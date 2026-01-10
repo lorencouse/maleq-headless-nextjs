@@ -7,12 +7,20 @@ export interface Post {
   excerpt: string;
   date: string;
   modified: string;
-  author: Author;
+  author: {
+    node: Author;
+  };
   featuredImage?: FeaturedImage;
-  categories?: Category[];
-  tags?: Tag[];
+  categories?: {
+    nodes: Category[];
+  };
+  tags?: {
+    nodes: Tag[];
+  };
   commentCount?: number;
-  comments?: Comment[];
+  comments?: {
+    nodes: Comment[];
+  };
 }
 
 export interface Author {
@@ -54,14 +62,18 @@ export interface Comment {
   content: string;
   date: string;
   author: {
-    name: string;
-    email?: string;
-    avatar?: {
-      url: string;
+    node: {
+      name: string;
+      email?: string;
+      avatar?: {
+        url: string;
+      };
     };
   };
   parent?: {
-    id: string;
+    node: {
+      id: string;
+    };
   };
 }
 

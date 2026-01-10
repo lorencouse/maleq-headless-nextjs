@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Post } from '@/lib/types/wordpress';
+import { getProductionImageUrl } from '@/lib/utils/image';
 
 interface BlogCardProps {
   post: Post;
@@ -28,7 +29,7 @@ export default function BlogCard({ post }: BlogCardProps) {
         <Link href={`/blog/${post.slug}`}>
           <div className='relative h-48 w-full'>
             <Image
-              src={post.featuredImage.node.sourceUrl}
+              src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
               alt={post.featuredImage.node.altText || post.title}
               fill
               className='object-cover'
@@ -40,9 +41,9 @@ export default function BlogCard({ post }: BlogCardProps) {
 
       <div className='p-6'>
         {/* Categories */}
-        {post.categories && post.categories.length > 0 && (
+        {post.categories?.nodes && post.categories.nodes.length > 0 && (
           <div className='flex flex-wrap gap-2 mb-3'>
-            {post.categories.slice(0, 2).map((category) => (
+            {post.categories.nodes.slice(0, 2).map((category) => (
               <Link
                 key={category.id}
                 href={`/blog/category/${category.slug}`}
@@ -73,16 +74,16 @@ export default function BlogCard({ post }: BlogCardProps) {
         {/* Meta Info */}
         <div className='flex items-center justify-between text-sm text-gray-500'>
           <div className='flex items-center space-x-2'>
-            {post.author?.avatar?.url && (
+            {post.author?.node?.avatar?.url && (
               <Image
                 src='/images/Mr-Q-profile.png'
-                alt={post.author.name}
+                alt={post.author.node.name}
                 width={24}
                 height={24}
                 className='rounded-full'
               />
             )}
-            <span>{post.author?.name}</span>
+            <span>{post.author?.node?.name}</span>
           </div>
           <time dateTime={post.date}>{formatDate(post.date)}</time>
         </div>

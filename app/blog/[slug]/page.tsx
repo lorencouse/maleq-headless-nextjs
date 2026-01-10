@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Post } from '@/lib/types/wordpress';
+import { getProductionImageUrl } from '@/lib/utils/image';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -103,7 +104,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {post.featuredImage?.node && (
         <div className='relative w-full h-96 mb-8 rounded-lg overflow-hidden'>
           <Image
-            src={post.featuredImage.node.sourceUrl}
+            src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
             alt={post.featuredImage.node.altText || post.title}
             fill
             className='object-cover'

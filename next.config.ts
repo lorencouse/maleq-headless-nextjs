@@ -19,14 +19,34 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'secure.gravatar.com',
         port: '',
-        // pathname: '/wp-content/uploads/**',
       },
       {
-        // If using a different domain for WordPress
+        // Staging domain - specific match
         protocol: 'https',
-        hostname: '**.maleq.com',
+        hostname: 'staging.maleq.com',
         port: '',
-        pathname: '/wp-content/uploads/**',
+        pathname: '/**', // Allow all paths from staging
+      },
+      {
+        // Production domain
+        protocol: 'https',
+        hostname: 'www.maleq.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        // Base domain
+        protocol: 'https',
+        hostname: 'maleq.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        // Production WordPress domain (where images are actually hosted)
+        protocol: 'https',
+        hostname: 'www.maleq.org',
+        port: '',
+        pathname: '/**',
       },
     ],
   },
