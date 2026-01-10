@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   images: {
@@ -10,9 +10,21 @@ const nextConfig: NextConfig = {
         pathname: '/wp-content/uploads/**',
       },
       {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '',
+        pathname: '/wp-content/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'secure.gravatar.com',
+        port: '',
+        // pathname: '/wp-content/uploads/**',
+      },
+      {
         // If using a different domain for WordPress
         protocol: 'https',
-        hostname: 'your-wordpress-domain.com',
+        hostname: '**.maleq.com',
         port: '',
         pathname: '/wp-content/uploads/**',
       },

@@ -9,12 +9,6 @@ export const PRODUCT_FIELDS = gql`
     slug
     shortDescription
     sku
-    price
-    regularPrice
-    salePrice
-    onSale
-    stockStatus
-    stockQuantity
     averageRating
     reviewCount
     type
@@ -40,6 +34,31 @@ export const PRODUCT_FIELDS = gql`
         name
         slug
       }
+    }
+    ... on SimpleProduct {
+      price
+      regularPrice
+      salePrice
+      onSale
+      stockStatus
+      stockQuantity
+    }
+    ... on VariableProduct {
+      price
+      regularPrice
+      salePrice
+      onSale
+      stockStatus
+      stockQuantity
+    }
+    ... on ExternalProduct {
+      price
+      regularPrice
+      salePrice
+      onSale
+    }
+    ... on GroupProduct {
+      price
     }
   }
 `;
