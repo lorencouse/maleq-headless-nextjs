@@ -1,14 +1,17 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import ThemeToggle from '@/components/theme/ThemeToggle';
 
 export default function Header() {
   return (
-    <header className='bg-white text-black shadow-sm'>
+    <header className='bg-background border-b border-border shadow-sm transition-colors'>
       <nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
         <div className='flex justify-between h-16 items-center'>
           {/* Logo */}
           <div className='flex-shrink-0'>
-            <Link href='/' className='text-2xl font-bold text-gray-900'>
+            <Link href='/' className='text-2xl font-bold'>
               <Image
                 src='/images/MQ-logo.png'
                 alt='Maleq'
@@ -23,35 +26,36 @@ export default function Header() {
           <div className='hidden md:flex space-x-8'>
             <Link
               href='/shop'
-              className='text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors'
+              className='text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors'
             >
               Shop
             </Link>
             <Link
               href='/blog'
-              className='text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors'
+              className='text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors'
             >
               Blog
             </Link>
             <Link
               href='/about'
-              className='text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors'
+              className='text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors'
             >
               About
             </Link>
             <Link
               href='/contact'
-              className='text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium transition-colors'
+              className='text-foreground hover:text-primary px-3 py-2 text-sm font-medium transition-colors'
             >
               Contact
             </Link>
           </div>
 
           {/* Cart & User Actions */}
-          <div className='flex items-center space-x-4'>
-            <button className='text-gray-700 hover:text-gray-900'>
+          <div className='flex items-center space-x-2'>
+            <ThemeToggle />
+            <button className='p-2 text-foreground hover:text-primary transition-colors'>
               <svg
-                className='h-6 w-6'
+                className='h-5 w-5'
                 fill='none'
                 strokeLinecap='round'
                 strokeLinejoin='round'
@@ -64,10 +68,10 @@ export default function Header() {
             </button>
             <Link
               href='/cart'
-              className='text-gray-700 hover:text-gray-900 relative'
+              className='p-2 text-foreground hover:text-primary relative transition-colors'
             >
               <svg
-                className='h-6 w-6'
+                className='h-5 w-5'
                 fill='none'
                 strokeLinecap='round'
                 strokeLinejoin='round'
@@ -77,7 +81,7 @@ export default function Header() {
               >
                 <path d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'></path>
               </svg>
-              <span className='absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center'>
+              <span className='absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center'>
                 0
               </span>
             </Link>
@@ -85,9 +89,9 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <div className='md:hidden'>
-            <button className='text-gray-700 hover:text-gray-900'>
+            <button className='p-2 text-foreground hover:text-primary transition-colors'>
               <svg
-                className='h-6 w-6'
+                className='h-5 w-5'
                 fill='none'
                 strokeLinecap='round'
                 strokeLinejoin='round'

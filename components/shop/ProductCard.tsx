@@ -13,10 +13,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow group">
+    <div className="bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group">
       <Link href={`/shop/product/${product.slug}`}>
         {/* Product Image */}
-        <div className="relative h-64 w-full overflow-hidden bg-gray-200">
+        <div className="relative h-64 w-full overflow-hidden bg-input">
           {product.image ? (
             <Image
               src={product.image.sourceUrl}
@@ -26,21 +26,21 @@ export default function ProductCard({ product }: ProductCardProps) {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-400">
+            <div className="flex items-center justify-center h-full text-muted">
               No Image
             </div>
           )}
 
           {/* Sale Badge */}
           {product.onSale && (
-            <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+            <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
               SALE
             </div>
           )}
 
           {/* Stock Status Badge */}
           {product.stockStatus === 'OUT_OF_STOCK' && (
-            <div className="absolute top-2 left-2 bg-gray-800 text-white text-xs font-bold px-2 py-1 rounded">
+            <div className="absolute top-2 left-2 bg-foreground text-background text-xs font-bold px-2 py-1 rounded">
               OUT OF STOCK
             </div>
           )}
@@ -50,21 +50,21 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Categories */}
           {product.productCategories && product.productCategories.length > 0 && (
             <div className="mb-2">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted">
                 {product.productCategories[0].name}
               </span>
             </div>
           )}
 
           {/* Product Name */}
-          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {product.name}
           </h3>
 
           {/* Short Description */}
           {product.shortDescription && (
             <div
-              className="text-sm text-gray-600 mb-3 line-clamp-2"
+              className="text-sm text-muted-foreground mb-3 line-clamp-2"
               dangerouslySetInnerHTML={{ __html: product.shortDescription }}
             />
           )}
@@ -73,15 +73,15 @@ export default function ProductCard({ product }: ProductCardProps) {
           <div className="flex items-center gap-2">
             {product.onSale && product.regularPrice ? (
               <>
-                <span className="text-lg font-bold text-red-600">
+                <span className="text-lg font-bold text-primary">
                   {formatPrice(product.salePrice)}
                 </span>
-                <span className="text-sm text-gray-500 line-through">
+                <span className="text-sm text-muted line-through">
                   {formatPrice(product.regularPrice)}
                 </span>
               </>
             ) : (
-              <span className="text-lg font-bold text-gray-900">
+              <span className="text-lg font-bold text-foreground">
                 {formatPrice(product.price || product.regularPrice)}
               </span>
             )}
@@ -96,8 +96,8 @@ export default function ProductCard({ product }: ProductCardProps) {
                     key={i}
                     className={`h-4 w-4 ${
                       i < Math.floor(product.averageRating!)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
+                        ? 'text-warning'
+                        : 'text-muted'
                     }`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
@@ -107,7 +107,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 ))}
               </div>
               {product.reviewCount && product.reviewCount > 0 && (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted">
                   ({product.reviewCount})
                 </span>
               )}
@@ -119,7 +119,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Add to Cart Button */}
       <div className="p-4 pt-0">
         <button
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary-hover transition-colors disabled:bg-muted disabled:cursor-not-allowed"
           disabled={product.stockStatus === 'OUT_OF_STOCK'}
         >
           {product.stockStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Add to Cart'}

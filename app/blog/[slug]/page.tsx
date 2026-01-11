@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
+import './blog-post.css';
 
 export const revalidate = 3600; // Revalidate every hour
 
@@ -52,9 +53,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <article className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <article className='single-post max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
       {/* Header */}
-      <header className='mb-8'>
+      <header className='entry-header mb-8'>
         {/* Categories */}
         {post.categories?.nodes && post.categories.nodes.length > 0 && (
           <div className='flex flex-wrap gap-2 mb-4'>
@@ -62,7 +63,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               <Link
                 key={category.id}
                 href={`/blog/category/${category.slug}`}
-                className='text-sm font-medium text-blue-600 hover:text-blue-800'
+                className='text-sm font-medium text-primary hover:text-primary-hover'
               >
                 {category.name}
               </Link>
@@ -71,12 +72,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         )}
 
         {/* Title */}
-        <h1 className='text-4xl md:text-5xl font-bold text-gray-900 mb-6'>
+        <h1 className='entry-title text-4xl md:text-5xl font-bold text-foreground mb-6'>
           {post.title}
         </h1>
 
         {/* Meta */}
-        <div className='flex items-center gap-4 text-gray-600'>
+        <div className='flex items-center gap-4 text-muted-foreground'>
           <div className='flex items-center gap-2'>
             {post.author?.node?.avatar?.url && (
               <Image
@@ -102,7 +103,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Featured Image */}
       {post.featuredImage?.node && (
-        <div className='relative w-full h-96 mb-8 rounded-lg overflow-hidden'>
+        <div className='entry-img relative w-full h-96 mb-8 rounded-lg overflow-hidden'>
           <Image
             src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
             alt={post.featuredImage.node.altText || post.title}
@@ -115,20 +116,20 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Content */}
       <div
-        className='prose prose-lg max-w-none mb-12'
+        className='entry-content prose prose-lg max-w-none mb-12 blog-content'
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (
-        <div className='border-t border-gray-200 pt-6 mb-12'>
-          <h3 className='text-sm font-semibold text-gray-900 mb-3'>Tags:</h3>
+        <div className='border-t border-border pt-6 mb-12'>
+          <h3 className='text-sm font-semibold text-foreground mb-3'>Tags:</h3>
           <div className='flex flex-wrap gap-2'>
             {post.tags.nodes.map((tag: any) => (
               <Link
                 key={tag.id}
                 href={`/blog/tag/${tag.slug}`}
-                className='px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full hover:bg-gray-200 transition-colors'
+                className='px-3 py-1 bg-input text-foreground text-sm rounded-full hover:bg-border transition-colors'
               >
                 {tag.name}
               </Link>
@@ -139,13 +140,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Comments Section */}
       {post.comments?.nodes && post.comments.nodes.length > 0 && (
-        <div className='border-t border-gray-200 pt-8'>
-          <h2 className='text-2xl font-bold text-gray-900 mb-6'>
+        <div className='border-t border-border pt-8'>
+          <h2 className='text-2xl font-bold text-foreground mb-6'>
             Comments ({post.commentCount})
           </h2>
           <div className='space-y-6'>
             {post.comments.nodes.map((comment: any) => (
-              <div key={comment.id} className='bg-gray-50 rounded-lg p-6'>
+              <div key={comment.id} className='bg-card border border-border rounded-lg p-6'>
                 <div className='flex items-start gap-4'>
                   {comment.author?.node?.avatar?.url && (
                     <Image
@@ -158,15 +159,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   )}
                   <div className='flex-1'>
                     <div className='flex items-center gap-2 mb-2'>
-                      <span className='font-semibold text-gray-900'>
+                      <span className='font-semibold text-foreground'>
                         {comment.author?.node?.name}
                       </span>
-                      <span className='text-sm text-gray-500'>
+                      <span className='text-sm text-muted'>
                         {formatDate(comment.date)}
                       </span>
                     </div>
                     <div
-                      className='text-gray-700'
+                      className='text-muted-foreground'
                       dangerouslySetInnerHTML={{ __html: comment.content }}
                     />
                   </div>

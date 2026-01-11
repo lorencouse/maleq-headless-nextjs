@@ -1,0 +1,833 @@
+/* ============================================================================
+   MODERNIZED BLOG POST STYLES
+   Following modern UI/UX principles and web standards
+   ============================================================================ */
+
+/* ============================================================================
+   BASE TYPOGRAPHY - Improved Readability
+   ============================================================================ */
+
+/* Optimal reading size - maintain accessibility */
+html {
+  font-size: 100%; /* 16px base for better accessibility */
+}
+
+/* ============================================================================
+   POST HEADER & TITLE - Better Spacing & Hierarchy
+   ============================================================================ */
+
+.entry-title,
+.page-title {
+  text-align: left;
+  margin-top: 0; /* Removed negative margin for better flow */
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.75rem, 5vw, 2.5rem); /* Responsive typography */
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em; /* Tighter tracking for large text */
+  color: var(--foreground);
+}
+
+.entry-header {
+  margin-bottom: 2rem;
+}
+
+/* ============================================================================
+   POST CONTENT HEADINGS - Modern Hierarchy with Visual Interest
+   ============================================================================ */
+
+.entry-content h2,
+.entry-content h3,
+.entry-content h4,
+.entry-content h5 {
+  scroll-margin-top: 2rem; /* Account for fixed headers when anchor linking */
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--foreground);
+  transition: color 0.2s ease;
+}
+
+/* Modern gradient underline for h2 */
+.entry-content h2 {
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid transparent;
+  background-image: linear-gradient(
+    90deg,
+    var(--primary) 0%,
+    var(--primary-light) 100%
+  );
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 100% 3px;
+  font-size: clamp(1.5rem, 4vw, 1.875rem);
+}
+
+.entry-content h3 {
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--border);
+  font-size: clamp(1.25rem, 3vw, 1.5rem);
+}
+
+.entry-content h4 {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: clamp(1.125rem, 2.5vw, 1.25rem);
+}
+
+.entry-content h5 {
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: var(--muted-foreground);
+}
+
+/* Schema & Special Headings */
+.schema-how-to-description {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: 0.75rem 0.75rem 0 0;
+  padding: 1.5rem;
+  margin-bottom: 0;
+}
+
+.term-description h2,
+.page .entry-content h2,
+.page-description h2,
+.term-description h3,
+.page .entry-content h3,
+.page-description h3,
+.table-title {
+  margin-top: 0;
+  padding: 1rem 0;
+  line-height: 1.3;
+}
+
+.rounded-block h2,
+.rounded-block h3,
+.rounded-block h4,
+.rounded-block h2.wp-block-heading,
+.rounded-block h3.wp-block-heading {
+  margin: 0.75rem 0 1.25rem;
+  border: none;
+  background: none;
+  padding-bottom: 0;
+}
+
+/* ============================================================================
+   LINKS & PARAGRAPHS - Enhanced Readability
+   ============================================================================ */
+
+.entry-content p {
+  font-size: 1.0625rem; /* 17px - optimal for reading */
+  line-height: 1.7; /* Improved readability */
+  letter-spacing: 0.01em;
+  margin-bottom: 1.5rem;
+  color: var(--foreground);
+}
+
+/* Modern link styling with smooth transitions */
+.entry-content p a,
+.entry-content a {
+  color: var(--primary);
+  font-weight: 500;
+  text-decoration: none;
+  background-image: linear-gradient(
+    to right,
+    var(--primary) 0%,
+    var(--primary) 100%
+  );
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  background-size: 0% 2px;
+  transition: background-size 0.3s ease, color 0.2s ease;
+  position: relative;
+}
+
+.entry-content p a:hover,
+.entry-content a:hover {
+  color: var(--primary-hover);
+  background-size: 100% 2px;
+}
+
+.entry-content p a:focus-visible,
+.entry-content a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Content width for optimal reading */
+.single-post .entry-content {
+  max-width: 65ch; /* Character-based width for better readability */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============================================================================
+   IMAGES - Modern Layout & Loading States
+   ============================================================================ */
+
+.entry-content .wp-block-image,
+.entry-content figure {
+  display: table; /* Makes container fit content width */
+  margin: 2rem auto;
+  max-width: 100%;
+}
+
+.entry-content img,
+.content-area img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Hover effect only for linked images */
+.entry-content a img,
+.content-area a img {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.entry-content a:hover img,
+.content-area a:hover img {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.single .entry-img {
+  aspect-ratio: 16 / 9;
+  position: relative;
+}
+
+/* Modern caption styling */
+.wp-block-image figcaption,
+.wp-block-image figcaption a,
+.wp-caption-text,
+figure.wp-block-video figcaption,
+figure.wp-block-video figcaption a,
+.wp-block-video figcaption,
+.entry-content figcaption {
+  display: table-caption; /* Matches parent table display */
+  caption-side: bottom;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background: var(--input);
+  border-radius: 0 0 0.5rem 0.5rem;
+  margin-top: 0rem;
+  font-style: italic;
+}
+
+/* ============================================================================
+   TABLES - Clean, Modern Design
+   ============================================================================ */
+
+.wp-block-table {
+  margin: 2rem 0;
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.wp-block-table table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: separate;
+  font-size: 0.9375rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.wp-block-table table th,
+.wp-block-table table td {
+  padding: 0.875rem 1rem;
+  text-align: left;
+  border: none;
+}
+
+.wp-block-table thead {
+  background: var(--input);
+  border-bottom: 2px solid var(--border);
+}
+
+.wp-block-table thead th {
+  font-weight: 600;
+  color: var(--foreground);
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  letter-spacing: 0.05em;
+}
+
+.wp-block-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.wp-block-table tbody tr:nth-child(even) td {
+  background-color: var(--input);
+}
+
+.wp-block-table tbody tr:nth-child(odd) td {
+  background-color: var(--background);
+}
+
+.wp-block-table tbody tr:hover td {
+  background-color: var(--border);
+}
+
+/* ============================================================================
+   PROS & CONS LISTS - Modern Card Design
+   ============================================================================ */
+
+.pros-list,
+.cons-list {
+  list-style: none;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.pros-list {
+  border-left: 4px solid var(--success);
+}
+
+.cons-list {
+  border-left: 4px solid var(--destructive);
+}
+
+.pros-list::before,
+.cons-list::before {
+  font-weight: 700;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--foreground);
+}
+
+.pros-list::before {
+  content: '✓ Pros';
+  color: var(--success);
+}
+
+.cons-list::before {
+  content: '✗ Cons';
+  color: var(--destructive);
+}
+
+.pros-list li,
+.cons-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--foreground);
+}
+
+.pros-list li::before {
+  content: '✓';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--success);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.cons-list li::before {
+  content: '✗';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: var(--destructive);
+  color: white;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* ============================================================================
+   PRODUCT RATING - Modern Badge Design
+   ============================================================================ */
+
+.product-rating {
+  position: relative;
+  background: linear-gradient(135deg, var(--success) 0%, #4ade80 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 2rem auto;
+  font-weight: 700;
+  max-width: 20rem;
+  box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3),
+    0 4px 6px -2px rgba(34, 197, 94, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-rating:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(34, 197, 94, 0.3),
+    0 10px 10px -5px rgba(34, 197, 94, 0.2);
+}
+
+.product-rating::before {
+  content: 'Total Score:';
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.9;
+}
+
+.product-rating::after {
+  content: '/10';
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-left: -0.25rem;
+}
+
+/* Rating number - make it stand out */
+.product-rating {
+  font-size: 2.5rem !important;
+}
+
+/* ============================================================================
+   CUSTOM CONTENT BLOCKS - Modern Card Design
+   ============================================================================ */
+
+.review {
+  position: relative;
+  border-left: 4px solid var(--primary);
+  padding: 1.5rem 2rem;
+  margin: 2rem 0;
+  font-weight: 400;
+  font-style: italic;
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  background: var(--card);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  color: var(--foreground);
+}
+
+.review::before {
+  content: '"';
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  font-size: 3rem;
+  color: var(--primary);
+  opacity: 0.2;
+  font-family: Georgia, serif;
+  line-height: 1;
+}
+
+.read-more {
+  padding: 1rem 0;
+  margin: 2rem 0;
+  border-bottom: 2px solid var(--border);
+  transition: border-color 0.2s ease;
+}
+
+.read-more:hover {
+  border-bottom-color: var(--primary);
+}
+
+.read-more a {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: gap 0.2s ease;
+}
+
+.read-more a::after {
+  content: '→';
+  transition: transform 0.2s ease;
+}
+
+.read-more a:hover::after {
+  transform: translateX(0.25rem);
+}
+
+/* ============================================================================
+   PRODUCT SECTIONS - Enhanced Visual Hierarchy
+   ============================================================================ */
+
+.product-name {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin: 2rem 0 1.5rem;
+  font-size: 1.375rem;
+  font-weight: 600;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  /* border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); */
+  color: var(--foreground);
+}
+
+.single-post .entry-content .product-name::before {
+  counter-increment: section;
+  content: counter(section);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-hover) 100%
+  );
+  color: white;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(255, 57, 57, 0.3),
+    0 2px 4px -1px rgba(255, 57, 57, 0.2);
+}
+
+body {
+  counter-reset: section;
+}
+
+/* Product Specs with Modern Layout */
+.product-specs,
+.product-specs-cn,
+.product-table {
+  position: relative;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
+  margin: 2rem 0;
+  padding: 1.5rem;
+}
+
+.product-specs::before,
+.product-specs-cn::before,
+.product-table::before {
+  font-weight: 700;
+  font-size: 1.125rem;
+  display: block;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--border);
+  color: var(--foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.product-specs::before,
+.product-table::before {
+  content: '📋 Product Specs';
+}
+
+.product-specs-cn::before {
+  content: '📋 產品資訊';
+}
+
+.product-specs p,
+.product-specs-cn p {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.product-specs p:last-child,
+.product-specs-cn p:last-child {
+  border-bottom: none;
+}
+
+/* Rounded Blocks - Card Component */
+.rounded-block,
+.schema-faq-section,
+.schema-how-to-step {
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: var(--card);
+  border: 1px solid var(--border);
+  margin: 2rem 0;
+  padding: 1.5rem;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.rounded-block:hover,
+.schema-faq-section:hover,
+.schema-how-to-step:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+}
+
+.rounded-block p {
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.rounded-block p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+   SCHEMA MARKUP SECTIONS - Structured Content
+   ============================================================================ */
+
+.rank-math-step-content {
+  padding-top: 1rem;
+  color: var(--foreground);
+}
+
+.schema-faq-question,
+.schema-how-to-step-name {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 1rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 2px solid var(--primary);
+  color: var(--foreground);
+  margin-bottom: 1rem;
+}
+
+.schema-faq-question::before {
+  content: 'Q:';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  background: var(--primary);
+  color: white;
+  border-radius: 0.375rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+}
+
+/* ============================================================================
+   TABLE OF CONTENTS - Clean List
+   ============================================================================ */
+
+#ez-toc-container {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin: 2rem 0;
+}
+
+#ez-toc-container li {
+  box-shadow: none;
+  padding: 0.5rem 0;
+  transition: padding-left 0.2s ease;
+}
+
+#ez-toc-container li:hover {
+  padding-left: 0.5rem;
+}
+
+/* ============================================================================
+   BLOG GRID/CARDS - List View
+   ============================================================================ */
+
+.post-grid .entry-content {
+  display: none;
+}
+
+.post-grid .entry-header {
+  margin-bottom: 0;
+  letter-spacing: normal;
+  line-height: 1.3;
+}
+
+/* ============================================================================
+   LAZY LOADING - Smooth Image Loading
+   ============================================================================ */
+
+img[data-lazyloaded] {
+  opacity: 0;
+}
+
+img.litespeed-loaded,
+img[data-lazyloaded].loaded {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================================================ */
+
+/* Improved focus indicators */
+*:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+/* Reduced motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN - Mobile First
+   ============================================================================ */
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  .entry-content p {
+    font-size: 1.0625rem;
+  }
+
+  .product-name {
+    font-size: 1.5rem;
+  }
+
+  .pros-list,
+  .cons-list {
+    padding: 2rem;
+  }
+}
+
+/* Desktop and up */
+@media (min-width: 1024px) {
+  /* Smooth hover effects only on devices that support hover */
+  .entry-content a:hover,
+  .entry-content img:hover,
+  .rounded-block:hover,
+  .schema-faq-section:hover,
+  .schema-how-to-step:hover {
+    /* Hover states defined above */
+  }
+}
+
+/* ============================================================================
+   DARK MODE ADJUSTMENTS - Optimized Contrast
+   ============================================================================ */
+
+.dark .entry-content h2 {
+  background-image: linear-gradient(
+    90deg,
+    var(--primary) 0%,
+    var(--primary-light) 100%
+  );
+}
+
+.dark .wp-block-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.dark .wp-block-table tbody tr:nth-child(odd) td {
+  background-color: transparent;
+}
+
+.dark .wp-block-table tbody tr:hover td {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.dark .wp-block-table thead {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .rounded-block,
+.dark .schema-faq-section,
+.dark .schema-how-to-step,
+.dark .product-specs,
+.dark .product-specs-cn,
+.dark .product-table {
+  background: var(--card);
+  border-color: var(--border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dark .review {
+  background: var(--card);
+  border-left-color: var(--primary);
+}
+
+.dark .schema-how-to-description {
+  background-color: var(--card);
+}
+
+.dark .entry-content img {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================================
+   PRINT STYLES - Optimized for Printing
+   ============================================================================ */
+
+@media print {
+  .entry-content {
+    max-width: 100%;
+  }
+
+  .entry-content img {
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .product-rating,
+  .rounded-block,
+  .schema-faq-section,
+  .schema-how-to-step {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+
+  .pros-list,
+  .cons-list {
+    break-inside: avoid;
+  }
+}

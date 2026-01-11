@@ -1,28 +1,144 @@
 @import 'tailwindcss';
 
 :root {
+  /* Light mode colors */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0a0a0a;
+  --muted: #6b7280;
+  --muted-foreground: #9ca3af;
+  --border: #e5e7eb;
+  --input: #f3f4f6;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+
+  /* Brand colors - Primary: #FF3939 */
+  --primary: #FF3939;
+  --primary-foreground: #ffffff;
+  --primary-hover: #e62e2e;
+  --primary-light: #ff5c5c;
+  --primary-dark: #cc2e2e;
+
+  /* Accent colors */
+  --accent: #f97316;
+  --accent-foreground: #ffffff;
+  --accent-hover: #ea580c;
+
+  /* Secondary colors */
+  --secondary: #6366f1;
+  --secondary-foreground: #ffffff;
+  --secondary-hover: #4f46e5;
+
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  /* Success */
+  --success: #10b981;
+  --success-foreground: #ffffff;
+
+  /* Warning */
+  --warning: #f59e0b;
+  --warning-foreground: #ffffff;
+
+  /* Border radius */
+  --radius: 0.5rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+.dark {
+  /* Dark mode colors */
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --muted: #9ca3af;
+  --muted-foreground: #6b7280;
+  --border: #27272a;
+  --input: #18181b;
+  --card: #09090b;
+  --card-foreground: #ededed;
+
+  /* Brand colors adjusted for dark mode */
+  --primary: #FF3939;
+  --primary-foreground: #ffffff;
+  --primary-hover: #ff5c5c;
+  --primary-light: #ff7070;
+  --primary-dark: #e62e2e;
+
+  /* Accent colors for dark mode */
+  --accent: #fb923c;
+  --accent-foreground: #ffffff;
+  --accent-hover: #f97316;
+
+  /* Secondary colors for dark mode */
+  --secondary: #818cf8;
+  --secondary-foreground: #ffffff;
+  --secondary-hover: #6366f1;
+
+  /* Destructive for dark mode */
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+
+  /* Success for dark mode */
+  --success: #34d399;
+  --success-foreground: #ffffff;
+
+  /* Warning for dark mode */
+  --warning: #fbbf24;
+  --warning-foreground: #ffffff;
 }
 
 @theme inline {
+  /* Background & Foreground */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* Border & Input */
+  --color-border: var(--border);
+  --color-input: var(--input);
+
+  /* Card */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  /* Primary (Brand Red #FF3939) */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+
+  /* Accent (Orange) */
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-hover: var(--accent-hover);
+
+  /* Secondary (Indigo) */
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
+
+  /* Semantic colors */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  /* Border radius tokens */
+  --radius: var(--radius);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
 
 body {
@@ -30,7 +146,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, sans-serif;
   line-height: 1.6;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1,
@@ -42,6 +158,7 @@ h6 {
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: 0.5rem;
+  color: var(--foreground);
 }
 
 h1 {
@@ -65,7 +182,7 @@ h6 {
 
 p {
   margin-bottom: 1rem;
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 a {
@@ -115,4 +232,98 @@ img {
   max-width: 100%;
   height: auto;
   display: block;
+}
+
+/* Blog Content Styles */
+.blog-content {
+  color: var(--foreground);
+}
+
+/* Center all images in blog content */
+.blog-content img {
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Center figures (image containers) */
+.blog-content figure {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.blog-content figcaption {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+  margin-top: 0.5rem;
+}
+
+/* Style links in blog content */
+.blog-content a {
+  color: var(--primary);
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.blog-content a:hover {
+  color: var(--primary-hover);
+  opacity: 1;
+}
+
+/* Style blockquotes in blog content */
+.blog-content blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* Style code blocks in blog content */
+.blog-content pre {
+  background: var(--input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.blog-content code {
+  background: var(--input);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.blog-content pre code {
+  background: transparent;
+  padding: 0;
+}
+
+/* Style tables in blog content */
+.blog-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.blog-content th,
+.blog-content td {
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.blog-content th {
+  background: var(--input);
+  font-weight: 600;
+}
+
+.blog-content tr:nth-child(even) {
+  background: var(--input);
 }

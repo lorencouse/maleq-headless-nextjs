@@ -23,7 +23,7 @@ export default function BlogCard({ post }: BlogCardProps) {
   }
 
   return (
-    <article className='bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow'>
+    <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all'>
       {/* Featured Image */}
       {post.featuredImage?.node && (
         <Link href={`/blog/${post.slug}`}>
@@ -40,39 +40,44 @@ export default function BlogCard({ post }: BlogCardProps) {
       )}
 
       <div className='p-6'>
-        {/* Categories */}
-        {post.categories?.nodes && post.categories.nodes.length > 0 && (
-          <div className='flex flex-wrap gap-2 mb-3'>
-            {post.categories.nodes.slice(0, 2).map((category) => (
-              <Link
-                key={category.id}
-                href={`/blog/category/${category.slug}`}
-                className='text-xs font-medium text-blue-600 hover:text-blue-800'
-              >
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Categories & Date */}
+        <div className='flex justify-between items-center mb-3'>
+          {post.categories?.nodes && post.categories.nodes.length > 0 && (
+            <div className='flex flex-wrap gap-2'>
+              {post.categories.nodes.slice(0, 2).map((category) => (
+                <Link
+                  key={category.id}
+                  href={`/blog/category/${category.slug}`}
+                  className='text-xs font-medium text-primary hover:text-primary-hover'
+                >
+                  {category.name}
+                </Link>
+              ))}
+            </div>
+          )}
+          <time dateTime={post.date} className='text-xs text-muted-foreground whitespace-nowrap ml-2'>
+            {formatDate(post.date)}
+          </time>
+        </div>
 
         {/* Title */}
-        <h2 className='text-xl font-bold text-gray-900 mb-2 line-clamp-2'>
+        <h2 className='text-xl font-bold text-foreground mb-2 line-clamp-2'>
           <Link
             href={`/blog/${post.slug}`}
-            className='hover:text-blue-600 transition-colors'
+            className='hover:text-primary transition-colors'
           >
             {post.title}
           </Link>
         </h2>
 
         {/* Excerpt */}
-        <div
-          className='text-gray-600 text-sm mb-4 line-clamp-3'
+        {/* <div
+          className='text-muted-foreground text-sm mb-4 line-clamp-3'
           dangerouslySetInnerHTML={{ __html: post.excerpt }}
-        />
+        /> */}
 
         {/* Meta Info */}
-        <div className='flex items-center justify-between text-sm text-gray-500'>
+        <div className='flex items-center justify-between text-sm text-muted border-t border-border mt-3 pt-3'>
           <div className='flex items-center space-x-2'>
             {post.author?.node?.avatar?.url && (
               <Image
@@ -85,18 +90,17 @@ export default function BlogCard({ post }: BlogCardProps) {
             )}
             <span>{post.author?.node?.name}</span>
           </div>
-          <time dateTime={post.date}>{formatDate(post.date)}</time>
+          {post.commentCount !== undefined && post.commentCount > 0 && (
+            <div className=' '>
+              <span className='text-xs text-muted'>
+                {post.commentCount}{' '}
+                {post.commentCount === 1 ? 'comment' : 'comments'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Comment Count */}
-        {post.commentCount !== undefined && post.commentCount > 0 && (
-          <div className='mt-3 pt-3 border-t border-gray-200'>
-            <span className='text-xs text-gray-500'>
-              {post.commentCount}{' '}
-              {post.commentCount === 1 ? 'comment' : 'comments'}
-            </span>
-          </div>
-        )}
       </div>
     </article>
   );
