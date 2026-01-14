@@ -1,0 +1,208 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Product Manufacturers from Williams Trading
+model Manufacturer {
+  id        String    @id @default(cuid())
+  code      String    @unique // Williams Trading manufacturer code
+  name      String
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+}
+
+// Product Types/Categories from Williams Trading
+model ProductType {
+  id          String    @id @default(cuid())
+  code        String    @unique // Williams Trading type code
+  name        String
+  description String?
+  active      Boolean   @default(true)
+  parentId    String?
+  parent      ProductType?  @relation("ProductTypeHierarchy", fields: [parentId], references: [id])
+  children    ProductType[] @relation("ProductTypeHierarchy")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+// Products from Williams Trading
+model Product {
+  id                String         @id @default(cuid())
+  sku               String         @unique // Williams Trading SKU
+  name              String
+  description       String?        @db.Text
+  shortDescription  String?        @db.Text
+
+  // Pricing
+  price             Decimal?       @db.Decimal(10, 2)
+  retailPrice       Decimal?       @db.Decimal(10, 2)
+  salePrice         Decimal?       @db.Decimal(10, 2)
+  onSale            Boolean        @default(false)
+
+  // Stock Management
+  stockQuantity     Int            @default(0)
+  stockStatus       StockStatus    @default(OUT_OF_STOCK)
+  lastStockUpdate   DateTime       @default(now())
+
+  // Product Details
+  active            Boolean        @default(true)
+  weight            Decimal?       @db.Decimal(10, 2)
+  length            Decimal?       @db.Decimal(10, 2)
+  width             Decimal?       @db.Decimal(10, 2)
+  height            Decimal?       @db.Decimal(10, 2)
+  upcCode           String?
+  manufacturerSku   String?
+  releaseDate       DateTime?
+
+  // Relationships
+  manufacturerId    String?
+  manufacturer      Manufacturer?  @relation(fields: [manufacturerId], references: [id])
+  productTypeId     String?
+  productType       ProductType?   @relation(fields: [productTypeId], references: [id])
+
+  // Images
+  images            ProductImage[]
+
+  // Stock Update History
+  stockHistory      StockHistory[]
+
+  // Variation Support
+  isVariableProduct Boolean        @default(false) // Is this a parent product with variations?
+  parentProductId   String?        // If this is a variation, points to parent
+  parentProduct     Product?       @relation("ProductVariations", fields: [parentProductId], references: [id], onDelete: Cascade)
+  variations        Product[]      @relation("ProductVariations")
+  variationAttributes ProductVariationAttribute[] // Attributes for this variation (e.g., size: 2oz)
+
+  // Metadata
+  source            ProductSource  @default(WILLIAMS_TRADING)
+  rawData           String?        @db.Text // Store raw XML/JSON for reference
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([sku])
+  @@index([manufacturerId])
+  @@index([productTypeId])
+  @@index([active])
+  @@index([stockStatus])
+  @@index([parentProductId])
+  @@index([isVariableProduct])
+}
+
+// Variation Attributes (e.g., Size: 2oz, Color: Red)
+model ProductVariationAttribute {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  name      String   // Attribute name (e.g., "Size", "Color", "Volume")
+  value     String   // Attribute value (e.g., "2 OZ", "Red", "100ml")
+  sortOrder Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([name])
+}
+
+// Product Images from Williams Trading
+model ProductImage {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  imageUrl  String   // Full URL from Williams Trading
+  fileName  String   // Filename from Williams Trading
+  sortOrder Int      @default(0)
+  isPrimary Boolean  @default(false)
+
+  // Local processed images
+  localPath     String?  // Path to locally stored image (e.g., /products/product-name-1.webp)
+  localFileName String?  // Generated filename for SEO
+  imageAlt      String?  // Alt text for SEO
+  imageTitle    String?  // Title for SEO
+  isProcessed   Boolean  @default(false) // Whether image has been downloaded and processed
+  processedAt   DateTime? // When image was processed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([isProcessed])
+}
+
+// Stock History for tracking changes
+model StockHistory {
+  id              String      @id @default(cuid())
+  productId       String
+  product         Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  previousQty     Int
+  newQty          Int
+  previousStatus  StockStatus
+  newStatus       StockStatus
+
+  createdAt       DateTime    @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+// Sync Log to track API sync operations
+model SyncLog {
+  id            String       @id @default(cuid())
+  syncType      SyncType
+  status        SyncStatus
+  recordsTotal  Int          @default(0)
+  recordsAdded  Int          @default(0)
+  recordsUpdated Int         @default(0)
+  recordsFailed Int          @default(0)
+  errorMessage  String?      @db.Text
+  startedAt     DateTime     @default(now())
+  completedAt   DateTime?
+
+  @@index([syncType])
+  @@index([status])
+  @@index([startedAt])
+}
+
+// Enums
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+  LOW_STOCK
+  ON_BACKORDER
+}
+
+enum ProductSource {
+  WILLIAMS_TRADING
+  WORDPRESS
+  MANUAL
+}
+
+enum SyncType {
+  FULL_SYNC
+  STOCK_UPDATE
+  MANUFACTURERS
+  PRODUCT_TYPES
+  PRODUCTS
+  IMAGES
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}

@@ -48,6 +48,13 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        // Williams Trading image server
+        protocol: 'http',
+        hostname: 'images.williams-trading.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 

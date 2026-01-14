@@ -99,16 +99,27 @@ export const GET_PRODUCT_BY_SLUG = gql`
           }
         }
       }
-      attributes {
-        nodes {
-          id
-          name
-          options
-          variation
-          visible
+      ... on SimpleProduct {
+        attributes {
+          nodes {
+            id
+            name
+            options
+            variation
+            visible
+          }
         }
       }
       ... on VariableProduct {
+        attributes {
+          nodes {
+            id
+            name
+            options
+            variation
+            visible
+          }
+        }
         variations {
           nodes {
             id
@@ -130,6 +141,17 @@ export const GET_PRODUCT_BY_SLUG = gql`
                 value
               }
             }
+          }
+        }
+      }
+      ... on ExternalProduct {
+        attributes {
+          nodes {
+            id
+            name
+            options
+            variation
+            visible
           }
         }
       }
