@@ -1,0 +1,1153 @@
+{
+  "levels": {
+    "0": [
+      {
+        "code": "36",
+        "name": "Anal Toys",
+        "parent": "0"
+      },
+      {
+        "code": "489",
+        "name": "As Seen on Oprah",
+        "parent": "0"
+      },
+      {
+        "code": "238",
+        "name": "Batteries, Storage, & Odds & Ends",
+        "parent": "0"
+      },
+      {
+        "code": "44",
+        "name": "Bondage, Fetish & Kink",
+        "parent": "0"
+      },
+      {
+        "code": "175",
+        "name": "Books, Adult Games & Music",
+        "parent": "0"
+      },
+      {
+        "code": "685",
+        "name": "Catalogs, Sales Tools & Promotional Items",
+        "parent": "0"
+      },
+      {
+        "code": "176",
+        "name": "Condoms",
+        "parent": "0"
+      },
+      {
+        "code": "30",
+        "name": "Dildos & Dongs",
+        "parent": "0"
+      },
+      {
+        "code": "42",
+        "name": "Erotic Body Lotions",
+        "parent": "0"
+      },
+      {
+        "code": "168",
+        "name": "Health & Beauty",
+        "parent": "0"
+      },
+      {
+        "code": "1001",
+        "name": "Holiday Items",
+        "parent": "0"
+      },
+      {
+        "code": "172",
+        "name": "Lingerie & Clothing",
+        "parent": "0"
+      },
+      {
+        "code": "528",
+        "name": "Lubricants",
+        "parent": "0"
+      },
+      {
+        "code": "257",
+        "name": "Luxury Items",
+        "parent": "0"
+      },
+      {
+        "code": "154",
+        "name": "Meds & Supplements",
+        "parent": "0"
+      },
+      {
+        "code": "811",
+        "name": "Party Games, Gifts & Supplies",
+        "parent": "0"
+      },
+      {
+        "code": "389",
+        "name": "Sales & Closeouts",
+        "parent": "0"
+      },
+      {
+        "code": "151",
+        "name": "Sex Dolls",
+        "parent": "0"
+      },
+      {
+        "code": "1002",
+        "name": "Sex Machines",
+        "parent": "0"
+      },
+      {
+        "code": "25",
+        "name": "Sextoys for Couples",
+        "parent": "0"
+      },
+      {
+        "code": "669",
+        "name": "Sextoys for Men",
+        "parent": "0"
+      },
+      {
+        "code": "654",
+        "name": "Sextoys for Women",
+        "parent": "0"
+      },
+      {
+        "code": "3",
+        "name": "Vibrators",
+        "parent": "0"
+      }
+    ],
+    "1": [
+      {
+        "code": "477",
+        "name": "Adult Candy and Erotic Foods",
+        "parent": "811"
+      },
+      {
+        "code": "623",
+        "name": "Adult Gags, Gifts and Novelties",
+        "parent": "811"
+      },
+      {
+        "code": "493",
+        "name": "Adult Party Games",
+        "parent": "811"
+      },
+      {
+        "code": "164",
+        "name": "Adult Party Supplies",
+        "parent": "811"
+      },
+      {
+        "code": "478",
+        "name": "After Bath",
+        "parent": "168"
+      },
+      {
+        "code": "201",
+        "name": "Anal",
+        "parent": "36"
+      },
+      {
+        "code": "38",
+        "name": "Anal Beads",
+        "parent": "36"
+      },
+      {
+        "code": "40",
+        "name": "Anal Douches, Enemas & Hygiene",
+        "parent": "36"
+      },
+      {
+        "code": "475",
+        "name": "Anal Lubes, Lotions, Sprays & Creams",
+        "parent": "36"
+      },
+      {
+        "code": "467",
+        "name": "Anal Trainer Kits",
+        "parent": "36"
+      },
+      {
+        "code": "157",
+        "name": "Anime",
+        "parent": "151"
+      },
+      {
+        "code": "761",
+        "name": "Aromatherapy",
+        "parent": "42"
+      },
+      {
+        "code": "370",
+        "name": "Assorted Condoms",
+        "parent": "176"
+      },
+      {
+        "code": "179",
+        "name": "Babydolls & Slips",
+        "parent": "172"
+      },
+      {
+        "code": "169",
+        "name": "Bath Time",
+        "parent": "168"
+      },
+      {
+        "code": "643",
+        "name": "Ben Wa Balls",
+        "parent": "25"
+      },
+      {
+        "code": "80",
+        "name": "Blindfolds",
+        "parent": "44"
+      },
+      {
+        "code": "681",
+        "name": "Body Dusts & Powders",
+        "parent": "42"
+      },
+      {
+        "code": "45",
+        "name": "Body Harnesses",
+        "parent": "44"
+      },
+      {
+        "code": "171",
+        "name": "Body Massagers",
+        "parent": "168"
+      },
+      {
+        "code": "385",
+        "name": "Body Paints & Dessert Toppings",
+        "parent": "42"
+      },
+      {
+        "code": "71",
+        "name": "Bondage Kits & Kinky Sets",
+        "parent": "44"
+      },
+      {
+        "code": "61",
+        "name": "Bondage Restraints",
+        "parent": "44"
+      },
+      {
+        "code": "241",
+        "name": "Bondage, Fetish & Kink Kits",
+        "parent": "44"
+      },
+      {
+        "code": "186",
+        "name": "Bra Sets",
+        "parent": "172"
+      },
+      {
+        "code": "8",
+        "name": "Bullets & Eggs",
+        "parent": "3"
+      },
+      {
+        "code": "242",
+        "name": "Candles",
+        "parent": "168"
+      },
+      {
+        "code": "612",
+        "name": "Candles",
+        "parent": "168"
+      },
+      {
+        "code": "508",
+        "name": "Celebrity & Porn Star",
+        "parent": "151"
+      },
+      {
+        "code": "183",
+        "name": "Chemises & Mini Dresses",
+        "parent": "172"
+      },
+      {
+        "code": "5",
+        "name": "Classic Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "378",
+        "name": "Clitoral",
+        "parent": "3"
+      },
+      {
+        "code": "617",
+        "name": "Clone Your Own",
+        "parent": "30"
+      },
+      {
+        "code": "166",
+        "name": "Clothing & Sexy Clubwear",
+        "parent": "172"
+      },
+      {
+        "code": "718",
+        "name": "Cock Rings",
+        "parent": "669"
+      },
+      {
+        "code": "698",
+        "name": "Collars & Leashes",
+        "parent": "44"
+      },
+      {
+        "code": "510",
+        "name": "Comics",
+        "parent": "175"
+      },
+      {
+        "code": "254",
+        "name": "Creams",
+        "parent": "42"
+      },
+      {
+        "code": "54",
+        "name": "Cuffs",
+        "parent": "44"
+      },
+      {
+        "code": "529",
+        "name": "Desensitizing",
+        "parent": "528"
+      },
+      {
+        "code": "374",
+        "name": "Dildo & Dong Kits",
+        "parent": "3"
+      },
+      {
+        "code": "815",
+        "name": "Dildos & Dongs Realistic",
+        "parent": "30"
+      },
+      {
+        "code": "649",
+        "name": "Discreet Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "32",
+        "name": "Double Dongs",
+        "parent": "30"
+      },
+      {
+        "code": "644",
+        "name": "Duotone Balls",
+        "parent": "25"
+      },
+      {
+        "code": "348",
+        "name": "Durex",
+        "parent": "176"
+      },
+      {
+        "code": "33",
+        "name": "Eco-Friendly Sex Toys",
+        "parent": "3"
+      },
+      {
+        "code": "648",
+        "name": "Edible Body Accessories",
+        "parent": "42"
+      },
+      {
+        "code": "155",
+        "name": "Female",
+        "parent": "151"
+      },
+      {
+        "code": "26",
+        "name": "Female Pumps",
+        "parent": "25"
+      },
+      {
+        "code": "239",
+        "name": "Finger Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "531",
+        "name": "Flavored",
+        "parent": "528"
+      },
+      {
+        "code": "245",
+        "name": "Fleshlight and Packers",
+        "parent": "669"
+      },
+      {
+        "code": "554",
+        "name": "For the Bachelor Party",
+        "parent": "811"
+      },
+      {
+        "code": "674",
+        "name": "For the Bachelorette Party",
+        "parent": "811"
+      },
+      {
+        "code": "11",
+        "name": "G Spot",
+        "parent": "3"
+      },
+      {
+        "code": "255",
+        "name": "G-Spot",
+        "parent": "30"
+      },
+      {
+        "code": "83",
+        "name": "Gags & Muzzles",
+        "parent": "44"
+      },
+      {
+        "code": "384",
+        "name": "Gels",
+        "parent": "42"
+      },
+      {
+        "code": "749",
+        "name": "Giant Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "167",
+        "name": "Halloween Costumes",
+        "parent": "1001"
+      },
+      {
+        "code": "9",
+        "name": "Hands Free Strap-On Vibes",
+        "parent": "3"
+      },
+      {
+        "code": "78",
+        "name": "Hoods & Goggles",
+        "parent": "44"
+      },
+      {
+        "code": "589",
+        "name": "Hygiene & Intimate Care",
+        "parent": "168"
+      },
+      {
+        "code": "473",
+        "name": "Inflatable Butt Plugs",
+        "parent": "36"
+      },
+      {
+        "code": "592",
+        "name": "Inflating & Ejaculating Dongs",
+        "parent": "30"
+      },
+      {
+        "code": "469",
+        "name": "Kegel Balls",
+        "parent": "25"
+      },
+      {
+        "code": "362",
+        "name": "Kimono",
+        "parent": "176"
+      },
+      {
+        "code": "471",
+        "name": "Large & Huge Butt Plugs",
+        "parent": "36"
+      },
+      {
+        "code": "101",
+        "name": "Latex",
+        "parent": "44"
+      },
+      {
+        "code": "193",
+        "name": "Latex",
+        "parent": "172"
+      },
+      {
+        "code": "350",
+        "name": "Lifestyles",
+        "parent": "176"
+      },
+      {
+        "code": "233",
+        "name": "Lotions",
+        "parent": "42"
+      },
+      {
+        "code": "159",
+        "name": "Love Rings",
+        "parent": "25"
+      },
+      {
+        "code": "682",
+        "name": "Love Rings",
+        "parent": "3"
+      },
+      {
+        "code": "516",
+        "name": "Magazines",
+        "parent": "175"
+      },
+      {
+        "code": "15",
+        "name": "Magic Wands & Body Massagers",
+        "parent": "3"
+      },
+      {
+        "code": "156",
+        "name": "Male",
+        "parent": "151"
+      },
+      {
+        "code": "736",
+        "name": "Male Extensions",
+        "parent": "669"
+      },
+      {
+        "code": "720",
+        "name": "Male Pump Accessories",
+        "parent": "669"
+      },
+      {
+        "code": "717",
+        "name": "Male Pumps",
+        "parent": "669"
+      },
+      {
+        "code": "619",
+        "name": "Massage Kits",
+        "parent": "654"
+      },
+      {
+        "code": "20",
+        "name": "Masturbators",
+        "parent": "669"
+      },
+      {
+        "code": "627",
+        "name": "Mens Cock & Ball Gear",
+        "parent": "44"
+      },
+      {
+        "code": "100",
+        "name": "Mens Fetish Wear",
+        "parent": "44"
+      },
+      {
+        "code": "366",
+        "name": "Mens Underwear",
+        "parent": "172"
+      },
+      {
+        "code": "532",
+        "name": "Natural",
+        "parent": "528"
+      },
+      {
+        "code": "640",
+        "name": "Naughty Role Play",
+        "parent": "172"
+      },
+      {
+        "code": "345",
+        "name": "Nipple Play",
+        "parent": "654"
+      },
+      {
+        "code": "4",
+        "name": "Novelty Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "536",
+        "name": "Oil-Based",
+        "parent": "528"
+      },
+      {
+        "code": "678",
+        "name": "Oils",
+        "parent": "42"
+      },
+      {
+        "code": "28",
+        "name": "Oral Products",
+        "parent": "25"
+      },
+      {
+        "code": "194",
+        "name": "Other",
+        "parent": "151"
+      },
+      {
+        "code": "476",
+        "name": "Palm Size Massagers",
+        "parent": "3"
+      },
+      {
+        "code": "391",
+        "name": "Pasties & Accessories",
+        "parent": "172"
+      },
+      {
+        "code": "29",
+        "name": "Pelvic Exercisers",
+        "parent": "25"
+      },
+      {
+        "code": "722",
+        "name": "Penis Enhancer Kits",
+        "parent": "669"
+      },
+      {
+        "code": "716",
+        "name": "Penis Sleeves & French Ticklers",
+        "parent": "669"
+      },
+      {
+        "code": "530",
+        "name": "Pheromone-Based",
+        "parent": "528"
+      },
+      {
+        "code": "244",
+        "name": "Plus Size",
+        "parent": "172"
+      },
+      {
+        "code": "344",
+        "name": "Porn Star Molded Dildos",
+        "parent": "30"
+      },
+      {
+        "code": "41",
+        "name": "Probes, Sticks & Rods",
+        "parent": "36"
+      },
+      {
+        "code": "39",
+        "name": "Prostate Massagers & P Spot Stimulators",
+        "parent": "36"
+      },
+      {
+        "code": "27",
+        "name": "Pussy & Clit",
+        "parent": "25"
+      },
+      {
+        "code": "7",
+        "name": "Rabbit Style Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "10",
+        "name": "Realistic",
+        "parent": "3"
+      },
+      {
+        "code": "35",
+        "name": "Realistic Large",
+        "parent": "30"
+      },
+      {
+        "code": "31",
+        "name": "Realistic Small & Medium",
+        "parent": "30"
+      },
+      {
+        "code": "666",
+        "name": "Rocket Style Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "620",
+        "name": "Sensual Kits",
+        "parent": "25"
+      },
+      {
+        "code": "695",
+        "name": "Sex Drinks",
+        "parent": "154"
+      },
+      {
+        "code": "518",
+        "name": "Sex Instruction",
+        "parent": "175"
+      },
+      {
+        "code": "236",
+        "name": "Sex Pills",
+        "parent": "154"
+      },
+      {
+        "code": "43",
+        "name": "Sex Swings, Machines & Erotic Furniture",
+        "parent": "44"
+      },
+      {
+        "code": "641",
+        "name": "Sexy Costume Accessories",
+        "parent": "172"
+      },
+      {
+        "code": "479",
+        "name": "Shaving & Personal Grooming",
+        "parent": "168"
+      },
+      {
+        "code": "533",
+        "name": "Silicone-Based",
+        "parent": "528"
+      },
+      {
+        "code": "181",
+        "name": "Sleep & Lounge",
+        "parent": "172"
+      },
+      {
+        "code": "470",
+        "name": "Small & Medium Butt Plugs",
+        "parent": "36"
+      },
+      {
+        "code": "232",
+        "name": "Sprays",
+        "parent": "42"
+      },
+      {
+        "code": "191",
+        "name": "Stockings, Pantyhose & Garters",
+        "parent": "172"
+      },
+      {
+        "code": "16",
+        "name": "Strap-ons & Harnesses",
+        "parent": "654"
+      },
+      {
+        "code": "775",
+        "name": "T Plugs",
+        "parent": "36"
+      },
+      {
+        "code": "189",
+        "name": "Teddies",
+        "parent": "172"
+      },
+      {
+        "code": "6",
+        "name": "Tongue Vibrators",
+        "parent": "3"
+      },
+      {
+        "code": "234",
+        "name": "Toy Cleaner",
+        "parent": "42"
+      },
+      {
+        "code": "364",
+        "name": "Trojan",
+        "parent": "176"
+      },
+      {
+        "code": "353",
+        "name": "Trustex",
+        "parent": "176"
+      },
+      {
+        "code": "591",
+        "name": "Unnatural Dildos & Dongs",
+        "parent": "30"
+      },
+      {
+        "code": "481",
+        "name": "Valentines Day",
+        "parent": "1001"
+      },
+      {
+        "code": "13",
+        "name": "Vibrating Bullets & Eggs",
+        "parent": "654"
+      },
+      {
+        "code": "639",
+        "name": "Vibrating Underwear",
+        "parent": "172"
+      },
+      {
+        "code": "12",
+        "name": "Vibrator Kits",
+        "parent": "3"
+      },
+      {
+        "code": "252",
+        "name": "Vibrator Sleeves",
+        "parent": "3"
+      },
+      {
+        "code": "534",
+        "name": "Warming & Tingling",
+        "parent": "528"
+      },
+      {
+        "code": "535",
+        "name": "Water-Based",
+        "parent": "528"
+      },
+      {
+        "code": "46",
+        "name": "Whips, Paddles & Ticklers",
+        "parent": "44"
+      },
+      {
+        "code": "187",
+        "name": "Womens Underwear",
+        "parent": "172"
+      },
+      {
+        "code": "152",
+        "name": "X-rated Adult Games",
+        "parent": "175"
+      },
+      {
+        "code": "196",
+        "name": "Xmas items",
+        "parent": "1001"
+      }
+    ],
+    "2": [
+      {
+        "code": "729",
+        "name": "Adjustable & Versatile Cock Rings",
+        "parent": "718"
+      },
+      {
+        "code": "624",
+        "name": "Adult Party Decorations",
+        "parent": "164"
+      },
+      {
+        "code": "492",
+        "name": "Adult Party Favors",
+        "parent": "164"
+      },
+      {
+        "code": "496",
+        "name": "Bakeware",
+        "parent": "164"
+      },
+      {
+        "code": "491",
+        "name": "Barware",
+        "parent": "164"
+      },
+      {
+        "code": "714",
+        "name": "Bathroom Humor",
+        "parent": "623"
+      },
+      {
+        "code": "683",
+        "name": "Birthday",
+        "parent": "623"
+      },
+      {
+        "code": "596",
+        "name": "Body Massagers",
+        "parent": "171"
+      },
+      {
+        "code": "660",
+        "name": "Bullet Wands",
+        "parent": "8"
+      },
+      {
+        "code": "726",
+        "name": "Classic Cock Rings",
+        "parent": "718"
+      },
+      {
+        "code": "731",
+        "name": "Classic Pumps",
+        "parent": "717"
+      },
+      {
+        "code": "759",
+        "name": "Clit Cuddlers",
+        "parent": "5"
+      },
+      {
+        "code": "150",
+        "name": "Cock & Ball",
+        "parent": "20"
+      },
+      {
+        "code": "738",
+        "name": "Cock Ring Trios",
+        "parent": "718"
+      },
+      {
+        "code": "723",
+        "name": "Couples Cock Rings",
+        "parent": "718"
+      },
+      {
+        "code": "728",
+        "name": "Double Penetration Cock Rings",
+        "parent": "718"
+      },
+      {
+        "code": "665",
+        "name": "Dual Bullets & Eggs",
+        "parent": "8"
+      },
+      {
+        "code": "758",
+        "name": "Firm Vibrators",
+        "parent": "5"
+      },
+      {
+        "code": "745",
+        "name": "Flexible Vibrators",
+        "parent": "5"
+      },
+      {
+        "code": "747",
+        "name": "G Spot Bullets & Eggs",
+        "parent": "11"
+      },
+      {
+        "code": "748",
+        "name": "G Spot Clit Stimulators",
+        "parent": "11"
+      },
+      {
+        "code": "746",
+        "name": "G Spot Firm Vibrators",
+        "parent": "11"
+      },
+      {
+        "code": "752",
+        "name": "G Spot Flexible Vibrators",
+        "parent": "11"
+      },
+      {
+        "code": "750",
+        "name": "G Spot Rabbit Style",
+        "parent": "11"
+      },
+      {
+        "code": "725",
+        "name": "Gentlemen Cock Rings",
+        "parent": "718"
+      },
+      {
+        "code": "495",
+        "name": "Gift Bags, Greeting Cards & Gift Wrap",
+        "parent": "623"
+      },
+      {
+        "code": "505",
+        "name": "Glass Dildos & Dongs",
+        "parent": "33"
+      },
+      {
+        "code": "507",
+        "name": "Glass Vibrators",
+        "parent": "33"
+      },
+      {
+        "code": "503",
+        "name": "Honeymoon Gifts",
+        "parent": "623"
+      },
+      {
+        "code": "737",
+        "name": "Kitchen Humor",
+        "parent": "623"
+      },
+      {
+        "code": "564",
+        "name": "Lollipops",
+        "parent": "477"
+      },
+      {
+        "code": "371",
+        "name": "Massage Lotions & Creams",
+        "parent": "171"
+      },
+      {
+        "code": "544",
+        "name": "Masturbation Creams & Lotions",
+        "parent": "20"
+      },
+      {
+        "code": "548",
+        "name": "Masturbation Hands Free",
+        "parent": "20"
+      },
+      {
+        "code": "546",
+        "name": "Masturbation Sleeves",
+        "parent": "20"
+      },
+      {
+        "code": "721",
+        "name": "Masturbator Pumps",
+        "parent": "717"
+      },
+      {
+        "code": "240",
+        "name": "Masturbator Trios",
+        "parent": "20"
+      },
+      {
+        "code": "24",
+        "name": "Masturbators",
+        "parent": "20"
+      },
+      {
+        "code": "547",
+        "name": "Masturbators Porn Star",
+        "parent": "20"
+      },
+      {
+        "code": "562",
+        "name": "Mints",
+        "parent": "477"
+      },
+      {
+        "code": "663",
+        "name": "Novelty Vibrators",
+        "parent": "623"
+      },
+      {
+        "code": "651",
+        "name": "One-Touch Bullets",
+        "parent": "8"
+      },
+      {
+        "code": "372",
+        "name": "Palm Size Massagers",
+        "parent": "171"
+      },
+      {
+        "code": "497",
+        "name": "Party Favors",
+        "parent": "164"
+      },
+      {
+        "code": "162",
+        "name": "Penis Extensions",
+        "parent": "20"
+      },
+      {
+        "code": "22",
+        "name": "Penis Pumps",
+        "parent": "20"
+      },
+      {
+        "code": "573",
+        "name": "PPAS or Prosthetic Penis Attachments",
+        "parent": "20"
+      },
+      {
+        "code": "387",
+        "name": "Prostate Massagers",
+        "parent": "20"
+      },
+      {
+        "code": "21",
+        "name": "Realistic Vaginas & Ass",
+        "parent": "20"
+      },
+      {
+        "code": "14",
+        "name": "Rechargeable Vibrators",
+        "parent": "33"
+      },
+      {
+        "code": "677",
+        "name": "Risque Office Supplies",
+        "parent": "623"
+      },
+      {
+        "code": "490",
+        "name": "Risque Party Wear",
+        "parent": "164"
+      },
+      {
+        "code": "23",
+        "name": "Sleeves & Rings",
+        "parent": "20"
+      },
+      {
+        "code": "724",
+        "name": "Stimulating",
+        "parent": "718"
+      },
+      {
+        "code": "662",
+        "name": "Straight Vibrators with Sleeves",
+        "parent": "5"
+      },
+      {
+        "code": "732",
+        "name": "Trigger Pumps",
+        "parent": "717"
+      },
+      {
+        "code": "733",
+        "name": "Vibrating Pumps",
+        "parent": "717"
+      }
+    ],
+    "3": [
+      {
+        "code": "537",
+        "name": "Accessories",
+        "parent": "22"
+      },
+      {
+        "code": "540",
+        "name": "Ass",
+        "parent": "24"
+      },
+      {
+        "code": "542",
+        "name": "Mouth",
+        "parent": "24"
+      },
+      {
+        "code": "538",
+        "name": "Pumps with sleeves",
+        "parent": "22"
+      },
+      {
+        "code": "543",
+        "name": "Pussy",
+        "parent": "24"
+      },
+      {
+        "code": "570",
+        "name": "Pussy & Ass",
+        "parent": "24"
+      }
+    ]
+  },
+  "maxLevel": 3,
+  "totalCategories": 227,
+  "metadata": {
+    "generated": "2026-01-17T03:49:39.087Z",
+    "source": "data/categories-extracted.json"
+  }
+}

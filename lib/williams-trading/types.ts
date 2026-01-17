@@ -35,6 +35,7 @@ export interface WTProduct {
   manufacturer_code?: string;
   product_type_code?: string;
   release_date?: string;
+  category_codes?: string[]; // Multiple category codes from XML
 }
 
 export interface WTProductImage {
@@ -61,4 +62,41 @@ export interface WTRequestParams {
   type?: string;
   manufacturer?: string;
   search_terms?: string;
+}
+
+// Category Hierarchy Types
+
+export interface SourceCategory {
+  code: string;
+  name: string;
+  parent: string; // "0" for top-level, otherwise parent code
+}
+
+export interface CategoryLevel {
+  [level: string]: SourceCategory[]; // e.g., "0": [...], "1": [...]
+}
+
+export interface CategoryHierarchy {
+  levels: CategoryLevel;
+  maxLevel: number;
+  totalCategories: number;
+  metadata: {
+    generated: string;
+    source: string;
+  };
+}
+
+export interface CategoryMapping {
+  codeToId: Record<string, number>; // category code -> WooCommerce ID
+  idToCode: Record<string, string>; // WooCommerce ID -> category code
+  lastSynced: string;
+  totalMapped: number;
+}
+
+export interface CategorySyncStats {
+  totalCategories: number;
+  created: number;
+  updated: number;
+  failed: number;
+  byLevel: Record<number, { created: number; updated: number; failed: number }>;
 }

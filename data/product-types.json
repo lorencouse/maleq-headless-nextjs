@@ -1,0 +1,112 @@
+{
+  "types": [
+    {
+      "id": "37",
+      "code": "LI",
+      "name": "Lingerie",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "46",
+      "code": "CO",
+      "name": "Condoms",
+      "description": null,
+      "max_discount_rate": "35",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "47",
+      "code": "LU",
+      "name": "Lubes",
+      "description": null,
+      "max_discount_rate": "20",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "52",
+      "code": "GM",
+      "name": "Games",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "56",
+      "code": "BA",
+      "name": "Bachelorette",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "58",
+      "code": "BO",
+      "name": "Bondage",
+      "description": null,
+      "max_discount_rate": "20",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "66",
+      "code": "DO",
+      "name": "Dolls",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "77",
+      "code": "VA",
+      "name": "Valentine Items",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "84",
+      "code": "NET",
+      "name": "NET",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "97",
+      "code": "BU",
+      "name": "BULK Items (Not in retail packaging)",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "116",
+      "code": "X-MAS",
+      "name": "X-MAS",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "117",
+      "code": "GA",
+      "name": "GA",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    }
+  ]
+}

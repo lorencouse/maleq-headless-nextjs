@@ -1,34 +1,12 @@
 import ProductCard from '@/components/shop/ProductCard';
-import { getAllProducts, getProductCategories, getManufacturers } from '@/lib/products/combined-service';
+import { getAllProducts, getProductCategories } from '@/lib/products/combined-service';
 
 export const revalidate = 3600; // Revalidate every hour for stock updates
 
 export default async function ShopPage() {
-  // Get products from both WordPress and Williams Trading
-  // Fallback to WordPress only if database is not set up
-  let products;
-  let categories = [];
-  let manufacturers = [];
-
-  try {
-    products = await getAllProducts({
-      limit: 12,
-      source: 'BOTH', // Options: 'WORDPRESS', 'WILLIAMS_TRADING', 'BOTH'
-    });
-
-    // Get categories and manufacturers for filters
-    [categories, manufacturers] = await Promise.all([
-      getProductCategories(),
-      getManufacturers(),
-    ]);
-  } catch (error) {
-    console.error('Error fetching products from database:', error);
-    // Fallback to WordPress only
-    products = await getAllProducts({
-      limit: 12,
-      source: 'WORDPRESS',
-    });
-  }
+  // Get products from WooCommerce
+  const { products } = await getAllProducts({ limit: 12 });
+  const categories = await getProductCategories();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -45,16 +23,8 @@ export default async function ShopPage() {
         <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
           <option value="">All Categories</option>
           {categories.map((category) => (
-            <option key={category.id} value={category.code}>
+            <option key={category.id} value={category.slug}>
               {category.name}
-            </option>
-          ))}
-        </select>
-        <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-          <option value="">All Manufacturers</option>
-          {manufacturers.map((manufacturer) => (
-            <option key={manufacturer.id} value={manufacturer.code}>
-              {manufacturer.name}
             </option>
           ))}
         </select>
@@ -91,11 +61,6 @@ export default async function ShopPage() {
           </button>
         </div>
       )}
-
-      {/* Source indicator */}
-      <div className="mt-8 text-center text-sm text-gray-500">
-        Showing products from WordPress and Williams Trading warehouse
-      </div>
     </div>
   );
 }

@@ -1,0 +1,704 @@
+{
+  "manufacturers": [
+    {
+      "id": "262",
+      "code": "ANP",
+      "name": "Antiqua Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "263",
+      "code": "BLA",
+      "name": "Black Ice",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "264",
+      "code": "AL",
+      "name": "Allure Lingerie",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "265",
+      "code": "VID",
+      "name": "VID",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "266",
+      "code": "ALE",
+      "name": "Alexander Institute",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "267",
+      "code": "CHO",
+      "name": "Channel One Productions",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "268",
+      "code": "PAC",
+      "name": "PAC",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "269",
+      "code": "NIN",
+      "name": "NIN",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "270",
+      "code": "PUS",
+      "name": "PUS",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "271",
+      "code": "BAB",
+      "name": "Baby Doll Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "272",
+      "code": "BOY",
+      "name": "All Boys Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "273",
+      "code": "BRZ",
+      "name": "BRZ",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "275",
+      "code": "PIPEDR",
+      "name": "Pipedream Products",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "276",
+      "code": "MIB",
+      "name": "MIB",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "277",
+      "code": "DIS",
+      "name": "Digital Sin",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "278",
+      "code": "EAP",
+      "name": "Evil Angel Productions",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "279",
+      "code": "EUR",
+      "name": "EUR",
+      "active": "0",
+      "video": "1"
+    },
+    {
+      "id": "280",
+      "code": "GHE",
+      "name": "GHE",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "281",
+      "code": "HOM",
+      "name": "HOM",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "282",
+      "code": "JUI",
+      "name": "JUI",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "283",
+      "code": "JSI",
+      "name": "JSI",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "284",
+      "code": "RAI",
+      "name": "RAI",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "285",
+      "code": "LE",
+      "name": "Lelo",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "286",
+      "code": "NW",
+      "name": "Nasstoys",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "287",
+      "code": "HOTT",
+      "name": "HOTT Products",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "288",
+      "code": "URB",
+      "name": "URB",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "289",
+      "code": "SE",
+      "name": "California Exotic Novelties",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "290",
+      "code": "EXQ",
+      "name": "Exquisite Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "291",
+      "code": "JMP",
+      "name": "JMP",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "292",
+      "code": "JUL",
+      "name": "JUL",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "293",
+      "code": "KA",
+      "name": "Kalan ",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "294",
+      "code": "MEL",
+      "name": "MEL",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "295",
+      "code": "ANA",
+      "name": "Anabolic DVD",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "296",
+      "code": "ANE",
+      "name": "Aneros Toys",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "297",
+      "code": "ANR",
+      "name": "Anarchy DVDs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "298",
+      "code": "ASM",
+      "name": "Adult Source Media",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "299",
+      "code": "AVA",
+      "name": "Avalon DVD",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "300",
+      "code": "COND",
+      "name": "Condoms Misc",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "301",
+      "code": "BA",
+      "name": "Body Action Products",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "302",
+      "code": "DVD",
+      "name": "DVD",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "303",
+      "code": "COM",
+      "name": "ASTROGLIDE ",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "304",
+      "code": "STI",
+      "name": "STI",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "305",
+      "code": "KIC",
+      "name": "Kick Ass",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "306",
+      "code": "LFP",
+      "name": "Hustler Videos",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "307",
+      "code": "DJ",
+      "name": "Doc Johnson Novelties",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "308",
+      "code": "BAC",
+      "name": "Baucchus",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "310",
+      "code": "BB",
+      "name": "Boy Butter Lubes",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "311",
+      "code": "LU",
+      "name": "Lubes Misc",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "312",
+      "code": "BC",
+      "name": "Elbow Grease",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "313",
+      "code": "HP",
+      "name": "Classic Brands",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "314",
+      "code": "BIG",
+      "name": "Big Top DVDs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "315",
+      "code": "BON",
+      "name": "Bondaids Restraints",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "316",
+      "code": "LC",
+      "name": "Lucom Rock Solid",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "317",
+      "code": "MER",
+      "name": "MER",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "318",
+      "code": "MET",
+      "name": "MET",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "319",
+      "code": "AVN",
+      "name": "AVN",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "320",
+      "code": "GEN",
+      "name": "Gentleman's Video",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "321",
+      "code": "MAJ",
+      "name": "MAJ",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "322",
+      "code": "SIN",
+      "name": "SI Novelties",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "323",
+      "code": "WIL",
+      "name": "WIL",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "324",
+      "code": "ZER",
+      "name": "ZER",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "325",
+      "code": "DGW",
+      "name": "Dream Girls Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "326",
+      "code": "BLC",
+      "name": "Ball and Chain",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "327",
+      "code": "EN",
+      "name": "Evolved Novelties",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "328",
+      "code": "CAS",
+      "name": "Candy Shop",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "329",
+      "code": "ZAM",
+      "name": "ZAM",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "330",
+      "code": "VR",
+      "name": "VR",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "331",
+      "code": "BLM",
+      "name": "Black Market DVDs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "332",
+      "code": "PIN",
+      "name": "PIN",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "333",
+      "code": "DIG",
+      "name": "Digital Playground Products",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "334",
+      "code": "HAR",
+      "name": "HAR",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "335",
+      "code": "MAG",
+      "name": "MAG",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "336",
+      "code": "BMS",
+      "name": "BMS Enterprises",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "337",
+      "code": "TOPH",
+      "name": "Topco Penthouse",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "339",
+      "code": "BP",
+      "name": "Boston Pump",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "340",
+      "code": "DRMG",
+      "name": "Dream Girl Lingerie",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "342",
+      "code": "BS",
+      "name": "B Swish Toys",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "343",
+      "code": "BIT",
+      "name": "Big Teaze Toys",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "345",
+      "code": "BW",
+      "name": "Ben Wa",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "346",
+      "code": "NRI",
+      "name": "NRI",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "347",
+      "code": "WCP",
+      "name": "WCP",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "348",
+      "code": "RLD",
+      "name": "RLD",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "349",
+      "code": "PUR",
+      "name": "PUR",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "350",
+      "code": "ROB",
+      "name": "ROB",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "351",
+      "code": "PAR",
+      "name": "Paradise Products",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "352",
+      "code": "CAB",
+      "name": "Caballero DVDs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "353",
+      "code": "CAP",
+      "name": "Candy Prints",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "354",
+      "code": "CAR",
+      "name": "Xcartel DVDs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "355",
+      "code": "CC",
+      "name": "Cathy's Cuffs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "357",
+      "code": "CHA",
+      "name": "Rascal Toys",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "358",
+      "code": "GIR",
+      "name": "GIR",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "359",
+      "code": "THI",
+      "name": "THI",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "360",
+      "code": "DIA",
+      "name": "Diabolic Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "361",
+      "code": "DVS",
+      "name": "DVS X Pictures",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "362",
+      "code": "HEA",
+      "name": "HEA",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "363",
+      "code": "CF",
+      "name": "California Fantasies",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "364",
+      "code": "CHE",
+      "name": "Cherry BoXXX DVDs",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "365",
+      "code": "TO",
+      "name": "Topco",
+      "active": "1",
+      "video": "0"
+    },
+    {
+      "id": "366",
+      "code": "NEW",
+      "name": "Parody -DVD",
+      "active": "0",
+      "video": "0"
+    },
+    {
+      "id": "367",
+      "code": "CLA",
+      "name": "Classic DVDs",
+      "active": "0",
+      "video": "0"
+    }
+  ]
+}

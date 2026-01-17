@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Stock update endpoint - used for hourly updates
- * This endpoint only updates stock quantities and statuses, not full product data
+ * Updates stock quantities in WooCommerce via batch API
  */
 export async function POST(request: NextRequest) {
   try {
@@ -15,12 +15,12 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // }
 
-    console.log('Starting stock update...');
+    console.log('Starting stock update to WooCommerce...');
     const result = await syncService.updateStock();
 
     return NextResponse.json({
       success: true,
-      message: 'Stock update completed',
+      message: 'Stock update to WooCommerce completed',
       data: result,
     });
   } catch (error) {

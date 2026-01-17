@@ -1,28 +1,30 @@
-import { prisma } from '@/lib/prisma';
 import { williamsTradingClient } from './client';
-import type { WTProduct, WTManufacturer, WTProductType, WTProductImage } from './types';
-import { SyncType, SyncStatus, StockStatus } from '@prisma/client';
+import { wooClient } from '@/lib/woocommerce/client';
+import {
+  transformWTProductToWoo,
+  transformWTCategoryToWoo,
+  transformWTManufacturerToTerm,
+  transformWTImagesToWoo,
+  prepareProductUpdate,
+} from '@/lib/woocommerce/transformer';
+import type { WooProduct, WooCategory, WooProductImage } from '@/lib/woocommerce/types';
+import type { CategoryHierarchy, CategoryMapping, CategorySyncStats, SourceCategory } from './types';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { join } from 'path';
 
 export class WilliamsTradingSyncService {
-  /**
-   * Create or update sync log
-   */
-  private async createSyncLog(syncType: SyncType) {
-    return prisma.syncLog.create({
-      data: {
-        syncType,
-        status: SyncStatus.IN_PROGRESS,
-      },
-    });
-  }
+  // Cache for category and manufacturer mappings
+  private categoryMap: Map<string, number> = new Map(); // WT code -> WooCommerce ID
+  private manufacturerMap: Map<string, number> = new Map(); // WT code -> WooCommerce term ID
+  private skuToWooIdMap: Map<string, number> = new Map(); // SKU -> WooCommerce product ID
 
   /**
-   * Update sync log
+   * Log sync operation (simple console logging)
    */
-  private async updateSyncLog(
-    id: string,
+  private logSync(
+    operation: string,
     data: {
-      status: SyncStatus;
+      status: 'started' | 'completed' | 'failed';
       recordsTotal?: number;
       recordsAdded?: number;
       recordsUpdated?: number;
@@ -30,63 +32,395 @@ export class WilliamsTradingSyncService {
       errorMessage?: string;
     }
   ) {
-    return prisma.syncLog.update({
-      where: { id },
-      data: {
-        ...data,
-        completedAt: new Date(),
-      },
-    });
+    const timestamp = new Date().toISOString();
+    const logEntry = {
+      timestamp,
+      operation,
+      ...data,
+    };
+    console.log(`[SYNC ${data.status.toUpperCase()}]`, JSON.stringify(logEntry, null, 2));
   }
 
   /**
-   * Sync manufacturers from Williams Trading API
+   * Build category map from WooCommerce
    */
-  async syncManufacturers(): Promise<{ added: number; updated: number; failed: number }> {
-    const syncLog = await this.createSyncLog(SyncType.MANUFACTURERS);
+  private async buildCategoryMap(): Promise<void> {
+    const categories = await wooClient.getCategories();
+    this.categoryMap.clear();
+
+    for (const cat of categories) {
+      if (cat.slug && cat.id) {
+        // Map by slug (which we created from WT code)
+        this.categoryMap.set(cat.slug.toUpperCase().replace(/-/g, '_'), cat.id);
+      }
+    }
+  }
+
+  /**
+   * Build manufacturer map from WooCommerce
+   */
+  private async buildManufacturerMap(): Promise<void> {
+    try {
+      const manufacturers = await wooClient.getManufacturers();
+      this.manufacturerMap.clear();
+
+      for (const mfr of manufacturers) {
+        if (mfr.slug && mfr.id) {
+          this.manufacturerMap.set(mfr.slug.toUpperCase().replace(/-/g, '_'), mfr.id);
+        }
+      }
+    } catch (error) {
+      console.warn('Could not load manufacturers from WooCommerce:', error);
+    }
+  }
+
+  /**
+   * Build SKU to WooCommerce ID map
+   */
+  private async buildSkuMap(): Promise<void> {
+    this.skuToWooIdMap.clear();
+    let page = 1;
+    const perPage = 100;
+
+    while (true) {
+      const products = await wooClient.getProducts({ per_page: perPage, page });
+      if (products.length === 0) break;
+
+      for (const product of products) {
+        if (product.sku && product.id) {
+          this.skuToWooIdMap.set(product.sku, product.id);
+        }
+      }
+
+      if (products.length < perPage) break;
+      page++;
+    }
+
+    console.log(`Built SKU map with ${this.skuToWooIdMap.size} products`);
+  }
+
+  /**
+   * Load category hierarchy from JSON file
+   */
+  private loadCategoryHierarchy(): CategoryHierarchy {
+    const hierarchyPath = join(process.cwd(), 'data', 'category-hierarchy.json');
+    if (!existsSync(hierarchyPath)) {
+      throw new Error(
+        'Category hierarchy file not found. Run: bun scripts/build-category-hierarchy.ts'
+      );
+    }
+    const rawData = readFileSync(hierarchyPath, 'utf-8');
+    return JSON.parse(rawData) as CategoryHierarchy;
+  }
+
+  /**
+   * Load category mapping from JSON file (if exists)
+   */
+  private loadCategoryMapping(): CategoryMapping {
+    const mappingPath = join(process.cwd(), 'data', 'category-mapping.json');
+    if (!existsSync(mappingPath)) {
+      return {
+        codeToId: {},
+        idToCode: {},
+        lastSynced: '',
+        totalMapped: 0,
+      };
+    }
+    const rawData = readFileSync(mappingPath, 'utf-8');
+    return JSON.parse(rawData) as CategoryMapping;
+  }
+
+  /**
+   * Save category mapping to JSON file
+   */
+  private saveCategoryMapping(mapping: CategoryMapping): void {
+    const mappingPath = join(process.cwd(), 'data', 'category-mapping.json');
+    mapping.lastSynced = new Date().toISOString();
+    mapping.totalMapped = Object.keys(mapping.codeToId).length;
+    writeFileSync(mappingPath, JSON.stringify(mapping, null, 2), 'utf-8');
+    console.log(`💾 Saved category mapping: ${mapping.totalMapped} categories`);
+  }
+
+  /**
+   * Sync categories from Williams Trading to WooCommerce
+   */
+  async syncCategories(): Promise<{ added: number; updated: number; failed: number }> {
     let added = 0;
     let updated = 0;
     let failed = 0;
 
+    this.logSync('CATEGORIES', { status: 'started' });
+
     try {
-      console.log('Fetching manufacturers from Williams Trading...');
-      const manufacturers = await williamsTradingClient.getManufacturers({ active: '1' });
+      console.log('Fetching product types from Williams Trading...');
+      const productTypes = await williamsTradingClient.getProductTypes({ active: '1' });
+      console.log(`Found ${productTypes.length} product types`);
 
-      console.log(`Found ${manufacturers.length} manufacturers`);
+      // Get existing WooCommerce categories
+      const existingCategories = await wooClient.getCategories();
+      const existingBySlug = new Map(existingCategories.map(c => [c.slug, c]));
 
-      for (const wtManufacturer of manufacturers) {
+      // First pass: create/update categories without parents
+      const createdCategories = new Map<string, WooCategory>();
+
+      for (const wtType of productTypes) {
         try {
-          const existingManufacturer = await prisma.manufacturer.findUnique({
-            where: { code: wtManufacturer.code },
-          });
+          const wooCategory = transformWTCategoryToWoo(wtType);
+          const existing = existingBySlug.get(wooCategory.slug);
 
-          if (existingManufacturer) {
-            await prisma.manufacturer.update({
-              where: { code: wtManufacturer.code },
-              data: {
-                name: wtManufacturer.name,
-                active: wtManufacturer.active === '1',
-              },
+          if (existing) {
+            // Update existing
+            await wooClient.updateCategory(existing.id!, {
+              name: wooCategory.name,
+              description: wooCategory.description,
             });
+            createdCategories.set(wtType.code, { ...existing, ...wooCategory });
             updated++;
           } else {
-            await prisma.manufacturer.create({
-              data: {
-                code: wtManufacturer.code,
-                name: wtManufacturer.name,
-                active: wtManufacturer.active === '1',
-              },
-            });
+            // Create new
+            const created = await wooClient.createCategory(wooCategory);
+            createdCategories.set(wtType.code, created);
             added++;
           }
         } catch (error) {
-          console.error(`Failed to sync manufacturer ${wtManufacturer.code}:`, error);
+          console.error(`Failed to sync category ${wtType.code}:`, error);
           failed++;
         }
       }
 
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.COMPLETED,
+      // Second pass: set parent relationships
+      for (const wtType of productTypes) {
+        if (wtType.parent_code) {
+          try {
+            const category = createdCategories.get(wtType.code);
+            const parentCategory = createdCategories.get(wtType.parent_code);
+
+            if (category?.id && parentCategory?.id && category.parent !== parentCategory.id) {
+              await wooClient.updateCategory(category.id, { parent: parentCategory.id });
+            }
+          } catch (error) {
+            console.error(`Failed to set parent for category ${wtType.code}:`, error);
+          }
+        }
+      }
+
+      // Rebuild category map
+      await this.buildCategoryMap();
+
+      this.logSync('CATEGORIES', {
+        status: 'completed',
+        recordsTotal: productTypes.length,
+        recordsAdded: added,
+        recordsUpdated: updated,
+        recordsFailed: failed,
+      });
+
+      console.log(`Categories sync completed: ${added} added, ${updated} updated, ${failed} failed`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logSync('CATEGORIES', {
+        status: 'failed',
+        errorMessage,
+      });
+      throw error;
+    }
+
+    return { added, updated, failed };
+  }
+
+  /**
+   * Sync full category hierarchy from JSON file to WooCommerce
+   * This syncs all 227 categories with their parent-child relationships
+   */
+  async syncCategoryHierarchy(): Promise<CategorySyncStats> {
+    const startTime = Date.now();
+
+    const stats: CategorySyncStats = {
+      totalCategories: 0,
+      created: 0,
+      updated: 0,
+      failed: 0,
+      byLevel: {},
+    };
+
+    this.logSync('CATEGORY_HIERARCHY', { status: 'started' });
+
+    try {
+      console.log('📂 Loading category hierarchy...');
+      const hierarchy = this.loadCategoryHierarchy();
+      const mapping = this.loadCategoryMapping();
+
+      stats.totalCategories = hierarchy.totalCategories;
+      console.log(`✅ Loaded ${hierarchy.totalCategories} categories (${hierarchy.maxLevel + 1} levels)`);
+
+      // Get existing WooCommerce categories
+      console.log('🔍 Fetching existing WooCommerce categories...');
+      const existingCategories = await wooClient.getCategories();
+      const existingBySlug = new Map(existingCategories.map(c => [c.slug, c]));
+      console.log(`✅ Found ${existingCategories.length} existing categories`);
+
+      // Track used slugs to handle duplicates
+      const usedSlugs = new Set(existingCategories.map(c => c.slug));
+
+      // Sync level by level
+      for (let level = 0; level <= hierarchy.maxLevel; level++) {
+        const levelCategories = hierarchy.levels[level.toString()] || [];
+        console.log(`\n📊 Processing Level ${level}: ${levelCategories.length} categories`);
+
+        stats.byLevel[level] = { created: 0, updated: 0, failed: 0 };
+
+        for (const category of levelCategories) {
+          try {
+            // Generate SEO-friendly slug from category name
+            let slug = category.name
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '');
+
+            // If slug is already used (duplicate name), append the category code
+            if (usedSlugs.has(slug)) {
+              slug = `${slug}-${category.code}`;
+            }
+            usedSlugs.add(slug);
+
+            // Get parent WooCommerce ID from mapping (if not top-level)
+            let parentId = 0;
+            if (category.parent !== '0') {
+              parentId = mapping.codeToId[category.parent];
+              if (!parentId) {
+                console.warn(`⚠️  Parent ${category.parent} not found for category ${category.code}`);
+              }
+            }
+
+            // Check if category exists
+            const existing = existingBySlug.get(slug);
+
+            if (existing) {
+              // Update existing category
+              await wooClient.updateCategory(existing.id!, {
+                name: category.name,
+                parent: parentId,
+              });
+
+              mapping.codeToId[category.code] = existing.id!;
+              mapping.idToCode[existing.id!.toString()] = category.code;
+              stats.updated++;
+              stats.byLevel[level].updated++;
+
+              console.log(`  ✏️  Updated: [${category.code}] ${category.name}`);
+            } else {
+              // Create new category
+              const created = await wooClient.createCategory({
+                name: category.name,
+                slug: slug,
+                parent: parentId,
+                description: '',
+              });
+
+              mapping.codeToId[category.code] = created.id!;
+              mapping.idToCode[created.id!.toString()] = category.code;
+              stats.created++;
+              stats.byLevel[level].created++;
+
+              console.log(`  ➕ Created: [${category.code}] ${category.name}`);
+            }
+
+            // Add small delay to avoid rate limiting
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (error) {
+            console.error(`  ❌ Failed: [${category.code}] ${category.name}:`, error);
+            stats.failed++;
+            stats.byLevel[level].failed++;
+          }
+        }
+
+        console.log(`  Level ${level} complete: ${stats.byLevel[level].created} created, ${stats.byLevel[level].updated} updated, ${stats.byLevel[level].failed} failed`);
+      }
+
+      // Save mapping to file
+      this.saveCategoryMapping(mapping);
+
+      // Log completion
+      const duration = Math.round((Date.now() - startTime) / 1000);
+      this.logSync('CATEGORY_HIERARCHY', {
+        status: 'completed',
+        recordsTotal: stats.totalCategories,
+        recordsAdded: stats.created,
+        recordsUpdated: stats.updated,
+        recordsFailed: stats.failed,
+      });
+
+      console.log(`\n✅ Category hierarchy sync completed in ${duration}s`);
+      console.log(`   Total: ${stats.totalCategories} | Created: ${stats.created} | Updated: ${stats.updated} | Failed: ${stats.failed}`);
+
+      return stats;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logSync('CATEGORY_HIERARCHY', {
+        status: 'failed',
+        errorMessage,
+      });
+      console.error('❌ Category hierarchy sync failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync manufacturers from Williams Trading to WooCommerce
+   * Note: Requires manufacturer custom taxonomy to be registered in WordPress
+   */
+  async syncManufacturers(): Promise<{ added: number; updated: number; failed: number }> {
+    let added = 0;
+    let updated = 0;
+    let failed = 0;
+
+    this.logSync('MANUFACTURERS', { status: 'started' });
+
+    try {
+      console.log('Fetching manufacturers from Williams Trading...');
+      const manufacturers = await williamsTradingClient.getManufacturers({ active: '1' });
+      console.log(`Found ${manufacturers.length} manufacturers`);
+
+      // Get existing manufacturers from WooCommerce
+      let existingManufacturers: { id?: number; slug?: string; name: string }[] = [];
+      try {
+        existingManufacturers = await wooClient.getManufacturers();
+      } catch {
+        console.warn('Manufacturer taxonomy may not be registered in WordPress');
+      }
+
+      const existingBySlug = new Map(existingManufacturers.map(m => [m.slug, m]));
+
+      for (const wtMfr of manufacturers) {
+        try {
+          const term = transformWTManufacturerToTerm(wtMfr);
+          const existing = existingBySlug.get(term.slug);
+
+          if (existing) {
+            await wooClient.updateManufacturer(existing.id!, {
+              name: term.name,
+              description: term.description,
+            });
+            updated++;
+          } else {
+            await wooClient.createManufacturer({
+              name: term.name,
+              slug: term.slug,
+              description: term.description,
+            });
+            added++;
+          }
+        } catch (error) {
+          console.error(`Failed to sync manufacturer ${wtMfr.code}:`, error);
+          failed++;
+        }
+      }
+
+      // Rebuild manufacturer map
+      await this.buildManufacturerMap();
+
+      this.logSync('MANUFACTURERS', {
+        status: 'completed',
         recordsTotal: manufacturers.length,
         recordsAdded: added,
         recordsUpdated: updated,
@@ -96,8 +430,8 @@ export class WilliamsTradingSyncService {
       console.log(`Manufacturers sync completed: ${added} added, ${updated} updated, ${failed} failed`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.FAILED,
+      this.logSync('MANUFACTURERS', {
+        status: 'failed',
         errorMessage,
       });
       throw error;
@@ -107,249 +441,184 @@ export class WilliamsTradingSyncService {
   }
 
   /**
-   * Sync product types (categories) from Williams Trading API
+   * Upload product images to WordPress media library
    */
-  async syncProductTypes(): Promise<{ added: number; updated: number; failed: number }> {
-    const syncLog = await this.createSyncLog(SyncType.PRODUCT_TYPES);
-    let added = 0;
-    let updated = 0;
-    let failed = 0;
+  private async uploadProductImages(
+    sku: string,
+    productName: string
+  ): Promise<WooProductImage[]> {
+    const images: WooProductImage[] = [];
 
     try {
-      console.log('Fetching product types from Williams Trading...');
-      const productTypes = await williamsTradingClient.getProductTypes({ active: '1' });
+      console.log(`    Fetching image list from Williams Trading API for ${sku}...`);
+      const wtImages = await williamsTradingClient.getProductImages(sku);
+      if (wtImages.length === 0) {
+        console.log(`    No images found for ${sku}`);
+        return images;
+      }
+      console.log(`    Found ${wtImages.length} images`);
 
-      console.log(`Found ${productTypes.length} product types`);
+      // Sort images: primary first, then by sort order
+      wtImages.sort((a, b) => {
+        if (a.is_primary === '1' && b.is_primary !== '1') return -1;
+        if (b.is_primary === '1' && a.is_primary !== '1') return 1;
+        const orderA = typeof a.sort_order === 'string' ? parseInt(a.sort_order, 10) : a.sort_order;
+        const orderB = typeof b.sort_order === 'string' ? parseInt(b.sort_order, 10) : b.sort_order;
+        return orderA - orderB;
+      });
 
-      // First pass: create/update all types without parent relationships
-      for (const wtType of productTypes) {
+      for (let i = 0; i < wtImages.length; i++) {
+        const wtImage = wtImages[i];
         try {
-          const existingType = await prisma.productType.findUnique({
-            where: { code: wtType.code },
-          });
+          const imageUrl = williamsTradingClient.getImageUrl(wtImage.image_url, sku, 'large');
+          console.log(`    [Image ${i + 1}/${wtImages.length}] ${wtImage.file_name}`);
+          console.log(`      URL: ${imageUrl}`);
 
-          if (existingType) {
-            await prisma.productType.update({
-              where: { code: wtType.code },
-              data: {
-                name: wtType.name,
-                description: wtType.description,
-                active: wtType.active === '1',
-              },
-            });
-            updated++;
+          // Check if image already exists in media library
+          console.log(`      Checking if image exists in media library...`);
+          let mediaItem = await wooClient.getMediaByFilename(wtImage.file_name);
+
+          if (!mediaItem) {
+            console.log(`      Uploading to WordPress media library...`);
+            // Upload new image
+            mediaItem = await wooClient.uploadImage(
+              imageUrl,
+              wtImage.file_name,
+              productName
+            );
+            console.log(`      ✓ Uploaded (Media ID: ${mediaItem?.id})`);
           } else {
-            await prisma.productType.create({
-              data: {
-                code: wtType.code,
-                name: wtType.name,
-                description: wtType.description,
-                active: wtType.active === '1',
-              },
+            console.log(`      ⊘ Already exists (Media ID: ${mediaItem.id})`);
+          }
+
+          if (mediaItem?.id) {
+            images.push({
+              id: mediaItem.id,
+              src: mediaItem.src,
+              alt: productName,
+              position: images.length,
             });
-            added++;
           }
         } catch (error) {
-          console.error(`Failed to sync product type ${wtType.code}:`, error);
-          failed++;
+          console.error(`      ❌ Failed to upload image ${wtImage.file_name}:`, error);
+          // Continue with other images
         }
+
+        // Small delay to avoid overwhelming the server
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-
-      // Second pass: establish parent-child relationships
-      // Build a map of API ID to code
-      const idToCode = new Map<string, string>();
-      for (const wtType of productTypes) {
-        const apiId = (wtType as any).id;
-        if (apiId) {
-          idToCode.set(apiId, wtType.code);
-        }
-      }
-
-      for (const wtType of productTypes) {
-        const parentApiId = (wtType as any).parent_id;
-        if (parentApiId && parentApiId !== '0') {
-          try {
-            // Find parent code from API ID
-            const parentCode = idToCode.get(parentApiId);
-            if (parentCode) {
-              const parentType = await prisma.productType.findUnique({
-                where: { code: parentCode },
-              });
-
-              if (parentType) {
-                await prisma.productType.update({
-                  where: { code: wtType.code },
-                  data: {
-                    parentId: parentType.id,
-                  },
-                });
-              }
-            }
-          } catch (error) {
-            console.error(`Failed to set parent for type ${wtType.code}:`, error);
-          }
-        }
-      }
-
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.COMPLETED,
-        recordsTotal: productTypes.length,
-        recordsAdded: added,
-        recordsUpdated: updated,
-        recordsFailed: failed,
-      });
-
-      console.log(`Product types sync completed: ${added} added, ${updated} updated, ${failed} failed`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.FAILED,
-        errorMessage,
-      });
-      throw error;
+      console.error(`    ❌ Failed to fetch images for ${sku}:`, error);
     }
 
-    return { added, updated, failed };
+    console.log(`    Total images processed: ${images.length}`);
+    return images;
   }
 
   /**
-   * Determine stock status from quantity
+   * Sync products from Williams Trading to WooCommerce
    */
-  private getStockStatus(quantity: number): StockStatus {
-    if (quantity === 0) return StockStatus.OUT_OF_STOCK;
-    if (quantity < 5) return StockStatus.LOW_STOCK;
-    return StockStatus.IN_STOCK;
-  }
-
-  /**
-   * Sync products from Williams Trading API
-   */
-  async syncProducts(activeOnly: boolean = true, limit?: number): Promise<{ added: number; updated: number; failed: number }> {
-    const syncLog = await this.createSyncLog(SyncType.PRODUCTS);
+  async syncProducts(
+    options: { activeOnly?: boolean; limit?: number; uploadImages?: boolean } = {}
+  ): Promise<{ added: number; updated: number; failed: number }> {
+    const { activeOnly = true, limit, uploadImages = true } = options;
     let added = 0;
     let updated = 0;
     let failed = 0;
 
+    this.logSync('PRODUCTS', { status: 'started' });
+
     try {
+      // Ensure we have category and manufacturer maps
+      if (this.categoryMap.size === 0) {
+        await this.buildCategoryMap();
+      }
+      if (this.manufacturerMap.size === 0) {
+        await this.buildManufacturerMap();
+      }
+
+      // Build SKU map for efficient lookups
+      await this.buildSkuMap();
+
       console.log('Fetching products from Williams Trading...');
       const params = limit ? { count: limit } : {};
-      const products = activeOnly
+      const wtProducts = activeOnly
         ? await williamsTradingClient.getActiveProducts(params)
         : await williamsTradingClient.getProducts(params);
 
-      console.log(`Found ${products.length} products`);
+      console.log(`Found ${wtProducts.length} products`);
 
-      for (const wtProduct of products) {
+      for (let i = 0; i < wtProducts.length; i++) {
+        const wtProduct = wtProducts[i];
         try {
+          console.log(`\n[Product ${i + 1}/${wtProducts.length}] Processing ${wtProduct.sku}...`);
+
           // Skip products without SKU
           if (!wtProduct.sku) {
-            console.warn('Skipping product without SKU:', wtProduct);
+            console.warn('⚠️  Skipping product without SKU');
             failed++;
             continue;
           }
 
-          const stockQuantity = parseInt(String(wtProduct.stock_quantity), 10) || 0;
-          const stockStatus = this.getStockStatus(stockQuantity);
-
-          // Find manufacturer and product type
-          let manufacturerId: string | null = null;
-          let productTypeId: string | null = null;
-
-          // Handle manufacturer - API returns nested manufacturer object
-          const manufacturerCode = (wtProduct as any).manufacturer?.code || wtProduct.manufacturer_code;
-          if (manufacturerCode) {
-            const manufacturer = await prisma.manufacturer.findUnique({
-              where: { code: manufacturerCode },
-            });
-            manufacturerId = manufacturer?.id || null;
+          // Upload images if enabled
+          let images: WooProductImage[] = [];
+          if (uploadImages) {
+            console.log(`  Fetching images for ${wtProduct.sku}...`);
+            images = await this.uploadProductImages(wtProduct.sku, wtProduct.name);
+            console.log(`  Found ${images.length} images`);
           }
 
-          // Handle product type - API returns nested type object
-          const typeCode = (wtProduct as any).type?.code || wtProduct.product_type_code;
-          if (typeCode) {
-            const productType = await prisma.productType.findUnique({
-              where: { code: typeCode },
-            });
-            productTypeId = productType?.id || null;
-          }
+          // Transform to WooCommerce format
+          const wooProduct = transformWTProductToWoo(
+            wtProduct,
+            this.categoryMap,
+            this.manufacturerMap,
+            images
+          );
 
-          const existingProduct = await prisma.product.findUnique({
-            where: { sku: wtProduct.sku },
-          });
+          // Check if product already exists in WooCommerce
+          // Use UPC code as SKU (matching transformer)
+          const productSku = wtProduct.upc_code || wtProduct.sku;
+          const existingId = this.skuToWooIdMap.get(productSku);
 
-          const productData = {
-            name: wtProduct.name,
-            description: wtProduct.description,
-            shortDescription: wtProduct.short_description,
-            price: wtProduct.price ? parseFloat(wtProduct.price) : null,
-            retailPrice: wtProduct.retail_price ? parseFloat(wtProduct.retail_price) : null,
-            salePrice: wtProduct.sale_price ? parseFloat(wtProduct.sale_price) : null,
-            onSale: wtProduct.on_sale === '1',
-            stockQuantity,
-            stockStatus,
-            lastStockUpdate: new Date(),
-            active: wtProduct.active === '1',
-            weight: wtProduct.weight ? parseFloat(wtProduct.weight) : null,
-            length: wtProduct.length ? parseFloat(wtProduct.length) : null,
-            width: wtProduct.width ? parseFloat(wtProduct.width) : null,
-            height: wtProduct.height ? parseFloat(wtProduct.height) : null,
-            upcCode: wtProduct.upc_code,
-            manufacturerSku: wtProduct.manufacturer_sku,
-            releaseDate: wtProduct.release_date ? new Date(wtProduct.release_date) : null,
-            manufacturerId,
-            productTypeId,
-            rawData: JSON.stringify(wtProduct),
-          };
+          if (existingId) {
+            console.log(`  Product exists (ID: ${existingId}), checking for updates...`);
+            // Get existing product to compare
+            const existing = await wooClient.getProductById(existingId);
 
-          if (existingProduct) {
-            // Check if stock changed
-            if (existingProduct.stockQuantity !== stockQuantity || existingProduct.stockStatus !== stockStatus) {
-              await prisma.stockHistory.create({
-                data: {
-                  productId: existingProduct.id,
-                  previousQty: existingProduct.stockQuantity,
-                  newQty: stockQuantity,
-                  previousStatus: existingProduct.stockStatus,
-                  newStatus: stockStatus,
-                },
-              });
+            // Only update if there are changes
+            const updates = prepareProductUpdate(existing, wooProduct);
+            if (updates) {
+              console.log(`  Updating product...`);
+              await wooClient.updateProduct(existingId, updates);
+              updated++;
+              console.log(`  ✓ Updated`);
+            } else {
+              // No changes needed, still count as processed
+              console.log(`  ⊘ No changes needed, skipping`);
             }
-
-            await prisma.product.update({
-              where: { sku: wtProduct.sku },
-              data: productData,
-            });
-            updated++;
           } else {
-            const newProduct = await prisma.product.create({
-              data: {
-                sku: wtProduct.sku,
-                ...productData,
-              },
-            });
-
-            // Create initial stock history
-            await prisma.stockHistory.create({
-              data: {
-                productId: newProduct.id,
-                previousQty: 0,
-                newQty: stockQuantity,
-                previousStatus: StockStatus.OUT_OF_STOCK,
-                newStatus: stockStatus,
-              },
-            });
-
+            console.log(`  Creating new product...`);
+            // Create new product
+            const created = await wooClient.createProduct(wooProduct);
+            if (created.id) {
+              this.skuToWooIdMap.set(productSku, created.id);
+              console.log(`  ✓ Created (ID: ${created.id})`);
+            }
             added++;
           }
         } catch (error) {
-          console.error(`Failed to sync product ${wtProduct.sku}:`, error);
+          console.error(`  ❌ Failed to sync product ${wtProduct.sku}:`, error);
           failed++;
         }
+
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
 
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.COMPLETED,
-        recordsTotal: products.length,
+      this.logSync('PRODUCTS', {
+        status: 'completed',
+        recordsTotal: wtProducts.length,
         recordsAdded: added,
         recordsUpdated: updated,
         recordsFailed: failed,
@@ -358,8 +627,8 @@ export class WilliamsTradingSyncService {
       console.log(`Products sync completed: ${added} added, ${updated} updated, ${failed} failed`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.FAILED,
+      this.logSync('PRODUCTS', {
+        status: 'failed',
         errorMessage,
       });
       throw error;
@@ -369,153 +638,69 @@ export class WilliamsTradingSyncService {
   }
 
   /**
-   * Sync product images
-   */
-  async syncProductImages(): Promise<{ added: number; updated: number; failed: number }> {
-    const syncLog = await this.createSyncLog(SyncType.IMAGES);
-    let added = 0;
-    let updated = 0;
-    let failed = 0;
-
-    try {
-      console.log('Fetching product images from Williams Trading...');
-
-      // Get all products that need images
-      const products = await prisma.product.findMany({
-        where: { source: 'WILLIAMS_TRADING' },
-        select: { id: true, sku: true },
-      });
-
-      console.log(`Fetching images for ${products.length} products`);
-
-      for (const product of products) {
-        try {
-          const wtImages = await williamsTradingClient.getProductImages(product.sku);
-
-          for (const wtImage of wtImages) {
-            const imageUrl = williamsTradingClient.getImageUrl(wtImage.image_url);
-            const sortOrder = parseInt(String(wtImage.sort_order), 10) || 0;
-
-            const existingImage = await prisma.productImage.findFirst({
-              where: {
-                productId: product.id,
-                fileName: wtImage.file_name,
-              },
-            });
-
-            if (existingImage) {
-              await prisma.productImage.update({
-                where: { id: existingImage.id },
-                data: {
-                  imageUrl,
-                  sortOrder,
-                  isPrimary: wtImage.is_primary === '1',
-                },
-              });
-              updated++;
-            } else {
-              await prisma.productImage.create({
-                data: {
-                  productId: product.id,
-                  imageUrl,
-                  fileName: wtImage.file_name,
-                  sortOrder,
-                  isPrimary: wtImage.is_primary === '1',
-                },
-              });
-              added++;
-            }
-          }
-        } catch (error) {
-          console.error(`Failed to sync images for product ${product.sku}:`, error);
-          failed++;
-        }
-
-        // Add delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.COMPLETED,
-        recordsTotal: products.length,
-        recordsAdded: added,
-        recordsUpdated: updated,
-        recordsFailed: failed,
-      });
-
-      console.log(`Product images sync completed: ${added} added, ${updated} updated, ${failed} failed`);
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.FAILED,
-        errorMessage,
-      });
-      throw error;
-    }
-
-    return { added, updated, failed };
-  }
-
-  /**
-   * Update stock quantities only (for hourly updates)
+   * Update stock quantities only (for frequent updates)
    */
   async updateStock(): Promise<{ updated: number; failed: number }> {
-    const syncLog = await this.createSyncLog(SyncType.STOCK_UPDATE);
     let updated = 0;
     let failed = 0;
 
+    this.logSync('STOCK_UPDATE', { status: 'started' });
+
     try {
-      console.log('Updating stock from Williams Trading...');
-      const products = await williamsTradingClient.getActiveProducts();
+      // Build SKU map if not already built
+      if (this.skuToWooIdMap.size === 0) {
+        await this.buildSkuMap();
+      }
 
-      console.log(`Updating stock for ${products.length} products`);
+      console.log('Fetching stock from Williams Trading...');
+      const wtProducts = await williamsTradingClient.getActiveProducts();
+      console.log(`Updating stock for ${wtProducts.length} products`);
 
-      for (const wtProduct of products) {
-        try {
-          const existingProduct = await prisma.product.findUnique({
-            where: { sku: wtProduct.sku },
-          });
+      // Batch stock updates for efficiency
+      const batchSize = 100;
+      const stockUpdates: { id: number; stock_quantity: number; stock_status: 'instock' | 'outofstock' }[] = [];
 
-          if (existingProduct) {
-            const stockQuantity = parseInt(String(wtProduct.stock_quantity), 10) || 0;
-            const stockStatus = this.getStockStatus(stockQuantity);
+      for (const wtProduct of wtProducts) {
+        const wooId = this.skuToWooIdMap.get(wtProduct.sku);
+        if (!wooId) continue;
 
-            // Only update if stock changed
-            if (
-              existingProduct.stockQuantity !== stockQuantity ||
-              existingProduct.stockStatus !== stockStatus
-            ) {
-              await prisma.stockHistory.create({
-                data: {
-                  productId: existingProduct.id,
-                  previousQty: existingProduct.stockQuantity,
-                  newQty: stockQuantity,
-                  previousStatus: existingProduct.stockStatus,
-                  newStatus: stockStatus,
-                },
-              });
+        const stockQuantity = typeof wtProduct.stock_quantity === 'string'
+          ? parseInt(wtProduct.stock_quantity, 10)
+          : wtProduct.stock_quantity;
 
-              await prisma.product.update({
-                where: { sku: wtProduct.sku },
-                data: {
-                  stockQuantity,
-                  stockStatus,
-                  lastStockUpdate: new Date(),
-                },
-              });
+        stockUpdates.push({
+          id: wooId,
+          stock_quantity: stockQuantity || 0,
+          stock_status: (stockQuantity || 0) > 0 ? 'instock' : 'outofstock',
+        });
 
-              updated++;
-            }
+        // Process in batches
+        if (stockUpdates.length >= batchSize) {
+          try {
+            await wooClient.batchUpdateStock(stockUpdates);
+            updated += stockUpdates.length;
+          } catch (error) {
+            console.error('Batch stock update failed:', error);
+            failed += stockUpdates.length;
           }
-        } catch (error) {
-          console.error(`Failed to update stock for product ${wtProduct.sku}:`, error);
-          failed++;
+          stockUpdates.length = 0;
         }
       }
 
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.COMPLETED,
-        recordsTotal: products.length,
+      // Process remaining updates
+      if (stockUpdates.length > 0) {
+        try {
+          await wooClient.batchUpdateStock(stockUpdates);
+          updated += stockUpdates.length;
+        } catch (error) {
+          console.error('Final batch stock update failed:', error);
+          failed += stockUpdates.length;
+        }
+      }
+
+      this.logSync('STOCK_UPDATE', {
+        status: 'completed',
+        recordsTotal: wtProducts.length,
         recordsUpdated: updated,
         recordsFailed: failed,
       });
@@ -523,8 +708,8 @@ export class WilliamsTradingSyncService {
       console.log(`Stock update completed: ${updated} updated, ${failed} failed`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.FAILED,
+      this.logSync('STOCK_UPDATE', {
+        status: 'failed',
         errorMessage,
       });
       throw error;
@@ -534,48 +719,54 @@ export class WilliamsTradingSyncService {
   }
 
   /**
-   * Full sync - sync everything
+   * Full sync - sync everything to WooCommerce
    */
-  async fullSync(): Promise<{
+  async fullSync(options: { uploadImages?: boolean } = {}): Promise<{
+    categories: { added: number; updated: number; failed: number };
     manufacturers: { added: number; updated: number; failed: number };
-    productTypes: { added: number; updated: number; failed: number };
     products: { added: number; updated: number; failed: number };
-    images: { added: number; updated: number; failed: number };
   }> {
-    const syncLog = await this.createSyncLog(SyncType.FULL_SYNC);
+    this.logSync('FULL_SYNC', { status: 'started' });
 
     try {
-      console.log('Starting full sync...');
+      console.log('Starting full sync to WooCommerce...');
 
+      // Sync in order: categories -> manufacturers -> products
+      const categories = await this.syncCategories();
       const manufacturers = await this.syncManufacturers();
-      const productTypes = await this.syncProductTypes();
-      const products = await this.syncProducts();
-      const images = await this.syncProductImages();
+      const products = await this.syncProducts({ uploadImages: options.uploadImages });
 
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.COMPLETED,
-        recordsTotal:
-          manufacturers.added +
-          manufacturers.updated +
-          productTypes.added +
-          productTypes.updated +
-          products.added +
-          products.updated +
-          images.added +
-          images.updated,
+      const totalRecords =
+        categories.added + categories.updated +
+        manufacturers.added + manufacturers.updated +
+        products.added + products.updated;
+
+      this.logSync('FULL_SYNC', {
+        status: 'completed',
+        recordsTotal: totalRecords,
+        recordsAdded: categories.added + manufacturers.added + products.added,
+        recordsUpdated: categories.updated + manufacturers.updated + products.updated,
+        recordsFailed: categories.failed + manufacturers.failed + products.failed,
       });
 
       console.log('Full sync completed successfully!');
 
-      return { manufacturers, productTypes, products, images };
+      return { categories, manufacturers, products };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      await this.updateSyncLog(syncLog.id, {
-        status: SyncStatus.FAILED,
+      this.logSync('FULL_SYNC', {
+        status: 'failed',
         errorMessage,
       });
       throw error;
     }
+  }
+
+  /**
+   * Test WooCommerce connection
+   */
+  async testConnection(): Promise<boolean> {
+    return wooClient.testConnection();
   }
 }
 

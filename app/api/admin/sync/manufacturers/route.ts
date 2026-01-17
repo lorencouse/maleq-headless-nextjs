@@ -11,12 +11,12 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // }
 
-    console.log('Starting manufacturers sync...');
+    console.log('Starting manufacturers sync to WooCommerce...');
     const result = await syncService.syncManufacturers();
 
     return NextResponse.json({
       success: true,
-      message: 'Manufacturers sync completed',
+      message: 'Manufacturers sync to WooCommerce completed',
       data: result,
     });
   } catch (error) {

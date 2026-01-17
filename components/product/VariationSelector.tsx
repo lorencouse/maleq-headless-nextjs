@@ -8,11 +8,13 @@ interface VariationAttribute {
   value: string;
 }
 
-interface Variation {
+export interface Variation {
   id: string;
   sku: string;
   name: string;
   price: string | null;
+  regularPrice?: string | null;
+  salePrice?: string | null;
   stockStatus: string;
   stockQuantity: number;
   attributes: VariationAttribute[];

@@ -11,16 +11,16 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // }
 
-    console.log('Starting product types sync...');
-    const result = await syncService.syncProductTypes();
+    console.log('Starting categories sync to WooCommerce...');
+    const result = await syncService.syncCategories();
 
     return NextResponse.json({
       success: true,
-      message: 'Product types sync completed',
+      message: 'Categories sync to WooCommerce completed',
       data: result,
     });
   } catch (error) {
-    console.error('Error syncing product types:', error);
+    console.error('Error syncing categories:', error);
     return NextResponse.json(
       {
         success: false,

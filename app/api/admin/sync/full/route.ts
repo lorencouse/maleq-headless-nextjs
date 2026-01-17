@@ -12,12 +12,23 @@ export async function POST(request: NextRequest) {
     //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     // }
 
-    console.log('Starting full sync...');
-    const result = await syncService.fullSync();
+    // Parse request body for options
+    let uploadImages = true;
+    try {
+      const body = await request.json();
+      uploadImages = body.uploadImages !== false;
+    } catch {
+      // No body or invalid JSON, use defaults
+    }
+
+    console.log('Starting full sync to WooCommerce...');
+    console.log('Options: uploadImages =', uploadImages);
+
+    const result = await syncService.fullSync({ uploadImages });
 
     return NextResponse.json({
       success: true,
-      message: 'Full sync completed',
+      message: 'Full sync to WooCommerce completed',
       data: result,
     });
   } catch (error) {

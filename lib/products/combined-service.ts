@@ -1,12 +1,18 @@
-import { prisma } from '@/lib/prisma';
 import { getClient } from '@/lib/apollo/client';
-import { GET_ALL_PRODUCTS } from '@/lib/queries/products';
-import { Product as WooProduct } from '@/lib/types/woocommerce';
-import { triggerStockUpdate } from '@/lib/williams-trading/stock-updater';
+import {
+  GET_ALL_PRODUCTS,
+  GET_PRODUCT_BY_SLUG,
+  GET_PRODUCTS_BY_CATEGORY,
+  SEARCH_PRODUCTS,
+  GET_ALL_PRODUCT_CATEGORIES,
+  GET_ALL_PRODUCT_SLUGS,
+} from '@/lib/queries/products';
+import type { Product as WooProduct, ProductCategory } from '@/lib/types/woocommerce';
 
-// Unified product interface
+// Unified product interface for frontend consumption
 export interface UnifiedProduct {
   id: string;
+  databaseId?: number;
   name: string;
   slug: string;
   description: string | null;
@@ -16,300 +22,233 @@ export interface UnifiedProduct {
   regularPrice: string | null;
   salePrice: string | null;
   onSale: boolean;
-  stockStatus: 'IN_STOCK' | 'OUT_OF_STOCK' | 'LOW_STOCK' | 'ON_BACKORDER';
+  stockStatus: string;
   stockQuantity: number | null;
   image: {
     url: string;
     altText: string;
   } | null;
-  category: {
+  galleryImages?: {
+    url: string;
+    altText: string;
+  }[];
+  categories: {
+    id: string;
     name: string;
     slug: string;
-  } | null;
-  manufacturer: {
+  }[];
+  tags?: {
+    id: string;
     name: string;
-    code: string;
-  } | null;
-  source: 'WORDPRESS' | 'WILLIAMS_TRADING';
-  isVariableProduct?: boolean;
-  variationCount?: number;
+    slug: string;
+  }[];
+  type: string;
+  averageRating?: number;
+  reviewCount?: number;
+  attributes?: {
+    name: string;
+    options: string[];
+    visible: boolean;
+  }[];
+  variations?: {
+    id: string;
+    name: string;
+    price: string | null;
+    regularPrice: string | null;
+    salePrice: string | null;
+    stockStatus: string;
+    stockQuantity: number | null;
+    attributes: { name: string; value: string }[];
+  }[];
 }
 
 /**
- * Convert Williams Trading product to unified format
- */
-function convertWTProduct(product: any): UnifiedProduct {
-  const primaryImage = product.images.find((img: any) => img.isPrimary) || product.images[0];
-
-  return {
-    id: product.id,
-    name: product.name,
-    slug: product.sku.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    description: product.description,
-    shortDescription: product.shortDescription,
-    sku: product.sku,
-    price: product.price?.toString() || null,
-    regularPrice: product.retailPrice?.toString() || null,
-    salePrice: product.salePrice?.toString() || null,
-    onSale: product.onSale,
-    stockStatus: product.stockStatus,
-    stockQuantity: product.stockQuantity,
-    image: primaryImage
-      ? {
-          url: primaryImage.imageUrl,
-          altText: product.name,
-        }
-      : null,
-    category: product.productType
-      ? {
-          name: product.productType.name,
-          slug: product.productType.code,
-        }
-      : null,
-    manufacturer: product.manufacturer
-      ? {
-          name: product.manufacturer.name,
-          code: product.manufacturer.code,
-        }
-      : null,
-    source: 'WILLIAMS_TRADING',
-    isVariableProduct: product.isVariableProduct,
-    variationCount: product._count?.variations || 0,
-  };
-}
-
-/**
- * Convert WordPress/WooCommerce product to unified format
+ * Convert WooCommerce GraphQL product to unified format
+ * Note: GraphQL returns nested objects with `nodes` arrays
  */
 function convertWooProduct(product: WooProduct): UnifiedProduct {
+  // Helper to extract nodes from GraphQL response
+  const getNodes = <T>(data: { nodes?: T[] } | T[] | undefined): T[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return data.nodes || [];
+  };
+
+  const galleryNodes = getNodes(product.galleryImages as any);
+  const categoryNodes = getNodes(product.productCategories as any);
+  const tagNodes = getNodes(product.productTags as any);
+  const attributeNodes = getNodes(product.attributes as any);
+  const variationNodes = getNodes(product.variations as any);
+
   return {
     id: product.id,
+    databaseId: product.databaseId,
     name: product.name,
     slug: product.slug,
-    description: product.description,
-    shortDescription: product.shortDescription,
+    description: product.description || null,
+    shortDescription: product.shortDescription || null,
     sku: product.sku || null,
     price: product.price || null,
     regularPrice: product.regularPrice || null,
     salePrice: product.salePrice || null,
-    onSale: product.onSale,
-    stockStatus: product.stockStatus,
+    onSale: product.onSale || false,
+    stockStatus: product.stockStatus || 'OUT_OF_STOCK',
     stockQuantity: product.stockQuantity || null,
     image: product.image
       ? {
           url: product.image.sourceUrl,
-          altText: product.image.altText,
+          altText: product.image.altText || product.name,
         }
       : null,
-    category:
-      product.productCategories && product.productCategories.length > 0
-        ? {
-            name: product.productCategories[0].name,
-            slug: product.productCategories[0].slug,
-          }
-        : null,
-    manufacturer: null,
-    source: 'WORDPRESS',
+    galleryImages: galleryNodes.map((img: any) => ({
+      url: img.sourceUrl,
+      altText: img.altText || product.name,
+    })),
+    categories: categoryNodes.map((cat: any) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+    })),
+    tags: tagNodes.map((tag: any) => ({
+      id: tag.id,
+      name: tag.name,
+      slug: tag.slug,
+    })),
+    type: product.type || 'SIMPLE',
+    averageRating: product.averageRating,
+    reviewCount: product.reviewCount,
+    attributes: attributeNodes.map((attr: any) => ({
+      name: attr.name,
+      options: attr.options || [],
+      visible: attr.visible ?? true,
+    })),
+    variations: variationNodes.map((v: any) => {
+      const attrNodes = getNodes(v.attributes as any);
+      return {
+        id: v.id,
+        name: v.name,
+        price: v.price || null,
+        regularPrice: v.regularPrice || null,
+        salePrice: v.salePrice || null,
+        stockStatus: v.stockStatus || 'OUT_OF_STOCK',
+        stockQuantity: v.stockQuantity || null,
+        attributes: attrNodes.map((a: any) => ({
+          name: a.name,
+          value: a.value,
+        })),
+      };
+    }),
   };
 }
 
 /**
- * Get products from Williams Trading database
+ * Get all products with pagination
  */
-export async function getWilliamsTradingProducts(params: {
+export async function getAllProducts(params: {
   limit?: number;
-  offset?: number;
+  after?: string;
   category?: string;
-  manufacturer?: string;
   search?: string;
-  inStock?: boolean;
-} = {}): Promise<UnifiedProduct[]> {
-  const {
-    limit = 12,
-    offset = 0,
-    category,
-    manufacturer,
-    search,
-    inStock,
-  } = params;
-
-  // Trigger stock update in background (non-blocking)
-  triggerStockUpdate().catch(console.error);
-
-  const where: any = {
-    active: true,
-    // Only show parent products or standalone products, not individual variations
-    parentProductId: null,
-  };
-
-  if (category) {
-    where.productType = {
-      code: category,
-    };
-  }
-
-  if (manufacturer) {
-    where.manufacturer = {
-      code: manufacturer,
-    };
-  }
-
-  if (search) {
-    where.OR = [
-      { name: { contains: search.toUpperCase() } },
-      { name: { contains: search.toLowerCase() } },
-      { description: { contains: search.toUpperCase() } },
-      { description: { contains: search.toLowerCase() } },
-      { sku: { contains: search.toUpperCase() } },
-      { sku: { contains: search.toLowerCase() } },
-    ];
-  }
-
-  if (inStock) {
-    where.stockStatus = {
-      in: ['IN_STOCK', 'LOW_STOCK'],
-    };
-  }
-
-  const products = await prisma.product.findMany({
-    where,
-    include: {
-      images: {
-        orderBy: {
-          sortOrder: 'asc',
-        },
-      },
-      productType: true,
-      manufacturer: true,
-      _count: {
-        select: {
-          variations: true,
-        },
-      },
-    },
-    take: limit,
-    skip: offset,
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
-
-  return products.map(convertWTProduct);
-}
-
-/**
- * Get products from WordPress
- */
-export async function getWordPressProducts(params: {
-  limit?: number;
-} = {}): Promise<UnifiedProduct[]> {
-  const { limit = 12 } = params;
+} = {}): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
+  const { limit = 12, after, category, search } = params;
 
   try {
+    let query = GET_ALL_PRODUCTS;
+    let variables: Record<string, unknown> = { first: limit, after };
+
+    if (category) {
+      query = GET_PRODUCTS_BY_CATEGORY;
+      variables = { ...variables, category };
+    } else if (search) {
+      query = SEARCH_PRODUCTS;
+      variables = { ...variables, search };
+    }
+
     const { data } = await getClient().query({
-      query: GET_ALL_PRODUCTS,
-      variables: {
-        first: limit,
-      },
+      query,
+      variables,
     });
 
     const products: WooProduct[] = data?.products?.nodes || [];
-    return products.map(convertWooProduct);
+    const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
+
+    return {
+      products: products.map(convertWooProduct),
+      pageInfo: {
+        hasNextPage: pageInfo.hasNextPage,
+        endCursor: pageInfo.endCursor,
+      },
+    };
   } catch (error) {
-    console.error('Error fetching WordPress products:', error);
+    console.error('Error fetching products:', error);
+    return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
+  }
+}
+
+/**
+ * Get a single product by slug
+ */
+export async function getProductBySlug(slug: string): Promise<UnifiedProduct | null> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_PRODUCT_BY_SLUG,
+      variables: { slug },
+    });
+
+    const product = data?.product;
+    if (!product) return null;
+
+    return convertWooProduct(product);
+  } catch (error) {
+    console.error('Error fetching product by slug:', error);
+    return null;
+  }
+}
+
+/**
+ * Get all product slugs for static generation
+ */
+export async function getAllProductSlugs(): Promise<string[]> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_PRODUCT_SLUGS,
+    });
+
+    return data?.products?.nodes?.map((p: { slug: string }) => p.slug) || [];
+  } catch (error) {
+    console.error('Error fetching product slugs:', error);
     return [];
   }
 }
 
 /**
- * Get all products from both sources
+ * Get all product categories
  */
-export async function getAllProducts(params: {
-  limit?: number;
-  offset?: number;
-  category?: string;
-  manufacturer?: string;
-  search?: string;
-  inStock?: boolean;
-  source?: 'WORDPRESS' | 'WILLIAMS_TRADING' | 'BOTH';
-} = {}): Promise<UnifiedProduct[]> {
-  const { source = 'BOTH', limit = 12 } = params;
+export async function getProductCategories(): Promise<ProductCategory[]> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_PRODUCT_CATEGORIES,
+    });
 
-  if (source === 'WORDPRESS') {
-    return getWordPressProducts({ limit });
+    return data?.productCategories?.nodes || [];
+  } catch (error) {
+    console.error('Error fetching product categories:', error);
+    return [];
   }
-
-  if (source === 'WILLIAMS_TRADING') {
-    return getWilliamsTradingProducts(params);
-  }
-
-  // Get from both sources
-  const [wtProducts, wpProducts] = await Promise.all([
-    getWilliamsTradingProducts({ ...params, limit: Math.ceil(limit / 2) }),
-    getWordPressProducts({ limit: Math.ceil(limit / 2) }),
-  ]);
-
-  // Combine and sort by most recent
-  return [...wtProducts, ...wpProducts].slice(0, limit);
 }
 
 /**
- * Get product categories from Williams Trading
+ * Search products
  */
-export async function getProductCategories() {
-  return prisma.productType.findMany({
-    where: {
-      active: true,
-    },
-    orderBy: {
-      name: 'asc',
-    },
-  });
+export async function searchProducts(searchTerm: string, limit = 12): Promise<UnifiedProduct[]> {
+  const result = await getAllProducts({ search: searchTerm, limit });
+  return result.products;
 }
 
 /**
- * Get manufacturers
+ * Get products by category
  */
-export async function getManufacturers() {
-  return prisma.manufacturer.findMany({
-    where: {
-      active: true,
-    },
-    orderBy: {
-      name: 'asc',
-    },
-  });
-}
-
-/**
- * Get product by SKU or slug
- */
-export async function getProductBySlug(slug: string): Promise<UnifiedProduct | null> {
-  // Try Williams Trading first (by SKU)
-  const wtProduct = await prisma.product.findFirst({
-    where: {
-      OR: [
-        { sku: slug },
-        { sku: slug.toUpperCase() },
-      ],
-    },
-    include: {
-      images: {
-        orderBy: {
-          sortOrder: 'asc',
-        },
-      },
-      productType: true,
-      manufacturer: true,
-    },
-  });
-
-  if (wtProduct) {
-    return convertWTProduct(wtProduct);
-  }
-
-  // Try WordPress (by slug)
-  // You can implement WordPress product by slug query here if needed
-
-  return null;
+export async function getProductsByCategory(category: string, limit = 12): Promise<UnifiedProduct[]> {
+  const result = await getAllProducts({ category, limit });
+  return result.products;
 }

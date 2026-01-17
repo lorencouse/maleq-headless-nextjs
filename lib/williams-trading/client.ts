@@ -229,11 +229,29 @@ export class WilliamsTradingClient {
 
   /**
    * Build full image URL from image path
+   * Images are stored at: http://images.williams-trading.com/product_images/{SKU}/large/{filename}
    */
-  getImageUrl(imagePath: string): string {
+  getImageUrl(imagePath: string, sku?: string, size: 'large' | 'medium' | 'small' = 'large'): string {
     if (imagePath.startsWith('http')) {
       return imagePath;
     }
+
+    // If SKU is provided, construct the proper URL
+    if (sku) {
+      // Extract just the filename if the imagePath contains a path
+      const fileName = imagePath.split('/').pop() || imagePath;
+      return `${this.imageBaseUrl}/${sku}/${size}/${fileName}`;
+    }
+
+    // Extract SKU from the path if it's in format like "AC1030812/image.jpg"
+    const pathParts = imagePath.split('/');
+    if (pathParts.length > 1) {
+      const fileName = pathParts[pathParts.length - 1];
+      const skuFromPath = pathParts[0];
+      return `${this.imageBaseUrl}/${skuFromPath}/${size}/${fileName}`;
+    }
+
+    // Fallback to original behavior if we can't determine SKU
     return `${this.imageBaseUrl}/${imagePath}`;
   }
 

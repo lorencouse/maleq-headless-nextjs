@@ -1,0 +1,2376 @@
+{
+  "generated": "2026-01-17T03:04:54.950Z",
+  "totalCategories": 226,
+  "productTypes": [
+    {
+      "id": "37",
+      "code": "LI",
+      "name": "Lingerie",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "46",
+      "code": "CO",
+      "name": "Condoms",
+      "description": null,
+      "max_discount_rate": "35",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "47",
+      "code": "LU",
+      "name": "Lubes",
+      "description": null,
+      "max_discount_rate": "20",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "52",
+      "code": "GM",
+      "name": "Games",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "56",
+      "code": "BA",
+      "name": "Bachelorette",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "58",
+      "code": "BO",
+      "name": "Bondage",
+      "description": null,
+      "max_discount_rate": "20",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "66",
+      "code": "DO",
+      "name": "Dolls",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "77",
+      "code": "VA",
+      "name": "Valentine Items",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "84",
+      "code": "NET",
+      "name": "NET",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "97",
+      "code": "BU",
+      "name": "BULK Items (Not in retail packaging)",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "116",
+      "code": "X-MAS",
+      "name": "X-MAS",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    },
+    {
+      "id": "117",
+      "code": "GA",
+      "name": "GA",
+      "description": null,
+      "max_discount_rate": "0",
+      "video": "0",
+      "active": "1"
+    }
+  ],
+  "categories": [
+    {
+      "wtCode": "36",
+      "name": "Anal Toys",
+      "slug": "anal-toys",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 1438
+    },
+    {
+      "wtCode": "38",
+      "name": "Anal Beads",
+      "slug": "anal-beads",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 127
+    },
+    {
+      "wtCode": "40",
+      "name": "Anal Douches, Enemas & Hygiene",
+      "slug": "anal-douches-enemas-and-hygiene",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 80
+    },
+    {
+      "wtCode": "475",
+      "name": "Anal Lubes, Lotions, Sprays & Creams",
+      "slug": "anal-lubes-lotions-sprays-and-creams",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 264
+    },
+    {
+      "wtCode": "467",
+      "name": "Anal Trainer Kits",
+      "slug": "anal-trainer-kits",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 120
+    },
+    {
+      "wtCode": "473",
+      "name": "Inflatable Butt Plugs",
+      "slug": "inflatable-butt-plugs",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 33
+    },
+    {
+      "wtCode": "471",
+      "name": "Large & Huge Butt Plugs",
+      "slug": "large-and-huge-butt-plugs",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 96
+    },
+    {
+      "wtCode": "41",
+      "name": "Probes, Sticks & Rods",
+      "slug": "probes-sticks-and-rods",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 264
+    },
+    {
+      "wtCode": "39",
+      "name": "Prostate Massagers & P Spot Stimulators",
+      "slug": "prostate-massagers-and-p-spot-stimulators",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 446
+    },
+    {
+      "wtCode": "470",
+      "name": "Small & Medium Butt Plugs",
+      "slug": "small-and-medium-butt-plugs",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 545
+    },
+    {
+      "wtCode": "775",
+      "name": "T Plugs",
+      "slug": "t-plugs",
+      "parent": "anal-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 168
+    },
+    {
+      "wtCode": "489",
+      "name": "As Seen on Oprah",
+      "slug": "as-seen-on-oprah",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 1
+    },
+    {
+      "wtCode": "238",
+      "name": "Batteries, Storage, & Odds & Ends",
+      "slug": "batteries-storage-and-odds-and-ends",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 64
+    },
+    {
+      "wtCode": "44",
+      "name": "Bondage, Fetish & Kink",
+      "slug": "bondage-fetish-and-kink",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 1543
+    },
+    {
+      "wtCode": "80",
+      "name": "Blindfolds",
+      "slug": "blindfolds",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 52
+    },
+    {
+      "wtCode": "45",
+      "name": "Body Harnesses",
+      "slug": "body-harnesses",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 208
+    },
+    {
+      "wtCode": "71",
+      "name": "Bondage Kits & Kinky Sets",
+      "slug": "bondage-kits-and-kinky-sets",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 296
+    },
+    {
+      "wtCode": "61",
+      "name": "Bondage Restraints",
+      "slug": "bondage-restraints",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 305
+    },
+    {
+      "wtCode": "241",
+      "name": "Bondage, Fetish & Kink Kits",
+      "slug": "bondage-fetish-and-kink-kits",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 78
+    },
+    {
+      "wtCode": "698",
+      "name": "Collars & Leashes",
+      "slug": "collars-and-leashes",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 86
+    },
+    {
+      "wtCode": "54",
+      "name": "Cuffs",
+      "slug": "cuffs",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 208
+    },
+    {
+      "wtCode": "83",
+      "name": "Gags & Muzzles",
+      "slug": "gags-and-muzzles",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 69
+    },
+    {
+      "wtCode": "78",
+      "name": "Hoods & Goggles",
+      "slug": "hoods-and-goggles",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 38
+    },
+    {
+      "wtCode": "101",
+      "name": "Latex",
+      "slug": "latex",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 1
+    },
+    {
+      "wtCode": "627",
+      "name": "Mens Cock & Ball Gear",
+      "slug": "mens-cock-and-ball-gear",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 10,
+      "productCount": 871
+    },
+    {
+      "wtCode": "100",
+      "name": "Mens Fetish Wear",
+      "slug": "mens-fetish-wear",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 11,
+      "productCount": 228
+    },
+    {
+      "wtCode": "43",
+      "name": "Sex Swings, Machines & Erotic Furniture",
+      "slug": "sex-swings-machines-and-erotic-furniture",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 12,
+      "productCount": 72
+    },
+    {
+      "wtCode": "46",
+      "name": "Whips, Paddles & Ticklers",
+      "slug": "whips-paddles-and-ticklers",
+      "parent": "bondage-fetish-and-kink",
+      "description": "",
+      "display": "default",
+      "menuOrder": 13,
+      "productCount": 203
+    },
+    {
+      "wtCode": "175",
+      "name": "Books, Adult Games & Music",
+      "slug": "books-adult-games-and-music",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 212
+    },
+    {
+      "wtCode": "510",
+      "name": "Comics",
+      "slug": "comics",
+      "parent": "books-adult-games-and-music",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 1
+    },
+    {
+      "wtCode": "516",
+      "name": "Magazines",
+      "slug": "magazines",
+      "parent": "books-adult-games-and-music",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 1
+    },
+    {
+      "wtCode": "518",
+      "name": "Sex Instruction",
+      "slug": "sex-instruction",
+      "parent": "books-adult-games-and-music",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 11
+    },
+    {
+      "wtCode": "152",
+      "name": "X-rated Adult Games",
+      "slug": "x-rated-adult-games",
+      "parent": "books-adult-games-and-music",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 251
+    },
+    {
+      "wtCode": "685",
+      "name": "Catalogs, Sales Tools & Promotional Items",
+      "slug": "catalogs-sales-tools-and-promotional-items",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 100
+    },
+    {
+      "wtCode": "176",
+      "name": "Condoms",
+      "slug": "condoms",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 175
+    },
+    {
+      "wtCode": "370",
+      "name": "Assorted Condoms",
+      "slug": "assorted-condoms",
+      "parent": "condoms",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 48
+    },
+    {
+      "wtCode": "348",
+      "name": "Durex",
+      "slug": "durex",
+      "parent": "condoms",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 15
+    },
+    {
+      "wtCode": "362",
+      "name": "Kimono",
+      "slug": "kimono",
+      "parent": "condoms",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 15
+    },
+    {
+      "wtCode": "350",
+      "name": "Lifestyles",
+      "slug": "lifestyles",
+      "parent": "condoms",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 27
+    },
+    {
+      "wtCode": "364",
+      "name": "Trojan",
+      "slug": "trojan",
+      "parent": "condoms",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 59
+    },
+    {
+      "wtCode": "353",
+      "name": "Trustex",
+      "slug": "trustex",
+      "parent": "condoms",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 8
+    },
+    {
+      "wtCode": "30",
+      "name": "Dildos & Dongs",
+      "slug": "dildos-and-dongs",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 1749
+    },
+    {
+      "wtCode": "617",
+      "name": "Clone Your Own",
+      "slug": "clone-your-own",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 14
+    },
+    {
+      "wtCode": "815",
+      "name": "Dildos & Dongs Realistic",
+      "slug": "dildos-and-dongs-realistic",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 1270
+    },
+    {
+      "wtCode": "32",
+      "name": "Double Dongs",
+      "slug": "double-dongs",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 105
+    },
+    {
+      "wtCode": "255",
+      "name": "G-Spot",
+      "slug": "g-spot",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 270
+    },
+    {
+      "wtCode": "592",
+      "name": "Inflating & Ejaculating Dongs",
+      "slug": "inflating-and-ejaculating-dongs",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 25
+    },
+    {
+      "wtCode": "344",
+      "name": "Porn Star Molded Dildos",
+      "slug": "porn-star-molded-dildos",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 33
+    },
+    {
+      "wtCode": "35",
+      "name": "Realistic Large",
+      "slug": "realistic-large",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 422
+    },
+    {
+      "wtCode": "31",
+      "name": "Realistic Small & Medium",
+      "slug": "realistic-small-and-medium",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 536
+    },
+    {
+      "wtCode": "591",
+      "name": "Unnatural Dildos & Dongs",
+      "slug": "unnatural-dildos-and-dongs",
+      "parent": "dildos-and-dongs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 113
+    },
+    {
+      "wtCode": "42",
+      "name": "Erotic Body Lotions",
+      "slug": "erotic-body-lotions",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 885
+    },
+    {
+      "wtCode": "761",
+      "name": "Aromatherapy",
+      "slug": "aromatherapy",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 96
+    },
+    {
+      "wtCode": "681",
+      "name": "Body Dusts & Powders",
+      "slug": "body-dusts-and-powders",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 6
+    },
+    {
+      "wtCode": "385",
+      "name": "Body Paints & Dessert Toppings",
+      "slug": "body-paints-and-dessert-toppings",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 33
+    },
+    {
+      "wtCode": "254",
+      "name": "Creams",
+      "slug": "creams",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 153
+    },
+    {
+      "wtCode": "648",
+      "name": "Edible Body Accessories",
+      "slug": "edible-body-accessories",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 6
+    },
+    {
+      "wtCode": "384",
+      "name": "Gels",
+      "slug": "gels",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 215
+    },
+    {
+      "wtCode": "233",
+      "name": "Lotions",
+      "slug": "lotions",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 184
+    },
+    {
+      "wtCode": "678",
+      "name": "Oils",
+      "slug": "oils",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 190
+    },
+    {
+      "wtCode": "232",
+      "name": "Sprays",
+      "slug": "sprays",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 146
+    },
+    {
+      "wtCode": "234",
+      "name": "Toy Cleaner",
+      "slug": "toy-cleaner",
+      "parent": "erotic-body-lotions",
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 56
+    },
+    {
+      "wtCode": "168",
+      "name": "Health & Beauty",
+      "slug": "health-and-beauty",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 1653
+    },
+    {
+      "wtCode": "478",
+      "name": "After Bath",
+      "slug": "after-bath",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 33
+    },
+    {
+      "wtCode": "169",
+      "name": "Bath Time",
+      "slug": "bath-time",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 63
+    },
+    {
+      "wtCode": "171",
+      "name": "Body Massagers",
+      "slug": "body-massagers",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 83
+    },
+    {
+      "wtCode": "596",
+      "name": "Body Massagers",
+      "slug": "body-massagers",
+      "parent": "body-massagers",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 121
+    },
+    {
+      "wtCode": "371",
+      "name": "Massage Lotions & Creams",
+      "slug": "massage-lotions-and-creams",
+      "parent": "body-massagers",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 387
+    },
+    {
+      "wtCode": "372",
+      "name": "Palm Size Massagers",
+      "slug": "palm-size-massagers",
+      "parent": "body-massagers",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 43
+    },
+    {
+      "wtCode": "612",
+      "name": "Candles",
+      "slug": "candles",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 97
+    },
+    {
+      "wtCode": "242",
+      "name": "Candles",
+      "slug": "candles",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 41
+    },
+    {
+      "wtCode": "589",
+      "name": "Hygiene & Intimate Care",
+      "slug": "hygiene-and-intimate-care",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 169
+    },
+    {
+      "wtCode": "479",
+      "name": "Shaving & Personal Grooming",
+      "slug": "shaving-and-personal-grooming",
+      "parent": "health-and-beauty",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 43
+    },
+    {
+      "wtCode": "1001",
+      "name": "Holiday Items",
+      "slug": "holiday-items",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 10,
+      "productCount": 165
+    },
+    {
+      "wtCode": "167",
+      "name": "Halloween Costumes",
+      "slug": "halloween-costumes",
+      "parent": "holiday-items",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 116
+    },
+    {
+      "wtCode": "481",
+      "name": "Valentines Day",
+      "slug": "valentines-day",
+      "parent": "holiday-items",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 430
+    },
+    {
+      "wtCode": "196",
+      "name": "Xmas items",
+      "slug": "xmas-items",
+      "parent": "holiday-items",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 144
+    },
+    {
+      "wtCode": "172",
+      "name": "Lingerie & Clothing",
+      "slug": "lingerie-and-clothing",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 11,
+      "productCount": 1463
+    },
+    {
+      "wtCode": "179",
+      "name": "Babydolls & Slips",
+      "slug": "babydolls-and-slips",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 68
+    },
+    {
+      "wtCode": "186",
+      "name": "Bra Sets",
+      "slug": "bra-sets",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 66
+    },
+    {
+      "wtCode": "183",
+      "name": "Chemises & Mini Dresses",
+      "slug": "chemises-and-mini-dresses",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 49
+    },
+    {
+      "wtCode": "166",
+      "name": "Clothing & Sexy Clubwear",
+      "slug": "clothing-and-sexy-clubwear",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 14
+    },
+    {
+      "wtCode": "193",
+      "name": "Latex",
+      "slug": "latex",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 1
+    },
+    {
+      "wtCode": "366",
+      "name": "Mens Underwear",
+      "slug": "mens-underwear",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 339
+    },
+    {
+      "wtCode": "640",
+      "name": "Naughty Role Play",
+      "slug": "naughty-role-play",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 678
+    },
+    {
+      "wtCode": "391",
+      "name": "Pasties & Accessories",
+      "slug": "pasties-and-accessories",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 306
+    },
+    {
+      "wtCode": "244",
+      "name": "Plus Size",
+      "slug": "plus-size",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 126
+    },
+    {
+      "wtCode": "641",
+      "name": "Sexy Costume Accessories",
+      "slug": "sexy-costume-accessories",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 328
+    },
+    {
+      "wtCode": "181",
+      "name": "Sleep & Lounge",
+      "slug": "sleep-and-lounge",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 10,
+      "productCount": 61
+    },
+    {
+      "wtCode": "191",
+      "name": "Stockings, Pantyhose & Garters",
+      "slug": "stockings-pantyhose-and-garters",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 11,
+      "productCount": 170
+    },
+    {
+      "wtCode": "189",
+      "name": "Teddies",
+      "slug": "teddies",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 12,
+      "productCount": 61
+    },
+    {
+      "wtCode": "639",
+      "name": "Vibrating Underwear",
+      "slug": "vibrating-underwear",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 13,
+      "productCount": 61
+    },
+    {
+      "wtCode": "187",
+      "name": "Womens Underwear",
+      "slug": "womens-underwear",
+      "parent": "lingerie-and-clothing",
+      "description": "",
+      "display": "default",
+      "menuOrder": 14,
+      "productCount": 139
+    },
+    {
+      "wtCode": "528",
+      "name": "Lubricants",
+      "slug": "lubricants",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 12,
+      "productCount": 1237
+    },
+    {
+      "wtCode": "529",
+      "name": "Desensitizing",
+      "slug": "desensitizing",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 165
+    },
+    {
+      "wtCode": "531",
+      "name": "Flavored",
+      "slug": "flavored",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 440
+    },
+    {
+      "wtCode": "532",
+      "name": "Natural",
+      "slug": "natural",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 97
+    },
+    {
+      "wtCode": "536",
+      "name": "Oil-Based",
+      "slug": "oil-based",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 62
+    },
+    {
+      "wtCode": "530",
+      "name": "Pheromone-Based",
+      "slug": "pheromone-based",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 8
+    },
+    {
+      "wtCode": "533",
+      "name": "Silicone-Based",
+      "slug": "silicone-based",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 220
+    },
+    {
+      "wtCode": "534",
+      "name": "Warming & Tingling",
+      "slug": "warming-and-tingling",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 128
+    },
+    {
+      "wtCode": "535",
+      "name": "Water-Based",
+      "slug": "water-based",
+      "parent": "lubricants",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 753
+    },
+    {
+      "wtCode": "257",
+      "name": "Luxury Items",
+      "slug": "luxury-items",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 13,
+      "productCount": 6
+    },
+    {
+      "wtCode": "154",
+      "name": "Meds & Supplements",
+      "slug": "meds-and-supplements",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 14,
+      "productCount": 189
+    },
+    {
+      "wtCode": "695",
+      "name": "Sex Drinks",
+      "slug": "sex-drinks",
+      "parent": "meds-and-supplements",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 51
+    },
+    {
+      "wtCode": "236",
+      "name": "Sex Pills",
+      "slug": "sex-pills",
+      "parent": "meds-and-supplements",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 239
+    },
+    {
+      "wtCode": "811",
+      "name": "Party Games, Gifts & Supplies",
+      "slug": "party-games-gifts-and-supplies",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 15,
+      "productCount": 910
+    },
+    {
+      "wtCode": "477",
+      "name": "Adult Candy and Erotic Foods",
+      "slug": "adult-candy-and-erotic-foods",
+      "parent": "party-games-gifts-and-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 157
+    },
+    {
+      "wtCode": "564",
+      "name": "Lollipops",
+      "slug": "lollipops",
+      "parent": "adult-candy-and-erotic-foods",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 58
+    },
+    {
+      "wtCode": "562",
+      "name": "Mints",
+      "slug": "mints",
+      "parent": "adult-candy-and-erotic-foods",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 15
+    },
+    {
+      "wtCode": "623",
+      "name": "Adult Gags, Gifts and Novelties",
+      "slug": "adult-gags-gifts-and-novelties",
+      "parent": "party-games-gifts-and-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 214
+    },
+    {
+      "wtCode": "714",
+      "name": "Bathroom Humor",
+      "slug": "bathroom-humor",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 2
+    },
+    {
+      "wtCode": "683",
+      "name": "Birthday",
+      "slug": "birthday",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 38
+    },
+    {
+      "wtCode": "495",
+      "name": "Gift Bags, Greeting Cards & Gift Wrap",
+      "slug": "gift-bags-greeting-cards-and-gift-wrap",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 27
+    },
+    {
+      "wtCode": "503",
+      "name": "Honeymoon Gifts",
+      "slug": "honeymoon-gifts",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 36
+    },
+    {
+      "wtCode": "737",
+      "name": "Kitchen Humor",
+      "slug": "kitchen-humor",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 13
+    },
+    {
+      "wtCode": "663",
+      "name": "Novelty Vibrators",
+      "slug": "novelty-vibrators",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 29
+    },
+    {
+      "wtCode": "677",
+      "name": "Risque Office Supplies",
+      "slug": "risque-office-supplies",
+      "parent": "adult-gags-gifts-and-novelties",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 6
+    },
+    {
+      "wtCode": "493",
+      "name": "Adult Party Games",
+      "slug": "adult-party-games",
+      "parent": "party-games-gifts-and-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 290
+    },
+    {
+      "wtCode": "164",
+      "name": "Adult Party Supplies",
+      "slug": "adult-party-supplies",
+      "parent": "party-games-gifts-and-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 264
+    },
+    {
+      "wtCode": "624",
+      "name": "Adult Party Decorations",
+      "slug": "adult-party-decorations",
+      "parent": "adult-party-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 26
+    },
+    {
+      "wtCode": "492",
+      "name": "Adult Party Favors",
+      "slug": "adult-party-favors",
+      "parent": "adult-party-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 32
+    },
+    {
+      "wtCode": "496",
+      "name": "Bakeware",
+      "slug": "bakeware",
+      "parent": "adult-party-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 10
+    },
+    {
+      "wtCode": "491",
+      "name": "Barware",
+      "slug": "barware",
+      "parent": "adult-party-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 63
+    },
+    {
+      "wtCode": "497",
+      "name": "Party Favors",
+      "slug": "party-favors",
+      "parent": "adult-party-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 50
+    },
+    {
+      "wtCode": "490",
+      "name": "Risque Party Wear",
+      "slug": "risque-party-wear",
+      "parent": "adult-party-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 48
+    },
+    {
+      "wtCode": "554",
+      "name": "For the Bachelor Party",
+      "slug": "for-the-bachelor-party",
+      "parent": "party-games-gifts-and-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 99
+    },
+    {
+      "wtCode": "674",
+      "name": "For the Bachelorette Party",
+      "slug": "for-the-bachelorette-party",
+      "parent": "party-games-gifts-and-supplies",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 210
+    },
+    {
+      "wtCode": "389",
+      "name": "Sales & Closeouts",
+      "slug": "sales-and-closeouts",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 16,
+      "productCount": 2
+    },
+    {
+      "wtCode": "151",
+      "name": "Sex Dolls",
+      "slug": "sex-dolls",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 17,
+      "productCount": 58
+    },
+    {
+      "wtCode": "157",
+      "name": "Anime",
+      "slug": "anime",
+      "parent": "sex-dolls",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 4
+    },
+    {
+      "wtCode": "508",
+      "name": "Celebrity & Porn Star",
+      "slug": "celebrity-and-porn-star",
+      "parent": "sex-dolls",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 8
+    },
+    {
+      "wtCode": "155",
+      "name": "Female",
+      "slug": "female",
+      "parent": "sex-dolls",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 38
+    },
+    {
+      "wtCode": "156",
+      "name": "Male",
+      "slug": "male",
+      "parent": "sex-dolls",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 15
+    },
+    {
+      "wtCode": "194",
+      "name": "Other",
+      "slug": "other",
+      "parent": "sex-dolls",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 6
+    },
+    {
+      "wtCode": "1002",
+      "name": "Sex Machines",
+      "slug": "sex-machines",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 18,
+      "productCount": 23
+    },
+    {
+      "wtCode": "25",
+      "name": "Sextoys for Couples",
+      "slug": "sextoys-for-couples",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 19,
+      "productCount": 1433
+    },
+    {
+      "wtCode": "643",
+      "name": "Ben Wa Balls",
+      "slug": "ben-wa-balls",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 15
+    },
+    {
+      "wtCode": "644",
+      "name": "Duotone Balls",
+      "slug": "duotone-balls",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 2
+    },
+    {
+      "wtCode": "26",
+      "name": "Female Pumps",
+      "slug": "female-pumps",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 20
+    },
+    {
+      "wtCode": "469",
+      "name": "Kegel Balls",
+      "slug": "kegel-balls",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 33
+    },
+    {
+      "wtCode": "159",
+      "name": "Love Rings",
+      "slug": "love-rings",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 939
+    },
+    {
+      "wtCode": "28",
+      "name": "Oral Products",
+      "slug": "oral-products",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 349
+    },
+    {
+      "wtCode": "29",
+      "name": "Pelvic Exercisers",
+      "slug": "pelvic-exercisers",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 23
+    },
+    {
+      "wtCode": "27",
+      "name": "Pussy & Clit",
+      "slug": "pussy-and-clit",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 35
+    },
+    {
+      "wtCode": "620",
+      "name": "Sensual Kits",
+      "slug": "sensual-kits",
+      "parent": "sextoys-for-couples",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 413
+    },
+    {
+      "wtCode": "669",
+      "name": "Sextoys for Men",
+      "slug": "sextoys-for-men",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 20,
+      "productCount": 1204
+    },
+    {
+      "wtCode": "718",
+      "name": "Cock Rings",
+      "slug": "cock-rings",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 679
+    },
+    {
+      "wtCode": "729",
+      "name": "Adjustable & Versatile Cock Rings",
+      "slug": "adjustable-and-versatile-cock-rings",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 171
+    },
+    {
+      "wtCode": "726",
+      "name": "Classic Cock Rings",
+      "slug": "classic-cock-rings",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 318
+    },
+    {
+      "wtCode": "738",
+      "name": "Cock Ring Trios",
+      "slug": "cock-ring-trios",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 141
+    },
+    {
+      "wtCode": "723",
+      "name": "Couples Cock Rings",
+      "slug": "couples-cock-rings",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 300
+    },
+    {
+      "wtCode": "728",
+      "name": "Double Penetration Cock Rings",
+      "slug": "double-penetration-cock-rings",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 24
+    },
+    {
+      "wtCode": "725",
+      "name": "Gentlemen Cock Rings",
+      "slug": "gentlemen-cock-rings",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 159
+    },
+    {
+      "wtCode": "724",
+      "name": "Stimulating",
+      "slug": "stimulating",
+      "parent": "cock-rings",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 47
+    },
+    {
+      "wtCode": "245",
+      "name": "Fleshlight and Packers",
+      "slug": "fleshlight-and-packers",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 46
+    },
+    {
+      "wtCode": "736",
+      "name": "Male Extensions",
+      "slug": "male-extensions",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 235
+    },
+    {
+      "wtCode": "720",
+      "name": "Male Pump Accessories",
+      "slug": "male-pump-accessories",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 28
+    },
+    {
+      "wtCode": "717",
+      "name": "Male Pumps",
+      "slug": "male-pumps",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 193
+    },
+    {
+      "wtCode": "731",
+      "name": "Classic Pumps",
+      "slug": "classic-pumps",
+      "parent": "male-pumps",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 90
+    },
+    {
+      "wtCode": "721",
+      "name": "Masturbator Pumps",
+      "slug": "masturbator-pumps",
+      "parent": "male-pumps",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 51
+    },
+    {
+      "wtCode": "732",
+      "name": "Trigger Pumps",
+      "slug": "trigger-pumps",
+      "parent": "male-pumps",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 39
+    },
+    {
+      "wtCode": "733",
+      "name": "Vibrating Pumps",
+      "slug": "vibrating-pumps",
+      "parent": "male-pumps",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 21
+    },
+    {
+      "wtCode": "20",
+      "name": "Masturbators",
+      "slug": "masturbators",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 871
+    },
+    {
+      "wtCode": "150",
+      "name": "Cock & Ball",
+      "slug": "cock-and-ball",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 29
+    },
+    {
+      "wtCode": "544",
+      "name": "Masturbation Creams & Lotions",
+      "slug": "masturbation-creams-and-lotions",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 90
+    },
+    {
+      "wtCode": "548",
+      "name": "Masturbation Hands Free",
+      "slug": "masturbation-hands-free",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 6
+    },
+    {
+      "wtCode": "546",
+      "name": "Masturbation Sleeves",
+      "slug": "masturbation-sleeves",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 277
+    },
+    {
+      "wtCode": "240",
+      "name": "Masturbator Trios",
+      "slug": "masturbator-trios",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 8
+    },
+    {
+      "wtCode": "24",
+      "name": "Masturbators",
+      "slug": "masturbators",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 797
+    },
+    {
+      "wtCode": "540",
+      "name": "Ass",
+      "slug": "ass",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 96
+    },
+    {
+      "wtCode": "542",
+      "name": "Mouth",
+      "slug": "mouth",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 86
+    },
+    {
+      "wtCode": "543",
+      "name": "Pussy",
+      "slug": "pussy",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 376
+    },
+    {
+      "wtCode": "570",
+      "name": "Pussy & Ass",
+      "slug": "pussy-and-ass",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 161
+    },
+    {
+      "wtCode": "547",
+      "name": "Masturbators Porn Star",
+      "slug": "masturbators-porn-star",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 148
+    },
+    {
+      "wtCode": "162",
+      "name": "Penis Extensions",
+      "slug": "penis-extensions",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 218
+    },
+    {
+      "wtCode": "22",
+      "name": "Penis Pumps",
+      "slug": "penis-pumps",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 158
+    },
+    {
+      "wtCode": "537",
+      "name": "Accessories",
+      "slug": "accessories",
+      "parent": "penis-pumps",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 28
+    },
+    {
+      "wtCode": "538",
+      "name": "Pumps with sleeves",
+      "slug": "pumps-with-sleeves",
+      "parent": "penis-pumps",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 16
+    },
+    {
+      "wtCode": "573",
+      "name": "PPAS or Prosthetic Penis Attachments",
+      "slug": "ppas-or-prosthetic-penis-attachments",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 68
+    },
+    {
+      "wtCode": "387",
+      "name": "Prostate Massagers",
+      "slug": "prostate-massagers",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 10,
+      "productCount": 230
+    },
+    {
+      "wtCode": "21",
+      "name": "Realistic Vaginas & Ass",
+      "slug": "realistic-vaginas-and-ass",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 11,
+      "productCount": 29
+    },
+    {
+      "wtCode": "23",
+      "name": "Sleeves & Rings",
+      "slug": "sleeves-and-rings",
+      "parent": "masturbators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 12,
+      "productCount": 221
+    },
+    {
+      "wtCode": "722",
+      "name": "Penis Enhancer Kits",
+      "slug": "penis-enhancer-kits",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 21
+    },
+    {
+      "wtCode": "716",
+      "name": "Penis Sleeves & French Ticklers",
+      "slug": "penis-sleeves-and-french-ticklers",
+      "parent": "sextoys-for-men",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 86
+    },
+    {
+      "wtCode": "654",
+      "name": "Sextoys for Women",
+      "slug": "sextoys-for-women",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 21,
+      "productCount": 1957
+    },
+    {
+      "wtCode": "619",
+      "name": "Massage Kits",
+      "slug": "massage-kits",
+      "parent": "sextoys-for-women",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 18
+    },
+    {
+      "wtCode": "345",
+      "name": "Nipple Play",
+      "slug": "nipple-play",
+      "parent": "sextoys-for-women",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 245
+    },
+    {
+      "wtCode": "16",
+      "name": "Strap-ons & Harnesses",
+      "slug": "strap-ons-and-harnesses",
+      "parent": "sextoys-for-women",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 291
+    },
+    {
+      "wtCode": "13",
+      "name": "Vibrating Bullets & Eggs",
+      "slug": "vibrating-bullets-and-eggs",
+      "parent": "sextoys-for-women",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 433
+    },
+    {
+      "wtCode": "3",
+      "name": "Vibrators",
+      "slug": "vibrators",
+      "parent": null,
+      "description": "",
+      "display": "default",
+      "menuOrder": 22,
+      "productCount": 2346
+    },
+    {
+      "wtCode": "8",
+      "name": "Bullets & Eggs",
+      "slug": "bullets-and-eggs",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 407
+    },
+    {
+      "wtCode": "660",
+      "name": "Bullet Wands",
+      "slug": "bullet-wands",
+      "parent": "bullets-and-eggs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 56
+    },
+    {
+      "wtCode": "665",
+      "name": "Dual Bullets & Eggs",
+      "slug": "dual-bullets-and-eggs",
+      "parent": "bullets-and-eggs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 16
+    },
+    {
+      "wtCode": "651",
+      "name": "One-Touch Bullets",
+      "slug": "one-touch-bullets",
+      "parent": "bullets-and-eggs",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 9
+    },
+    {
+      "wtCode": "5",
+      "name": "Classic Vibrators",
+      "slug": "classic-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 437
+    },
+    {
+      "wtCode": "759",
+      "name": "Clit Cuddlers",
+      "slug": "clit-cuddlers",
+      "parent": "classic-vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 249
+    },
+    {
+      "wtCode": "758",
+      "name": "Firm Vibrators",
+      "slug": "firm-vibrators",
+      "parent": "classic-vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 79
+    },
+    {
+      "wtCode": "745",
+      "name": "Flexible Vibrators",
+      "slug": "flexible-vibrators",
+      "parent": "classic-vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 52
+    },
+    {
+      "wtCode": "662",
+      "name": "Straight Vibrators with Sleeves",
+      "slug": "straight-vibrators-with-sleeves",
+      "parent": "classic-vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 15
+    },
+    {
+      "wtCode": "378",
+      "name": "Clitoral",
+      "slug": "clitoral",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 416
+    },
+    {
+      "wtCode": "374",
+      "name": "Dildo & Dong Kits",
+      "slug": "dildo-and-dong-kits",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 9
+    },
+    {
+      "wtCode": "649",
+      "name": "Discreet Vibrators",
+      "slug": "discreet-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 47
+    },
+    {
+      "wtCode": "33",
+      "name": "Eco-Friendly Sex Toys",
+      "slug": "eco-friendly-sex-toys",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 5,
+      "productCount": 397
+    },
+    {
+      "wtCode": "505",
+      "name": "Glass Dildos & Dongs",
+      "slug": "glass-dildos-and-dongs",
+      "parent": "eco-friendly-sex-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 5
+    },
+    {
+      "wtCode": "507",
+      "name": "Glass Vibrators",
+      "slug": "glass-vibrators",
+      "parent": "eco-friendly-sex-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 3
+    },
+    {
+      "wtCode": "14",
+      "name": "Rechargeable Vibrators",
+      "slug": "rechargeable-vibrators",
+      "parent": "eco-friendly-sex-toys",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 1657
+    },
+    {
+      "wtCode": "239",
+      "name": "Finger Vibrators",
+      "slug": "finger-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 6,
+      "productCount": 85
+    },
+    {
+      "wtCode": "11",
+      "name": "G Spot",
+      "slug": "g-spot",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 7,
+      "productCount": 343
+    },
+    {
+      "wtCode": "747",
+      "name": "G Spot Bullets & Eggs",
+      "slug": "g-spot-bullets-and-eggs",
+      "parent": "g-spot",
+      "description": "",
+      "display": "default",
+      "menuOrder": 0,
+      "productCount": 11
+    },
+    {
+      "wtCode": "748",
+      "name": "G Spot Clit Stimulators",
+      "slug": "g-spot-clit-stimulators",
+      "parent": "g-spot",
+      "description": "",
+      "display": "default",
+      "menuOrder": 1,
+      "productCount": 132
+    },
+    {
+      "wtCode": "746",
+      "name": "G Spot Firm Vibrators",
+      "slug": "g-spot-firm-vibrators",
+      "parent": "g-spot",
+      "description": "",
+      "display": "default",
+      "menuOrder": 2,
+      "productCount": 37
+    },
+    {
+      "wtCode": "752",
+      "name": "G Spot Flexible Vibrators",
+      "slug": "g-spot-flexible-vibrators",
+      "parent": "g-spot",
+      "description": "",
+      "display": "default",
+      "menuOrder": 3,
+      "productCount": 97
+    },
+    {
+      "wtCode": "750",
+      "name": "G Spot Rabbit Style",
+      "slug": "g-spot-rabbit-style",
+      "parent": "g-spot",
+      "description": "",
+      "display": "default",
+      "menuOrder": 4,
+      "productCount": 297
+    },
+    {
+      "wtCode": "749",
+      "name": "Giant Vibrators",
+      "slug": "giant-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 8,
+      "productCount": 2
+    },
+    {
+      "wtCode": "9",
+      "name": "Hands Free Strap-On Vibes",
+      "slug": "hands-free-strap-on-vibes",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 9,
+      "productCount": 65
+    },
+    {
+      "wtCode": "682",
+      "name": "Love Rings",
+      "slug": "love-rings",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 10,
+      "productCount": 237
+    },
+    {
+      "wtCode": "15",
+      "name": "Magic Wands & Body Massagers",
+      "slug": "magic-wands-and-body-massagers",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 11,
+      "productCount": 172
+    },
+    {
+      "wtCode": "4",
+      "name": "Novelty Vibrators",
+      "slug": "novelty-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 12,
+      "productCount": 11
+    },
+    {
+      "wtCode": "476",
+      "name": "Palm Size Massagers",
+      "slug": "palm-size-massagers",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 13,
+      "productCount": 67
+    },
+    {
+      "wtCode": "7",
+      "name": "Rabbit Style Vibrators",
+      "slug": "rabbit-style-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 14,
+      "productCount": 315
+    },
+    {
+      "wtCode": "10",
+      "name": "Realistic",
+      "slug": "realistic",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 15,
+      "productCount": 361
+    },
+    {
+      "wtCode": "666",
+      "name": "Rocket Style Vibrators",
+      "slug": "rocket-style-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 16,
+      "productCount": 12
+    },
+    {
+      "wtCode": "6",
+      "name": "Tongue Vibrators",
+      "slug": "tongue-vibrators",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 17,
+      "productCount": 99
+    },
+    {
+      "wtCode": "12",
+      "name": "Vibrator Kits",
+      "slug": "vibrator-kits",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 18,
+      "productCount": 74
+    },
+    {
+      "wtCode": "252",
+      "name": "Vibrator Sleeves",
+      "slug": "vibrator-sleeves",
+      "parent": "vibrators",
+      "description": "",
+      "display": "default",
+      "menuOrder": 19,
+      "productCount": 60
+    }
+  ]
+}

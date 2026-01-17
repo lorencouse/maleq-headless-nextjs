@@ -10,17 +10,20 @@ interface ProductPageClientProps {
 
 interface SelectedVariation {
   id: string;
-  sku: string;
   name: string;
   price: string | null;
+  regularPrice: string | null;
+  salePrice: string | null;
   stockStatus: string;
-  stockQuantity: number;
+  stockQuantity: number | null;
   attributes: Array<{ name: string; value: string }>;
 }
 
 export default function ProductPageClient({ product }: ProductPageClientProps) {
+  const isVariable = product.type === 'VARIABLE';
+
   const [selectedVariation, setSelectedVariation] = useState<SelectedVariation | null>(
-    product.isVariableProduct && product.variations && product.variations.length > 0
+    isVariable && product.variations && product.variations.length > 0
       ? product.variations[0]
       : null
   );
@@ -34,7 +37,7 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
   const displayPrice = selectedVariation?.price || product.price || product.regularPrice;
   const displayStockStatus = selectedVariation?.stockStatus || product.stockStatus;
   const displayStockQuantity = selectedVariation?.stockQuantity ?? product.stockQuantity;
-  const displaySku = selectedVariation?.sku || product.sku;
+  const displaySku = product.sku;
 
   return (
     <>
@@ -97,45 +100,35 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
       )}
 
       {/* Variation Selector */}
-      {product.isVariableProduct && product.variations && product.variations.length > 0 && (
+      {isVariable && product.variations && product.variations.length > 0 && (
         <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Options</h3>
           <VariationSelector
-            variations={product.variations}
-            onVariationChange={setSelectedVariation}
+            variations={product.variations.map(v => ({
+              ...v,
+              sku: product.sku || '',
+              stockQuantity: v.stockQuantity || 0,
+            }))}
+            onVariationChange={(variation) => setSelectedVariation({
+              ...variation,
+              regularPrice: variation.regularPrice || null,
+              salePrice: variation.salePrice || null,
+            } as SelectedVariation)}
           />
         </div>
       )}
 
-      {/* Key Features (from dimensions) */}
-      {product.dimensions && Object.values(product.dimensions).some(v => v) && (
+      {/* Product Attributes */}
+      {product.attributes && product.attributes.length > 0 && (
         <div className="mb-8 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-3">Quick Specs</h3>
+          <h3 className="font-semibold text-gray-900 mb-3">Product Details</h3>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            {product.dimensions.length && (
-              <div>
-                <span className="text-gray-600">Length:</span>
-                <span className="ml-2 font-medium">{product.dimensions.length}"</span>
+            {product.attributes.filter(attr => attr.visible).map((attr, index) => (
+              <div key={index}>
+                <span className="text-gray-600">{attr.name}:</span>
+                <span className="ml-2 font-medium">{attr.options.join(', ')}</span>
               </div>
-            )}
-            {product.dimensions.width && (
-              <div>
-                <span className="text-gray-600">Width:</span>
-                <span className="ml-2 font-medium">{product.dimensions.width}"</span>
-              </div>
-            )}
-            {product.dimensions.height && (
-              <div>
-                <span className="text-gray-600">Height:</span>
-                <span className="ml-2 font-medium">{product.dimensions.height}"</span>
-              </div>
-            )}
-            {product.dimensions.weight && (
-              <div>
-                <span className="text-gray-600">Weight:</span>
-                <span className="ml-2 font-medium">{product.dimensions.weight} lbs</span>
-              </div>
-            )}
+            ))}
           </div>
         </div>
       )}
@@ -170,18 +163,16 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
             <span className="font-medium text-gray-900">{displaySku}</span>
           </div>
         )}
-        {product.upcCode && (
+        {product.averageRating && product.averageRating > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-600">UPC:</span>
-            <span className="font-medium text-gray-900">{product.upcCode}</span>
+            <span className="text-gray-600">Rating:</span>
+            <span className="font-medium text-gray-900">{product.averageRating} / 5</span>
           </div>
         )}
-        {product.releaseDate && (
+        {product.reviewCount && product.reviewCount > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Release Date:</span>
-            <span className="font-medium text-gray-900">
-              {new Date(product.releaseDate).toLocaleDateString()}
-            </span>
+            <span className="text-gray-600">Reviews:</span>
+            <span className="font-medium text-gray-900">{product.reviewCount}</span>
           </div>
         )}
       </div>

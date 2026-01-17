@@ -7,10 +7,14 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const formatPrice = (price: string | undefined) => {
+  const formatPrice = (price: string | null | undefined) => {
     if (!price) return 'N/A';
     return `$${parseFloat(price).toFixed(2)}`;
   };
+
+  // Get first category
+  const primaryCategory = product.categories?.[0];
+  const isVariable = product.type === 'VARIABLE';
 
   return (
     <div className="bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group">
@@ -47,22 +51,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <div className="p-4">
-          {/* Category or Manufacturer */}
-          <div className="mb-2 flex items-center gap-2">
-            {product.category && (
+          {/* Category */}
+          {primaryCategory && (
+            <div className="mb-2">
               <span className="text-xs text-muted">
-                {product.category.name}
+                {primaryCategory.name}
               </span>
-            )}
-            {product.manufacturer && (
-              <>
-                {product.category && <span className="text-xs text-muted">•</span>}
-                <span className="text-xs text-muted">
-                  {product.manufacturer.name}
-                </span>
-              </>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Product Name */}
           <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors">
@@ -102,13 +98,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           {/* Variation Count */}
-          {product.isVariableProduct && product.variationCount && product.variationCount > 0 && (
+          {isVariable && product.variations && product.variations.length > 0 && (
             <div className="mt-2 text-xs text-primary font-medium">
-              {product.variationCount} {product.variationCount === 1 ? 'option' : 'options'} available
+              {product.variations.length} {product.variations.length === 1 ? 'option' : 'options'} available
             </div>
           )}
 
-          {product.source === 'WILLIAMS_TRADING' && product.sku && (
+          {product.sku && (
             <div className="mt-2 text-xs text-muted">
               SKU: {product.sku}
             </div>
@@ -124,7 +120,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         >
           {product.stockStatus === 'OUT_OF_STOCK'
             ? 'Out of Stock'
-            : product.isVariableProduct
+            : isVariable
               ? 'Select Options'
               : 'Add to Cart'}
         </button>

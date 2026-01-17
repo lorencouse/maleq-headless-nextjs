@@ -1,0 +1,143 @@
+{
+  "excludedTypes": [
+    {
+      "id": "35",
+      "code": "DVDF",
+      "name": "DVD's- Frontline",
+      "reason": "DVD/Video"
+    },
+    {
+      "id": "40",
+      "code": "DVED",
+      "name": "Educational DVDs",
+      "reason": "DVD/Video"
+    },
+    {
+      "id": "41",
+      "code": "DVDS",
+      "name": "DVD Blowout Sale",
+      "reason": "DVD/Video"
+    },
+    {
+      "id": "42",
+      "code": "DVMC",
+      "name": "DVD's (Always in Stock)",
+      "reason": "DVD/Video"
+    },
+    {
+      "id": "43",
+      "code": "DVDC",
+      "name": "DVD Catalog",
+      "reason": "DVD/Video"
+    },
+    {
+      "id": "49",
+      "code": "VIDF",
+      "name": "VHS Frontline",
+      "reason": "DVD/Video"
+    },
+    {
+      "id": "55",
+      "code": "CLAD",
+      "name": "DVD's- Classic",
+      "reason": "DVD/Video"
+    },
+    { "id": "80", "code": "VIDC", "name": "VIDC", "reason": "DVD/Video" },
+    { "id": "81", "code": "VIMC", "name": "VIMC", "reason": "DVD/Video" },
+    {
+      "id": "36",
+      "code": "DISC",
+      "name": "Discontinued (Manufactures)",
+      "reason": "Discontinued"
+    },
+    {
+      "id": "48",
+      "code": "WD",
+      "name": "Discontinued (Williams)",
+      "reason": "Discontinued"
+    },
+    {
+      "id": "59",
+      "code": "WDB",
+      "name": "Blowout Items",
+      "reason": "Discontinued"
+    },
+    { "id": "110", "code": "DIS", "name": "DIS", "reason": "Discontinued" },
+    {
+      "id": "50",
+      "code": "BR",
+      "name": "Manufactures back order",
+      "reason": "Back Order"
+    },
+    {
+      "id": "38",
+      "code": "BR1",
+      "name": "Manufactures back order 2x",
+      "reason": "Back Order"
+    },
+    {
+      "id": "64",
+      "code": "BR2",
+      "name": "Manufactures back order 3x",
+      "reason": "Back Order"
+    },
+    {
+      "id": "63",
+      "code": "BR3",
+      "name": "Manufactures back order 4x",
+      "reason": "Back Order"
+    },
+    {
+      "id": "60",
+      "code": "MG",
+      "name": "Mags and Comics",
+      "reason": "Excluded Category"
+    },
+    {
+      "id": "62",
+      "code": "XM",
+      "name": "Holiday Items",
+      "reason": "Excluded Category"
+    },
+    {
+      "id": "65",
+      "code": "HAZ",
+      "name": "Hazardous Materials",
+      "reason": "Excluded Category"
+    },
+    {
+      "id": "69",
+      "code": "DSP",
+      "name": "Floor / Counter Displays",
+      "reason": "Excluded Category"
+    },
+    {
+      "id": "75",
+      "code": "PIL",
+      "name": "Pills/ Sexual Enhancement",
+      "reason": "Excluded Category"
+    },
+    {
+      "id": "96",
+      "code": "SAMPLES",
+      "name": "SAMPLES",
+      "reason": "Excluded Category"
+    },
+    { "id": "93", "code": "FRT", "name": "FRT", "reason": "Excluded Category" },
+    {
+      "id": "112",
+      "code": "PROMO",
+      "name": "PROMO",
+      "reason": "Excluded Category"
+    },
+    {
+      "id": "44",
+      "code": "NV",
+      "name": "All Novelties",
+      "description": null,
+      "max_discount_rate": "35",
+      "video": "0",
+      "active": "1"
+    }
+  ]
+}

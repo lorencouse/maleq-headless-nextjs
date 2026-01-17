@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<types>
+ <type active="1" video="0">
+  <code>LI</code>
+  <name><![CDATA[Lingerie]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>NV</code>
+  <name><![CDATA[All Novelties]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>CO</code>
+  <name><![CDATA[Condoms]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>LU</code>
+  <name><![CDATA[Lubes]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>GM</code>
+  <name><![CDATA[Games]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>BA</code>
+  <name><![CDATA[Bachelorette]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>BO</code>
+  <name><![CDATA[Bondage]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>DO</code>
+  <name><![CDATA[Dolls]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>VA</code>
+  <name><![CDATA[Valentine Items]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>NET</code>
+  <name><![CDATA[NET]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>FRT</code>
+  <name><![CDATA[FRT]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>BU</code>
+  <name><![CDATA[BULK Items (Not in retail packaging)]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>PROMO</code>
+  <name><![CDATA[PROMO]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>X-MAS</code>
+  <name><![CDATA[X-MAS]]></name>
+ </type>
+ <type active="1" video="0">
+  <code>GA</code>
+  <name><![CDATA[GA]]></name>
+ </type>
+</types>
