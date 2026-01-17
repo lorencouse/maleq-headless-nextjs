@@ -42,3 +42,8 @@ next-env.d.ts
 
 # processed product images
 /public/products/*.webp
+
+# large data files
+data/products-filtered.json
+data/products-filtered.xml
+data/products.xml
