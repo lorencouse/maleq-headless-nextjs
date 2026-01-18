@@ -7,9 +7,14 @@ export const { getClient } = registerApolloClient(() => {
     cache: new InMemoryCache(),
     link: new HttpLink({
       uri: process.env.NEXT_PUBLIC_WORDPRESS_API_URL,
-      // Use Next.js default fetch behavior
+      // Disable caching to always fetch fresh data
       fetchOptions: { cache: 'no-store' },
     }),
+    defaultOptions: {
+      query: {
+        fetchPolicy: 'no-cache',
+      },
+    },
   });
 });
 

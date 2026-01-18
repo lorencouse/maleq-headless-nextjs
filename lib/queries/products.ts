@@ -84,7 +84,7 @@ export const GET_ALL_PRODUCTS = gql`
 // Get single product by slug
 export const GET_PRODUCT_BY_SLUG = gql`
   ${PRODUCT_FIELDS}
-  query GetProductBySlug($slug: String!) {
+  query GetProductBySlug($slug: ID!) {
     product(id: $slug, idType: SLUG) {
       ...ProductFields
       description

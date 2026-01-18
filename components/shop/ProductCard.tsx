@@ -9,7 +9,11 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const formatPrice = (price: string | null | undefined) => {
     if (!price) return 'N/A';
-    return `$${parseFloat(price).toFixed(2)}`;
+    // WPGraphQL returns prices already formatted (e.g., "$82.35")
+    // If it starts with $, return as-is; otherwise format it
+    if (price.startsWith('$')) return price;
+    const num = parseFloat(price.replace(/[^0-9.-]/g, ''));
+    return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
   };
 
   // Get first category

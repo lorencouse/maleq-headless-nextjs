@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { getClient } from '@/lib/apollo/client';
 import { GET_ALL_POSTS } from '@/lib/queries/posts';
-import { GET_ALL_PRODUCTS } from '@/lib/queries/products';
+import { getAllProducts } from '@/lib/products/combined-service';
 import BlogCard from '@/components/blog/BlogCard';
 import ProductCard from '@/components/shop/ProductCard';
 
@@ -9,19 +9,16 @@ export const revalidate = 1800; // Revalidate every 30 minutes
 
 export default async function Home() {
   // Fetch latest posts and products
-  const [postsData, productsData] = await Promise.all([
+  const [postsData, productsResult] = await Promise.all([
     getClient().query({
       query: GET_ALL_POSTS,
       variables: { first: 3 },
     }),
-    getClient().query({
-      query: GET_ALL_PRODUCTS,
-      variables: { first: 4 },
-    }),
+    getAllProducts({ limit: 4 }),
   ]);
 
   const posts = postsData?.data?.posts?.nodes || [];
-  const products = productsData?.data?.products?.nodes || [];
+  const products = productsResult.products;
 
   return (
     <div>

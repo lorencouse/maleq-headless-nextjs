@@ -16,6 +16,13 @@ const nextConfig: NextConfig = {
         pathname: '/wp-content/uploads/**',
       },
       {
+        // Local by Flywheel WordPress
+        protocol: 'http',
+        hostname: 'maleq-local.local',
+        port: '',
+        pathname: '/wp-content/uploads/**',
+      },
+      {
         protocol: 'https',
         hostname: 'secure.gravatar.com',
         port: '',
