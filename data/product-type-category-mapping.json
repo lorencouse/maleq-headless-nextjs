@@ -1,0 +1,47 @@
+{
+  "description": "Maps product type codes to fallback WooCommerce category codes. Used when products have no categories assigned.",
+  "typeToCategory": {
+    "LI": ["172"],
+    "CO": ["176"],
+    "LU": ["528"],
+    "GM": ["152", "175"],
+    "BA": ["164", "674"],
+    "BO": ["44"],
+    "DO": ["151"],
+    "VA": ["481"],
+    "NET": ["172"],
+    "BU": ["238"],
+    "X-MAS": ["196", "1001"],
+    "GA": ["152", "175"]
+  },
+  "typeCodeToName": {
+    "LI": "Lingerie",
+    "CO": "Condoms",
+    "LU": "Lubes",
+    "GM": "Games",
+    "BA": "Bachelorette",
+    "BO": "Bondage",
+    "DO": "Dolls",
+    "VA": "Valentine Items",
+    "NET": "NET",
+    "BU": "BULK Items",
+    "X-MAS": "X-MAS",
+    "GA": "Games"
+  },
+  "categoryCodeToSlug": {
+    "172": "lingerie-clothing",
+    "176": "condoms",
+    "528": "lubricants",
+    "152": "x-rated-adult-games",
+    "175": "books-adult-games-music",
+    "164": "adult-party-supplies",
+    "674": "for-the-bachelorette-party",
+    "44": "bondage-fetish-kink",
+    "151": "sex-dolls",
+    "481": "valentines-day",
+    "238": "batteries-storage-odds-ends",
+    "196": "xmas-items",
+    "1001": "holiday-items"
+  },
+  "lastUpdated": "2026-01-18T00:00:00.000Z"
+}

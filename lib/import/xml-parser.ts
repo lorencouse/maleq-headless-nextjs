@@ -53,7 +53,7 @@ export interface VariationGroup {
   manufacturerCode: string;
   typeCode: string;
   products: XMLProduct[];
-  variationAttribute: 'color' | 'flavor' | 'size' | null;
+  variationAttribute: 'color' | 'flavor' | 'size' | 'style' | null;
 }
 
 /**
@@ -163,15 +163,44 @@ export class XMLParser {
   }
 
   /**
-   * Detect potential variations by analyzing product names and attributes
+   * Check if a product is a bulk/display product that shouldn't be grouped as a variation
+   */
+  private isBulkDisplayProduct(name: string): boolean {
+    const bulkIndicators = [
+      /\d+\s*PC\s*DISPLAY/i,
+      /\d+\s*PCS\s*DISPLAY/i,
+      /DISPLAY\s*\d+\s*PC/i,
+      /COUNTER\s*DISPLAY/i,
+      /FISH\s*BOWL/i,
+      /PILLOW\s*PACKS?\s*\d+/i,
+      /SAMPLE\s*PACKET/i,
+      /\d+\s*BOTTLE\s*DISPLAY/i,
+      /\d+PC\s*DISPLAY/i,
+    ];
+
+    return bulkIndicators.some(pattern => pattern.test(name));
+  }
+
+  /**
+   * Detect potential variations by analyzing product names, prices, and attributes
+   * Uses a two-pass approach:
+   * 1. First pass: detect size variations (products with same base name, different sizes)
+   * 2. Second pass: for products without size variations, group by type/style (COOL, HOT, etc.)
    */
   detectVariations(products: XMLProduct[]): VariationGroup[] {
     const groups = new Map<string, VariationGroup>();
 
     for (const product of products) {
+      // Skip bulk/display products - these are not variations
+      if (this.isBulkDisplayProduct(product.name)) {
+        continue;
+      }
+
       // Extract base name (remove size, flavor, color indicators)
       const baseName = this.extractBaseName(product.name);
-      const key = `${baseName}|${product.manufacturer.code}|${product.type.code}`;
+      // Include price in the key - products with same base name AND same price are likely variations
+      const priceKey = parseFloat(product.price).toFixed(2);
+      const key = `${baseName}|${product.manufacturer.code}|${product.type.code}|${priceKey}`;
 
       if (!groups.has(key)) {
         groups.set(key, {
@@ -186,42 +215,366 @@ export class XMLParser {
       groups.get(key)!.products.push(product);
     }
 
-    // Filter groups to only include those with 2+ products
-    const variationGroups: VariationGroup[] = [];
+    // Now merge groups that have similar base names but different prices
+    // This handles size variations where larger sizes cost more
+    const mergedGroups = this.mergeRelatedGroups(Array.from(groups.values()));
 
-    for (const group of groups.values()) {
+    // FIRST PASS: Filter groups to only include those with 2+ products (size/color variations)
+    const variationGroups: VariationGroup[] = [];
+    const singleProductGroups: VariationGroup[] = [];
+
+    for (const group of mergedGroups) {
       if (group.products.length > 1) {
         // Determine variation attribute
         group.variationAttribute = this.determineVariationAttribute(group.products);
         variationGroups.push(group);
+      } else {
+        // Single product - may be grouped by type/style in second pass
+        singleProductGroups.push(group);
       }
     }
+
+    // SECOND PASS: Try to group single products by type/style variations
+    // Products like "ELBOW GREASE COOL CREAM" and "ELBOW GREASE HOT CREAM"
+    // (each with only 1 product, no size variations) should be grouped as style variations
+    const typeStyleGroups = this.groupByTypeStyle(singleProductGroups);
+    variationGroups.push(...typeStyleGroups);
+
+    // Collect products not used in type/style grouping
+    const usedSkusInTypeStyle = new Set(typeStyleGroups.flatMap(g => g.products.map(p => p.sku)));
+    const remainingSingleGroups = singleProductGroups.filter(g =>
+      !usedSkusInTypeStyle.has(g.products[0]?.sku)
+    );
+
+    // THIRD PASS: Group products by model name variations
+    // Products like "Tenga Spinner Tetra", "Tenga Spinner Hexa", etc.
+    // Same manufacturer, same price, same base product line - different model names
+    const modelVariationGroups = this.groupByModelName(remainingSingleGroups);
+    variationGroups.push(...modelVariationGroups);
 
     return variationGroups;
   }
 
   /**
+   * Group single products by type/style variations
+   * This handles cases where products differ only by type word (COOL, HOT, ORIGINAL, etc.)
+   */
+  private groupByTypeStyle(singleProductGroups: VariationGroup[]): VariationGroup[] {
+    const result: VariationGroup[] = [];
+    const used = new Set<number>();
+
+    // Type/style words that can differentiate product variations
+    const typeStyleWords = [
+      'COOL', 'HOT', 'WARM', 'COLD', 'ICE', 'FIRE', 'HEAT',
+      'ORIGINAL', 'CLASSIC', 'LIGHT', 'LITE', 'REGULAR',
+      'WARMING', 'COOLING', 'TINGLING',
+      'NATURAL', 'ORGANIC', 'PURE',
+      'WATER', 'SILICONE', 'HYBRID', 'OIL',
+      'GEL', 'LIQUID', 'CREAM', 'LOTION',
+    ];
+
+    for (let i = 0; i < singleProductGroups.length; i++) {
+      if (used.has(i)) continue;
+
+      const group = singleProductGroups[i];
+      const baseNameUpper = group.baseName.toUpperCase();
+
+      // Check if this base name contains a type/style word
+      const typeWord = typeStyleWords.find(tw => baseNameUpper.includes(` ${tw}`) || baseNameUpper.endsWith(` ${tw}`));
+      if (!typeWord) continue;
+
+      // Extract the "core" base name by removing the type word
+      const coreBaseName = baseNameUpper.replace(new RegExp(`\\s+${typeWord}\\b`, 'gi'), '').trim();
+      if (!coreBaseName || coreBaseName === baseNameUpper) continue;
+
+      // Find other groups with the same core base name but different type words
+      const matchingGroups: VariationGroup[] = [group];
+      used.add(i);
+
+      for (let j = i + 1; j < singleProductGroups.length; j++) {
+        if (used.has(j)) continue;
+
+        const other = singleProductGroups[j];
+
+        // Must be same manufacturer and product type
+        if (other.manufacturerCode !== group.manufacturerCode || other.typeCode !== group.typeCode) {
+          continue;
+        }
+
+        const otherBaseNameUpper = other.baseName.toUpperCase();
+        const otherTypeWord = typeStyleWords.find(tw => otherBaseNameUpper.includes(` ${tw}`) || otherBaseNameUpper.endsWith(` ${tw}`));
+        if (!otherTypeWord) continue;
+
+        const otherCoreBaseName = otherBaseNameUpper.replace(new RegExp(`\\s+${otherTypeWord}\\b`, 'gi'), '').trim();
+
+        // Check if core base names match
+        if (otherCoreBaseName === coreBaseName) {
+          matchingGroups.push(other);
+          used.add(j);
+        }
+      }
+
+      // Only create a variation group if we found 2+ matching products
+      if (matchingGroups.length >= 2) {
+        const mergedProducts = matchingGroups.flatMap(g => g.products);
+        result.push({
+          baseName: coreBaseName.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
+          manufacturerCode: group.manufacturerCode,
+          typeCode: group.typeCode,
+          products: mergedProducts,
+          variationAttribute: 'style',
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Group products by model name variations
+   * This handles product lines like "Tenga Spinner Tetra", "Tenga Spinner Hexa", etc.
+   * where the last word is a model name and products share the same price
+   */
+  private groupByModelName(singleProductGroups: VariationGroup[]): VariationGroup[] {
+    const result: VariationGroup[] = [];
+    const used = new Set<number>();
+
+    // Group candidates by manufacturer + price
+    const candidatesByMfgPrice = new Map<string, number[]>();
+
+    for (let i = 0; i < singleProductGroups.length; i++) {
+      const group = singleProductGroups[i];
+      const product = group.products[0];
+      if (!product) continue;
+
+      // Key by manufacturer code and price (rounded to 2 decimals)
+      const priceKey = parseFloat(product.price).toFixed(2);
+      const key = `${group.manufacturerCode}|${priceKey}`;
+
+      if (!candidatesByMfgPrice.has(key)) {
+        candidatesByMfgPrice.set(key, []);
+      }
+      candidatesByMfgPrice.get(key)!.push(i);
+    }
+
+    // For each group of same-price products from same manufacturer,
+    // try to find model name patterns
+    for (const [, indices] of candidatesByMfgPrice.entries()) {
+      if (indices.length < 2) continue;
+
+      // Extract product names and their base patterns (all words except last)
+      const patterns = indices.map(i => {
+        const group = singleProductGroups[i];
+        const name = group.baseName.toUpperCase().trim();
+        // Remove common suffixes like "(NET)" before splitting
+        const cleanName = name.replace(/\s*\(NET\)\s*$/i, '').trim();
+        const words = cleanName.split(/\s+/);
+
+        // Need at least 2 words to have a pattern + model name
+        if (words.length < 2) return null;
+
+        const modelName = words[words.length - 1];
+        const basePattern = words.slice(0, -1).join(' ');
+
+        return { index: i, basePattern, modelName, fullName: cleanName };
+      }).filter(p => p !== null) as Array<{ index: number; basePattern: string; modelName: string; fullName: string }>;
+
+      // Group by base pattern
+      const byPattern = new Map<string, typeof patterns>();
+      for (const p of patterns) {
+        if (!byPattern.has(p.basePattern)) {
+          byPattern.set(p.basePattern, []);
+        }
+        byPattern.get(p.basePattern)!.push(p);
+      }
+
+      // Create variation groups for patterns with 2+ products
+      for (const [basePattern, matches] of byPattern.entries()) {
+        if (matches.length < 2) continue;
+
+        // Check that none of these products are already used
+        if (matches.some(m => used.has(m.index))) continue;
+
+        // Mark as used
+        matches.forEach(m => used.add(m.index));
+
+        // Get all products
+        const products = matches.flatMap(m => singleProductGroups[m.index].products);
+        const firstGroup = singleProductGroups[matches[0].index];
+
+        result.push({
+          baseName: basePattern.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
+          manufacturerCode: firstGroup.manufacturerCode,
+          typeCode: firstGroup.typeCode,
+          products,
+          variationAttribute: 'style', // Model name is a style variation
+        });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Merge groups that have similar base names (for size variations with different prices)
+   */
+  private mergeRelatedGroups(groups: VariationGroup[]): VariationGroup[] {
+    const merged: VariationGroup[] = [];
+    const used = new Set<number>();
+
+    for (let i = 0; i < groups.length; i++) {
+      if (used.has(i)) continue;
+
+      const group = groups[i];
+      const mergedGroup: VariationGroup = {
+        ...group,
+        products: [...group.products],
+      };
+
+      // Find other groups with similar base names from same manufacturer/type
+      for (let j = i + 1; j < groups.length; j++) {
+        if (used.has(j)) continue;
+
+        const other = groups[j];
+
+        // Must be same manufacturer and type
+        if (other.manufacturerCode !== group.manufacturerCode || other.typeCode !== group.typeCode) {
+          continue;
+        }
+
+        // Check if base names are similar enough to merge
+        if (this.areSimilarBaseNames(group.baseName, other.baseName)) {
+          // Merge the groups - use the shorter base name
+          mergedGroup.baseName = group.baseName.length <= other.baseName.length ? group.baseName : other.baseName;
+          mergedGroup.products.push(...other.products);
+          used.add(j);
+        }
+      }
+
+      merged.push(mergedGroup);
+      used.add(i);
+    }
+
+    return merged;
+  }
+
+  /**
+   * Check if two base names are similar enough to be variations
+   * This should be conservative to avoid grouping different product models together
+   */
+  private areSimilarBaseNames(name1: string, name2: string): boolean {
+    // Normalize names
+    const n1 = name1.toUpperCase().trim();
+    const n2 = name2.toUpperCase().trim();
+
+    // Exact match
+    if (n1 === n2) return true;
+
+    // Also match if one is empty (common when base name extraction removes all variation parts)
+    // This handles cases like product names that ARE the variation indicator
+    if (!n1 || !n2) return false;
+
+    // Don't merge if names differ significantly - model names like "SYN V", "TRIDENT", etc. are distinct products
+    // Only consider them similar if one is a strict subset at word boundaries
+
+    const words1 = n1.split(/\s+/);
+    const words2 = n2.split(/\s+/);
+
+    // If one name is a subset of the other (all words match), they could be variations
+    // e.g., "Product X" and "Product X Large" could be variations
+    const smaller = words1.length < words2.length ? words1 : words2;
+    const larger = words1.length < words2.length ? words2 : words1;
+
+    // Check if all words in smaller are contained in larger (in order)
+    let matchCount = 0;
+    let largerIdx = 0;
+
+    for (const word of smaller) {
+      while (largerIdx < larger.length) {
+        if (larger[largerIdx] === word) {
+          matchCount++;
+          largerIdx++;
+          break;
+        }
+        largerIdx++;
+      }
+    }
+
+    // Only consider similar if all words from smaller match AND
+    // the difference is just 1-2 words (variation indicator)
+    if (matchCount === smaller.length && larger.length - smaller.length <= 2) {
+      // But don't merge if the extra words look like model identifiers
+      const modelIdentifiers = ['TRIDENT', 'SYN', 'CLASSIC', 'PRO', 'PLUS', 'ULTRA', 'MAX', 'MINI', 'V', 'V2', 'II', 'III'];
+      const extraWords = larger.filter(w => !smaller.includes(w));
+
+      // If extra words are model identifiers, these are different products, not variations
+      const hasModelIdentifier = extraWords.some(w => modelIdentifiers.includes(w));
+      if (hasModelIdentifier) {
+        return false;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Extract base name from product name
-   * Remove size indicators (2.5 OZ, 8oz, etc.), flavor/color names
+   * Remove size indicators, length/volume, flavor/color names
+   * KEEP model names like Helix, Eupho, etc. as they identify different products
    */
   private extractBaseName(name: string): string {
     let baseName = name;
 
-    // Remove common size patterns first
-    baseName = baseName.replace(/\s*\d+(\.\d+)?\s*(OZ|ML|G|LB|IN|INCH|INCHES|MM|CM)\b/gi, '');
+    // Remove volume/size patterns with units (anywhere in string)
+    // Matches: 2.5 oz, 2.5oz, 2.5 ounces, 8ml, 16 fl oz, 1 O, 4 O (missing z), .5 oz, etc.
+    // Also handles ".5 oz" pattern (decimal without leading zero)
+    // Also handles "100ML/ 3.4 OZ" patterns with / separator
+    baseName = baseName.replace(/\s*\.?\d+(\.\d+)?\s*(FL\.?\s*)?(OZ|OUNCES?|ML|MILLILITERS?|L|LITERS?|G|GRAMS?|MG|LB|LBS|POUNDS?|O)\.?\s*(\/\s*\.?\d+(\.\d+)?\s*(FL\.?\s*)?(OZ|OUNCES?|ML|MILLILITERS?|L|LITERS?|G|GRAMS?|MG|LB|LBS|POUNDS?|O)\.?)?\b/gi, '');
 
-    // Remove common flavor/scent/color indicators in brackets or at end
+    // Remove length/dimension patterns
+    // Matches: 9 inches, 9in, 9", 5.5 inch, 10mm, 15cm, etc.
+    baseName = baseName.replace(/\s*\d+(\.\d+)?\s*(INCHES?|IN|"|″|MM|MILLIMETERS?|CM|CENTIMETERS?|FT|FEET|FOOT)\b/gi, '');
+
+    // Remove pack/count patterns: 12pk, 6 pack, 3ct, 10 count, 40pc bowl, etc.
+    baseName = baseName.replace(/\s*\d+\s*(PK|PACK|PC|PCS|PIECES?|CT|COUNT)\s*(BOWL|BOX|BAG|DISPLAY|JAR)?\b/gi, '');
+
+    // Remove standalone decimal numbers at end like "2.5" or "5."
+    baseName = baseName.replace(/\s+\d+\.?\d*\s*$/gi, '');
+
+    // Remove common flavor/scent/color indicators in brackets or parentheses
     baseName = baseName.replace(/\s*\[.*?\]/g, '');
+    baseName = baseName.replace(/\s*\(net\)/gi, '');
     baseName = baseName.replace(/\s*\(.*?\)/g, '');
 
-    // Remove multi-word flavor/color variants first (order matters - do compound words before single words)
+    // Remove size abbreviations: S, M, L, XL, XXL, S/M, L/XL, O/S, Queen, Q/S, OS Queen, etc.
+    // Match anywhere (not just at end) since they may appear before style names
+    // Be careful not to remove single letters that are part of words
+    baseName = baseName.replace(/\s+(XS|XXL|XXXL|2XL|3XL|4XL|S\/M|M\/L|L\/XL|XL\/XXL|O\/S|OS|ONE\s*SIZE|QUEEN|Q\/S|OS\s*QUEEN)\b/gi, '');
+    // Also handle single-letter sizes only at end of string to avoid false positives
+    baseName = baseName.replace(/\s+[SML]\s*$/gi, '');
+
+    // Remove multi-word variants that indicate variations (NOT model names)
     const multiWordVariants = [
+      // Flavors
       'PINA COLADA', 'MANGO PASSION', 'CHERRY LEMONADE', 'BUTTER RUM', 'BANANA CREAM',
       'KEY LIME', 'ORANGE CREAM', 'TAHITIAN VANILLA', 'NATURAL ALOE',
       'CREME BRULEE', 'MINT CHOCOLATE', 'COOKIES AND CREAM', 'STRAWBERRY BANANA',
       'PASSION FRUIT', 'BLUE RASPBERRY', 'GREEN APPLE', 'COTTON CANDY',
-      'BUBBLE GUM', 'ROOT BEER', 'CHERRY VANILLA', 'CHOCOLATE MINT',
-      'EXTRA LARGE', 'EXTRA SMALL'
+      'BUBBLE GUM', 'ROOT BEER', 'CHERRY VANILLA', 'CHOCOLATE MINT', 'FRENCH LAVENDER',
+      'WARM VANILLA', 'COOL MINT', 'FRESH STRAWBERRY', 'WILD CHERRY',
+      // Colors/Finishes
+      'BLACK ICE', 'CLASSIC WHITE', 'PROSTATE MASSAGER WHITE', 'PROSTATE MASSAGER BLACK',
+      'MIDNIGHT BLACK', 'PEARL WHITE', 'ROSE GOLD', 'MATTE BLACK',
+      // Product types/styles that are variations
+      'GP FREE', 'WATER LIQUID', 'WATER GEL', 'SILICONE GEL', 'GEL TUBE',
+      'DOUBLE CLEAR', 'DOUBLE RUBBER', 'DOUBLE METAL',
+      // Packaging/container types
+      'FOIL PACKETS', 'FOIL PACK', 'TRAVEL SIZE', 'SAMPLE SIZE', 'SAMPLE PACK',
+      // Sizes as words
+      'EXTRA LARGE', 'EXTRA SMALL', 'EXTRA LONG', 'SUPER LARGE',
+      'OS QUEEN', 'ONE SIZE',
     ];
 
     for (const variant of multiWordVariants) {
@@ -229,54 +582,680 @@ export class XMLParser {
       baseName = baseName.replace(regex, '');
     }
 
-    // Remove single-word flavor/color variants
-    const singleWordVariants = [
-      'NATURAL', 'MANGO', 'CHERRY', 'STRAWBERRY', 'VANILLA', 'ALOE',
-      'CHOCOLATE', 'MINT', 'GRAPE', 'ORANGE', 'LEMON', 'LIME', 'BANANA',
-      'RASPBERRY', 'BLUEBERRY', 'PEACH', 'APPLE', 'WATERMELON', 'COCONUT',
-      'RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR', 'SILVER', 'GOLD',
-      'SMALL', 'MEDIUM', 'LARGE', 'XLARGE', 'XL', 'XXL', 'XXXL'
+    // Remove size words (Small/Medium/Large) when they appear BEFORE common product suffixes
+    // This handles cases like "Booty Sparks Light Up Large Anal Plug" -> "Booty Sparks Light Up Anal Plug"
+    const sizeWords = ['SMALL', 'MEDIUM', 'LARGE', 'SM', 'MED', 'LG', 'MINI', 'PETITE', 'JUMBO', 'GIANT'];
+    const productSuffixes = [
+      'ANAL PLUG', 'BUTT PLUG', 'PLUG', 'DILDO', 'DONG', 'VIBE', 'VIBRATOR',
+      'CUP', 'SLEEVE', 'STROKER', 'RING', 'COCK RING', 'CUFF', 'CUFFS',
+      'CHOKER', 'COLLAR', 'GARTER', 'PANTY', 'THONG', 'BRA',
+      'BALL', 'BALLS', 'BEADS', 'CLAMP', 'CLAMPS', 'NIPPLE',
     ];
-
-    for (const variant of singleWordVariants) {
-      const regex = new RegExp(`\\s+${variant}\\s*$`, 'i');
-      baseName = baseName.replace(regex, '');
+    for (const size of sizeWords) {
+      for (const suffix of productSuffixes) {
+        const regex = new RegExp(`\\s+${size}\\s+${suffix}`, 'gi');
+        baseName = baseName.replace(regex, ` ${suffix}`);
+      }
     }
 
-    return baseName.trim();
+    // Remove color words when they appear BEFORE common product suffixes
+    // This handles cases like "Dark Heart Chrome Heart Pink Choker" -> "Dark Heart Chrome Heart Choker"
+    const colorWords = ['RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
+      'SILVER', 'GOLD', 'BRONZE', 'COPPER', 'GREY', 'GRAY', 'BROWN',
+      'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY'];
+    for (const color of colorWords) {
+      for (const suffix of productSuffixes) {
+        const regex = new RegExp(`\\s+${color}\\s+${suffix}`, 'gi');
+        baseName = baseName.replace(regex, ` ${suffix}`);
+      }
+    }
+
+    // Remove single-word variants that indicate variations (colors, flavors, sizes, styles)
+    // DO NOT remove model identifiers like HELIX, EUPHO, etc.
+    // DO NOT remove style/type words (COOL, HOT, ORIGINAL, etc.) as they define product lines
+    const singleWordVariants = [
+      // Flavors/Scents - only remove when clearly just flavor modifiers
+      'MANGO', 'CHERRY', 'STRAWBERRY', 'VANILLA', 'ALOE',
+      'CHOCOLATE', 'MINT', 'GRAPE', 'LEMON', 'LIME', 'BANANA',
+      'RASPBERRY', 'BLUEBERRY', 'PEACH', 'APPLE', 'WATERMELON', 'COCONUT',
+      'LAVENDER', 'PEPPERMINT', 'SPEARMINT', 'EUCALYPTUS', 'JASMINE',
+      'CINNAMON', 'GINGER', 'HONEY', 'CARAMEL', 'MOCHA', 'COFFEE',
+      'MELON', 'BERRY', 'TROPICAL', 'CITRUS', 'FLORAL',
+      // Colors (at end only)
+      'RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
+      'SILVER', 'GOLD', 'BRONZE', 'COPPER', 'GREY', 'GRAY', 'BROWN',
+      'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY',
+      // Sizes as words (at end only)
+      'SMALL', 'MEDIUM', 'LARGE', 'XLARGE', 'SM', 'MED', 'LG',
+      'MINI', 'PETITE', 'REGULAR', 'JUMBO', 'GIANT', 'KING',
+      'QUEEN', // Plus size
+      // Container/packaging types only (not product type)
+      'TUBE', 'BOTTLE', 'PUMP', 'SACHET', 'SAMPLE',
+      'JAR', 'BOWL', 'BOX', 'BAG', 'QUICKIE',
+      // Size modifiers
+      'JR', 'JUNIOR', 'SENIOR',
+      // Material variants
+      'RUBBER', 'METAL', 'GLASS', 'PLASTIC', 'LEATHER', 'LATEX', 'VINYL',
+      'THIN', 'THICK',
+    ];
+
+    // Apply multiple times to strip multiple suffixes like "Trident Black Large" -> "Trident"
+    for (let pass = 0; pass < 3; pass++) {
+      for (const variant of singleWordVariants) {
+        const regex = new RegExp(`\\s+${variant}\\s*$`, 'i');
+        baseName = baseName.replace(regex, '');
+      }
+    }
+
+    // Clean up multiple spaces, trim, and remove trailing punctuation
+    baseName = baseName.replace(/\s+/g, ' ').trim();
+    baseName = baseName.replace(/[\s\.\-,\/]+$/, '').trim();
+
+    return baseName;
   }
 
   /**
    * Determine what attribute varies between products
    */
-  private determineVariationAttribute(products: XMLProduct[]): 'color' | 'flavor' | 'size' | null {
-    // Check if colors differ
+  private determineVariationAttribute(products: XMLProduct[]): 'color' | 'flavor' | 'size' | 'style' | null {
+    // Extract variation values from each product name
+    const extractedValues = products.map(p => this.extractVariationValue(p.name));
+
+    // Check if colors differ (from XML color field or extracted from name)
     const colors = new Set(products.map(p => p.color.toLowerCase()).filter(c => c));
     if (colors.size > 1) {
       return 'color';
     }
 
-    // Check if flavors differ (by analyzing names)
-    const flavorKeywords = ['flavor', 'scent', 'taste', 'natural', 'vanilla', 'chocolate', 'strawberry'];
-    const hasFlavorInNames = products.some(p =>
-      flavorKeywords.some(kw => p.name.toLowerCase().includes(kw))
-    );
-    if (hasFlavorInNames) {
-      return 'flavor';
+    // Check for color variations in names
+    const extractedColors = extractedValues.map(v => v.color).filter(c => c);
+    if (new Set(extractedColors).size > 1) {
+      return 'color';
     }
 
-    // Check if sizes differ
-    const sizes = new Set(
-      products.map(p => {
-        const match = p.name.match(/\d+(\.\d+)?\s*(OZ|ML|G|LB)/i);
-        return match ? match[0].toLowerCase() : '';
-      }).filter(s => s)
-    );
-    if (sizes.size > 1) {
+    // Check for size variations (volume, length, or size words) - check before style/flavor
+    // because size is the most common variation type
+    const extractedSizes = extractedValues.map(v => v.size).filter(s => s);
+    if (new Set(extractedSizes).size > 1) {
       return 'size';
     }
 
+    // Check for style variations (warming, cooling, gel, liquid, etc.)
+    const extractedStyles = extractedValues.map(v => v.style).filter(s => s);
+    if (new Set(extractedStyles).size > 1) {
+      return 'style';
+    }
+
+    // Check for flavor variations in names
+    const extractedFlavors = extractedValues.map(v => v.flavor).filter(f => f);
+    if (new Set(extractedFlavors).size > 1) {
+      return 'flavor';
+    }
+
+    // Fallback: check if name lengths differ significantly (different suffixes)
     return null;
+  }
+
+  /**
+   * Extract variation values from a product name
+   * Returns detected size, color, flavor, or style from the name
+   */
+  private extractVariationValue(name: string): {
+    size: string | null;
+    color: string | null;
+    flavor: string | null;
+    style: string | null;
+  } {
+    const result = { size: null as string | null, color: null as string | null, flavor: null as string | null, style: null as string | null };
+    const lowerName = name.toLowerCase();
+
+    // Size patterns - volume
+    // Handle formats like: 2.5 oz, 2.5oz, 5.OZ (note the dot before unit), 2.5 ounces, 1 O, 4 O
+    const volumeMatch = name.match(/(\d+(?:\.\d+)?)\s*\.?\s*(fl\.?\s*)?(oz|ounces?|ml|milliliters?|l|liters?|g|grams?|mg|lb|lbs|pounds?|o)\b/i);
+    if (volumeMatch) {
+      result.size = volumeMatch[0].toLowerCase().replace(/\s+/g, '');
+      // Normalize "1o" to "1 oz"
+      if (result.size.match(/^\d+o$/)) {
+        result.size = result.size.replace(/o$/, ' oz');
+      }
+    }
+
+    // Size patterns - length/dimension
+    if (!result.size) {
+      const lengthMatch = name.match(/(\d+(?:\.\d+)?)\s*(inches?|in|"|″|mm|millimeters?|cm|centimeters?|ft|feet|foot)\b/i);
+      if (lengthMatch) {
+        result.size = lengthMatch[0].toLowerCase().replace(/\s+/g, '');
+      }
+    }
+
+    // Size patterns - clothing combo sizes like S/M, L/XL, O/S, Queen, Q/S
+    if (!result.size) {
+      const comboSizeMatch = name.match(/\b(s\/m|m\/l|l\/xl|xl\/xxl|o\/s|one\s*size|queen|q\/s|os\s*queen)\b/i);
+      if (comboSizeMatch) {
+        result.size = comboSizeMatch[1].toUpperCase().replace(/\s+/g, '');
+      }
+    }
+
+    // Size patterns - pack counts like 3pk, 12ct, 40pc bowl
+    if (!result.size) {
+      const packCountMatch = name.match(/\b(\d+)\s*(pk|pack|pc|pcs|ct|count)\s*(bowl|box|bag|display|jar)?\b/i);
+      if (packCountMatch) {
+        const count = packCountMatch[1];
+        const container = packCountMatch[3] ? ` ${packCountMatch[3].toLowerCase()}` : 'pk';
+        result.size = `${count}${container === 'pk' ? 'pk' : container}`;
+      }
+    }
+
+    // Size patterns - clothing/general sizes
+    if (!result.size) {
+      const sizeWordMatch = name.match(/\b(xs|x-?small|small|sm|s|medium|med|m|large|lg|l|x-?large|xl|xxl|xxxl|2xl|3xl|4xl|mini|petite|regular|plus|jumbo|giant|king)\b/i);
+      if (sizeWordMatch) {
+        result.size = this.normalizeSize(sizeWordMatch[1]);
+      }
+    }
+
+    // Color patterns
+    const colorWords = [
+      'red', 'blue', 'green', 'pink', 'purple', 'black', 'white', 'clear',
+      'silver', 'gold', 'bronze', 'copper', 'grey', 'gray', 'brown',
+      'yellow', 'orange', 'teal', 'navy', 'nude', 'tan', 'beige', 'ivory',
+      'midnight', 'pearl', 'matte', 'rose'
+    ];
+    for (const color of colorWords) {
+      if (lowerName.includes(color)) {
+        // Make sure it's a word boundary match
+        const colorRegex = new RegExp(`\\b${color}\\b`, 'i');
+        if (colorRegex.test(name)) {
+          result.color = color;
+          break;
+        }
+      }
+    }
+
+    // Flavor patterns - check multi-word flavors FIRST (longer matches take priority)
+    const multiWordFlavors = [
+      'pina colada', 'passion fruit', 'key lime', 'butter rum', 'creme brulee',
+      'mango passion', 'cherry lemonade', 'orange cream', 'banana cream',
+      'tahitian vanilla', 'natural aloe', 'french lavender', 'strawberry banana',
+      'blue raspberry', 'green apple', 'cotton candy', 'bubble gum', 'root beer',
+      'cherry vanilla', 'chocolate mint', 'warm vanilla', 'cool mint',
+      'fresh strawberry', 'wild cherry'
+    ];
+    for (const flavor of multiWordFlavors) {
+      if (lowerName.includes(flavor)) {
+        result.flavor = flavor;
+        break;
+      }
+    }
+
+    // Only check single-word flavors if no multi-word flavor was found
+    if (!result.flavor) {
+      const singleWordFlavors = [
+        'mango', 'cherry', 'strawberry', 'vanilla',
+        'chocolate', 'mint', 'grape', 'lemon', 'lime', 'banana',
+        'raspberry', 'blueberry', 'peach', 'apple', 'watermelon', 'coconut',
+        'lavender', 'peppermint', 'spearmint', 'eucalyptus', 'jasmine',
+        'cinnamon', 'ginger', 'honey', 'caramel', 'mocha', 'coffee',
+        'melon', 'berry', 'tropical', 'citrus', 'floral', 'fresh',
+        // 'natural' and 'aloe' removed as they're too generic when alone
+      ];
+      for (const flavor of singleWordFlavors) {
+        if (lowerName.includes(flavor)) {
+          result.flavor = flavor;
+          break;
+        }
+      }
+    }
+
+    // Style patterns (warming, cooling, etc.) - for lubricants and similar products
+    // Note: "silicone" only counts as a style when it refers to lube base type,
+    // not when describing a toy's material (e.g., "silicone plug" vs "silicone lube")
+    const styleWords = [
+      'cooling', 'warming', 'tingling', 'sensitizing', 'desensitizing',
+      'ice', 'fire', 'heat', 'cool', 'warm', 'hot', 'cold',
+      'water', 'hybrid', 'oil', 'organic',
+      'gel', 'liquid', 'cream', 'lotion', 'spray', 'foam',
+      'quickie', 'jar', 'tube', 'bottle', 'pump' // Container/format styles
+    ];
+
+    // Check for multi-word styles first (higher priority)
+    const multiStyleMatch = name.match(/\b(foil\s*packets?|travel\s*size|sample\s*pack)\b/i);
+    if (multiStyleMatch) {
+      result.style = multiStyleMatch[1].toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    // Check single-word styles only if no multi-word style found
+    if (!result.style) {
+      for (const style of styleWords) {
+        if (lowerName.includes(style)) {
+          const styleRegex = new RegExp(`\\b${style}\\b`, 'i');
+          if (styleRegex.test(name)) {
+            result.style = style;
+            break;
+          }
+        }
+      }
+    }
+
+    // Special handling for "silicone" - only consider it a style (lube type) if
+    // it's followed by lube-related words, not material descriptions
+    if (!result.style && lowerName.includes('silicone')) {
+      const siliconeAsLubePattern = /\bsilicone\s*(lube|lubricant|gel|based|liquid)\b/i;
+      // Also match standalone "silicone" at end of name (like "ASTROGLIDE SILICONE 2.5 OZ")
+      // but NOT when followed by toy words
+      const siliconeAsToyPattern = /\bsilicone\s*(plug|dong|dildo|vibe|vibrator|massager|sleeve|ring|toy|stroker|packer|anal|vaginal)\b/i;
+
+      if (siliconeAsLubePattern.test(name) ||
+          (!siliconeAsToyPattern.test(name) && /\bsilicone\s*\d/i.test(name))) {
+        result.style = 'silicone';
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Normalize size values to consistent format
+   */
+  private normalizeSize(size: string): string {
+    const lower = size.toLowerCase().replace(/-/g, '');
+
+    // Map variations to standard sizes
+    const sizeMap: Record<string, string> = {
+      'xs': 'X-Small',
+      'xsmall': 'X-Small',
+      's': 'Small',
+      'sm': 'Small',
+      'small': 'Small',
+      'm': 'Medium',
+      'med': 'Medium',
+      'medium': 'Medium',
+      'l': 'Large',
+      'lg': 'Large',
+      'large': 'Large',
+      'xl': 'X-Large',
+      'xlarge': 'X-Large',
+      'xxl': 'XX-Large',
+      'xxxl': 'XXX-Large',
+      '2xl': 'XX-Large',
+      '3xl': 'XXX-Large',
+      '4xl': 'XXXX-Large',
+      // Combo sizes
+      's/m': 'S/M',
+      'm/l': 'M/L',
+      'l/xl': 'L/XL',
+      'xl/xxl': 'XL/XXL',
+      'o/s': 'One Size',
+      'onesize': 'One Size',
+      'one size': 'One Size',
+      // Queen/Plus sizes
+      'queen': 'Queen',
+      'q/s': 'Queen',
+      'osqueen': 'Queen',
+      'os queen': 'Queen',
+      'mini': 'Mini',
+      'petite': 'Petite',
+      'regular': 'Regular',
+      'plus': 'Plus',
+      'jumbo': 'Jumbo',
+      'giant': 'Giant',
+      'king': 'King',
+    };
+
+    return sizeMap[lower] || size;
+  }
+
+  /**
+   * Normalize size/volume/length values to consistent format
+   * Examples:
+   *   "2.5oz" -> "2.5 oz"
+   *   "2.5 ounces" -> "2.5 oz"
+   *   "8ml" -> "8 ml"
+   *   "9inches" -> "9 in"
+   *   "9"" -> "9 in"
+   *   "300mg" -> "300 mg"
+   */
+  private normalizeSizeValue(size: string): string {
+    // If it's already a normalized word size (Small, Medium, etc.), return as-is
+    if (/^[A-Z]/.test(size)) {
+      return size;
+    }
+
+    let normalized = size.toLowerCase().trim();
+
+    // Clean up common artifacts like "5.oz" -> "5oz"
+    normalized = normalized.replace(/(\d)\.([a-z])/i, '$1$2');
+
+    // Extract the number and unit
+    const match = normalized.match(/^(\d+(?:\.\d+)?)\s*(.*)/);
+    if (!match) {
+      return size; // Can't parse, return original
+    }
+
+    const number = match[1];
+    let unit = match[2].trim().replace(/^\./, ''); // Remove leading dot if present
+
+    // Normalize unit names
+    const unitMap: Record<string, string> = {
+      // Volume
+      'oz': 'oz',
+      'ounce': 'oz',
+      'ounces': 'oz',
+      'floz': 'fl oz',
+      'fl oz': 'fl oz',
+      'fl.oz': 'fl oz',
+      'fluid oz': 'fl oz',
+      'fluid ounce': 'fl oz',
+      'fluid ounces': 'fl oz',
+      'ml': 'ml',
+      'milliliter': 'ml',
+      'milliliters': 'ml',
+      'millilitre': 'ml',
+      'millilitres': 'ml',
+      'l': 'L',
+      'liter': 'L',
+      'liters': 'L',
+      'litre': 'L',
+      'litres': 'L',
+      // Weight
+      'g': 'g',
+      'gram': 'g',
+      'grams': 'g',
+      'mg': 'mg',
+      'milligram': 'mg',
+      'milligrams': 'mg',
+      'lb': 'lb',
+      'lbs': 'lb',
+      'pound': 'lb',
+      'pounds': 'lb',
+      // Length
+      'in': 'in',
+      'inch': 'in',
+      'inches': 'in',
+      '"': 'in',
+      '″': 'in',
+      'mm': 'mm',
+      'millimeter': 'mm',
+      'millimeters': 'mm',
+      'millimetre': 'mm',
+      'millimetres': 'mm',
+      'cm': 'cm',
+      'centimeter': 'cm',
+      'centimeters': 'cm',
+      'centimetre': 'cm',
+      'centimetres': 'cm',
+      'ft': 'ft',
+      'foot': 'ft',
+      'feet': 'ft',
+      // Count
+      'pk': 'pk',
+      'pack': 'pk',
+      'packs': 'pk',
+      'pc': 'pc',
+      'pcs': 'pc',
+      'piece': 'pc',
+      'pieces': 'pc',
+      'ct': 'ct',
+      'count': 'ct',
+    };
+
+    // Normalize the unit
+    const normalizedUnit = unitMap[unit] || unit;
+
+    // Format with space between number and unit
+    return `${number} ${normalizedUnit}`;
+  }
+
+  /**
+   * Normalize color names to consistent format
+   * Examples:
+   *   "blk" -> "Black"
+   *   "wht" -> "White"
+   *   "clr" -> "Clear"
+   */
+  private normalizeColor(color: string): string {
+    const colorMap: Record<string, string> = {
+      // Common abbreviations
+      'blk': 'Black',
+      'wht': 'White',
+      'clr': 'Clear',
+      'slv': 'Silver',
+      'gld': 'Gold',
+      'pnk': 'Pink',
+      'prp': 'Purple',
+      'blu': 'Blue',
+      'grn': 'Green',
+      'red': 'Red',
+      'ylw': 'Yellow',
+      'org': 'Orange',
+      'brn': 'Brown',
+      'gry': 'Gray',
+      'grey': 'Gray',
+      // Full names (ensure title case)
+      'black': 'Black',
+      'white': 'White',
+      'clear': 'Clear',
+      'silver': 'Silver',
+      'gold': 'Gold',
+      'pink': 'Pink',
+      'purple': 'Purple',
+      'blue': 'Blue',
+      'green': 'Green',
+      'yellow': 'Yellow',
+      'orange': 'Orange',
+      'brown': 'Brown',
+      'gray': 'Gray',
+      'nude': 'Nude',
+      'tan': 'Tan',
+      'beige': 'Beige',
+      'ivory': 'Ivory',
+      'teal': 'Teal',
+      'navy': 'Navy',
+      'bronze': 'Bronze',
+      'copper': 'Copper',
+      'rose': 'Rose',
+      'pearl': 'Pearl',
+      'midnight': 'Midnight',
+      'matte': 'Matte',
+      // Compound colors
+      'rose gold': 'Rose Gold',
+      'matte black': 'Matte Black',
+      'pearl white': 'Pearl White',
+      'midnight black': 'Midnight Black',
+    };
+
+    const lower = color.toLowerCase().trim();
+    return colorMap[lower] || XMLParser.applyTitleCase(color);
+  }
+
+  /**
+   * Normalize flavor/scent names to consistent format
+   * Examples:
+   *   "straw" -> "Strawberry"
+   *   "choc" -> "Chocolate"
+   *   "van" -> "Vanilla"
+   */
+  private normalizeFlavor(flavor: string): string {
+    const flavorMap: Record<string, string> = {
+      // Common abbreviations
+      'straw': 'Strawberry',
+      'choc': 'Chocolate',
+      'van': 'Vanilla',
+      'mint': 'Mint',
+      'cher': 'Cherry',
+      'mang': 'Mango',
+      'pepp': 'Peppermint',
+      'lav': 'Lavender',
+      'coco': 'Coconut',
+      'lem': 'Lemon',
+      'nat': 'Natural',
+      // Full names (ensure consistent title case)
+      'strawberry': 'Strawberry',
+      'chocolate': 'Chocolate',
+      'vanilla': 'Vanilla',
+      'cherry': 'Cherry',
+      'mango': 'Mango',
+      'peppermint': 'Peppermint',
+      'spearmint': 'Spearmint',
+      'lavender': 'Lavender',
+      'coconut': 'Coconut',
+      'lemon': 'Lemon',
+      'lime': 'Lime',
+      'banana': 'Banana',
+      'grape': 'Grape',
+      'raspberry': 'Raspberry',
+      'blueberry': 'Blueberry',
+      'peach': 'Peach',
+      'apple': 'Apple',
+      'watermelon': 'Watermelon',
+      'eucalyptus': 'Eucalyptus',
+      'jasmine': 'Jasmine',
+      'cinnamon': 'Cinnamon',
+      'ginger': 'Ginger',
+      'honey': 'Honey',
+      'caramel': 'Caramel',
+      'mocha': 'Mocha',
+      'coffee': 'Coffee',
+      'natural': 'Natural',
+      'aloe': 'Aloe',
+      // Multi-word flavors
+      'pina colada': 'Piña Colada',
+      'piña colada': 'Piña Colada',
+      'passion fruit': 'Passion Fruit',
+      'key lime': 'Key Lime',
+      'butter rum': 'Butter Rum',
+      'creme brulee': 'Crème Brûlée',
+      'crème brûlée': 'Crème Brûlée',
+      'mango passion': 'Mango Passion',
+      'cherry lemonade': 'Cherry Lemonade',
+      'orange cream': 'Orange Cream',
+      'banana cream': 'Banana Cream',
+      'tahitian vanilla': 'Tahitian Vanilla',
+      'natural aloe': 'Natural Aloe',
+      'french lavender': 'French Lavender',
+      'strawberry banana': 'Strawberry Banana',
+      'blue raspberry': 'Blue Raspberry',
+      'green apple': 'Green Apple',
+      'cotton candy': 'Cotton Candy',
+      'bubble gum': 'Bubble Gum',
+      'root beer': 'Root Beer',
+      'cherry vanilla': 'Cherry Vanilla',
+      'chocolate mint': 'Chocolate Mint',
+    };
+
+    const lower = flavor.toLowerCase().trim();
+    return flavorMap[lower] || XMLParser.applyTitleCase(flavor);
+  }
+
+  /**
+   * Normalize style names to consistent format
+   */
+  private normalizeStyle(style: string): string {
+    const styleMap: Record<string, string> = {
+      'warming': 'Warming',
+      'cooling': 'Cooling',
+      'tingling': 'Tingling',
+      'sensitizing': 'Sensitizing',
+      'desensitizing': 'Desensitizing',
+      'water': 'Water-Based',
+      'silicone': 'Silicone-Based',
+      'hybrid': 'Hybrid',
+      'oil': 'Oil-Based',
+      'organic': 'Organic',
+      'gel': 'Gel',
+      'liquid': 'Liquid',
+      'cream': 'Cream',
+      'lotion': 'Lotion',
+      'spray': 'Spray',
+      'foam': 'Foam',
+      'ice': 'Ice',
+      'fire': 'Fire',
+      'heat': 'Heat',
+      'cool': 'Cool',
+      'warm': 'Warm',
+      'hot': 'Hot',
+      'cold': 'Cold',
+    };
+
+    const lower = style.toLowerCase().trim();
+    return styleMap[lower] || XMLParser.applyTitleCase(style);
+  }
+
+  /**
+   * Get variation option value for a product based on the variation type
+   * This is used to determine the specific variation value for each product in a group
+   */
+  getVariationOption(product: XMLProduct, variationType: 'color' | 'flavor' | 'size' | 'style' | null): string {
+    if (!variationType) {
+      return this.cleanVariationName(product.name);
+    }
+
+    const extracted = this.extractVariationValue(product.name);
+
+    switch (variationType) {
+      case 'color':
+        // First try the XML color field
+        if (product.color && product.color.trim()) {
+          return this.normalizeColor(product.color.trim());
+        }
+        // Then try extracted from name
+        if (extracted.color) {
+          return this.normalizeColor(extracted.color);
+        }
+        break;
+
+      case 'flavor':
+        if (extracted.flavor) {
+          return this.normalizeFlavor(extracted.flavor);
+        }
+        // Check for style as fallback for flavor type
+        if (extracted.style) {
+          return this.normalizeStyle(extracted.style);
+        }
+        break;
+
+      case 'style':
+        if (extracted.style) {
+          return this.normalizeStyle(extracted.style);
+        }
+        break;
+
+      case 'size':
+        if (extracted.size) {
+          return this.normalizeSizeValue(extracted.size);
+        }
+        break;
+    }
+
+    // Fallback: try to extract the differing part from the product name
+    // by comparing to the base name
+    const baseName = this.extractBaseName(product.name);
+    if (product.name.length > baseName.length) {
+      let suffix = product.name.substring(baseName.length).trim();
+      suffix = this.cleanVariationName(suffix);
+      if (suffix && suffix.length > 0) {
+        return XMLParser.applyTitleCase(suffix);
+      }
+    }
+
+    // Final fallback: just use a cleaned version of the full name
+    return this.cleanVariationName(product.name);
+  }
+
+  /**
+   * Clean up a variation name by removing common artifacts
+   */
+  private cleanVariationName(name: string): string {
+    let cleaned = name
+      // Remove (net) and similar suffixes
+      .replace(/\s*\(net\)\s*/gi, '')
+      // Remove trailing/leading punctuation
+      .replace(/^[\s\-\.]+|[\s\-\.]+$/g, '')
+      // Clean up multiple spaces
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return cleaned || name;
   }
 
   /**

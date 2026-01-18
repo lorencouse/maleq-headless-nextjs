@@ -47,3 +47,10 @@ next-env.d.ts
 data/products-filtered.json
 data/products-filtered.xml
 data/products.xml
+
+# database backups
+backups/
+*.sql
+
+# local environment
+.env.local
