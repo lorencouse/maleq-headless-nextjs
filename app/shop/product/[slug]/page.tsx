@@ -1,8 +1,13 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
+import { getProductsByCategory } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import ProductPageClient from '@/components/product/ProductPageClient';
+import ProductReviews from '@/components/reviews/ProductReviews';
+import RelatedProducts from '@/components/product/RelatedProducts';
+import RecentlyViewed from '@/components/product/RecentlyViewed';
+import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 
 export const revalidate = 3600; // Revalidate every hour for stock updates
 
@@ -32,6 +37,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   // Get primary category
   const primaryCategory = product.categories?.[0];
+
+  // Fetch related products from same category
+  let relatedProducts: Awaited<ReturnType<typeof getProductsByCategory>> = [];
+  if (primaryCategory?.slug) {
+    try {
+      relatedProducts = await getProductsByCategory(primaryCategory.slug, 8);
+    } catch (error) {
+      console.error('Error fetching related products:', error);
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -95,6 +110,36 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {product.specifications && product.specifications.length > 0 && (
         <ProductSpecifications specifications={product.specifications} />
       )}
+
+      {/* Product Reviews */}
+      <ProductReviews
+        productId={product.databaseId}
+        productName={product.name}
+        averageRating={product.averageRating || 0}
+        reviewCount={product.reviewCount || 0}
+      />
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <RelatedProducts
+          products={relatedProducts}
+          currentProductId={product.id}
+          title="You May Also Like"
+        />
+      )}
+
+      {/* Recently Viewed */}
+      <RecentlyViewed currentProductId={product.id} />
+
+      {/* Track this product view */}
+      <TrackRecentlyViewed
+        productId={product.databaseId?.toString() || product.id}
+        name={product.name}
+        slug={product.slug}
+        price={parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0')}
+        regularPrice={parseFloat(product.regularPrice?.replace(/[^0-9.]/g, '') || '0')}
+        image={product.image || undefined}
+      />
     </div>
   );
 }

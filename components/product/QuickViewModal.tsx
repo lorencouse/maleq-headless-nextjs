@@ -1,0 +1,339 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { UnifiedProduct } from '@/lib/products/combined-service';
+import { useCartStore } from '@/lib/store/cart-store';
+import { showSuccess, showError } from '@/lib/utils/toast';
+import WishlistButton from '@/components/wishlist/WishlistButton';
+
+interface QuickViewModalProps {
+  product: UnifiedProduct;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
+  const addItem = useCartStore((state) => state.addItem);
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  const isVariable = product.type === 'VARIABLE';
+  const displayStockStatus = product.stockStatus;
+
+  // Close on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
+
+  const formatPrice = (price: string | null | undefined) => {
+    if (!price) return 'N/A';
+    if (price.startsWith('$')) return price;
+    const num = parseFloat(price.replace(/[^0-9.-]/g, ''));
+    return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
+  };
+
+  const priceToNumber = (price: string | null | undefined): number => {
+    if (!price) return 0;
+    const cleaned = price.replace(/[^0-9.]/g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
+  const handleAddToCart = async () => {
+    if (displayStockStatus === 'OUT_OF_STOCK') {
+      showError('This product is out of stock');
+      return;
+    }
+
+    if (isVariable) {
+      // Redirect to product page for variable products
+      onClose();
+      window.location.href = `/shop/product/${product.slug}`;
+      return;
+    }
+
+    setIsAdding(true);
+
+    try {
+      addItem({
+        productId: product.databaseId?.toString() || product.id,
+        name: product.name,
+        slug: product.slug,
+        sku: product.sku || '',
+        price: priceToNumber(product.price || product.regularPrice),
+        regularPrice: priceToNumber(product.regularPrice),
+        quantity: quantity,
+        image: product.image || undefined,
+        stockQuantity: product.stockQuantity || undefined,
+        maxQuantity: product.stockQuantity || 999,
+        inStock: displayStockStatus === 'IN_STOCK',
+        type: product.type,
+      });
+
+      showSuccess(`${product.name} added to cart!`);
+      setQuantity(1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      showError('Failed to add product to cart');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Build gallery
+  const gallery = [
+    product.image,
+    ...(product.galleryImages || []),
+  ].filter(Boolean);
+
+  if (!isOpen) return null;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 z-50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="relative bg-background rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-muted transition-colors"
+            aria-label="Close quick view"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+            {/* Image Section */}
+            <div className="space-y-4">
+              {/* Main Image */}
+              <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
+                {gallery[selectedImageIndex] ? (
+                  <Image
+                    src={gallery[selectedImageIndex]!.url}
+                    alt={gallery[selectedImageIndex]!.altText || product.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    No Image
+                  </div>
+                )}
+
+                {/* Sale Badge */}
+                {product.onSale && (
+                  <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    SALE
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnail Gallery */}
+              {gallery.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {gallery.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
+                        selectedImageIndex === index
+                          ? 'border-primary'
+                          : 'border-transparent hover:border-muted-foreground/30'
+                      }`}
+                    >
+                      {img && (
+                        <Image
+                          src={img.url}
+                          alt={img.altText || `${product.name} - ${index + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Product Info Section */}
+            <div className="flex flex-col">
+              {/* Category */}
+              {product.categories?.[0] && (
+                <span className="text-sm text-muted-foreground mb-2">
+                  {product.categories[0].name}
+                </span>
+              )}
+
+              {/* Name */}
+              <h2 className="text-2xl font-bold text-foreground mb-4">{product.name}</h2>
+
+              {/* Price */}
+              <div className="mb-4">
+                {product.onSale && product.regularPrice ? (
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-2xl font-bold text-red-600">
+                      {formatPrice(product.salePrice)}
+                    </span>
+                    <span className="text-lg text-muted-foreground line-through">
+                      {formatPrice(product.regularPrice)}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-2xl font-bold text-foreground">
+                    {formatPrice(product.price || product.regularPrice)}
+                  </span>
+                )}
+              </div>
+
+              {/* Stock Status */}
+              <div className="flex items-center gap-2 mb-4">
+                {displayStockStatus === 'IN_STOCK' ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    In Stock
+                  </span>
+                ) : displayStockStatus === 'OUT_OF_STOCK' ? (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-red-600">
+                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                    Out of Stock
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-sm text-yellow-600">
+                    <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                    On Backorder
+                  </span>
+                )}
+              </div>
+
+              {/* Short Description */}
+              {product.shortDescription && (
+                <p className="text-muted-foreground mb-6 line-clamp-3">
+                  {product.shortDescription.replace(/<[^>]*>/g, '')}
+                </p>
+              )}
+
+              {/* Variable Product Notice */}
+              {isVariable && (
+                <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
+                  This product has multiple options. View full details to select options.
+                </div>
+              )}
+
+              {/* Quantity and Add to Cart */}
+              {!isVariable && displayStockStatus !== 'OUT_OF_STOCK' && (
+                <div className="flex gap-3 mb-4">
+                  <div className="flex items-center border border-input rounded-lg">
+                    <button
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Decrease quantity"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="px-4 py-2 text-foreground font-medium min-w-[48px] text-center">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity((q) => q + 1)}
+                      className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Increase quantity"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={isAdding}
+                    className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
+                  >
+                    {isAdding ? 'Adding...' : 'Add to Cart'}
+                  </button>
+                </div>
+              )}
+
+              {/* Variable Product - Go to Product Page */}
+              {isVariable && (
+                <Link
+                  href={`/shop/product/${product.slug}`}
+                  onClick={onClose}
+                  className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center mb-4"
+                >
+                  Select Options
+                </Link>
+              )}
+
+              {/* Out of Stock - View Details */}
+              {displayStockStatus === 'OUT_OF_STOCK' && (
+                <Link
+                  href={`/shop/product/${product.slug}`}
+                  onClick={onClose}
+                  className="w-full py-3 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-semibold text-center mb-4"
+                >
+                  View Details
+                </Link>
+              )}
+
+              {/* Wishlist and View Details */}
+              <div className="flex gap-3">
+                <WishlistButton
+                  productId={product.databaseId?.toString() || product.id}
+                  name={product.name}
+                  slug={product.slug}
+                  price={priceToNumber(product.price || product.regularPrice)}
+                  regularPrice={priceToNumber(product.regularPrice)}
+                  image={product.image || undefined}
+                  inStock={displayStockStatus === 'IN_STOCK'}
+                  variant="button"
+                  className="flex-1"
+                />
+              </div>
+
+              {/* View Full Details Link */}
+              <Link
+                href={`/shop/product/${product.slug}`}
+                onClick={onClose}
+                className="mt-4 text-center text-sm text-primary hover:underline"
+              >
+                View Full Product Details
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

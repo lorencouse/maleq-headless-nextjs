@@ -5,6 +5,7 @@ import VariationSelector from './VariationSelector';
 import { EnhancedProduct } from '@/lib/products/product-service';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import WishlistButton from '@/components/wishlist/WishlistButton';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
@@ -234,9 +235,16 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
             {isAdding ? 'Adding...' : displayStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>
-        <button className="w-full border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors font-semibold">
-          Add to Wishlist
-        </button>
+        <WishlistButton
+          productId={product.databaseId?.toString() || product.id}
+          name={product.name}
+          slug={product.slug}
+          price={priceToNumber(displayPrice)}
+          regularPrice={priceToNumber(product.regularPrice)}
+          image={product.image || undefined}
+          inStock={displayStockStatus === 'IN_STOCK'}
+          variant="button"
+        />
       </div>
 
       {/* Quick Info */}

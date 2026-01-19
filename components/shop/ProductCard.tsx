@@ -1,13 +1,19 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import QuickAddButton from './QuickAddButton';
+import WishlistButton from '@/components/wishlist/WishlistButton';
+import QuickViewModal from '@/components/product/QuickViewModal';
 
 interface ProductCardProps {
   product: UnifiedProduct;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const formatPrice = (price: string | null | undefined) => {
     if (!price) return 'N/A';
     // WPGraphQL returns prices already formatted (e.g., "$82.35")
@@ -53,6 +59,37 @@ export default function ProductCard({ product }: ProductCardProps) {
               OUT OF STOCK
             </div>
           )}
+
+          {/* Quick Actions */}
+          <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Quick View Button */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsQuickViewOpen(true);
+              }}
+              className="p-2 rounded-full bg-background/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Quick view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+
+            {/* Wishlist Button */}
+            <WishlistButton
+              productId={product.databaseId?.toString() || product.id}
+              name={product.name}
+              slug={product.slug}
+              price={parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0')}
+              regularPrice={parseFloat(product.regularPrice?.replace(/[^0-9.]/g, '') || '0')}
+              image={product.image || undefined}
+              inStock={product.stockStatus === 'IN_STOCK'}
+              variant="icon"
+            />
+          </div>
         </div>
 
         <div className="p-4">
@@ -121,6 +158,13 @@ export default function ProductCard({ product }: ProductCardProps) {
       <div className="p-4 pt-0">
         <QuickAddButton product={product} />
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal
+        product={product}
+        isOpen={isQuickViewOpen}
+        onClose={() => setIsQuickViewOpen(false)}
+      />
     </div>
   );
 }

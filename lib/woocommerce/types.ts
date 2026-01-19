@@ -145,6 +145,25 @@ export interface WooStockUpdate {
   stock_status: 'instock' | 'outofstock' | 'onbackorder';
 }
 
+// Review Types
+export interface WooReview {
+  id?: number;
+  date_created?: string;
+  date_created_gmt?: string;
+  product_id: number;
+  status?: 'approved' | 'hold' | 'spam' | 'unspam' | 'trash' | 'untrash';
+  reviewer: string;
+  reviewer_email: string;
+  review: string;
+  rating: number;
+  verified?: boolean;
+  reviewer_avatar_urls?: {
+    '24': string;
+    '48': string;
+    '96': string;
+  };
+}
+
 // Error Types
 export interface WooApiError {
   code: string;

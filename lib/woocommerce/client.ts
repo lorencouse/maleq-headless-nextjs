@@ -7,6 +7,7 @@ import type {
   WooStockUpdate,
   WooBatchRequest,
   WooBatchResponse,
+  WooReview,
 } from './types';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
@@ -347,6 +348,55 @@ class WooCommerceClient {
     return this.request<WooBatchResponse<WooProduct>>('/products/batch', {
       method: 'POST',
       body: JSON.stringify(batch),
+    });
+  }
+
+  // ============ REVIEWS ============
+
+  async getReviews(params: {
+    product?: number;
+    per_page?: number;
+    page?: number;
+    status?: 'approved' | 'hold' | 'spam' | 'trash' | 'all';
+  } = {}): Promise<WooReview[]> {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    });
+
+    return this.request<WooReview[]>(`/products/reviews?${searchParams.toString()}`);
+  }
+
+  async getProductReviews(productId: number, params: {
+    per_page?: number;
+    page?: number;
+  } = {}): Promise<WooReview[]> {
+    return this.getReviews({ product: productId, status: 'approved', ...params });
+  }
+
+  async getReviewById(reviewId: number): Promise<WooReview> {
+    return this.request<WooReview>(`/products/reviews/${reviewId}`);
+  }
+
+  async createReview(review: Omit<WooReview, 'id' | 'date_created' | 'date_created_gmt' | 'verified' | 'reviewer_avatar_urls'>): Promise<WooReview> {
+    return this.request<WooReview>('/products/reviews', {
+      method: 'POST',
+      body: JSON.stringify(review),
+    });
+  }
+
+  async updateReview(reviewId: number, review: Partial<WooReview>): Promise<WooReview> {
+    return this.request<WooReview>(`/products/reviews/${reviewId}`, {
+      method: 'PUT',
+      body: JSON.stringify(review),
+    });
+  }
+
+  async deleteReview(reviewId: number, force = false): Promise<WooReview> {
+    return this.request<WooReview>(`/products/reviews/${reviewId}?force=${force}`, {
+      method: 'DELETE',
     });
   }
 
