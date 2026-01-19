@@ -27,7 +27,7 @@ interface UploadedImage extends ProcessedImage {
 export class ImageProcessor {
   private cacheDir: string;
   private readonly TARGET_SIZE = 650;
-  private readonly WEBP_QUALITY = 85;
+  private readonly WEBP_QUALITY = 90;
   private readonly MAX_RETRIES = 3;
   private readonly RETRY_DELAY = 1000; // ms
 

@@ -1,72 +1,122 @@
 #!/usr/bin/env bun
 
 /**
- * Image Import Script
+ * Image Import Script (Direct SQL)
  *
- * Retroactively adds images to existing products that were imported without images.
- * Matches products by SKU/barcode and uploads images.
+ * Imports images for existing products using direct MySQL access.
+ * Implements the following logic:
+ *
+ * Simple Products:
+ *   - Download and process ALL images
+ *   - First image → Featured image
+ *   - Additional images → Gallery images
+ *
+ * Variable Products (First Variation):
+ *   - Download ALL images from first variation's XML source
+ *   - First image → Parent product featured image
+ *   - Additional images → Parent product gallery
+ *   - First image → This variation's featured image
+ *
+ * Variable Products (Other Variations):
+ *   - Download ONLY the first image
+ *   - Set as variation's featured image
+ *
+ * Image Processing (via ImageProcessor):
+ *   - Convert to WebP format
+ *   - Resize to 650x650px on white canvas
+ *   - Preserve aspect ratio (no cropping)
+ *   - SEO-optimized filenames and alt text
+ *   - Quality: 90%
  *
  * Usage:
  *   bun scripts/import-images.ts [options]
  *
  * Options:
- *   --limit <n>     Limit number of products to process (default: all)
- *   --batch <n>     Batch size for processing (default: 10)
- *   --skip-existing Skip products that already have images
- *
- * Examples:
- *   bun scripts/import-images.ts --limit 100
- *   bun scripts/import-images.ts --skip-existing
+ *   --limit <n>           Limit number of products to process
+ *   --dry-run             Show what would be processed without downloading
+ *   --product-id <id>     Process a specific product by ID
+ *   --type <type>         Process only 'simple', 'variable', or 'variation'
+ *   --skip-existing       Skip products that already have images
+ *   --concurrency <n>     Number of concurrent image downloads (default: 5)
  */
 
-import { join } from 'path';
-import { XMLParser } from '../lib/import/xml-parser';
+import { createConnection, Connection } from 'mysql2/promise';
+import { XMLParser, XMLProduct } from '../lib/import/xml-parser';
 import { ImageProcessor } from '../lib/import/image-processor';
-import { wooClient } from '../lib/woocommerce/client';
+import * as path from 'path';
+import * as fs from 'fs';
+import { createHash } from 'crypto';
 
-interface ImageImportOptions {
+// WordPress uploads directory (Local by Flywheel - actual site directory)
+const WP_UPLOADS_DIR = '/Users/lorencouse/Local Sites/maleq-local/app/public/wp-content/uploads';
+const WP_SITE_URL = 'http://maleq-local.local';
+
+interface ImportOptions {
   limit?: number;
-  batchSize: number;
+  dryRun: boolean;
+  productId?: number;
+  productType?: 'simple' | 'variable' | 'variation';
   skipExisting: boolean;
+  concurrency: number;
 }
 
-/**
- * Parse command line arguments
- */
-function parseArgs(): ImageImportOptions {
+interface ProductToProcess {
+  productId: number;
+  productName: string;
+  productSlug: string;
+  sku: string;
+  productType: string;
+  parentId: number | null;
+  isFirstVariation: boolean;
+  xmlImages: string[];
+}
+
+function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
-  const options: ImageImportOptions = {
-    batchSize: 10,
+  const options: ImportOptions = {
+    dryRun: false,
     skipExisting: false,
+    concurrency: 5,
   };
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-
     if (arg === '--limit' && i + 1 < args.length) {
       options.limit = parseInt(args[i + 1], 10);
       i++;
-    } else if (arg === '--batch' && i + 1 < args.length) {
-      options.batchSize = parseInt(args[i + 1], 10);
+    } else if (arg === '--dry-run') {
+      options.dryRun = true;
+    } else if (arg === '--product-id' && i + 1 < args.length) {
+      options.productId = parseInt(args[i + 1], 10);
+      i++;
+    } else if (arg === '--type' && i + 1 < args.length) {
+      options.productType = args[i + 1] as 'simple' | 'variable' | 'variation';
       i++;
     } else if (arg === '--skip-existing') {
       options.skipExisting = true;
+    } else if (arg === '--concurrency' && i + 1 < args.length) {
+      options.concurrency = parseInt(args[i + 1], 10);
+      i++;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
-Image Import Script
+Image Import Script (Direct SQL)
 
 Usage:
   bun scripts/import-images.ts [options]
 
 Options:
-  --limit <n>        Limit number of products to process (default: all)
-  --batch <n>        Batch size for processing (default: 10)
-  --skip-existing    Skip products that already have images
-  --help, -h         Show this help message
+  --limit <n>           Limit number of products to process
+  --dry-run             Show what would be processed without downloading
+  --product-id <id>     Process a specific product by ID
+  --type <type>         Process only 'simple', 'variable', or 'variation'
+  --skip-existing       Skip products that already have images
+  --concurrency <n>     Number of concurrent image downloads (default: 5)
+  --help, -h            Show this help message
 
 Examples:
-  bun scripts/import-images.ts --limit 100
-  bun scripts/import-images.ts --skip-existing --batch 20
+  bun scripts/import-images.ts --limit 10 --dry-run
+  bun scripts/import-images.ts --type simple --skip-existing
+  bun scripts/import-images.ts --product-id 12345
       `);
       process.exit(0);
     }
@@ -75,226 +125,553 @@ Examples:
   return options;
 }
 
-/**
- * Main import function
- */
+class DirectImageImporter {
+  private connection: Connection;
+  private imageProcessor: ImageProcessor;
+  private xmlProducts: Map<string, XMLProduct> = new Map();
+
+  // Stats
+  private processedCount = 0;
+  private successCount = 0;
+  private errorCount = 0;
+  private skippedCount = 0;
+  private imagesDownloaded = 0;
+
+  constructor(connection: Connection) {
+    this.connection = connection;
+    this.imageProcessor = new ImageProcessor();
+  }
+
+  /**
+   * Initialize the importer
+   */
+  async init(): Promise<void> {
+    await this.imageProcessor.init();
+  }
+
+  /**
+   * Load XML products and create SKU lookup map
+   */
+  async loadXMLProducts(xmlPath: string): Promise<void> {
+    const parser = new XMLParser(xmlPath);
+    const products = await parser.parseProducts();
+
+    for (const product of products) {
+      // Map by both SKU and barcode for flexible lookup
+      if (product.sku) {
+        this.xmlProducts.set(product.sku.toUpperCase(), product);
+      }
+      if (product.barcode) {
+        this.xmlProducts.set(product.barcode.toUpperCase(), product);
+      }
+    }
+
+    console.log(`✓ Loaded ${products.length} products from XML`);
+    console.log(`  - ${this.xmlProducts.size} SKU/barcode mappings created`);
+  }
+
+  /**
+   * Get products that need images
+   */
+  async getProductsNeedingImages(options: ImportOptions): Promise<ProductToProcess[]> {
+    let query = `
+      SELECT
+        p.ID as productId,
+        p.post_title as productName,
+        p.post_name as productSlug,
+        pm_sku.meta_value as sku,
+        t.slug as productType,
+        p.post_parent as parentId,
+        p.menu_order as menuOrder
+      FROM wp_posts p
+      LEFT JOIN wp_postmeta pm_sku ON p.ID = pm_sku.post_id AND pm_sku.meta_key = '_sku'
+      LEFT JOIN wp_term_relationships tr ON p.ID = tr.object_id
+      LEFT JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'product_type'
+      LEFT JOIN wp_terms t ON tt.term_id = t.term_id
+      WHERE p.post_type IN ('product', 'product_variation')
+      AND p.post_status = 'publish'
+    `;
+
+    const params: any[] = [];
+
+    if (options.productId) {
+      query += ' AND p.ID = ?';
+      params.push(options.productId);
+    }
+
+    if (options.productType) {
+      if (options.productType === 'variation') {
+        query += " AND p.post_type = 'product_variation'";
+      } else {
+        query += ' AND t.slug = ?';
+        params.push(options.productType);
+      }
+    }
+
+    if (options.skipExisting) {
+      query += ` AND NOT EXISTS (
+        SELECT 1 FROM wp_postmeta pm_thumb
+        WHERE pm_thumb.post_id = p.ID
+        AND pm_thumb.meta_key = '_thumbnail_id'
+        AND pm_thumb.meta_value IS NOT NULL
+        AND pm_thumb.meta_value != ''
+        AND pm_thumb.meta_value != '0'
+      )`;
+    }
+
+    query += ' ORDER BY p.post_type DESC, p.post_parent, p.menu_order, p.ID';
+
+    if (options.limit) {
+      query += ` LIMIT ${options.limit}`;
+    }
+
+    const [rows] = await this.connection.execute(query, params);
+    const products = rows as any[];
+
+    // Track first variation for each parent
+    const parentFirstVariation = new Map<number, number>();
+
+    const result: ProductToProcess[] = [];
+
+    for (const row of products) {
+      const isVariation = row.productType === null && row.parentId > 0;
+      let isFirstVariation = false;
+
+      if (isVariation) {
+        if (!parentFirstVariation.has(row.parentId)) {
+          parentFirstVariation.set(row.parentId, row.productId);
+          isFirstVariation = true;
+        }
+      }
+
+      // Find XML product by SKU
+      const sku = row.sku?.toUpperCase();
+      const xmlProduct = sku ? this.xmlProducts.get(sku) : null;
+
+      if (!xmlProduct) {
+        continue; // Skip products without XML match
+      }
+
+      const xmlImages = xmlProduct.images || [];
+      if (xmlImages.length === 0) {
+        continue; // Skip products without images
+      }
+
+      result.push({
+        productId: row.productId,
+        productName: row.productName || xmlProduct.name,
+        productSlug: row.productSlug,
+        sku: row.sku,
+        productType: isVariation ? 'variation' : (row.productType || 'simple'),
+        parentId: row.parentId,
+        isFirstVariation,
+        xmlImages,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Get the uploads subdirectory for current month
+   */
+  getUploadsSubdir(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}/${month}`;
+  }
+
+  /**
+   * Save processed image to WordPress uploads and create attachment
+   */
+  async createAttachment(
+    imagePath: string,
+    filename: string,
+    productName: string,
+    index: number
+  ): Promise<number | null> {
+    try {
+      const subdir = this.getUploadsSubdir();
+      const uploadDir = path.join(WP_UPLOADS_DIR, subdir);
+
+      // Ensure directory exists
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+
+      // Read processed image
+      const imageBuffer = fs.readFileSync(imagePath);
+
+      // Check if file exists, add hash if needed
+      let finalFilename = filename;
+      let filePath = path.join(uploadDir, finalFilename);
+
+      if (fs.existsSync(filePath)) {
+        const hash = createHash('md5').update(imageBuffer).digest('hex').substring(0, 8);
+        finalFilename = filename.replace('.webp', `-${hash}.webp`);
+        filePath = path.join(uploadDir, finalFilename);
+      }
+
+      // Write file to uploads
+      fs.writeFileSync(filePath, imageBuffer);
+
+      // Create WordPress attachment
+      const altText = `${productName} - Image ${index}`;
+      const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+      const guid = `${WP_SITE_URL}/wp-content/uploads/${subdir}/${finalFilename}`;
+
+      // Insert attachment post
+      const [result] = await this.connection.execute(
+        `INSERT INTO wp_posts (
+          post_author, post_date, post_date_gmt, post_content, post_title,
+          post_excerpt, post_status, comment_status, ping_status, post_password,
+          post_name, to_ping, pinged, post_modified, post_modified_gmt,
+          post_content_filtered, post_parent, guid, menu_order, post_type, post_mime_type
+        ) VALUES (1, ?, ?, '', ?, '', 'inherit', 'open', 'closed', '', ?, '', '', ?, ?, '', 0, ?, 0, 'attachment', 'image/webp')`,
+        [now, now, altText, finalFilename.replace('.webp', ''), now, now, guid]
+      );
+
+      const attachmentId = (result as any).insertId;
+
+      // Add attachment metadata
+      const attachedFile = `${subdir}/${finalFilename}`;
+      const metadata = this.generateAttachmentMetadata(imageBuffer, attachedFile);
+
+      await this.connection.execute(
+        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES
+          (?, '_wp_attached_file', ?),
+          (?, '_wp_attachment_metadata', ?),
+          (?, '_wp_attachment_image_alt', ?)`,
+        [
+          attachmentId, attachedFile,
+          attachmentId, this.phpSerialize(metadata),
+          attachmentId, altText,
+        ]
+      );
+
+      this.imagesDownloaded++;
+      return attachmentId;
+    } catch (error) {
+      console.error(`  ✗ Failed to create attachment: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * Generate WordPress attachment metadata
+   */
+  generateAttachmentMetadata(imageBuffer: Buffer, attachedFile: string): object {
+    return {
+      width: 650,
+      height: 650,
+      file: attachedFile,
+      filesize: imageBuffer.length,
+      sizes: {},
+      image_meta: {
+        aperture: '0',
+        credit: '',
+        camera: '',
+        caption: '',
+        created_timestamp: '0',
+        copyright: '',
+        focal_length: '0',
+        iso: '0',
+        shutter_speed: '0',
+        title: '',
+        orientation: '1',
+        keywords: [],
+      },
+    };
+  }
+
+  /**
+   * Simple PHP serialize for metadata
+   */
+  phpSerialize(obj: any): string {
+    if (obj === null) return 'N;';
+    if (typeof obj === 'boolean') return `b:${obj ? 1 : 0};`;
+    if (typeof obj === 'number') {
+      if (Number.isInteger(obj)) return `i:${obj};`;
+      return `d:${obj};`;
+    }
+    if (typeof obj === 'string') return `s:${obj.length}:"${obj}";`;
+    if (Array.isArray(obj)) {
+      const items = obj.map((v, i) => `${this.phpSerialize(i)}${this.phpSerialize(v)}`).join('');
+      return `a:${obj.length}:{${items}}`;
+    }
+    if (typeof obj === 'object') {
+      const entries = Object.entries(obj);
+      const items = entries.map(([k, v]) => `${this.phpSerialize(k)}${this.phpSerialize(v)}`).join('');
+      return `a:${entries.length}:{${items}}`;
+    }
+    return 'N;';
+  }
+
+  /**
+   * Set product featured image
+   */
+  async setFeaturedImage(productId: number, attachmentId: number): Promise<void> {
+    const [existing] = await this.connection.execute(
+      `SELECT meta_id FROM wp_postmeta WHERE post_id = ? AND meta_key = '_thumbnail_id'`,
+      [productId]
+    );
+
+    if ((existing as any[]).length > 0) {
+      await this.connection.execute(
+        `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_thumbnail_id'`,
+        [attachmentId.toString(), productId]
+      );
+    } else {
+      await this.connection.execute(
+        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_thumbnail_id', ?)`,
+        [productId, attachmentId.toString()]
+      );
+    }
+  }
+
+  /**
+   * Set product gallery images
+   */
+  async setGalleryImages(productId: number, attachmentIds: number[]): Promise<void> {
+    if (attachmentIds.length === 0) return;
+
+    const galleryValue = attachmentIds.join(',');
+
+    const [existing] = await this.connection.execute(
+      `SELECT meta_id FROM wp_postmeta WHERE post_id = ? AND meta_key = '_product_image_gallery'`,
+      [productId]
+    );
+
+    if ((existing as any[]).length > 0) {
+      await this.connection.execute(
+        `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_product_image_gallery'`,
+        [galleryValue, productId]
+      );
+    } else {
+      await this.connection.execute(
+        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_product_image_gallery', ?)`,
+        [productId, galleryValue]
+      );
+    }
+  }
+
+  /**
+   * Process images for a single product
+   */
+  async processProductImages(product: ProductToProcess, options: ImportOptions): Promise<boolean> {
+    const { productId, productName, xmlImages, productType, isFirstVariation, parentId } = product;
+
+    // Determine which images to download based on product type
+    let imagesToDownload: string[];
+
+    if (productType === 'variation' && !isFirstVariation) {
+      // Non-first variations: only download first image
+      imagesToDownload = xmlImages.slice(0, 1);
+    } else {
+      // Simple products, variable products, or first variation: download all
+      imagesToDownload = xmlImages;
+    }
+
+    if (options.dryRun) {
+      console.log(`  [DRY RUN] Would download ${imagesToDownload.length} image(s)`);
+      return true;
+    }
+
+    try {
+      // Process images using ImageProcessor (handles download, resize, webp conversion)
+      // Note: Williams Trading images are at http://images.williams-trading.com/product_images
+      const processedImages = await this.imageProcessor.processProductImages(
+        imagesToDownload,
+        productName,
+        'http://images.williams-trading.com/product_images'
+      );
+
+      if (processedImages.length === 0) {
+        console.log(`  ⚠ No images were successfully processed`);
+        return false;
+      }
+
+      // Create attachments for processed images
+      const attachmentIds: number[] = [];
+
+      for (let i = 0; i < processedImages.length; i++) {
+        const processed = processedImages[i];
+        const attachmentId = await this.createAttachment(
+          processed.localPath,
+          processed.filename,
+          productName,
+          i + 1
+        );
+
+        if (attachmentId) {
+          attachmentIds.push(attachmentId);
+        }
+      }
+
+      if (attachmentIds.length === 0) {
+        console.log(`  ⚠ No attachments were created`);
+        return false;
+      }
+
+      // Set featured image for this product
+      await this.setFeaturedImage(productId, attachmentIds[0]);
+
+      // Handle gallery and parent images based on product type
+      if (productType === 'variation' && isFirstVariation && parentId) {
+        // First variation: set parent's featured and gallery images
+        await this.setFeaturedImage(parentId, attachmentIds[0]);
+        if (attachmentIds.length > 1) {
+          await this.setGalleryImages(parentId, attachmentIds.slice(1));
+        }
+        console.log(`  ✓ Set parent (${parentId}) featured + ${attachmentIds.length - 1} gallery images`);
+      } else if (productType === 'simple' || productType === 'variable') {
+        // Simple/variable product: set gallery images
+        if (attachmentIds.length > 1) {
+          await this.setGalleryImages(productId, attachmentIds.slice(1));
+        }
+      }
+
+      console.log(`  ✓ Added ${attachmentIds.length} image(s)`);
+      return true;
+    } catch (error) {
+      console.error(`  ✗ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      return false;
+    }
+  }
+
+  /**
+   * Process all products
+   */
+  async processAll(products: ProductToProcess[], options: ImportOptions): Promise<void> {
+    const total = products.length;
+    console.log(`\nProcessing ${total} products...\n`);
+
+    const startTime = Date.now();
+
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+      this.processedCount++;
+
+      const imageCount = product.productType === 'variation' && !product.isFirstVariation
+        ? 1
+        : product.xmlImages.length;
+
+      console.log(`[${this.processedCount}/${total}] ${product.productName} (${product.productType}) - ${imageCount} image(s)`);
+
+      const success = await this.processProductImages(product, options);
+
+      if (success) {
+        this.successCount++;
+      } else {
+        this.errorCount++;
+      }
+
+      // Progress update every 10 products
+      if (this.processedCount % 10 === 0) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const rate = this.processedCount / elapsed;
+        const remaining = (total - this.processedCount) / rate;
+        console.log(`\n--- Progress: ${this.processedCount}/${total} (${Math.round(this.processedCount / total * 100)}%) - ETA: ${Math.round(remaining)}s ---\n`);
+      }
+    }
+  }
+
+  /**
+   * Print summary
+   */
+  printSummary(): void {
+    console.log('\n=== IMAGE IMPORT SUMMARY ===');
+    console.log(`Products Processed: ${this.processedCount}`);
+    console.log(`  - Success: ${this.successCount}`);
+    console.log(`  - Errors: ${this.errorCount}`);
+    console.log(`  - Skipped: ${this.skippedCount}`);
+    console.log(`Images Downloaded: ${this.imagesDownloaded}`);
+  }
+}
+
 async function main() {
-  const startTime = Date.now();
   const options = parseArgs();
 
   console.log('\n╔════════════════════════════════════════╗');
-  console.log('║   Product Image Import Script         ║');
+  console.log('║  Product Image Import Script (SQL)     ║');
   console.log('╚════════════════════════════════════════╝\n');
 
   console.log('Configuration:');
-  console.log(`  Batch Size: ${options.batchSize}`);
-  console.log(`  Skip Existing: ${options.skipExisting ? 'Yes' : 'No'}`);
-  if (options.limit) {
-    console.log(`  Product Limit: ${options.limit}`);
-  }
-  console.log();
+  console.log(`  Image Size: 650x650px (WebP, 85% quality)`);
+  console.log(`  Concurrency: ${options.concurrency}`);
+  console.log(`  Dry Run: ${options.dryRun}`);
+  console.log(`  Skip Existing: ${options.skipExisting}`);
+  if (options.limit) console.log(`  Limit: ${options.limit}`);
+  if (options.productId) console.log(`  Product ID: ${options.productId}`);
+  if (options.productType) console.log(`  Product Type: ${options.productType}`);
 
-  // Test WooCommerce connection
-  console.log('Testing WooCommerce connection...');
-  const connected = await wooClient.testConnection();
-
-  if (!connected) {
-    console.error('✗ Failed to connect to WooCommerce API');
-    process.exit(1);
-  }
-
-  console.log('✓ Connected to WooCommerce\n');
-
-  // Parse XML file
-  const xmlPath = join(process.cwd(), 'data', 'products-filtered.xml');
-  console.log(`Loading products from: ${xmlPath}`);
-
-  const parser = new XMLParser(xmlPath);
-  const xmlProducts = await parser.parseProducts();
-
-  console.log(`✓ Parsed ${xmlProducts.length} products from XML\n`);
-
-  // Create SKU to XML product mapping
-  const skuMap = new Map<string, typeof xmlProducts[0]>();
-  for (const product of xmlProducts) {
-    if (product.barcode) {
-      skuMap.set(product.barcode, product);
-    }
-  }
-
-  // Initialize image processor
-  const imageProcessor = new ImageProcessor();
-  await imageProcessor.init();
-
-  console.log('=== FETCHING WOOCOMMERCE PRODUCTS ===\n');
-
-  // Fetch all products from WooCommerce
-  let page = 1;
-  let allWooProducts: any[] = [];
-
-  while (true) {
-    const products = await wooClient.getProducts({ per_page: 100, page });
-    if (products.length === 0) break;
-    allWooProducts.push(...products);
-    console.log(`Fetched page ${page}: ${products.length} products`);
-    page++;
-  }
-
-  console.log(`\n✓ Total products in WooCommerce: ${allWooProducts.length}\n`);
-
-  // Filter products that need images
-  const productsToProcess = allWooProducts.filter(product => {
-    if (options.skipExisting && product.images && product.images.length > 0) {
-      return false;
-    }
-    return true;
+  // Connect to database
+  const connection = await createConnection({
+    socketPath: '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
+    user: 'root',
+    password: 'root',
+    database: 'local',
   });
 
-  console.log(`Products needing images: ${productsToProcess.length}\n`);
+  console.log('\n✓ Connected to Local MySQL database');
 
-  if (options.limit) {
-    productsToProcess.splice(options.limit);
+  const importer = new DirectImageImporter(connection);
+  await importer.init();
+
+  // Load XML products
+  const xmlPath = path.join(process.cwd(), 'data/products-filtered.xml');
+  await importer.loadXMLProducts(xmlPath);
+
+  // Get products needing images
+  console.log('\nFinding products that need images...');
+  const products = await importer.getProductsNeedingImages(options);
+  console.log(`✓ Found ${products.length} products to process`);
+
+  if (products.length === 0) {
+    console.log('\nNo products need images. Exiting.');
+    await connection.end();
+    return;
   }
 
-  console.log('=== PROCESSING IMAGES ===\n');
+  // Show breakdown by type
+  const simpleCount = products.filter(p => p.productType === 'simple').length;
+  const variableCount = products.filter(p => p.productType === 'variable').length;
+  const variationCount = products.filter(p => p.productType === 'variation').length;
+  const firstVariationCount = products.filter(p => p.productType === 'variation' && p.isFirstVariation).length;
 
-  let processed = 0;
-  let updated = 0;
-  let skipped = 0;
-  let errors: Array<{ id: number; name: string; error: string }> = [];
+  console.log('\nBreakdown:');
+  console.log(`  - Simple products: ${simpleCount}`);
+  console.log(`  - Variable products: ${variableCount}`);
+  console.log(`  - Variations: ${variationCount} (${firstVariationCount} first variations)`);
 
-  // Process in batches
-  for (let i = 0; i < productsToProcess.length; i += options.batchSize) {
-    const batch = productsToProcess.slice(i, i + options.batchSize);
-
-    await Promise.all(
-      batch.map(async (wooProduct) => {
-        try {
-          processed++;
-          console.log(`\n[${processed}/${productsToProcess.length}] Processing: ${wooProduct.name}`);
-
-          // Handle variable products
-          if (wooProduct.type === 'variable') {
-            console.log('  Variable product - processing variations...');
-
-            // Fetch variations
-            const variations = await wooClient.getVariations(wooProduct.id);
-            console.log(`  Found ${variations.length} variations`);
-
-            for (const variation of variations) {
-              const xmlProduct = skuMap.get(variation.sku);
-
-              if (!xmlProduct) {
-                console.log(`  ⚠ No XML data found for SKU: ${variation.sku}`);
-                continue;
-              }
-
-              if (xmlProduct.images.length === 0) {
-                console.log(`  ⊕ No images in XML for: ${variation.sku}`);
-                continue;
-              }
-
-              // Process and upload images
-              console.log(`  Processing ${xmlProduct.images.length} images for variation ${variation.id}...`);
-              const uploadedImages = await imageProcessor.processAndUploadImages(
-                xmlProduct.images,
-                xmlProduct.name,
-                'https://images.williams-trading.com'
-              );
-
-              if (uploadedImages.length > 0) {
-                // Update variation with first image
-                await wooClient.updateVariation(wooProduct.id, variation.id, {
-                  image: {
-                    id: uploadedImages[0].mediaId,
-                    src: uploadedImages[0].url,
-                  },
-                });
-                console.log(`  ✓ Updated variation ${variation.id} with ${uploadedImages.length} images`);
-              }
-            }
-
-            updated++;
-          } else {
-            // Handle simple products
-            const xmlProduct = skuMap.get(wooProduct.sku);
-
-            if (!xmlProduct) {
-              console.log(`  ⊕ No XML data found for SKU: ${wooProduct.sku}`);
-              skipped++;
-              return;
-            }
-
-            if (xmlProduct.images.length === 0) {
-              console.log(`  ⊕ No images in XML`);
-              skipped++;
-              return;
-            }
-
-            // Process and upload images
-            console.log(`  Processing ${xmlProduct.images.length} images...`);
-            const uploadedImages = await imageProcessor.processAndUploadImages(
-              xmlProduct.images,
-              xmlProduct.name,
-              'https://images.williams-trading.com'
-            );
-
-            if (uploadedImages.length > 0) {
-              // Update product with images
-              await wooClient.updateProduct(wooProduct.id, {
-                images: uploadedImages.map((img, index) => ({
-                  id: img.mediaId,
-                  src: img.url,
-                  position: index,
-                })),
-              });
-              console.log(`  ✓ Updated with ${uploadedImages.length} images`);
-              updated++;
-            } else {
-              console.log(`  ⚠ No images uploaded`);
-              skipped++;
-            }
-          }
-        } catch (error) {
-          console.error(`  ✗ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-          errors.push({
-            id: wooProduct.id,
-            name: wooProduct.name,
-            error: error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
-      })
-    );
+  // Show sample
+  console.log('\nSample products:');
+  for (const product of products.slice(0, 5)) {
+    const imageCount = product.productType === 'variation' && !product.isFirstVariation
+      ? '1 (non-first variation)'
+      : `${product.xmlImages.length}`;
+    console.log(`  - [${product.productType}${product.isFirstVariation ? '*' : ''}] ${product.productName.substring(0, 50)}: ${imageCount} image(s)`);
+  }
+  if (products.length > 5) {
+    console.log(`  ... and ${products.length - 5} more`);
   }
 
-  const duration = Date.now() - startTime;
+  // Process images
+  const startTime = Date.now();
+  await importer.processAll(products, options);
 
-  console.log('\n=== IMAGE IMPORT SUMMARY ===');
-  console.log(`Processed: ${processed}`);
-  console.log(`Updated: ${updated}`);
-  console.log(`Skipped: ${skipped}`);
-  console.log(`Errors: ${errors.length}`);
+  // Print summary
+  importer.printSummary();
 
-  if (errors.length > 0) {
-    console.log('\nErrors:');
-    errors.slice(0, 10).forEach((err) => {
-      console.log(`  - ${err.name} (ID: ${err.id}): ${err.error}`);
-    });
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`\nDuration: ${duration}s`);
 
-    if (errors.length > 10) {
-      console.log(`  ... and ${errors.length - 10} more errors`);
-    }
-  }
-
-  console.log('\n=== IMPORT COMPLETE ===');
-  console.log(`Duration: ${(duration / 1000).toFixed(2)}s\n`);
-
-  process.exit(0);
+  await connection.end();
+  console.log('\n✓ Image import completed');
 }
 
-// Run import
-main().catch((error) => {
-  console.error('\n✗ Import failed with error:');
-  console.error(error);
+main().catch(error => {
+  console.error('Fatal error:', error);
   process.exit(1);
 });

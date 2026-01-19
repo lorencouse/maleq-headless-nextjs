@@ -129,15 +129,6 @@
       "code": "PROMO",
       "name": "PROMO",
       "reason": "Excluded Category"
-    },
-    {
-      "id": "44",
-      "code": "NV",
-      "name": "All Novelties",
-      "description": null,
-      "max_discount_rate": "35",
-      "video": "0",
-      "active": "1"
     }
   ]
 }

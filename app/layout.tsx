@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { CartProvider } from "@/components/cart/CartProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,11 +25,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased flex flex-col min-h-screen`}>
         <ThemeProvider>
-          <Header />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
+          <CartProvider>
+            <Header />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

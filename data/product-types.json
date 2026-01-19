@@ -107,6 +107,16 @@
       "max_discount_rate": "0",
       "video": "0",
       "active": "1"
+    },
+
+    {
+      "id": "44",
+      "code": "NV",
+      "name": "All Novelties",
+      "description": null,
+      "max_discount_rate": "35",
+      "video": "0",
+      "active": "1"
     }
   ]
 }

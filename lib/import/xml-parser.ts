@@ -166,19 +166,20 @@ export class XMLParser {
    * Check if a product is a bulk/display product that shouldn't be grouped as a variation
    */
   private isBulkDisplayProduct(name: string): boolean {
+    // Note: We want to be very conservative here - only skip products that are truly
+    // generic display items with no variant (like "COUNTER DISPLAY" alone).
+    // Products like "COOCHY SHAVE CREAM FROSTED CAKE FOIL 15 ML 24PC DISPLAY" should
+    // NOT be skipped because they have a scent variant (FROSTED CAKE) that can be grouped.
+    // Similarly, "BOOTY CALL FISHBOWL 65 PILLOW PACKS CHERRY" has a flavor variant.
+
+    // Only skip if it's JUST a display/counter item with no other distinguishing features
     const bulkIndicators = [
-      /\d+\s*PC\s*DISPLAY/i,
-      /\d+\s*PCS\s*DISPLAY/i,
-      /DISPLAY\s*\d+\s*PC/i,
-      /COUNTER\s*DISPLAY/i,
-      /FISH\s*BOWL/i,
-      /PILLOW\s*PACKS?\s*\d+/i,
-      /SAMPLE\s*PACKET/i,
-      /\d+\s*BOTTLE\s*DISPLAY/i,
-      /\d+PC\s*DISPLAY/i,
+      /^COUNTER\s*DISPLAY$/i,
+      /^SAMPLE\s*PACKET$/i,
+      /^DISPLAY\s*STAND$/i,
     ];
 
-    return bulkIndicators.some(pattern => pattern.test(name));
+    return bulkIndicators.some(pattern => pattern.test(name.trim()));
   }
 
   /**
@@ -283,10 +284,72 @@ export class XMLParser {
     // Product line patterns to look for
     // These are patterns where multiple groups should be merged
     const productLinePatterns = [
+      // Zodiac Mini Vibe - grouped by color (duplicate colors are OK, images differentiate)
       {
         pattern: /\bZODIAC\b/i,
         baseNamePattern: /ZODIAC\s+\w+\s+MINI\s+VIBE/i,
         targetBaseName: 'Zodiac Mini Vibe',
+        variationAttribute: 'color' as const,
+      },
+      // Lord of the Cock Rings - character names as variants
+      {
+        pattern: /\bLORD\s+OF\s+THE\s+COCK\s+RINGS?\b/i,
+        baseNamePattern: /LORD\s+OF\s+THE\s+COCK\s+RINGS?\s+\w+/i,
+        targetBaseName: 'Lord of the Cock Rings',
+      },
+      // Orange Is the New Black product line
+      {
+        pattern: /\bORANGE\s+IS\s+THE\s+NEW\s+BLACK\b/i,
+        baseNamePattern: /ORANGE\s+IS\s+THE\s+NEW\s+BLACK\s+\w+/i,
+        targetBaseName: 'Orange Is the New Black',
+      },
+      // Nipple Nibblers Sour Pleasure Balm - flavor variants
+      {
+        pattern: /\bNIPPLE\s+NIBBLERS\s+SOUR\s+PLEASURE\s+BALM\b/i,
+        baseNamePattern: /NIPPLE\s+NIBBLERS\s+SOUR\s+PLEASURE\s+BALM\s+[\w\s']+\s+3G/i,
+        targetBaseName: 'Nipple Nibblers Sour Pleasure Balm 3g',
+      },
+      // Nipple Nibblers Cool Tingle Balm - flavor variants
+      {
+        pattern: /\bNIPPLE\s+NIBBLERS\s+COOL\s+TINGLE\s+BALM\b/i,
+        baseNamePattern: /NIPPLE\s+NIBBLERS\s+COOL\s+TINGLE\s+BALM\s+[\w\s]+\s+3G/i,
+        targetBaseName: 'Nipple Nibblers Cool Tingle Balm 3g',
+      },
+      // Hemp Seed 3-in-1 Massage Candle - scent variants
+      {
+        pattern: /\bHEMP\s+SEED\s+3-IN-1\b/i,
+        baseNamePattern: /HEMP\s+SEED\s+3-IN-1\s+(MASSAGE\s+)?CANDL?E?\s+[\w\s]+\s+6OZ/i,
+        targetBaseName: 'Hemp Seed 3-in-1 Massage Candle 6oz',
+      },
+      // Addiction Cocktails Silicone Dong - cocktail name variants
+      {
+        pattern: /\bADDICTION\s+COCKTAILS\b/i,
+        baseNamePattern: /ADDICTION\s+COCKTAILS\s+[\d.]+\s+SILICONE\s+DONG\s+[\w\s]+/i,
+        targetBaseName: 'Addiction Cocktails 5.5 Silicone Dong',
+      },
+      // Goodhead Juicy Head Cocktails Spray - cocktail name variants
+      {
+        pattern: /\bGOODHEAD\s+JUICY\s+HEAD\s+COCKTAILS\b/i,
+        baseNamePattern: /GOODHEAD\s+JUICY\s+HEAD\s+COCKTAILS\s+SPRAY\s+[\w\s&]+\s+2OZ/i,
+        targetBaseName: 'Goodhead Juicy Head Cocktails Spray 2oz',
+      },
+      // Coochy Shave Cream Foil Display - scent variants
+      {
+        pattern: /\bCOOCHY\s+SHAVE\s+CREAM\b/i,
+        baseNamePattern: /COOCHY\s+SHAVE\s+CREAM\s+[\w\s]+\s+FOIL\s+15\s*ML\s+24PC\s+DISPLAY/i,
+        targetBaseName: 'Coochy Shave Cream Foil 15ml 24pc Display',
+      },
+      // Booty Call Fishbowl Pillow Packs - flavor variants
+      {
+        pattern: /\bBOOTY\s+CALL\s+FISHBOWL\b/i,
+        baseNamePattern: /BOOTY\s+CALL\s+FISHBOWL\s+65\s+PILLOW\s+PACKS\s+\w+/i,
+        targetBaseName: 'Booty Call Fishbowl 65 Pillow Packs',
+      },
+      // The 9's Booty Call Silicone Butt Plug - color/phrase variants
+      {
+        pattern: /\bTHE\s+9'?S\s+BOOTY\s+CALL\b/i,
+        baseNamePattern: /THE\s+9'?S\s+BOOTY\s+CALL\s+(SILICONE\s+)?BUTT\s+PLUG\s+\w+/i,
+        targetBaseName: "The 9's Booty Call Silicone Butt Plug",
       },
     ];
 
@@ -328,7 +391,7 @@ export class XMLParser {
           manufacturerCode,
           typeCode,
           products: mergedProducts,
-          variationAttribute: 'style', // Use style for product line variations
+          variationAttribute: (linePattern as any).variationAttribute || 'style',
         });
       }
     }
@@ -489,6 +552,80 @@ export class XMLParser {
     const strategy4Results = this.groupByKeywordPattern(singleProductGroups, indices, used);
     result.push(...strategy4Results);
 
+    // Strategy 5: Find numbered series (handles #1, #2, #3, etc.)
+    const strategy5Results = this.groupByNumberedSeriesPattern(singleProductGroups, indices, used);
+    result.push(...strategy5Results);
+
+    return result;
+  }
+
+  /**
+   * Strategy 5: Group by numbered series pattern
+   * Handles: "Dr Skin Cock Vibe #1", "Dr Skin Cock Vibe #3", etc.
+   * Also handles: "B Yours Cockvibe #1", "Xact Fit Silicone Rings #14 #15 #16"
+   */
+  private groupByNumberedSeriesPattern(
+    singleProductGroups: VariationGroup[],
+    indices: number[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
+
+    // Extract product names and their base patterns (removing #N patterns)
+    const patterns = indices.map(i => {
+      if (used.has(i)) return null;
+      const group = singleProductGroups[i];
+      const name = group.products[0]?.name.toUpperCase().trim() || '';
+
+      // Check if this product has a numbered pattern
+      const hasNumber = /#\d+/.test(name);
+      if (!hasNumber) return null;
+
+      // Remove the numbered parts to get base pattern
+      // Handles both single (#1) and multiple (#14 #15 #16) number patterns
+      const basePattern = name
+        .replace(/#\d+/g, '') // Remove #N patterns
+        .replace(/\s+/g, ' ') // Clean up multiple spaces
+        .trim();
+
+      // Extract the series numbers for grouping verification
+      const seriesNumbers = name.match(/#(\d+)/g)?.map(m => m) || [];
+
+      return { index: i, basePattern, seriesNumbers, fullName: name };
+    }).filter(p => p !== null) as Array<{ index: number; basePattern: string; seriesNumbers: string[]; fullName: string }>;
+
+    // Group by base pattern
+    const byPattern = new Map<string, typeof patterns>();
+    for (const p of patterns) {
+      if (!byPattern.has(p.basePattern)) {
+        byPattern.set(p.basePattern, []);
+      }
+      byPattern.get(p.basePattern)!.push(p);
+    }
+
+    // Create variation groups for patterns with 2+ products
+    for (const [basePattern, matches] of byPattern.entries()) {
+      if (matches.length < 2) continue;
+
+      // Check that none of these products are already used
+      if (matches.some(m => used.has(m.index))) continue;
+
+      // Mark as used
+      matches.forEach(m => used.add(m.index));
+
+      // Get all products
+      const products = matches.flatMap(m => singleProductGroups[m.index].products);
+      const firstGroup = singleProductGroups[matches[0].index];
+
+      result.push({
+        baseName: basePattern.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
+        manufacturerCode: firstGroup.manufacturerCode,
+        typeCode: firstGroup.typeCode,
+        products,
+        variationAttribute: 'style', // Use style for numbered series
+      });
+    }
+
     return result;
   }
 
@@ -507,8 +644,11 @@ export class XMLParser {
       if (used.has(i)) return null;
       const group = singleProductGroups[i];
       const name = group.products[0]?.name.toUpperCase().trim() || '';
-      // Remove common suffixes like "(NET)" before splitting
-      const cleanName = name.replace(/\s*\(NET\)\s*$/i, '').trim();
+      // Remove common suffixes like "(NET)" and trailing quote marks before splitting
+      const cleanName = name
+        .replace(/\s*\(NET\)\s*$/i, '')
+        .replace(/\s*["″"]\s*$/g, '')
+        .trim();
       const words = cleanName.split(/\s+/);
 
       // Need at least 2 words to have a pattern + model name
@@ -570,7 +710,10 @@ export class XMLParser {
       if (used.has(i)) return null;
       const group = singleProductGroups[i];
       const name = group.products[0]?.name.toUpperCase().trim() || '';
-      const cleanName = name.replace(/\s*\(NET\)\s*$/i, '').trim();
+      const cleanName = name
+        .replace(/\s*\(NET\)\s*$/i, '')
+        .replace(/\s*["″"]\s*$/g, '')
+        .trim();
       const words = cleanName.split(/\s+/);
 
       // Need at least 3 words for this pattern
@@ -688,15 +831,27 @@ export class XMLParser {
 
     // Variant words to ignore when building the key
     const variantWords = new Set([
-      // Flavors
+      // Basic flavors
       'MINT', 'CHERRY', 'STRAWBERRY', 'VANILLA', 'CHOCOLATE', 'MANGO', 'GRAPE',
       'LEMON', 'LIME', 'BANANA', 'RASPBERRY', 'BLUEBERRY', 'PEACH', 'APPLE',
       'WATERMELON', 'COCONUT', 'LAVENDER', 'PEPPERMINT', 'SPEARMINT', 'CINNAMON',
+      'HONEY', 'GINGER', 'CARAMEL', 'MOCHA', 'COFFEE', 'MELON', 'BERRY',
+      'TROPICAL', 'CITRUS', 'FLORAL', 'EUCALYPTUS', 'JASMINE',
+      // Multi-word flavor components (second word)
+      'COLADA', 'MADNESS', 'SENSATION', 'RAVE', 'BLAST', 'PIZAZZ', 'PUCKER',
+      'TWIST', 'DROP', 'MOJITO', 'MARTINI', 'BELLINI', 'COSMO', 'CHAMPAGNE',
+      // Scent names (for candles)
+      'DREAMSICLE', 'GUAVALAVA', 'SUNSATIONAL', 'MISCHIEF', 'TEASE', 'BEGGING',
+      'STOCKING', 'MUSK', 'ROSE', 'KASHMIR', 'ZEN', 'PARADISE', 'HAZE', 'NECTAR',
+      'CAKE', 'KEEN', 'SQUEEZED', 'FLING',
+      // Cocktail names
+      'LAGOON', 'SANGRIA',
       'BX', // Box suffix (like "Goodhead 4 Oz Mint Bx")
       // Colors
       'RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
       'SILVER', 'GOLD', 'ORANGE', 'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN',
-      'LIGHT', // "Light Blue", "Light Pink"
+      'BEIGE', 'IVORY', 'CREAM', 'BROWN', 'GRAY', 'GREY', 'BRONZE', 'COPPER',
+      'LIGHT', 'DARK', 'MIDNIGHT', 'PEARL', 'MATTE', 'NATURAL',
       // Sizes
       'SMALL', 'MEDIUM', 'LARGE', 'MINI', 'EXTRA', 'XL', 'XXL', 'XXXL',
       'PETITE', 'REGULAR', 'JUMBO', 'GIANT', 'KING', 'QUEEN',
@@ -704,6 +859,15 @@ export class XMLParser {
       // Zodiac signs
       'ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO',
       'LIBRA', 'SCORPIO', 'SAGITTARIUS', 'CAPRICORN', 'AQUARIUS', 'PISCES',
+      // LOTR character names (for Lord of the Cock Rings)
+      'BILBO', 'FRODO', 'GANDALF', 'LURTZ', 'ELENDIL', 'ELROND', 'SMAUG', 'SAURON',
+      'HOBBIT', 'FELLOWSHIP', 'TOWERS', 'RETURN',
+      // Body parts / phrases on products
+      'STOP', 'GIRL', 'HARD', 'YEAH', 'FUCK', 'BAD', 'HIT',
+      // Unflavored indicator
+      'UNFLAVORED', 'UNSCENTED', 'ORIGINAL',
+      // Cooling/warming indicators (often variations)
+      'COOLING', 'WARMING', 'COOL', 'WARM', 'HOT', 'COLD', 'ICE', 'FIRE',
     ]);
 
     const products = indices
@@ -974,6 +1138,9 @@ export class XMLParser {
   private extractBaseName(name: string): string {
     let baseName = name;
 
+    // Clean up trailing quote marks (often used to indicate inches)
+    baseName = baseName.replace(/\s*["″"]\s*$/g, '').trim();
+
     // Remove volume/size patterns with units (anywhere in string)
     // Matches: 2.5 oz, 2.5oz, 2.5 ounces, 8ml, 16 fl oz, 1 O, 4 O (missing z), .5 oz, etc.
     // Also handles ".5 oz" pattern (decimal without leading zero)
@@ -1004,7 +1171,29 @@ export class XMLParser {
 
     // Remove multi-word variants that indicate variations (NOT model names)
     const multiWordVariants = [
-      // Flavors
+      // Nipple Nibblers Sour flavors
+      'GIDDY GRAPE', 'PEACH PIZAZZ', 'PINEAPPLE PUCKER', "ROCKIN' RASPBERRY", 'ROCKIN RASPBERRY',
+      'SPUN SUGAR', 'WICKED WATERMELON', 'BERRY BLAST', 'WACKY WATERMELON', 'SASSY STRAWBERRY',
+      // Nipple Nibblers Cool Tingle flavors
+      'RASPBERRY RAVE', 'MELON MADNESS', 'STRAWBERRY SENSATION', 'STRAWBERRY TWIST', 'PINK LEMONADE',
+      // Goodhead Juicy Head Cocktails
+      'LEMON DROP', 'SEX ON THE BEACH', 'STRAWB & CHAMPAGNE', 'DRY MARTINI',
+      // Addiction Cocktails colors
+      'BLUE LAGOON', 'PURPLE HAZE', 'PEACH BELLINI', 'PURPLE COSMO', 'MINT MOJITO',
+      // Coochy Shave Cream scents
+      'FLORAL HAZE', 'FROSTED CAKE', 'ISLAND PARADISE', 'PEACHY KEEN', 'SWEET NECTAR',
+      // Hemp Seed 3-in-1 scents
+      'KASHMIR MUSK', 'ZEN BERRY ROSE', 'MISTLETOE MISCHIEF', 'TINSEL TEASE',
+      'YULE BE BEGGING', 'OH OH OH', 'STUFF MY STOCKING', 'DREAMSICLE', 'GUAVALAVA',
+      'HIGH TIDE', 'SKINNY DIP', 'SUNSATIONAL', 'SUMMER FLING', 'FRESH SQUEEZED',
+      'BABY ITS COLD OUTSIDE',
+      // Lord of the Cock Rings characters
+      'FRODO SINGLE', 'GANDALF BLACK', 'ELENDIL 3 PACK', 'ELROND COCK GATE',
+      // The 9's Booty Call phrases
+      "DON'T STOP", 'DONT STOP', 'BAD GIRL', 'HIT IT HARD', 'FUCK YEAH',
+      // Orange Is the New Black products
+      'L CUFFS ANKLE', 'LOVE CUFFS WRIST', 'RIDING CROP & TICKLER', 'TIE ME UPS',
+      // Standard flavors
       'PINA COLADA', 'MANGO PASSION', 'CHERRY LEMONADE', 'BUTTER RUM', 'BANANA CREAM',
       'KEY LIME', 'ORANGE CREAM', 'TAHITIAN VANILLA', 'NATURAL ALOE',
       'CREME BRULEE', 'MINT CHOCOLATE', 'COOKIES AND CREAM', 'STRAWBERRY BANANA',
@@ -1019,6 +1208,12 @@ export class XMLParser {
       'DOUBLE CLEAR', 'DOUBLE RUBBER', 'DOUBLE METAL',
       // Packaging/container types
       'FOIL PACKETS', 'FOIL PACK', 'TRAVEL SIZE', 'SAMPLE SIZE', 'SAMPLE PACK',
+      // Booty Call Fishbowl variations - remove packs indicator so flavors can be detected
+      '65 PILLOW PACKS',
+      // Display product variations - remove display indicators so scent/flavor can be detected
+      'FOIL 15 ML 24PC DISPLAY', 'FOIL 15ML 24PC DISPLAY', '15 ML 24PC DISPLAY', '15ML 24PC DISPLAY',
+      '24PC DISPLAY', '24 PC DISPLAY', '24PCS DISPLAY', '24 PCS DISPLAY',
+      '12PC DISPLAY', '12 PC DISPLAY', '48PC DISPLAY', '48 PC DISPLAY',
       // Sizes as words
       'EXTRA LARGE', 'EXTRA SMALL', 'EXTRA LONG', 'SUPER LARGE',
       'OS QUEEN', 'ONE SIZE',
@@ -1068,10 +1263,13 @@ export class XMLParser {
       'LAVENDER', 'PEPPERMINT', 'SPEARMINT', 'EUCALYPTUS', 'JASMINE',
       'CINNAMON', 'GINGER', 'HONEY', 'CARAMEL', 'MOCHA', 'COFFEE',
       'MELON', 'BERRY', 'TROPICAL', 'CITRUS', 'FLORAL',
+      'UNFLAVORED', 'UNSCENTED', 'COOLING', 'WARMING',
+      // Lord of the Cock Rings character names (single words)
+      'BILBO', 'FRODO', 'GANDALF', 'LURTZ', 'ELENDIL', 'ELROND', 'SMAUG', 'SAURON',
       // Colors (at end only)
       'RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
       'SILVER', 'GOLD', 'BRONZE', 'COPPER', 'GREY', 'GRAY', 'BROWN',
-      'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY',
+      'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY', 'ORANGE',
       // Sizes as words (at end only)
       'SMALL', 'MEDIUM', 'LARGE', 'XLARGE', 'SM', 'MED', 'LG',
       'MINI', 'PETITE', 'REGULAR', 'JUMBO', 'GIANT', 'KING',

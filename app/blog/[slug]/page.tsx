@@ -92,7 +92,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
           <span>•</span>
           <time dateTime={post.date}>{formatDate(post.date)}</time>
-          {post.commentCount > 0 && (
+          {post.commentCount && post.commentCount > 0 && (
             <>
               <span>•</span>
               <span>{post.commentCount} comments</span>

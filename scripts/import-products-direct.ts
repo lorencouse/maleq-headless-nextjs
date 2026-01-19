@@ -919,6 +919,12 @@ class DirectProductImporter {
       };
       parentMeta.push([parentId, '_product_attributes', JSON.stringify(attrData).replace(/"/g, '\\"')]);
 
+      // Set first variation as default (serialized PHP array format)
+      // Format: a:1:{s:8:"pa_color";s:6:"orange";}
+      const firstTermSlug = termSlugs[0] || '';
+      const defaultAttrSerialized = `a:1:{s:${taxonomy.length}:"${taxonomy}";s:${firstTermSlug.length}:"${firstTermSlug}";}`;
+      parentMeta.push([parentId, '_default_attributes', defaultAttrSerialized]);
+
       for (const [pid, key, value] of parentMeta) {
         await this.connection.execute(
           `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, ?, ?)`,

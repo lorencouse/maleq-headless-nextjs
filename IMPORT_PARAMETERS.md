@@ -39,7 +39,7 @@ This document defines the specifications and requirements for importing products
 - **Dimensions**: 650px × 650px (1:1 aspect ratio)
 - **Background**: White (#FFFFFF)
 - **Transparency**: None (fill with white background)
-- **Quality**: 85% WebP quality for optimal file size
+- **Quality**: 90% WebP quality for optimal file size
 
 ### Image Handling Rules
 - **Aspect Ratio Preservation**: Do NOT crop images
@@ -53,6 +53,21 @@ This document defines the specifications and requirements for importing products
   - Compress all images
   - Strip EXIF data
   - Progressive/optimized encoding
+
+### Variable Product Image Rules
+- **First Variation**:
+  - Download ALL images from the first variation's source product
+  - First image → Parent product featured image
+  - Additional images → Parent product gallery
+- **Other Variations**:
+  - Download ONLY the first image from each variation's source product
+  - Set as the variation's featured image
+- **Image Linking**: Images are linked by matching product SKU to XML product
+
+### Simple Product Image Rules
+- Download and process ALL images from the XML product
+- First image → Product featured image
+- Additional images → Product gallery
 
 ### Image SEO
 - **File Naming**: `{product-name-slug}-{number}.webp`
