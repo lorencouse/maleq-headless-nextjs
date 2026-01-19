@@ -1,5 +1,6 @@
 import type {
   WooProduct,
+  WooProductVariation,
   WooCategory,
   WooManufacturer,
   WooMediaItem,
@@ -129,19 +130,19 @@ class WooCommerceClient {
 
   // ============ PRODUCT VARIATIONS ============
 
-  async getVariations(productId: number): Promise<WooProduct[]> {
-    return this.request<WooProduct[]>(`/products/${productId}/variations`);
+  async getVariations(productId: number): Promise<WooProductVariation[]> {
+    return this.request<WooProductVariation[]>(`/products/${productId}/variations`);
   }
 
-  async createVariation(productId: number, variation: Partial<WooProduct>): Promise<WooProduct> {
-    return this.request<WooProduct>(`/products/${productId}/variations`, {
+  async createVariation(productId: number, variation: Partial<WooProductVariation>): Promise<WooProductVariation> {
+    return this.request<WooProductVariation>(`/products/${productId}/variations`, {
       method: 'POST',
       body: JSON.stringify(variation),
     });
   }
 
-  async updateVariation(productId: number, variationId: number, variation: Partial<WooProduct>): Promise<WooProduct> {
-    return this.request<WooProduct>(`/products/${productId}/variations/${variationId}`, {
+  async updateVariation(productId: number, variationId: number, variation: Partial<WooProductVariation>): Promise<WooProductVariation> {
+    return this.request<WooProductVariation>(`/products/${productId}/variations/${variationId}`, {
       method: 'PUT',
       body: JSON.stringify(variation),
     });

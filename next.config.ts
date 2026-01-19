@@ -1,6 +1,17 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Exclude data directory from webpack watching (image imports trigger recompiles)
+  webpack: (config, { dev }) => {
+    if (dev) {
+      config.watchOptions = {
+        ...config.watchOptions,
+        ignored: ['**/node_modules/**', '**/data/**', '**/.git/**'],
+      };
+    }
+    return config;
+  },
+
   images: {
     remotePatterns: [
       {

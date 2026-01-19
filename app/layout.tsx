@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
+import { Toaster } from "@/components/ui/Toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className={`${inter.className} antialiased flex flex-col min-h-screen`}>
         <ThemeProvider>
           <CartProvider>
+            <Toaster />
             <Header />
             <main className="flex-grow">
               {children}

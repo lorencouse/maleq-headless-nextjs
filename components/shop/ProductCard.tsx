@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedProduct } from '@/lib/products/combined-service';
+import QuickAddButton from './QuickAddButton';
 
 interface ProductCardProps {
   product: UnifiedProduct;
@@ -118,16 +119,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Add to Cart Button */}
       <div className="p-4 pt-0">
-        <button
-          className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary-hover transition-colors disabled:bg-muted disabled:cursor-not-allowed"
-          disabled={product.stockStatus === 'OUT_OF_STOCK'}
-        >
-          {product.stockStatus === 'OUT_OF_STOCK'
-            ? 'Out of Stock'
-            : isVariable
-              ? 'Select Options'
-              : 'Add to Cart'}
-        </button>
+        <QuickAddButton product={product} />
       </div>
     </div>
   );

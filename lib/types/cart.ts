@@ -4,7 +4,13 @@
  * Defines the structure for cart items, cart state, and cart actions
  */
 
-import { ProductImage } from './woocommerce';
+/**
+ * Cart image type (simplified version for cart storage)
+ */
+export interface CartImage {
+  url: string;
+  altText: string;
+}
 
 /**
  * Represents a single item in the shopping cart
@@ -41,7 +47,7 @@ export interface CartItem {
   subtotal: number;
 
   /** Product main image */
-  image?: ProductImage;
+  image?: CartImage;
 
   /** Variation attributes (e.g., { "Color": "Red", "Size": "Medium" }) */
   attributes?: Record<string, string>;
@@ -161,7 +167,7 @@ export interface AddToCartParams {
   price: number;
   regularPrice: number;
   quantity?: number;
-  image?: ProductImage;
+  image?: CartImage;
   attributes?: Record<string, string>;
   stockQuantity?: number;
   maxQuantity: number;

@@ -4,6 +4,13 @@ import { promisify } from 'util';
 
 const parseXML = promisify(parseString);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface XMLParseResult {
+  products?: {
+    product?: any[];
+  };
+}
+
 export interface XMLProduct {
   sku: string;
   name: string;
@@ -71,7 +78,7 @@ export class XMLParser {
    */
   async parseProducts(): Promise<XMLProduct[]> {
     const xmlContent = readFileSync(this.xmlPath, 'utf-8');
-    const result = await parseXML(xmlContent);
+    const result = await parseXML(xmlContent) as XMLParseResult;
 
     const products: XMLProduct[] = [];
 

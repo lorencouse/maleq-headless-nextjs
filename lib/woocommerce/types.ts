@@ -36,10 +36,12 @@ export interface WooProductVariation {
   price?: string;
   regular_price?: string;
   sale_price?: string;
+  manage_stock?: boolean;
   stock_quantity?: number;
   stock_status?: 'instock' | 'outofstock' | 'onbackorder';
   attributes?: { name: string; option: string }[];
   image?: WooProductImage;
+  meta_data?: { key: string; value: string }[];
 }
 
 export interface WooProduct {

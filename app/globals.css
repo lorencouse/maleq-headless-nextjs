@@ -46,6 +46,11 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+
+  /* Toast colors */
+  --toast-bg: #ffffff;
+  --toast-color: #0a0a0a;
+  --toast-border: #e5e7eb;
 }
 
 .dark {
@@ -87,6 +92,11 @@
   /* Warning for dark mode */
   --warning: #fbbf24;
   --warning-foreground: #ffffff;
+
+  /* Toast colors for dark mode */
+  --toast-bg: #18181b;
+  --toast-color: #ededed;
+  --toast-border: #27272a;
 }
 
 @theme inline {

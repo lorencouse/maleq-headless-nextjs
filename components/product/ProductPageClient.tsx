@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import VariationSelector from './VariationSelector';
 import { EnhancedProduct } from '@/lib/products/product-service';
+import { useCartStore } from '@/lib/store/cart-store';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
@@ -21,6 +23,9 @@ interface SelectedVariation {
 
 export default function ProductPageClient({ product }: ProductPageClientProps) {
   const isVariable = product.type === 'VARIABLE';
+  const addItem = useCartStore((state) => state.addItem);
+  const [quantity, setQuantity] = useState(1);
+  const [isAdding, setIsAdding] = useState(false);
 
   const [selectedVariation, setSelectedVariation] = useState<SelectedVariation | null>(
     isVariable && product.variations && product.variations.length > 0
@@ -42,6 +47,79 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
   const displayStockStatus = selectedVariation?.stockStatus || product.stockStatus;
   const displayStockQuantity = selectedVariation?.stockQuantity ?? product.stockQuantity;
   const displaySku = product.sku;
+
+  // Helper to convert price string to number
+  const priceToNumber = (price: string | null | undefined): number => {
+    if (!price) return 0;
+    const cleaned = price.replace(/[^0-9.]/g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
+  // Add to Cart Handler
+  const handleAddToCart = async () => {
+    // Validate stock
+    if (displayStockStatus === 'OUT_OF_STOCK') {
+      showError('This product is out of stock');
+      return;
+    }
+
+    // For variable products, ensure variation is selected
+    if (isVariable && !selectedVariation) {
+      showError('Please select product options');
+      return;
+    }
+
+    // Validate quantity
+    if (quantity < 1) {
+      showError('Quantity must be at least 1');
+      return;
+    }
+
+    if (displayStockQuantity && quantity > displayStockQuantity) {
+      showError(`Only ${displayStockQuantity} available in stock`);
+      return;
+    }
+
+    setIsAdding(true);
+
+    try {
+      // Prepare cart item data
+      const currentPrice = priceToNumber(displayPrice);
+      const regularPrice = priceToNumber(
+        selectedVariation?.regularPrice || product.regularPrice
+      );
+
+      addItem({
+        productId: product.databaseId?.toString() || product.id,
+        variationId: selectedVariation?.id,
+        name: product.name,
+        slug: product.slug,
+        sku: product.sku || '',
+        price: currentPrice,
+        regularPrice: regularPrice,
+        quantity: quantity,
+        image: product.image || undefined,
+        attributes: selectedVariation?.attributes?.reduce((acc, attr) => {
+          acc[attr.name] = attr.value;
+          return acc;
+        }, {} as Record<string, string>),
+        stockQuantity: displayStockQuantity || undefined,
+        maxQuantity: displayStockQuantity || 999,
+        inStock: displayStockStatus === 'IN_STOCK',
+        type: product.type,
+      });
+
+      showSuccess(`${product.name} added to cart!`);
+
+      // Reset quantity after adding
+      setQuantity(1);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      showError('Failed to add product to cart');
+    } finally {
+      setIsAdding(false);
+    }
+  };
 
   return (
     <>
@@ -144,14 +222,16 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
             type="number"
             min="1"
             max={displayStockQuantity || 99}
-            defaultValue="1"
+            value={quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
             className="w-24 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
           />
           <button
+            onClick={handleAddToCart}
+            disabled={displayStockStatus === 'OUT_OF_STOCK' || isAdding}
             className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
-            disabled={displayStockStatus === 'OUT_OF_STOCK'}
           >
-            {displayStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Add to Cart'}
+            {isAdding ? 'Adding...' : displayStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Add to Cart'}
           </button>
         </div>
         <button className="w-full border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-50 transition-colors font-semibold">

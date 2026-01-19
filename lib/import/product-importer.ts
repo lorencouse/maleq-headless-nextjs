@@ -1,5 +1,5 @@
 import { wooClient } from '../woocommerce/client';
-import type { WooProduct, WooProductImage, WooProductAttribute } from '../woocommerce/types';
+import type { WooProduct, WooProductImage, WooProductAttribute, WooProductVariation } from '../woocommerce/types';
 import { ImageProcessor } from './image-processor';
 import { XMLParser, type XMLProduct, type VariationGroup } from './xml-parser';
 import type { CategoryImporter } from './category-importer';
@@ -362,7 +362,7 @@ export class ProductImporter {
       const prices = this.calculatePrices(varProduct.price);
       const stockQty = parseInt(varProduct.stock_quantity, 10);
 
-      const variationData: Partial<WooProduct> = {
+      const variationData: Partial<WooProductVariation> = {
         sku: varProduct.barcode,
         regular_price: prices.regular,
         sale_price: prices.sale, // Always set sale price (10% off regular)
