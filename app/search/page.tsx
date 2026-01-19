@@ -1,0 +1,147 @@
+import { Suspense } from 'react';
+import { Metadata } from 'next';
+import { searchProducts, getProductCategories } from '@/lib/products/combined-service';
+import ShopPageClient from '@/components/shop/ShopPageClient';
+
+interface SearchPageProps {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: SearchPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const query = params.q || '';
+
+  return {
+    title: query ? `Search results for "${query}" | Maleq` : 'Search | Maleq',
+    description: query
+      ? `Browse search results for "${query}" in our collection of quality products.`
+      : 'Search our collection of quality products.',
+  };
+}
+
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const params = await searchParams;
+  const query = params.q || '';
+
+  // Get products and categories
+  const [products, categories] = await Promise.all([
+    query ? searchProducts(query, 24) : Promise.resolve([]),
+    getProductCategories(),
+  ]);
+
+  // Format categories for filter panel
+  const formattedCategories = categories.map((cat) => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    count: cat.count,
+  }));
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Header */}
+      <div className="mb-8">
+        {query ? (
+          <>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Search results for &quot;{query}&quot;
+            </h1>
+            <p className="text-muted-foreground">
+              {products.length} {products.length === 1 ? 'product' : 'products'} found
+            </p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Search</h1>
+            <p className="text-muted-foreground">Enter a search term to find products</p>
+          </>
+        )}
+      </div>
+
+      {/* Search Results */}
+      {query ? (
+        products.length > 0 ? (
+          <Suspense fallback={<SearchLoadingSkeleton />}>
+            <ShopPageClient
+              initialProducts={products}
+              categories={formattedCategories}
+              hasMore={false}
+            />
+          </Suspense>
+        ) : (
+          <div className="text-center py-16">
+            <svg
+              className="w-16 h-16 mx-auto mb-4 text-muted"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <h2 className="text-xl font-semibold text-foreground mb-2">No products found</h2>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+              We couldn&apos;t find any products matching &quot;{query}&quot;. Try using different
+              keywords or browse our categories.
+            </p>
+            <a
+              href="/shop"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
+            >
+              Browse All Products
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+            </a>
+          </div>
+        )
+      ) : (
+        <div className="text-center py-16">
+          <svg
+            className="w-16 h-16 mx-auto mb-4 text-muted"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Start your search</h2>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            Use the search bar above to find products in our collection.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SearchLoadingSkeleton() {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
+          <div className="aspect-square bg-muted animate-pulse" />
+          <div className="p-4 space-y-2">
+            <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+            <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+            <div className="h-6 bg-muted rounded w-1/4 animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}

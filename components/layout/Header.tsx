@@ -1,18 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import { useCartItemCount } from '@/lib/store/cart-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import MiniCart from '@/components/cart/MiniCart';
+import SearchAutocomplete from '@/components/search/SearchAutocomplete';
+import MobileMenu from '@/components/navigation/MobileMenu';
 
 export default function Header() {
   const cartItemCount = useCartItemCount();
   const { user, isAuthenticated } = useAuthStore();
   const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Close search on escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+
+    if (isSearchOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [isSearchOpen]);
 
   return (
     <header className='bg-background border-b border-border shadow-sm transition-colors'>
@@ -62,7 +85,11 @@ export default function Header() {
           {/* Cart & User Actions */}
           <div className='flex items-center space-x-2'>
             <ThemeToggle />
-            <button className='p-2 text-foreground hover:text-primary transition-colors'>
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className='p-2 text-foreground hover:text-primary transition-colors'
+              aria-label='Search'
+            >
               <svg
                 className='h-5 w-5'
                 fill='none'
@@ -176,7 +203,11 @@ export default function Header() {
 
           {/* Mobile menu button */}
           <div className='md:hidden'>
-            <button className='p-2 text-foreground hover:text-primary transition-colors'>
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className='p-2 text-foreground hover:text-primary transition-colors'
+              aria-label='Open menu'
+            >
               <svg
                 className='h-5 w-5'
                 fill='none'
@@ -197,6 +228,30 @@ export default function Header() {
       <MiniCart
         isOpen={isMiniCartOpen}
         onClose={() => setIsMiniCartOpen(false)}
+      />
+
+      {/* Search Modal */}
+      {isSearchOpen && (
+        <>
+          <div
+            className='fixed inset-0 bg-black/50 z-50'
+            onClick={() => setIsSearchOpen(false)}
+          />
+          <div className='fixed top-0 left-0 right-0 z-50 p-4 pt-20'>
+            <div className='max-w-2xl mx-auto'>
+              <SearchAutocomplete
+                autoFocus
+                onClose={() => setIsSearchOpen(false)}
+              />
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Mobile Menu */}
+      <MobileMenu
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
       />
     </header>
   );
