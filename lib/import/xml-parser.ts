@@ -252,7 +252,95 @@ export class XMLParser {
     const modelVariationGroups = this.groupByModelName(remainingSingleGroups);
     variationGroups.push(...modelVariationGroups);
 
-    return variationGroups;
+    // Collect products not used in model name grouping
+    const usedSkusInModelName = new Set(modelVariationGroups.flatMap(g => g.products.map(p => p.sku)));
+    const remainingAfterModelName = remainingSingleGroups.filter(g =>
+      !usedSkusInModelName.has(g.products[0]?.sku)
+    );
+
+    // FOURTH PASS: Merge size variations across different prices
+    // Products like "Tom of Finland Anal Plug Medium" ($59.64) and "Extra Large" ($107.28)
+    const usedInSizeMerge = new Set<number>();
+    const sizeVariationGroups = this.mergeSizeVariationsAcrossPrices(remainingAfterModelName, usedInSizeMerge);
+    variationGroups.push(...sizeVariationGroups);
+
+    // FIFTH PASS: Merge product line variations (like Zodiac signs)
+    // These have unique pattern words that define the product variant
+    const mergedVariationGroups = this.mergeProductLineVariations(variationGroups);
+
+    return mergedVariationGroups;
+  }
+
+  /**
+   * Merge variation groups that belong to the same product line
+   * For example, "Zodiac Aries Mini Vibe Pink" and "Zodiac Taurus Mini Vibe Orange"
+   * might be in different color groups, but should all be merged into one Zodiac Mini Vibe product
+   */
+  private mergeProductLineVariations(existingGroups: VariationGroup[]): VariationGroup[] {
+    const result: VariationGroup[] = [];
+    const groupsToRemove = new Set<number>();
+
+    // Product line patterns to look for
+    // These are patterns where multiple groups should be merged
+    const productLinePatterns = [
+      {
+        pattern: /\bZODIAC\b/i,
+        baseNamePattern: /ZODIAC\s+\w+\s+MINI\s+VIBE/i,
+        targetBaseName: 'Zodiac Mini Vibe',
+      },
+    ];
+
+    for (const linePattern of productLinePatterns) {
+      // Find all groups that match this product line
+      const matchingIndices: number[] = [];
+
+      for (let i = 0; i < existingGroups.length; i++) {
+        if (groupsToRemove.has(i)) continue;
+
+        const group = existingGroups[i];
+        // Check if any product in this group matches the pattern
+        const hasMatch = group.products.some(p =>
+          linePattern.baseNamePattern.test(p.name.toUpperCase())
+        );
+
+        if (hasMatch) {
+          matchingIndices.push(i);
+        }
+      }
+
+      // If we found multiple groups that match, merge them
+      if (matchingIndices.length >= 2) {
+        // Merge all products from matching groups
+        const mergedProducts: XMLProduct[] = [];
+        let manufacturerCode = '';
+        let typeCode = '';
+
+        for (const idx of matchingIndices) {
+          const group = existingGroups[idx];
+          mergedProducts.push(...group.products);
+          manufacturerCode = manufacturerCode || group.manufacturerCode;
+          typeCode = typeCode || group.typeCode;
+          groupsToRemove.add(idx);
+        }
+
+        result.push({
+          baseName: linePattern.targetBaseName,
+          manufacturerCode,
+          typeCode,
+          products: mergedProducts,
+          variationAttribute: 'style', // Use style for product line variations
+        });
+      }
+    }
+
+    // Return groups that weren't merged, plus the new merged groups
+    for (let i = 0; i < existingGroups.length; i++) {
+      if (!groupsToRemove.has(i)) {
+        result.push(existingGroups[i]);
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -334,6 +422,11 @@ export class XMLParser {
    * Group products by model name variations
    * This handles product lines like "Tenga Spinner Tetra", "Tenga Spinner Hexa", etc.
    * where the last word is a model name and products share the same price
+   *
+   * Also handles:
+   * - "Goodhead 4 Oz Mint", "Goodhead 4 Oz Cherry" -> grouped by flavor at end
+   * - "Zodiac Aries Mini Vibe Pink", "Zodiac Taurus Mini Vibe Orange" -> grouped by pattern with variant words
+   * - "Tom of Finland Anal Plug Medium", "Tom of Finland Anal Plug Extra Large" -> grouped by size in name
    */
   private groupByModelName(singleProductGroups: VariationGroup[]): VariationGroup[] {
     const result: VariationGroup[] = [];
@@ -362,54 +455,408 @@ export class XMLParser {
     for (const [, indices] of candidatesByMfgPrice.entries()) {
       if (indices.length < 2) continue;
 
-      // Extract product names and their base patterns (all words except last)
-      const patterns = indices.map(i => {
-        const group = singleProductGroups[i];
-        const name = group.baseName.toUpperCase().trim();
-        // Remove common suffixes like "(NET)" before splitting
-        const cleanName = name.replace(/\s*\(NET\)\s*$/i, '').trim();
-        const words = cleanName.split(/\s+/);
+      // Try multiple pattern extraction strategies
+      const groupedByStrategy = this.tryMultiplePatternStrategies(singleProductGroups, indices, used);
+      result.push(...groupedByStrategy);
+    }
 
-        // Need at least 2 words to have a pattern + model name
-        if (words.length < 2) return null;
+    return result;
+  }
 
-        const modelName = words[words.length - 1];
-        const basePattern = words.slice(0, -1).join(' ');
+  /**
+   * Try multiple strategies to find variation patterns
+   */
+  private tryMultiplePatternStrategies(
+    singleProductGroups: VariationGroup[],
+    indices: number[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
 
-        return { index: i, basePattern, modelName, fullName: cleanName };
-      }).filter(p => p !== null) as Array<{ index: number; basePattern: string; modelName: string; fullName: string }>;
+    // Strategy 1: Remove last word as variant (original strategy)
+    const strategy1Results = this.groupByLastWordPattern(singleProductGroups, indices, used);
+    result.push(...strategy1Results);
 
-      // Group by base pattern
-      const byPattern = new Map<string, typeof patterns>();
-      for (const p of patterns) {
-        if (!byPattern.has(p.basePattern)) {
-          byPattern.set(p.basePattern, []);
-        }
-        byPattern.get(p.basePattern)!.push(p);
+    // Strategy 2: Remove last TWO words as variant (handles "Extra Large", "Light Blue", etc.)
+    const strategy2Results = this.groupByLastTwoWordsPattern(singleProductGroups, indices, used);
+    result.push(...strategy2Results);
+
+    // Strategy 3: Find common prefix pattern (handles Zodiac signs, flavor names anywhere)
+    const strategy3Results = this.groupByCommonPrefixPattern(singleProductGroups, indices, used);
+    result.push(...strategy3Results);
+
+    // Strategy 4: Find products with same words but different order/variant words in middle
+    const strategy4Results = this.groupByKeywordPattern(singleProductGroups, indices, used);
+    result.push(...strategy4Results);
+
+    return result;
+  }
+
+  /**
+   * Strategy 1: Group by removing last word as variant
+   */
+  private groupByLastWordPattern(
+    singleProductGroups: VariationGroup[],
+    indices: number[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
+
+    // Extract product names and their base patterns (all words except last)
+    const patterns = indices.map(i => {
+      if (used.has(i)) return null;
+      const group = singleProductGroups[i];
+      const name = group.products[0]?.name.toUpperCase().trim() || '';
+      // Remove common suffixes like "(NET)" before splitting
+      const cleanName = name.replace(/\s*\(NET\)\s*$/i, '').trim();
+      const words = cleanName.split(/\s+/);
+
+      // Need at least 2 words to have a pattern + model name
+      if (words.length < 2) return null;
+
+      const modelName = words[words.length - 1];
+      const basePattern = words.slice(0, -1).join(' ');
+
+      return { index: i, basePattern, modelName, fullName: cleanName };
+    }).filter(p => p !== null) as Array<{ index: number; basePattern: string; modelName: string; fullName: string }>;
+
+    // Group by base pattern
+    const byPattern = new Map<string, typeof patterns>();
+    for (const p of patterns) {
+      if (!byPattern.has(p.basePattern)) {
+        byPattern.set(p.basePattern, []);
       }
+      byPattern.get(p.basePattern)!.push(p);
+    }
 
-      // Create variation groups for patterns with 2+ products
-      for (const [basePattern, matches] of byPattern.entries()) {
-        if (matches.length < 2) continue;
+    // Create variation groups for patterns with 2+ products
+    for (const [basePattern, matches] of byPattern.entries()) {
+      if (matches.length < 2) continue;
 
-        // Check that none of these products are already used
-        if (matches.some(m => used.has(m.index))) continue;
+      // Check that none of these products are already used
+      if (matches.some(m => used.has(m.index))) continue;
 
-        // Mark as used
-        matches.forEach(m => used.add(m.index));
+      // Mark as used
+      matches.forEach(m => used.add(m.index));
 
-        // Get all products
-        const products = matches.flatMap(m => singleProductGroups[m.index].products);
-        const firstGroup = singleProductGroups[matches[0].index];
+      // Get all products
+      const products = matches.flatMap(m => singleProductGroups[m.index].products);
+      const firstGroup = singleProductGroups[matches[0].index];
 
-        result.push({
-          baseName: basePattern.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
-          manufacturerCode: firstGroup.manufacturerCode,
-          typeCode: firstGroup.typeCode,
-          products,
-          variationAttribute: 'style', // Model name is a style variation
-        });
+      result.push({
+        baseName: basePattern.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
+        manufacturerCode: firstGroup.manufacturerCode,
+        typeCode: firstGroup.typeCode,
+        products,
+        variationAttribute: this.determineVariationAttribute(products),
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Strategy 2: Group by removing last TWO words as variant
+   * Handles: "Tom of Finland Anal Plug Medium Silicone" vs "Tom of Finland Anal Plug Extra Large Silicone"
+   */
+  private groupByLastTwoWordsPattern(
+    singleProductGroups: VariationGroup[],
+    indices: number[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
+
+    const patterns = indices.map(i => {
+      if (used.has(i)) return null;
+      const group = singleProductGroups[i];
+      const name = group.products[0]?.name.toUpperCase().trim() || '';
+      const cleanName = name.replace(/\s*\(NET\)\s*$/i, '').trim();
+      const words = cleanName.split(/\s+/);
+
+      // Need at least 3 words for this pattern
+      if (words.length < 3) return null;
+
+      const variantWords = words.slice(-2).join(' ');
+      const basePattern = words.slice(0, -2).join(' ');
+
+      return { index: i, basePattern, variantWords, fullName: cleanName };
+    }).filter(p => p !== null) as Array<{ index: number; basePattern: string; variantWords: string; fullName: string }>;
+
+    // Group by base pattern
+    const byPattern = new Map<string, typeof patterns>();
+    for (const p of patterns) {
+      if (!byPattern.has(p.basePattern)) {
+        byPattern.set(p.basePattern, []);
       }
+      byPattern.get(p.basePattern)!.push(p);
+    }
+
+    for (const [basePattern, matches] of byPattern.entries()) {
+      if (matches.length < 2) continue;
+      if (matches.some(m => used.has(m.index))) continue;
+
+      matches.forEach(m => used.add(m.index));
+
+      const products = matches.flatMap(m => singleProductGroups[m.index].products);
+      const firstGroup = singleProductGroups[matches[0].index];
+
+      result.push({
+        baseName: basePattern.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
+        manufacturerCode: firstGroup.manufacturerCode,
+        typeCode: firstGroup.typeCode,
+        products,
+        variationAttribute: this.determineVariationAttribute(products),
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Strategy 3: Find common prefix pattern
+   * Handles: "Zodiac Aries Mini Vibe Pink" vs "Zodiac Taurus Mini Vibe Orange"
+   * The common part is "Zodiac ... Mini Vibe ..."
+   */
+  private groupByCommonPrefixPattern(
+    singleProductGroups: VariationGroup[],
+    indices: number[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
+
+    // Get all product names
+    const products = indices
+      .filter(i => !used.has(i))
+      .map(i => ({
+        index: i,
+        name: singleProductGroups[i].products[0]?.name.toUpperCase().trim() || '',
+        words: (singleProductGroups[i].products[0]?.name.toUpperCase().trim() || '').split(/\s+/),
+      }));
+
+    if (products.length < 2) return result;
+
+    // Find products that share the same first word and last word(s)
+    const byFirstAndLastWord = new Map<string, typeof products>();
+    for (const p of products) {
+      if (p.words.length < 3) continue;
+
+      // Key: first word + last word (handles "Zodiac X Mini Vibe Y" pattern)
+      const key = `${p.words[0]}|${p.words[p.words.length - 2]}|${p.words[p.words.length - 1]}`;
+
+      if (!byFirstAndLastWord.has(key)) {
+        byFirstAndLastWord.set(key, []);
+      }
+      byFirstAndLastWord.get(key)!.push(p);
+    }
+
+    for (const [, matches] of byFirstAndLastWord.entries()) {
+      if (matches.length < 2) continue;
+      if (matches.some(m => used.has(m.index))) continue;
+
+      // Find common words (first N words that match across all products)
+      const commonPrefix = this.findCommonPrefix(matches.map(m => m.words));
+      if (commonPrefix.length < 1) continue;
+
+      matches.forEach(m => used.add(m.index));
+
+      const groupProducts = matches.flatMap(m => singleProductGroups[m.index].products);
+      const firstGroup = singleProductGroups[matches[0].index];
+
+      result.push({
+        baseName: commonPrefix.map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' '),
+        manufacturerCode: firstGroup.manufacturerCode,
+        typeCode: firstGroup.typeCode,
+        products: groupProducts,
+        variationAttribute: this.determineVariationAttribute(groupProducts),
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Strategy 4: Group by keyword pattern
+   * Finds products with key identifying words in common
+   * Handles: "Goodhead 4 Oz Mint Bx", "Goodhead 4 Oz Cherry Bx"
+   */
+  private groupByKeywordPattern(
+    singleProductGroups: VariationGroup[],
+    indices: number[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
+
+    // Variant words to ignore when building the key
+    const variantWords = new Set([
+      // Flavors
+      'MINT', 'CHERRY', 'STRAWBERRY', 'VANILLA', 'CHOCOLATE', 'MANGO', 'GRAPE',
+      'LEMON', 'LIME', 'BANANA', 'RASPBERRY', 'BLUEBERRY', 'PEACH', 'APPLE',
+      'WATERMELON', 'COCONUT', 'LAVENDER', 'PEPPERMINT', 'SPEARMINT', 'CINNAMON',
+      'BX', // Box suffix (like "Goodhead 4 Oz Mint Bx")
+      // Colors
+      'RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
+      'SILVER', 'GOLD', 'ORANGE', 'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN',
+      'LIGHT', // "Light Blue", "Light Pink"
+      // Sizes
+      'SMALL', 'MEDIUM', 'LARGE', 'MINI', 'EXTRA', 'XL', 'XXL', 'XXXL',
+      'PETITE', 'REGULAR', 'JUMBO', 'GIANT', 'KING', 'QUEEN',
+      'SM', 'MED', 'LG', 'XS', '2XL', '3XL', '4XL',
+      // Zodiac signs
+      'ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO',
+      'LIBRA', 'SCORPIO', 'SAGITTARIUS', 'CAPRICORN', 'AQUARIUS', 'PISCES',
+    ]);
+
+    const products = indices
+      .filter(i => !used.has(i))
+      .map(i => {
+        const name = singleProductGroups[i].products[0]?.name.toUpperCase().trim() || '';
+        const words = name.split(/\s+/);
+        // Build key from non-variant words
+        const keyWords = words.filter(w => !variantWords.has(w));
+        return {
+          index: i,
+          name,
+          keyWords,
+          key: keyWords.join('|'),
+        };
+      });
+
+    // Group by key
+    const byKey = new Map<string, typeof products>();
+    for (const p of products) {
+      if (p.keyWords.length < 2) continue; // Need at least 2 key words
+      if (!byKey.has(p.key)) {
+        byKey.set(p.key, []);
+      }
+      byKey.get(p.key)!.push(p);
+    }
+
+    for (const [key, matches] of byKey.entries()) {
+      if (matches.length < 2) continue;
+      if (matches.some(m => used.has(m.index))) continue;
+
+      matches.forEach(m => used.add(m.index));
+
+      const groupProducts = matches.flatMap(m => singleProductGroups[m.index].products);
+      const firstGroup = singleProductGroups[matches[0].index];
+
+      // Use key words as base name
+      const baseName = key.split('|').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
+
+      result.push({
+        baseName,
+        manufacturerCode: firstGroup.manufacturerCode,
+        typeCode: firstGroup.typeCode,
+        products: groupProducts,
+        variationAttribute: this.determineVariationAttribute(groupProducts),
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Find common prefix words across multiple word arrays
+   */
+  private findCommonPrefix(wordArrays: string[][]): string[] {
+    if (wordArrays.length === 0) return [];
+    if (wordArrays.length === 1) return wordArrays[0];
+
+    const result: string[] = [];
+    const first = wordArrays[0];
+
+    for (let i = 0; i < first.length; i++) {
+      const word = first[i];
+      if (wordArrays.every(arr => arr[i] === word)) {
+        result.push(word);
+      } else {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Additional pass to merge size variations with different prices
+   * Products like "Tom of Finland Anal Plug Medium" and "Tom of Finland Anal Plug Extra Large"
+   * may have different prices but should still be grouped
+   */
+  private mergeSizeVariationsAcrossPrices(
+    singleProductGroups: VariationGroup[],
+    used: Set<number>
+  ): VariationGroup[] {
+    const result: VariationGroup[] = [];
+
+    // Size words that indicate size variations
+    const sizeIndicators = [
+      'SMALL', 'MEDIUM', 'LARGE', 'MINI', 'EXTRA', 'XL', 'XXL', 'XXXL',
+      'PETITE', 'REGULAR', 'JUMBO', 'GIANT', 'KING', 'QUEEN',
+      'SM', 'MED', 'LG', 'XS', '2XL', '3XL', '4XL',
+    ];
+
+    // Group products by manufacturer and base name (with size words removed)
+    const byBaseNameNoSize = new Map<string, number[]>();
+
+    for (let i = 0; i < singleProductGroups.length; i++) {
+      if (used.has(i)) continue;
+
+      const group = singleProductGroups[i];
+      const product = group.products[0];
+      if (!product) continue;
+
+      const name = product.name.toUpperCase().trim();
+      const words = name.split(/\s+/);
+
+      // Check if this product has a size indicator
+      const hasSizeIndicator = words.some(w => sizeIndicators.includes(w));
+      if (!hasSizeIndicator) continue;
+
+      // Build base name without size words
+      const baseWords = words.filter(w => !sizeIndicators.includes(w));
+      const baseName = baseWords.join(' ');
+
+      const key = `${group.manufacturerCode}|${baseName}`;
+
+      if (!byBaseNameNoSize.has(key)) {
+        byBaseNameNoSize.set(key, []);
+      }
+      byBaseNameNoSize.get(key)!.push(i);
+    }
+
+    // Create variation groups for products that match (same base name, different sizes)
+    for (const [, indices] of byBaseNameNoSize.entries()) {
+      if (indices.length < 2) continue;
+      if (indices.some(i => used.has(i))) continue;
+
+      // Verify these products have DIFFERENT sizes
+      const sizes = indices.map(i => {
+        const name = singleProductGroups[i].products[0]?.name.toUpperCase() || '';
+        const words = name.split(/\s+/);
+        return words.filter(w => sizeIndicators.includes(w)).join(' ');
+      });
+
+      const uniqueSizes = new Set(sizes);
+      if (uniqueSizes.size < 2) continue; // All same size, not size variations
+
+      // Mark as used
+      indices.forEach(i => used.add(i));
+
+      const products = indices.flatMap(i => singleProductGroups[i].products);
+      const firstGroup = singleProductGroups[indices[0]];
+
+      // Build base name from first product, removing size words
+      const firstName = firstGroup.products[0]?.name || '';
+      const baseNameWords = firstName.split(/\s+/).filter(w => !sizeIndicators.includes(w.toUpperCase()));
+      const baseName = baseNameWords.join(' ');
+
+      result.push({
+        baseName: XMLParser.applyTitleCase(baseName),
+        manufacturerCode: firstGroup.manufacturerCode,
+        typeCode: firstGroup.typeCode,
+        products,
+        variationAttribute: 'size',
+      });
     }
 
     return result;
