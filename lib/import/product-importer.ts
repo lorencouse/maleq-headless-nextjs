@@ -4,6 +4,12 @@ import { ImageProcessor } from './image-processor';
 import { XMLParser, type XMLProduct, type VariationGroup } from './xml-parser';
 import type { CategoryImporter } from './category-importer';
 import type { ManufacturerImporter } from './manufacturer-importer';
+import {
+  parseMaterials,
+  parseColors,
+  getNormalizedMaterialMeta,
+  getNormalizedColorMeta,
+} from './attribute-normalizer';
 
 interface ImportConfig {
   priceMultiplier: number; // 3x
@@ -145,8 +151,8 @@ export class ProductImporter {
         { key: '_wt_barcode', value: xmlProduct.barcode },
         { key: '_wt_manufacturer_code', value: xmlProduct.manufacturer.code },
         { key: '_wt_product_type_code', value: xmlProduct.type.code },
-        { key: '_wt_color', value: xmlProduct.color },
-        { key: '_wt_material', value: xmlProduct.material },
+        { key: '_wt_color', value: getNormalizedColorMeta(xmlProduct.color) },
+        { key: '_wt_material', value: getNormalizedMaterialMeta(xmlProduct.material) },
         { key: '_wt_discountable', value: xmlProduct.discountable },
         { key: '_wt_active', value: xmlProduct.active },
         { key: '_wt_on_sale', value: xmlProduct.on_sale },
@@ -158,30 +164,26 @@ export class ProductImporter {
     // Add attributes if present
     const attributes: WooProductAttribute[] = [];
 
-    if (xmlProduct.color) {
+    // Normalize and add color attribute
+    const normalizedColors = parseColors(xmlProduct.color);
+    if (normalizedColors.length > 0) {
       attributes.push({
         name: 'Color',
-        options: [xmlProduct.color],
+        options: normalizedColors,
         visible: true,
         variation: false,
       });
     }
 
-    if (xmlProduct.material) {
-      // Split comma-separated materials into individual options
-      const materials = xmlProduct.material
-        .split(/[,\/]+/)
-        .map(m => XMLParser.applyTitleCase(m.trim()))
-        .filter(m => m.length > 0);
-
-      if (materials.length > 0) {
-        attributes.push({
-          name: 'Material',
-          options: materials,
-          visible: true,
-          variation: false,
-        });
-      }
+    // Normalize and add material attribute
+    const normalizedMaterials = parseMaterials(xmlProduct.material);
+    if (normalizedMaterials.length > 0) {
+      attributes.push({
+        name: 'Material',
+        options: normalizedMaterials,
+        visible: true,
+        variation: false,
+      });
     }
 
     if (attributes.length > 0) {
@@ -313,7 +315,9 @@ export class ProductImporter {
       let option = '';
 
       if (group.variationAttribute === 'color') {
-        option = p.color;
+        // Normalize color for variations
+        const colors = parseColors(p.color);
+        option = colors.length > 0 ? colors[0] : XMLParser.applyTitleCase(p.color);
       } else if (group.variationAttribute === 'size') {
         const match = p.name.match(/\d+(\.\d+)?\s*(OZ|ML|G|LB)/i);
         option = match ? match[0] : p.name.split(' ').pop() || '';
@@ -322,8 +326,8 @@ export class ProductImporter {
         option = p.name.replace(group.baseName, '').trim();
       }
 
-      // Apply title case to the option
-      return XMLParser.applyTitleCase(option);
+      // Apply title case to the option (for non-color attributes)
+      return group.variationAttribute === 'color' ? option : XMLParser.applyTitleCase(option);
     });
 
     // Generate a unique parent SKU from the group
