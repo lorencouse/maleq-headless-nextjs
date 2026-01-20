@@ -1,0 +1,7 @@
+{
+  "extensions.experimental.affinity": {
+    "claude-code": 1
+  },
+  "terminal.integrated.persistentSessionReviveProcess": "never",
+  "git.ignoreLimitWarning": true
+}

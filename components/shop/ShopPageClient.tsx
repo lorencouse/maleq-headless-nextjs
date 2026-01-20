@@ -26,6 +26,10 @@ const DEFAULT_FILTERS: FilterState = {
   material: '',
   minPrice: 0,
   maxPrice: 500,
+  minLength: 0,
+  maxLength: 24,
+  minWeight: 0,
+  maxWeight: 10,
   inStock: false,
   onSale: false,
 };
@@ -59,6 +63,10 @@ export default function ShopPageClient({
   const materialFilter = searchParams.get('material') || '';
   const minPriceFilter = parseInt(searchParams.get('minPrice') || '0', 10);
   const maxPriceFilter = parseInt(searchParams.get('maxPrice') || '500', 10);
+  const minLengthFilter = parseFloat(searchParams.get('minLength') || '0');
+  const maxLengthFilter = parseFloat(searchParams.get('maxLength') || '24');
+  const minWeightFilter = parseFloat(searchParams.get('minWeight') || '0');
+  const maxWeightFilter = parseFloat(searchParams.get('maxWeight') || '10');
   const inStockFilter = searchParams.get('inStock') === 'true';
   const onSaleFilter = searchParams.get('onSale') === 'true';
   const sortBy: SortOption = (searchParams.get('sort') as SortOption) || 'newest';
@@ -70,6 +78,10 @@ export default function ShopPageClient({
     material: materialFilter,
     minPrice: minPriceFilter,
     maxPrice: maxPriceFilter,
+    minLength: minLengthFilter,
+    maxLength: maxLengthFilter,
+    minWeight: minWeightFilter,
+    maxWeight: maxWeightFilter,
     inStock: inStockFilter,
     onSale: onSaleFilter,
   };
@@ -84,6 +96,10 @@ export default function ShopPageClient({
     if (newFilters.material) params.set('material', newFilters.material);
     if (newFilters.minPrice > 0) params.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice < 500) params.set('maxPrice', newFilters.maxPrice.toString());
+    if (newFilters.minLength > 0) params.set('minLength', newFilters.minLength.toString());
+    if (newFilters.maxLength < 24) params.set('maxLength', newFilters.maxLength.toString());
+    if (newFilters.minWeight > 0) params.set('minWeight', newFilters.minWeight.toString());
+    if (newFilters.maxWeight < 10) params.set('maxWeight', newFilters.maxWeight.toString());
     if (newFilters.inStock) params.set('inStock', 'true');
     if (newFilters.onSale) params.set('onSale', 'true');
     if (newSort !== 'newest') params.set('sort', newSort);
@@ -101,6 +117,10 @@ export default function ShopPageClient({
       material: string;
       minPrice: number;
       maxPrice: number;
+      minLength: number;
+      maxLength: number;
+      minWeight: number;
+      maxWeight: number;
       inStock: boolean;
       onSale: boolean;
       sort: SortOption;
@@ -124,6 +144,10 @@ export default function ShopPageClient({
       if (filterParams.material) params.set('material', filterParams.material);
       if (filterParams.minPrice > 0) params.set('minPrice', filterParams.minPrice.toString());
       if (filterParams.maxPrice < 500) params.set('maxPrice', filterParams.maxPrice.toString());
+      if (filterParams.minLength > 0) params.set('minLength', filterParams.minLength.toString());
+      if (filterParams.maxLength < 24) params.set('maxLength', filterParams.maxLength.toString());
+      if (filterParams.minWeight > 0) params.set('minWeight', filterParams.minWeight.toString());
+      if (filterParams.maxWeight < 10) params.set('maxWeight', filterParams.maxWeight.toString());
       if (filterParams.inStock) params.set('inStock', 'true');
       if (filterParams.onSale) params.set('onSale', 'true');
       if (filterParams.sort !== 'newest') params.set('sort', filterParams.sort);
@@ -158,7 +182,7 @@ export default function ShopPageClient({
     // Skip fetch if we have search results from SSR and no filters applied
     // This prevents re-fetching on hydration/Strict Mode double-render
     if (hasInitialSearchResults.current) {
-      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
+      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter < 500 || minLengthFilter > 0 || maxLengthFilter < 24 || minWeightFilter > 0 || maxWeightFilter < 10 || inStockFilter || onSaleFilter || sortBy !== 'newest';
       if (!hasFilters) {
         // Clear the flag so subsequent filter changes will fetch
         hasInitialSearchResults.current = false;
@@ -177,12 +201,16 @@ export default function ShopPageClient({
       material: materialFilter,
       minPrice: minPriceFilter,
       maxPrice: maxPriceFilter,
+      minLength: minLengthFilter,
+      maxLength: maxLengthFilter,
+      minWeight: minWeightFilter,
+      maxWeight: maxWeightFilter,
       inStock: inStockFilter,
       onSale: onSaleFilter,
       sort: sortBy,
       search: searchQuery,
     });
-  }, [categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, inStockFilter, onSaleFilter, sortBy, searchQuery, fetchProducts]);
+  }, [categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, sortBy, searchQuery, fetchProducts]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters: FilterState) => {
@@ -205,6 +233,12 @@ export default function ShopPageClient({
     if (key === 'minPrice' || key === 'maxPrice') {
       newFilters.minPrice = 0;
       newFilters.maxPrice = 500;
+    } else if (key === 'minLength' || key === 'maxLength') {
+      newFilters.minLength = 0;
+      newFilters.maxLength = 24;
+    } else if (key === 'minWeight' || key === 'maxWeight') {
+      newFilters.minWeight = 0;
+      newFilters.maxWeight = 10;
     } else if (key === 'category') {
       newFilters.category = '';
     } else if (key === 'brand') {
@@ -231,6 +265,10 @@ export default function ShopPageClient({
       material: materialFilter,
       minPrice: minPriceFilter,
       maxPrice: maxPriceFilter,
+      minLength: minLengthFilter,
+      maxLength: maxLengthFilter,
+      minWeight: minWeightFilter,
+      maxWeight: maxWeightFilter,
       inStock: inStockFilter,
       onSale: onSaleFilter,
       sort: sortBy,

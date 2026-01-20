@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import PriceRangeFilter from './PriceRangeFilter';
+import RangeFilter from './RangeFilter';
 import CategoryFilter, { HierarchicalCategory } from './CategoryFilter';
 import StockFilter from './StockFilter';
 import SelectFilter from './SelectFilter';
@@ -14,6 +15,10 @@ export interface FilterState {
   material: string;
   minPrice: number;
   maxPrice: number;
+  minLength: number;
+  maxLength: number;
+  minWeight: number;
+  maxWeight: number;
   inStock: boolean;
   onSale: boolean;
 }
@@ -47,6 +52,8 @@ export default function FilterPanel({
     color: false,
     material: false,
     price: true,
+    length: false,
+    weight: false,
     availability: true,
   });
 
@@ -64,6 +71,10 @@ export default function FilterPanel({
     filters.material !== '' ||
     filters.minPrice > 0 ||
     filters.maxPrice < 500 ||
+    filters.minLength > 0 ||
+    filters.maxLength < 24 ||
+    filters.minWeight > 0 ||
+    filters.maxWeight < 10 ||
     filters.inStock ||
     filters.onSale;
 
@@ -235,6 +246,81 @@ export default function FilterPanel({
             minPrice={filters.minPrice}
             maxPrice={filters.maxPrice}
             onPriceChange={(min, max) => onFilterChange({ ...filters, minPrice: min, maxPrice: max })}
+          />
+        )}
+      </div>
+
+      {/* Length */}
+      <div className="mb-6">
+        <button
+          onClick={() => toggleSection('length')}
+          className="flex justify-between items-center w-full py-2 text-left"
+        >
+          <span className="font-semibold text-foreground">Length</span>
+          <svg
+            className={`w-5 h-5 text-muted-foreground transition-transform ${
+              expandedSections.length ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {expandedSections.length && (
+          <RangeFilter
+            minValue={filters.minLength}
+            maxValue={filters.maxLength}
+            onRangeChange={(min, max) => onFilterChange({ ...filters, minLength: min, maxLength: max })}
+            min={0}
+            max={24}
+            step={0.5}
+            unit="in"
+            presets={[
+              { label: 'Under 4"', min: 0, max: 4 },
+              { label: '4" - 6"', min: 4, max: 6 },
+              { label: '6" - 8"', min: 6, max: 8 },
+              { label: '8" - 10"', min: 8, max: 10 },
+              { label: 'Over 10"', min: 10, max: 24 },
+            ]}
+          />
+        )}
+      </div>
+
+      {/* Weight */}
+      <div className="mb-6">
+        <button
+          onClick={() => toggleSection('weight')}
+          className="flex justify-between items-center w-full py-2 text-left"
+        >
+          <span className="font-semibold text-foreground">Weight</span>
+          <svg
+            className={`w-5 h-5 text-muted-foreground transition-transform ${
+              expandedSections.weight ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {expandedSections.weight && (
+          <RangeFilter
+            minValue={filters.minWeight}
+            maxValue={filters.maxWeight}
+            onRangeChange={(min, max) => onFilterChange({ ...filters, minWeight: min, maxWeight: max })}
+            min={0}
+            max={10}
+            step={0.1}
+            unit="lbs"
+            presets={[
+              { label: 'Under 0.5 lbs', min: 0, max: 0.5 },
+              { label: '0.5 - 1 lbs', min: 0.5, max: 1 },
+              { label: '1 - 2 lbs', min: 1, max: 2 },
+              { label: 'Over 2 lbs', min: 2, max: 10 },
+            ]}
           />
         )}
       </div>

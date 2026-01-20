@@ -53,6 +53,20 @@ export default function ActiveFilters({
     });
   }
 
+  if (filters.minLength > 0 || filters.maxLength < 24) {
+    activeFilters.push({
+      key: 'minLength',
+      label: `Length: ${filters.minLength}" - ${filters.maxLength}"`,
+    });
+  }
+
+  if (filters.minWeight > 0 || filters.maxWeight < 10) {
+    activeFilters.push({
+      key: 'minWeight',
+      label: `Weight: ${filters.minWeight} - ${filters.maxWeight} lbs`,
+    });
+  }
+
   if (filters.brand) {
     const brandName = getOptionName(brands, filters.brand);
     activeFilters.push({ key: 'brand', label: `Brand: ${brandName}` });

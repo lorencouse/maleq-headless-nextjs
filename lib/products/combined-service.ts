@@ -27,6 +27,10 @@ export interface UnifiedProduct {
   onSale: boolean;
   stockStatus: string;
   stockQuantity: number | null;
+  weight?: string | null;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
   image: {
     url: string;
     altText: string;
@@ -115,6 +119,10 @@ function convertWooProduct(product: WooProduct): UnifiedProduct {
     onSale: product.onSale || false,
     stockStatus: product.stockStatus || 'OUT_OF_STOCK',
     stockQuantity: product.stockQuantity || null,
+    weight: (product as any).weight || null,
+    length: (product as any).length || null,
+    width: (product as any).width || null,
+    height: (product as any).height || null,
     image: product.image
       ? {
           url: product.image.sourceUrl,

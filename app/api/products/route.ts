@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllProducts, getFilteredProducts } from '@/lib/products/combined-service';
+import { getAllProducts, getFilteredProducts, UnifiedProduct } from '@/lib/products/combined-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,25 +14,38 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined;
     const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
+    const minLength = searchParams.get('minLength') ? parseFloat(searchParams.get('minLength')!) : undefined;
+    const maxLength = searchParams.get('maxLength') ? parseFloat(searchParams.get('maxLength')!) : undefined;
+    const minWeight = searchParams.get('minWeight') ? parseFloat(searchParams.get('minWeight')!) : undefined;
+    const maxWeight = searchParams.get('maxWeight') ? parseFloat(searchParams.get('maxWeight')!) : undefined;
     const inStock = searchParams.get('inStock') === 'true';
     const onSale = searchParams.get('onSale') === 'true';
     const sort = searchParams.get('sort') || 'newest';
 
+    // Check for dimension/weight filters (these are done client-side)
+    const hasDimensionFilters = (minLength !== undefined && minLength > 0) ||
+                                 (maxLength !== undefined && maxLength < 24) ||
+                                 (minWeight !== undefined && minWeight > 0) ||
+                                 (maxWeight !== undefined && maxWeight < 10);
+
     // Determine if we need filtered query (DB-level filtering) or basic query
     const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category || brand || color || material;
 
-    let products;
+    let products: UnifiedProduct[];
     let pageInfo;
+
+    // For dimension filters, we need to fetch more products to filter client-side
+    const fetchLimit = hasDimensionFilters ? Math.max(limit * 4, 100) : limit;
 
     if (search) {
       // Search query uses basic getAllProducts
-      const result = await getAllProducts({ limit, after, search });
+      const result = await getAllProducts({ limit: fetchLimit, after, search });
       products = result.products;
       pageInfo = result.pageInfo;
     } else if (hasFilters) {
       // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
       const result = await getFilteredProducts({
-        limit,
+        limit: fetchLimit,
         after,
         category,
         brand,
@@ -47,9 +60,45 @@ export async function GET(request: NextRequest) {
       pageInfo = result.pageInfo;
     } else {
       // No filters - use basic query
-      const result = await getAllProducts({ limit, after });
+      const result = await getAllProducts({ limit: fetchLimit, after });
       products = result.products;
       pageInfo = result.pageInfo;
+    }
+
+    // Apply dimension/weight filters client-side (these aren't available via GraphQL)
+    if (hasDimensionFilters) {
+      products = products.filter((product) => {
+        // Get product dimensions from attributes or meta
+        const productLength = getProductDimension(product, 'length');
+        const productWeight = getProductWeight(product);
+
+        // Apply length filter
+        if (minLength !== undefined && minLength > 0) {
+          if (productLength === null || productLength < minLength) return false;
+        }
+        if (maxLength !== undefined && maxLength < 24) {
+          if (productLength === null || productLength > maxLength) return false;
+        }
+
+        // Apply weight filter
+        if (minWeight !== undefined && minWeight > 0) {
+          if (productWeight === null || productWeight < minWeight) return false;
+        }
+        if (maxWeight !== undefined && maxWeight < 10) {
+          if (productWeight === null || productWeight > maxWeight) return false;
+        }
+
+        return true;
+      });
+
+      // Limit results after filtering
+      products = products.slice(0, limit);
+
+      // Update pageInfo since we filtered client-side
+      pageInfo = {
+        hasNextPage: products.length >= limit,
+        endCursor: pageInfo?.endCursor,
+      };
     }
 
     // Apply sorting (done client-side as GraphQL orderby is limited)
@@ -92,4 +141,92 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Extract product length from product data
+ * Looks for length in various places: dimensions, attributes, description
+ */
+function getProductDimension(product: UnifiedProduct, dimension: 'length' | 'width' | 'height'): number | null {
+  // Check if product has dimensions in the expected fields
+  const productAny = product as any;
+
+  // Check direct dimension fields
+  if (productAny[dimension]) {
+    const value = parseFloat(productAny[dimension]);
+    if (!isNaN(value)) return value;
+  }
+
+  // Check dimensions object
+  if (productAny.dimensions?.[dimension]) {
+    const value = parseFloat(productAny.dimensions[dimension]);
+    if (!isNaN(value)) return value;
+  }
+
+  // Try to extract from description
+  if (product.description) {
+    const patterns: Record<string, RegExp[]> = {
+      length: [
+        /length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+        /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+long/i,
+      ],
+      width: [
+        /width[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+        /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+wide/i,
+      ],
+      height: [
+        /height[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/i,
+        /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+tall/i,
+      ],
+    };
+
+    for (const pattern of patterns[dimension] || []) {
+      const match = product.description.match(pattern);
+      if (match && match[1]) {
+        const value = parseFloat(match[1]);
+        if (!isNaN(value) && value > 0 && value < 100) return value;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extract product weight from product data
+ * Returns weight in lbs
+ */
+function getProductWeight(product: UnifiedProduct): number | null {
+  const productAny = product as any;
+
+  // Check direct weight field
+  if (productAny.weight) {
+    const value = parseFloat(productAny.weight);
+    if (!isNaN(value)) return value;
+  }
+
+  // Check dimensions object
+  if (productAny.dimensions?.weight) {
+    const value = parseFloat(productAny.dimensions.weight);
+    if (!isNaN(value)) return value;
+  }
+
+  // Try to extract from description
+  if (product.description) {
+    // Weight in lbs
+    const lbsMatch = product.description.match(/weight[:\s]+(\d+(?:\.\d+)?)\s*(?:pounds?|lbs?\.?)/i);
+    if (lbsMatch && lbsMatch[1]) {
+      const value = parseFloat(lbsMatch[1]);
+      if (!isNaN(value) && value > 0 && value < 100) return value;
+    }
+
+    // Weight in oz (convert to lbs)
+    const ozMatch = product.description.match(/weight[:\s]+(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)/i);
+    if (ozMatch && ozMatch[1]) {
+      const value = parseFloat(ozMatch[1]) / 16; // Convert oz to lbs
+      if (!isNaN(value) && value > 0 && value < 100) return value;
+    }
+  }
+
+  return null;
 }
