@@ -1,6 +1,7 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
 import { getProductsByCategory } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import ProductImageGallery from '@/components/product/ProductImageGallery';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import ProductPageClient from '@/components/product/ProductPageClient';
@@ -8,8 +9,64 @@ import ProductReviews from '@/components/reviews/ProductReviews';
 import RelatedProducts from '@/components/product/RelatedProducts';
 import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
+import { ProductSchema } from '@/components/seo/StructuredData';
 
 export const revalidate = 3600; // Revalidate every hour for stock updates
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
+// Generate metadata for product page
+export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+    };
+  }
+
+  const price = product.price?.replace(/[^0-9.]/g, '') || '0';
+  const description = product.shortDescription
+    ? product.shortDescription.replace(/<[^>]*>/g, '').slice(0, 160)
+    : product.description
+    ? product.description.replace(/<[^>]*>/g, '').slice(0, 160)
+    : `Shop ${product.name} at Maleq. Fast, discreet shipping available.`;
+
+  return {
+    title: product.name,
+    description,
+    openGraph: {
+      title: product.name,
+      description,
+      url: `${SITE_URL}/shop/product/${slug}`,
+      type: 'website',
+      images: product.image
+        ? [
+            {
+              url: product.image.url,
+              width: 800,
+              height: 800,
+              alt: product.name,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: product.name,
+      description,
+      images: product.image ? [product.image.url] : [],
+    },
+    alternates: {
+      canonical: `${SITE_URL}/shop/product/${slug}`,
+    },
+    other: {
+      'product:price:amount': price,
+      'product:price:currency': 'USD',
+    },
+  };
+}
 
 // Generate static params for all products
 export async function generateStaticParams() {
@@ -48,8 +105,33 @@ export default async function ProductPage({ params }: ProductPageProps) {
     }
   }
 
+  // Prepare structured data
+  const productPrice = parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0');
+  const productDescription = product.shortDescription
+    ? product.shortDescription.replace(/<[^>]*>/g, '').slice(0, 300)
+    : product.description
+    ? product.description.replace(/<[^>]*>/g, '').slice(0, 300)
+    : `Shop ${product.name} at Maleq.`;
+
+  const stockStatus = product.stockStatus === 'IN_STOCK' ? 'InStock' : 'OutOfStock';
+  const productImages = product.gallery?.map(img => img.url) || (product.image ? [product.image.url] : []);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Product Structured Data */}
+      <ProductSchema
+        name={product.name}
+        description={productDescription}
+        image={productImages.length > 0 ? productImages : '/placeholder.jpg'}
+        sku={product.sku || undefined}
+        brand={product.categories?.[0]?.name}
+        price={productPrice}
+        availability={stockStatus as 'InStock' | 'OutOfStock'}
+        url={`${SITE_URL}/shop/product/${product.slug}`}
+        reviewCount={product.reviewCount || undefined}
+        ratingValue={product.averageRating || undefined}
+      />
+
       {/* Breadcrumb */}
       <div className="mb-8 text-sm text-gray-600">
         <a href="/shop" className="hover:text-blue-600">Shop</a>

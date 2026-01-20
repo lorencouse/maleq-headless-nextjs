@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
@@ -7,15 +7,92 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Toaster } from "@/components/ui/Toaster";
 import NewsletterPopup from "@/components/newsletter/NewsletterPopup";
+import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
   display: "swap",
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+const SITE_NAME = 'Maleq';
+const SITE_DESCRIPTION = 'Discover premium adult products at Maleq. Shop our curated collection with fast, discreet shipping and excellent customer service.';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
+};
+
 export const metadata: Metadata = {
-  title: "Maleq - Headless WordPress & WooCommerce",
-  description: "Modern e-commerce built with Next.js and headless WordPress",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: `${SITE_NAME} - Premium Adult Products`,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
+  keywords: ['adult products', 'adult store', 'intimate products', 'discreet shipping'],
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} - Premium Adult Products`,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: `${SITE_NAME} - Premium Adult Products`,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${SITE_NAME} - Premium Adult Products`,
+    description: SITE_DESCRIPTION,
+    images: ['/og-image.jpg'],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  verification: {
+    // Add verification tokens when available
+    // google: 'verification_token',
+    // yandex: 'verification_token',
+    // bing: 'verification_token',
+  },
+  alternates: {
+    canonical: SITE_URL,
+  },
+  icons: {
+    icon: '/favicon.ico',
+    shortcut: '/favicon-16x16.png',
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({
@@ -26,11 +103,29 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased flex flex-col min-h-screen`}>
+        <GoogleAnalytics />
+        <OrganizationSchema
+          name={SITE_NAME}
+          url={SITE_URL}
+          logo={`${SITE_URL}/logo.png`}
+          contactPoint={{
+            email: 'support@maleq.com',
+            contactType: 'customer service',
+          }}
+        />
+        <WebSiteSchema
+          name={SITE_NAME}
+          url={SITE_URL}
+          searchUrl={`${SITE_URL}/search?q={search_term_string}`}
+        />
         <ThemeProvider>
           <CartProvider>
+            <a href="#main-content" className="skip-link">
+              Skip to main content
+            </a>
             <Toaster />
             <Header />
-            <main className="flex-grow">
+            <main id="main-content" className="flex-grow" role="main">
               {children}
             </main>
             <Footer />

@@ -40,8 +40,8 @@ export default function Header() {
   }, [isSearchOpen]);
 
   return (
-    <header className='bg-background border-b border-border shadow-sm transition-colors'>
-      <nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+    <header className='bg-background border-b border-border shadow-sm transition-colors' role="banner">
+      <nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' aria-label="Main navigation">
         <div className='flex justify-between h-16 items-center'>
           {/* Logo */}
           <div className='flex-shrink-0'>
