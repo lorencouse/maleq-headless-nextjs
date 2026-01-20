@@ -132,18 +132,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
 
       {/* Breadcrumb */}
-      <div className="mb-8 text-sm text-gray-600">
-        <a href="/shop" className="hover:text-blue-600">Shop</a>
+      <div className="mb-8 text-sm text-muted-foreground">
+        <a href="/shop" className="hover:text-primary transition-colors">Shop</a>
         {primaryCategory && (
           <>
             {' '}/{' '}
-            <a href={`/shop?category=${primaryCategory.slug}`} className="hover:text-blue-600">
+            <a href={`/shop/category/${primaryCategory.slug}`} className="hover:text-primary transition-colors">
               {primaryCategory.name}
             </a>
           </>
         )}
         {' '}/{' '}
-        <span className="text-gray-900">{product.name}</span>
+        <span className="text-foreground">{product.name}</span>
       </div>
 
       {/* Product Details with Image Gallery */}
@@ -151,9 +151,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       {/* Product Description */}
       {product.description && (
-        <div className="mt-16 border-t border-gray-200 pt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Description</h2>
-          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+        <div className="mt-16 border-t border-border pt-12">
+          <h2 className="text-2xl font-bold text-foreground mb-6">Product Description</h2>
+          <div className="prose prose-lg max-w-none text-foreground/80 leading-relaxed dark:prose-invert">
             {product.description.replace(/<[^>]*>/g, '')}
           </div>
         </div>

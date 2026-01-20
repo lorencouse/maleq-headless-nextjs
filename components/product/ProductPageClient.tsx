@@ -8,7 +8,7 @@ import { showSuccess, showError } from '@/lib/utils/toast';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockAlertButton from '@/components/product/StockAlertButton';
 import SocialShare from '@/components/product/SocialShare';
-import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommerce-format';
+import { formatAttributeName, formatAttributeValue, formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
 
 interface VariationImage {
   url: string;
@@ -45,28 +45,12 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
       : null
   );
 
-  const formatPrice = (price: string | null | undefined) => {
-    if (!price) return 'N/A';
-    // WPGraphQL returns prices already formatted (e.g., "$82.35")
-    // If it starts with $, return as-is; otherwise format it
-    if (price.startsWith('$')) return price;
-    const num = parseFloat(price.replace(/[^0-9.-]/g, ''));
-    return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
-  };
-
   // Use selected variation data if available, otherwise use parent product data
   const displayPrice = selectedVariation?.price || product.price || product.regularPrice;
   const displayStockStatus = selectedVariation?.stockStatus || product.stockStatus;
   const displayStockQuantity = selectedVariation?.stockQuantity ?? product.stockQuantity;
   // For variable products, show variation SKU; for simple products, show product SKU
   const displaySku = isVariable ? selectedVariation?.sku : product.sku;
-
-  // Helper to convert price string to number
-  const priceToNumber = (price: string | null | undefined): number => {
-    if (!price) return 0;
-    const cleaned = price.replace(/[^0-9.]/g, '');
-    return parseFloat(cleaned) || 0;
-  };
 
   // Add to Cart Handler
   const handleAddToCart = async () => {
@@ -97,8 +81,8 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
 
     try {
       // Prepare cart item data
-      const currentPrice = priceToNumber(displayPrice);
-      const regularPrice = priceToNumber(
+      const currentPrice = parsePrice(displayPrice);
+      const regularPrice = parsePrice(
         selectedVariation?.regularPrice || product.regularPrice
       );
 
@@ -252,8 +236,8 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
               productId={product.databaseId?.toString() || product.id}
               name={product.name}
               slug={product.slug}
-              price={priceToNumber(displayPrice)}
-              regularPrice={priceToNumber(product.regularPrice)}
+              price={parsePrice(displayPrice)}
+              regularPrice={parsePrice(product.regularPrice)}
               image={product.image || undefined}
               inStock={false}
               variant="button"
@@ -282,8 +266,8 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
               productId={product.databaseId?.toString() || product.id}
               name={product.name}
               slug={product.slug}
-              price={priceToNumber(displayPrice)}
-              regularPrice={priceToNumber(product.regularPrice)}
+              price={parsePrice(displayPrice)}
+              regularPrice={parsePrice(product.regularPrice)}
               image={product.image || undefined}
               inStock={displayStockStatus === 'IN_STOCK'}
               variant="button"

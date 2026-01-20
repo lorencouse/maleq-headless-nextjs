@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import { formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 
 interface QuickViewModalProps {
@@ -42,19 +43,6 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
     };
   }, [isOpen, onClose]);
 
-  const formatPrice = (price: string | null | undefined) => {
-    if (!price) return 'N/A';
-    if (price.startsWith('$')) return price;
-    const num = parseFloat(price.replace(/[^0-9.-]/g, ''));
-    return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
-  };
-
-  const priceToNumber = (price: string | null | undefined): number => {
-    if (!price) return 0;
-    const cleaned = price.replace(/[^0-9.]/g, '');
-    return parseFloat(cleaned) || 0;
-  };
-
   const handleAddToCart = async () => {
     if (displayStockStatus === 'OUT_OF_STOCK') {
       showError('This product is out of stock');
@@ -76,8 +64,8 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         name: product.name,
         slug: product.slug,
         sku: product.sku || '',
-        price: priceToNumber(product.price || product.regularPrice),
-        regularPrice: priceToNumber(product.regularPrice),
+        price: parsePrice(product.price || product.regularPrice),
+        regularPrice: parsePrice(product.regularPrice),
         quantity: quantity,
         image: product.image || undefined,
         stockQuantity: product.stockQuantity || undefined,
@@ -189,9 +177,13 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
             <div className="flex flex-col">
               {/* Category */}
               {product.categories?.[0] && (
-                <span className="text-sm text-muted-foreground mb-2">
+                <a
+                  href={`/shop/category/${product.categories[0].slug}`}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
+                  onClick={onClose}
+                >
                   {product.categories[0].name}
-                </span>
+                </a>
               )}
 
               {/* Name */}
@@ -313,8 +305,8 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   productId={product.databaseId?.toString() || product.id}
                   name={product.name}
                   slug={product.slug}
-                  price={priceToNumber(product.price || product.regularPrice)}
-                  regularPrice={priceToNumber(product.regularPrice)}
+                  price={parsePrice(product.price || product.regularPrice)}
+                  regularPrice={parsePrice(product.regularPrice)}
                   image={product.image || undefined}
                   inStock={displayStockStatus === 'IN_STOCK'}
                   variant="button"

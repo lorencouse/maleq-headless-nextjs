@@ -49,9 +49,12 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
           )}
           {/* Category */}
           {product.categories && product.categories.length > 0 && (
-            <span className="text-sm text-muted-foreground">
+            <a
+              href={`/shop/category/${product.categories[0].slug}`}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
               {product.categories[0].name}
-            </span>
+            </a>
           )}
         </div>
 

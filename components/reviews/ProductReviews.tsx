@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import ReviewSummary from './ReviewSummary';
 import ReviewList from './ReviewList';
 import WriteReviewForm from './WriteReviewForm';
@@ -18,7 +18,8 @@ export default function ProductReviews({
   averageRating,
   reviewCount,
 }: ProductReviewsProps) {
-  const [showWriteReview, setShowWriteReview] = useState(false);
+  // Show write review form by default if there are no reviews
+  const [showWriteReview, setShowWriteReview] = useState(reviewCount === 0);
   const [key, setKey] = useState(0);
 
   const handleReviewSuccess = () => {

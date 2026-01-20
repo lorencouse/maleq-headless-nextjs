@@ -2,27 +2,13 @@
 
 import { FilterState } from './FilterPanel';
 import { HierarchicalCategory } from './CategoryFilter';
+import { findCategoryBySlug } from '@/lib/utils/category-helpers';
 
 interface ActiveFiltersProps {
   filters: FilterState;
   categories: HierarchicalCategory[];
   onRemoveFilter: (key: keyof FilterState) => void;
   onClearAll: () => void;
-}
-
-// Recursively find a category by slug in the hierarchy
-function findCategoryBySlug(
-  categories: HierarchicalCategory[],
-  slug: string
-): HierarchicalCategory | undefined {
-  for (const cat of categories) {
-    if (cat.slug === slug) return cat;
-    if (cat.children.length > 0) {
-      const found = findCategoryBySlug(cat.children, slug);
-      if (found) return found;
-    }
-  }
-  return undefined;
 }
 
 export default function ActiveFilters({
@@ -44,6 +30,18 @@ export default function ActiveFilters({
       key: 'minPrice',
       label: `$${filters.minPrice} - $${filters.maxPrice}`,
     });
+  }
+
+  if (filters.brand) {
+    activeFilters.push({ key: 'brand', label: `Brand: ${filters.brand}` });
+  }
+
+  if (filters.color) {
+    activeFilters.push({ key: 'color', label: `Color: ${filters.color}` });
+  }
+
+  if (filters.material) {
+    activeFilters.push({ key: 'material', label: `Material: ${filters.material}` });
   }
 
   if (filters.inStock) {

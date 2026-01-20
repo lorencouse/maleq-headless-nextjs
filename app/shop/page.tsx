@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { getAllProducts, getHierarchicalCategories } from '@/lib/products/combined-service';
+import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 
 export const metadata: Metadata = {
@@ -10,11 +10,50 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
-export default async function ShopPage() {
-  // Get products and hierarchical categories from WooCommerce
-  const [{ products, pageInfo }, categories] = await Promise.all([
-    getAllProducts({ limit: 24 }),
+interface ShopPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const params = await searchParams;
+
+  // Parse filter params from URL
+  const category = typeof params.category === 'string' ? params.category : undefined;
+  const brand = typeof params.brand === 'string' ? params.brand : undefined;
+  const color = typeof params.color === 'string' ? params.color : undefined;
+  const material = typeof params.material === 'string' ? params.material : undefined;
+  const minPrice = typeof params.minPrice === 'string' ? parseFloat(params.minPrice) : undefined;
+  const maxPrice = typeof params.maxPrice === 'string' ? parseFloat(params.maxPrice) : undefined;
+  const inStock = params.inStock === 'true';
+  const onSale = params.onSale === 'true';
+
+  // Check if any filters are active
+  const hasFilters = category || brand || color || material ||
+    (minPrice !== undefined && minPrice > 0) ||
+    (maxPrice !== undefined && maxPrice < 500) ||
+    inStock || onSale;
+
+  // Fetch products - use filtered query if filters are present
+  const productsPromise = hasFilters
+    ? getFilteredProducts({
+        limit: 24,
+        category,
+        brand,
+        color,
+        material,
+        minPrice,
+        maxPrice,
+        inStock,
+        onSale,
+      })
+    : getAllProducts({ limit: 24 });
+
+  // Get products, categories, brands, and attributes from WooCommerce
+  const [{ products, pageInfo }, categories, brands, { colors, materials }] = await Promise.all([
+    productsPromise,
     getHierarchicalCategories(),
+    getBrands(),
+    getGlobalAttributes(),
   ]);
 
   return (
@@ -32,6 +71,9 @@ export default async function ShopPage() {
         <ShopPageClient
           initialProducts={products}
           categories={categories}
+          brands={brands}
+          colors={colors}
+          materials={materials}
           hasMore={pageInfo.hasNextPage}
         />
       </Suspense>

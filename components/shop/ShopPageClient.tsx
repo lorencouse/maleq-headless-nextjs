@@ -6,17 +6,24 @@ import ProductCard from './ProductCard';
 import FilterPanel, { FilterState } from './filters/FilterPanel';
 import ActiveFilters from './filters/ActiveFilters';
 import SortDropdown, { SortOption } from './SortDropdown';
-import { UnifiedProduct, HierarchicalCategory } from '@/lib/products/combined-service';
+import { UnifiedProduct, HierarchicalCategory, FilterOption } from '@/lib/products/combined-service';
 
 interface ShopPageClientProps {
   initialProducts: UnifiedProduct[];
   categories: HierarchicalCategory[];
+  brands?: FilterOption[];
+  colors?: FilterOption[];
+  materials?: FilterOption[];
   hasMore: boolean;
   searchQuery?: string;
+  initialCategory?: string;
 }
 
 const DEFAULT_FILTERS: FilterState = {
   category: '',
+  brand: '',
+  color: '',
+  material: '',
   minPrice: 0,
   maxPrice: 500,
   inStock: false,
@@ -26,8 +33,12 @@ const DEFAULT_FILTERS: FilterState = {
 export default function ShopPageClient({
   initialProducts,
   categories,
+  brands = [],
+  colors = [],
+  materials = [],
   hasMore: initialHasMore,
   searchQuery,
+  initialCategory,
 }: ShopPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -41,8 +52,11 @@ export default function ShopPageClient({
   const isInitialMount = useRef(true);
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
 
-  // Parse filters from URL
-  const categoryFilter = searchParams.get('category') || '';
+  // Parse filters from URL (use initialCategory as fallback for category pages)
+  const categoryFilter = searchParams.get('category') || initialCategory || '';
+  const brandFilter = searchParams.get('brand') || '';
+  const colorFilter = searchParams.get('color') || '';
+  const materialFilter = searchParams.get('material') || '';
   const minPriceFilter = parseInt(searchParams.get('minPrice') || '0', 10);
   const maxPriceFilter = parseInt(searchParams.get('maxPrice') || '500', 10);
   const inStockFilter = searchParams.get('inStock') === 'true';
@@ -51,6 +65,9 @@ export default function ShopPageClient({
 
   const filters: FilterState = {
     category: categoryFilter,
+    brand: brandFilter,
+    color: colorFilter,
+    material: materialFilter,
     minPrice: minPriceFilter,
     maxPrice: maxPriceFilter,
     inStock: inStockFilter,
@@ -62,6 +79,9 @@ export default function ShopPageClient({
     const params = new URLSearchParams();
 
     if (newFilters.category) params.set('category', newFilters.category);
+    if (newFilters.brand) params.set('brand', newFilters.brand);
+    if (newFilters.color) params.set('color', newFilters.color);
+    if (newFilters.material) params.set('material', newFilters.material);
     if (newFilters.minPrice > 0) params.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice < 500) params.set('maxPrice', newFilters.maxPrice.toString());
     if (newFilters.inStock) params.set('inStock', 'true');
@@ -76,6 +96,9 @@ export default function ShopPageClient({
   const fetchProducts = useCallback(async (
     filterParams: {
       category: string;
+      brand: string;
+      color: string;
+      material: string;
       minPrice: number;
       maxPrice: number;
       inStock: boolean;
@@ -96,6 +119,9 @@ export default function ShopPageClient({
 
       if (filterParams.search) params.set('search', filterParams.search);
       if (filterParams.category) params.set('category', filterParams.category);
+      if (filterParams.brand) params.set('brand', filterParams.brand);
+      if (filterParams.color) params.set('color', filterParams.color);
+      if (filterParams.material) params.set('material', filterParams.material);
       if (filterParams.minPrice > 0) params.set('minPrice', filterParams.minPrice.toString());
       if (filterParams.maxPrice < 500) params.set('maxPrice', filterParams.maxPrice.toString());
       if (filterParams.inStock) params.set('inStock', 'true');
@@ -121,31 +147,18 @@ export default function ShopPageClient({
     }
   }, []);
 
-  // Fetch products when filters change (skip initial mount)
+  // Fetch products when filters change (skip initial mount - server handles initial load)
   useEffect(() => {
+    // Skip initial mount - server already provides filtered products
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      // Check if we have URL params on initial load (excluding search, which is pre-loaded)
-      const hasFilters = categoryFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
-      if (hasFilters && !searchQuery) {
-        // Only fetch if we have filters AND no search query
-        // Search results are already loaded server-side
-        fetchProducts({
-          category: categoryFilter,
-          minPrice: minPriceFilter,
-          maxPrice: maxPriceFilter,
-          inStock: inStockFilter,
-          onSale: onSaleFilter,
-          sort: sortBy,
-        });
-      }
       return;
     }
 
     // Skip fetch if we have search results from SSR and no filters applied
     // This prevents re-fetching on hydration/Strict Mode double-render
     if (hasInitialSearchResults.current) {
-      const hasFilters = categoryFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
+      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
       if (!hasFilters) {
         // Clear the flag so subsequent filter changes will fetch
         hasInitialSearchResults.current = false;
@@ -159,6 +172,9 @@ export default function ShopPageClient({
     setCursor(null);
     fetchProducts({
       category: categoryFilter,
+      brand: brandFilter,
+      color: colorFilter,
+      material: materialFilter,
       minPrice: minPriceFilter,
       maxPrice: maxPriceFilter,
       inStock: inStockFilter,
@@ -166,7 +182,7 @@ export default function ShopPageClient({
       sort: sortBy,
       search: searchQuery,
     });
-  }, [categoryFilter, minPriceFilter, maxPriceFilter, inStockFilter, onSaleFilter, sortBy, searchQuery, fetchProducts]);
+  }, [categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, inStockFilter, onSaleFilter, sortBy, searchQuery, fetchProducts]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters: FilterState) => {
@@ -191,6 +207,12 @@ export default function ShopPageClient({
       newFilters.maxPrice = 500;
     } else if (key === 'category') {
       newFilters.category = '';
+    } else if (key === 'brand') {
+      newFilters.brand = '';
+    } else if (key === 'color') {
+      newFilters.color = '';
+    } else if (key === 'material') {
+      newFilters.material = '';
     } else if (key === 'inStock') {
       newFilters.inStock = false;
     } else if (key === 'onSale') {
@@ -204,6 +226,9 @@ export default function ShopPageClient({
     if (isLoading || !hasMore) return;
     fetchProducts({
       category: categoryFilter,
+      brand: brandFilter,
+      color: colorFilter,
+      material: materialFilter,
       minPrice: minPriceFilter,
       maxPrice: maxPriceFilter,
       inStock: inStockFilter,
@@ -245,6 +270,9 @@ export default function ShopPageClient({
           <h2 className="text-lg font-semibold text-foreground mb-4">Filters</h2>
           <FilterPanel
             categories={categories}
+            brands={brands}
+            colors={colors}
+            materials={materials}
             filters={filters}
             onFilterChange={handleFilterChange}
             onClearFilters={handleClearFilters}
@@ -365,6 +393,9 @@ export default function ShopPageClient({
           <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-background z-50 lg:hidden overflow-y-auto">
             <FilterPanel
               categories={categories}
+              brands={brands}
+              colors={colors}
+              materials={materials}
               filters={filters}
               onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}

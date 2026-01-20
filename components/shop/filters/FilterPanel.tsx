@@ -4,9 +4,14 @@ import { useState } from 'react';
 import PriceRangeFilter from './PriceRangeFilter';
 import CategoryFilter, { HierarchicalCategory } from './CategoryFilter';
 import StockFilter from './StockFilter';
+import SelectFilter from './SelectFilter';
+import type { FilterOption } from '@/lib/products/combined-service';
 
 export interface FilterState {
   category: string;
+  brand: string;
+  color: string;
+  material: string;
   minPrice: number;
   maxPrice: number;
   inStock: boolean;
@@ -15,6 +20,9 @@ export interface FilterState {
 
 interface FilterPanelProps {
   categories: HierarchicalCategory[];
+  brands?: FilterOption[];
+  colors?: FilterOption[];
+  materials?: FilterOption[];
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
   onClearFilters: () => void;
@@ -24,6 +32,9 @@ interface FilterPanelProps {
 
 export default function FilterPanel({
   categories,
+  brands = [],
+  colors = [],
+  materials = [],
   filters,
   onFilterChange,
   onClearFilters,
@@ -32,6 +43,8 @@ export default function FilterPanel({
 }: FilterPanelProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     category: true,
+    brand: true,
+    attributes: false,
     price: true,
     availability: true,
   });
@@ -45,8 +58,11 @@ export default function FilterPanel({
 
   const hasActiveFilters =
     filters.category !== '' ||
+    filters.brand !== '' ||
+    filters.color !== '' ||
+    filters.material !== '' ||
     filters.minPrice > 0 ||
-    filters.maxPrice < 1000 ||
+    filters.maxPrice < 500 ||
     filters.inStock ||
     filters.onSale;
 
@@ -104,6 +120,84 @@ export default function FilterPanel({
           />
         )}
       </div>
+
+      {/* Brand */}
+      {brands.length > 0 && (
+        <div className="mb-6">
+          <button
+            onClick={() => toggleSection('brand')}
+            className="flex justify-between items-center w-full py-2 text-left"
+          >
+            <span className="font-semibold text-foreground">Brand</span>
+            <svg
+              className={`w-5 h-5 text-muted-foreground transition-transform ${
+                expandedSections.brand ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.brand && (
+            <SelectFilter
+              options={brands}
+              selectedValue={filters.brand}
+              onSelect={(brand) => onFilterChange({ ...filters, brand })}
+              placeholder="All Brands"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Attributes (Color, Material) */}
+      {(colors.length > 0 || materials.length > 0) && (
+        <div className="mb-6">
+          <button
+            onClick={() => toggleSection('attributes')}
+            className="flex justify-between items-center w-full py-2 text-left"
+          >
+            <span className="font-semibold text-foreground">Attributes</span>
+            <svg
+              className={`w-5 h-5 text-muted-foreground transition-transform ${
+                expandedSections.attributes ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.attributes && (
+            <div className="space-y-4 mt-2">
+              {colors.length > 0 && (
+                <div>
+                  <label className="text-sm text-muted-foreground">Color</label>
+                  <SelectFilter
+                    options={colors}
+                    selectedValue={filters.color}
+                    onSelect={(color) => onFilterChange({ ...filters, color })}
+                    placeholder="All Colors"
+                  />
+                </div>
+              )}
+              {materials.length > 0 && (
+                <div>
+                  <label className="text-sm text-muted-foreground">Material</label>
+                  <SelectFilter
+                    options={materials}
+                    selectedValue={filters.material}
+                    onSelect={(material) => onFilterChange({ ...filters, material })}
+                    placeholder="All Materials"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Price Range */}
       <div className="mb-6">

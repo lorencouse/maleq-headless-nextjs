@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ProductSpecification } from '@/lib/products/product-service';
 
 interface ProductSpecificationsProps {
@@ -10,17 +11,31 @@ export default function ProductSpecifications({ specifications }: ProductSpecifi
   }
 
   return (
-    <div className="border-t border-gray-200 pt-8 mt-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Product Specifications</h2>
-      <div className="bg-gray-50 rounded-lg p-6">
+    <div className="border-t border-border pt-8 mt-8">
+      <h2 className="text-2xl font-bold text-foreground mb-6">Product Specifications</h2>
+      <div className="bg-muted rounded-lg p-6">
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
           {specifications.map((spec, index) => (
-            <div key={index} className="border-b border-gray-200 pb-3">
-              <dt className="text-sm font-semibold text-gray-600 mb-1">
+            <div key={index} className="border-b border-border pb-3">
+              <dt className="text-sm font-semibold text-muted-foreground mb-1">
                 {spec.label}
               </dt>
-              <dd className="text-base text-gray-900">
-                {spec.value}
+              <dd className="text-base text-foreground">
+                {spec.links && spec.links.length > 0 ? (
+                  spec.links.map((link, linkIndex) => (
+                    <span key={linkIndex}>
+                      {linkIndex > 0 && ', '}
+                      <Link
+                        href={link.url}
+                        className="text-primary hover:text-primary-hover hover:underline transition-colors"
+                      >
+                        {link.text}
+                      </Link>
+                    </span>
+                  ))
+                ) : (
+                  spec.value
+                )}
               </dd>
             </div>
           ))}

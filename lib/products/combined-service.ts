@@ -1,13 +1,13 @@
 import { getClient } from '@/lib/apollo/client';
 import {
   GET_ALL_PRODUCTS,
-  GET_PRODUCT_BY_SLUG,
   GET_PRODUCTS_BY_CATEGORY,
   SEARCH_PRODUCTS,
   GET_ALL_PRODUCT_CATEGORIES,
-  GET_ALL_PRODUCT_SLUGS,
   FILTER_PRODUCTS,
   GET_HIERARCHICAL_CATEGORIES,
+  GET_ALL_BRANDS,
+  GET_GLOBAL_ATTRIBUTES,
 } from '@/lib/queries/products';
 import type { Product as WooProduct, ProductCategory } from '@/lib/types/woocommerce';
 
@@ -72,6 +72,14 @@ export interface HierarchicalCategory {
   slug: string;
   count: number;
   children: HierarchicalCategory[];
+}
+
+// Filter option interface for brands and attributes
+export interface FilterOption {
+  id: string;
+  name: string;
+  slug: string;
+  count: number | null;
 }
 
 /**
@@ -200,18 +208,21 @@ export async function getAllProducts(params: {
 
 /**
  * Get filtered products with DB-level filtering
- * Uses the FILTER_PRODUCTS query for price, stock, and sale filters
+ * Uses the FILTER_PRODUCTS query for price, stock, sale, and taxonomy filters
  */
 export async function getFilteredProducts(params: {
   limit?: number;
   after?: string;
   category?: string;
+  brand?: string;
+  color?: string;
+  material?: string;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
   onSale?: boolean;
 }): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
-  const { limit = 24, after, category, minPrice, maxPrice, inStock, onSale } = params;
+  const { limit = 24, after, category, brand, color, material, minPrice, maxPrice, inStock, onSale } = params;
 
   try {
     // Build variables for the filter query
@@ -237,6 +248,26 @@ export async function getFilteredProducts(params: {
       variables.stockStatus = ['IN_STOCK'];
     }
 
+    // Build taxonomy filter for brand, color, and material
+    const taxonomyFilters: { taxonomy: string; terms: string[] }[] = [];
+
+    if (brand) {
+      taxonomyFilters.push({ taxonomy: 'PRODUCT_BRAND', terms: [brand] });
+    }
+    if (color) {
+      taxonomyFilters.push({ taxonomy: 'PA_COLOR', terms: [color] });
+    }
+    if (material) {
+      taxonomyFilters.push({ taxonomy: 'PA_MATERIAL', terms: [material] });
+    }
+
+    if (taxonomyFilters.length > 0) {
+      variables.taxonomyFilter = {
+        relation: 'AND',
+        filters: taxonomyFilters,
+      };
+    }
+
     const { data } = await getClient().query({
       query: FILTER_PRODUCTS,
       variables,
@@ -258,41 +289,6 @@ export async function getFilteredProducts(params: {
   }
 }
 
-/**
- * Get a single product by slug
- */
-export async function getProductBySlug(slug: string): Promise<UnifiedProduct | null> {
-  try {
-    const { data } = await getClient().query({
-      query: GET_PRODUCT_BY_SLUG,
-      variables: { slug },
-    });
-
-    const product = data?.product;
-    if (!product) return null;
-
-    return convertWooProduct(product);
-  } catch (error) {
-    console.error('Error fetching product by slug:', error);
-    return null;
-  }
-}
-
-/**
- * Get all product slugs for static generation
- */
-export async function getAllProductSlugs(): Promise<string[]> {
-  try {
-    const { data } = await getClient().query({
-      query: GET_ALL_PRODUCT_SLUGS,
-    });
-
-    return data?.products?.nodes?.map((p: { slug: string }) => p.slug) || [];
-  } catch (error) {
-    console.error('Error fetching product slugs:', error);
-    return [];
-  }
-}
 
 /**
  * Get all product categories
@@ -394,4 +390,72 @@ export async function searchProducts(searchTerm: string, limit = 12): Promise<Un
 export async function getProductsByCategory(category: string, limit = 12): Promise<UnifiedProduct[]> {
   const result = await getAllProducts({ category, limit });
   return result.products;
+}
+
+/**
+ * Get all product brands for filtering
+ */
+export async function getBrands(): Promise<FilterOption[]> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_BRANDS,
+    });
+
+    const nodes = data?.productBrands?.nodes || [];
+
+    return nodes
+      .filter((brand: FilterOption) => brand.count && brand.count > 0)
+      .map((brand: FilterOption) => ({
+        id: brand.id,
+        name: brand.name,
+        slug: brand.slug,
+        count: brand.count,
+      }))
+      .sort((a: FilterOption, b: FilterOption) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error('Error fetching brands:', error);
+    return [];
+  }
+}
+
+/**
+ * Get global product attributes (color, material) for filtering
+ */
+export async function getGlobalAttributes(): Promise<{
+  colors: FilterOption[];
+  materials: FilterOption[];
+}> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_GLOBAL_ATTRIBUTES,
+    });
+
+    const colorNodes = data?.allPaColor?.nodes || [];
+    const materialNodes = data?.allPaMaterial?.nodes || [];
+
+    const colors = colorNodes
+      .filter((attr: FilterOption) => attr.count && attr.count > 0)
+      .map((attr: FilterOption) => ({
+        id: attr.id,
+        name: attr.name,
+        slug: attr.slug,
+        count: attr.count,
+      }))
+      .sort((a: FilterOption, b: FilterOption) => a.name.localeCompare(b.name));
+
+    const materials = materialNodes
+      .filter((attr: FilterOption) => attr.count && attr.count > 0)
+      .map((attr: FilterOption) => ({
+        id: attr.id,
+        name: attr.name,
+        slug: attr.slug,
+        count: attr.count,
+      }))
+      .sort((a: FilterOption, b: FilterOption) => a.name.localeCompare(b.name));
+
+    return { colors, materials };
+  } catch (error) {
+    console.error('Error fetching global attributes:', error);
+    return { colors: [], materials: [] };
+  }
 }

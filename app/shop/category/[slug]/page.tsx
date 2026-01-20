@@ -1,38 +1,14 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getProductsByCategory, getHierarchicalCategories, HierarchicalCategory } from '@/lib/products/combined-service';
+import { getProductsByCategory, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
+import { findCategoryBySlug, flattenCategories } from '@/lib/utils/category-helpers';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
-}
-
-// Helper to find a category by slug in the hierarchical structure
-function findCategoryBySlug(
-  categories: HierarchicalCategory[],
-  slug: string
-): HierarchicalCategory | undefined {
-  for (const cat of categories) {
-    if (cat.slug === slug) return cat;
-    if (cat.children.length > 0) {
-      const found = findCategoryBySlug(cat.children, slug);
-      if (found) return found;
-    }
-  }
-  return undefined;
-}
-
-// Helper to flatten hierarchical categories for static params
-function flattenCategories(categories: HierarchicalCategory[]): HierarchicalCategory[] {
-  return categories.reduce((acc: HierarchicalCategory[], cat) => {
-    acc.push(cat);
-    if (cat.children.length > 0) {
-      acc.push(...flattenCategories(cat.children));
-    }
-    return acc;
-  }, []);
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
@@ -62,19 +38,52 @@ export async function generateStaticParams() {
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;
+  const urlParams = await searchParams;
 
-  // Get hierarchical categories and find current category
-  const allCategories = await getHierarchicalCategories();
+  // Parse additional filter params from URL
+  const brand = typeof urlParams.brand === 'string' ? urlParams.brand : undefined;
+  const color = typeof urlParams.color === 'string' ? urlParams.color : undefined;
+  const material = typeof urlParams.material === 'string' ? urlParams.material : undefined;
+  const minPrice = typeof urlParams.minPrice === 'string' ? parseFloat(urlParams.minPrice) : undefined;
+  const maxPrice = typeof urlParams.maxPrice === 'string' ? parseFloat(urlParams.maxPrice) : undefined;
+  const inStock = urlParams.inStock === 'true';
+  const onSale = urlParams.onSale === 'true';
+
+  // Check if any additional filters are active (beyond the category)
+  const hasAdditionalFilters = brand || color || material ||
+    (minPrice !== undefined && minPrice > 0) ||
+    (maxPrice !== undefined && maxPrice < 500) ||
+    inStock || onSale;
+
+  // Get hierarchical categories, brands, and attributes
+  const [allCategories, brandsData, { colors: colorsData, materials: materialsData }] = await Promise.all([
+    getHierarchicalCategories(),
+    getBrands(),
+    getGlobalAttributes(),
+  ]);
+
   const category = findCategoryBySlug(allCategories, slug);
 
   if (!category) {
     notFound();
   }
 
-  // Get products in this category
-  const products = await getProductsByCategory(slug, 24);
+  // Get products - use filtered query if additional filters, otherwise simple category query
+  const products = hasAdditionalFilters
+    ? (await getFilteredProducts({
+        limit: 24,
+        category: slug,
+        brand,
+        color,
+        material,
+        minPrice,
+        maxPrice,
+        inStock,
+        onSale,
+      })).products
+    : await getProductsByCategory(slug, 24);
 
   // Build breadcrumb items
   const breadcrumbItems = [
@@ -101,7 +110,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <ShopPageClient
             initialProducts={products}
             categories={allCategories}
+            brands={brandsData}
+            colors={colorsData}
+            materials={materialsData}
             hasMore={false}
+            initialCategory={slug}
           />
         </Suspense>
       ) : (

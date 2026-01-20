@@ -8,6 +8,9 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '24', 10);
     const after = searchParams.get('after') || undefined;
     const category = searchParams.get('category') || undefined;
+    const brand = searchParams.get('brand') || undefined;
+    const color = searchParams.get('color') || undefined;
+    const material = searchParams.get('material') || undefined;
     const search = searchParams.get('search') || undefined;
     const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined;
     const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
@@ -16,7 +19,7 @@ export async function GET(request: NextRequest) {
     const sort = searchParams.get('sort') || 'newest';
 
     // Determine if we need filtered query (DB-level filtering) or basic query
-    const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category;
+    const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category || brand || color || material;
 
     let products;
     let pageInfo;
@@ -27,11 +30,14 @@ export async function GET(request: NextRequest) {
       products = result.products;
       pageInfo = result.pageInfo;
     } else if (hasFilters) {
-      // Use DB-level filtering for price, stock, sale, and category filters
+      // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
       const result = await getFilteredProducts({
         limit,
         after,
         category,
+        brand,
+        color,
+        material,
         minPrice,
         maxPrice,
         inStock,

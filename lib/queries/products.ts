@@ -304,7 +304,43 @@ export const GET_HIERARCHICAL_CATEGORIES = gql`
   }
 `;
 
-// Filter products with multiple criteria
+// Get all product brands
+export const GET_ALL_BRANDS = gql`
+  query GetAllBrands {
+    productBrands(first: 100, where: { hideEmpty: true }) {
+      nodes {
+        id
+        name
+        slug
+        count
+      }
+    }
+  }
+`;
+
+// Get all product attributes (global attributes like color, material)
+export const GET_GLOBAL_ATTRIBUTES = gql`
+  query GetGlobalAttributes {
+    allPaColor(first: 100) {
+      nodes {
+        id
+        name
+        slug
+        count
+      }
+    }
+    allPaMaterial(first: 100) {
+      nodes {
+        id
+        name
+        slug
+        count
+      }
+    }
+  }
+`;
+
+// Filter products with multiple criteria including taxonomy filters
 export const FILTER_PRODUCTS = gql`
   ${PRODUCT_FIELDS}
   query FilterProducts(
@@ -315,6 +351,7 @@ export const FILTER_PRODUCTS = gql`
     $maxPrice: Float
     $onSale: Boolean
     $stockStatus: [StockStatusEnum]
+    $taxonomyFilter: ProductTaxonomyFilterInput
   ) {
     products(
       first: $first
@@ -325,6 +362,7 @@ export const FILTER_PRODUCTS = gql`
         maxPrice: $maxPrice
         onSale: $onSale
         stockStatus: $stockStatus
+        taxonomyFilter: $taxonomyFilter
         orderby: { field: DATE, order: DESC }
       }
     ) {

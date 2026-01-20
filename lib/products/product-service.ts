@@ -3,9 +3,15 @@ import { GET_PRODUCT_BY_SLUG, GET_ALL_PRODUCT_SLUGS } from '@/lib/queries/produc
 import type { UnifiedProduct } from './combined-service';
 import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommerce-format';
 
+export interface ProductSpecificationLink {
+  text: string;
+  url: string;
+}
+
 export interface ProductSpecification {
   label: string;
   value: string;
+  links?: ProductSpecificationLink[];
 }
 
 export interface ProductVariation {
@@ -70,17 +76,27 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
 
   // Brands
   if (product.productBrands?.nodes?.length > 0) {
+    const brandNodes = product.productBrands.nodes;
     specs.push({
       label: 'Brand',
-      value: product.productBrands.nodes.map((brand: any) => brand.name).join(', ')
+      value: brandNodes.map((brand: any) => brand.name).join(', '),
+      links: brandNodes.map((brand: any) => ({
+        text: brand.name,
+        url: `/shop?brand=${brand.slug}`,
+      })),
     });
   }
 
   // Categories
   if (product.productCategories?.nodes?.length > 0) {
+    const categoryNodes = product.productCategories.nodes;
     specs.push({
       label: 'Categories',
-      value: product.productCategories.nodes.map((cat: any) => cat.name).join(', ')
+      value: categoryNodes.map((cat: any) => cat.name).join(', '),
+      links: categoryNodes.map((cat: any) => ({
+        text: cat.name,
+        url: `/shop/category/${cat.slug}`,
+      })),
     });
   }
 
@@ -124,10 +140,28 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
     for (const attr of product.attributes.nodes) {
       // Only show visible, non-variation attributes in specifications
       if (attr.visible && !attr.variation && attr.options?.length > 0) {
-        specs.push({
-          label: formatAttributeName(attr.name),
-          value: attr.options.map((opt: string) => formatAttributeValue(opt)).join(', ')
-        });
+        const attrName = attr.name.toLowerCase();
+        const isColor = attrName === 'pa_color' || attrName === 'color';
+        const isMaterial = attrName === 'pa_material' || attrName === 'material';
+
+        // Add links for color and material attributes
+        if (isColor || isMaterial) {
+          const filterParam = isColor ? 'color' : 'material';
+          specs.push({
+            label: formatAttributeName(attr.name),
+            value: attr.options.map((opt: string) => formatAttributeValue(opt)).join(', '),
+            links: attr.options.map((opt: string) => ({
+              text: formatAttributeValue(opt),
+              // Use lowercase slug format for the URL
+              url: `/shop?${filterParam}=${opt.toLowerCase().replace(/\s+/g, '-')}`,
+            })),
+          });
+        } else {
+          specs.push({
+            label: formatAttributeName(attr.name),
+            value: attr.options.map((opt: string) => formatAttributeValue(opt)).join(', ')
+          });
+        }
       }
     }
   }
