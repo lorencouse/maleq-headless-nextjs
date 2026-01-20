@@ -22,7 +22,7 @@
     "@stripe/stripe-js": "^8.6.3",
     "graphql": "^16.9.0",
     "mysql2": "^3.16.1",
-    "next": "15.5.7",
+    "next": "^16.1.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hot-toast": "^2.6.0",
