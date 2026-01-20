@@ -5,11 +5,11 @@ import { XMLParser, type XMLProduct, type VariationGroup } from './xml-parser';
 import type { CategoryImporter } from './category-importer';
 import type { ManufacturerImporter } from './manufacturer-importer';
 import {
-  parseMaterials,
   parseColors,
   getNormalizedMaterialMeta,
   getNormalizedColorMeta,
 } from './attribute-normalizer';
+import { enhanceProductAttributes } from './attribute-extractor';
 
 interface ImportConfig {
   priceMultiplier: number; // 3x
@@ -123,13 +123,30 @@ export class ProductImporter {
     const stockQty = parseInt(xmlProduct.stock_quantity, 10);
     const stockStatus = stockQty > 0 ? 'instock' : 'outofstock';
 
+    // Get clean description for extraction
+    const cleanDescription = XMLParser.cleanDescription(xmlProduct.description);
+
+    // Enhance attributes using both XML data and text extraction from description
+    const enhancedAttrs = enhanceProductAttributes(
+      {
+        color: xmlProduct.color,
+        material: xmlProduct.material,
+        weight: xmlProduct.weight,
+        length: xmlProduct.length,
+        width: xmlProduct.diameter, // diameter maps to width
+        height: xmlProduct.height,
+      },
+      cleanDescription,
+      xmlProduct.name
+    );
+
     // Build product
     const product: WooProduct = {
       name: XMLParser.applyTitleCase(xmlProduct.name),
       slug: this.generateSlug(xmlProduct.name),
       type: 'simple',
       status: xmlProduct.active === '1' ? 'publish' : 'draft',
-      description: XMLParser.cleanDescription(xmlProduct.description),
+      description: cleanDescription,
       short_description: XMLParser.generateShortDescription(xmlProduct.description),
       sku: xmlProduct.barcode, // Use UPC as SKU
       regular_price: prices.regular,
@@ -138,11 +155,11 @@ export class ProductImporter {
       manage_stock: true,
       stock_quantity: stockQty,
       stock_status: stockStatus,
-      weight: xmlProduct.weight || '',
+      weight: enhancedAttrs.weight,
       dimensions: {
-        length: xmlProduct.length || '',
-        width: xmlProduct.diameter || '', // diameter maps to width
-        height: xmlProduct.height || '',
+        length: enhancedAttrs.length,
+        width: enhancedAttrs.width,
+        height: enhancedAttrs.height,
       },
       categories,
       images,
@@ -164,23 +181,21 @@ export class ProductImporter {
     // Add attributes if present
     const attributes: WooProductAttribute[] = [];
 
-    // Normalize and add color attribute
-    const normalizedColors = parseColors(xmlProduct.color);
-    if (normalizedColors.length > 0) {
+    // Add color attribute (enhanced from XML + description extraction)
+    if (enhancedAttrs.colors.length > 0) {
       attributes.push({
         name: 'Color',
-        options: normalizedColors,
+        options: enhancedAttrs.colors,
         visible: true,
         variation: false,
       });
     }
 
-    // Normalize and add material attribute
-    const normalizedMaterials = parseMaterials(xmlProduct.material);
-    if (normalizedMaterials.length > 0) {
+    // Add material attribute (enhanced from XML + description extraction)
+    if (enhancedAttrs.materials.length > 0) {
       attributes.push({
         name: 'Material',
-        options: normalizedMaterials,
+        options: enhancedAttrs.materials,
         visible: true,
         variation: false,
       });

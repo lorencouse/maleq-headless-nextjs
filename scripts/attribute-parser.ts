@@ -2,6 +2,9 @@
  * Attribute Parser Script
  * Extracts missing taxonomy data from product titles, descriptions, and existing data
  *
+ * Uses shared extraction utilities from lib/import/attribute-extractor.ts
+ * to ensure consistency with the product importer.
+ *
  * Usage:
  *   bun run scripts/attribute-parser.ts --analyze    # Analyze and show extraction results
  *   bun run scripts/attribute-parser.ts --test       # Test extraction on sample products
@@ -9,32 +12,15 @@
  *   bun run scripts/attribute-parser.ts --apply      # Apply extracted data to database
  */
 
-import { normalizeMaterial, normalizeColor, parseMaterials } from '../lib/import/attribute-normalizer';
-
-// ==================== TYPE DEFINITIONS ====================
-
-interface ExtractedAttributes {
-  materials: string[];
-  colors: string[];
-  dimensions: {
-    length?: number;
-    insertableLength?: number;
-    width?: number;
-    diameter?: number;
-    circumference?: number;
-    height?: number;
-  };
-  weight?: {
-    value: number;
-    unit: string;
-    valueInOz: number;
-  };
-  size?: string;
-  volume?: {
-    value: number;
-    unit: string;
-  };
-}
+import {
+  extractDimensions,
+  extractWeight,
+  extractMaterialsFromText,
+  extractColorsFromText,
+  type ExtractedAttributes,
+  type ExtractedDimensions,
+  type ExtractedWeight,
+} from '../lib/import/attribute-extractor';
 
 interface ProductData {
   id: number;
@@ -48,740 +34,38 @@ interface ProductData {
   existingWeight?: string;
 }
 
-// ==================== DIMENSION PATTERNS ====================
-
-/**
- * Regex patterns for extracting dimensions from text
- * Handles multiple formats including metric and imperial units
- */
-const DIMENSION_PATTERNS = {
-  // Length patterns - multiple formats (imperial)
-  length: [
-    /(?:total\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length|total\s+length)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:\w+\s+)?(?:handle\s+)?length/gi,
-    /length\s*[:\s]\s*(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    // "measures X inches"
-    /measures\s+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    // "6 big inches" colloquial
-    /(\d+(?:\.\d+)?)\s+(?:big\s+)?inches?\s+(?:of|long)/gi,
-    // "approximately X inches"
-    /approximately\s+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    // "about X inches long"
-    /about\s+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:long|in\s+length)/gi,
-  ],
-
-  // Metric length patterns (will be converted to inches)
-  lengthMetric: [
-    /(?:total\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\s+(?:long|in\s+length)/gi,
-    /length\s*[:\s]\s*(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:mm|millimeters?)\s+(?:long|in\s+length)/gi,
-    /length[:\s]+(\d+(?:\.\d+)?)\s*(?:mm|millimeters?)/gi,
-  ],
-
-  // Insertable length - various formats
-  insertableLength: [
-    /insertable\s*(?:length)?[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /insertion\s*(?:length)?[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    /insertable[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:\w+\s+)*insertion\s+length/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+insertable/gi,
-    // "usable length"
-    /usable\s+length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    // "X inches of insertable length"
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+of\s+insertable/gi,
-  ],
-
-  // Width patterns
-  width: [
-    /width[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:wide|in\s+width)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+wide(?:\s+\w+)?/gi,
-    // "max width X inches"
-    /max(?:imum)?\s+width[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-  ],
-
-  // Width metric patterns
-  widthMetric: [
-    /width[:\s]+(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\s+(?:wide|in\s+width)/gi,
-  ],
-
-  // Diameter patterns
-  diameter: [
-    /diameter[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:diameter|dia\.?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:thick|girth)/gi,
-    // "max diameter"
-    /max(?:imum)?\s+diameter[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-  ],
-
-  // Diameter metric
-  diameterMetric: [
-    /diameter[:\s]+(\d+(?:\.\d+)?)\s*(?:cm|centimeters?|mm|millimeters?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:cm|centimeters?|mm|millimeters?)\s+(?:diameter|dia\.?)/gi,
-  ],
-
-  // Circumference
-  circumference: [
-    /circumference[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /girth[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-    // "X inches around"
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+around/gi,
-  ],
-
-  // Height
-  height: [
-    /height[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:in\s+)?height/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+tall/gi,
-    // "stands X inches"
-    /stands\s+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
-  ],
-
-  // Height metric
-  heightMetric: [
-    /height[:\s]+(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)/gi,
-    /(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\s+(?:in\s+)?height/gi,
-    /(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)\s+tall/gi,
-  ],
-};
-
-/**
- * Parse "X by Y by Z" dimension strings (e.g., "12 inches by 8.25 inches by 4.75 inches")
- * Also handles "X x Y x Z" format and metric units
- */
-function parseByDimensions(text: string): { length?: number; width?: number; height?: number } {
-  // Try imperial "X by Y by Z" or "X x Y x Z"
-  const imperialPattern = /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")?\s*(?:by|x)\s+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")?\s*(?:(?:by|x)\s+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")?)?/gi;
-  let match = imperialPattern.exec(text);
-  if (match) {
-    const dims: { length?: number; width?: number; height?: number } = {};
-    if (match[1]) dims.length = parseFloat(match[1]);
-    if (match[2]) dims.width = parseFloat(match[2]);
-    if (match[3]) dims.height = parseFloat(match[3]);
-    // Validate reasonable dimensions (0-100 inches)
-    if (dims.length && (dims.length <= 0 || dims.length > 100)) delete dims.length;
-    if (dims.width && (dims.width <= 0 || dims.width > 100)) delete dims.width;
-    if (dims.height && (dims.height <= 0 || dims.height > 100)) delete dims.height;
-    if (Object.keys(dims).length > 0) return dims;
-  }
-
-  // Try metric "X cm by Y cm" or "X cm x Y cm"
-  const metricCmPattern = /(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)?\s*(?:by|x)\s+(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)?\s*(?:(?:by|x)\s+(\d+(?:\.\d+)?)\s*(?:cm|centimeters?)?)?/gi;
-  match = metricCmPattern.exec(text);
-  if (match && text.toLowerCase().includes('cm')) {
-    const dims: { length?: number; width?: number; height?: number } = {};
-    if (match[1]) dims.length = Math.round((parseFloat(match[1]) / 2.54) * 100) / 100;
-    if (match[2]) dims.width = Math.round((parseFloat(match[2]) / 2.54) * 100) / 100;
-    if (match[3]) dims.height = Math.round((parseFloat(match[3]) / 2.54) * 100) / 100;
-    if (dims.length && (dims.length <= 0 || dims.length > 100)) delete dims.length;
-    if (dims.width && (dims.width <= 0 || dims.width > 100)) delete dims.width;
-    if (dims.height && (dims.height <= 0 || dims.height > 100)) delete dims.height;
-    if (Object.keys(dims).length > 0) return dims;
-  }
-
-  return {};
+// Local interface for this script's needs (extends shared types)
+interface ScriptExtractedAttributes {
+  materials: string[];
+  colors: string[];
+  dimensions: ExtractedDimensions;
+  weight?: ExtractedWeight;
+  size?: string;
+  volume?: {
+    value: number;
+    unit: string;
+  };
 }
 
-// ==================== WEIGHT PATTERNS ====================
+// ==================== VOLUME/SIZE PATTERNS (script-specific) ====================
 
-/**
- * Weight extraction patterns - returns weight in ounces for consistency
- */
-const WEIGHT_PATTERNS = [
-  // "Weight 7.4 ounces" or "Weight: 7.4 oz"
-  { pattern: /weight[:\s]+(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)\b/gi, unit: 'oz' },
-  // "Weighs 7.4 ounces"
-  { pattern: /weighs?\s+(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)\b/gi, unit: 'oz' },
-  // "Weight 0.5 pounds" or "Weight: 0.5 lbs"
-  { pattern: /weight[:\s]+(\d+(?:\.\d+)?)\s*(?:pounds?|lbs?\.?)\b/gi, unit: 'lbs' },
-  // "X ounces" at end of measurement section
-  { pattern: /(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)\s*(?:\.|$|Premium|Body)/gi, unit: 'oz' },
-];
-
-// ==================== MATERIAL PATTERNS ====================
-
-/**
- * Common material keywords to search for in descriptions
- */
-const MATERIAL_KEYWORDS = [
-  // Silicone variants
-  'silicone', 'medical grade silicone', 'platinum silicone', 'liquid silicone',
-  'sil-a-gel', 'silaskin', 'pure silicone',
-
-  // Plastics
-  'abs plastic', 'abs', 'polycarbonate', 'polypropylene', 'polyurethane',
-  'acrylic', 'pc', 'pp', 'pu',
-
-  // TPE/TPR variants
-  'tpe', 'tpr', 'thermoplastic elastomer', 'thermoplastic rubber',
-  'fanta flesh', 'sensafirm', 'superskin', 'real feel', 'real skin',
-
-  // PVC variants
-  'pvc', 'vinyl', 'jelly', 'rubber jelly',
-
-  // Elastomers
-  'latex', 'rubber', 'elastomer', 'sebs',
-
-  // Metals
-  'metal', 'stainless steel', 'steel', 'aluminum', 'aluminium', 'alloy',
-  'chrome', 'nickel', 'nickel free', 'zinc alloy', 'titanium',
-  'brass', 'copper', 'gold plated', 'silver plated',
-
-  // Glass
-  'glass', 'borosilicate glass', 'pyrex', 'tempered glass',
-
-  // Leather
-  'leather', 'faux leather', 'pu leather', 'vegan leather', 'leatherette',
-  'genuine leather', 'patent leather', 'bonded leather',
-
-  // Fabrics
-  'nylon', 'spandex', 'polyester', 'cotton', 'lace', 'mesh',
-  'satin', 'silk', 'velvet', 'microfiber', 'lycra', 'elastane',
-  'neoprene', 'fishnet', 'tulle', 'organza', 'chiffon',
-
-  // Skin-like materials
-  'cyberskin', 'ultraskyn', 'bioskin', 'vixskin', 'sil-a-gel',
-  'super skin', 'pure skin', 'realistic skin',
-
-  // Natural materials
-  'wood', 'bamboo', 'ceramic', 'stone', 'marble',
-  'feather', 'feathers', 'fur', 'faux fur',
-
-  // Other
-  'crystal', 'crystals', 'resin', 'foam', 'memory foam',
-  'wax', 'paraffin', 'gel', 'water based',
-];
-
-/**
- * Patterns for extracting materials from structured text
- * Multiple patterns to handle various description formats
- */
-const MATERIAL_EXTRACTION_PATTERNS = [
-  // "Material: Silicone" or "Materials: ABS, Silicone" - explicit label
-  /\bMaterials?[:\s]+([A-Za-z,\s\/\-()]+?)(?:\.|Categories:|Features:|Specifications:|Key\s+features|Product\s+|$)/gi,
-  // "body safe materials ABS plastic"
-  /body\s+safe\s+materials?\s+([A-Za-z,\s\/\-()]+?)(?:\.|!|\?|\n|Categories:|$)/gi,
-  // "made of silicone" or "made from TPE"
-  /made\s+(?:of|from|with)\s+(?:(?:premium|pure|body\s+safe|high\s+quality|soft|flexible)\s+)*([A-Za-z,\s\/\-]+?)(?:\.|,|\s+and\s+|\s+that\s+|\s+which\s+|\s+for\s+|$)/gi,
-  // "crafted from silicone"
-  /crafted\s+(?:from|with)\s+(?:(?:premium|pure|soft)\s+)*([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-  // "constructed of/from"
-  /constructed\s+(?:of|from)\s+([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-  // "Product material Silicone" or "Product material: TPE"
-  /Product\s+materials?[:\s]+([A-Za-z,\s\/\-]+?)(?:\.|Categories:|$)/gi,
-  // "is made from body safe Thermoplastic"
-  /is\s+made\s+(?:of|from)\s+(?:body\s+safe\s+)?([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-  // "features body safe silicone"
-  /features?\s+(?:body\s+safe\s+)?([A-Za-z,\s\/\-]+?)\s+(?:construction|material|design)/gi,
-  // "silicone construction" or "stainless steel design"
-  /([A-Za-z]+)\s+(?:construction|body|exterior|casing)/gi,
-  // "100% silicone" or "pure silicone"
-  /(?:100%|pure)\s+([A-Za-z]+)/gi,
-  // "premium silicone" standalone
-  /premium\s+([A-Za-z]+)\s+(?:that|which|for|with)/gi,
-  // "this silicone toy" - material before product type
-  /this\s+([A-Za-z]+)\s+(?:toy|plug|vibe|vibrator|massager|dildo|ring|sleeve)/gi,
-  // "coated in silicone"
-  /coated\s+(?:in|with)\s+([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-  // "covered in silicone"
-  /covered\s+(?:in|with)\s+([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-  // "consists of silicone"
-  /consists?\s+of\s+([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-  // "composed of silicone"
-  /composed\s+of\s+([A-Za-z,\s\/\-]+?)(?:\.|,|$)/gi,
-];
-
-// ==================== COLOR PATTERNS ====================
-
-/**
- * Common color names to extract
- */
-const COLOR_NAMES = [
-  // Basic colors
-  'black', 'white', 'red', 'blue', 'green', 'yellow', 'orange', 'purple',
-  'pink', 'brown', 'gray', 'grey', 'clear', 'transparent',
-
-  // Skin tones
-  'flesh', 'nude', 'vanilla', 'caramel', 'chocolate', 'mocha', 'coffee',
-  'light flesh', 'dark flesh', 'tan', 'beige', 'ivory', 'cream',
-  'cocoa', 'honey', 'cinnamon', 'latte',
-
-  // Metallic
-  'gold', 'silver', 'bronze', 'copper', 'rose gold', 'chrome',
-  'gunmetal', 'platinum', 'brass', 'metallic',
-
-  // Pink variants
-  'hot pink', 'light pink', 'baby pink', 'blush', 'rose', 'fuchsia', 'magenta',
-  'coral', 'salmon', 'peach', 'dusty pink', 'fairy pink', 'neon pink',
-
-  // Purple variants
-  'violet', 'lavender', 'plum', 'lilac', 'indigo', 'grape', 'eggplant',
-  'amethyst', 'orchid', 'mauve',
-
-  // Blue variants
-  'navy', 'royal blue', 'light blue', 'sky blue', 'teal', 'turquoise', 'aqua',
-  'cobalt', 'midnight blue', 'electric blue', 'powder blue', 'ocean',
-
-  // Green variants
-  'lime', 'mint', 'emerald', 'olive', 'forest green', 'sage', 'seafoam',
-  'jade', 'hunter green', 'neon green',
-
-  // Red variants
-  'crimson', 'scarlet', 'burgundy', 'maroon', 'wine', 'cherry',
-  'ruby', 'brick', 'blood red',
-
-  // Orange variants
-  'tangerine', 'rust', 'amber', 'apricot', 'burnt orange',
-
-  // Yellow variants
-  'lemon', 'mustard', 'canary', 'buttercup', 'neon yellow',
-
-  // Neutral/earth tones
-  'charcoal', 'slate', 'taupe', 'khaki', 'sand', 'oatmeal',
-  'espresso', 'chestnut', 'mahogany', 'walnut',
-
-  // Multi-color
-  'rainbow', 'multi', 'multicolor', 'assorted', 'tie dye', 'ombre', 'gradient',
-
-  // Special
-  'glow', 'neon', 'glitter', 'sparkle', 'holographic', 'iridescent',
-];
-
-/**
- * Patterns for extracting colors from structured text
- */
-const COLOR_EXTRACTION_PATTERNS = [
-  // "Color: Black" or "Colors: Black, Pink" - strict pattern
-  /\bColors?[:\s]+([A-Za-z,\s\/\-]+?)(?:\.|Categories:|Material|Features:|Specifications:|$)/gi,
-  // "Available in Black" or "Available in Pink and Black"
-  /available\s+in\s+([A-Za-z,\s\/\-]+?)(?:\.|!|\?|$)/gi,
-  // "comes in Black" or "comes in multiple colors"
-  /comes\s+in\s+([A-Za-z,\s\/\-]+?)(?:\.|!|\?|$)/gi,
-  // "offered in Black"
-  /offered\s+in\s+([A-Za-z,\s\/\-]+?)(?:\.|!|\?|$)/gi,
-  // "this Black product" - color before product name
-  /this\s+(black|white|pink|purple|blue|red|green|clear|gold|silver)\s+\w+/gi,
-];
-
-// ==================== VOLUME PATTERNS ====================
-
-/**
- * Volume/capacity patterns
- */
 const VOLUME_PATTERNS = [
-  // "6 oz", "6 ounces", "6oz"
   /(\d+(?:\.\d+)?)\s*(?:fluid\s+)?(?:ounces?|oz\.?)\b/gi,
-  // "100ml", "100 ml"
   /(\d+(?:\.\d+)?)\s*(?:ml|milliliters?)\b/gi,
-  // "1 liter", "1L"
   /(\d+(?:\.\d+)?)\s*(?:liters?|l)\b/gi,
 ];
 
-// ==================== SIZE PATTERNS ====================
-
-/**
- * Size patterns for clothing and accessories
- */
 const SIZE_PATTERNS = [
-  // "Size: Small", "Size S/M"
   /size[:\s]+([XSML]+(?:\/[XSML]+)?|small|medium|large|x-?large|xx-?large|one\s+size)/gi,
-  // Common sizes in text
   /\b(small|medium|large|x-?large|xx-?large|one\s+size(?:\s+fits\s+(?:all|most))?)\b/gi,
 ];
 
-// ==================== EXTRACTION FUNCTIONS ====================
-
-/**
- * Convert metric to inches
- */
-function convertToInches(value: number, unit: 'cm' | 'mm'): number {
-  if (unit === 'cm') return value / 2.54;
-  if (unit === 'mm') return value / 25.4;
-  return value;
-}
-
-/**
- * Parse fractions like "6 1/2" into decimal
- */
-function parseFraction(text: string): number | null {
-  // Match patterns like "6 1/2", "6-1/2", "6.5"
-  const fractionPattern = /(\d+)\s*[-\s]\s*(\d+)\/(\d+)/;
-  const match = text.match(fractionPattern);
-  if (match) {
-    const whole = parseFloat(match[1]);
-    const numerator = parseFloat(match[2]);
-    const denominator = parseFloat(match[3]);
-    if (denominator !== 0) {
-      return whole + (numerator / denominator);
-    }
-  }
-  return null;
-}
-
-/**
- * Extract a numeric dimension value from text using patterns
- */
-function extractDimension(text: string, patterns: RegExp[], isMetric: boolean = false): number | undefined {
-  for (const pattern of patterns) {
-    const regex = new RegExp(pattern.source, pattern.flags);
-    const match = regex.exec(text);
-    if (match && match[1]) {
-      let value = parseFloat(match[1]);
-      if (!isNaN(value) && value > 0) {
-        // Convert metric to inches
-        if (isMetric) {
-          const matchStr = match[0].toLowerCase();
-          if (matchStr.includes('mm') || matchStr.includes('millimeter')) {
-            value = convertToInches(value, 'mm');
-          } else if (matchStr.includes('cm') || matchStr.includes('centimeter')) {
-            value = convertToInches(value, 'cm');
-          }
-        }
-        // Reasonable bounds for product dimensions (in inches)
-        if (value > 0 && value < 100) {
-          return Math.round(value * 100) / 100; // Round to 2 decimal places
-        }
-      }
-    }
-  }
-  return undefined;
-}
-
-/**
- * Extract all dimensions from text
- */
-export function extractDimensions(text: string): ExtractedAttributes['dimensions'] {
-  const dimensions: ExtractedAttributes['dimensions'] = {};
-
-  // First try to parse "X by Y by Z" format which is common in descriptions
-  const byDims = parseByDimensions(text);
-  if (byDims.length) dimensions.length = byDims.length;
-  if (byDims.width) dimensions.width = byDims.width;
-  if (byDims.height) dimensions.height = byDims.height;
-
-  // Then try specific patterns (these can override "by" format if more specific)
-  // Try imperial first, then metric as fallback
-  let explicitLength = extractDimension(text, DIMENSION_PATTERNS.length);
-  if (!explicitLength) {
-    explicitLength = extractDimension(text, DIMENSION_PATTERNS.lengthMetric, true);
-  }
-  if (explicitLength) dimensions.length = explicitLength;
-
-  dimensions.insertableLength = extractDimension(text, DIMENSION_PATTERNS.insertableLength);
-
-  let explicitWidth = extractDimension(text, DIMENSION_PATTERNS.width);
-  if (!explicitWidth) {
-    explicitWidth = extractDimension(text, DIMENSION_PATTERNS.widthMetric, true);
-  }
-  if (explicitWidth) dimensions.width = explicitWidth;
-
-  let diameter = extractDimension(text, DIMENSION_PATTERNS.diameter);
-  if (!diameter) {
-    diameter = extractDimension(text, DIMENSION_PATTERNS.diameterMetric, true);
-  }
-  dimensions.diameter = diameter;
-
-  dimensions.circumference = extractDimension(text, DIMENSION_PATTERNS.circumference);
-
-  let explicitHeight = extractDimension(text, DIMENSION_PATTERNS.height);
-  if (!explicitHeight) {
-    explicitHeight = extractDimension(text, DIMENSION_PATTERNS.heightMetric, true);
-  }
-  if (explicitHeight) dimensions.height = explicitHeight;
-
-  // Clean up undefined values
-  Object.keys(dimensions).forEach(key => {
-    if (dimensions[key as keyof typeof dimensions] === undefined) {
-      delete dimensions[key as keyof typeof dimensions];
-    }
-  });
-
-  return dimensions;
-}
-
-/**
- * Extract weight from text
- * Returns weight value and converts to ounces for consistency
- */
-export function extractWeight(text: string): ExtractedAttributes['weight'] | undefined {
-  for (const { pattern, unit } of WEIGHT_PATTERNS) {
-    const regex = new RegExp(pattern.source, pattern.flags);
-    const match = regex.exec(text);
-    if (match && match[1]) {
-      const value = parseFloat(match[1]);
-      if (!isNaN(value) && value > 0 && value < 100) { // Reasonable bounds
-        let valueInOz = value;
-        if (unit === 'lbs') {
-          valueInOz = value * 16; // Convert pounds to ounces
-        }
-        return { value, unit, valueInOz };
-      }
-    }
-  }
-  return undefined;
-}
-
-/**
- * False positive material contexts - if these phrases appear, skip the keyword
- */
-const MATERIAL_FALSE_POSITIVE_CONTEXTS = [
-  'latex condom compatible',
-  'latex compatible',
-  'compatible with latex',
-  'safe with latex',
-  'rubber latex condom',
-  'natural rubber latex',
-  'latex condoms',
-  'velvet pouch',
-  'velvet storage',
-  'velvet bag',
-  'satin pouch',
-  'satin bag',
-  'wood grain',
-];
-
-/**
- * Extract materials from text
- */
-export function extractMaterials(text: string, title: string = ''): string[] {
-  const materials: Set<string> = new Set();
-
-  // First, try structured patterns like "Material: X"
-  for (const pattern of MATERIAL_EXTRACTION_PATTERNS) {
-    const regex = new RegExp(pattern.source, pattern.flags);
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match[1]) {
-        // Clean and validate the match
-        const matchText = match[1].trim();
-
-        // Skip if it's too long (probably captured too much)
-        if (matchText.length > 100) continue;
-
-        // Split by comma and process each part
-        const parts = matchText.split(/[,\/]+/);
-        for (const part of parts) {
-          const trimmedPart = part.trim();
-          if (trimmedPart.length === 0) continue;
-
-          // Extract just the material name from each part
-          const materialName = extractMaterialName(trimmedPart);
-          if (materialName) {
-            materials.add(materialName);
-          }
-        }
-      }
-    }
-  }
-
-  return Array.from(materials);
-}
-
-/**
- * List of known valid material names for exact matching
- */
-const KNOWN_MATERIALS = [
-  // Plastics
-  'abs plastic', 'abs', 'polycarbonate', 'polypropylene', 'polyurethane', 'acrylic',
-
-  // Silicone variants
-  'silicone', 'medical grade silicone', 'platinum silicone', 'liquid silicone',
-  'sil-a-gel', 'silaskin', 'pure silicone',
-
-  // TPE/TPR
-  'tpe', 'tpr', 'thermoplastic elastomer', 'thermoplastic rubber',
-  'fanta flesh', 'sensafirm', 'superskin',
-
-  // PVC/Vinyl
-  'pvc', 'vinyl', 'jelly', 'enhanced pvc',
-
-  // Elastomers
-  'latex', 'rubber', 'elastomer', 'sebs',
-
-  // Metals
-  'metal', 'steel', 'stainless steel', 'aluminum', 'alloy', 'zinc alloy',
-  'chrome', 'nickel free', 'titanium', 'brass', 'copper',
-
-  // Glass
-  'glass', 'borosilicate glass', 'pyrex', 'tempered glass',
-
-  // Leather
-  'leather', 'faux leather', 'pu leather', 'vegan leather', 'leatherette',
-  'genuine leather', 'patent leather',
-
-  // Fabrics
-  'nylon', 'spandex', 'polyester', 'cotton', 'lace', 'mesh',
-  'satin', 'silk', 'velvet', 'microfiber', 'lycra', 'elastane',
-  'neoprene', 'fishnet',
-
-  // Skin-like
-  'cyberskin', 'bioskin', 'ultraskyn', 'vixskin', 'real feel', 'pure skin',
-
-  // Natural
-  'wood', 'bamboo', 'ceramic', 'stone',
-  'feathers', 'feather', 'fur', 'faux fur',
-
-  // Other
-  'crystals', 'crystal', 'resin', 'foam', 'memory foam', 'gel', 'wax',
-];
-
-/**
- * Extract just the material name from a string, removing extra words
- */
-function extractMaterialName(text: string): string | null {
-  const lowerText = text.toLowerCase().trim();
-
-  // Try to match known materials
-  for (const material of KNOWN_MATERIALS) {
-    if (lowerText.includes(material)) {
-      // Return the normalized material name
-      const normalized = normalizeMaterial(material);
-      return normalized;
-    }
-  }
-
-  return null;
-}
-
-/**
- * Check if a material name is a known/valid material
- */
-function isKnownMaterial(material: string): boolean {
-  const lowerMaterial = material.toLowerCase().trim();
-
-  // Skip if too long (likely a sentence, not a material)
-  if (lowerMaterial.split(' ').length > 4) return false;
-
-  // Skip known false positives (product parts, not materials)
-  const falsePositives = [
-    'allows for', 'stretch', 'placed right', 'contains no',
-    'phthalate free', 'phthalate or', 'remote control', 'power control',
-    'coating on', 'butt plug', 'cock ring', 'cage', 'egg',
-  ];
-  if (falsePositives.some(fp => lowerMaterial.includes(fp))) return false;
-
-  return KNOWN_MATERIALS.some(known => lowerMaterial.includes(known));
-}
-
-/**
- * Color false positives to filter out
- */
-const COLOR_FALSE_POSITIVES = [
-  'may vary', 'vary', 'of each', 'star sign', 'block with',
-  'classic', 'skin tone', 'light skin', 'dark skin',
-  'over time', 'and blue', 'and pink', 'and black', 'and white',
-  'and red', 'and purple', 'package', 'and sizes', 'sizes',
-  'ice pink', 'ice blue', 'ice', 'cerise', 'berry',
-  // More false positives
-  'pump bottle', 'handy pump', 'a handy', 'bottle',
-  'silicone', 'plastic', 'latex', 'rubber', 'metal', // materials not colors
-  'the in', 'dark the', 'glow in', 'in the dark',
-];
-
-/**
- * Product type words that should not be confused with colors
- * These are checked contextually (e.g., "Hot Cream" where Cream is a product type)
- */
-const COLOR_CONTEXT_EXCLUDES: Record<string, string[]> = {
-  'cream': ['hot cream', 'shave cream', 'body cream', 'massage cream', 'hand cream'],
-  'rose': ['rose scent', 'rose oil', 'rose petal'],
-  'cherry': ['cherry flavor', 'cherry scent'],
-  'vanilla': ['vanilla flavor', 'vanilla scent'],
-  'peach': ['peach flavor', 'peach scent'],
-  'mint': ['mint flavor', 'peppermint'],
-  'honey': ['honey flavor'],
-  'chocolate': ['chocolate flavor'],
-  'coffee': ['coffee flavor'],
-};
-
-/**
- * Check if a color name is valid (not a false positive)
- */
-function isValidColor(color: string, fullText: string = ''): boolean {
-  const lower = color.toLowerCase().trim();
-  const lowerText = fullText.toLowerCase();
-
-  // Skip if too short or too long
-  if (lower.length < 2 || lower.length > 25) return false;
-
-  // Skip if it contains false positive phrases
-  if (COLOR_FALSE_POSITIVES.some(fp => lower.includes(fp))) return false;
-
-  // Skip if it's clearly not a color (contains certain words)
-  const invalidWords = ['bottle', 'pump', 'tube', 'pack', 'size', 'inch', 'oz', 'ml', 'safe', 'free'];
-  if (invalidWords.some(w => lower.includes(w))) return false;
-
-  // Check contextual excludes (e.g., "cream" in "hot cream" is not a color)
-  if (fullText && COLOR_CONTEXT_EXCLUDES[lower]) {
-    const excludePhrases = COLOR_CONTEXT_EXCLUDES[lower];
-    if (excludePhrases.some(phrase => lowerText.includes(phrase))) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * Extract colors from text and title
- */
-export function extractColors(text: string, title: string): string[] {
-  const colors: Set<string> = new Set();
-  const lowerTitle = title.toLowerCase();
-  const combinedText = `${title} ${text}`;
-
-  // First, try structured patterns like "Color: X"
-  for (const pattern of COLOR_EXTRACTION_PATTERNS) {
-    const regex = new RegExp(pattern.source, pattern.flags);
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match[1]) {
-        const colorStr = match[1].trim().toLowerCase();
-
-        // Skip false positives
-        if (!isValidColor(colorStr, combinedText)) continue;
-
-        // Split on comma and process each
-        const colorParts = colorStr.split(/[,\/]+/);
-        for (const part of colorParts) {
-          const trimmed = part.trim();
-          if (isValidColor(trimmed, combinedText)) {
-            const normalized = normalizeColor(trimmed);
-            if (normalized && isValidColor(normalized, combinedText)) {
-              colors.add(normalized);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Search for color names in title (most reliable)
-  for (const colorName of COLOR_NAMES) {
-    const colorLower = colorName.toLowerCase();
-    // Check title - use word boundaries to avoid partial matches
-    const titleWords = lowerTitle.split(/\s+/);
-    if (titleWords.includes(colorLower) ||
-        lowerTitle.includes(` ${colorLower} `) ||
-        lowerTitle.endsWith(` ${colorLower}`) ||
-        lowerTitle.startsWith(`${colorLower} `)) {
-      const normalized = normalizeColor(colorName);
-      if (normalized && isValidColor(normalized, combinedText)) {
-        colors.add(normalized);
-      }
-    }
-  }
-
-  return Array.from(colors);
-}
+// ==================== SCRIPT-SPECIFIC EXTRACTION FUNCTIONS ====================
 
 /**
  * Extract volume from text
  */
-export function extractVolume(text: string, title: string): ExtractedAttributes['volume'] | undefined {
+function extractVolume(text: string, title: string): ScriptExtractedAttributes['volume'] | undefined {
   const combinedText = `${title} ${text}`;
 
   for (const pattern of VOLUME_PATTERNS) {
@@ -790,7 +74,6 @@ export function extractVolume(text: string, title: string): ExtractedAttributes[
     if (match && match[1]) {
       const value = parseFloat(match[1]);
       if (!isNaN(value) && value > 0) {
-        // Determine unit
         const matchLower = match[0].toLowerCase();
         let unit = 'oz';
         if (matchLower.includes('ml') || matchLower.includes('milliliter')) {
@@ -809,14 +92,13 @@ export function extractVolume(text: string, title: string): ExtractedAttributes[
 /**
  * Extract size from text
  */
-export function extractSize(text: string, title: string): string | undefined {
+function extractSize(text: string, title: string): string | undefined {
   const combinedText = `${title} ${text}`;
 
   for (const pattern of SIZE_PATTERNS) {
     const regex = new RegExp(pattern.source, pattern.flags);
     const match = regex.exec(combinedText);
     if (match && match[1]) {
-      // Normalize size
       const size = match[1].toUpperCase()
         .replace('X-LARGE', 'XL')
         .replace('XX-LARGE', 'XXL')
@@ -831,14 +113,14 @@ export function extractSize(text: string, title: string): string | undefined {
 }
 
 /**
- * Extract all attributes from a product
+ * Extract all attributes from a product using shared extraction utilities
  */
-export function extractAttributes(product: ProductData): ExtractedAttributes {
+function extractAttributes(product: ProductData): ScriptExtractedAttributes {
   const { title, description } = product;
 
   return {
-    materials: extractMaterials(description, title),
-    colors: extractColors(description, title),
+    materials: extractMaterialsFromText(description),
+    colors: extractColorsFromText(description, title),
     dimensions: extractDimensions(description),
     weight: extractWeight(description),
     size: extractSize(description, title),
