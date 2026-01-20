@@ -24,6 +24,11 @@ interface ExtractedAttributes {
     circumference?: number;
     height?: number;
   };
+  weight?: {
+    value: number;
+    unit: string;
+    valueInOz: number;
+  };
   size?: string;
   volume?: {
     value: number;
@@ -43,44 +48,65 @@ interface ProductData {
 
 /**
  * Regex patterns for extracting dimensions from text
+ * Handles multiple formats: "length 7.5 inches", "7.5 inches long", "7.5 inches total length"
  */
 const DIMENSION_PATTERNS = {
-  // Length patterns: "length 7.5 inches", "length: 7.5in", "7.5 inches long"
+  // Length patterns - multiple formats
   length: [
     /(?:total\s+)?length[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
-    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length)/gi,
+    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:long|in\s+length|total\s+length)/gi,
+    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:\w+\s+)?(?:handle\s+)?length/gi,
     /length\s*[:\s]\s*(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
   ],
 
-  // Insertable length: "insertable length 6.5 inches", "insertable: 6.5in"
+  // Insertable length - various formats including "insertion length"
   insertableLength: [
     /insertable\s*(?:length)?[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
     /insertion\s*(?:length)?[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
     /insertable[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)/gi,
+    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+(?:\w+\s+)*insertion\s+length/gi,
+    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+insertable/gi,
   ],
 
-  // Width patterns: "width 1.5 inches", "1.5 inches wide"
+  // Width patterns - including "X inches wide Y"
   width: [
     /width[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
     /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:wide|in\s+width)/gi,
+    /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?)\s+wide\s+\w+/gi,
   ],
 
-  // Diameter patterns: "diameter 1.25 inches", "1.25in diameter"
+  // Diameter patterns
   diameter: [
     /diameter[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
     /(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")\s+(?:diameter|dia\.?)/gi,
   ],
 
-  // Circumference: "circumference 4.5 inches"
+  // Circumference
   circumference: [
     /circumference[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
   ],
 
-  // Height: "height 3 inches"
+  // Height
   height: [
     /height[:\s]+(\d+(?:\.\d+)?)\s*(?:inches?|in\.?|")/gi,
   ],
 };
+
+// ==================== WEIGHT PATTERNS ====================
+
+/**
+ * Weight extraction patterns - returns weight in ounces for consistency
+ */
+const WEIGHT_PATTERNS = [
+  // "Weight 7.4 ounces" or "Weight: 7.4 oz"
+  { pattern: /weight[:\s]+(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)\b/gi, unit: 'oz' },
+  // "Weighs 7.4 ounces"
+  { pattern: /weighs?\s+(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)\b/gi, unit: 'oz' },
+  // "Weight 0.5 pounds" or "Weight: 0.5 lbs"
+  { pattern: /weight[:\s]+(\d+(?:\.\d+)?)\s*(?:pounds?|lbs?\.?)\b/gi, unit: 'lbs' },
+  // "X ounces" at end of measurement section
+  { pattern: /(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)\s*(?:\.|$|Premium|Body)/gi, unit: 'oz' },
+];
 
 // ==================== MATERIAL PATTERNS ====================
 
@@ -217,6 +243,28 @@ export function extractDimensions(text: string): ExtractedAttributes['dimensions
   });
 
   return dimensions;
+}
+
+/**
+ * Extract weight from text
+ * Returns weight value and converts to ounces for consistency
+ */
+export function extractWeight(text: string): ExtractedAttributes['weight'] | undefined {
+  for (const { pattern, unit } of WEIGHT_PATTERNS) {
+    const regex = new RegExp(pattern.source, pattern.flags);
+    const match = regex.exec(text);
+    if (match && match[1]) {
+      const value = parseFloat(match[1]);
+      if (!isNaN(value) && value > 0 && value < 100) { // Reasonable bounds
+        let valueInOz = value;
+        if (unit === 'lbs') {
+          valueInOz = value * 16; // Convert pounds to ounces
+        }
+        return { value, unit, valueInOz };
+      }
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -453,6 +501,7 @@ export function extractAttributes(product: ProductData): ExtractedAttributes {
     materials: extractMaterials(description, title),
     colors: extractColors(description, title),
     dimensions: extractDimensions(description),
+    weight: extractWeight(description),
     size: extractSize(description, title),
     volume: extractVolume(description, title),
   };
@@ -662,6 +711,9 @@ function printAnalysisResults(results: AnalysisResults): void {
     if (Object.keys(sample.extracted.dimensions).length > 0) {
       console.log(`  Dimensions: ${JSON.stringify(sample.extracted.dimensions)}`);
     }
+    if (sample.extracted.weight) {
+      console.log(`  Weight: ${sample.extracted.weight.value} ${sample.extracted.weight.unit}`);
+    }
     if (sample.extracted.volume) {
       console.log(`  Volume: ${sample.extracted.volume.value} ${sample.extracted.volume.unit}`);
     }
@@ -676,6 +728,7 @@ interface ProductUpdate {
   materials: string[];
   colors: string[];
   dimensions: ExtractedAttributes['dimensions'];
+  weight?: ExtractedAttributes['weight'];
   hasMissingMaterials: boolean;
   hasMissingColors: boolean;
 }
@@ -872,6 +925,19 @@ async function updateProductDimensions(productId: number, dimensions: ExtractedA
 }
 
 /**
+ * Update product weight (convert to standard unit - WooCommerce uses shop settings)
+ */
+async function updateProductWeight(productId: number, weight: ExtractedAttributes['weight']): Promise<void> {
+  if (!weight) return;
+
+  // WooCommerce typically stores weight in the shop's weight unit
+  // We'll store as ounces for consistency with the description
+  // Convert to lbs if needed (0.0625 lbs = 1 oz)
+  const weightInLbs = weight.valueInOz / 16;
+  await updateProductMeta(productId, '_weight', weightInLbs.toFixed(2));
+}
+
+/**
  * Dry run - show proposed changes without applying them
  */
 async function runDryRun(): Promise<void> {
@@ -886,13 +952,14 @@ async function runDryRun(): Promise<void> {
     const extracted = extractAttributes(product);
 
     // Only include products where we can extract something useful
-    if (extracted.materials.length > 0 || extracted.colors.length > 0 || Object.keys(extracted.dimensions).length > 0) {
+    if (extracted.materials.length > 0 || extracted.colors.length > 0 || Object.keys(extracted.dimensions).length > 0 || extracted.weight) {
       updates.push({
         id: product.id,
         title: product.title,
         materials: extracted.materials,
         colors: extracted.colors,
         dimensions: extracted.dimensions,
+        weight: extracted.weight,
         hasMissingMaterials: !product.existingMaterials || product.existingMaterials === 'NULL',
         hasMissingColors: !product.existingColor || product.existingColor === 'NULL',
       });
@@ -907,6 +974,7 @@ async function runDryRun(): Promise<void> {
   console.log(`Products that would receive material taxonomy: ${updates.filter(u => u.materials.length > 0).length}`);
   console.log(`Products that would receive color data: ${updates.filter(u => u.colors.length > 0 && u.hasMissingColors).length}`);
   console.log(`Products that would receive dimensions: ${updates.filter(u => Object.keys(u.dimensions).length > 0).length}`);
+  console.log(`Products that would receive weight: ${updates.filter(u => u.weight).length}`);
 
   console.log('\n--- Sample Updates (first 20) ---');
   updates.slice(0, 20).forEach(update => {
@@ -919,6 +987,9 @@ async function runDryRun(): Promise<void> {
     }
     if (Object.keys(update.dimensions).length > 0) {
       console.log(`  + Dimensions: ${JSON.stringify(update.dimensions)}`);
+    }
+    if (update.weight) {
+      console.log(`  + Weight: ${update.weight.value} ${update.weight.unit}`);
     }
   });
 
@@ -953,6 +1024,7 @@ async function applyChanges(): Promise<void> {
   let totalMaterialsAssigned = 0;
   let totalColorsUpdated = 0;
   let totalDimensionsUpdated = 0;
+  let totalWeightsUpdated = 0;
   const processedIds = new Set<number>();
 
   // Process in batches with a maximum limit
@@ -1007,6 +1079,12 @@ async function applyChanges(): Promise<void> {
         totalDimensionsUpdated++;
       }
 
+      // Update weight if found (only if description has a weight)
+      if (extracted.weight) {
+        await updateProductWeight(product.id, extracted.weight);
+        totalWeightsUpdated++;
+      }
+
       totalProcessed++;
     }
 
@@ -1027,6 +1105,7 @@ async function applyChanges(): Promise<void> {
   console.log(`Material terms assigned: ${totalMaterialsAssigned}`);
   console.log(`Color values updated: ${totalColorsUpdated}`);
   console.log(`Dimension values updated: ${totalDimensionsUpdated}`);
+  console.log(`Weight values updated: ${totalWeightsUpdated}`);
 }
 
 // ==================== MAIN ENTRY POINT ====================
