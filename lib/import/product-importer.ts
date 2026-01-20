@@ -168,12 +168,20 @@ export class ProductImporter {
     }
 
     if (xmlProduct.material) {
-      attributes.push({
-        name: 'Material',
-        options: [xmlProduct.material],
-        visible: true,
-        variation: false,
-      });
+      // Split comma-separated materials into individual options
+      const materials = xmlProduct.material
+        .split(/[,\/]+/)
+        .map(m => XMLParser.applyTitleCase(m.trim()))
+        .filter(m => m.length > 0);
+
+      if (materials.length > 0) {
+        attributes.push({
+          name: 'Material',
+          options: materials,
+          visible: true,
+          variation: false,
+        });
+      }
     }
 
     if (attributes.length > 0) {

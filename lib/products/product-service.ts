@@ -144,13 +144,18 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
         const isColor = attrName === 'pa_color' || attrName === 'color';
         const isMaterial = attrName === 'pa_material' || attrName === 'material';
 
+        // Flatten options - some may contain comma-separated values that need splitting
+        const flattenedOptions = attr.options.flatMap((opt: string) =>
+          opt.split(/[,\/]+/).map((o: string) => o.trim()).filter((o: string) => o.length > 0)
+        );
+
         // Add links for color and material attributes
         if (isColor || isMaterial) {
           const filterParam = isColor ? 'color' : 'material';
           specs.push({
             label: formatAttributeName(attr.name),
-            value: attr.options.map((opt: string) => formatAttributeValue(opt)).join(', '),
-            links: attr.options.map((opt: string) => ({
+            value: flattenedOptions.map((opt: string) => formatAttributeValue(opt)).join(', '),
+            links: flattenedOptions.map((opt: string) => ({
               text: formatAttributeValue(opt),
               // Use lowercase slug format for the URL
               url: `/shop?${filterParam}=${opt.toLowerCase().replace(/\s+/g, '-')}`,
@@ -159,7 +164,7 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
         } else {
           specs.push({
             label: formatAttributeName(attr.name),
-            value: attr.options.map((opt: string) => formatAttributeValue(opt)).join(', ')
+            value: flattenedOptions.map((opt: string) => formatAttributeValue(opt)).join(', ')
           });
         }
       }

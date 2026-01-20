@@ -318,10 +318,10 @@ export const GET_ALL_BRANDS = gql`
   }
 `;
 
-// Get all product attributes (global attributes like color, material)
-export const GET_GLOBAL_ATTRIBUTES = gql`
-  query GetGlobalAttributes {
-    allPaColor(first: 100) {
+// Get all product materials
+export const GET_ALL_MATERIALS = gql`
+  query GetAllMaterials {
+    productMaterials(first: 100, where: { hideEmpty: true }) {
       nodes {
         id
         name
@@ -329,7 +329,14 @@ export const GET_GLOBAL_ATTRIBUTES = gql`
         count
       }
     }
-    allPaMaterial(first: 100) {
+  }
+`;
+
+// Get all product attributes (global attributes like color)
+// Note: Material is now a custom taxonomy (product_material), not a product attribute
+export const GET_GLOBAL_ATTRIBUTES = gql`
+  query GetGlobalAttributes {
+    allPaColor(first: 100) {
       nodes {
         id
         name
@@ -351,7 +358,7 @@ export const FILTER_PRODUCTS = gql`
     $maxPrice: Float
     $onSale: Boolean
     $stockStatus: [StockStatusEnum]
-    $taxonomyFilter: ProductTaxonomyFilterInput
+    $taxonomyFilter: ProductTaxonomyInput
   ) {
     products(
       first: $first

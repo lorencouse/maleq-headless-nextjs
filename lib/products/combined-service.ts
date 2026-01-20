@@ -7,6 +7,7 @@ import {
   FILTER_PRODUCTS,
   GET_HIERARCHICAL_CATEGORIES,
   GET_ALL_BRANDS,
+  GET_ALL_MATERIALS,
   GET_GLOBAL_ATTRIBUTES,
 } from '@/lib/queries/products';
 import type { Product as WooProduct, ProductCategory } from '@/lib/types/woocommerce';
@@ -258,7 +259,7 @@ export async function getFilteredProducts(params: {
       taxonomyFilters.push({ taxonomy: 'PA_COLOR', terms: [color] });
     }
     if (material) {
-      taxonomyFilters.push({ taxonomy: 'PA_MATERIAL', terms: [material] });
+      taxonomyFilters.push({ taxonomy: 'PRODUCT_MATERIAL', terms: [material] });
     }
 
     if (taxonomyFilters.length > 0) {
@@ -419,31 +420,50 @@ export async function getBrands(): Promise<FilterOption[]> {
 }
 
 /**
- * Get global product attributes (color, material) for filtering
+ * Get all product materials for filtering
+ * Materials are stored as a custom taxonomy (product_material)
+ */
+export async function getMaterials(): Promise<FilterOption[]> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_MATERIALS,
+    });
+
+    const nodes = data?.productMaterials?.nodes || [];
+
+    return nodes
+      .filter((material: FilterOption) => material.count && material.count > 0)
+      .map((material: FilterOption) => ({
+        id: material.id,
+        name: material.name,
+        slug: material.slug,
+        count: material.count,
+      }))
+      .sort((a: FilterOption, b: FilterOption) => a.name.localeCompare(b.name));
+  } catch (error) {
+    console.error('Error fetching materials:', error);
+    return [];
+  }
+}
+
+/**
+ * Get global product attributes (color) for filtering
+ * Note: Material is now a separate taxonomy, use getMaterials() instead
  */
 export async function getGlobalAttributes(): Promise<{
   colors: FilterOption[];
   materials: FilterOption[];
 }> {
   try {
-    const { data } = await getClient().query({
-      query: GET_GLOBAL_ATTRIBUTES,
-    });
+    // Fetch colors and materials in parallel
+    const [colorResult, materials] = await Promise.all([
+      getClient().query({ query: GET_GLOBAL_ATTRIBUTES }),
+      getMaterials(),
+    ]);
 
-    const colorNodes = data?.allPaColor?.nodes || [];
-    const materialNodes = data?.allPaMaterial?.nodes || [];
+    const colorNodes = colorResult.data?.allPaColor?.nodes || [];
 
     const colors = colorNodes
-      .filter((attr: FilterOption) => attr.count && attr.count > 0)
-      .map((attr: FilterOption) => ({
-        id: attr.id,
-        name: attr.name,
-        slug: attr.slug,
-        count: attr.count,
-      }))
-      .sort((a: FilterOption, b: FilterOption) => a.name.localeCompare(b.name));
-
-    const materials = materialNodes
       .filter((attr: FilterOption) => attr.count && attr.count > 0)
       .map((attr: FilterOption) => ({
         id: attr.id,

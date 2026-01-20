@@ -3,17 +3,38 @@
 import { FilterState } from './FilterPanel';
 import { HierarchicalCategory } from './CategoryFilter';
 import { findCategoryBySlug } from '@/lib/utils/category-helpers';
+import { FilterOption } from '@/lib/products/combined-service';
 
 interface ActiveFiltersProps {
   filters: FilterState;
   categories: HierarchicalCategory[];
+  brands?: FilterOption[];
+  colors?: FilterOption[];
+  materials?: FilterOption[];
   onRemoveFilter: (key: keyof FilterState) => void;
   onClearAll: () => void;
+}
+
+// Convert slug to readable name (fallback when option not found)
+function formatSlug(slug: string): string {
+  return slug
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+// Find option name by slug
+function getOptionName(options: FilterOption[] | undefined, slug: string): string {
+  const option = options?.find(opt => opt.slug === slug);
+  return option?.name || formatSlug(slug);
 }
 
 export default function ActiveFilters({
   filters,
   categories,
+  brands = [],
+  colors = [],
+  materials = [],
   onRemoveFilter,
   onClearAll,
 }: ActiveFiltersProps) {
@@ -21,7 +42,7 @@ export default function ActiveFilters({
 
   if (filters.category) {
     const category = findCategoryBySlug(categories, filters.category);
-    const categoryName = category?.name || filters.category;
+    const categoryName = category?.name || formatSlug(filters.category);
     activeFilters.push({ key: 'category', label: `Category: ${categoryName}` });
   }
 
@@ -33,15 +54,18 @@ export default function ActiveFilters({
   }
 
   if (filters.brand) {
-    activeFilters.push({ key: 'brand', label: `Brand: ${filters.brand}` });
+    const brandName = getOptionName(brands, filters.brand);
+    activeFilters.push({ key: 'brand', label: `Brand: ${brandName}` });
   }
 
   if (filters.color) {
-    activeFilters.push({ key: 'color', label: `Color: ${filters.color}` });
+    const colorName = getOptionName(colors, filters.color);
+    activeFilters.push({ key: 'color', label: `Color: ${colorName}` });
   }
 
   if (filters.material) {
-    activeFilters.push({ key: 'material', label: `Material: ${filters.material}` });
+    const materialName = getOptionName(materials, filters.material);
+    activeFilters.push({ key: 'material', label: `Material: ${materialName}` });
   }
 
   if (filters.inStock) {

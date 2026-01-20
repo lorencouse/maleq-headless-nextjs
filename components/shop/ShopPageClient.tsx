@@ -310,6 +310,9 @@ export default function ShopPageClient({
         <ActiveFilters
           filters={filters}
           categories={categories}
+          brands={brands}
+          colors={colors}
+          materials={materials}
           onRemoveFilter={handleRemoveFilter}
           onClearAll={handleClearFilters}
         />

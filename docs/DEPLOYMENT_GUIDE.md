@@ -14,6 +14,49 @@ This guide covers deploying the Maleq headless e-commerce store to Vercel.
 
 ---
 
+## WordPress Custom Plugins (Required)
+
+The following mu-plugins must be installed on the WordPress/WooCommerce backend for full functionality.
+
+### Location
+Copy these files to: `wp-content/mu-plugins/`
+
+### Required Plugins
+
+| Plugin File | Description | Source |
+|-------------|-------------|--------|
+| `wpgraphql-brands.php` | Exposes WooCommerce Brands taxonomy to GraphQL | `wordpress-snippets/register-brands-wpgraphql.php` |
+| `wpgraphql-materials.php` | Creates Product Materials taxonomy for filtering | `wordpress-snippets/register-material-wpgraphql.php` |
+
+### Installation Steps
+
+1. **Copy plugin files** to WordPress mu-plugins directory:
+   ```bash
+   # From project root
+   cp wordpress-snippets/register-brands-wpgraphql.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-brands.php
+   cp wordpress-snippets/register-material-wpgraphql.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-materials.php
+   ```
+
+2. **Run material migration** (one-time setup):
+   - Visit: `https://your-wordpress-site.com/wp-admin/?migrate_materials=1`
+   - This creates material taxonomy terms from existing product meta data
+
+3. **Verify GraphQL queries work**:
+   ```graphql
+   # Test brands
+   { productBrands(first: 10) { nodes { id name slug count } } }
+
+   # Test materials
+   { productMaterials(first: 10) { nodes { id name slug count } } }
+   ```
+
+### Notes
+- mu-plugins load automatically without activation
+- These plugins require WPGraphQL and WooGraphQL to be installed
+- After deployment, clear any GraphQL/object caches
+
+---
+
 ## Environment Variables
 
 Configure these environment variables in Vercel Dashboard > Project Settings > Environment Variables.

@@ -44,7 +44,8 @@ export default function FilterPanel({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     category: true,
     brand: true,
-    attributes: false,
+    color: false,
+    material: false,
     price: true,
     availability: true,
   });
@@ -151,17 +152,17 @@ export default function FilterPanel({
         </div>
       )}
 
-      {/* Attributes (Color, Material) */}
-      {(colors.length > 0 || materials.length > 0) && (
+      {/* Color */}
+      {colors.length > 0 && (
         <div className="mb-6">
           <button
-            onClick={() => toggleSection('attributes')}
+            onClick={() => toggleSection('color')}
             className="flex justify-between items-center w-full py-2 text-left"
           >
-            <span className="font-semibold text-foreground">Attributes</span>
+            <span className="font-semibold text-foreground">Color</span>
             <svg
               className={`w-5 h-5 text-muted-foreground transition-transform ${
-                expandedSections.attributes ? 'rotate-180' : ''
+                expandedSections.color ? 'rotate-180' : ''
               }`}
               fill="none"
               stroke="currentColor"
@@ -170,31 +171,43 @@ export default function FilterPanel({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
-          {expandedSections.attributes && (
-            <div className="space-y-4 mt-2">
-              {colors.length > 0 && (
-                <div>
-                  <label className="text-sm text-muted-foreground">Color</label>
-                  <SelectFilter
-                    options={colors}
-                    selectedValue={filters.color}
-                    onSelect={(color) => onFilterChange({ ...filters, color })}
-                    placeholder="All Colors"
-                  />
-                </div>
-              )}
-              {materials.length > 0 && (
-                <div>
-                  <label className="text-sm text-muted-foreground">Material</label>
-                  <SelectFilter
-                    options={materials}
-                    selectedValue={filters.material}
-                    onSelect={(material) => onFilterChange({ ...filters, material })}
-                    placeholder="All Materials"
-                  />
-                </div>
-              )}
-            </div>
+          {expandedSections.color && (
+            <SelectFilter
+              options={colors}
+              selectedValue={filters.color}
+              onSelect={(color) => onFilterChange({ ...filters, color })}
+              placeholder="All Colors"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Material */}
+      {materials.length > 0 && (
+        <div className="mb-6">
+          <button
+            onClick={() => toggleSection('material')}
+            className="flex justify-between items-center w-full py-2 text-left"
+          >
+            <span className="font-semibold text-foreground">Material</span>
+            <svg
+              className={`w-5 h-5 text-muted-foreground transition-transform ${
+                expandedSections.material ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.material && (
+            <SelectFilter
+              options={materials}
+              selectedValue={filters.material}
+              onSelect={(material) => onFilterChange({ ...filters, material })}
+              placeholder="All Materials"
+            />
           )}
         </div>
       )}
