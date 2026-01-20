@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { showSuccessToast } from '@/lib/utils/toast';
+import { showSuccess } from '@/lib/utils/toast';
 
 interface SocialShareProps {
   url: string;
@@ -55,7 +55,7 @@ export default function SocialShare({
     try {
       await navigator.clipboard.writeText(fullUrl);
       setCopied(true);
-      showSuccessToast('Link copied to clipboard!');
+      showSuccess('Link copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback for older browsers
@@ -66,7 +66,7 @@ export default function SocialShare({
       document.execCommand('copy');
       document.body.removeChild(textArea);
       setCopied(true);
-      showSuccessToast('Link copied to clipboard!');
+      showSuccess('Link copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     }
   };

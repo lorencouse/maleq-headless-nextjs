@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { isSubscribed, markAsSubscribed, isValidEmail } from '@/lib/utils/newsletter';
-import { showSuccessToast, showErrorToast } from '@/lib/utils/toast';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface NewsletterSignupProps {
   source?: 'footer' | 'popup' | 'checkout' | 'page';
@@ -67,16 +67,16 @@ export default function NewsletterSignup({
       if (result.success) {
         setSubscribed(true);
         markAsSubscribed();
-        showSuccessToast(result.message);
+        showSuccess(result.message);
         setEmail('');
         onSuccess?.();
       } else {
         setError(result.message);
-        showErrorToast(result.message);
+        showError(result.message);
       }
     } catch {
       setError('Failed to subscribe. Please try again.');
-      showErrorToast('Failed to subscribe. Please try again.');
+      showError('Failed to subscribe. Please try again.');
     } finally {
       setIsLoading(false);
     }

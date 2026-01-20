@@ -8,7 +8,7 @@ import {
   getAlertEmail,
   isValidEmail,
 } from '@/lib/utils/stock-alerts';
-import { showSuccessToast, showErrorToast } from '@/lib/utils/toast';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface StockAlertButtonProps {
   productId: string;
@@ -69,14 +69,14 @@ export default function StockAlertButton({
         addStockAlert({ productId, productName, email: email.trim() });
         setIsSubscribed(true);
         setShowForm(false);
-        showSuccessToast(result.message);
+        showSuccess(result.message);
       } else {
         setError(result.message);
-        showErrorToast(result.message);
+        showError(result.message);
       }
     } catch {
       setError('Failed to subscribe. Please try again.');
-      showErrorToast('Failed to subscribe. Please try again.');
+      showError('Failed to subscribe. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -94,9 +94,9 @@ export default function StockAlertButton({
       removeStockAlert(productId);
       setIsSubscribed(false);
       setEmail('');
-      showSuccessToast('Stock alert removed');
+      showSuccess('Stock alert removed');
     } catch {
-      showErrorToast('Failed to remove alert');
+      showError('Failed to remove alert');
     } finally {
       setIsLoading(false);
     }

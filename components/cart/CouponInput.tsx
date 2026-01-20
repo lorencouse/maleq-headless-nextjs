@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
-import { showSuccessToast, showErrorToast } from '@/lib/utils/toast';
+import { showSuccess, showError } from '@/lib/utils/toast';
 
 export default function CouponInput() {
   const [code, setCode] = useState('');
@@ -44,14 +44,14 @@ export default function CouponInput() {
       if (result.valid && result.discountAmount !== undefined) {
         applyCoupon(code.trim().toUpperCase(), result.discountAmount);
         setCode('');
-        showSuccessToast(result.message);
+        showSuccess(result.message);
       } else {
         setError(result.message);
-        showErrorToast(result.message);
+        showError(result.message);
       }
     } catch {
       setError('Failed to validate coupon');
-      showErrorToast('Failed to validate coupon');
+      showError('Failed to validate coupon');
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +59,7 @@ export default function CouponInput() {
 
   const handleRemove = () => {
     removeCoupon();
-    showSuccessToast('Coupon removed');
+    showSuccess('Coupon removed');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
