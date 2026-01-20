@@ -130,18 +130,18 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
       <div className="mb-6">
         {product.onSale && product.regularPrice && !selectedVariation ? (
           <div className="flex items-baseline gap-3">
-            <span className="text-3xl font-bold text-red-600">
+            <span className="text-3xl font-bold text-primary">
               {formatPrice(product.salePrice)}
             </span>
-            <span className="text-xl text-gray-500 line-through">
+            <span className="text-xl text-muted-foreground line-through">
               {formatPrice(product.regularPrice)}
             </span>
-            <span className="px-3 py-1 bg-red-100 text-red-600 text-sm font-semibold rounded-full">
+            <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full">
               SALE
             </span>
           </div>
         ) : (
-          <span className="text-3xl font-bold text-gray-900">
+          <span className="text-3xl font-bold text-foreground">
             {formatPrice(displayPrice)}
           </span>
         )}
@@ -151,27 +151,27 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
       <div className="mb-6 flex items-center gap-3">
         {displayStockStatus === 'IN_STOCK' ? (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            <p className="text-green-600 font-medium">In Stock</p>
+            <div className="w-3 h-3 bg-success rounded-full"></div>
+            <p className="text-success font-medium">In Stock</p>
           </div>
         ) : displayStockStatus === 'LOW_STOCK' ? (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-            <p className="text-yellow-600 font-medium">Low Stock</p>
+            <div className="w-3 h-3 bg-warning rounded-full"></div>
+            <p className="text-warning font-medium">Low Stock</p>
           </div>
         ) : displayStockStatus === 'OUT_OF_STOCK' ? (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-            <p className="text-red-600 font-medium">Out of Stock</p>
+            <div className="w-3 h-3 bg-destructive rounded-full"></div>
+            <p className="text-destructive font-medium">Out of Stock</p>
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-            <p className="text-orange-600 font-medium">On Backorder</p>
+            <div className="w-3 h-3 bg-accent rounded-full"></div>
+            <p className="text-accent font-medium">On Backorder</p>
           </div>
         )}
         {displayStockQuantity && displayStockQuantity > 0 && (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             ({displayStockQuantity} available)
           </p>
         )}
@@ -179,15 +179,15 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
 
       {/* Short Description */}
       {product.shortDescription && (
-        <div className="mb-8 text-gray-700 leading-relaxed">
+        <div className="mb-8 text-foreground/80 leading-relaxed">
           {product.shortDescription.replace(/<[^>]*>/g, '')}
         </div>
       )}
 
       {/* Variation Selector */}
       {isVariable && product.variations && product.variations.length > 0 && (
-        <div className="mb-8 p-6 bg-gray-50 rounded-lg border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Options</h3>
+        <div className="mb-8 p-6 bg-input rounded-xl border border-border">
+          <h3 className="text-lg font-semibold text-foreground mb-4">Select Options</h3>
           <VariationSelector
             variations={product.variations.map(v => ({
               ...v,
@@ -205,13 +205,13 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
 
       {/* Product Attributes */}
       {product.attributes && product.attributes.length > 0 && (
-        <div className="mb-8 p-4 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-gray-900 mb-3">Product Details</h3>
+        <div className="mb-8 p-5 bg-primary/5 rounded-xl border border-primary/10">
+          <h3 className="font-semibold text-foreground mb-3">Product Details</h3>
           <div className="grid grid-cols-2 gap-3 text-sm">
             {product.attributes.filter(attr => attr.visible).map((attr, index) => (
               <div key={index}>
-                <span className="text-gray-600">{attr.name}:</span>
-                <span className="ml-2 font-medium">{attr.options.join(', ')}</span>
+                <span className="text-muted-foreground">{attr.name}:</span>
+                <span className="ml-2 font-medium text-foreground">{attr.options.join(', ')}</span>
               </div>
             ))}
           </div>
@@ -248,12 +248,12 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
                 max={displayStockQuantity || 99}
                 value={quantity}
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className="w-24 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                className="w-24 px-4 py-3.5 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               />
               <button
                 onClick={handleAddToCart}
                 disabled={isAdding}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
+                className="flex-1 bg-primary text-primary-foreground py-3.5 px-6 rounded-xl hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-lg"
               >
                 {isAdding ? 'Adding...' : 'Add to Cart'}
               </button>
@@ -273,29 +273,29 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
       </div>
 
       {/* Quick Info */}
-      <div className="border-t border-gray-200 pt-6 space-y-3 text-sm">
+      <div className="border-t border-border pt-6 space-y-3 text-sm">
         {displaySku && (
           <div className="flex justify-between">
-            <span className="text-gray-600">SKU:</span>
-            <span className="font-medium text-gray-900">{displaySku}</span>
+            <span className="text-muted-foreground">SKU:</span>
+            <span className="font-medium text-foreground">{displaySku}</span>
           </div>
         )}
         {product.averageRating && product.averageRating > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Rating:</span>
-            <span className="font-medium text-gray-900">{product.averageRating} / 5</span>
+            <span className="text-muted-foreground">Rating:</span>
+            <span className="font-medium text-foreground">{product.averageRating} / 5</span>
           </div>
         )}
         {product.reviewCount && product.reviewCount > 0 && (
           <div className="flex justify-between">
-            <span className="text-gray-600">Reviews:</span>
-            <span className="font-medium text-gray-900">{product.reviewCount}</span>
+            <span className="text-muted-foreground">Reviews:</span>
+            <span className="font-medium text-foreground">{product.reviewCount}</span>
           </div>
         )}
       </div>
 
       {/* Social Share */}
-      <div className="border-t border-gray-200 pt-6 mt-6">
+      <div className="border-t border-border pt-6 mt-6">
         <SocialShare
           url={`/shop/product/${product.slug}`}
           title={product.name}

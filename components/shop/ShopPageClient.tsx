@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import ProductCard from './ProductCard';
 import FilterPanel, { FilterState } from './filters/FilterPanel';
@@ -36,17 +36,23 @@ export default function ShopPageClient({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [cursor, setCursor] = useState<string | null>(null);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const isInitialMount = useRef(true);
 
   // Parse filters from URL
-  const filters: FilterState = useMemo(() => ({
-    category: searchParams.get('category') || '',
-    minPrice: parseInt(searchParams.get('minPrice') || '0', 10),
-    maxPrice: parseInt(searchParams.get('maxPrice') || '500', 10),
-    inStock: searchParams.get('inStock') === 'true',
-    onSale: searchParams.get('onSale') === 'true',
-  }), [searchParams]);
-
+  const categoryFilter = searchParams.get('category') || '';
+  const minPriceFilter = parseInt(searchParams.get('minPrice') || '0', 10);
+  const maxPriceFilter = parseInt(searchParams.get('maxPrice') || '500', 10);
+  const inStockFilter = searchParams.get('inStock') === 'true';
+  const onSaleFilter = searchParams.get('onSale') === 'true';
   const sortBy: SortOption = (searchParams.get('sort') as SortOption) || 'newest';
+
+  const filters: FilterState = {
+    category: categoryFilter,
+    minPrice: minPriceFilter,
+    maxPrice: maxPriceFilter,
+    inStock: inStockFilter,
+    onSale: onSaleFilter,
+  };
 
   // Update URL with filters
   const updateURL = useCallback((newFilters: FilterState, newSort: SortOption) => {
@@ -63,62 +69,83 @@ export default function ShopPageClient({
     router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   }, [pathname, router]);
 
-  // Filter and sort products client-side
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
+  // Fetch products from API
+  const fetchProducts = useCallback(async (
+    filterParams: {
+      category: string;
+      minPrice: number;
+      maxPrice: number;
+      inStock: boolean;
+      onSale: boolean;
+      sort: SortOption;
+    },
+    afterCursor?: string | null
+  ) => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', '24');
 
-    // Apply filters
-    if (filters.category) {
-      result = result.filter((p) =>
-        p.categories.some((c) => c.slug === filters.category)
-      );
+      if (afterCursor) {
+        params.set('after', afterCursor);
+      }
+
+      if (filterParams.category) params.set('category', filterParams.category);
+      if (filterParams.minPrice > 0) params.set('minPrice', filterParams.minPrice.toString());
+      if (filterParams.maxPrice < 500) params.set('maxPrice', filterParams.maxPrice.toString());
+      if (filterParams.inStock) params.set('inStock', 'true');
+      if (filterParams.onSale) params.set('onSale', 'true');
+      if (filterParams.sort !== 'newest') params.set('sort', filterParams.sort);
+
+      const response = await fetch(`/api/products?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.products) {
+        if (afterCursor) {
+          setProducts((prev) => [...prev, ...data.products]);
+        } else {
+          setProducts(data.products);
+        }
+        setHasMore(data.pageInfo?.hasNextPage || false);
+        setCursor(data.pageInfo?.endCursor || null);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+    } finally {
+      setIsLoading(false);
     }
+  }, []);
 
-    if (filters.minPrice > 0 || filters.maxPrice < 500) {
-      result = result.filter((p) => {
-        const price = parseFloat(p.price?.replace(/[^0-9.]/g, '') || '0');
-        return price >= filters.minPrice && price <= filters.maxPrice;
-      });
-    }
-
-    if (filters.inStock) {
-      result = result.filter((p) => p.stockStatus === 'IN_STOCK');
-    }
-
-    if (filters.onSale) {
-      result = result.filter((p) => p.onSale);
-    }
-
-    // Apply sorting
-    switch (sortBy) {
-      case 'price-asc':
-        result.sort((a, b) => {
-          const priceA = parseFloat(a.price?.replace(/[^0-9.]/g, '') || '0');
-          const priceB = parseFloat(b.price?.replace(/[^0-9.]/g, '') || '0');
-          return priceA - priceB;
+  // Fetch products when filters change (skip initial mount)
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      // Check if we have URL params on initial load
+      const hasFilters = categoryFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
+      if (hasFilters) {
+        fetchProducts({
+          category: categoryFilter,
+          minPrice: minPriceFilter,
+          maxPrice: maxPriceFilter,
+          inStock: inStockFilter,
+          onSale: onSaleFilter,
+          sort: sortBy,
         });
-        break;
-      case 'price-desc':
-        result.sort((a, b) => {
-          const priceA = parseFloat(a.price?.replace(/[^0-9.]/g, '') || '0');
-          const priceB = parseFloat(b.price?.replace(/[^0-9.]/g, '') || '0');
-          return priceB - priceA;
-        });
-        break;
-      case 'name-asc':
-        result.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'name-desc':
-        result.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case 'popularity':
-        result.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
-        break;
-      // 'newest' is default, keep original order
+      }
+      return;
     }
 
-    return result;
-  }, [products, filters, sortBy]);
+    // Reset cursor and fetch when filters change
+    setCursor(null);
+    fetchProducts({
+      category: categoryFilter,
+      minPrice: minPriceFilter,
+      maxPrice: maxPriceFilter,
+      inStock: inStockFilter,
+      onSale: onSaleFilter,
+      sort: sortBy,
+    });
+  }, [categoryFilter, minPriceFilter, maxPriceFilter, inStockFilter, onSaleFilter, sortBy, fetchProducts]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters: FilterState) => {
@@ -152,28 +179,16 @@ export default function ShopPageClient({
   };
 
   // Load more products
-  const handleLoadMore = async () => {
+  const handleLoadMore = () => {
     if (isLoading || !hasMore) return;
-
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (cursor) params.set('after', cursor);
-      params.set('limit', '12');
-
-      const response = await fetch(`/api/products?${params.toString()}`);
-      const data = await response.json();
-
-      if (data.products) {
-        setProducts((prev) => [...prev, ...data.products]);
-        setHasMore(data.pageInfo?.hasNextPage || false);
-        setCursor(data.pageInfo?.endCursor || null);
-      }
-    } catch (error) {
-      console.error('Error loading more products:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    fetchProducts({
+      category: categoryFilter,
+      minPrice: minPriceFilter,
+      maxPrice: maxPriceFilter,
+      inStock: inStockFilter,
+      onSale: onSaleFilter,
+      sort: sortBy,
+    }, cursor);
   };
 
   // Close mobile filter on resize
@@ -233,7 +248,7 @@ export default function ShopPageClient({
 
             {/* Results Count */}
             <p className="text-sm text-muted-foreground">
-              {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+              {products.length} {products.length === 1 ? 'product' : 'products'}
             </p>
           </div>
 
@@ -250,10 +265,23 @@ export default function ShopPageClient({
         />
 
         {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
+        {isLoading && products.length === 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
+                <div className="aspect-square bg-muted animate-pulse" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+                  <div className="h-6 bg-muted rounded w-1/4 animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length > 0 ? (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
+              {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
             </div>

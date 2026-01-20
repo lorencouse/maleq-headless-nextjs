@@ -11,7 +11,7 @@ import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 import { ProductSchema } from '@/components/seo/StructuredData';
 
-export const revalidate = 3600; // Revalidate every hour for stock updates
+export const dynamic = 'force-dynamic'; // Use dynamic rendering for fresh stock data
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
@@ -195,7 +195,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
       {/* Product Reviews */}
       <ProductReviews
-        productId={product.databaseId}
+        productId={product.databaseId || parseInt(product.id)}
         productName={product.name}
         averageRating={product.averageRating || 0}
         reviewCount={product.reviewCount || 0}

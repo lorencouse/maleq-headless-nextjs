@@ -38,6 +38,7 @@ export interface ProductCategory {
   id: string;
   name: string;
   slug: string;
+  description?: string;
   count?: number;
   image?: {
     sourceUrl: string;

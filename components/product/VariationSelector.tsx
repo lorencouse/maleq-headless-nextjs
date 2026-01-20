@@ -114,7 +114,7 @@ export default function VariationSelector({
       {/* Attribute Selectors */}
       {attributeOptions.map(({ name, values }) => (
         <div key={name}>
-          <label className="block text-sm font-semibold text-gray-900 mb-3">
+          <label className="block text-sm font-semibold text-foreground mb-3">
             {name}
           </label>
           <div className="flex flex-wrap gap-2">
@@ -128,10 +128,10 @@ export default function VariationSelector({
                   onClick={() => handleAttributeSelect(name, value)}
                   disabled={!isAvailable}
                   className={`
-                    px-4 py-2 border-2 rounded-lg font-medium transition-all
+                    px-4 py-2.5 border-2 rounded-xl font-medium transition-all
                     ${isSelected
-                      ? 'border-blue-600 bg-blue-50 text-blue-900'
-                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                      ? 'border-primary bg-primary/10 text-foreground'
+                      : 'border-border bg-card text-foreground hover:border-muted-foreground'
                     }
                     ${!isAvailable
                       ? 'opacity-40 cursor-not-allowed line-through'
@@ -149,38 +149,38 @@ export default function VariationSelector({
 
       {/* Selected Variation Info */}
       {selectedVariation && (
-        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="p-4 bg-input rounded-xl border border-border">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <p className="text-sm text-gray-600">Selected:</p>
-              <p className="font-semibold text-gray-900">{selectedVariation.name}</p>
+              <p className="text-sm text-muted-foreground">Selected:</p>
+              <p className="font-semibold text-foreground">{selectedVariation.name}</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-foreground">
                 {formatPrice(selectedVariation.price)}
               </p>
             </div>
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <p className="text-gray-600">SKU: {selectedVariation.sku}</p>
+            <p className="text-muted-foreground">SKU: {selectedVariation.sku}</p>
             <div className="flex items-center gap-2">
               {selectedVariation.stockStatus === 'IN_STOCK' ? (
                 <>
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-green-600 font-medium">In Stock</span>
+                  <div className="w-2 h-2 bg-success rounded-full"></div>
+                  <span className="text-success font-medium">In Stock</span>
                 </>
               ) : selectedVariation.stockStatus === 'LOW_STOCK' ? (
                 <>
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-yellow-600 font-medium">
+                  <div className="w-2 h-2 bg-warning rounded-full"></div>
+                  <span className="text-warning font-medium">
                     Low Stock ({selectedVariation.stockQuantity} left)
                   </span>
                 </>
               ) : (
                 <>
-                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                  <span className="text-red-600 font-medium">Out of Stock</span>
+                  <div className="w-2 h-2 bg-destructive rounded-full"></div>
+                  <span className="text-destructive font-medium">Out of Stock</span>
                 </>
               )}
             </div>
@@ -191,52 +191,52 @@ export default function VariationSelector({
       {/* Variation Comparison Table (if there are multiple variations) */}
       {variations.length > 1 && variations.length <= 6 && (
         <details className="mt-6">
-          <summary className="cursor-pointer text-sm font-semibold text-gray-700 hover:text-gray-900">
+          <summary className="cursor-pointer text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">
             Compare All Options
           </summary>
-          <div className="mt-4 overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm">
-              <thead className="bg-gray-50">
+          <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+            <table className="min-w-full divide-y divide-border text-sm">
+              <thead className="bg-input">
                 <tr>
                   {attributeOptions.map(attr => (
-                    <th key={attr.name} className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
+                    <th key={attr.name} className="px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                       {attr.name}
                     </th>
                   ))}
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                     Price
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-700 uppercase">
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
                     Stock
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-card divide-y divide-border">
                 {variations.map(variation => (
                   <tr
                     key={variation.id}
                     className={`
-                      ${variation.id === selectedVariation?.id ? 'bg-blue-50' : ''}
-                      hover:bg-gray-50
+                      ${variation.id === selectedVariation?.id ? 'bg-primary/5' : ''}
+                      hover:bg-input/50 transition-colors
                     `}
                   >
                     {attributeOptions.map(attr => {
                       const attrValue = variation.attributes.find(a => a.name === attr.name)?.value || '-';
                       return (
-                        <td key={attr.name} className="px-3 py-2 text-gray-900">
+                        <td key={attr.name} className="px-3 py-2.5 text-foreground">
                           {attrValue}
                         </td>
                       );
                     })}
-                    <td className="px-3 py-2 font-semibold text-gray-900">
+                    <td className="px-3 py-2.5 font-semibold text-foreground">
                       {formatPrice(variation.price)}
                     </td>
-                    <td className="px-3 py-2">
+                    <td className="px-3 py-2.5">
                       <span className={`
                         text-xs font-medium
-                        ${variation.stockStatus === 'IN_STOCK' ? 'text-green-600' : ''}
-                        ${variation.stockStatus === 'LOW_STOCK' ? 'text-yellow-600' : ''}
-                        ${variation.stockStatus === 'OUT_OF_STOCK' ? 'text-red-600' : ''}
+                        ${variation.stockStatus === 'IN_STOCK' ? 'text-success' : ''}
+                        ${variation.stockStatus === 'LOW_STOCK' ? 'text-warning' : ''}
+                        ${variation.stockStatus === 'OUT_OF_STOCK' ? 'text-destructive' : ''}
                       `}>
                         {variation.stockStatus === 'IN_STOCK' ? 'In Stock' : ''}
                         {variation.stockStatus === 'LOW_STOCK' ? `Low (${variation.stockQuantity})` : ''}

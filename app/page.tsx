@@ -5,7 +5,7 @@ import { getAllProducts } from '@/lib/products/combined-service';
 import BlogCard from '@/components/blog/BlogCard';
 import ProductCard from '@/components/shop/ProductCard';
 
-export const revalidate = 1800; // Revalidate every 30 minutes
+export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
 export default async function Home() {
   // Fetch latest posts and products

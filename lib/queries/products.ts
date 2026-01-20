@@ -223,12 +223,13 @@ export const GET_ALL_PRODUCT_SLUGS = gql`
 // Get all product categories
 export const GET_ALL_PRODUCT_CATEGORIES = gql`
   query GetAllProductCategories {
-    productCategories {
+    productCategories(first: 200, where: { hideEmpty: true }) {
       nodes {
         id
         name
         slug
         count
+        description
         image {
           sourceUrl
         }

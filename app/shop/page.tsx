@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Browse our collection of quality products. Filter by category, price, and more.',
 };
 
-export const revalidate = 3600; // Revalidate every hour for stock updates
+export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
 export default async function ShopPage() {
   // Get products and categories from WooCommerce

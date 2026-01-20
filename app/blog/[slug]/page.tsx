@@ -7,7 +7,7 @@ import { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import './blog-post.css';
 
-export const revalidate = 3600; // Revalidate every hour
+export const dynamic = 'force-dynamic'; // Use dynamic rendering for fresh content
 
 // Generate static params for all posts
 export async function generateStaticParams() {

@@ -33,7 +33,7 @@ export async function generateStaticParams() {
   }));
 }
 
-export const revalidate = 3600; // Revalidate every hour
+export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;

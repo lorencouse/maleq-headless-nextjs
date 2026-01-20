@@ -3,7 +3,7 @@ import { GET_ALL_POSTS } from '@/lib/queries/posts';
 import BlogCard from '@/components/blog/BlogCard';
 import { Post } from '@/lib/types/wordpress';
 
-export const revalidate = 3600; // Revalidate every hour
+export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
 export default async function BlogPage() {
   const { data } = await getClient().query({
