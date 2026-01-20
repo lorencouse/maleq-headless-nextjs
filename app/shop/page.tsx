@@ -2,6 +2,9 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
+import ShopHero from '@/components/shop/ShopHero';
+import FeaturedCategories from '@/components/shop/FeaturedCategories';
+import FeaturedProducts from '@/components/shop/FeaturedProducts';
 
 export const metadata: Metadata = {
   title: 'Shop | Maleq',
@@ -48,21 +51,59 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       })
     : getAllProducts({ limit: 24 });
 
+  // Also fetch sale products for featured section (only when no filters active)
+  const saleProductsPromise = !hasFilters
+    ? getFilteredProducts({ limit: 8, onSale: true })
+    : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } });
+
   // Get products, categories, brands, and attributes from WooCommerce
-  const [{ products, pageInfo }, categories, brands, { colors, materials }] = await Promise.all([
+  const [{ products, pageInfo }, { products: saleProducts }, categories, brands, { colors, materials }] = await Promise.all([
     productsPromise,
+    saleProductsPromise,
     getHierarchicalCategories(),
     getBrands(),
     getGlobalAttributes(),
   ]);
 
+  // Show featured sections only when no filters are active
+  const showFeaturedSections = !hasFilters;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">Shop</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Featured Sections - Only show when no filters */}
+      {showFeaturedSections && (
+        <>
+          {/* Hero Banner with Promos */}
+          <ShopHero />
+
+          {/* Featured Categories */}
+          <FeaturedCategories categories={categories} />
+
+          {/* Sale Products Carousel */}
+          {saleProducts.length > 0 && (
+            <FeaturedProducts
+              products={saleProducts}
+              title="On Sale Now"
+              subtitle="Limited time deals you don't want to miss"
+              viewAllHref="/shop?onSale=true"
+              viewAllText="View All Deals"
+            />
+          )}
+
+          {/* Section Divider */}
+          <div className="border-t border-border my-8" />
+        </>
+      )}
+
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+          {hasFilters ? 'Filtered Results' : 'All Products'}
+        </h1>
         <p className="text-muted-foreground">
-          Browse our collection of quality products
+          {hasFilters
+            ? `Showing ${products.length} products matching your criteria`
+            : 'Browse our complete collection of premium products'}
         </p>
       </div>
 
