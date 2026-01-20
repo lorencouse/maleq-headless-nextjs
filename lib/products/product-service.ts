@@ -108,18 +108,29 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
     });
   }
 
-  // Dimensions (weight, length, width, height)
-  const dimensions: string[] = [];
+  // Weight
   if (product.weight) {
-    dimensions.push(`Weight: ${product.weight}`);
-  }
-  if (product.length && product.width && product.height) {
-    dimensions.push(`Dimensions: ${product.length} × ${product.width} × ${product.height}`);
-  }
-  if (dimensions.length > 0) {
     specs.push({
-      label: 'Shipping',
-      value: dimensions.join(' | ')
+      label: 'Weight',
+      value: `${product.weight} lbs`
+    });
+  }
+
+  // Product dimensions - show whatever is available
+  const dimensionParts: string[] = [];
+  if (product.length) {
+    dimensionParts.push(`Length: ${product.length}"`);
+  }
+  if (product.width) {
+    dimensionParts.push(`Width: ${product.width}"`);
+  }
+  if (product.height) {
+    dimensionParts.push(`Height: ${product.height}"`);
+  }
+  if (dimensionParts.length > 0) {
+    specs.push({
+      label: 'Dimensions',
+      value: dimensionParts.join(' | ')
     });
   }
 
