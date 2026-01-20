@@ -42,6 +42,10 @@ interface ProductData {
   description: string;
   existingMaterials?: string;
   existingColor?: string;
+  existingLength?: string;
+  existingWidth?: string;
+  existingHeight?: string;
+  existingWeight?: string;
 }
 
 // ==================== DIMENSION PATTERNS ====================
@@ -1332,64 +1336,108 @@ async function runDryRun(): Promise<void> {
 }
 
 /**
+ * Fetch all products with pagination (for full processing)
+ */
+async function fetchAllProducts(limit: number, offset: number): Promise<ProductData[]> {
+  const sql = `
+    SELECT
+      p.ID as id,
+      p.post_title as title,
+      p.post_content as description,
+      MAX(CASE WHEN pm.meta_key = '_wt_material' THEN pm.meta_value END) as existingMaterials,
+      MAX(CASE WHEN pm.meta_key = '_wt_color' THEN pm.meta_value END) as existingColor,
+      MAX(CASE WHEN pm.meta_key = '_length' THEN pm.meta_value END) as existingLength,
+      MAX(CASE WHEN pm.meta_key = '_width' THEN pm.meta_value END) as existingWidth,
+      MAX(CASE WHEN pm.meta_key = '_height' THEN pm.meta_value END) as existingHeight,
+      MAX(CASE WHEN pm.meta_key = '_weight' THEN pm.meta_value END) as existingWeight
+    FROM wp_posts p
+    LEFT JOIN wp_postmeta pm ON p.ID = pm.post_id
+      AND pm.meta_key IN ('_wt_material', '_wt_color', '_length', '_width', '_height', '_weight')
+    WHERE p.post_type = 'product'
+    AND p.post_status = 'publish'
+    GROUP BY p.ID, p.post_title, p.post_content
+    ORDER BY p.ID
+    LIMIT ${limit} OFFSET ${offset}
+  `;
+
+  const output = await queryMySQL(sql);
+  const rows = parseMySQLOutput(output);
+
+  return rows.map(row => ({
+    id: parseInt(row.id),
+    title: row.title,
+    description: row.description,
+    existingMaterials: row.existingMaterials,
+    existingColor: row.existingColor,
+    existingLength: row.existingLength,
+    existingWidth: row.existingWidth,
+    existingHeight: row.existingHeight,
+    existingWeight: row.existingWeight,
+  })) as ProductData[];
+}
+
+/**
+ * Check if product already has material taxonomy assigned
+ */
+async function hasProductMaterialTaxonomy(productId: number): Promise<boolean> {
+  const sql = `
+    SELECT 1
+    FROM wp_term_relationships tr
+    JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+    WHERE tr.object_id = ${productId}
+    AND tt.taxonomy = 'product_material'
+    LIMIT 1
+  `;
+  const output = await queryMySQL(sql);
+  const rows = parseMySQLOutput(output);
+  return rows.length > 0;
+}
+
+/**
  * Apply extracted data to database
  */
 async function applyChanges(): Promise<void> {
   console.log('Applying extracted data to database...\n');
 
-  // Get total count of products missing materials
-  const countSql = `
-    SELECT COUNT(*) as count
-    FROM wp_posts p
-    LEFT JOIN wp_term_relationships tr ON p.ID = tr.object_id
-    LEFT JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
-      AND tt.taxonomy = 'product_material'
-    WHERE p.post_type = 'product'
-    AND p.post_status = 'publish'
-    AND tt.term_taxonomy_id IS NULL
-  `;
-  const countOutput = await queryMySQL(countSql);
-  const countRows = parseMySQLOutput(countOutput);
-  const totalMissing = parseInt(countRows[0]?.count || '0');
-
-  console.log(`Found ${totalMissing} products missing material taxonomy\n`);
+  // Get total count of products
+  const totalCount = await getProductCount();
+  console.log(`Found ${totalCount} total products to process\n`);
 
   const batchSize = 100;
+  let offset = 0;
   let totalProcessed = 0;
   let totalMaterialsAssigned = 0;
   let totalColorsUpdated = 0;
   let totalDimensionsUpdated = 0;
   let totalWeightsUpdated = 0;
-  const processedIds = new Set<number>();
+  let batchNumber = 0;
 
-  // Process in batches with a maximum limit
-  const maxIterations = Math.ceil(totalMissing / batchSize) + 10; // Add buffer for safety
-  let iterations = 0;
+  while (offset < totalCount) {
+    batchNumber++;
+    const products = await fetchAllProducts(batchSize, offset);
 
-  while (iterations < maxIterations) {
-    const products = await fetchProductsMissingMaterials(batchSize);
-
-    // Filter out already processed products (safety check)
-    const newProducts = products.filter(p => !processedIds.has(p.id));
-
-    if (newProducts.length === 0) {
-      console.log('No more unprocessed products found.');
+    if (products.length === 0) {
+      console.log('No more products to process.');
       break;
     }
 
-    console.log(`Processing batch ${iterations + 1}: ${newProducts.length} products...`);
+    console.log(`Processing batch ${batchNumber}: products ${offset + 1}-${offset + products.length} of ${totalCount}...`);
 
-    for (const product of newProducts) {
-      processedIds.add(product.id);
+    for (const product of products) {
       const extracted = extractAttributes(product);
+      let productUpdated = false;
 
-      // Assign material taxonomy terms
-      if (extracted.materials.length > 0) {
+      // Check if product needs material taxonomy
+      const hasMaterialTax = await hasProductMaterialTaxonomy(product.id);
+
+      // Assign material taxonomy terms (only if not already assigned)
+      if (!hasMaterialTax && extracted.materials.length > 0) {
         for (const material of extracted.materials) {
           const termId = await getOrCreateTerm(material, 'product_material');
           if (termId) {
             await assignTermToProduct(product.id, termId);
             totalMaterialsAssigned++;
+            productUpdated = true;
           }
         }
 
@@ -1397,39 +1445,53 @@ async function applyChanges(): Promise<void> {
         if (!product.existingMaterials || product.existingMaterials === 'NULL') {
           await updateProductMeta(product.id, '_wt_material', extracted.materials.join(', '));
         }
-      } else {
-        // No materials extracted - assign a placeholder term to prevent re-processing
-        // Or we can just track it and move on
       }
 
       // Update colors if missing
       if (extracted.colors.length > 0 && (!product.existingColor || product.existingColor === 'NULL')) {
         await updateProductMeta(product.id, '_wt_color', extracted.colors.join(', '));
         totalColorsUpdated++;
+        productUpdated = true;
       }
 
-      // Update dimensions if found
-      if (Object.keys(extracted.dimensions).length > 0) {
-        await updateProductDimensions(product.id, extracted.dimensions);
+      // Update dimensions if found and missing
+      const dims = extracted.dimensions;
+      const existingProduct = product as any;
+      let dimsUpdated = false;
+
+      if (dims.length && (!existingProduct.existingLength || existingProduct.existingLength === 'NULL' || existingProduct.existingLength === '')) {
+        await updateProductMeta(product.id, '_length', dims.length.toString());
+        dimsUpdated = true;
+      }
+      if (dims.width && (!existingProduct.existingWidth || existingProduct.existingWidth === 'NULL' || existingProduct.existingWidth === '')) {
+        await updateProductMeta(product.id, '_width', dims.width.toString());
+        dimsUpdated = true;
+      }
+      if (dims.height && (!existingProduct.existingHeight || existingProduct.existingHeight === 'NULL' || existingProduct.existingHeight === '')) {
+        await updateProductMeta(product.id, '_height', dims.height.toString());
+        dimsUpdated = true;
+      }
+
+      if (dimsUpdated) {
         totalDimensionsUpdated++;
+        productUpdated = true;
       }
 
-      // Update weight if found (only if description has a weight)
-      if (extracted.weight) {
+      // Update weight if found and missing
+      if (extracted.weight && (!existingProduct.existingWeight || existingProduct.existingWeight === 'NULL' || existingProduct.existingWeight === '')) {
         await updateProductWeight(product.id, extracted.weight);
         totalWeightsUpdated++;
+        productUpdated = true;
       }
 
       totalProcessed++;
     }
 
-    iterations++;
+    offset += batchSize;
 
-    // Safety check
-    if (totalProcessed >= totalMissing) {
-      console.log('Processed all products.');
-      break;
-    }
+    // Progress indicator
+    const progress = Math.round((offset / totalCount) * 100);
+    console.log(`  Progress: ${Math.min(progress, 100)}% | Materials: ${totalMaterialsAssigned} | Colors: ${totalColorsUpdated} | Dimensions: ${totalDimensionsUpdated} | Weights: ${totalWeightsUpdated}`);
   }
 
   console.log(`\n========================================`);
