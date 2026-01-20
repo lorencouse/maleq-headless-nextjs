@@ -47,6 +47,7 @@ next-env.d.ts
 data/products-filtered.json
 data/products-filtered.xml
 data/products.xml
+data/image-cache/
 
 # database backups
 backups/
@@ -54,3 +55,6 @@ backups/
 
 # local environment
 .env.local
+
+# log files
+*.log
