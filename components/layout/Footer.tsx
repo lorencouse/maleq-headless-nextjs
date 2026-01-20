@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -103,22 +104,14 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div>
-            <h4 className='text-foreground text-sm font-semibold mb-4'>
-              Newsletter
-            </h4>
-            <p className='text-sm mb-4'>
-              Subscribe to get updates on new products and blog posts.
-            </p>
-            <form className='flex'>
-              <input
-                type='email'
-                placeholder='Your email'
-                className='flex-1 px-3 py-2 bg-input text-foreground text-sm rounded-l border border-border focus:outline-none focus:ring-2 focus:ring-primary'
-              />
-              <button className='px-4 py-2 bg-primary text-primary-foreground text-sm rounded-r hover:bg-primary-hover transition-colors'>
-                Subscribe
-              </button>
-            </form>
+            <NewsletterSignup
+              source="footer"
+              variant="inline"
+              showTitle
+              showDescription
+              title="Newsletter"
+              description="Subscribe to get updates on new products and blog posts."
+            />
           </div>
         </div>
 

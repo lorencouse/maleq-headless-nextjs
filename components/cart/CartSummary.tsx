@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCartStore, useCartSubtotal, useCartTotal } from '@/lib/store/cart-store';
 import { formatPrice, getFreeShippingProgress } from '@/lib/utils/cart-helpers';
+import CouponInput from './CouponInput';
 
 const FREE_SHIPPING_THRESHOLD = 100;
 
@@ -47,6 +48,9 @@ export default function CartSummary() {
           You qualify for free shipping!
         </div>
       )}
+
+      {/* Coupon Input */}
+      <CouponInput />
 
       {/* Summary Lines */}
       <div className="space-y-3 mb-4">

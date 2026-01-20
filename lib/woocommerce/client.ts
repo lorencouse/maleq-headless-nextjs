@@ -8,6 +8,7 @@ import type {
   WooBatchRequest,
   WooBatchResponse,
   WooReview,
+  WooCoupon,
 } from './types';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
@@ -398,6 +399,122 @@ class WooCommerceClient {
     return this.request<WooReview>(`/products/reviews/${reviewId}?force=${force}`, {
       method: 'DELETE',
     });
+  }
+
+  // ============ COUPONS ============
+
+  async getCoupons(params: {
+    code?: string;
+    per_page?: number;
+    page?: number;
+  } = {}): Promise<WooCoupon[]> {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        searchParams.append(key, String(value));
+      }
+    });
+
+    return this.request<WooCoupon[]>(`/coupons?${searchParams.toString()}`);
+  }
+
+  async getCouponByCode(code: string): Promise<WooCoupon | null> {
+    const coupons = await this.getCoupons({ code });
+    return coupons[0] || null;
+  }
+
+  async getCouponById(id: number): Promise<WooCoupon> {
+    return this.request<WooCoupon>(`/coupons/${id}`);
+  }
+
+  async validateCoupon(code: string, cartTotal: number, productIds?: number[]): Promise<{
+    valid: boolean;
+    coupon?: WooCoupon;
+    discountAmount?: number;
+    message: string;
+  }> {
+    try {
+      const coupon = await this.getCouponByCode(code);
+
+      if (!coupon) {
+        return { valid: false, message: 'Coupon not found' };
+      }
+
+      // Check if coupon has expired
+      if (coupon.date_expires_gmt) {
+        const expiryDate = new Date(coupon.date_expires_gmt);
+        if (expiryDate < new Date()) {
+          return { valid: false, message: 'This coupon has expired' };
+        }
+      }
+
+      // Check usage limit
+      if (coupon.usage_limit && coupon.usage_count !== undefined) {
+        if (coupon.usage_count >= coupon.usage_limit) {
+          return { valid: false, message: 'This coupon has reached its usage limit' };
+        }
+      }
+
+      // Check minimum amount
+      if (coupon.minimum_amount) {
+        const minAmount = parseFloat(coupon.minimum_amount);
+        if (cartTotal < minAmount) {
+          return { valid: false, message: `Minimum order amount of $${minAmount.toFixed(2)} required` };
+        }
+      }
+
+      // Check maximum amount
+      if (coupon.maximum_amount) {
+        const maxAmount = parseFloat(coupon.maximum_amount);
+        if (cartTotal > maxAmount) {
+          return { valid: false, message: `Maximum order amount of $${maxAmount.toFixed(2)} exceeded` };
+        }
+      }
+
+      // Check product restrictions
+      if (productIds && coupon.product_ids && coupon.product_ids.length > 0) {
+        const hasValidProduct = productIds.some(id => coupon.product_ids!.includes(id));
+        if (!hasValidProduct) {
+          return { valid: false, message: 'This coupon is not valid for the products in your cart' };
+        }
+      }
+
+      // Check excluded products
+      if (productIds && coupon.excluded_product_ids && coupon.excluded_product_ids.length > 0) {
+        const hasExcludedProduct = productIds.some(id => coupon.excluded_product_ids!.includes(id));
+        if (hasExcludedProduct) {
+          return { valid: false, message: 'This coupon cannot be applied to some products in your cart' };
+        }
+      }
+
+      // Calculate discount amount
+      let discountAmount = 0;
+      const amount = parseFloat(coupon.amount);
+
+      switch (coupon.discount_type) {
+        case 'percent':
+          discountAmount = (cartTotal * amount) / 100;
+          break;
+        case 'fixed_cart':
+          discountAmount = Math.min(amount, cartTotal);
+          break;
+        case 'fixed_product':
+          discountAmount = Math.min(amount, cartTotal);
+          break;
+        default:
+          discountAmount = 0;
+      }
+
+      return {
+        valid: true,
+        coupon,
+        discountAmount: Math.round(discountAmount * 100) / 100,
+        message: 'Coupon applied successfully',
+      };
+    } catch (error) {
+      console.error('Error validating coupon:', error);
+      return { valid: false, message: 'Error validating coupon' };
+    }
   }
 
   // ============ UTILITY ============

@@ -6,6 +6,8 @@ import { EnhancedProduct } from '@/lib/products/product-service';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import WishlistButton from '@/components/wishlist/WishlistButton';
+import StockAlertButton from '@/components/product/StockAlertButton';
+import SocialShare from '@/components/product/SocialShare';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
@@ -218,33 +220,56 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
 
       {/* Add to Cart */}
       <div className="mb-8">
-        <div className="flex gap-4 mb-4">
-          <input
-            type="number"
-            min="1"
-            max={displayStockQuantity || 99}
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-            className="w-24 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-          />
-          <button
-            onClick={handleAddToCart}
-            disabled={displayStockStatus === 'OUT_OF_STOCK' || isAdding}
-            className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
-          >
-            {isAdding ? 'Adding...' : displayStockStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'Add to Cart'}
-          </button>
-        </div>
-        <WishlistButton
-          productId={product.databaseId?.toString() || product.id}
-          name={product.name}
-          slug={product.slug}
-          price={priceToNumber(displayPrice)}
-          regularPrice={priceToNumber(product.regularPrice)}
-          image={product.image || undefined}
-          inStock={displayStockStatus === 'IN_STOCK'}
-          variant="button"
-        />
+        {displayStockStatus === 'OUT_OF_STOCK' ? (
+          <>
+            <StockAlertButton
+              productId={product.databaseId?.toString() || product.id}
+              productName={product.name}
+              variant="button"
+              className="mb-4"
+            />
+            <WishlistButton
+              productId={product.databaseId?.toString() || product.id}
+              name={product.name}
+              slug={product.slug}
+              price={priceToNumber(displayPrice)}
+              regularPrice={priceToNumber(product.regularPrice)}
+              image={product.image || undefined}
+              inStock={false}
+              variant="button"
+            />
+          </>
+        ) : (
+          <>
+            <div className="flex gap-4 mb-4">
+              <input
+                type="number"
+                min="1"
+                max={displayStockQuantity || 99}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                className="w-24 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+              <button
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold"
+              >
+                {isAdding ? 'Adding...' : 'Add to Cart'}
+              </button>
+            </div>
+            <WishlistButton
+              productId={product.databaseId?.toString() || product.id}
+              name={product.name}
+              slug={product.slug}
+              price={priceToNumber(displayPrice)}
+              regularPrice={priceToNumber(product.regularPrice)}
+              image={product.image || undefined}
+              inStock={displayStockStatus === 'IN_STOCK'}
+              variant="button"
+            />
+          </>
+        )}
       </div>
 
       {/* Quick Info */}
@@ -267,6 +292,17 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
             <span className="font-medium text-gray-900">{product.reviewCount}</span>
           </div>
         )}
+      </div>
+
+      {/* Social Share */}
+      <div className="border-t border-gray-200 pt-6 mt-6">
+        <SocialShare
+          url={`/shop/product/${product.slug}`}
+          title={product.name}
+          description={product.shortDescription?.replace(/<[^>]*>/g, '') || ''}
+          image={product.image?.url}
+          variant="icons"
+        />
       </div>
     </>
   );

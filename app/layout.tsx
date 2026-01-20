@@ -6,6 +6,7 @@ import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Toaster } from "@/components/ui/Toaster";
+import NewsletterPopup from "@/components/newsletter/NewsletterPopup";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -33,6 +34,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <NewsletterPopup delay={45000} showOnExitIntent />
           </CartProvider>
         </ThemeProvider>
       </body>
