@@ -18,11 +18,16 @@ export interface ProductVariation {
   id: string;
   name: string;
   sku: string | null;
+  description: string | null;
   price: string | null;
   regularPrice: string | null;
   salePrice: string | null;
   stockStatus: string;
   stockQuantity: number | null;
+  weight: string | null;
+  length: string | null;
+  width: string | null;
+  height: string | null;
   attributes: Array<{
     name: string;
     value: string;
@@ -260,11 +265,16 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         id: v.id,
         name: v.name,
         sku: v.sku || null,
+        description: v.description || null,
         price: v.price || null,
         regularPrice: v.regularPrice || null,
         salePrice: v.salePrice || null,
         stockStatus: v.stockStatus || 'OUT_OF_STOCK',
         stockQuantity: v.stockQuantity || null,
+        weight: v.weight || null,
+        length: v.length || null,
+        width: v.width || null,
+        height: v.height || null,
         attributes: v.attributes?.nodes?.map((a: any) => ({
           name: a.name,
           value: a.value,

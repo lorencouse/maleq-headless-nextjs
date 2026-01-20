@@ -8,7 +8,7 @@ export default function EmptyCart() {
       {/* Cart Icon */}
       <div className="mb-6">
         <svg
-          className="w-24 h-24 mx-auto text-muted"
+          className="w-24 h-24 mx-auto text-muted-foreground"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -47,7 +47,7 @@ export default function EmptyCart() {
         >
           Return to Home
         </Link>
-        <span className="hidden sm:inline text-muted">|</span>
+        <span className="hidden sm:inline text-muted-foreground">|</span>
         <Link
           href="/shop"
           className="text-muted-foreground hover:text-primary transition-colors"

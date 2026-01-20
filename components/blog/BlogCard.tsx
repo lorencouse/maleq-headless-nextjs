@@ -77,7 +77,7 @@ export default function BlogCard({ post }: BlogCardProps) {
         /> */}
 
         {/* Meta Info */}
-        <div className='flex items-center justify-between text-sm text-muted border-t border-border mt-3 pt-3'>
+        <div className='flex items-center justify-between text-sm text-muted-foreground border-t border-border mt-3 pt-3'>
           <div className='flex items-center space-x-2'>
             {post.author?.node?.avatar?.url && (
               <Image
@@ -92,7 +92,7 @@ export default function BlogCard({ post }: BlogCardProps) {
           </div>
           {post.commentCount !== undefined && post.commentCount > 0 && (
             <div className=' '>
-              <span className='text-xs text-muted'>
+              <span className='text-xs text-muted-foreground'>
                 {post.commentCount}{' '}
                 {post.commentCount === 1 ? 'comment' : 'comments'}
               </span>

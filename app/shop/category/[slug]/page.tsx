@@ -120,7 +120,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       ) : (
         <div className="text-center py-16">
           <svg
-            className="w-16 h-16 mx-auto mb-4 text-muted"
+            className="w-16 h-16 mx-auto mb-4 text-muted-foreground"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

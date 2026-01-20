@@ -4,10 +4,10 @@
   /* Light mode colors */
   --background: #ffffff;
   --foreground: #0a0a0a;
-  --muted: #6b7280;
-  --muted-foreground: #9ca3af;
-  --border: #e5e7eb;
-  --input: #f3f4f6;
+  --muted: #f4f4f5;
+  --muted-foreground: #52525b;
+  --border: #e4e4e7;
+  --input: #f4f4f5;
   --card: #ffffff;
   --card-foreground: #0a0a0a;
 
@@ -57,7 +57,7 @@
   /* Dark mode colors */
   --background: #0a0a0a;
   --foreground: #fafafa;
-  --muted: #71717a;
+  --muted: #27272a;
   --muted-foreground: #a1a1aa;
   --border: #3f3f46;
   --input: #27272a;

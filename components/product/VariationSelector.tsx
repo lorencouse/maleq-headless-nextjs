@@ -17,11 +17,16 @@ export interface Variation {
   id: string;
   sku: string;
   name: string;
+  description?: string | null;
   price: string | null;
   regularPrice?: string | null;
   salePrice?: string | null;
   stockStatus: string;
   stockQuantity: number;
+  weight?: string | null;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
   attributes: VariationAttribute[];
   image?: {
     url: string;
@@ -153,11 +158,12 @@ export default function VariationSelector({
 
       {/* Selected Variation Info */}
       {selectedVariation && (
-        <div className="p-4 bg-input rounded-xl border border-border">
-          <div className="flex items-center justify-between mb-2">
+        <div className="p-4 bg-input rounded-xl border border-border space-y-4">
+          {/* Header with name and price */}
+          <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Selected:</p>
-              <p className="font-semibold text-foreground">{selectedVariation.name}</p>
+              <p className="font-semibold text-foreground">{formatVariationName(selectedVariation.name, selectedVariation.attributes)}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-foreground">
@@ -166,6 +172,7 @@ export default function VariationSelector({
             </div>
           </div>
 
+          {/* SKU and Stock Status */}
           <div className="flex items-center justify-between text-sm">
             <p className="text-muted-foreground">SKU: {selectedVariation.sku}</p>
             <div className="flex items-center gap-2">
@@ -189,6 +196,48 @@ export default function VariationSelector({
               )}
             </div>
           </div>
+
+          {/* Weight and Dimensions */}
+          {(selectedVariation.weight || selectedVariation.length || selectedVariation.width || selectedVariation.height) && (
+            <div className="pt-3 border-t border-border">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                {selectedVariation.weight && (
+                  <div>
+                    <span className="text-muted-foreground">Weight:</span>{' '}
+                    <span className="font-medium text-foreground">{selectedVariation.weight} lbs</span>
+                  </div>
+                )}
+                {selectedVariation.length && (
+                  <div>
+                    <span className="text-muted-foreground">Length:</span>{' '}
+                    <span className="font-medium text-foreground">{selectedVariation.length}&quot;</span>
+                  </div>
+                )}
+                {selectedVariation.width && (
+                  <div>
+                    <span className="text-muted-foreground">Width:</span>{' '}
+                    <span className="font-medium text-foreground">{selectedVariation.width}&quot;</span>
+                  </div>
+                )}
+                {selectedVariation.height && (
+                  <div>
+                    <span className="text-muted-foreground">Height:</span>{' '}
+                    <span className="font-medium text-foreground">{selectedVariation.height}&quot;</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Variation Description */}
+          {selectedVariation.description && (
+            <div className="pt-3 border-t border-border">
+              <p className="text-sm text-muted-foreground mb-1">Description:</p>
+              <p className="text-sm text-foreground leading-relaxed line-clamp-4">
+                {selectedVariation.description}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

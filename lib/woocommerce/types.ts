@@ -33,12 +33,15 @@ export interface WooProductDimensions {
 export interface WooProductVariation {
   id?: number;
   sku?: string;
+  description?: string;
   price?: string;
   regular_price?: string;
   sale_price?: string;
   manage_stock?: boolean;
   stock_quantity?: number;
   stock_status?: 'instock' | 'outofstock' | 'onbackorder';
+  weight?: string;
+  dimensions?: WooProductDimensions;
   attributes?: { name: string; option: string }[];
   image?: WooProductImage;
   meta_data?: { key: string; value: string }[];

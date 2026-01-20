@@ -147,11 +147,16 @@ export const GET_PRODUCT_BY_SLUG = gql`
             databaseId
             name
             sku
+            description
             price
             regularPrice
             salePrice
             stockStatus
             stockQuantity
+            weight
+            length
+            width
+            height
             image {
               id
               sourceUrl

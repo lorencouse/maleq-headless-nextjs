@@ -389,13 +389,35 @@ export class ProductImporter {
       const prices = this.calculatePrices(varProduct.price);
       const stockQty = parseInt(varProduct.stock_quantity, 10);
 
+      // Get clean description and enhance attributes for this variation
+      const varDescription = XMLParser.cleanDescription(varProduct.description);
+      const varEnhancedAttrs = enhanceProductAttributes(
+        {
+          color: varProduct.color,
+          material: varProduct.material,
+          weight: varProduct.weight,
+          length: varProduct.length,
+          width: varProduct.diameter, // diameter maps to width
+          height: varProduct.height,
+        },
+        varDescription,
+        varProduct.name
+      );
+
       const variationData: Partial<WooProductVariation> = {
         sku: varProduct.barcode,
+        description: varDescription,
         regular_price: prices.regular,
         sale_price: prices.sale, // Always set sale price (10% off regular)
         manage_stock: true,
         stock_quantity: stockQty,
         stock_status: stockQty > 0 ? 'instock' : 'outofstock',
+        weight: varEnhancedAttrs.weight,
+        dimensions: {
+          length: varEnhancedAttrs.length,
+          width: varEnhancedAttrs.width,
+          height: varEnhancedAttrs.height,
+        },
         attributes: [
           {
             name: variationAttrName,

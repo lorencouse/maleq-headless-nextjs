@@ -64,7 +64,7 @@ export default async function Home() {
         ) : (
           <div className="text-center py-12 bg-card border border-border rounded-lg">
             <p className="text-muted-foreground">No products available yet.</p>
-            <p className="text-sm text-muted mt-2">
+            <p className="text-sm text-muted-foreground mt-2">
               Make sure your WordPress backend is configured correctly.
             </p>
           </div>
@@ -90,7 +90,7 @@ export default async function Home() {
           ) : (
             <div className="text-center py-12 bg-card border border-border rounded-lg">
               <p className="text-muted-foreground">No blog posts available yet.</p>
-              <p className="text-sm text-muted mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 Make sure your WordPress backend is configured correctly.
               </p>
             </div>

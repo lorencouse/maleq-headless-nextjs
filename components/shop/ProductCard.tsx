@@ -41,7 +41,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-muted">
+            <div className="flex items-center justify-center h-full text-muted-foreground">
               No Image
             </div>
           )}
@@ -96,7 +96,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Category */}
           {primaryCategory && (
             <div className="mb-2">
-              <span className="text-xs text-muted">
+              <span className="text-xs text-muted-foreground">
                 {primaryCategory.name}
               </span>
             </div>
@@ -121,7 +121,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <span className="text-lg font-bold text-primary">
                   {formatPrice(product.salePrice)}
                 </span>
-                <span className="text-sm text-muted line-through">
+                <span className="text-sm text-muted-foreground line-through">
                   {formatPrice(product.regularPrice)}
                 </span>
               </>
@@ -147,7 +147,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
 
           {product.sku && (
-            <div className="mt-2 text-xs text-muted">
+            <div className="mt-2 text-xs text-muted-foreground">
               SKU: {product.sku}
             </div>
           )}

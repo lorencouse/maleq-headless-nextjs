@@ -111,7 +111,7 @@ export default function WishlistPage() {
         {items.length === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-xl">
             <svg
-              className="w-16 h-16 mx-auto mb-4 text-muted"
+              className="w-16 h-16 mx-auto mb-4 text-muted-foreground"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

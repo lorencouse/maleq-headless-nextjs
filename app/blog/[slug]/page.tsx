@@ -162,7 +162,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                       <span className='font-semibold text-foreground'>
                         {comment.author?.node?.name}
                       </span>
-                      <span className='text-sm text-muted'>
+                      <span className='text-sm text-muted-foreground'>
                         {formatDate(comment.date)}
                       </span>
                     </div>

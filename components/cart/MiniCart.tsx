@@ -93,7 +93,7 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
             /* Empty State */
             <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
               <svg
-                className="w-16 h-16 text-muted mb-4"
+                className="w-16 h-16 text-muted-foreground mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
