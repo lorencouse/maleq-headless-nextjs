@@ -304,7 +304,7 @@ export default function ShopPageClient({
     <div className="flex flex-col lg:flex-row gap-8">
       {/* Desktop Filter Sidebar */}
       <aside className="hidden lg:block w-64 flex-shrink-0">
-        <div className="sticky top-24">
+        <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin">
           <h2 className="text-lg font-semibold text-foreground mb-4">Filters</h2>
           <FilterPanel
             categories={categories}
