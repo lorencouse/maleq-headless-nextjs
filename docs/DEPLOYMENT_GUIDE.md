@@ -38,8 +38,16 @@ Copy these files to: `wp-content/mu-plugins/`
    ```
 
 2. **Run material migration** (one-time setup):
+
+   **Option A - SQL Migration (Recommended for large sites):**
+   ```bash
+   mysql -u [user] -p [database] < wordpress-snippets/migrate-materials.sql
+   ```
+   This script creates terms, normalizes names, and links products in one operation.
+
+   **Option B - PHP Migration (for smaller sites):**
    - Visit: `https://your-wordpress-site.com/wp-admin/?migrate_materials=1`
-   - This creates material taxonomy terms from existing product meta data
+   - This processes products in batches via the admin interface
 
 3. **Verify GraphQL queries work**:
    ```graphql
