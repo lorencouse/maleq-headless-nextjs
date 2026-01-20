@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getProductsByCategory, getProductCategories } from '@/lib/products/combined-service';
+import { getProductsByCategory, getHierarchicalCategories, HierarchicalCategory } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
@@ -9,10 +9,36 @@ interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 
+// Helper to find a category by slug in the hierarchical structure
+function findCategoryBySlug(
+  categories: HierarchicalCategory[],
+  slug: string
+): HierarchicalCategory | undefined {
+  for (const cat of categories) {
+    if (cat.slug === slug) return cat;
+    if (cat.children.length > 0) {
+      const found = findCategoryBySlug(cat.children, slug);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
+// Helper to flatten hierarchical categories for static params
+function flattenCategories(categories: HierarchicalCategory[]): HierarchicalCategory[] {
+  return categories.reduce((acc: HierarchicalCategory[], cat) => {
+    acc.push(cat);
+    if (cat.children.length > 0) {
+      acc.push(...flattenCategories(cat.children));
+    }
+    return acc;
+  }, []);
+}
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const categories = await getProductCategories();
-  const category = categories.find((c) => c.slug === slug);
+  const categories = await getHierarchicalCategories();
+  const category = findCategoryBySlug(categories, slug);
 
   if (!category) {
     return {
@@ -22,13 +48,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   return {
     title: `${category.name} | Shop | Maleq`,
-    description: category.description || `Browse our ${category.name} collection at Maleq.`,
+    description: `Browse our ${category.name} collection at Maleq.`,
   };
 }
 
 export async function generateStaticParams() {
-  const categories = await getProductCategories();
-  return categories.map((category) => ({
+  const categories = await getHierarchicalCategories();
+  const allCategories = flattenCategories(categories);
+  return allCategories.map((category) => ({
     slug: category.slug,
   }));
 }
@@ -38,9 +65,9 @@ export const dynamic = 'force-dynamic'; // Use dynamic rendering
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
 
-  // Get all categories for filtering and find current category
-  const allCategories = await getProductCategories();
-  const category = allCategories.find((c) => c.slug === slug);
+  // Get hierarchical categories and find current category
+  const allCategories = await getHierarchicalCategories();
+  const category = findCategoryBySlug(allCategories, slug);
 
   if (!category) {
     notFound();
@@ -48,14 +75,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
   // Get products in this category
   const products = await getProductsByCategory(slug, 24);
-
-  // Format categories for filter panel (exclude current category from filters)
-  const formattedCategories = allCategories.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-    slug: cat.slug,
-    count: cat.count,
-  }));
 
   // Build breadcrumb items
   const breadcrumbItems = [
@@ -71,12 +90,6 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground mb-2">{category.name}</h1>
-        {category.description && (
-          <div
-            className="text-muted-foreground prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: category.description }}
-          />
-        )}
         <p className="text-sm text-muted-foreground mt-2">
           {products.length} {products.length === 1 ? 'product' : 'products'}
         </p>
@@ -87,7 +100,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <Suspense fallback={<CategoryLoadingSkeleton />}>
           <ShopPageClient
             initialProducts={products}
-            categories={formattedCategories}
+            categories={allCategories}
             hasMore={false}
           />
         </Suspense>

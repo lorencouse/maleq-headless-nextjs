@@ -61,7 +61,7 @@ export default function PriceRangeFilter({
         <div className="flex-1">
           <label className="sr-only">Minimum price</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
             <input
               type="number"
               value={localMin}
@@ -70,15 +70,15 @@ export default function PriceRangeFilter({
               min={min}
               max={max}
               placeholder="Min"
-              className="w-full pl-7 pr-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm"
+              className="w-full pl-6 pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
             />
           </div>
         </div>
-        <span className="text-muted-foreground">-</span>
+        <span className="text-muted-foreground text-sm">to</span>
         <div className="flex-1">
           <label className="sr-only">Maximum price</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
             <input
               type="number"
               value={localMax}
@@ -87,7 +87,7 @@ export default function PriceRangeFilter({
               min={min}
               max={max}
               placeholder="Max"
-              className="w-full pl-7 pr-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm"
+              className="w-full pl-6 pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
             />
           </div>
         </div>

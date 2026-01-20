@@ -2,9 +2,8 @@ import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-ser
 import { getProductsByCategory } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
-import ProductImageGallery from '@/components/product/ProductImageGallery';
+import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
-import ProductPageClient from '@/components/product/ProductPageClient';
 import ProductReviews from '@/components/reviews/ProductReviews';
 import RelatedProducts from '@/components/product/RelatedProducts';
 import RecentlyViewed from '@/components/product/RecentlyViewed';
@@ -124,7 +123,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         description={productDescription}
         image={productImages.length > 0 ? productImages : '/placeholder.jpg'}
         sku={product.sku || undefined}
-        brand={product.categories?.[0]?.name}
+        brand={product.brands?.[0]?.name || product.categories?.[0]?.name}
         price={productPrice}
         availability={stockStatus as 'InStock' | 'OutOfStock'}
         url={`${SITE_URL}/shop/product/${product.slug}`}
@@ -147,36 +146,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <span className="text-gray-900">{product.name}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Product Images */}
-        <div>
-          <ProductImageGallery
-            images={product.gallery.map(img => ({
-              ...img,
-              title: img.altText,
-            }))}
-            productName={product.name}
-          />
-        </div>
-
-        {/* Product Details */}
-        <div>
-          {/* Category Badge */}
-          {primaryCategory && (
-            <div className="mb-4">
-              <span className="text-sm text-gray-500">
-                {primaryCategory.name}
-              </span>
-            </div>
-          )}
-
-          {/* Product Name */}
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">{product.name}</h1>
-
-          {/* Client-side interactive components (price, stock, variations, add to cart) */}
-          <ProductPageClient product={product} />
-        </div>
-      </div>
+      {/* Product Details with Image Gallery */}
+      <ProductDetailsWrapper product={product} />
 
       {/* Product Description */}
       {product.description && (

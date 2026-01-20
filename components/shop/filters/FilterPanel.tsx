@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import PriceRangeFilter from './PriceRangeFilter';
-import CategoryFilter from './CategoryFilter';
+import CategoryFilter, { HierarchicalCategory } from './CategoryFilter';
 import StockFilter from './StockFilter';
 
 export interface FilterState {
@@ -14,7 +14,7 @@ export interface FilterState {
 }
 
 interface FilterPanelProps {
-  categories: { id: string; name: string; slug: string; count?: number }[];
+  categories: HierarchicalCategory[];
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
   onClearFilters: () => void;

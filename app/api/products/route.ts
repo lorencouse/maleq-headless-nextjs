@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllProducts } from '@/lib/products/combined-service';
+import { getAllProducts, getFilteredProducts } from '@/lib/products/combined-service';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,36 +15,38 @@ export async function GET(request: NextRequest) {
     const onSale = searchParams.get('onSale') === 'true';
     const sort = searchParams.get('sort') || 'newest';
 
-    // Fetch products from the service
-    let result = await getAllProducts({
-      limit,
-      after,
-      category,
-      search,
-    });
+    // Determine if we need filtered query (DB-level filtering) or basic query
+    const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category;
 
-    let { products } = result;
-    const { pageInfo } = result;
+    let products;
+    let pageInfo;
 
-    // Apply additional filters that GraphQL doesn't support directly
-    if (minPrice !== undefined || maxPrice !== undefined) {
-      products = products.filter((p) => {
-        const price = parseFloat(p.price?.replace(/[^0-9.]/g, '') || '0');
-        if (minPrice !== undefined && price < minPrice) return false;
-        if (maxPrice !== undefined && price > maxPrice) return false;
-        return true;
+    if (search) {
+      // Search query uses basic getAllProducts
+      const result = await getAllProducts({ limit, after, search });
+      products = result.products;
+      pageInfo = result.pageInfo;
+    } else if (hasFilters) {
+      // Use DB-level filtering for price, stock, sale, and category filters
+      const result = await getFilteredProducts({
+        limit,
+        after,
+        category,
+        minPrice,
+        maxPrice,
+        inStock,
+        onSale,
       });
+      products = result.products;
+      pageInfo = result.pageInfo;
+    } else {
+      // No filters - use basic query
+      const result = await getAllProducts({ limit, after });
+      products = result.products;
+      pageInfo = result.pageInfo;
     }
 
-    if (inStock) {
-      products = products.filter((p) => p.stockStatus === 'IN_STOCK');
-    }
-
-    if (onSale) {
-      products = products.filter((p) => p.onSale);
-    }
-
-    // Apply sorting
+    // Apply sorting (done client-side as GraphQL orderby is limited)
     switch (sort) {
       case 'price-asc':
         products.sort((a, b) => {
@@ -69,7 +71,7 @@ export async function GET(request: NextRequest) {
       case 'popularity':
         products.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
         break;
-      // 'newest' is default, keep original order
+      // 'newest' is default, keep original order from DB
     }
 
     return NextResponse.json({

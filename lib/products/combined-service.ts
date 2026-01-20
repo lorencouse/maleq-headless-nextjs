@@ -6,6 +6,8 @@ import {
   SEARCH_PRODUCTS,
   GET_ALL_PRODUCT_CATEGORIES,
   GET_ALL_PRODUCT_SLUGS,
+  FILTER_PRODUCTS,
+  GET_HIERARCHICAL_CATEGORIES,
 } from '@/lib/queries/products';
 import type { Product as WooProduct, ProductCategory } from '@/lib/types/woocommerce';
 
@@ -53,6 +55,7 @@ export interface UnifiedProduct {
   variations?: {
     id: string;
     name: string;
+    sku: string | null;
     price: string | null;
     regularPrice: string | null;
     salePrice: string | null;
@@ -60,6 +63,15 @@ export interface UnifiedProduct {
     stockQuantity: number | null;
     attributes: { name: string; value: string }[];
   }[];
+}
+
+// Hierarchical category interface for nested category tree
+export interface HierarchicalCategory {
+  id: string;
+  name: string;
+  slug: string;
+  count: number;
+  children: HierarchicalCategory[];
 }
 
 /**
@@ -127,6 +139,7 @@ function convertWooProduct(product: WooProduct): UnifiedProduct {
       return {
         id: v.id,
         name: v.name,
+        sku: v.sku || null,
         price: v.price || null,
         regularPrice: v.regularPrice || null,
         salePrice: v.salePrice || null,
@@ -186,6 +199,66 @@ export async function getAllProducts(params: {
 }
 
 /**
+ * Get filtered products with DB-level filtering
+ * Uses the FILTER_PRODUCTS query for price, stock, and sale filters
+ */
+export async function getFilteredProducts(params: {
+  limit?: number;
+  after?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+  onSale?: boolean;
+}): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
+  const { limit = 24, after, category, minPrice, maxPrice, inStock, onSale } = params;
+
+  try {
+    // Build variables for the filter query
+    const variables: Record<string, unknown> = {
+      first: limit,
+      after: after || null,
+    };
+
+    // Only add filters if they have meaningful values
+    if (category) {
+      variables.category = category;
+    }
+    if (minPrice !== undefined && minPrice > 0) {
+      variables.minPrice = minPrice;
+    }
+    if (maxPrice !== undefined && maxPrice < 10000) {
+      variables.maxPrice = maxPrice;
+    }
+    if (onSale === true) {
+      variables.onSale = true;
+    }
+    if (inStock === true) {
+      variables.stockStatus = ['IN_STOCK'];
+    }
+
+    const { data } = await getClient().query({
+      query: FILTER_PRODUCTS,
+      variables,
+    });
+
+    const products: WooProduct[] = data?.products?.nodes || [];
+    const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
+
+    return {
+      products: products.map(convertWooProduct),
+      pageInfo: {
+        hasNextPage: pageInfo.hasNextPage,
+        endCursor: pageInfo.endCursor,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching filtered products:', error);
+    return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
+  }
+}
+
+/**
  * Get a single product by slug
  */
 export async function getProductBySlug(slug: string): Promise<UnifiedProduct | null> {
@@ -223,16 +296,86 @@ export async function getAllProductSlugs(): Promise<string[]> {
 
 /**
  * Get all product categories
+ * Paginates through all categories since WPGraphQL has a bug with hideEmpty filter
+ * that incorrectly limits results to 100
  */
 export async function getProductCategories(): Promise<ProductCategory[]> {
   try {
-    const { data } = await getClient().query({
-      query: GET_ALL_PRODUCT_CATEGORIES,
-    });
+    const allCategories: ProductCategory[] = [];
+    let hasNextPage = true;
+    let afterCursor: string | null = null;
 
-    return data?.productCategories?.nodes || [];
+    // Paginate through all categories
+    while (hasNextPage) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await getClient().query({
+        query: GET_ALL_PRODUCT_CATEGORIES,
+        variables: {
+          first: 100,
+          after: afterCursor,
+        },
+      });
+
+      const nodes: ProductCategory[] = result.data?.productCategories?.nodes || [];
+      const pageInfoData = result.data?.productCategories?.pageInfo;
+
+      allCategories.push(...nodes);
+
+      hasNextPage = pageInfoData?.hasNextPage ?? false;
+      afterCursor = pageInfoData?.endCursor ?? null;
+
+      // Safety limit to prevent infinite loops
+      if (allCategories.length > 1000) break;
+    }
+
+    // Filter out empty categories (count = 0 or null) and sort alphabetically
+    return allCategories
+      .filter((cat) => cat.count && cat.count > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching product categories:', error);
+    return [];
+  }
+}
+
+/**
+ * Get hierarchical product categories (tree structure)
+ * Returns top-level categories with nested children
+ */
+export async function getHierarchicalCategories(): Promise<HierarchicalCategory[]> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_HIERARCHICAL_CATEGORIES,
+    });
+
+    const nodes = data?.productCategories?.nodes || [];
+
+    // Recursively convert GraphQL response to HierarchicalCategory
+    function convertCategory(cat: any): HierarchicalCategory {
+      const children = cat.children?.nodes || [];
+      return {
+        id: cat.id,
+        name: cat.name,
+        slug: cat.slug,
+        count: cat.count || 0,
+        children: children
+          .filter((child: any) => child.count && child.count > 0)
+          .map(convertCategory)
+          .sort((a: HierarchicalCategory, b: HierarchicalCategory) =>
+            a.name.localeCompare(b.name)
+          ),
+      };
+    }
+
+    // Filter out empty categories and sort alphabetically
+    return nodes
+      .filter((cat: any) => cat.count && cat.count > 0)
+      .map(convertCategory)
+      .sort((a: HierarchicalCategory, b: HierarchicalCategory) =>
+        a.name.localeCompare(b.name)
+      );
+  } catch (error) {
+    console.error('Error fetching hierarchical categories:', error);
     return [];
   }
 }

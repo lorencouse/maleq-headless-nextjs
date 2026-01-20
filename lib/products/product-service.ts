@@ -1,6 +1,7 @@
 import { getClient } from '@/lib/apollo/client';
 import { GET_PRODUCT_BY_SLUG, GET_ALL_PRODUCT_SLUGS } from '@/lib/queries/products';
 import type { UnifiedProduct } from './combined-service';
+import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommerce-format';
 
 export interface ProductSpecification {
   label: string;
@@ -10,6 +11,7 @@ export interface ProductSpecification {
 export interface ProductVariation {
   id: string;
   name: string;
+  sku: string | null;
   price: string | null;
   regularPrice: string | null;
   salePrice: string | null;
@@ -25,6 +27,19 @@ export interface ProductVariation {
   } | null;
 }
 
+export interface ProductBrand {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface ProductDimensions {
+  weight: string | null;
+  length: string | null;
+  width: string | null;
+  height: string | null;
+}
+
 export interface EnhancedProduct extends UnifiedProduct {
   specifications: ProductSpecification[];
   gallery: Array<{
@@ -33,18 +48,35 @@ export interface EnhancedProduct extends UnifiedProduct {
     altText: string;
     isPrimary: boolean;
   }>;
+  brands: ProductBrand[];
+  dimensions: ProductDimensions;
+  featured: boolean;
+  purchaseNote: string | null;
+  externalUrl?: string | null;
+  buttonText?: string | null;
 }
 
 /**
  * Extract product specifications from WooCommerce product
  */
-function extractSpecifications(product: any): ProductSpecification[] {
+function extractSpecifications(product: any, isVariable: boolean): ProductSpecification[] {
   const specs: ProductSpecification[] = [];
 
-  if (product.sku) {
+  // Only show parent SKU for non-variable products
+  // Variable products show variation SKU in the selector
+  if (product.sku && !isVariable) {
     specs.push({ label: 'SKU', value: product.sku });
   }
 
+  // Brands
+  if (product.productBrands?.nodes?.length > 0) {
+    specs.push({
+      label: 'Brand',
+      value: product.productBrands.nodes.map((brand: any) => brand.name).join(', ')
+    });
+  }
+
+  // Categories
   if (product.productCategories?.nodes?.length > 0) {
     specs.push({
       label: 'Categories',
@@ -52,10 +84,26 @@ function extractSpecifications(product: any): ProductSpecification[] {
     });
   }
 
+  // Tags
   if (product.productTags?.nodes?.length > 0) {
     specs.push({
       label: 'Tags',
       value: product.productTags.nodes.map((tag: any) => tag.name).join(', ')
+    });
+  }
+
+  // Dimensions (weight, length, width, height)
+  const dimensions: string[] = [];
+  if (product.weight) {
+    dimensions.push(`Weight: ${product.weight}`);
+  }
+  if (product.length && product.width && product.height) {
+    dimensions.push(`Dimensions: ${product.length} × ${product.width} × ${product.height}`);
+  }
+  if (dimensions.length > 0) {
+    specs.push({
+      label: 'Shipping',
+      value: dimensions.join(' | ')
     });
   }
 
@@ -71,13 +119,14 @@ function extractSpecifications(product: any): ProductSpecification[] {
     specs.push({ label: 'Stock Quantity', value: product.stockQuantity.toString() });
   }
 
-  // Product attributes
+  // Product attributes (non-variation attributes for display)
   if (product.attributes?.nodes) {
     for (const attr of product.attributes.nodes) {
-      if (attr.visible && attr.options?.length > 0) {
+      // Only show visible, non-variation attributes in specifications
+      if (attr.visible && !attr.variation && attr.options?.length > 0) {
         specs.push({
-          label: attr.name,
-          value: attr.options.join(', ')
+          label: formatAttributeName(attr.name),
+          value: attr.options.map((opt: string) => formatAttributeValue(opt)).join(', ')
         });
       }
     }
@@ -99,7 +148,23 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
     const product = data?.product;
     if (!product) return null;
 
-    const specifications = extractSpecifications(product);
+    const isVariable = product.type === 'VARIABLE';
+    const specifications = extractSpecifications(product, isVariable);
+
+    // Extract brands
+    const brands: ProductBrand[] = product.productBrands?.nodes?.map((brand: any) => ({
+      id: brand.id,
+      name: brand.name,
+      slug: brand.slug,
+    })) || [];
+
+    // Extract dimensions
+    const dimensions: ProductDimensions = {
+      weight: product.weight || null,
+      length: product.length || null,
+      width: product.width || null,
+      height: product.height || null,
+    };
 
     const enhancedProduct: EnhancedProduct = {
       id: product.id,
@@ -144,6 +209,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       variations: product.variations?.nodes?.map((v: any) => ({
         id: v.id,
         name: v.name,
+        sku: v.sku || null,
         price: v.price || null,
         regularPrice: v.regularPrice || null,
         salePrice: v.salePrice || null,
@@ -153,6 +219,10 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
           name: a.name,
           value: a.value,
         })) || [],
+        image: v.image ? {
+          url: v.image.sourceUrl,
+          altText: v.image.altText || v.name,
+        } : null,
       })),
       specifications,
       gallery: [
@@ -171,6 +241,12 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
           isPrimary: false,
         })) || []),
       ],
+      brands,
+      dimensions,
+      featured: product.featured || false,
+      purchaseNote: product.purchaseNote || null,
+      externalUrl: product.externalUrl || null,
+      buttonText: product.buttonText || null,
     };
 
     return enhancedProduct;

@@ -67,7 +67,11 @@ export const PRODUCT_FIELDS = gql`
 export const GET_ALL_PRODUCTS = gql`
   ${PRODUCT_FIELDS}
   query GetAllProducts($first: Int = 12, $after: String) {
-    products(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC } }) {
+    products(
+      first: $first
+      after: $after
+      where: { orderby: { field: DATE, order: DESC } }
+    ) {
       nodes {
         ...ProductFields
       }
@@ -88,6 +92,8 @@ export const GET_PRODUCT_BY_SLUG = gql`
     product(id: $slug, idType: SLUG) {
       ...ProductFields
       description
+      featured
+      purchaseNote
       galleryImages {
         nodes {
           id
@@ -99,7 +105,18 @@ export const GET_PRODUCT_BY_SLUG = gql`
           }
         }
       }
+      productBrands {
+        nodes {
+          id
+          name
+          slug
+        }
+      }
       ... on SimpleProduct {
+        weight
+        length
+        width
+        height
         attributes {
           nodes {
             id
@@ -111,6 +128,10 @@ export const GET_PRODUCT_BY_SLUG = gql`
         }
       }
       ... on VariableProduct {
+        weight
+        length
+        width
+        height
         attributes {
           nodes {
             id
@@ -125,6 +146,7 @@ export const GET_PRODUCT_BY_SLUG = gql`
             id
             databaseId
             name
+            sku
             price
             regularPrice
             salePrice
@@ -154,6 +176,8 @@ export const GET_PRODUCT_BY_SLUG = gql`
             visible
           }
         }
+        externalUrl
+        buttonText
       }
     }
   }
@@ -162,14 +186,15 @@ export const GET_PRODUCT_BY_SLUG = gql`
 // Get products by category
 export const GET_PRODUCTS_BY_CATEGORY = gql`
   ${PRODUCT_FIELDS}
-  query GetProductsByCategory($category: String!, $first: Int = 12, $after: String) {
+  query GetProductsByCategory(
+    $category: String!
+    $first: Int = 12
+    $after: String
+  ) {
     products(
       first: $first
       after: $after
-      where: {
-        category: $category
-        orderby: { field: DATE, order: DESC }
-      }
+      where: { category: $category, orderby: { field: DATE, order: DESC } }
     ) {
       nodes {
         ...ProductFields
@@ -191,10 +216,7 @@ export const SEARCH_PRODUCTS = gql`
     products(
       first: $first
       after: $after
-      where: {
-        search: $search
-        orderby: { field: DATE, order: DESC }
-      }
+      where: { search: $search, orderby: { field: DATE, order: DESC } }
     ) {
       nodes {
         ...ProductFields
@@ -220,10 +242,12 @@ export const GET_ALL_PRODUCT_SLUGS = gql`
   }
 `;
 
-// Get all product categories
+// Get all product categories (with pagination support)
+// Note: hideEmpty filter has a bug in WPGraphQL that limits results to 100
+// So we fetch all and filter client-side
 export const GET_ALL_PRODUCT_CATEGORIES = gql`
-  query GetAllProductCategories {
-    productCategories(first: 200, where: { hideEmpty: true }) {
+  query GetAllProductCategories($first: Int = 100, $after: String) {
+    productCategories(first: $first, after: $after) {
       nodes {
         id
         name
@@ -232,6 +256,48 @@ export const GET_ALL_PRODUCT_CATEGORIES = gql`
         description
         image {
           sourceUrl
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+// Get hierarchical product categories (top-level with nested children)
+export const GET_HIERARCHICAL_CATEGORIES = gql`
+  query GetHierarchicalCategories {
+    productCategories(first: 100, where: { parent: 0 }) {
+      nodes {
+        id
+        name
+        slug
+        count
+        children(first: 50) {
+          nodes {
+            id
+            name
+            slug
+            count
+            children(first: 50) {
+              nodes {
+                id
+                name
+                slug
+                count
+                children(first: 50) {
+                  nodes {
+                    id
+                    name
+                    slug
+                    count
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

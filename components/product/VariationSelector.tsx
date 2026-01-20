@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Image from 'next/image';
+import {
+  formatAttributeName,
+  formatAttributeValue,
+  formatPrice,
+  formatVariationName,
+} from '@/lib/utils/woocommerce-format';
 
 interface VariationAttribute {
   name: string;
@@ -18,6 +23,10 @@ export interface Variation {
   stockStatus: string;
   stockQuantity: number;
   attributes: VariationAttribute[];
+  image?: {
+    url: string;
+    altText: string;
+  } | null;
 }
 
 interface VariationSelectorProps {
@@ -104,18 +113,13 @@ export default function VariationSelector({
     );
   };
 
-  const formatPrice = (price: string | null | undefined) => {
-    if (!price) return 'N/A';
-    return `$${parseFloat(price).toFixed(2)}`;
-  };
-
   return (
     <div className="space-y-6">
       {/* Attribute Selectors */}
       {attributeOptions.map(({ name, values }) => (
         <div key={name}>
           <label className="block text-sm font-semibold text-foreground mb-3">
-            {name}
+            {formatAttributeName(name)}
           </label>
           <div className="flex flex-wrap gap-2">
             {values.map(value => {
@@ -139,7 +143,7 @@ export default function VariationSelector({
                     }
                   `}
                 >
-                  {value}
+                  {formatAttributeValue(value)}
                 </button>
               );
             })}
@@ -200,7 +204,7 @@ export default function VariationSelector({
                 <tr>
                   {attributeOptions.map(attr => (
                     <th key={attr.name} className="px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
-                      {attr.name}
+                      {formatAttributeName(attr.name)}
                     </th>
                   ))}
                   <th className="px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider">
@@ -224,7 +228,7 @@ export default function VariationSelector({
                       const attrValue = variation.attributes.find(a => a.name === attr.name)?.value || '-';
                       return (
                         <td key={attr.name} className="px-3 py-2.5 text-foreground">
-                          {attrValue}
+                          {attrValue !== '-' ? formatAttributeValue(attrValue) : '-'}
                         </td>
                       );
                     })}

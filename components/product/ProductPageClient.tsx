@@ -8,23 +8,32 @@ import { showSuccess, showError } from '@/lib/utils/toast';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockAlertButton from '@/components/product/StockAlertButton';
 import SocialShare from '@/components/product/SocialShare';
+import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommerce-format';
+
+interface VariationImage {
+  url: string;
+  altText: string;
+}
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
+  onVariationImageChange?: (image: VariationImage | null) => void;
 }
 
 interface SelectedVariation {
   id: string;
   name: string;
+  sku: string | null;
   price: string | null;
   regularPrice: string | null;
   salePrice: string | null;
   stockStatus: string;
   stockQuantity: number | null;
   attributes: Array<{ name: string; value: string }>;
+  image?: VariationImage | null;
 }
 
-export default function ProductPageClient({ product }: ProductPageClientProps) {
+export default function ProductPageClient({ product, onVariationImageChange }: ProductPageClientProps) {
   const isVariable = product.type === 'VARIABLE';
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
@@ -49,7 +58,8 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
   const displayPrice = selectedVariation?.price || product.price || product.regularPrice;
   const displayStockStatus = selectedVariation?.stockStatus || product.stockStatus;
   const displayStockQuantity = selectedVariation?.stockQuantity ?? product.stockQuantity;
-  const displaySku = product.sku;
+  // For variable products, show variation SKU; for simple products, show product SKU
+  const displaySku = isVariable ? selectedVariation?.sku : product.sku;
 
   // Helper to convert price string to number
   const priceToNumber = (price: string | null | undefined): number => {
@@ -191,14 +201,22 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
           <VariationSelector
             variations={product.variations.map(v => ({
               ...v,
-              sku: product.sku || '',
+              sku: v.sku || '',
               stockQuantity: v.stockQuantity || 0,
             }))}
-            onVariationChange={(variation) => setSelectedVariation({
-              ...variation,
-              regularPrice: variation.regularPrice || null,
-              salePrice: variation.salePrice || null,
-            } as SelectedVariation)}
+            onVariationChange={(variation) => {
+              setSelectedVariation({
+                ...variation,
+                sku: variation.sku || null,
+                regularPrice: variation.regularPrice || null,
+                salePrice: variation.salePrice || null,
+                image: variation.image || null,
+              } as SelectedVariation);
+              // Update the product image gallery
+              if (onVariationImageChange) {
+                onVariationImageChange(variation.image || null);
+              }
+            }}
           />
         </div>
       )}
@@ -210,8 +228,10 @@ export default function ProductPageClient({ product }: ProductPageClientProps) {
           <div className="grid grid-cols-2 gap-3 text-sm">
             {product.attributes.filter(attr => attr.visible).map((attr, index) => (
               <div key={index}>
-                <span className="text-muted-foreground">{attr.name}:</span>
-                <span className="ml-2 font-medium text-foreground">{attr.options.join(', ')}</span>
+                <span className="text-muted-foreground">{formatAttributeName(attr.name)}:</span>
+                <span className="ml-2 font-medium text-foreground">
+                  {attr.options.map(opt => formatAttributeValue(opt)).join(', ')}
+                </span>
               </div>
             ))}
           </div>

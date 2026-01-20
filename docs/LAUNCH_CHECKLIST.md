@@ -47,6 +47,16 @@ Use this checklist to ensure a successful launch of the Maleq e-commerce store.
 - [ ] Newsletter signup working
 - [ ] Contact form sending emails
 
+### WordPress/Backend Configuration
+
+- [ ] **WPGraphQL Brands Support** - Add the PHP snippet to register product_brand taxonomy with WPGraphQL
+  - Copy `wordpress-snippets/register-brands-wpgraphql.php` to WordPress `wp-content/mu-plugins/wpgraphql-brands.php`
+  - SSH to staging.maleq.com (159.69.220.162) and production servers
+  - Or upload via SFTP/file manager
+  - After adding, uncomment `productBrands` in `lib/queries/products.ts`
+- [ ] Verify WPGraphQL productBrands query works in GraphiQL
+- [ ] Test product pages display brand information correctly
+
 ---
 
 ## Launch Day

@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { getAllProducts, getProductCategories } from '@/lib/products/combined-service';
+import { getAllProducts, getHierarchicalCategories } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 
 export const metadata: Metadata = {
@@ -11,19 +11,11 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
 export default async function ShopPage() {
-  // Get products and categories from WooCommerce
+  // Get products and hierarchical categories from WooCommerce
   const [{ products, pageInfo }, categories] = await Promise.all([
     getAllProducts({ limit: 24 }),
-    getProductCategories(),
+    getHierarchicalCategories(),
   ]);
-
-  // Format categories for filter panel
-  const formattedCategories = categories.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-    slug: cat.slug,
-    count: cat.count,
-  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -39,7 +31,7 @@ export default async function ShopPage() {
       <Suspense fallback={<ShopLoadingSkeleton />}>
         <ShopPageClient
           initialProducts={products}
-          categories={formattedCategories}
+          categories={categories}
           hasMore={pageInfo.hasNextPage}
         />
       </Suspense>

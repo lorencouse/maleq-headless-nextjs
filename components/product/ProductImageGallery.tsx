@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 
 interface ProductImage {
@@ -11,13 +11,37 @@ interface ProductImage {
   isPrimary: boolean;
 }
 
+interface VariationImage {
+  url: string;
+  altText: string;
+}
+
 interface ProductImageGalleryProps {
   images: ProductImage[];
   productName: string;
+  selectedVariationImage?: VariationImage | null;
 }
 
-export default function ProductImageGallery({ images, productName }: ProductImageGalleryProps) {
+export default function ProductImageGallery({
+  images,
+  productName,
+  selectedVariationImage
+}: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(images[0] || null);
+
+  // When variation image changes, update the display
+  useEffect(() => {
+    if (selectedVariationImage) {
+      // Create a temporary image object for the variation
+      setSelectedImage({
+        id: 'variation-image',
+        url: selectedVariationImage.url,
+        altText: selectedVariationImage.altText || productName,
+        title: productName,
+        isPrimary: false,
+      });
+    }
+  }, [selectedVariationImage, productName]);
 
   if (!images || images.length === 0) {
     return (

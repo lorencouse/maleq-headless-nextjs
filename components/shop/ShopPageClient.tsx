@@ -6,12 +6,13 @@ import ProductCard from './ProductCard';
 import FilterPanel, { FilterState } from './filters/FilterPanel';
 import ActiveFilters from './filters/ActiveFilters';
 import SortDropdown, { SortOption } from './SortDropdown';
-import { UnifiedProduct } from '@/lib/products/combined-service';
+import { UnifiedProduct, HierarchicalCategory } from '@/lib/products/combined-service';
 
 interface ShopPageClientProps {
   initialProducts: UnifiedProduct[];
-  categories: { id: string; name: string; slug: string; count?: number }[];
+  categories: HierarchicalCategory[];
   hasMore: boolean;
+  searchQuery?: string;
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -26,6 +27,7 @@ export default function ShopPageClient({
   initialProducts,
   categories,
   hasMore: initialHasMore,
+  searchQuery,
 }: ShopPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -37,6 +39,7 @@ export default function ShopPageClient({
   const [cursor, setCursor] = useState<string | null>(null);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const isInitialMount = useRef(true);
+  const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
 
   // Parse filters from URL
   const categoryFilter = searchParams.get('category') || '';
@@ -78,6 +81,7 @@ export default function ShopPageClient({
       inStock: boolean;
       onSale: boolean;
       sort: SortOption;
+      search?: string;
     },
     afterCursor?: string | null
   ) => {
@@ -90,6 +94,7 @@ export default function ShopPageClient({
         params.set('after', afterCursor);
       }
 
+      if (filterParams.search) params.set('search', filterParams.search);
       if (filterParams.category) params.set('category', filterParams.category);
       if (filterParams.minPrice > 0) params.set('minPrice', filterParams.minPrice.toString());
       if (filterParams.maxPrice < 500) params.set('maxPrice', filterParams.maxPrice.toString());
@@ -120,9 +125,11 @@ export default function ShopPageClient({
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
-      // Check if we have URL params on initial load
+      // Check if we have URL params on initial load (excluding search, which is pre-loaded)
       const hasFilters = categoryFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
-      if (hasFilters) {
+      if (hasFilters && !searchQuery) {
+        // Only fetch if we have filters AND no search query
+        // Search results are already loaded server-side
         fetchProducts({
           category: categoryFilter,
           minPrice: minPriceFilter,
@@ -135,7 +142,20 @@ export default function ShopPageClient({
       return;
     }
 
+    // Skip fetch if we have search results from SSR and no filters applied
+    // This prevents re-fetching on hydration/Strict Mode double-render
+    if (hasInitialSearchResults.current) {
+      const hasFilters = categoryFilter || minPriceFilter > 0 || maxPriceFilter < 500 || inStockFilter || onSaleFilter || sortBy !== 'newest';
+      if (!hasFilters) {
+        // Clear the flag so subsequent filter changes will fetch
+        hasInitialSearchResults.current = false;
+        return;
+      }
+      hasInitialSearchResults.current = false;
+    }
+
     // Reset cursor and fetch when filters change
+    // Include search query if present
     setCursor(null);
     fetchProducts({
       category: categoryFilter,
@@ -144,8 +164,9 @@ export default function ShopPageClient({
       inStock: inStockFilter,
       onSale: onSaleFilter,
       sort: sortBy,
+      search: searchQuery,
     });
-  }, [categoryFilter, minPriceFilter, maxPriceFilter, inStockFilter, onSaleFilter, sortBy, fetchProducts]);
+  }, [categoryFilter, minPriceFilter, maxPriceFilter, inStockFilter, onSaleFilter, sortBy, searchQuery, fetchProducts]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters: FilterState) => {
@@ -188,6 +209,7 @@ export default function ShopPageClient({
       inStock: inStockFilter,
       onSale: onSaleFilter,
       sort: sortBy,
+      search: searchQuery,
     }, cursor);
   };
 

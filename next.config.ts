@@ -1,15 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Exclude data directory from webpack watching (image imports trigger recompiles)
-  webpack: (config, { dev }) => {
-    if (dev) {
-      config.watchOptions = {
-        ...config.watchOptions,
-        ignored: ['**/node_modules/**', '**/data/**', '**/.git/**'],
-      };
-    }
-    return config;
+  // Turbopack configuration (used with `next dev --turbopack`)
+  // Turbopack has better defaults for file watching - no need to configure ignored paths
+  turbopack: {
+    resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
 
   // Compress responses

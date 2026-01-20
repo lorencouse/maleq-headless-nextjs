@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { searchProducts, getProductCategories } from '@/lib/products/combined-service';
+import { searchProducts, getHierarchicalCategories } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 
 interface SearchPageProps {
@@ -23,19 +23,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q || '';
 
-  // Get products and categories
+  // Get products and hierarchical categories
   const [products, categories] = await Promise.all([
     query ? searchProducts(query, 24) : Promise.resolve([]),
-    getProductCategories(),
+    getHierarchicalCategories(),
   ]);
-
-  // Format categories for filter panel
-  const formattedCategories = categories.map((cat) => ({
-    id: cat.id,
-    name: cat.name,
-    slug: cat.slug,
-    count: cat.count,
-  }));
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -64,8 +56,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <Suspense fallback={<SearchLoadingSkeleton />}>
             <ShopPageClient
               initialProducts={products}
-              categories={formattedCategories}
+              categories={categories}
               hasMore={false}
+              searchQuery={query}
             />
           </Suspense>
         ) : (

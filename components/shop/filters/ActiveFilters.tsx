@@ -1,12 +1,28 @@
 'use client';
 
 import { FilterState } from './FilterPanel';
+import { HierarchicalCategory } from './CategoryFilter';
 
 interface ActiveFiltersProps {
   filters: FilterState;
-  categories: { id: string; name: string; slug: string }[];
+  categories: HierarchicalCategory[];
   onRemoveFilter: (key: keyof FilterState) => void;
   onClearAll: () => void;
+}
+
+// Recursively find a category by slug in the hierarchy
+function findCategoryBySlug(
+  categories: HierarchicalCategory[],
+  slug: string
+): HierarchicalCategory | undefined {
+  for (const cat of categories) {
+    if (cat.slug === slug) return cat;
+    if (cat.children.length > 0) {
+      const found = findCategoryBySlug(cat.children, slug);
+      if (found) return found;
+    }
+  }
+  return undefined;
 }
 
 export default function ActiveFilters({
@@ -18,7 +34,8 @@ export default function ActiveFilters({
   const activeFilters: { key: keyof FilterState; label: string }[] = [];
 
   if (filters.category) {
-    const categoryName = categories.find((c) => c.slug === filters.category)?.name || filters.category;
+    const category = findCategoryBySlug(categories, filters.category);
+    const categoryName = category?.name || filters.category;
     activeFilters.push({ key: 'category', label: `Category: ${categoryName}` });
   }
 
