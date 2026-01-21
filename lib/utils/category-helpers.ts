@@ -29,3 +29,26 @@ export function flattenCategories(categories: HierarchicalCategory[]): Hierarchi
     return acc;
   }, []);
 }
+
+/**
+ * Find the parent category of a given category by slug
+ */
+export function findParentCategory(
+  categories: HierarchicalCategory[],
+  childSlug: string,
+  parent: HierarchicalCategory | null = null
+): { name: string; slug: string } | null {
+  for (const cat of categories) {
+    // Check if this category is the parent of the target
+    if (cat.children.length > 0) {
+      const childFound = cat.children.find(child => child.slug === childSlug);
+      if (childFound) {
+        return { name: cat.name, slug: cat.slug };
+      }
+      // Recursively search in children
+      const foundInChildren = findParentCategory(cat.children, childSlug, cat);
+      if (foundInChildren) return foundInChildren;
+    }
+  }
+  return null;
+}

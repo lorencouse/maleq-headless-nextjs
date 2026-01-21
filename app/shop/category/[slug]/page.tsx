@@ -2,9 +2,11 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getProductsByCategory, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
-import { findCategoryBySlug, flattenCategories } from '@/lib/utils/category-helpers';
+import { findCategoryBySlug, flattenCategories, findParentCategory } from '@/lib/utils/category-helpers';
 import ShopPageClient from '@/components/shop/ShopPageClient';
-import Breadcrumbs from '@/components/navigation/Breadcrumbs';
+import CategoryHero from '@/components/shop/CategoryHero';
+import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
+import FeaturedProducts from '@/components/shop/FeaturedProducts';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -24,7 +26,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   return {
     title: `${category.name} | Shop | Maleq`,
-    description: `Browse our ${category.name} collection at Maleq.`,
+    description: `Browse our ${category.name} collection at Maleq. ${category.count} products available with fast, discreet shipping.`,
+    openGraph: {
+      title: `${category.name} | Maleq`,
+      description: `Shop ${category.name} at Maleq. Fast, discreet shipping available.`,
+      type: 'website',
+    },
   };
 }
 
@@ -70,37 +77,90 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     notFound();
   }
 
-  // Get products - use filtered query if additional filters, otherwise simple category query
-  const products = hasAdditionalFilters
-    ? (await getFilteredProducts({
-        limit: 24,
-        category: slug,
-        brand,
-        color,
-        material,
-        minPrice,
-        maxPrice,
-        inStock,
-        onSale,
-      })).products
-    : await getProductsByCategory(slug, 24);
+  // Find parent category for breadcrumbs
+  const parentCategory = findParentCategory(allCategories, slug);
 
-  // Build breadcrumb items
-  const breadcrumbItems = [
-    { label: 'Shop', href: '/shop' },
-    { label: category.name },
-  ];
+  // Fetch products and sale products in parallel
+  const [products, saleProductsResult] = await Promise.all([
+    hasAdditionalFilters
+      ? getFilteredProducts({
+          limit: 24,
+          category: slug,
+          brand,
+          color,
+          material,
+          minPrice,
+          maxPrice,
+          inStock,
+          onSale,
+        }).then(r => r.products)
+      : getProductsByCategory(slug, 24),
+    // Only fetch sale products if no filters are active
+    !hasAdditionalFilters
+      ? getFilteredProducts({
+          limit: 8,
+          category: slug,
+          onSale: true,
+        })
+      : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } }),
+  ]);
+
+  const saleProducts = saleProductsResult.products;
+
+  // Get child categories with products
+  const childCategories = category.children?.filter(c => c.count > 0) || [];
+
+  // Show featured sections only when no filters are active
+  const showFeaturedSections = !hasAdditionalFilters;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      {/* Breadcrumbs */}
-      <Breadcrumbs items={breadcrumbItems} />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Category Hero */}
+      <CategoryHero
+        category={category}
+        productCount={products.length}
+        parentCategory={parentCategory}
+      />
 
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">{category.name}</h1>
-        <p className="text-sm text-muted-foreground mt-2">
+      {/* Featured Sections - Only show when no filters */}
+      {showFeaturedSections && (
+        <>
+          {/* Child Categories */}
+          {childCategories.length > 0 && (
+            <div id="subcategories">
+              <SubcategoryGrid
+                subcategories={childCategories}
+                parentSlug={slug}
+              />
+            </div>
+          )}
+
+          {/* Sale Products for this Category */}
+          {saleProducts.length > 0 && (
+            <FeaturedProducts
+              products={saleProducts}
+              title={`${category.name} on Sale`}
+              subtitle="Limited time deals in this category"
+              viewAllHref={`/shop/category/${slug}?onSale=true`}
+              viewAllText="View All Deals"
+            />
+          )}
+
+          {/* Section Divider */}
+          {(childCategories.length > 0 || saleProducts.length > 0) && (
+            <div className="border-t border-border my-8" />
+          )}
+        </>
+      )}
+
+      {/* All Products Header */}
+      <div id="products" className="mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-1">
+          {hasAdditionalFilters ? 'Filtered Results' : `All ${category.name}`}
+        </h2>
+        <p className="text-sm text-muted-foreground">
           {products.length} {products.length === 1 ? 'product' : 'products'}
+          {hasAdditionalFilters ? ' matching your filters' : ' available'}
         </p>
       </div>
 
@@ -134,7 +194,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           </svg>
           <h2 className="text-xl font-semibold text-foreground mb-2">No products found</h2>
           <p className="text-muted-foreground mb-6">
-            This category doesn&apos;t have any products yet.
+            {hasAdditionalFilters
+              ? 'Try adjusting your filters to find what you\'re looking for.'
+              : 'This category doesn\'t have any products yet.'}
           </p>
           <a
             href="/shop"
@@ -158,17 +220,34 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
 function CategoryLoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {[...Array(8)].map((_, i) => (
-        <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="aspect-square bg-muted animate-pulse" />
-          <div className="p-4 space-y-2">
-            <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
-            <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
-            <div className="h-6 bg-muted rounded w-1/4 animate-pulse" />
+    <div className="flex flex-col lg:flex-row gap-8">
+      {/* Filter Skeleton */}
+      <aside className="hidden lg:block w-64 flex-shrink-0">
+        <div className="space-y-4">
+          <div className="h-6 bg-muted rounded w-24 animate-pulse" />
+          <div className="space-y-2">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-10 bg-muted rounded animate-pulse" />
+            ))}
           </div>
         </div>
-      ))}
+      </aside>
+
+      {/* Products Skeleton */}
+      <div className="flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="aspect-square bg-muted animate-pulse" />
+              <div className="p-4 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4 animate-pulse" />
+                <div className="h-4 bg-muted rounded w-1/2 animate-pulse" />
+                <div className="h-6 bg-muted rounded w-1/4 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
+import { getCategoryConfig } from '@/lib/config/category-icons';
 
 interface FeaturedCategoriesProps {
   categories: HierarchicalCategory[];
