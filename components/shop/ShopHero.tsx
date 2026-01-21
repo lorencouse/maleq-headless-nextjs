@@ -8,7 +8,6 @@ interface PromoCard {
   cta: string;
   href: string;
   bgColor: string;
-  textColor?: string;
   icon?: React.ReactNode;
 }
 
@@ -19,7 +18,6 @@ const promoCards: PromoCard[] = [
     cta: 'Shop Now',
     href: '/shop',
     bgColor: 'bg-gradient-to-br from-primary to-primary-hover',
-    textColor: 'text-white',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
@@ -32,7 +30,6 @@ const promoCards: PromoCard[] = [
     cta: 'View Deals',
     href: '/shop?onSale=true',
     bgColor: 'bg-gradient-to-br from-accent to-orange-600',
-    textColor: 'text-white',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -45,7 +42,6 @@ const promoCards: PromoCard[] = [
     cta: 'Learn More',
     href: '/shipping-returns',
     bgColor: 'bg-gradient-to-br from-secondary to-indigo-700',
-    textColor: 'text-white',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -67,13 +63,13 @@ export default function ShopHero() {
 
         <div className="relative px-6 py-12 sm:px-12 sm:py-16 lg:py-20">
           <div className="max-w-2xl">
-            <span className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-primary bg-primary/10 rounded-full mb-4 uppercase">
+            <span className="inline-block px-3 py-1 text-xs font-semibold tracking-wider text-primary-light bg-primary/20 rounded-full mb-4 uppercase">
               Premium Quality
             </span>
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            <h1 className="text-white text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
               Discover Our Collection
             </h1>
-            <p className="text-lg text-zinc-300 mb-8 max-w-lg">
+            <p className="text-white/80 text-lg mb-8 max-w-lg">
               Shop our curated selection of premium products with fast, discreet shipping and satisfaction guaranteed.
             </p>
             <div className="flex flex-wrap gap-4">
@@ -106,11 +102,11 @@ export default function ShopHero() {
             className={`group relative overflow-hidden rounded-xl ${card.bgColor} p-5 transition-transform hover:scale-[1.02] hover:shadow-lg`}
           >
             <div className="flex items-start justify-between">
-              <div className={card.textColor}>
-                <div className="mb-3 opacity-90">{card.icon}</div>
-                <h3 className="font-bold text-lg mb-1">{card.title}</h3>
-                <p className="text-sm opacity-90 mb-3">{card.subtitle}</p>
-                <span className="inline-flex items-center gap-1 text-sm font-medium group-hover:gap-2 transition-all">
+              <div>
+                <div className="text-white mb-3 opacity-90">{card.icon}</div>
+                <h3 className="text-white font-bold text-lg mb-1">{card.title}</h3>
+                <p className="text-white/80 text-sm mb-3">{card.subtitle}</p>
+                <span className="text-white inline-flex items-center gap-1 text-sm font-medium group-hover:gap-2 transition-all">
                   {card.cta}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
