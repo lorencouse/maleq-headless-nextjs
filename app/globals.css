@@ -198,7 +198,6 @@ p.muted {
 }
 
 a {
-  color: inherit;
   text-decoration: none;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
