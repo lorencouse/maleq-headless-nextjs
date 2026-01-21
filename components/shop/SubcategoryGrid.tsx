@@ -48,15 +48,15 @@ export default function SubcategoryGrid({ subcategories, parentSlug }: Subcatego
               </div>
 
               {/* Content */}
-              <div className="relative h-full flex flex-col justify-between p-3 sm:p-4 text-white">
-                <div className="w-6 h-6 sm:w-7 sm:h-7 opacity-80 group-hover:opacity-100 transition-opacity">
+              <div className="relative h-full flex flex-col justify-between p-3 sm:p-4">
+                <div className="w-6 h-6 sm:w-7 sm:h-7 text-white opacity-80 group-hover:opacity-100 transition-opacity">
                   {config.icon}
                 </div>
                 <div>
-                  <h3 className="font-semibold text-xs sm:text-sm leading-tight mb-0.5 line-clamp-2">
+                  <h3 className="text-white font-semibold text-xs sm:text-sm leading-tight mb-0.5 line-clamp-2">
                     {subcategory.name}
                   </h3>
-                  <p className="text-[10px] sm:text-xs opacity-80">
+                  <p className="text-white/80 text-[10px] sm:text-xs">
                     {subcategory.count} {subcategory.count === 1 ? 'item' : 'items'}
                   </p>
                 </div>

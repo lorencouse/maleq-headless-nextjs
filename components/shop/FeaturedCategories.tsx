@@ -550,15 +550,15 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
               </div>
 
               {/* Content */}
-              <div className="relative h-full flex flex-col justify-between p-4 text-white">
-                <div className="opacity-80 group-hover:opacity-100 transition-opacity">
+              <div className="relative h-full flex flex-col justify-between p-4">
+                <div className="text-white opacity-80 group-hover:opacity-100 transition-opacity">
                   {config.icon}
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm sm:text-base leading-tight mb-1 line-clamp-2">
+                  <h3 className="text-white font-bold text-sm sm:text-base leading-tight mb-1 line-clamp-2">
                     {category.name}
                   </h3>
-                  <p className="text-xs opacity-80">
+                  <p className="text-white/80 text-xs">
                     {category.count} {category.count === 1 ? 'item' : 'items'}
                   </p>
                 </div>

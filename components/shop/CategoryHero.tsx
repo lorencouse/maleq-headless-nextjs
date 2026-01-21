@@ -25,10 +25,10 @@ export default function CategoryHero({ category, productCount, parentCategory }:
         </div>
 
         {/* Content */}
-        <div className="relative px-6 py-8 sm:px-8 sm:py-12 text-white">
+        <div className="relative px-6 py-8 sm:px-8 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             {/* Icon */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0 text-white">
               {config.icon}
             </div>
 
@@ -55,7 +55,7 @@ export default function CategoryHero({ category, productCount, parentCategory }:
               </div>
 
               {/* Title */}
-              <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+              <h1 className="text-white text-3xl sm:text-4xl font-bold mb-2">
                 {category.name}
               </h1>
 
@@ -82,14 +82,14 @@ export default function CategoryHero({ category, productCount, parentCategory }:
             <div className="hidden sm:flex flex-col gap-2">
               <a
                 href="#products"
-                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors backdrop-blur-sm text-center"
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium transition-colors backdrop-blur-sm text-center"
               >
                 Browse Products
               </a>
               {category.children && category.children.length > 0 && (
                 <a
                   href="#subcategories"
-                  className="px-4 py-2 border border-white/30 hover:bg-white/10 rounded-lg text-sm font-medium transition-colors text-center"
+                  className="px-4 py-2 border border-white/30 hover:bg-white/10 rounded-lg text-white text-sm font-medium transition-colors text-center"
                 >
                   View Subcategories
                 </a>
