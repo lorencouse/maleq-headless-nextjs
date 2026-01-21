@@ -168,7 +168,6 @@ h6 {
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: 0.5rem;
-  color: var(--foreground);
 }
 
 h1 {
@@ -192,7 +191,6 @@ h6 {
 
 p {
   margin-bottom: 1rem;
-  color: var(--foreground);
 }
 
 p.muted {
