@@ -536,7 +536,7 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
           return (
             <Link
               key={category.id}
-              href={`/shop?category=${category.slug}`}
+              href={`/shop/category/${category.slug}`}
               className="group relative overflow-hidden rounded-xl aspect-[4/3] sm:aspect-square"
             >
               {/* Background Gradient */}
