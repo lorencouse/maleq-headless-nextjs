@@ -1,9 +1,20 @@
 import Link from 'next/link';
+import { Metadata } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_ALL_POSTS } from '@/lib/queries/posts';
 import { getAllProducts } from '@/lib/products/combined-service';
 import BlogCard from '@/components/blog/BlogCard';
 import ProductCard from '@/components/shop/ProductCard';
+
+export const metadata: Metadata = {
+  title: 'Maleq | Premium Adult Products & Discreet Shipping',
+  description: 'Shop premium adult products at Maleq. Fast, discreet shipping. Browse vibrators, toys, lingerie, and more with secure checkout and privacy guaranteed.',
+  openGraph: {
+    title: 'Maleq | Premium Adult Products & Discreet Shipping',
+    description: 'Shop premium adult products at Maleq. Fast, discreet shipping. Browse vibrators, toys, lingerie, and more.',
+    type: 'website',
+  },
+};
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering
 

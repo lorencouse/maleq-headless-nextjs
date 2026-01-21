@@ -13,9 +13,9 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary">Maleq</h1>
+            <span className="text-3xl font-bold text-primary">Maleq</span>
           </Link>
-          <h2 className="mt-6 text-2xl font-bold text-foreground">Create your account</h2>
+          <h1 className="mt-6 text-2xl font-bold text-foreground">Create your account</h1>
           <p className="mt-2 text-muted-foreground">
             Join Maleq for a better shopping experience
           </p>

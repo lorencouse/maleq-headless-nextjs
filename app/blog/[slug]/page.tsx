@@ -1,3 +1,4 @@
+import { Metadata } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_POST_BY_SLUG, GET_ALL_POST_SLUGS } from '@/lib/queries/posts';
 import Image from 'next/image';
@@ -7,7 +8,67 @@ import { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import './blog-post.css';
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
 export const dynamic = 'force-dynamic'; // Use dynamic rendering for fresh content
+
+// Generate metadata for blog post
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const { data } = await getClient().query({
+    query: GET_POST_BY_SLUG,
+    variables: { slug },
+  });
+
+  const post: Post = data?.postBy;
+
+  if (!post) {
+    return {
+      title: 'Post Not Found | Maleq',
+    };
+  }
+
+  // Strip HTML and limit description
+  const description = post.excerpt
+    ? post.excerpt.replace(/<[^>]*>/g, '').slice(0, 160)
+    : post.content
+    ? post.content.replace(/<[^>]*>/g, '').slice(0, 160)
+    : `Read ${post.title} on the Maleq blog.`;
+
+  return {
+    title: `${post.title} | Maleq Blog`,
+    description,
+    openGraph: {
+      title: post.title,
+      description,
+      url: `${SITE_URL}/blog/${slug}`,
+      type: 'article',
+      publishedTime: post.date,
+      authors: post.author?.node?.name ? [post.author.node.name] : undefined,
+      images: post.featuredImage?.node?.sourceUrl
+        ? [
+            {
+              url: getProductionImageUrl(post.featuredImage.node.sourceUrl),
+              width: 1200,
+              height: 630,
+              alt: post.featuredImage.node.altText || post.title,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description,
+      images: post.featuredImage?.node?.sourceUrl
+        ? [getProductionImageUrl(post.featuredImage.node.sourceUrl)]
+        : [],
+    },
+    alternates: {
+      canonical: `${SITE_URL}/blog/${slug}`,
+    },
+  };
+}
 
 // Generate static params for all posts
 export async function generateStaticParams() {

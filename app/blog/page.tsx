@@ -1,7 +1,18 @@
+import { Metadata } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_ALL_POSTS } from '@/lib/queries/posts';
 import BlogCard from '@/components/blog/BlogCard';
 import { Post } from '@/lib/types/wordpress';
+
+export const metadata: Metadata = {
+  title: 'Blog | Maleq',
+  description: 'Read the latest articles, guides, and insights from Maleq. Tips, product reviews, and expert advice for your intimate wellness.',
+  openGraph: {
+    title: 'Blog | Maleq',
+    description: 'Read the latest articles, guides, and insights from Maleq.',
+    type: 'website',
+  },
+};
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering
 
@@ -19,8 +30,8 @@ export default async function BlogPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Blog</h1>
-        <p className="text-lg text-gray-600">
+        <h1 className="text-4xl font-bold text-foreground mb-4">Blog</h1>
+        <p className="text-lg text-muted-foreground">
           Insights, stories, and updates from our team
         </p>
       </div>
@@ -34,7 +45,7 @@ export default async function BlogPage() {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-600">No blog posts found.</p>
+          <p className="text-muted-foreground">No blog posts found.</p>
         </div>
       )}
 

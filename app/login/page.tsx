@@ -13,9 +13,9 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary">Maleq</h1>
+            <span className="text-3xl font-bold text-primary">Maleq</span>
           </Link>
-          <h2 className="mt-6 text-2xl font-bold text-foreground">Welcome back</h2>
+          <h1 className="mt-6 text-2xl font-bold text-foreground">Welcome back</h1>
           <p className="mt-2 text-muted-foreground">
             Sign in to your account to continue
           </p>
