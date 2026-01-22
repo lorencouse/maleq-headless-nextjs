@@ -410,3 +410,68 @@ export const defaultCategoryConfig = {
 export function getCategoryConfig(slug: string) {
   return categoryConfig[slug] || defaultCategoryConfig;
 }
+
+// Category slug to image filename mapping
+// Images are stored in public/images/product-categories/
+export const categoryImages: Record<string, string> = {
+  // Anal toys
+  'anal-beads': 'anal-beads.webp',
+  'classic-anal-beads': 'anal-beads.webp',
+  'vibrating-anal-beads': 'anal-beads.webp',
+  'glass-anal-beads': 'glass-anal-beads.webp',
+  'anal-trainer-kits': 'anal-trainer-kits.webp',
+  'anal-vibrators': 'anal-vibrators.webp',
+  'anal-lubes-lotions-sprays-creams': 'anal-lubes-lotions-and-sprays.webp',
+  'inflatable-butt-plugs': 'inflatable-butt-plugs.webp',
+  'small-medium-butt-plugs': 'inflatable-butt-plugs.webp',
+  'big-butt-plugs': 'large-hube-butt-plugs.webp',
+  'huge-butt-plugs': 'large-hube-butt-plugs.webp',
+  'large-huge-butt-plugs': 'large-hube-butt-plugs.webp',
+  'enemas-douches': 'anal-douches-enemas.webp',
+  'anal-douches-enemas': 'anal-douches-enemas.webp',
+  'anal-douches-enemas-hygiene': 'anal-douches-enemas.webp',
+  'hygiene-intimate-care': 'anal-douches-enemas.webp',
+
+  // Prostate
+  'prostate-massagers': 'prostate-masagers.webp',
+  'prostate-massagers-p-spot-stimulators': 'prostate-masagers-and-p-spot-stimulators.webp',
+
+  // Cock rings
+  'cock-rings': 'classic-cock-rings.webp',
+  'classic-cock-rings': 'classic-cock-rings.webp',
+  'adjustable-cock-rings': 'adjustable-and-versitile-cock-rings.webp',
+  'adjustable-versatile-cock-rings': 'adjustable-and-versitile-cock-rings.webp',
+  'cock-ring-trios': 'cock-ring-trios.webp',
+  'cock-ring-sets': 'cock-ring-trios.webp',
+  'stimulating-cock-rings': 'stimulating-cock-rings.webp',
+  'double-penetration-cock-rings': 'double-penetration-cock-rings.webp',
+  'sleeves-rings': 'cock-sleeves.webp',
+
+  // Penis pumps
+  'penis-pumps': 'penis-pumps.webp',
+  'male-pumps': 'penis-pumps.webp',
+
+  // Penis extensions & sleeves
+  'penis-extensions': 'penis-extensions.webp',
+  'male-extensions': 'penis-extensions.webp',
+  'penis-sleeves': 'penis-sleves.webp',
+
+  // Bondage
+  'body-harnesses': 'body-harnesses.webp',
+
+  // Men's wear
+  'mens-underwear': 'mens-underwaer.webp',
+
+  // Lubricants & massage
+  'massage-lotions-creams': 'massage-lotions-and-creams.webp',
+  'erotic-body-lotions': 'massage-lotions-and-creams.webp',
+};
+
+// Helper to get category image path
+export function getCategoryImage(slug: string): string | null {
+  const filename = categoryImages[slug];
+  if (filename) {
+    return `/images/product-categories/${filename}`;
+  }
+  return null;
+}

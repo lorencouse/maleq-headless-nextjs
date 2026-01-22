@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
-import { getCategoryConfig } from '@/lib/config/category-icons';
+import { getCategoryConfig, getCategoryImage } from '@/lib/config/category-icons';
 
 interface CategoryHeroProps {
   category: HierarchicalCategory;
@@ -12,30 +13,48 @@ interface CategoryHeroProps {
 
 export default function CategoryHero({ category, productCount, parentCategory }: CategoryHeroProps) {
   const config = getCategoryConfig(category.slug);
+  const categoryImage = getCategoryImage(category.slug);
 
   return (
     <section className="mb-8">
       {/* Hero Banner */}
-      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${config.gradient}`}>
-        {/* Pattern Overlay */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
-        </div>
+      <div className={`relative overflow-hidden rounded-2xl ${!categoryImage ? `bg-gradient-to-r ${config.gradient}` : ''}`}>
+        {/* Background Image or Pattern */}
+        {categoryImage ? (
+          <>
+            <Image
+              src={categoryImage}
+              alt={category.name}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            {/* Dark overlay for text readability */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40" />
+          </>
+        ) : (
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute inset-0" style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }} />
+          </div>
+        )}
 
         {/* Content */}
         <div className="relative px-6 py-8 sm:px-8 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            {/* Icon */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0 text-white">
-              {config.icon}
-            </div>
+            {/* Icon - only show when there's no category image */}
+            {!categoryImage && (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0 text-white">
+                {config.icon}
+              </div>
+            )}
 
             {/* Text Content */}
             <div className="flex-1">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-sm text-white/80 mb-2">
+              <div className="flex items-center gap-2 text-sm text-white/80 mb-2 drop-shadow-md">
                 <Link href="/shop" className="hover:text-white transition-colors">
                   Shop
                 </Link>
@@ -55,12 +74,12 @@ export default function CategoryHero({ category, productCount, parentCategory }:
               </div>
 
               {/* Title */}
-              <h1 className="text-white text-3xl sm:text-4xl font-bold mb-2">
+              <h1 className="text-white text-3xl sm:text-4xl font-bold mb-2 drop-shadow-lg">
                 {category.name}
               </h1>
 
               {/* Stats */}
-              <div className="flex flex-wrap items-center gap-4 text-white/90">
+              <div className="flex flex-wrap items-center gap-4 text-white/90 drop-shadow-md">
                 <span className="flex items-center gap-1.5">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />

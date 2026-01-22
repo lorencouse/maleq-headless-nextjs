@@ -1,0 +1,187 @@
+/**
+ * Navigation Configuration
+ *
+ * Central configuration for all site navigation menus.
+ * Used by both desktop dropdowns and mobile menu.
+ */
+
+export interface NavItem {
+  label: string;
+  href: string;
+  description?: string;
+  children?: NavItem[];
+  icon?: string; // Icon key from CategoryIcons
+  featured?: boolean; // Highlight in menu
+}
+
+export interface NavSection {
+  label: string;
+  href?: string;
+  children: NavItem[];
+  columns?: number; // For mega menu layout (1-4)
+  featured?: NavItem[]; // Featured items shown separately
+}
+
+// Main navigation structure
+export const mainNavigation: NavSection[] = [
+  {
+    label: 'Shop',
+    href: '/shop',
+    columns: 4,
+    children: [
+      {
+        label: 'Sex Toys',
+        href: '/shop/category/sex-toys',
+        children: [
+          { label: 'Vibrators', href: '/shop/category/vibrators', icon: 'vibrator' },
+          { label: 'Dildos', href: '/shop/category/dildos-dongs', icon: 'dildo' },
+          { label: 'Anal Toys', href: '/shop/category/anal-toys', icon: 'anal' },
+          { label: 'Masturbators', href: '/shop/category/masturbators', icon: 'masturbator' },
+          { label: 'Cock Rings', href: '/shop/category/cock-rings', icon: 'cockRing' },
+        ],
+      },
+      {
+        label: 'For Her',
+        href: '/shop/category/sextoys-for-women',
+        children: [
+          { label: 'Vibrators', href: '/shop/category/vibrators', icon: 'vibrator' },
+          { label: 'Clitoral', href: '/shop/category/clitoral', icon: 'clitoral' },
+          { label: 'G-Spot', href: '/shop/category/g-spot', icon: 'gspot' },
+          { label: 'Bullets & Eggs', href: '/shop/category/vibrating-bullets-eggs', icon: 'bullet' },
+          { label: 'Rabbit Style', href: '/shop/category/rabbit-style-vibrators', icon: 'rabbit' },
+        ],
+      },
+      {
+        label: 'For Him',
+        href: '/shop/category/sextoys-for-men',
+        children: [
+          { label: 'Masturbators', href: '/shop/category/masturbators', icon: 'masturbator' },
+          { label: 'Cock Rings', href: '/shop/category/cock-rings', icon: 'cockRing' },
+          { label: 'Penis Pumps', href: '/shop/category/penis-pumps', icon: 'pump' },
+          { label: 'Prostate', href: '/shop/category/prostate-massagers', icon: 'prostate' },
+          { label: 'Extensions', href: '/shop/category/penis-extensions', icon: 'forMen' },
+        ],
+      },
+      {
+        label: 'Bondage & Fetish',
+        href: '/shop/category/bondage-fetish-kink',
+        children: [
+          { label: 'Restraints', href: '/shop/category/bondage-restraints', icon: 'bondage' },
+          { label: 'Cuffs', href: '/shop/category/cuffs', icon: 'cuffs' },
+          { label: 'Whips & Paddles', href: '/shop/category/whips-paddles-ticklers', icon: 'whip' },
+          { label: 'Nipple Play', href: '/shop/category/nipple-play', icon: 'nipple' },
+          { label: 'Bondage Kits', href: '/shop/category/bondage-kits-kinky-sets', icon: 'kit' },
+        ],
+      },
+      {
+        label: 'Lubricants',
+        href: '/shop/category/lubricants',
+        children: [
+          { label: 'Water-Based', href: '/shop/category/water-based', icon: 'lubricant' },
+          { label: 'Silicone-Based', href: '/shop/category/silicone-based', icon: 'lubricant' },
+          { label: 'Anal Lubes', href: '/shop/category/anal-lubes-lotions-sprays-creams', icon: 'lubricant' },
+          { label: 'Flavored', href: '/shop/category/flavored', icon: 'lubricant' },
+          { label: 'Massage', href: '/shop/category/massage-lotions-creams', icon: 'massage' },
+        ],
+      },
+      {
+        label: 'Lingerie',
+        href: '/shop/category/lingerie-clothing',
+        children: [
+          { label: 'Stockings', href: '/shop/category/stockings-pantyhose-garters', icon: 'stockings' },
+          { label: "Women's", href: '/shop/category/womens-underwear', icon: 'lingerie' },
+          { label: "Men's", href: '/shop/category/mens-underwear', icon: 'underwear' },
+          { label: 'Costumes', href: '/shop/category/sexy-costume-accessories', icon: 'lingerie' },
+        ],
+      },
+      {
+        label: 'For Couples',
+        href: '/shop/category/sextoys-for-couples',
+        children: [
+          { label: 'Couples Toys', href: '/shop/category/sextoys-for-couples', icon: 'couples' },
+          { label: 'Sensual Kits', href: '/shop/category/sensual-kits', icon: 'kit' },
+          { label: 'Games', href: '/shop/category/adult-party-games', icon: 'partyGames' },
+        ],
+      },
+      {
+        label: 'Essentials',
+        href: '/shop/category/health-beauty',
+        children: [
+          { label: 'Condoms', href: '/shop/category/condoms', icon: 'condom' },
+          { label: 'Hygiene', href: '/shop/category/hygiene-intimate-care', icon: 'hygiene' },
+          { label: 'Wellness', href: '/shop/category/health-beauty', icon: 'healthBeauty' },
+        ],
+      },
+    ],
+    featured: [
+      { label: 'New Arrivals', href: '/shop?sort=date', featured: true },
+      { label: 'Best Sellers', href: '/shop?sort=popularity', featured: true },
+      { label: 'On Sale', href: '/shop?on_sale=true', featured: true },
+    ],
+  },
+  {
+    label: 'Guides',
+    href: '/blog',
+    columns: 2,
+    children: [
+      {
+        label: 'Topics',
+        href: '/blog',
+        children: [
+          { label: 'Sex & Intimacy', href: '/blog/category/sex', description: 'Tips and techniques' },
+          { label: 'Relationships', href: '/blog/category/relationships', description: 'Connection advice' },
+          { label: 'Health & Wellness', href: '/blog/category/health', description: 'Sexual health info' },
+          { label: 'Product Guides', href: '/blog/category/guides', description: 'How-to guides' },
+        ],
+      },
+      {
+        label: 'Popular Guides',
+        href: '/blog',
+        children: [
+          { label: 'Beginner\'s Guide to Toys', href: '/blog/beginners-guide', featured: true },
+          { label: 'Lube Guide', href: '/blog/lube-guide', featured: true },
+          { label: 'Couples Play', href: '/blog/couples-guide', featured: true },
+        ],
+      },
+    ],
+  },
+  {
+    label: 'Help',
+    href: '/faq',
+    columns: 1,
+    children: [
+      {
+        label: 'Customer Service',
+        href: '/faq',
+        children: [
+          { label: 'FAQ', href: '/faq', description: 'Common questions' },
+          { label: 'Shipping & Returns', href: '/shipping-returns', description: 'Delivery info' },
+          { label: 'Contact Us', href: '/contact', description: 'Get in touch' },
+          { label: 'Order Tracking', href: '/account/orders', description: 'Track your order' },
+        ],
+      },
+    ],
+  },
+];
+
+// Simple top-level links (non-dropdown)
+export const simpleNavLinks: NavItem[] = [
+  { label: 'About', href: '/about' },
+];
+
+// Utility links for footer/mobile
+export const utilityLinks: NavItem[] = [
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Terms of Service', href: '/terms' },
+  { label: 'Shipping & Returns', href: '/shipping-returns' },
+  { label: 'Contact', href: '/contact' },
+];
+
+// Account navigation
+export const accountNavigation: NavItem[] = [
+  { label: 'Dashboard', href: '/account' },
+  { label: 'Orders', href: '/account/orders' },
+  { label: 'Addresses', href: '/account/addresses' },
+  { label: 'Account Details', href: '/account/details' },
+  { label: 'Wishlist', href: '/account/wishlist' },
+];

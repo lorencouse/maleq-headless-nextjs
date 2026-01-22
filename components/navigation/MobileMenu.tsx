@@ -5,24 +5,27 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import ThemeToggle from '@/components/theme/ThemeToggle';
-
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  children?: Category[];
-}
+import { mainNavigation, simpleNavLinks, accountNavigation } from '@/lib/config/navigation';
+import { CategoryIcons } from '@/lib/config/category-icons';
 
 interface MobileMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  categories?: Category[];
 }
 
-export default function MobileMenu({ isOpen, onClose, categories = [] }: MobileMenuProps) {
+function NavIcon({ iconKey, className = 'w-4 h-4' }: { iconKey?: string; className?: string }) {
+  if (!iconKey) return null;
+  const icon = CategoryIcons[iconKey as keyof typeof CategoryIcons];
+  if (!icon) return null;
+
+  return <span className={className}>{icon}</span>;
+}
+
+export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
+  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
 
   // Close menu on route change
   useEffect(() => {
@@ -41,9 +44,15 @@ export default function MobileMenu({ isOpen, onClose, categories = [] }: MobileM
     };
   }, [isOpen]);
 
-  const toggleCategory = (id: string) => {
-    setExpandedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+  const toggleSection = (label: string) => {
+    setExpandedSections((prev) =>
+      prev.includes(label) ? prev.filter((s) => s !== label) : [...prev, label]
+    );
+  };
+
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((prev) =>
+      prev.includes(label) ? prev.filter((g) => g !== label) : [...prev, label]
     );
   };
 
@@ -51,6 +60,8 @@ export default function MobileMenu({ isOpen, onClose, categories = [] }: MobileM
     logout();
     onClose();
   };
+
+  const isActive = (href: string) => pathname === href;
 
   if (!isOpen) return null;
 
@@ -113,34 +124,25 @@ export default function MobileMenu({ isOpen, onClose, categories = [] }: MobileM
           )}
         </div>
 
-        {/* Navigation */}
+        {/* Main Navigation */}
         <nav className="p-4">
           <ul className="space-y-1">
-            <li>
-              <Link
-                href="/shop"
-                onClick={onClose}
-                className={`block px-4 py-3 rounded-lg transition-colors ${
-                  pathname === '/shop'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                Shop
-              </Link>
-            </li>
-
-            {/* Categories */}
-            {categories.length > 0 && (
-              <li>
+            {/* Main navigation sections */}
+            {mainNavigation.map((section) => (
+              <li key={section.label}>
+                {/* Section header */}
                 <button
-                  onClick={() => toggleCategory('categories')}
-                  className="flex items-center justify-between w-full px-4 py-3 text-foreground hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => toggleSection(section.label)}
+                  className={`flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors ${
+                    isActive(section.href || '')
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
                 >
-                  <span>Categories</span>
+                  <span className="font-medium">{section.label}</span>
                   <svg
                     className={`w-5 h-5 text-muted-foreground transition-transform ${
-                      expandedCategories.includes('categories') ? 'rotate-180' : ''
+                      expandedSections.includes(section.label) ? 'rotate-180' : ''
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -149,69 +151,115 @@ export default function MobileMenu({ isOpen, onClose, categories = [] }: MobileM
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                {expandedCategories.includes('categories') && (
-                  <ul className="mt-1 ml-4 space-y-1 border-l border-border pl-4">
-                    {categories.map((category) => (
-                      <li key={category.id}>
-                        <Link
-                          href={`/shop/category/${category.slug}`}
-                          onClick={onClose}
-                          className={`block px-4 py-2 text-sm rounded-lg transition-colors ${
-                            pathname === `/shop/category/${category.slug}`
-                              ? 'bg-primary/10 text-primary font-medium'
-                              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                          }`}
+
+                {/* Section content */}
+                {expandedSections.includes(section.label) && (
+                  <div className="mt-1 ml-4 border-l border-border pl-4 space-y-1">
+                    {/* Featured links */}
+                    {section.featured && section.featured.length > 0 && (
+                      <div className="pb-2 mb-2 border-b border-border">
+                        {section.featured.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={onClose}
+                            className="block px-4 py-2 text-sm font-semibold text-primary hover:bg-muted rounded-lg transition-colors"
+                          >
+                            {item.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Groups */}
+                    {section.children.map((group) => (
+                      <div key={group.label}>
+                        <button
+                          onClick={() => toggleGroup(`${section.label}-${group.label}`)}
+                          className="flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
                         >
-                          {category.name}
-                        </Link>
-                      </li>
+                          <span>{group.label}</span>
+                          {group.children && group.children.length > 0 && (
+                            <svg
+                              className={`w-4 h-4 text-muted-foreground transition-transform ${
+                                expandedGroups.includes(`${section.label}-${group.label}`) ? 'rotate-180' : ''
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Group items */}
+                        {group.children && expandedGroups.includes(`${section.label}-${group.label}`) && (
+                          <ul className="ml-4 mt-1 space-y-0.5">
+                            {group.children.map((item) => (
+                              <li key={item.href}>
+                                <Link
+                                  href={item.href}
+                                  onClick={onClose}
+                                  className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors ${
+                                    isActive(item.href)
+                                      ? 'bg-primary/10 text-primary'
+                                      : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                  }`}
+                                >
+                                  {item.icon && (
+                                    <NavIcon iconKey={item.icon} className="w-4 h-4" />
+                                  )}
+                                  <span>{item.label}</span>
+                                </Link>
+                              </li>
+                            ))}
+                            {/* View all link */}
+                            <li>
+                              <Link
+                                href={group.href}
+                                onClick={onClose}
+                                className="block px-4 py-2 text-xs font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                              >
+                                View All &rarr;
+                              </Link>
+                            </li>
+                          </ul>
+                        )}
+                      </div>
                     ))}
-                  </ul>
+
+                    {/* Section "View All" link */}
+                    {section.href && (
+                      <Link
+                        href={section.href}
+                        onClick={onClose}
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors mt-2"
+                      >
+                        View All {section.label} &rarr;
+                      </Link>
+                    )}
+                  </div>
                 )}
               </li>
-            )}
+            ))}
 
-            <li>
-              <Link
-                href="/blog"
-                onClick={onClose}
-                className={`block px-4 py-3 rounded-lg transition-colors ${
-                  pathname === '/blog'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                Blog
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href="/about"
-                onClick={onClose}
-                className={`block px-4 py-3 rounded-lg transition-colors ${
-                  pathname === '/about'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                About
-              </Link>
-            </li>
-
-            <li>
-              <Link
-                href="/contact"
-                onClick={onClose}
-                className={`block px-4 py-3 rounded-lg transition-colors ${
-                  pathname === '/contact'
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-foreground hover:bg-muted'
-                }`}
-              >
-                Contact
-              </Link>
-            </li>
+            {/* Simple links */}
+            {simpleNavLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  onClick={onClose}
+                  className={`block px-4 py-3 rounded-lg transition-colors ${
+                    isActive(link.href)
+                      ? 'bg-primary/10 text-primary font-medium'
+                      : 'text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
 
@@ -222,37 +270,21 @@ export default function MobileMenu({ isOpen, onClose, categories = [] }: MobileM
               Account
             </p>
             <ul className="space-y-1">
-              <li>
-                <Link
-                  href="/account"
-                  onClick={onClose}
-                  className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
-                >
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/account/orders"
-                  onClick={onClose}
-                  className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
-                >
-                  Orders
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/account/addresses"
-                  onClick={onClose}
-                  className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
-                >
-                  Addresses
-                </Link>
-              </li>
+              {accountNavigation.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    onClick={onClose}
+                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
               <li>
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                  className="block w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
                 >
                   Sign Out
                 </button>

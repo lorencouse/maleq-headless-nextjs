@@ -1,0 +1,188 @@
+# Maleq Headless - Project TODO
+
+## Priority Legend
+- `[HIGH]` - Critical for launch
+- `[MED]` - Important but not blocking
+- `[LOW]` - Nice to have / polish
+
+---
+
+## Navigation & Header
+
+### Navbar Updates
+- [x] `[HIGH]` Implement dropdown menus for main navigation categories (Completed 2025-01-22)
+- [x] `[MED]` Add SVG icons next to navigation text links (Completed 2025-01-22)
+- [ ] `[MED]` Update header styling with heavy black underlines
+- [ ] `[LOW]` Add bolded black font accents for emphasis
+
+### Planned Navigation Structure
+```
+Guides
+├── Health
+├── Sex
+├── Relationships
+└── News
+
+Shop
+├── Returns
+├── Help Center
+└── Order Tracking
+
+Sex Toys
+├── Female Toys
+├── Male Toys
+├── Cock Rings
+├── Male Masturbators
+├── Anal Sex Toys
+└── Dildos
+
+Bondage
+├── Hoods & Masks
+├── Cock and Ball Gear
+├── Cuffs
+├── Gags & Muzzles
+└── Sex Swings & Machines
+
+Lube & Essentials
+├── Water-Based
+├── Silicone-Based
+├── Anal
+├── Oil-Based
+└── Condoms
+
+Account
+```
+
+---
+
+## UI & Styling
+
+- [ ] `[MED]` Update breadcrumbs styling across site
+- [ ] `[MED]` Add black as a secondary accent color throughout site
+- [ ] `[LOW]` Improve mobile menu animations and transitions
+
+---
+
+## Product Pages
+
+### Trust Badges & Info
+- [x] `[HIGH]` Add "Discreet Shipping" badge/section (Completed 2025-01-22)
+- [x] `[HIGH]` Add "Secure Checkout" trust badge (Completed 2025-01-22)
+- [x] `[MED]` Add shipping time estimate badge (Completed 2025-01-22)
+- [x] `[MED]` Add quality guarantee badge (Completed 2025-01-22)
+- [ ] `[LOW]` Add satisfaction guarantee section
+
+### Product Features
+- [ ] `[MED]` Add product add-ons functionality (batteries, accessories, etc.)
+- [ ] `[MED]` Set in-stock variations as primary variation automatically
+- [ ] `[LOW]` Add product comparison feature
+
+---
+
+## Content & SEO
+
+### Product Content
+- [ ] `[HIGH]` SEO optimize product descriptions
+- [ ] `[HIGH]` Add missing category hero images
+- [ ] `[MED]` Migrate product photos from old DB descriptions to gallery
+- [ ] `[MED]` Auto-match migrated images with new products
+
+### Reviews
+- [ ] `[HIGH]` Populate product reviews (content exists, needs import/display)
+- [x] ~~Clean up duplicate comments in database~~ (Completed 2025-01-22)
+
+### Blog & Guides
+- [ ] `[MED]` Verify all blog post images are migrated
+- [ ] `[LOW]` Add related posts section to blog articles
+
+---
+
+## WordPress & Data
+
+- [ ] `[HIGH]` Update block product URLs to use new domain paths
+- [ ] `[HIGH]` Change WP default link behavior to assign correct paths
+- [ ] `[MED]` Review and update reusable blocks with correct URLs
+
+---
+
+## Home Page
+
+- [x] `[HIGH]` Create improved home page design with better UX (Completed 2025-01-22)
+- [x] `[MED]` Add featured categories section with icons (Completed 2025-01-22)
+- [ ] `[MED]` Add testimonials/reviews section
+- [x] `[MED]` Add "Why Shop With Us" benefits section (Completed 2025-01-22)
+- [ ] `[LOW]` Add trending products carousel
+- [x] `[LOW]` Add blog posts preview section (Completed 2025-01-22)
+
+---
+
+## Account & User Features
+
+- [ ] `[LOW]` Add order tracking page with live status
+- [ ] `[LOW]` Add returns/RMA request form
+- [ ] `[LOW]` Add help center/FAQ integration in account area
+
+---
+
+## Technical & Performance
+
+- [ ] `[MED]` Audit and optimize image loading (lazy loading, WebP)
+- [ ] `[MED]` Review and improve Core Web Vitals scores
+- [ ] `[LOW]` Add service worker for offline support
+- [ ] `[LOW]` Implement product data prefetching on hover
+
+---
+
+## Pre-Launch Checklist
+
+- [ ] `[HIGH]` Complete UAT testing (see docs/UAT_TEST_PLAN.md)
+- [ ] `[HIGH]` Security audit review (see docs/SECURITY_AUDIT.md)
+- [ ] `[HIGH]` Verify all payment flows work correctly
+- [ ] `[HIGH]` Test email notifications (order confirmation, password reset)
+- [ ] `[HIGH]` Verify SSL and domain configuration
+- [ ] `[MED]` Set up monitoring and error tracking (Sentry configured)
+- [ ] `[MED]` Configure CDN for static assets
+- [ ] `[MED]` Set up database backups
+- [ ] `[LOW]` Create 404 and error page designs
+
+---
+
+## Completed Items
+
+- [x] Core e-commerce functionality (cart, checkout, Stripe)
+- [x] User authentication system (login, register, password reset)
+- [x] Product catalog with filtering and search
+- [x] Blog system with WordPress integration
+- [x] Wishlist functionality
+- [x] Reviews system (UI complete, needs content)
+- [x] Stock alert subscriptions
+- [x] Newsletter signup
+- [x] Mobile responsive design
+- [x] Light/dark theme toggle
+- [x] Google Analytics integration
+- [x] SEO sitemap and structured data
+- [x] Product import from Williams Trading
+- [x] Category icons configuration
+- [x] Delete duplicate comments script (2025-01-22)
+- [x] Navigation dropdowns with mega menu (2025-01-22)
+- [x] Mobile menu with hierarchical navigation (2025-01-22)
+- [x] Product page trust badges component (2025-01-22)
+- [x] Home page redesign with new hero, benefits, newsletter (2025-01-22)
+- [x] Featured categories on home page (2025-01-22)
+- [x] MQ branding with "Men's Questions, Answered" tagline (2025-01-22)
+- [x] Promo/Sale banner component (2025-01-22)
+- [x] Mr. Q / Miss Q guide sections (2025-01-22)
+- [x] Social media and YouTube section (2025-01-22)
+
+---
+
+## Notes
+
+- Main branch: `initial-setup`
+- Deployment guide: `docs/DEPLOYMENT_GUIDE.md`
+- API documentation: `docs/API_DOCUMENTATION.md`
+- Store specifications: `docs/STORE_SPECIFICATIONS.md`
+
+Remove 'Skip to Main Content' link from header
+Update favicon and app icons
+Change site title to MaleQ

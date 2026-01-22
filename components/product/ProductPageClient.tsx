@@ -8,6 +8,7 @@ import { showSuccess, showError } from '@/lib/utils/toast';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockAlertButton from '@/components/product/StockAlertButton';
 import SocialShare from '@/components/product/SocialShare';
+import TrustBadges from '@/components/product/TrustBadges';
 import { formatAttributeName, formatAttributeValue, formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
 
 interface VariationImage {
@@ -274,6 +275,11 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
             />
           </>
         )}
+      </div>
+
+      {/* Trust Badges */}
+      <div className="mb-8">
+        <TrustBadges variant="default" />
       </div>
 
       {/* Quick Info */}
