@@ -3,23 +3,40 @@
  */
 
 /**
- * Rewrites staging image URLs to point to production server
- * This allows us to use production images without syncing them to staging
+ * Default image base URL (production)
+ * Used when NEXT_PUBLIC_IMAGE_BASE_URL is not set
+ */
+const DEFAULT_IMAGE_BASE_URL = 'https://www.maleq.com';
+
+/**
+ * Get the configured image base URL from environment
+ */
+function getImageBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_IMAGE_BASE_URL || DEFAULT_IMAGE_BASE_URL;
+}
+
+/**
+ * Rewrites image URLs to use the configured image base URL
+ * Extracts the path from any WordPress URL and prepends the environment-specific base
  *
- * @param url - The image URL from WordPress (may be staging or production)
- * @returns The rewritten URL pointing to production
+ * @param url - The image URL from WordPress (any environment)
+ * @returns The rewritten URL using the configured image base
  */
 export function getProductionImageUrl(url: string | undefined): string {
   if (!url) return '';
 
-  // If the URL is from staging.maleq.com, rewrite it to www.maleq.org
-  // This allows us to load images from production without copying them
-  if (url.includes('staging.maleq.com')) {
-    return url.replace('staging.maleq.com', 'www.maleq.org');
-  }
+  // Extract the path from the URL
+  const path = getImagePath(url);
 
-  // If already pointing to production, return as-is
-  return url;
+  // If we couldn't extract a path, return the original URL
+  if (!path || path === url) return url;
+
+  // Only rewrite WordPress media URLs (wp-content/uploads)
+  if (!path.includes('/wp-content/')) return url;
+
+  const baseUrl = getImageBaseUrl();
+
+  return `${baseUrl}${path}`;
 }
 
 /**

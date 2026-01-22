@@ -85,7 +85,9 @@ html {
 .schema-how-to-description {
   background-color: var(--card);
   border: 1px solid var(--border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   border-radius: 0.75rem 0.75rem 0 0;
   padding: 1.5rem;
   margin-bottom: 0;
@@ -140,7 +142,9 @@ html {
   background-position: 0 100%;
   background-repeat: no-repeat;
   background-size: 0% 2px;
-  transition: background-size 0.3s ease, color 0.2s ease;
+  transition:
+    background-size 0.3s ease,
+    color 0.2s ease;
   position: relative;
 }
 
@@ -169,7 +173,7 @@ html {
    ============================================================================ */
 
 .entry-content .wp-block-image,
-.entry-content figure {
+.entry-content figure:not(.wp-block-video) {
   display: table; /* Makes container fit content width */
   margin: 2rem auto;
   max-width: 100%;
@@ -181,21 +185,25 @@ html {
   margin-left: auto;
   margin-right: auto;
   border-radius: 1.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Hover effect only for linked images */
 .entry-content a img,
 .content-area a img {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   cursor: pointer;
 }
 
 .entry-content a:hover img,
 .content-area a:hover img {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
     0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
@@ -233,7 +241,9 @@ figure.wp-block-video figcaption a,
   margin: 2rem 0;
   overflow-x: auto;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .wp-block-table table {
@@ -285,23 +295,49 @@ figure.wp-block-video figcaption a,
    PROS & CONS LISTS - Modern Card Design
    ============================================================================ */
 
+/* Container for side-by-side layout (WordPress columns or custom wrapper) */
+.wp-block-columns:has(.pros-list),
+.wp-block-columns:has(.cons-list),
+.pros-cons-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
 .pros-list,
 .cons-list {
   list-style: none;
-  padding: 1.5rem;
-  margin: 2rem 0;
+  margin: 0;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   background: var(--card);
   border: 1px solid var(--border);
+  /* Responsive sizing */
+  flex: 1 1 280px; /* Grow, shrink, min 280px */
+  max-width: 400px;
+  min-width: 320px;
 }
 
+/* Stack on mobile */
+@media (max-width: 640px) {
+  .pros-list,
+  .cons-list {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+/* Colored borders for visual distinction */
 .pros-list {
-  border-left: 4px solid var(--success);
+  border: 1px solid var(--success);
 }
 
 .cons-list {
-  border-left: 4px solid var(--destructive);
+  border: 1px solid var(--destructive);
 }
 
 .pros-list::before,
@@ -371,52 +407,64 @@ figure.wp-block-video figcaption a,
 }
 
 /* ============================================================================
-   PRODUCT RATING - Modern Badge Design
+   PRODUCT RATING - Modern Sleek Design
    ============================================================================ */
 
 .product-rating {
   position: relative;
-  background: linear-gradient(135deg, var(--success) 0%, #4ade80 100%);
-  color: white;
-  padding: 1.5rem 2rem;
-  border-radius: 1rem;
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
+  width: fit-content;
   margin: 2rem auto;
-  font-weight: 700;
-  max-width: 20rem;
-  box-shadow: 0 10px 15px -3px rgba(34, 197, 94, 0.3),
-    0 4px 6px -2px rgba(34, 197, 94, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.product-rating:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(34, 197, 94, 0.3),
-    0 10px 10px -5px rgba(34, 197, 94, 0.2);
+  padding: 1.5rem 3rem 0rem 3rem;
+  background: linear-gradient(
+    135deg,
+    rgba(34, 197, 94, 0.08) 0%,
+    rgba(74, 222, 128, 0.04) 100%
+  );
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 1rem;
+  box-shadow:
+    0 4px 6px -1px rgba(34, 197, 94, 0.15),
+    0 2px 4px -2px rgba(34, 197, 94, 0.1);
+  transition: all 0.3s ease;
 }
 
 .product-rating::before {
-  content: 'Total Score:';
-  font-size: 0.875rem;
-  font-weight: 500;
+  content: 'Total Score';
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.9;
+  letter-spacing: 0.1em;
+  color: var(--muted-foreground);
+  white-space: nowrap;
 }
 
 .product-rating::after {
   content: '/10';
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-left: -0.25rem;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--muted-foreground);
+  align-self: flex-end;
+  margin-bottom: 1rem;
+  margin-left: 0.125rem;
 }
 
-/* Rating number - make it stand out */
+/* The rating number itself */
 .product-rating {
-  font-size: 2.5rem !important;
+  flex-direction: row;
+  /* padding-top: 2.5rem; */
+  font-size: 3rem !important;
+  font-weight: 800 !important;
+  line-height: 1;
+  color: var(--success);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ============================================================================
@@ -426,7 +474,7 @@ figure.wp-block-video figcaption a,
 .review {
   position: relative;
   border-left: 4px solid var(--primary);
-  padding: 1.5rem 2rem;
+  padding: 3rem 1.5rem 1.5rem 2rem;
   margin: 2rem 0;
   font-weight: 400;
   font-style: italic;
@@ -434,20 +482,23 @@ figure.wp-block-video figcaption a,
   line-height: 1.7;
   background: var(--card);
   border-radius: 0.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   color: var(--foreground);
 }
 
 .review::before {
-  content: '"';
+  content: '" MQ Reader Review:';
   position: absolute;
   top: 1rem;
   left: 1rem;
-  font-size: 3rem;
+  font-size: 1.5rem;
   color: var(--primary);
-  opacity: 0.2;
+  opacity: 0.75;
   font-family: Georgia, serif;
   line-height: 1;
+  margin-bottom: 10px;
 }
 
 .read-more {
@@ -515,7 +566,8 @@ figure.wp-block-video figcaption a,
   color: white;
   font-weight: 700;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(255, 57, 57, 0.3),
+  box-shadow:
+    0 4px 6px -1px rgba(255, 57, 57, 0.3),
     0 2px 4px -1px rgba(255, 57, 57, 0.2);
 }
 
@@ -526,45 +578,58 @@ body {
 /* Product Specs with Modern Layout */
 .product-specs,
 .product-specs-cn,
-.product-table {
+.product-table,
+p.product-specs,
+p.product-specs-cn {
   position: relative;
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   background: var(--card);
   border: 1px solid var(--border);
   margin: 2rem 0;
-  padding: 1.5rem;
+  padding-top: 3rem; /* Space for ::before header */
+  font-size: 0.9375rem;
+  line-height: 2;
+  width: 100%;
 }
 
 .product-specs::before,
 .product-specs-cn::before,
-.product-table::before {
+.product-table::before,
+p.product-specs::before,
+p.product-specs-cn::before {
+  content: '📋 Product Specs';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   font-weight: 700;
-  font-size: 1.125rem;
+  font-size: 0.875rem;
   display: block;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  padding: 0.75rem 1.5rem;
   border-bottom: 2px solid var(--border);
+  background: var(--input);
+  border-radius: 0.75rem 0.75rem 0 0;
   color: var(--foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
-.product-specs::before,
-.product-table::before {
-  content: '📋 Product Specs';
-}
-
+p.product-specs-cn::before,
 .product-specs-cn::before {
   content: '📋 產品資訊';
 }
 
+/* When product-specs contains child p elements */
 .product-specs p,
 .product-specs-cn p {
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--border);
   font-size: 0.9375rem;
   line-height: 1.6;
+  margin-bottom: 0;
 }
 
 .product-specs p:last-child,
@@ -572,23 +637,78 @@ body {
   border-bottom: none;
 }
 
+/* ============================================================================
+   LEVEL INDICATOR - Clean Segmented Bar Display
+   ============================================================================ */
+
+.level-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  vertical-align: middle;
+}
+
+.level-segments {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.level-segment {
+  width: 1.25rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.level-segment.filled {
+  background: #3b82f6;
+  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+}
+
+.level-segment.empty {
+  background: var(--border);
+  opacity: 0.5;
+}
+
+.level-value {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  min-width: 1.5rem;
+}
+
+/* Dark mode adjustments */
+.dark .level-segment.filled {
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.4);
+}
+
+.dark .level-segment.empty {
+  background: var(--muted-foreground);
+  opacity: 0.3;
+}
+
 /* Rounded Blocks - Card Component */
 .rounded-block,
 .schema-faq-section,
 .schema-how-to-step {
   border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.06);
   background: var(--card);
   border: 1px solid var(--border);
   margin: 2rem 0;
   padding: 1.5rem;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .rounded-block:hover,
 .schema-faq-section:hover,
 .schema-how-to-step:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transform: translateY(-1px);
 }
@@ -697,6 +817,85 @@ img[data-lazyloaded].loaded {
 }
 
 /* ============================================================================
+   VIDEO BLOCKS - GIF-like Autoplay Videos
+   ============================================================================ */
+
+.wp-block-video,
+.wp-block-video figure,
+figure.wp-block-video,
+.entry-content .wp-block-video,
+.entry-content figure.wp-block-video {
+  margin: 0 auto;
+  padding: 0;
+  max-width: 100%;
+  display: block;
+}
+
+.wp-block-video video {
+  display: block;
+  margin: 0 auto;
+  border-radius: 1rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  /* Full width video */
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: cover;
+  background: transparent;
+  /* Subtle enhancement + dithering reduction */
+  /* blur(0.5px) smooths compression artifacts, contrast compensates for softness */
+  filter: blur(0.5px) contrast(1.1) saturate(1.1) brightness(1.02);
+}
+
+/* Override any inline width/height/aspect-ratio attributes */
+.wp-block-video video[width],
+.wp-block-video video[height],
+.entry-content .wp-block-video video,
+.wp-block-video video {
+  width: 100% !important;
+  height: auto !important;
+  min-height: unset !important;
+  max-height: unset !important;
+  aspect-ratio: auto !important;
+}
+
+/* Ensure figure doesn't constrain video */
+.wp-block-video.aligncenter,
+figure.wp-block-video.aligncenter {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* Loading state - show placeholder before video loads */
+.wp-block-video video:not([data-loaded]) {
+  min-height: 200px;
+}
+
+/* Smooth fade in when video is ready */
+.wp-block-video video[data-loaded] {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Remove default video controls styling for GIF-like behavior */
+.wp-block-video video::-webkit-media-controls {
+  display: none !important;
+}
+
+.wp-block-video video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+/* Dark mode adjustments */
+.dark .wp-block-video video {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================================
    ACCESSIBILITY & FOCUS STATES
    ============================================================================ */
 
@@ -787,7 +986,9 @@ img[data-lazyloaded].loaded {
 .dark .product-table {
   background: var(--card);
   border-color: var(--border);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .dark .review {
@@ -800,7 +1001,8 @@ img[data-lazyloaded].loaded {
 }
 
 .dark .entry-content img {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.3),
     0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 

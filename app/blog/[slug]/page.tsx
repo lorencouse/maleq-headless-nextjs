@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
+import VideoAutoplay from '@/components/blog/VideoAutoplay';
+import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -180,6 +182,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         className='entry-content prose prose-lg max-w-none mb-12 blog-content'
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
+
+      {/* Enable lazy loading autoplay for videos */}
+      <VideoAutoplay />
+
+      {/* Enhance star ratings in product specs */}
+      <StarRatingEnhancer />
 
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (
