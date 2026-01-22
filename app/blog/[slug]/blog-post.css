@@ -1,7 +1,48 @@
 /* ============================================================================
    MODERNIZED BLOG POST STYLES
    Following modern UI/UX principles and web standards
+   Using design tokens from globals.css for consistency
    ============================================================================ */
+
+/* ============================================================================
+   BASE CARD COMPONENT - Reusable card styles
+   ============================================================================ */
+
+.blog-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.blog-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Featured card variant with brand accent */
+.blog-card--featured {
+  border-top: 3px solid var(--primary);
+}
+
+/* Accent card with subtle brand tint */
+.blog-card--accent {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 57, 57, 0.03) 0%,
+    transparent 100%
+  );
+  border-color: rgba(255, 57, 57, 0.15);
+}
+
+.blog-card--accent:hover {
+  border-color: rgba(255, 57, 57, 0.3);
+  box-shadow: var(--shadow-primary);
+}
 
 /* ============================================================================
    BASE TYPOGRAPHY - Improved Readability
@@ -175,7 +216,7 @@ html {
 .entry-content .wp-block-image,
 .entry-content figure:not(.wp-block-video) {
   display: table; /* Makes container fit content width */
-  margin: 2rem auto;
+  margin: var(--space-8) auto;
   max-width: 100%;
 }
 
@@ -184,10 +225,8 @@ html {
   display: block;
   margin-left: auto;
   margin-right: auto;
-  border-radius: 1.5rem;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
 }
 
 /* Hover effect only for linked images */
@@ -202,9 +241,7 @@ html {
 .entry-content a:hover img,
 .content-area a:hover img {
   transform: translateY(-2px);
-  box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-lg);
 }
 
 .single .entry-img {
@@ -225,11 +262,11 @@ figure.wp-block-video figcaption a,
   color: var(--muted-foreground);
   font-size: 0.875rem;
   line-height: 1.5;
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   text-align: center;
   background: var(--input);
-  border-radius: 0 0 0.5rem 0.5rem;
-  margin-top: 0rem;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  margin-top: 0;
   font-style: italic;
 }
 
@@ -238,12 +275,10 @@ figure.wp-block-video figcaption a,
    ============================================================================ */
 
 .wp-block-table {
-  margin: 2rem 0;
+  margin: var(--space-8) 0;
   overflow-x: auto;
-  border-radius: 0.5rem;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .wp-block-table table {
@@ -251,7 +286,7 @@ figure.wp-block-video figcaption a,
   border-spacing: 0;
   border-collapse: separate;
   font-size: 0.9375rem;
-  border-radius: 0.5rem;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -301,23 +336,21 @@ figure.wp-block-video figcaption a,
 .pros-cons-wrapper {
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: var(--space-4);
   justify-content: center;
-  margin: 2rem 0;
+  margin: var(--space-8) 0;
 }
 
 .pros-list,
 .cons-list {
   list-style: none;
   margin: 0;
-  border-radius: 0.75rem;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   background: var(--card);
   border: 1px solid var(--border);
   /* Responsive sizing */
-  flex: 1 1 280px; /* Grow, shrink, min 280px */
+  flex: 1 1 280px;
   max-width: 400px;
   min-width: 320px;
 }
@@ -459,7 +492,6 @@ figure.wp-block-video figcaption a,
 /* The rating number itself */
 .product-rating {
   flex-direction: row;
-  /* padding-top: 2.5rem; */
   font-size: 3rem !important;
   font-weight: 800 !important;
   line-height: 1;
@@ -474,31 +506,33 @@ figure.wp-block-video figcaption a,
 .review {
   position: relative;
   border-left: 4px solid var(--primary);
-  padding: 3rem 1.5rem 1.5rem 2rem;
-  margin: 2rem 0;
+  padding: var(--space-12) var(--space-6) var(--space-6) var(--space-8);
+  margin: var(--space-8) 0;
   font-weight: 400;
   font-style: italic;
   font-size: 1.0625rem;
   line-height: 1.7;
   background: var(--card);
-  border-radius: 0.5rem;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   color: var(--foreground);
+}
+
+.review:hover {
+  box-shadow: var(--shadow-md);
+  border-left-color: var(--primary-hover);
 }
 
 .review::before {
   content: '" MQ Reader Review:';
   position: absolute;
-  top: 1rem;
-  left: 1rem;
-  font-size: 1.5rem;
+  top: var(--space-4);
+  left: var(--space-4);
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--primary);
-  opacity: 0.75;
   font-family: Georgia, serif;
   line-height: 1;
-  margin-bottom: 10px;
 }
 
 .read-more {
@@ -565,10 +599,8 @@ figure.wp-block-video figcaption a,
   );
   color: white;
   font-weight: 700;
-  border-radius: 0.5rem;
-  box-shadow:
-    0 4px 6px -1px rgba(255, 57, 57, 0.3),
-    0 2px 4px -1px rgba(255, 57, 57, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-primary);
 }
 
 body {
@@ -582,17 +614,28 @@ body {
 p.product-specs,
 p.product-specs-cn {
   position: relative;
-  border-radius: 0.75rem;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   background: var(--card);
   border: 1px solid var(--border);
-  margin: 2rem 0;
-  padding-top: 3rem; /* Space for ::before header */
+  border-top: 3px solid var(--primary); /* Brand accent */
+  margin: var(--space-8) 0;
+  padding-top: var(--space-12); /* Space for ::before header */
   font-size: 0.9375rem;
   line-height: 2;
   width: 100%;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.product-specs:hover,
+.product-specs-cn:hover,
+.product-table:hover,
+p.product-specs:hover,
+p.product-specs-cn:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .product-specs::before,
@@ -608,10 +651,10 @@ p.product-specs-cn::before {
   font-weight: 700;
   font-size: 0.875rem;
   display: block;
-  padding: 0.75rem 1.5rem;
+  padding: var(--space-3) var(--space-6);
   border-bottom: 2px solid var(--border);
   background: var(--input);
-  border-radius: 0.75rem 0.75rem 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   color: var(--foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -644,7 +687,7 @@ p.product-specs-cn::before,
 .level-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
   vertical-align: middle;
 }
 
@@ -656,13 +699,13 @@ p.product-specs-cn::before,
 .level-segment {
   width: 1.25rem;
   height: 0.5rem;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s ease;
 }
 
 .level-segment.filled {
-  background: #3b82f6;
-  box-shadow: 0 1px 2px rgba(59, 130, 246, 0.3);
+  background: var(--info);
+  box-shadow: var(--shadow-info);
 }
 
 .level-segment.empty {
@@ -674,43 +717,33 @@ p.product-specs-cn::before,
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--muted-foreground);
-  min-width: 1.5rem;
+  min-width: var(--space-6);
 }
 
-/* Dark mode adjustments */
-.dark .level-segment.filled {
-  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.4);
-}
-
-.dark .level-segment.empty {
-  background: var(--muted-foreground);
-  opacity: 0.3;
-}
+/* Dark mode adjustments handled by --info token */
 
 /* Rounded Blocks - Card Component */
 .rounded-block,
 .schema-faq-section,
 .schema-how-to-step {
-  border-radius: 0.75rem;
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   background: var(--card);
   border: 1px solid var(--border);
-  margin: 2rem 0;
-  padding: 1.5rem;
+  margin: var(--space-8) 0;
+  padding: var(--space-6);
   transition:
     box-shadow 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .rounded-block:hover,
 .schema-faq-section:hover,
 .schema-how-to-step:hover {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
+  border-color: var(--primary-light);
 }
 
 .rounded-block p {
@@ -753,9 +786,10 @@ p.product-specs-cn::before,
   height: 2rem;
   background: var(--primary);
   color: white;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-md);
   font-weight: 700;
   font-size: 0.875rem;
+  box-shadow: var(--shadow-primary);
 }
 
 /* ============================================================================
@@ -765,9 +799,11 @@ p.product-specs-cn::before,
 #ez-toc-container {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin: 2rem 0;
+  border-left: 4px solid var(--primary); /* Brand accent */
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+  margin: var(--space-8) 0;
 }
 
 #ez-toc-container li {
@@ -834,10 +870,8 @@ figure.wp-block-video,
 .wp-block-video video {
   display: block;
   margin: 0 auto;
-  border-radius: 1rem;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   /* Full width video */
   width: 100%;
   height: auto;
@@ -845,7 +879,6 @@ figure.wp-block-video,
   object-fit: cover;
   background: transparent;
   /* Subtle enhancement + dithering reduction */
-  /* blur(0.5px) smooths compression artifacts, contrast compensates for softness */
   filter: blur(0.5px) contrast(1.1) saturate(1.1) brightness(1.02);
 }
 
@@ -888,12 +921,7 @@ figure.wp-block-video.aligncenter {
   display: none !important;
 }
 
-/* Dark mode adjustments */
-.dark .wp-block-video video {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -1px rgba(0, 0, 0, 0.2);
-}
+/* Dark mode video - shadow handled by tokens */
 
 /* ============================================================================
    ACCESSIBILITY & FOCUS STATES
@@ -938,15 +966,14 @@ figure.wp-block-video.aligncenter {
   }
 }
 
-/* Desktop and up */
-@media (min-width: 1024px) {
-  /* Smooth hover effects only on devices that support hover */
-  .entry-content a:hover,
-  .entry-content img:hover,
+/* Desktop and up - use hover media query for devices that support it */
+@media (min-width: 1024px) and (hover: hover) {
+  /* Enhanced hover effects for desktop */
+  .blog-card:hover,
   .rounded-block:hover,
   .schema-faq-section:hover,
   .schema-how-to-step:hover {
-    /* Hover states defined above */
+    box-shadow: var(--shadow-lg);
   }
 }
 
@@ -986,9 +1013,7 @@ figure.wp-block-video.aligncenter {
 .dark .product-table {
   background: var(--card);
   border-color: var(--border);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.3),
-    0 1px 2px rgba(0, 0, 0, 0.2);
+  /* Shadow tokens auto-adjust for dark mode in globals.css */
 }
 
 .dark .review {
@@ -1000,11 +1025,8 @@ figure.wp-block-video.aligncenter {
   background-color: var(--card);
 }
 
-.dark .entry-content img {
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.3),
-    0 2px 4px -1px rgba(0, 0, 0, 0.2);
-}
+/* Note: Shadow tokens in globals.css auto-adjust for dark mode,
+   so explicit dark mode shadow overrides are no longer needed */
 
 /* ============================================================================
    PRINT STYLES - Optimized for Printing

@@ -28,6 +28,12 @@
   --secondary-foreground: #ffffff;
   --secondary-hover: #4f46e5;
 
+  /* Info colors (blue - for neutral indicators) */
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
+  --info-hover: #2563eb;
+  --info-light: #60a5fa;
+
   /* Destructive */
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
@@ -46,6 +52,33 @@
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Colored shadows for brand elements */
+  --shadow-primary: 0 4px 14px -3px rgba(255, 57, 57, 0.25);
+  --shadow-primary-lg: 0 10px 25px -5px rgba(255, 57, 57, 0.3);
+  --shadow-success: 0 4px 14px -3px rgba(16, 185, 129, 0.25);
+  --shadow-info: 0 4px 14px -3px rgba(59, 130, 246, 0.25);
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
 
   /* Toast colors */
   --toast-bg: #ffffff;
@@ -81,6 +114,12 @@
   --secondary-foreground: #ffffff;
   --secondary-hover: #6366f1;
 
+  /* Info colors for dark mode */
+  --info: #60a5fa;
+  --info-foreground: #ffffff;
+  --info-hover: #3b82f6;
+  --info-light: #93c5fd;
+
   /* Destructive for dark mode */
   --destructive: #f87171;
   --destructive-foreground: #ffffff;
@@ -92,6 +131,19 @@
   /* Warning for dark mode */
   --warning: #fbbf24;
   --warning-foreground: #ffffff;
+
+  /* Shadows for dark mode (deeper) */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+
+  /* Colored shadows for dark mode */
+  --shadow-primary: 0 4px 14px -3px rgba(255, 57, 57, 0.35);
+  --shadow-primary-lg: 0 10px 25px -5px rgba(255, 57, 57, 0.4);
+  --shadow-success: 0 4px 14px -3px rgba(52, 211, 153, 0.35);
+  --shadow-info: 0 4px 14px -3px rgba(96, 165, 250, 0.35);
 
   /* Toast colors for dark mode */
   --toast-bg: #18181b;
@@ -131,6 +183,12 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-hover: var(--secondary-hover);
 
+  /* Info (Blue) */
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-hover: var(--info-hover);
+  --color-info-light: var(--info-light);
+
   /* Semantic colors */
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
@@ -145,6 +203,8 @@
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
   --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-full: var(--radius-full);
 
   /* Fonts */
   --font-sans: var(--font-geist-sans);
