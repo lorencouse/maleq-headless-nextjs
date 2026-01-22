@@ -7,6 +7,7 @@ import {
   FILTER_PRODUCTS,
   GET_HIERARCHICAL_CATEGORIES,
   GET_ALL_BRANDS,
+  GET_BRANDS_PAGE,
   GET_ALL_MATERIALS,
   GET_GLOBAL_ATTRIBUTES,
 } from '@/lib/queries/products';
@@ -403,16 +404,28 @@ export async function getProductsByCategory(category: string, limit = 12): Promi
 
 /**
  * Get all product brands for filtering
+ * First tries simple query, falls back to paginated query if needed
  */
 export async function getBrands(): Promise<FilterOption[]> {
   try {
+    // First, try to fetch all brands with a simple query
     const { data } = await getClient().query({
       query: GET_ALL_BRANDS,
+      fetchPolicy: 'network-only',
     });
 
-    const nodes = data?.productBrands?.nodes || [];
+    let allBrands = data?.productBrands?.nodes || [];
+    console.log(`getBrands: Simple query returned ${allBrands.length} brands`);
 
-    return nodes
+    // If we got exactly 100 brands (WPGraphQL default limit), pagination might be needed
+    if (allBrands.length === 100) {
+      console.log('getBrands: Hit limit, using pagination to fetch all brands...');
+      allBrands = await fetchBrandsWithPagination();
+    }
+
+    console.log(`getBrands: Total ${allBrands.length} brands fetched`);
+
+    return allBrands
       .filter((brand: FilterOption) => brand.count && brand.count > 0)
       .map((brand: FilterOption) => ({
         id: brand.id,
@@ -425,6 +438,52 @@ export async function getBrands(): Promise<FilterOption[]> {
     console.error('Error fetching brands:', error);
     return [];
   }
+}
+
+/**
+ * Fetch brands using cursor-based pagination
+ */
+async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
+  const allBrands: FilterOption[] = [];
+  let hasNextPage = true;
+  let afterCursor: string | null = null;
+  let pageCount = 0;
+  const maxPages = 20;
+
+  while (hasNextPage && pageCount < maxPages) {
+    pageCount++;
+    console.log(`getBrands pagination: Fetching page ${pageCount}, cursor: ${afterCursor}`);
+
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: any = await getClient().query({
+        query: GET_BRANDS_PAGE,
+        variables: {
+          first: 100,
+          after: afterCursor,
+        },
+        fetchPolicy: 'network-only',
+      });
+
+      const nodes = result.data?.productBrands?.nodes || [];
+      const pageInfo = result.data?.productBrands?.pageInfo;
+
+      console.log(`getBrands page ${pageCount}: got ${nodes.length} nodes, hasNextPage: ${pageInfo?.hasNextPage}`);
+
+      allBrands.push(...nodes);
+
+      hasNextPage = pageInfo?.hasNextPage === true;
+      afterCursor = pageInfo?.endCursor || null;
+
+      if (nodes.length === 0) break;
+    } catch (queryError) {
+      console.error(`getBrands: Error fetching page ${pageCount}:`, queryError);
+      break;
+    }
+  }
+
+  console.log(`getBrands pagination: Total ${allBrands.length} brands in ${pageCount} pages`);
+  return allBrands;
 }
 
 /**

@@ -27,6 +27,7 @@ Copy these files to: `wp-content/mu-plugins/`
 |-------------|-------------|--------|
 | `wpgraphql-brands.php` | Exposes WooCommerce Brands taxonomy to GraphQL | `wordpress-snippets/register-brands-wpgraphql.php` |
 | `wpgraphql-materials.php` | Creates Product Materials taxonomy for filtering | `wordpress-snippets/register-material-wpgraphql.php` |
+| `wpgraphql-increase-limit.php` | Increases WPGraphQL max query limit from 100 to 500 | `wordpress-snippets/wpgraphql-increase-limit.php` |
 
 ### Installation Steps
 
@@ -35,6 +36,7 @@ Copy these files to: `wp-content/mu-plugins/`
    # From project root
    cp wordpress-snippets/register-brands-wpgraphql.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-brands.php
    cp wordpress-snippets/register-material-wpgraphql.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-materials.php
+   cp wordpress-snippets/wpgraphql-increase-limit.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-increase-limit.php
    ```
 
 2. **Run material migration** (one-time setup):

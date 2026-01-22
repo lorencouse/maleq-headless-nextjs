@@ -309,10 +309,10 @@ export const GET_HIERARCHICAL_CATEGORIES = gql`
   }
 `;
 
-// Get all product brands
+// Get all product brands (simple query without pagination for smaller datasets)
 export const GET_ALL_BRANDS = gql`
   query GetAllBrands {
-    productBrands(first: 100, where: { hideEmpty: true }) {
+    productBrands(first: 1000, where: { hideEmpty: true }) {
       nodes {
         id
         name
@@ -323,10 +323,28 @@ export const GET_ALL_BRANDS = gql`
   }
 `;
 
+// Get product brands with pagination (for large datasets)
+export const GET_BRANDS_PAGE = gql`
+  query GetBrandsPage($first: Int!, $after: String) {
+    productBrands(first: $first, after: $after, where: { hideEmpty: true }) {
+      nodes {
+        id
+        name
+        slug
+        count
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
 // Get all product materials
 export const GET_ALL_MATERIALS = gql`
   query GetAllMaterials {
-    productMaterials(first: 100, where: { hideEmpty: true }) {
+    productMaterials(first: 500, where: { hideEmpty: true }) {
       nodes {
         id
         name
