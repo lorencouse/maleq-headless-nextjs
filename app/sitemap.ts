@@ -79,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     });
 
     productPages = (productData?.products?.nodes || []).map((product: { slug: string }) => ({
-      url: `${SITE_URL}/shop/product/${product.slug}`,
+      url: `${SITE_URL}/product/${product.slug}`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
       priority: 0.8,
@@ -98,7 +98,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     categoryPages = (categoryData?.productCategories?.nodes || [])
       .filter((category: { count: number }) => category.count > 0)
       .map((category: { slug: string }) => ({
-        url: `${SITE_URL}/shop/category/${category.slug}`,
+        url: `${SITE_URL}/product-category/${category.slug}`,
         lastModified: new Date(),
         changeFrequency: 'weekly' as const,
         priority: 0.7,

@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     openGraph: {
       title: product.name,
       description,
-      url: `${SITE_URL}/shop/product/${slug}`,
+      url: `${SITE_URL}/product/${slug}`,
       type: 'website',
       images: product.image
         ? [
@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       images: product.image ? [product.image.url] : [],
     },
     alternates: {
-      canonical: `${SITE_URL}/shop/product/${slug}`,
+      canonical: `${SITE_URL}/product/${slug}`,
     },
     other: {
       'product:price:amount': price,
@@ -126,7 +126,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         brand={product.brands?.[0]?.name || product.categories?.[0]?.name}
         price={productPrice}
         availability={stockStatus as 'InStock' | 'OutOfStock'}
-        url={`${SITE_URL}/shop/product/${product.slug}`}
+        url={`${SITE_URL}/product/${product.slug}`}
         reviewCount={product.reviewCount || undefined}
         ratingValue={product.averageRating || undefined}
       />
@@ -137,7 +137,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {primaryCategory && (
           <>
             {' '}/{' '}
-            <a href={`/shop/category/${primaryCategory.slug}`} className="hover:text-primary transition-colors">
+            <a href={`/product-category/${primaryCategory.slug}`} className="hover:text-primary transition-colors">
               {primaryCategory.name}
             </a>
           </>

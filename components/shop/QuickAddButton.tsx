@@ -28,7 +28,7 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
   const handleClick = async () => {
     // For variable products, navigate to product page
     if (isVariable) {
-      router.push(`/shop/product/${product.slug}`);
+      router.push(`/product/${product.slug}`);
       return;
     }
 

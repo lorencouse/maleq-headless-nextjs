@@ -1,6 +1,6 @@
 # Product Link Migration Status
 
-Generated: 2026-01-23T22:38:52.162Z
+Generated: 2026-01-23T23:32:40.971Z
 
 ## Migration Summary
 
@@ -8,29 +8,34 @@ The product link migration has been executed. URLs and shortcodes that could be
 matched to existing products have been converted to the new format.
 
 ### Completed
-- URLs converted from `maleq.com/product/{slug}` to `/shop/product/{slug}`
+- URLs converted from `maleq.com/product/{slug}` to `/product/{slug}`
 - Shortcodes converted from `[add_to_cart id="..."]` to `[add_to_cart sku="..."]`
 
 ### Successfully Migrated
-- **352** URLs converted (73 unique products)
+- **536** URLs converted (119 unique products)
 - **268** shortcodes converted (107 unique products)
 
 ### Remaining Issues
-- **1828** URLs reference discontinued products
+- **1644** URLs reference discontinued products
 - **582** shortcodes reference discontinued products
 
 ---
 
 ## Successfully Migrated URLs
 
-These URLs have been converted to the new `/shop/product/{slug}` format:
+These URLs have been converted to the new `/product/{slug}` format:
 
 | Product Slug | Product Name | SKU | Posts Count |
 |--------------|--------------|-----|-------------|
 | lube-shooter | Lube Shooter | VAR-KIN-LUBE-SHOOTER | 1 |
+| anal-fantasy-deluxe-vibro-balls | Anal Fantasy Deluxe Vibro Balls | 603912332384 | 10 |
+| tenga-egg-variety-pack-standard | Tenga Egg Variety Pack Standard | 4582655748392 | 1 |
+| colt-anal-trainer-kit | Colt Anal Trainer Kit | 716770034762 | 18 |
 | swiss-navy-water-based-lube | Swiss Navy Water Based Lube | VAR-MD-SWISS-NAVY-WATER-BASED-LUBE | 38 |
 | swiss-navy-silicone-lube | Swiss Navy Silicone Lube | VAR-MD-SWISS-NAVY-SILICONE-LUBE | 64 |
+| cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel | Cloud 9 Fresh + Deluxe Anal Enema Premiu... | 685239852738 | 15 |
 | tenga-egg | Tenga Egg | VAR-TE-TENGA-EGG | 14 |
+| trojan-enz-lubricated | Trojan Enz Lubricated | VAR-ECS-TROJAN-ENZ-LUBRICATED | 8 |
 | cloud-9-pro-sensual-silicone-cock-ring-3-pack | Cloud 9 Pro Sensual Silicone Cock Ring 3... | VAR-WTC-CLOUD-9-PRO-SENSUAL-SILICONE-C | 18 |
 | pro-sensual-xl-pro-rings-black-clear-2-pack | Pro Sensual Xl Pro Rings Black & Clear 2... | 685239852240 | 13 |
 | fantasy-c-rinz-mr-big-cock-ring-ball-stretcher | Fantasy C-rinz Mr Big Cock Ring & Ball S... | 603912358384 | 9 |
@@ -43,23 +48,44 @@ These URLs have been converted to the new `/shop/product/{slug}` format:
 | king-cock-double-penetrator-flesh | King Cock Double Penetrator Flesh | 603912350036 | 4 |
 | vac-u-lock-code-black-realistic-hung | Vac U Lock Code Black Realistic Hung | 782421026486 | 3 |
 | crystal-jellies-double-dong-18in-purple | Crystal Jellies Double Dong 18in Purple | 782421932619 | 6 |
+| iroha-stick-lilac-x-black-net | Iroha Stick Lilac X Black | 4560220557518 | 2 |
+| glas-naturals-chili-pepper-dildo | Glas Naturals Chili Pepper Dildo | 4890808063514 | 2 |
+| d-bulk-sex-flesh-tranny-ter-love-doll | Sex Flesh Tranny Ter Love Doll | 848518015440 | 4 |
 | master-series-mini-face-fuck-strap-on | Master Series Mini Face Fuck Strap on | 848518013507 | 3 |
+| natural-realskin-hot-cock-rotating-thruster | Natural Realskin Hot Cock Rotating Thrus... | 782631290707 | 2 |
 | fifty-shades-greedy-girl-g-spot-rabbit | Fifty Shades Greedy Girl G Spot Rabbit | 5060108815734 | 2 |
 | inmi-shegasm-pro-thrust-thrusting-suction-rabbit | Inmi Shegasm Pro-thrust Thrusting Suctio... | 848518031761 | 4 |
 | trojan-bareskin-lubricated-24pk | Trojan Bareskin Lubricated 24pk | 022600998532 | 4 |
+| lifestyles-ribbed-pleasure-3pk | Lifestyles Ribbed Pleasure 3pk | 070907041031 | 2 |
 | trojan-naturalamb-condoms-3pk | Trojan Naturalamb Condoms 3pk | 022600002789 | 2 |
 | metal-worx-cock-cage | Metal Worx Cock Cage | 603912309409 | 1 |
 | fetish-fantasy-extreme-the-prisoner | Fetish Fantasy Extreme the Prisoner | 603912325645 | 2 |
 | master-series-mistress-femdom-pegging-kit | Master Series Mistress Femdom Pegging Ki... | 848518027184 | 2 |
 | dr-joel-graduated-prostate-probe | Dr Joel Graduated Prostate Probe | 716770075475 | 2 |
+| trinity-vibes-beaded-prostate | Trinity Vibes Beaded Prostate | 848518046000 | 2 |
+| wd-eclipse-tapered-roller-bal-probe | eclipse Tapered Roller Bal Probe | 716770091109 | 4 |
+| shanes-world-sparkle-g-vibe | Shanes World Sparkle G-vibe | VAR-SE-SHANES-WORLD-SPARKLE-G-VIBE | 2 |
+| dr-skin-cockvibe-6-beige | Dr Skin Cockvibe #6 Beige | 735380113131 | 3 |
+| anal-fantasy-ass-gasm-cockring-plug | Anal Fantasy Ass-gasm Cockring Plug | VAR-PIPEDR-ANAL-FANTASY-ASS-GASM-COCKRING | 9 |
+| loadz-dual-density-squirting-dildo-light | Loadz Dual Density Squirting Dildo Light | VAR-XR-LOADZ-DUAL-DENSITY-SQUIRTING-D | 2 |
+| tunnel-plug | Tunnel Plug | VAR-PER-TUNNEL-PLUG | 5 |
+| elbow-grease-hot-cream | Elbow Grease Hot Cream | VAR-BC-ELBOW-GREASE-HOT-CREAM | 8 |
+| triple-ripple-butt-plug-large-cd | Triple Ripple Butt Plug-large Cd | 782421113407 | 3 |
+| classic-butt-plug-large-cd | Classic Butt Plug-large Cd | 782421110208 | 3 |
+| small-cock-plug | Small Cock Plug | VAR-SIN-SMALL-COCK-PLUG | 1 |
 | au-naturel-mister-perfect | Au Naturel Mister Perfect | VAR-BL-AU-NATUREL-MISTER-PERFECT | 5 |
 | naturally-yours-ding-dong | Naturally Yours Ding Dong | VAR-BL-NATURALLY-YOURS-DING-DONG | 4 |
 | dr-skin-cockvibe | Dr Skin Cockvibe | VAR-BL-DR-SKIN-COCKVIBE | 3 |
+| naturally-yours-mambo-vibe | Naturally Yours Mambo Vibe | VAR-BL-NATURALLY-YOURS-MAMBO-VIBE | 2 |
 | fantasy-for-her-flexible-please-her | Fantasy for Her Flexible Please Her | 603912755732 | 2 |
 | special-order-sexflesh-double-up-dennis-realistic-ass | Sexflesh Double Up Dennis Realistic Ass | 848518003898 | 2 |
+| pdx-male-reach-around-stroker | Pdx Male Reach Around Stroker | 603912760415 | 2 |
 | stay-hard-cock-sleeve-kit-clear | Stay Hard Cock Sleeve Kit Clear | 853858007284 | 2 |
 | anal-fantasy-ass-gasm-cockring-anal-beads | Anal Fantasy Ass-gasm Cockring Anal Bead... | 603912765816 | 2 |
 | wicked-toy-breeze-gel-3-3-oz | Wicked Toy Breeze Gel 3.3 Oz | 713079902242 | 4 |
+| wicked-ultra-lube | Wicked Ultra Lube | VAR-WIC-WICKED-ULTRA-LUBE | 2 |
+| intimate-earth-ease-silicone-relaxing-glide | Intimate Earth Ease Silicone Relaxing Gl... | VAR-IE-INTIMATE-EARTH-EASE-SILICONE-R | 4 |
+| jo-hybridlubricant | Jo Hybridlubricant | VAR-JO-JO-HYBRIDLUBRICANT | 1 |
 | silicone-rechargeable-vibrating-plug-urethral-sounding-black | Silicone Rechargeable Vibrating Plug Ure... | 8714273533128 | 2 |
 | boneyard-piss-holer-w-interchangeable-vibrating-bullet | Boneyard Piss Holer W/ Interchangeable V... | 666987004082 | 2 |
 | urethral-sounding-plug-set-black | Urethral Sounding Plug Set Black | 8714273548030 | 2 |
@@ -68,17 +94,27 @@ These URLs have been converted to the new `/shop/product/{slug}` format:
 | master-series-dockers-silicone-urethral-sound-set | Master Series Dockers Silicone Urethral ... | 848518027368 | 2 |
 | mancage-model-16-chastity-4-5-in-cage-w-plug | Mancage Model 16 Chastity 4.5 in Cage W/... | 8714273929228 | 2 |
 | gun-oil-h2o-gel-3-3-oz-tube | Gun Oil H2o Gel 3.3 Oz Tube | 892172001202 | 2 |
+| wicked-aqua-heat | Wicked Aqua Heat | VAR-WIC-WICKED-AQUA-HEAT | 13 |
 | silicone-anal-trainer-kit | Silicone Anal Trainer Kit | 716770088659 | 1 |
 | silicone-curve-anal-kit | Silicone Curve Anal Kit | 716770100757 | 2 |
+| anal-adventures-platinum-silicone-loop-plug | Anal Adventures Platinum Silicone Loop P... | VAR-BL-ANAL-ADVENTURES-PLATINUM-SILIC | 2 |
+| colours-pleasures-trainer-kit-multicolor | Colours Pleasures Trainer Kit Multicolor | 657447102875 | 2 |
 | strap-u-triple-peg-28x-dildo-set-silicone-w-remote | Strap U Triple Peg 28x Dildo Set Silicon... | 848518045751 | 2 |
 | bang-backdoor-adventure-3pc-butt-plug-bullet-blindfold-kit-black | Bang! Backdoor Adventure 3pc Butt Plug B... | 848518039934 | 2 |
 | luxe-bling-plugs-training-kit-black-w-rainbow-gems | Luxe Bling Plugs Training Kit Black W/ R... | 819835020691 | 2 |
+| booty-sparks-red-heart-gem-anal-plug | Booty Sparks Red Heart Gem Anal Plug | VAR-XR-BOOTY-SPARKS-RED-HEART-GEM-ANA | 2 |
+| booty-sparks-red-heart-glass-anal-plug | Booty Sparks Red Heart Glass Anal Plug | VAR-XR-BOOTY-SPARKS-RED-HEART-GLASS-A | 2 |
 | intimate-earth-adventure-anal-serum-for-women | Intimate Earth Adventure Anal Serum for ... | 854397006042 | 2 |
 | butt-eze-anal-desensitizer-w-hemp-seed-oil-2-oz-bottle | Butt Eze Anal Desensitizer W/ Hemp Seed ... | 679359001039 | 2 |
 | king-cock-plus-6-5-in-thrusting-cock-w-balls | King Cock Plus 6.5 in Thrusting Cock W/ ... | 603912765786 | 2 |
 | cloud-9-comfort-cock-rings-w-flat-back-5-pk-pro-sensual-line | Cloud 9 Comfort Cock Rings W/flat Back 5... | 850013016860 | 2 |
+| stay-hard-beaded-cockrings-3pc-clear | Stay Hard Beaded Cockrings 3pc Clear | 853858007031 | 10 |
+| master-series-donut-cock-ring | Master Series Donut Cock Ring | VAR-XR-MASTER-SERIES-DONUT-COCK-RING | 5 |
 | master-series-stainless-steel-beaded-cock-ring-1-75in | Master Series Stainless Steel Beaded Coc... | 848518005656 | 2 |
+| kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup | Kevin Dean 12  Cock with Removable Vac-u... | 782421294205 | 2 |
 | shane-diesel-dildo | Shane Diesel Dildo | VAR-NSN-SHANE-DIESEL-DILDO | 2 |
+| dr-skin-4-mini-cock-vanilla | Dr Skin 4 Mini Cock Vanilla " | 819835020295 | 2 |
+| lover-s-arouser | Lover's Arouser | 716770087485 | 5 |
 | enhance-travel-pump-system | Enhance Travel Pump System | 716770058607 | 9 |
 | renegade-powerhouse-pump-black | Renegade Powerhouse Pump Black | 657447094385 | 7 |
 | precision-pump-with-erection-enhancer | Precision Pump with Erection Enhancer | 716770018137 | 5 |
@@ -86,19 +122,29 @@ These URLs have been converted to the new `/shop/product/{slug}` format:
 | performance-vs5-silicone-3-snap-cock-strap-black | Performance Vs5 Silicone 3 Snap Cock Str... | 850002870121 | 6 |
 | temptasia-reina-teal-g-spot-dildo | Temptasia Reina Teal G Spot Dildo | 819835021810 | 4 |
 | cloud-9-health-wellness-wand-kit-9-function-flexible-head-purple | Cloud 9 Health & Wellness Wand Kit 9 Fun... | 685239852950 | 2 |
+| fifty-shades-of-grey-greedy-girl-rechargeable-thrusting-g-spot-rabbit-vibrator | Fifty Shades of Grey Greedy Girl Recharg... | 5060680311167 | 1 |
+| spunk-lube-hybrid | Spunk Lube Hybrid | VAR-DEN-SPUNK-LUBE-HYBRID | 4 |
 | master-series-anal-desensitizing-lube-4-25-oz | Master Series Anal Desensitizing Lube 4.... | 848518001313 | 4 |
 | pdx-elite-tip-teazer-power-pump | Pdx Elite Tip Teazer Power Pump | 603912744828 | 2 |
 | pdx-elite-suck-n-pump-stroker | Pdx Elite Suck N Pump Stroker | 603912751505 | 2 |
 | classix-pleasure-pump-pump | Classix Pleasure Pump Pump | 603912755565 | 2 |
+| pumped-comfort-beginner | Pumped Comfort Beginner | VAR-SHT-PUMPED-COMFORT-BEGINNER | 1 |
 | swiss-navy-masturbation-cream-5-oz | Swiss Navy Masturbation Cream 5 Oz | 699439009403 | 2 |
-| elbow-grease-hot-cream | Elbow Grease Hot Cream | VAR-BC-ELBOW-GREASE-HOT-CREAM | 2 |
 | temptasia-twist-kit-set-of-3 | Temptasia Twist Kit Set of 3 | 819835022602 | 6 |
 | fetish-fantasy-big-daddy-hollow-10in-strap-on-black | Fetish Fantasy Big Daddy Hollow 10in Str... | 603912264586 | 2 |
 | erection-assistant-hollow-strap-on | Erection Assistant Hollow Strap-on | VAR-NW-ERECTION-ASSISTANT-HOLLOW-STRA | 2 |
+| cloud-9-pro-sensual-swirl-thrust-7 | Cloud 9 Pro Sensual Swirl Thrust 7 | VAR-WTC-CLOUD-9-PRO-SENSUAL-SWIRL-THRU | 2 |
+| luxe-silicone-10-beads | Luxe Silicone 10 Beads | VAR-BL-LUXE-SILICONE-10-BEADS | 2 |
+| anal-ese-collection-vibrating-anal-fantasy-kit-black | Anal-ese Collection Vibrating Anal Fanta... | 782631297508 | 2 |
+| silicone-bendie-power-probe | Silicone Bendie Power Probe | 716770088666 | 2 |
+| glas-quintessence-beaded-anal-slider | Glas Quintessence Beaded Anal Slider | 4890808063330 | 2 |
 | luxe-little-thumper-black-anal-plug | Luxe Little Thumper Black Anal Plug | 702730697764 | 2 |
+| performance-vs7-silicone-cock-ball-strap-large | Performance Vs7 Silicone Cock & Ball Str... | 850002870145 | 2 |
+| swiss-navy-anal-lube | Swiss Navy Anal Lube | VAR-MD-SWISS-NAVY-ANAL-LUBE | 2 |
 | dr-joel-prostate-locator | Dr Joel Prostate Locator | VAR-SE-DR-JOEL-PROSTATE-LOCATOR | 2 |
 | glas-8-ribbed-g-spot-glass-dildo | Glas 8 Ribbed G Spot Glass Dildo " | 4890808219232 | 4 |
 | silicone-pegging-probe | Silicone Pegging Probe | 716770090201 | 2 |
+| boy-butter-lubricanttub | Boy Butter Lubricanttub | VAR-BB-BOY-BUTTER-LUBRICANTTUB | 4 |
 | addiction-100-silicone-ben-7-black | Addiction 100% Silicone Ben 7 Black " | 677613873118 | 2 |
 
 ---
@@ -231,16 +277,13 @@ These product slugs do not exist in the current database. The products may have 
 | holiday-sexy-stocking | Post IDs: 113 |
 | anal-sex-starter-kit | Post IDs: 113, 131, 131 (+46 more) |
 | sir-richards-latex-condoms-12-package | Post IDs: 113 |
-| anal-fantasy-deluxe-vibro-balls-starter-kit | Post IDs: 113, 226, 226 (+7 more) |
 | bad-boy-red | Post IDs: 113 |
 | super-soft-1-5-cock-ring | Post IDs: 113 |
 | tenga-deep-throat-cup | Post IDs: 113 |
-| tenga-egg-variety-pack-6 | Post IDs: 113 |
 | billy-deep-blue-p-spot-massager | Post IDs: 113 |
 | pros-enema-black | Post IDs: 131, 131, 139 (+29 more) |
 | pjur-analyse-me-relaxing-anal-glide-silicone-lubricant-100ml | Post IDs: 131, 131, 131 (+52 more) |
 | xl-lubricant-launcher | Post IDs: 131, 131, 148 (+25 more) |
-| bulk-colt-anal-trainer-kit | Post IDs: 131, 162, 162 (+14 more) |
 | cloud-9-fresh-toy-cleaner-4-oz | Post IDs: 131, 210, 210 (+2 more) |
 | lube-tube-2-pack-clear | Post IDs: 131 |
 | pjur-analyse-comfort-anal-glide | Post IDs: 131, 139, 139 (+13 more) |
@@ -251,12 +294,10 @@ These product slugs do not exist in the current database. The products may have 
 | anal-eze-gel | Post IDs: 135, 135, 271 (+6 more) |
 | pjur-aqua-100ml | Post IDs: 138, 288, 288 |
 | smooth-and-slick | Post IDs: 138, 142, 142 (+35 more) |
-| cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel-2 | Post IDs: 139, 139, 139 (+12 more) |
 | anal-glide-silicone-lubricant-2oz-pump | Post IDs: 140, 281, 281 (+3 more) |
 | mood-lube-5-pack | Post IDs: 142, 142, 142 (+41 more) |
 | gun-oil-h2o-lubricant | Post IDs: 142, 142, 142 (+10 more) |
 | lifestyles-extra-strength-40pc-bowl | Post IDs: 143, 143, 143 (+7 more) |
-| trojan-enz-lubricated-36pk | Post IDs: 143, 143, 143 (+5 more) |
 | trojan-ultra-thin-12-pack-2 | Post IDs: 143, 143, 143 (+4 more) |
 | cock-ring-starter-pack | Post IDs: 144, 179, 179 (+20 more) |
 | smooth-metal-ring | Post IDs: 144, 144, 231 (+8 more) |
@@ -297,7 +338,6 @@ These product slugs do not exist in the current database. The products may have 
 | signature-cocks-isiah-maxwell-10-inches-ultraskyn-cock | Post IDs: 164, 164, 164 (+2 more) |
 | big-black-cock-twisted-curvy-11-inches-dildo | Post IDs: 164, 164, 164 (+1 more) |
 | kip-lipstick-vibrator | Post IDs: 165, 165 |
-| iroha-stick-lilac-x-black | Post IDs: 165, 165 |
 | iroha-mini-ume-anzu-palm-sized-massager | Post IDs: 165, 165 |
 | mia-2-black | Post IDs: 165, 165 |
 | vibrassage-fondle-vibrating-clitoris-massager-pink | Post IDs: 165, 165 |
@@ -307,21 +347,17 @@ These product slugs do not exist in the current database. The products may have 
 | bang-her-silicone-g-spot-finger-vibe-pink | Post IDs: 165, 165, 187 (+1 more) |
 | the-realm-lycan-lock-on-werewolf-dildo-red | Post IDs: 167, 167 |
 | the-realm-draken-lock-on-dildo-blue | Post IDs: 167, 167, 167 (+1 more) |
-| glas-glass-naturals-chili-pepper-dildo | Post IDs: 167, 167 |
 | fck-a-duck-inflatable-bath-toy | Post IDs: 167, 167 |
-| bulk-sex-flesh-tranny-terri-love-doll | Post IDs: 167, 167, 246 (+1 more) |
 | woof-xl-silicone-puppy-tail-butt-plug-black | Post IDs: 167, 167, 167 |
 | tailz-fox-tail-anal-plug-and-ears-set | Post IDs: 167, 167, 276 (+2 more) |
 | fantasy-c-ringz-extreme-cocok-blocker | Post IDs: 167, 167, 173 (+1 more) |
 | real-feel-deluxe-no-12-vibrating-dildo-waterproof-12-inch | Post IDs: 169, 169, 206 (+4 more) |
 | onslaught-xxl-vibrating-giant-dildo-thruster-beige | Post IDs: 169, 169 |
 | stryker-realistic-cock-vibrating-bx | Post IDs: 169, 169, 227 (+5 more) |
-| natural-realskin-hot-cock-rotating-thruster-vibrator | Post IDs: 169, 169 |
 | thunder-plugs-vibrating-thrusting-plug-with-remote-control | Post IDs: 169, 169 |
 | anal-fantasy-elite-vibrating-ass-thruster | Post IDs: 169, 169, 186 (+3 more) |
 | screaming-o-my-secret-remote-vibrating-xl-plug-black | Post IDs: 169, 437441, 437441 |
 | lifestyles-skyn-extra-lubricated-12pk | Post IDs: 170, 170, 265 (+1 more) |
-| lifestyle-ribbed-pleasure-3pk | Post IDs: 170, 170 |
 | trojan-pleasures-fire-ice-condoms | Post IDs: 170, 170 |
 | lifestyles-snugger-fit-3pk | Post IDs: 170, 170, 265 (+1 more) |
 | durex-xxl-lubricated-3-pack-latex-condoms | Post IDs: 170, 170, 265 (+1 more) |
@@ -356,22 +392,17 @@ These product slugs do not exist in the current database. The products may have 
 | optimale-reversible-stroke-rollerball-frost | Post IDs: 184, 184, 272 (+3 more) |
 | sue-johanson-head-honcho-masturbator | Post IDs: 184, 184, 231 (+7 more) |
 | hole-lotion-solid-net | Post IDs: 184, 184, 292 (+1 more) |
-| trinity-vibes-beaded-prostate-vibrator | Post IDs: 186, 186 |
-| eclipse-tapered-roller-ball-probe | Post IDs: 186, 186, 383052 (+1 more) |
 | under-control-prostate-vibe-with-remote | Post IDs: 186, 186 |
 | o-boy-7-speed-waterproof-prostate-stimulator | Post IDs: 186, 186, 249 |
 | cloud-9-slimline-vibe | Post IDs: 187, 187 |
 | waterproof-silver-bullet-with-ultra-tech-motor | Post IDs: 187, 187 |
-| shanes-world-sparkle-g-vibe-pink | Post IDs: 187, 187 |
 | neon-luv-touch-vibe | Post IDs: 187, 187, 187 |
-| dr-skin-cockvibe-7-beige | Post IDs: 187, 187, 187 |
 | mambo-vibe-purple | Post IDs: 187, 187, 187 |
 | naturally-yours-ding-dong-clear-vibrating | Post IDs: 187, 187, 187 |
 | purity-g-silicone-vibe-aqua-blue | Post IDs: 187, 187, 187 |
 | quick-draw-vacuum-penis-pump | Post IDs: 197, 197, 275 (+7 more) |
 | loki-wave-obsidian-black-prostate-massager-net | Post IDs: 199, 199, 199 (+9 more) |
 | ass-gasm-silicone-cockring-plug-black | Post IDs: 199, 199, 199 (+21 more) |
-| anal-fantasy-ass-gasm-cockring-plug-2 | Post IDs: 199, 199, 199 (+6 more) |
 | vibrating-anal-t-vibe | Post IDs: 199, 199, 199 (+2 more) |
 | pjur-%e5%be%8c%e5%ba%ad%e8%82%9b%e4%ba%a4%e6%bd%a4%e6%bb%91%e6%b6%b2 | Post IDs: 202 |
 | %e7%81%8c%e8%85%b8%e5%99%a8%ef%bd%9c%e7%94%b7%e7%94%a8%e5%a5%97%e7%92%b0%e7%b5%84%e5%90%88 | Post IDs: 202 |
@@ -384,27 +415,20 @@ These product slugs do not exist in the current database. The products may have 
 | great-american-challenge-dildo | Post IDs: 206, 206 |
 | jumbo-jack-man-o-war-biggest-dildo | Post IDs: 206, 206 |
 | american-bombshell-b-10-tango | Post IDs: 206, 206, 206 (+1 more) |
-| loadz-7-dual-density-squirting-dildo-light | Post IDs: 206, 206 |
 | big-as-fuk-cock-dildo-series | Post IDs: 206, 206, 206 (+2 more) |
 | dr-joel-kaplan-anal-dilator-kit | Post IDs: 207 |
-| tunnel-plug-xl | Post IDs: 207, 223, 294 (+2 more) |
 | keith-haring-egg-party-net | Post IDs: 207 |
 | universal-toy-cleaner-4-3oz | Post IDs: 207, 207, 230 (+1 more) |
 | jellie-anal-starter-6 | Post IDs: 210, 210, 223 (+7 more) |
-| elbow-grease-cream | Post IDs: 216, 268, 268 (+3 more) |
 | invade-deep-cream-8oz | Post IDs: 216, 268, 268 (+3 more) |
 | anal-fantasy-ass-gasm-cock-ring-advanced-plug-2 | Post IDs: 223, 231 |
 | round-butt-plug | Post IDs: 223, 223 |
-| triple-ripple-butt-plug | Post IDs: 223, 441582, 441582 |
-| classic-butt-plug-large | Post IDs: 223, 276, 276 |
-| small-cock-plug-flesh-2 | Post IDs: 223 |
 | anal-fantasy-p-spot-tickler-vibe-2 | Post IDs: 224, 224 |
 | x5-hard-on-brown | Post IDs: 225, 225, 225 (+1 more) |
 | real-feel-deluxe-7-flesh-9in | Post IDs: 225, 225 |
 | glas-dildo | Post IDs: 225, 225, 225 (+6 more) |
 | icicles-no-5-glass-dong-7-inches-clear | Post IDs: 225 |
 | intro-to-prostate-kit-4-piece-black | Post IDs: 225, 225, 382828 (+3 more) |
-| naturally-yours-mambo-vibe-blue | Post IDs: 225, 225 |
 | shanes-world-rush-vibe | Post IDs: 225, 225 |
 | basic-anal-beads | Post IDs: 226, 226, 226 (+2 more) |
 | mega-booty-beads-black-2 | Post IDs: 226, 226, 226 (+3 more) |
@@ -422,7 +446,6 @@ These product slugs do not exist in the current database. The products may have 
 | revel-venue-realistic-vibrating-dildo | Post IDs: 229 |
 | anal-fantasy-reach-around-vibrating | Post IDs: 229, 229, 229 (+2 more) |
 | power-stud-curvy-anal-vibrator | Post IDs: 229, 229, 229 |
-| colt-anal-trainer-kit-bulk | Post IDs: 230 |
 | cloud-9-7-inches-dong-platinum-silicone-black-3-free-bonus-cock-rings | Post IDs: 230, 230, 230 (+5 more) |
 | cloud-9-premium-starter-kit-2 | Post IDs: 230, 230, 230 |
 | anal-dildo-starter-kit-save-25 | Post IDs: 230, 230, 230 (+1 more) |
@@ -443,7 +466,6 @@ These product slugs do not exist in the current database. The products may have 
 | silicone-remote-pinpoint-pleaser-purple-plug | Post IDs: 244, 244 |
 | fantasy-for-her-g-spot-vibrator-stimulate-her | Post IDs: 244, 244 |
 | pipedream-extreme-fuck-me-silly-man | Post IDs: 246, 246 |
-| pdx-male-reach-around-stroker-beige | Post IDs: 246, 246 |
 | pipedream-extreme-fuck-me-silly-dude | Post IDs: 246, 246 |
 | pipedream-extreme-fuck-me-silly-2-mega-masturbator | Post IDs: 246, 246 |
 | mistress-mia-backdoor-butt-latte | Post IDs: 246, 246 |
@@ -468,12 +490,9 @@ These product slugs do not exist in the current database. The products may have 
 | pjur-body-glide-women | Post IDs: 254, 254, 384072 (+1 more) |
 | pjur-med-sensitive-glide-3-4oz-bottle | Post IDs: 254, 254 |
 | wicked-simply-aqua-lubricant-4-fluid-ounces | Post IDs: 254, 254 |
-| wicked-ultra-lube-2-oz | Post IDs: 254, 254 |
 | sliquid-sizzle-warming-lubricant | Post IDs: 254, 254 |
 | id-millennium-silicone-lube | Post IDs: 254, 254, 273 (+3 more) |
 | intimate-earth-elite-shiitake-silicone-glide-4oz | Post IDs: 254, 254, 281 (+1 more) |
-| intimate-earth-ease-silicone-relaxing-glide-4-oz | Post IDs: 254, 254, 440127 (+1 more) |
-| jo-hybrid-8-oz-lubricant | Post IDs: 254 |
 | sliquid-organics-silk-lubricant-8-5oz | Post IDs: 254, 254 |
 | intimate-earth-soothe-organic-anal-lubricant-8oz | Post IDs: 254, 254 |
 | master-series-cadence-extreme-10x-vibrating-urethral-sound | Post IDs: 255, 255 |
@@ -486,13 +505,8 @@ These product slugs do not exist in the current database. The products may have 
 | the-mortal-coil-sound-bulk | Post IDs: 255, 255 |
 | ouch-urethral-sounding-stainless-steel-plug-with-ring | Post IDs: 255, 255 |
 | urethral-sounding-metal-dilator-set-of-5 | Post IDs: 255, 255 |
-| wicked-aqua-heat-4-oz | Post IDs: 255, 285, 285 (+10 more) |
-| anal-adventures-platinum-silicone-loop-plug-kit-black | Post IDs: 256, 256 |
-| colours-pleasures-trainer-kit-multicolor-2 | Post IDs: 256, 256 |
 | renegade-peeker-kit-black-hollow-butt-plugs | Post IDs: 256, 256 |
-| booty-sparks-red-heart-gem-anal-plug-set | Post IDs: 256, 256 |
 | rear-assets-rose-gold-pink-gem-trainer-kit | Post IDs: 256, 256 |
-| booty-sparks-red-heart-glass-anal-plug-set | Post IDs: 256, 256 |
 | glas-pleasure-droplets-anal-training-kit | Post IDs: 256, 256 |
 | adam-eve-4-pc-anal-plug-kit | Post IDs: 256, 256 |
 | ultimate-anal-kit-black | Post IDs: 256, 256 |
@@ -503,14 +517,11 @@ These product slugs do not exist in the current database. The products may have 
 | lifestyles-kyng-40pc-bowl | Post IDs: 258, 258 |
 | trine-steel-cock-ring-collection-3-piece | Post IDs: 259, 259 |
 | stay-hard-cockring-combo-set | Post IDs: 259, 259, 269 (+5 more) |
-| stay-hard-beaded-cock-ring-clear | Post IDs: 259, 259, 269 (+7 more) |
 | optimale-cock-ring | Post IDs: 259, 259, 269 (+8 more) |
 | perfect-fit-armour-push-standard-black | Post IDs: 259, 259 |
-| master-series-donut-cock-ring-2-0-inch | Post IDs: 259, 259, 440651 (+2 more) |
 | vedo-drive-vibrating-ring-gun-metal-grey | Post IDs: 259, 259, 259 (+9 more) |
 | night-rider-vibrating-cock-ring-black | Post IDs: 259, 259 |
 | prince-yahshua-ultraskyn-10-5-inches-cock-brown-dildo | Post IDs: 260, 260 |
-| kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup-2 | Post IDs: 260, 260 |
 | jason-luv-10-inches-ultraskyn-cock-brown-dildo | Post IDs: 260, 260 |
 | signature-cocks-xander-corvus-ultraskin-9-inches-dildo | Post IDs: 260, 260 |
 | john-holmes-realistic-dildo | Post IDs: 260, 260 |
@@ -519,13 +530,11 @@ These product slugs do not exist in the current database. The products may have 
 | signature-cocks-pierce-paris-9-inches-ultraskyn-dildo | Post IDs: 260, 260 |
 | sean-michaels-dong-10in | Post IDs: 260, 260 |
 | glas-7-inches-realistic-curved-glass-g-spot-dildo-clear | Post IDs: 263, 263, 287 (+1 more) |
-| dr-skin-4-mini-cock | Post IDs: 263, 263 |
 | dr-skin-basic-dildo-with-suction-cup | Post IDs: 263, 263 |
 | x5-plus-5-inches-cock-suction-cup-beige-dildo | Post IDs: 263, 263 |
 | x5-plus-7-inches-vibrating-cock-beige-dildo | Post IDs: 263, 263 |
 | blush-naturally-yours-6-crystalline-dildo-diamond | Post IDs: 263, 263 |
 | first-time-g-spot-tulip-vibe-6-75-inches-purple | Post IDs: 263, 263 |
-| lovers-arouser | Post IDs: 269, 270, 270 (+2 more) |
 | wireless-rockin-rabbit-vibrating-ring-purple | Post IDs: 270, 270, 270 (+1 more) |
 | reusable-vibrating-c-ring-blue | Post IDs: 270 |
 | passion-extra-strength-anal-desensitizing-spray | Post IDs: 271, 271, 271 (+2 more) |
@@ -541,12 +550,10 @@ These product slugs do not exist in the current database. The products may have 
 | magic-wand-rechargeable-massager | Post IDs: 279, 279 |
 | ro-80mm-bullet-vibe-silver | Post IDs: 279, 279 |
 | omg-bullets-play-rechargeable-bullet-vibrator-pink | Post IDs: 279, 279 |
-| fifty-shades-of-grey-greedy-girl-thrusting-g-spot-rabbit-vibrator | Post IDs: 279 |
 | advanced-waterproof-jack-rabbit-blue | Post IDs: 279, 279, 279 |
 | mood-silicone-lube-4-oz-bu | Post IDs: 281, 281 |
 | sliquid-silver-silicone-lube | Post IDs: 281, 281 |
 | k-y-jelly-lubricant | Post IDs: 284, 284, 288 (+2 more) |
-| spunk-lube-hybrid-8-oz | Post IDs: 284, 284, 442131 (+1 more) |
 | id-sensations-lubricant | Post IDs: 285, 285, 285 (+9 more) |
 | gun-oil-stroke-29-masturbation-cream-6-ounces-jar | Post IDs: 285, 292, 292 |
 | trigger-penis-pump-with-built-in-pressure-gauge | Post IDs: 286, 286, 286 (+4 more) |
@@ -562,7 +569,6 @@ These product slugs do not exist in the current database. The products may have 
 | adam-eve-rechargeable-penis-pump | Post IDs: 289, 289, 437070 (+1 more) |
 | automatic-digital-penis-pump-with-easy-grip | Post IDs: 289, 289 |
 | performance-vx101-male-enhancement-penis-pump | Post IDs: 289 |
-| pumped-comfort-beginner-pump | Post IDs: 289 |
 | classix-power-pump-vibrating | Post IDs: 289, 289 |
 | elbow-grease-cool-cream | Post IDs: 292, 292 |
 | elbow-grease-h2o-gel-hot | Post IDs: 292, 292 |
@@ -577,16 +583,11 @@ These product slugs do not exist in the current database. The products may have 
 | master-series-pumper-hollow-inflatable-strap-on | Post IDs: 437068, 437068 |
 | man-squeeze-brysen-ultraskyn-ass-stroker | Post IDs: 437118, 437118 |
 | satisfyer-anal-beads-set-of-2 | Post IDs: 437156, 437156 |
-| cloud-9-pro-sensual-swirl-thrust-7-vibrating-dildo | Post IDs: 437189, 437189 |
 | power-pounder-vibrating-and-thrusting-silicone-dildo | Post IDs: 437244 |
 | anal-fantasy-first-time-fun-beads | Post IDs: 437264, 437264 |
-| luxe-silicone-10-beads-pink | Post IDs: 437265, 437265 |
 | colt-power-drill-balls-anal-beads | Post IDs: 437267, 437267 |
-| anal-ese-collection-vibrating-anal-fantasy-kit | Post IDs: 437272, 437272 |
 | bang-vibrating-silicone-anal-beads-with-remote | Post IDs: 437274, 437274 |
-| silicone-bendie-power-probe-anal-beads | Post IDs: 437275, 437275 |
 | glas-5-inches-curved-glass-beaded-dildo-clear | Post IDs: 437276, 437276 |
-| glas-quintessence-beaded-glass-anal-slider | Post IDs: 437277, 437277 |
 | gender-x-gold-digger-set-rose-gold-black | Post IDs: 437279, 437279 |
 | master-series-beaded-anal-hook | Post IDs: 437280, 437280 |
 | loverboy-top-gun-tommy-chocolate-dildo | Post IDs: 437337, 437337 |
@@ -595,15 +596,12 @@ These product slugs do not exist in the current database. The products may have 
 | vac-u-lock-dual-density-ultraskyn-strap-on-set-brown | Post IDs: 437632, 437632 |
 | fetish-fantasy-extreme-7in-silicone-hollow-strap-on-bla | Post IDs: 437876, 437876 |
 | size-matters-sm-hollow-silicone-dildo-strap-on-flesh | Post IDs: 437877, 437877 |
-| performance-vs7-silicone-cock-ball-strap | Post IDs: 438069, 438069 |
 | ooowee-anal-relaxer-lubricant-with-hemp-seed-oil-1-7oz | Post IDs: 440128, 440128 |
 | happy-hiney-anal-comfort-cream-2oz | Post IDs: 440130, 440130, 440130 |
-| swiss-navy-anal-lube-4-oz | Post IDs: 440153, 440153 |
 | mojo-water-based-anal-relaxing-glide-4oz | Post IDs: 440304, 440304 |
 | performance-wearable-vibro-plug-indigo-blue | Post IDs: 441581, 441581 |
 | anal-lube-natural-3-4-oz-airless-pump-bu | Post IDs: 442132, 442132 |
 | jo-cool-h2o-anal-4-oz-lubricant | Post IDs: 442133, 442133 |
-| boy-butter-lubricant-16-oz-tub | Post IDs: 442134, 442134, 442134 (+1 more) |
 | ergo-super-flexi-iii-plum-pro-sensual-line | Post IDs: 442171, 442171 |
 
 ---
@@ -614,342 +612,6 @@ Check the box next to the correct replacement product, then run:
 ```bash
 bun scripts/apply-fuzzy-matches.ts
 ```
-
-### `cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel-2`
-
-- [x] `cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel-2` → `cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel` — Cloud 9 Fresh + Deluxe Anal Enema Premium Shower K... (99%)
-- [ ] `cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel-2` → `premium` — Premium (73%)
-- [ ] `cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel-2` → `cloud-9` — Cloud 9 (73%)
-- [ ] **REMOVE** - Delete all links to `cloud-9-fresh-deluxe-anal-enema-premium-shower-kit-w-2-tips-6-ft-stainless-steel-2`
-
-### `kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup-2`
-
-- [x] `kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup-2` → `kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup` — Kevin Dean 12  Cock with Removable Vac-u-lock Suct... (99%)
-- [ ] `kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup-2` → `signature-cocks-ricky-johnson-10in-w-removeable-vac-u-lock-suction-cup` — Signature Cocks Ricky Johnson 10in W/ Removeable V... (54%)
-- [ ] `kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup-2` → `signature-cocks-anton-hardon-in-w-removeable-vac-u-lock-suction-cup-chocolate` — Signature Cocks Anton Hardon in W/ Removeable Vac-... (54%)
-- [ ] **REMOVE** - Delete all links to `kevin-dean-12-cock-with-removable-vac-u-lock-suction-cup-2`
-
-### `lifestyle-ribbed-pleasure-3pk`
-
-- [x] `lifestyle-ribbed-pleasure-3pk` → `lifestyles-ribbed-pleasure-3pk` — Lifestyles Ribbed Pleasure 3pk (99%)
-- [ ] `lifestyle-ribbed-pleasure-3pk` → `lifestyles-styles-sensitive-3pk` — Lifestyles Styles Sensitive 3pk (53%)
-- [ ] `lifestyle-ribbed-pleasure-3pk` → `lifestyles-ultra-sens-3pk` — Lifestyles Ultra-sens-3pk (52%)
-- [ ] **REMOVE** - Delete all links to `lifestyle-ribbed-pleasure-3pk`
-
-### `colours-pleasures-trainer-kit-multicolor-2`
-
-- [x] `colours-pleasures-trainer-kit-multicolor-2` → `colours-pleasures-trainer-kit-multicolor` — Colours Pleasures Trainer Kit Multicolor (99%)
-- [ ] `colours-pleasures-trainer-kit-multicolor-2` → `colours-pleasures` — Colours Pleasures (82%)
-- [ ] `colours-pleasures-trainer-kit-multicolor-2` → `firefly-trainer-kit-multicolor` — Firefly Trainer Kit Multicolor (60%)
-- [ ] **REMOVE** - Delete all links to `colours-pleasures-trainer-kit-multicolor-2`
-
-### `anal-fantasy-ass-gasm-cockring-plug-2`
-
-- [x] `anal-fantasy-ass-gasm-cockring-plug-2` → `anal-fantasy-ass-gasm-cockring-plug` — Anal Fantasy Ass-gasm Cockring Plug (98%)
-- [ ] `anal-fantasy-ass-gasm-cockring-plug-2` → `anal-fantasy-ass-gasm-cock-ring-beginners-plug` — Anal Fantasy Ass Gasm Cock Ring Beginners Plug (89%)
-- [ ] `anal-fantasy-ass-gasm-cockring-plug-2` → `anal-fantasy-ass-gasm-cockring-anal-beads` — Anal Fantasy Ass-gasm Cockring Anal Beads (81%)
-- [ ] **REMOVE** - Delete all links to `anal-fantasy-ass-gasm-cockring-plug-2`
-
-### `dr-skin-cockvibe-7-beige`
-
-- [x] `dr-skin-cockvibe-7-beige` → `dr-skin-cockvibe-6-beige` — Dr Skin Cockvibe #6 Beige (98%)
-- [ ] `dr-skin-cockvibe-7-beige` → `dr-skin-cockvibe-8-beige` — Dr Skin Cockvibe #8 Beige (98%)
-- [ ] `dr-skin-cockvibe-7-beige` → `dr-skin-cockvibe-9-beige` — Dr Skin Cockvibe #9 Beige (98%)
-- [ ] **REMOVE** - Delete all links to `dr-skin-cockvibe-7-beige`
-
-### `loadz-7-dual-density-squirting-dildo-light`
-
-- [x] `loadz-7-dual-density-squirting-dildo-light` → `loadz-dual-density-squirting-dildo-light` — Loadz Dual Density Squirting Dildo Light (98%)
-- [ ] `loadz-7-dual-density-squirting-dildo-light` → `cloud-9-dual-density-dildo-w-balls-light` — Cloud 9 Dual Density Dildo W/ Balls Light (65%)
-- [ ] `loadz-7-dual-density-squirting-dildo-light` → `neo-dual-density-dildo-neon` — Neo Dual Density Dildo Neon (49%)
-- [ ] **REMOVE** - Delete all links to `loadz-7-dual-density-squirting-dildo-light`
-
-### `lovers-arouser`
-
-- [x] `lovers-arouser` → `lover-s-arouser` — Lover's Arouser (97%)
-- [ ] `lovers-arouser` → `amethyst-arouser` — Amethyst Arouser (53%)
-- [ ] `lovers-arouser` → `love-affair` — Love Affair (50%)
-- [ ] **REMOVE** - Delete all links to `lovers-arouser`
-
-### `booty-sparks-red-heart-glass-anal-plug-set`
-
-- [x] `booty-sparks-red-heart-glass-anal-plug-set` → `booty-sparks-red-heart-glass-anal-plug` — Booty Sparks Red Heart Glass Anal Plug (97%)
-- [ ] `booty-sparks-red-heart-glass-anal-plug-set` → `booty-sparks-red-heart-gem-anal-plug` — Booty Sparks Red Heart Gem Anal Plug (77%)
-- [ ] `booty-sparks-red-heart-glass-anal-plug-set` → `glas` — Glas (73%)
-- [ ] **REMOVE** - Delete all links to `booty-sparks-red-heart-glass-anal-plug-set`
-
-### `booty-sparks-red-heart-gem-anal-plug-set`
-
-- [x] `booty-sparks-red-heart-gem-anal-plug-set` → `booty-sparks-red-heart-gem-anal-plug` — Booty Sparks Red Heart Gem Anal Plug (97%)
-- [ ] `booty-sparks-red-heart-gem-anal-plug-set` → `booty-sparks-emerald-gem-anal-plug-set` — Booty Sparks Emerald Gem Anal Plug Set (78%)
-- [ ] `booty-sparks-red-heart-gem-anal-plug-set` → `booty-sparks-red-heart-glass-anal-plug` — Booty Sparks Red Heart Glass Anal Plug (77%)
-- [ ] **REMOVE** - Delete all links to `booty-sparks-red-heart-gem-anal-plug-set`
-
-### `intimate-earth-ease-silicone-relaxing-glide-4-oz`
-
-- [x] `intimate-earth-ease-silicone-relaxing-glide-4-oz` → `intimate-earth-ease-silicone-relaxing-glide` — Intimate Earth Ease Silicone Relaxing Glide (97%)
-- [ ] `intimate-earth-ease-silicone-relaxing-glide-4-oz` → `intimate-earth` — Intimate Earth (79%)
-- [ ] `intimate-earth-ease-silicone-relaxing-glide-4-oz` → `intimate` — Intimate (75%)
-- [ ] **REMOVE** - Delete all links to `intimate-earth-ease-silicone-relaxing-glide-4-oz`
-
-### `classic-butt-plug-large`
-
-- [x] `classic-butt-plug-large` → `classic-butt-plug-large-cd` — Classic Butt Plug-large Cd (97%)
-- [ ] `classic-butt-plug-large` → `classic-butt-plug-black-cd` — Classic Butt Plug-black Cd (76%)
-- [ ] `classic-butt-plug-large` → `butt` — Butt (75%)
-- [ ] **REMOVE** - Delete all links to `classic-butt-plug-large`
-
-### `anal-ese-collection-vibrating-anal-fantasy-kit`
-
-- [x] `anal-ese-collection-vibrating-anal-fantasy-kit` → `anal-ese-collection-vibrating-anal-fantasy-kit-black` — Anal-ese Collection Vibrating Anal Fantasy Kit Bla... (97%)
-- [ ] `anal-ese-collection-vibrating-anal-fantasy-kit` → `anal` — Anal (73%)
-- [ ] `anal-ese-collection-vibrating-anal-fantasy-kit` → `anal-ese-collection-vibrating-alpha-plug-1` — Anal-ese Collection Vibrating Alpha Plug #1 (72%)
-- [ ] **REMOVE** - Delete all links to `anal-ese-collection-vibrating-anal-fantasy-kit`
-
-### `performance-vs7-silicone-cock-ball-strap`
-
-- [x] `performance-vs7-silicone-cock-ball-strap` → `performance-vs7-silicone-cock-ball-strap-large` — Performance Vs7 Silicone Cock & Ball Strap Large (96%)
-- [ ] `performance-vs7-silicone-cock-ball-strap` → `performance-vs6-silicone-cock-ball-strap-black` — Performance Vs6 Silicone Cock & Ball Strap Black (84%)
-- [ ] `performance-vs7-silicone-cock-ball-strap` → `performance-vs8-silicone-double-cock-ball-strap-black` — Performance Vs8 Silicone Double Cock & Ball Strap ... (79%)
-- [ ] **REMOVE** - Delete all links to `performance-vs7-silicone-cock-ball-strap`
-
-### `iroha-stick-lilac-x-black`
-
-- [x] `iroha-stick-lilac-x-black` → `iroha-stick-lilac-x-black-net` — Iroha Stick Lilac X Black (96%)
-- [ ] `iroha-stick-lilac-x-black` → `lipstick-vibe-black` — Lipstick Vibe Black (51%)
-- [ ] `iroha-stick-lilac-x-black` → `split-boy-shortaqua-black-w-lilac-dream-pheromone` — Split Boy Shortaqua/black W/ Lilac Dream Pheromone (42%)
-- [ ] **REMOVE** - Delete all links to `iroha-stick-lilac-x-black`
-
-### `bulk-sex-flesh-tranny-terri-love-doll`
-
-- [x] `bulk-sex-flesh-tranny-terri-love-doll` → `d-bulk-sex-flesh-tranny-ter-love-doll` — Sex Flesh Tranny Ter Love Doll (96%)
-- [ ] `bulk-sex-flesh-tranny-terri-love-doll` → `bulk-sex-flesh-fat-jack-enlarger-sleeve` — Sex Flesh Fat Jack Enlarger Sleeve (43%)
-- [ ] `bulk-sex-flesh-tranny-terri-love-doll` → `personal-trainer-love-doll` — Personal Trainer Love Doll (38%)
-- [ ] **REMOVE** - Delete all links to `bulk-sex-flesh-tranny-terri-love-doll`
-
-### `eclipse-tapered-roller-ball-probe`
-
-- [x] `eclipse-tapered-roller-ball-probe` → `wd-eclipse-tapered-roller-bal-probe` — eclipse Tapered Roller Bal Probe (95%)
-- [ ] `eclipse-tapered-roller-ball-probe` → `eclipse-roller-ball-probe` — Eclipse Roller Ball Probe (78%)
-- [ ] `eclipse-tapered-roller-ball-probe` → `cloud-9-pro-sensual-roller-ball-g-turbo` — Cloud 9 Pro Sensual Roller Ball G Turbo (53%)
-- [ ] **REMOVE** - Delete all links to `eclipse-tapered-roller-ball-probe`
-
-### `shanes-world-sparkle-g-vibe-pink`
-
-- [x] `shanes-world-sparkle-g-vibe-pink` → `shanes-world-sparkle-g-vibe` — Shanes World Sparkle G-vibe (95%)
-- [ ] `shanes-world-sparkle-g-vibe-pink` → `shanes-world-sparkle-bullet-pink` — Shanes World Sparkle Bullet Pink (81%)
-- [ ] `shanes-world-sparkle-g-vibe-pink` → `wd-shanes-world-sparkle-bull-blue` — Shanes World Sparkle Bull Blue (60%)
-- [ ] **REMOVE** - Delete all links to `shanes-world-sparkle-g-vibe-pink`
-
-### `naturally-yours-mambo-vibe-blue`
-
-- [x] `naturally-yours-mambo-vibe-blue` → `naturally-yours-mambo-vibe` — Naturally Yours Mambo Vibe (95%)
-- [ ] `naturally-yours-mambo-vibe-blue` → `naturally-yours-fantasy-vibe` — Naturally Yours Fantasy Vibe (62%)
-- [ ] `naturally-yours-mambo-vibe-blue` → `x5-mambo-vibe-natural` — X5 Mambo Vibe Natural (49%)
-- [ ] **REMOVE** - Delete all links to `naturally-yours-mambo-vibe-blue`
-
-### `pdx-male-reach-around-stroker-beige`
-
-- [x] `pdx-male-reach-around-stroker-beige` → `pdx-male-reach-around-stroker` — Pdx Male Reach Around Stroker (95%)
-- [ ] `pdx-male-reach-around-stroker-beige` → `pdx-male-pump-and-dump-stroker-clear` — Pdx Male Pump and Dump Stroker Clear (52%)
-- [ ] `pdx-male-reach-around-stroker-beige` → `pdx-elite-ez-grip-stroker-clear` — Pdx Elite Ez Grip Stroker Clear (39%)
-- [ ] **REMOVE** - Delete all links to `pdx-male-reach-around-stroker-beige`
-
-### `natural-realskin-hot-cock-rotating-thruster-vibrator`
-
-- [x] `natural-realskin-hot-cock-rotating-thruster-vibrator` → `natural-realskin-hot-cock-rotating-thruster` — Natural Realskin Hot Cock Rotating Thruster (95%)
-- [ ] `natural-realskin-hot-cock-rotating-thruster-vibrator` → `natural-realskin-hot-cock` — Natural Realskin Hot Cock (84%)
-- [ ] `natural-realskin-hot-cock-rotating-thruster-vibrator` → `natural-realskin-hot-cock-jackhammer` — Natural Realskin Hot Cock Jackhammer (57%)
-- [ ] **REMOVE** - Delete all links to `natural-realskin-hot-cock-rotating-thruster-vibrator`
-
-### `pumped-comfort-beginner-pump`
-
-- [x] `pumped-comfort-beginner-pump` → `pumped-comfort-beginner` — Pumped Comfort Beginner (95%)
-- [ ] `pumped-comfort-beginner-pump` → `glow-comfort-beginner-pump-glow-in-the-dark` — Glow Comfort Beginner Pump Glow in the Dark (79%)
-- [ ] `pumped-comfort-beginner-pump` → `pumped-deluxe-beginner` — Pumped Deluxe Beginner (68%)
-- [ ] **REMOVE** - Delete all links to `pumped-comfort-beginner-pump`
-
-### `luxe-silicone-10-beads-pink`
-
-- [x] `luxe-silicone-10-beads-pink` → `luxe-silicone-10-beads` — Luxe Silicone 10 Beads (94%)
-- [ ] `luxe-silicone-10-beads-pink` → `silicone` — Silicone (79%)
-- [ ] `luxe-silicone-10-beads-pink` → `d-adam-eve-silicone-booty-bliss-vibrating-beads-pink` — adam & Eve Silicone Booty Bliss Vibrating Beads Pi... (62%)
-- [ ] **REMOVE** - Delete all links to `luxe-silicone-10-beads-pink`
-
-### `anal-adventures-platinum-silicone-loop-plug-kit-black`
-
-- [x] `anal-adventures-platinum-silicone-loop-plug-kit-black` → `anal-adventures-platinum-silicone-loop-plug` — Anal Adventures Platinum Silicone Loop Plug (94%)
-- [ ] `anal-adventures-platinum-silicone-loop-plug-kit-black` → `anal-adventures-platinum-silicone-rocket-plug-black` — Anal Adventures Platinum Silicone Rocket Plug Blac... (78%)
-- [ ] `anal-adventures-platinum-silicone-loop-plug-kit-black` → `anal-adventures-platinum-silicone-saddle-plug-black` — Anal Adventures Platinum Silicone Saddle Plug Blac... (77%)
-- [ ] **REMOVE** - Delete all links to `anal-adventures-platinum-silicone-loop-plug-kit-black`
-
-### `glas-quintessence-beaded-glass-anal-slider`
-
-- [x] `glas-quintessence-beaded-glass-anal-slider` → `glas-quintessence-beaded-anal-slider` — Glas Quintessence Beaded Anal Slider (94%)
-- [ ] `glas-quintessence-beaded-glass-anal-slider` → `glas` — Glas (73%)
-- [ ] `glas-quintessence-beaded-glass-anal-slider` → `anal` — Anal (73%)
-- [ ] **REMOVE** - Delete all links to `glas-quintessence-beaded-glass-anal-slider`
-
-### `bulk-colt-anal-trainer-kit`
-
-- [x] `bulk-colt-anal-trainer-kit` → `colt-anal-trainer-kit` — Colt Anal Trainer Kit (94%)
-- [ ] `bulk-colt-anal-trainer-kit` → `colt` — Colt (75%)
-- [ ] `bulk-colt-anal-trainer-kit` → `anal` — Anal (75%)
-- [ ] **REMOVE** - Delete all links to `bulk-colt-anal-trainer-kit`
-
-### `trojan-enz-lubricated-36pk`
-
-- [x] `trojan-enz-lubricated-36pk` → `trojan-enz-lubricated` — Trojan Enz Lubricated (94%)
-- [ ] `trojan-enz-lubricated-36pk` → `trojan-enz` — Trojan Enz (82%)
-- [ ] `trojan-enz-lubricated-36pk` → `trojan` — Trojan (77%)
-- [ ] **REMOVE** - Delete all links to `trojan-enz-lubricated-36pk`
-
-### `colt-anal-trainer-kit-bulk`
-
-- [x] `colt-anal-trainer-kit-bulk` → `colt-anal-trainer-kit` — Colt Anal Trainer Kit (94%)
-- [ ] `colt-anal-trainer-kit-bulk` → `colt` — Colt (75%)
-- [ ] `colt-anal-trainer-kit-bulk` → `anal` — Anal (75%)
-- [ ] **REMOVE** - Delete all links to `colt-anal-trainer-kit-bulk`
-
-### `swiss-navy-anal-lube-4-oz`
-
-- [x] `swiss-navy-anal-lube-4-oz` → `swiss-navy-anal-lube` — Swiss Navy Anal Lube (94%)
-- [ ] `swiss-navy-anal-lube-4-oz` → `swiss` — Swiss (76%)
-- [ ] `swiss-navy-anal-lube-4-oz` → `lube` — Lube (75%)
-- [ ] **REMOVE** - Delete all links to `swiss-navy-anal-lube-4-oz`
-
-### `glas-glass-naturals-chili-pepper-dildo`
-
-- [x] `glas-glass-naturals-chili-pepper-dildo` → `glas-naturals-chili-pepper-dildo` — Glas Naturals Chili Pepper Dildo (94%)
-- [ ] `glas-glass-naturals-chili-pepper-dildo` → `glas` — Glas (73%)
-- [ ] `glas-glass-naturals-chili-pepper-dildo` → `glas-7-realistic-curved-glass-g-spot-dildo` — Glas 7 Realistic Curved Glass G Spot Dildo " (47%)
-- [ ] **REMOVE** - Delete all links to `glas-glass-naturals-chili-pepper-dildo`
-
-### `tunnel-plug-xl`
-
-- [x] `tunnel-plug-xl` → `tunnel-plug` — Tunnel Plug (94%)
-- [ ] `tunnel-plug-xl` → `d-tunnel-plug` — D-tunnel Plug (86%)
-- [ ] `tunnel-plug-xl` → `d-tunnel-plug-x-large-ice-clear` — D-tunnel Plug X Large Ice Clear (78%)
-- [ ] **REMOVE** - Delete all links to `tunnel-plug-xl`
-
-### `stay-hard-beaded-cock-ring-clear`
-
-- [x] `stay-hard-beaded-cock-ring-clear` → `stay-hard-beaded-cockrings-3pc-clear` — Stay Hard Beaded Cockrings 3pc Clear (93%)
-- [ ] `stay-hard-beaded-cock-ring-clear` → `stay-hard-beaded-cockrings-3pc-black` — Stay Hard Beaded Cockrings 3pc Black (80%)
-- [ ] `stay-hard-beaded-cock-ring-clear` → `stay-hard-beaded-cockrings-3pc-set-blue` — Stay Hard Beaded Cockrings 3pc Set Blue (78%)
-- [ ] **REMOVE** - Delete all links to `stay-hard-beaded-cock-ring-clear`
-
-### `fifty-shades-of-grey-greedy-girl-thrusting-g-spot-rabbit-vibrator`
-
-- [x] `fifty-shades-of-grey-greedy-girl-thrusting-g-spot-rabbit-vibrator` → `fifty-shades-of-grey-greedy-girl-rechargeable-thrusting-g-spot-rabbit-vibrator` — Fifty Shades of Grey Greedy Girl Rechargeable Thru... (93%)
-- [ ] `fifty-shades-of-grey-greedy-girl-thrusting-g-spot-rabbit-vibrator` → `g-spot-rabbit-vibrator` — G-spot Rabbit Vibrator (80%)
-- [ ] `fifty-shades-of-grey-greedy-girl-thrusting-g-spot-rabbit-vibrator` → `fifty-shades-of-grey-greedy-girl-rechargeable-slimline-rabbit-vibrator` — Fifty Shades of Grey Greedy Girl Rechargeable Slim... (76%)
-- [ ] **REMOVE** - Delete all links to `fifty-shades-of-grey-greedy-girl-thrusting-g-spot-rabbit-vibrator`
-
-### `wicked-ultra-lube-2-oz`
-
-- [x] `wicked-ultra-lube-2-oz` → `wicked-ultra-lube` — Wicked Ultra Lube (93%)
-- [ ] `wicked-ultra-lube-2-oz` → `wicked` — Wicked (78%)
-- [ ] `wicked-ultra-lube-2-oz` → `lube` — Lube (75%)
-- [ ] **REMOVE** - Delete all links to `wicked-ultra-lube-2-oz`
-
-### `spunk-lube-hybrid-8-oz`
-
-- [x] `spunk-lube-hybrid-8-oz` → `spunk-lube-hybrid` — Spunk Lube Hybrid (93%)
-- [ ] `spunk-lube-hybrid-8-oz` → `lube` — Lube (75%)
-- [ ] `spunk-lube-hybrid-8-oz` → `str8cam-lube-hybrid-8-oz` — Str8cam Lube Hybrid 8 Oz (70%)
-- [ ] **REMOVE** - Delete all links to `spunk-lube-hybrid-8-oz`
-
-### `trinity-vibes-beaded-prostate-vibrator`
-
-- [x] `trinity-vibes-beaded-prostate-vibrator` → `trinity-vibes-beaded-prostate` — Trinity Vibes Beaded Prostate (93%)
-- [ ] `trinity-vibes-beaded-prostate-vibrator` → `loe-rogue-beaded-rabbit-vibrator` — Loe Rogue Beaded Rabbit Vibrator (45%)
-- [ ] `trinity-vibes-beaded-prostate-vibrator` → `petites-lil-marley-beaded-g-spot-vibrator` — Petites Lil Marley Beaded G Spot Vibrator (44%)
-- [ ] **REMOVE** - Delete all links to `trinity-vibes-beaded-prostate-vibrator`
-
-### `master-series-donut-cock-ring-2-0-inch`
-
-- [x] `master-series-donut-cock-ring-2-0-inch` → `master-series-donut-cock-ring` — Master Series Donut Cock Ring (93%)
-- [ ] `master-series-donut-cock-ring-2-0-inch` → `master-series` — Master Series (80%)
-- [ ] `master-series-donut-cock-ring-2-0-inch` → `master-series-trine-steel-cock-ring-set` — Master Series Trine Steel Cock Ring Set (63%)
-- [ ] **REMOVE** - Delete all links to `master-series-donut-cock-ring-2-0-inch`
-
-### `wicked-aqua-heat-4-oz`
-
-- [x] `wicked-aqua-heat-4-oz` → `wicked-aqua-heat` — Wicked Aqua Heat (93%)
-- [ ] `wicked-aqua-heat-4-oz` → `wicked-aqua` — Wicked Aqua (86%)
-- [ ] `wicked-aqua-heat-4-oz` → `wicked` — Wicked (79%)
-- [ ] **REMOVE** - Delete all links to `wicked-aqua-heat-4-oz`
-
-### `elbow-grease-cream`
-
-- [x] `elbow-grease-cream` → `elbow-grease-hot-cream` — Elbow Grease Hot Cream (93%)
-- [ ] `elbow-grease-cream` → `elbow-grease-light-cream` — Elbow Grease Light Cream (90%)
-- [ ] `elbow-grease-cream` → `elbow-grease` — Elbow Grease (90%)
-- [ ] **REMOVE** - Delete all links to `elbow-grease-cream`
-
-### `anal-fantasy-deluxe-vibro-balls-starter-kit`
-
-- [x] `anal-fantasy-deluxe-vibro-balls-starter-kit` → `anal-fantasy-deluxe-vibro-balls` — Anal Fantasy Deluxe Vibro Balls (92%)
-- [ ] `anal-fantasy-deluxe-vibro-balls-starter-kit` → `anal` — Anal (73%)
-- [ ] `anal-fantasy-deluxe-vibro-balls-starter-kit` → `anal-fantasy-beginners-bead-kit` — Anal Fantasy Beginners Bead Kit (46%)
-- [ ] **REMOVE** - Delete all links to `anal-fantasy-deluxe-vibro-balls-starter-kit`
-
-### `triple-ripple-butt-plug`
-
-- [x] `triple-ripple-butt-plug` → `triple-ripple-butt-plug-large-cd` — Triple Ripple Butt Plug-large Cd (92%)
-- [ ] `triple-ripple-butt-plug` → `butt` — Butt (75%)
-- [ ] `triple-ripple-butt-plug` → `glas-triple-play-beaded-butt-plug` — Glas Triple Play Beaded Butt Plug (67%)
-- [ ] **REMOVE** - Delete all links to `triple-ripple-butt-plug`
-
-### `silicone-bendie-power-probe-anal-beads`
-
-- [x] `silicone-bendie-power-probe-anal-beads` → `silicone-bendie-power-probe` — Silicone Bendie Power Probe (91%)
-- [ ] `silicone-bendie-power-probe-anal-beads` → `silicone` — Silicone (76%)
-- [ ] `silicone-bendie-power-probe-anal-beads` → `anal` — Anal (73%)
-- [ ] **REMOVE** - Delete all links to `silicone-bendie-power-probe-anal-beads`
-
-### `dr-skin-4-mini-cock`
-
-- [x] `dr-skin-4-mini-cock` → `dr-skin-4-mini-cock-vanilla` — Dr Skin 4 Mini Cock Vanilla " (91%)
-- [ ] `dr-skin-4-mini-cock` → `dr-skin-5-mini-cock-vanilla` — Dr Skin 5 Mini Cock Vanilla " (87%)
-- [ ] `dr-skin-4-mini-cock` → `mini` — Mini (76%)
-- [ ] **REMOVE** - Delete all links to `dr-skin-4-mini-cock`
-
-### `boy-butter-lubricant-16-oz-tub`
-
-- [x] `boy-butter-lubricant-16-oz-tub` → `boy-butter-lubricanttub` — Boy Butter Lubricanttub (91%)
-- [ ] `boy-butter-lubricant-16-oz-tub` → `boy-butter-lubricant-9-oz-squeeze-tube` — Boy Butter Lubricant 9 Oz Squeeze Tube (88%)
-- [ ] `boy-butter-lubricant-16-oz-tub` → `boy-butter` — Boy Butter (80%)
-- [ ] **REMOVE** - Delete all links to `boy-butter-lubricant-16-oz-tub`
-
-### `cloud-9-pro-sensual-swirl-thrust-7-vibrating-dildo`
-
-- [x] `cloud-9-pro-sensual-swirl-thrust-7-vibrating-dildo` → `cloud-9-pro-sensual-swirl-thrust-7` — Cloud 9 Pro Sensual Swirl Thrust 7 (90%)
-- [ ] `cloud-9-pro-sensual-swirl-thrust-7-vibrating-dildo` → `cloud-9` — Cloud 9 (74%)
-- [ ] `cloud-9-pro-sensual-swirl-thrust-7-vibrating-dildo` → `cloud-9-pro-sensual-roller-ball-g-turbo` — Cloud 9 Pro Sensual Roller Ball G Turbo (48%)
-- [ ] **REMOVE** - Delete all links to `cloud-9-pro-sensual-swirl-thrust-7-vibrating-dildo`
-
-### `jo-hybrid-8-oz-lubricant`
-
-- [x] `jo-hybrid-8-oz-lubricant` → `jo-hybridlubricant` — Jo Hybridlubricant (90%)
-- [ ] `jo-hybrid-8-oz-lubricant` → `jo-hybrid-lubricant-w-coconut` — Jo Hybrid Lubricant W/coconut (79%)
-- [ ] `jo-hybrid-8-oz-lubricant` → `luvmor-naturals-hybrid-personal-lubricant-4oz` — Luvmor Naturals Hybrid Personal Lubricant 4oz (78%)
-- [ ] **REMOVE** - Delete all links to `jo-hybrid-8-oz-lubricant`
-
-### `tenga-egg-variety-pack-6`
-
-- [x] `tenga-egg-variety-pack-6` → `tenga-egg-variety-pack-standard` — Tenga Egg Variety Pack Standard (90%)
-- [ ] `tenga-egg-variety-pack-6` → `tenga-egg` — Tenga Egg (81%)
-- [ ] `tenga-egg-variety-pack-6` → `tenga` — Tenga (76%)
-- [ ] **REMOVE** - Delete all links to `tenga-egg-variety-pack-6`
-
-### `small-cock-plug-flesh-2`
-
-- [x] `small-cock-plug-flesh-2` → `small-cock-plug` — Small Cock Plug (90%)
-- [ ] `small-cock-plug-flesh-2` → `ignite-medium-cock-plug-flesh` — Ignite Medium Cock Plug Flesh (66%)
-- [ ] `small-cock-plug-flesh-2` → `real-cocks-sliders-flesh` — Real Cocks Sliders Flesh (50%)
-- [ ] **REMOVE** - Delete all links to `small-cock-plug-flesh-2`
 
 ### `real-feel-deluxe-7-flesh-9in`
 

@@ -152,7 +152,7 @@ export default function WishlistPage() {
                 className="bg-card border border-border rounded-lg overflow-hidden group"
               >
                 {/* Product Image */}
-                <Link href={`/shop/product/${item.slug}`}>
+                <Link href={`/product/${item.slug}`}>
                   <div className="relative aspect-square bg-muted">
                     {item.image ? (
                       <Image
@@ -179,7 +179,7 @@ export default function WishlistPage() {
 
                 {/* Product Info */}
                 <div className="p-4">
-                  <Link href={`/shop/product/${item.slug}`}>
+                  <Link href={`/product/${item.slug}`}>
                     <h3 className="font-medium text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
                       {item.name}
                     </h3>

@@ -241,7 +241,7 @@ async function main() {
     AND post_status = 'publish'
     AND (
       post_content LIKE '%maleq%/product/%'
-      OR post_content LIKE '%/shop/product/%'
+      OR post_content LIKE '%/product/%'
       OR post_content LIKE '%add_to_cart%'
     )
   `) as [any[], any];
@@ -273,7 +273,7 @@ async function main() {
           postType: post.post_type,
           oldUrl,
           oldSlug: slug,
-          newUrl: `/shop/product/${product.slug}`,
+          newUrl: `/product/${product.slug}`,
           productName: product.name,
           sku: product.sku || 'N/A',
         });
@@ -304,10 +304,10 @@ async function main() {
           oldProductId: productId,
           newShortcode: product.sku
             ? `[add_to_cart sku="${product.sku}"]`
-            : `<a href="/shop/product/${product.slug}">View Product</a>`,
+            : `<a href="/product/${product.slug}">View Product</a>`,
           productName: product.name,
           sku: product.sku || 'N/A',
-          newUrl: `/shop/product/${product.slug}`,
+          newUrl: `/product/${product.slug}`,
         });
       } else {
         unmatchedShortcodes.push({
@@ -320,7 +320,7 @@ async function main() {
       }
     }
 
-    // Extract migrated URLs (new format: /shop/product/{slug})
+    // Extract migrated URLs (new format: /product/{slug})
     const newUrlRegex = /\/shop\/product\/([^"'\s<>\/\?#]+)/gi;
     while ((match = newUrlRegex.exec(content)) !== null) {
       const slug = match[1].toLowerCase();
@@ -368,7 +368,7 @@ async function main() {
   lines.push('matched to existing products have been converted to the new format.');
   lines.push('');
   lines.push('### Completed');
-  lines.push('- URLs converted from `maleq.com/product/{slug}` to `/shop/product/{slug}`');
+  lines.push('- URLs converted from `maleq.com/product/{slug}` to `/product/{slug}`');
   lines.push('- Shortcodes converted from `[add_to_cart id="..."]` to `[add_to_cart sku="..."]`');
   lines.push('');
   // Deduplicate migrated URLs by slug
@@ -418,7 +418,7 @@ async function main() {
     lines.push('');
     lines.push('## Successfully Migrated URLs');
     lines.push('');
-    lines.push('These URLs have been converted to the new `/shop/product/{slug}` format:');
+    lines.push('These URLs have been converted to the new `/product/{slug}` format:');
     lines.push('');
     lines.push('| Product Slug | Product Name | SKU | Posts Count |');
     lines.push('|--------------|--------------|-----|-------------|');

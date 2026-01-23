@@ -141,7 +141,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               products={saleProducts}
               title={`${category.name} on Sale`}
               subtitle="Limited time deals in this category"
-              viewAllHref={`/shop/category/${slug}?onSale=true`}
+              viewAllHref={`/product-category/${slug}?onSale=true`}
               viewAllText="View All Deals"
             />
           )}

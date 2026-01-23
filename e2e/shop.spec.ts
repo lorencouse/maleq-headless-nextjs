@@ -10,12 +10,12 @@ test.describe('Shop Page', () => {
     await page.goto('/shop');
 
     // Wait for products to load
-    await page.waitForSelector('[data-testid="product-card"], .product-card, a[href*="/shop/product/"]', {
+    await page.waitForSelector('[data-testid="product-card"], .product-card, a[href*="/product/"]', {
       timeout: 10000,
     });
 
     // Check that at least one product is visible
-    const products = await page.locator('a[href*="/shop/product/"]').count();
+    const products = await page.locator('a[href*="/product/"]').count();
     expect(products).toBeGreaterThan(0);
   });
 
@@ -41,7 +41,7 @@ test.describe('Product Page', () => {
     await page.goto('/shop');
 
     // Wait for products to load and click first product
-    const productLink = page.locator('a[href*="/shop/product/"]').first();
+    const productLink = page.locator('a[href*="/product/"]').first();
     await productLink.waitFor({ timeout: 10000 });
     await productLink.click();
 
@@ -53,7 +53,7 @@ test.describe('Product Page', () => {
     await page.goto('/shop');
 
     // Get first product link
-    const productLink = page.locator('a[href*="/shop/product/"]').first();
+    const productLink = page.locator('a[href*="/product/"]').first();
     await productLink.waitFor({ timeout: 10000 });
     await productLink.click();
 

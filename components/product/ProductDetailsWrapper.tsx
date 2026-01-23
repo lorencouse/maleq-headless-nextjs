@@ -50,7 +50,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
           {/* Category */}
           {product.categories && product.categories.length > 0 && (
             <a
-              href={`/shop/category/${product.categories[0].slug}`}
+              href={`/product-category/${product.categories[0].slug}`}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {product.categories[0].name}

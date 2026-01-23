@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
 
       case 'product':
         if (slug) {
-          revalidatePath(`/shop/product/${slug}`);
+          revalidatePath(`/product/${slug}`);
           revalidatePath('/shop');
         } else {
           revalidatePath('/shop');

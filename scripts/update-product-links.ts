@@ -25,7 +25,7 @@ const LOCAL_DB_USER = 'root';
 const LOCAL_DB_PASS = 'root';
 
 // New site URL format
-const NEW_PRODUCT_URL_BASE = '/shop/product/';
+const NEW_PRODUCT_URL_BASE = '/product/';
 
 // URL patterns to match (maleq domains and local)
 const OLD_URL_PATTERNS = [

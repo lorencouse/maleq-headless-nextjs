@@ -106,7 +106,7 @@ export default function RecentlyViewed({
             className="flex-shrink-0 w-[200px] snap-start"
           >
             <div className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow group">
-              <Link href={`/shop/product/${item.slug}`}>
+              <Link href={`/product/${item.slug}`}>
                 <div className="relative aspect-square bg-muted">
                   {item.image ? (
                     <Image
@@ -138,7 +138,7 @@ export default function RecentlyViewed({
               </Link>
 
               <div className="p-3">
-                <Link href={`/shop/product/${item.slug}`}>
+                <Link href={`/product/${item.slug}`}>
                   <h3 className="font-medium text-sm text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
                     {item.name}
                   </h3>

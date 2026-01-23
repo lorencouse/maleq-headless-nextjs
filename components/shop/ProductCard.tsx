@@ -29,7 +29,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group">
-      <Link href={`/shop/product/${product.slug}`}>
+      <Link href={`/product/${product.slug}`}>
         {/* Product Image */}
         <div className="relative h-64 w-full overflow-hidden bg-input">
           {product.image ? (

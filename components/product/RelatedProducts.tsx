@@ -104,7 +104,7 @@ export default function RelatedProducts({
             className="flex-shrink-0 w-[260px] snap-start"
           >
             <div className="bg-card border border-border rounded-lg overflow-hidden hover:shadow-lg transition-shadow group">
-              <Link href={`/shop/product/${product.slug}`}>
+              <Link href={`/product/${product.slug}`}>
                 <div className="relative aspect-square bg-muted">
                   {product.image ? (
                     <Image
@@ -148,7 +148,7 @@ export default function RelatedProducts({
               </Link>
 
               <div className="p-4">
-                <Link href={`/shop/product/${product.slug}`}>
+                <Link href={`/product/${product.slug}`}>
                   <h3 className="font-medium text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
                     {product.name}
                   </h3>

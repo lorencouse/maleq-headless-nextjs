@@ -307,7 +307,7 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
       {/* Social Share */}
       <div className="border-t border-border pt-6 mt-6">
         <SocialShare
-          url={`/shop/product/${product.slug}`}
+          url={`/product/${product.slug}`}
           title={product.name}
           description={product.shortDescription?.replace(/<[^>]*>/g, '') || ''}
           image={product.image?.url}

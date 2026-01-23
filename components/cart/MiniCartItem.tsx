@@ -53,7 +53,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
       {/* Product Details */}
       <div className="flex-1 min-w-0">
         <Link
-          href={`/shop/product/${item.slug}`}
+          href={`/product/${item.slug}`}
           className="text-sm font-medium text-foreground hover:text-primary line-clamp-2 transition-colors"
         >
           {item.name}

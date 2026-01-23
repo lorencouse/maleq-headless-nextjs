@@ -52,7 +52,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
     if (isVariable) {
       // Redirect to product page for variable products
       onClose();
-      window.location.href = `/shop/product/${product.slug}`;
+      window.location.href = `/product/${product.slug}`;
       return;
     }
 
@@ -178,7 +178,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Category */}
               {product.categories?.[0] && (
                 <a
-                  href={`/shop/category/${product.categories[0].slug}`}
+                  href={`/product-category/${product.categories[0].slug}`}
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
                   onClick={onClose}
                 >
@@ -280,7 +280,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Variable Product - Go to Product Page */}
               {isVariable && (
                 <Link
-                  href={`/shop/product/${product.slug}`}
+                  href={`/product/${product.slug}`}
                   onClick={onClose}
                   className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center mb-4"
                 >
@@ -291,7 +291,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Out of Stock - View Details */}
               {displayStockStatus === 'OUT_OF_STOCK' && (
                 <Link
-                  href={`/shop/product/${product.slug}`}
+                  href={`/product/${product.slug}`}
                   onClick={onClose}
                   className="w-full py-3 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-semibold text-center mb-4"
                 >
@@ -316,7 +316,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
               {/* View Full Details Link */}
               <Link
-                href={`/shop/product/${product.slug}`}
+                href={`/product/${product.slug}`}
                 onClick={onClose}
                 className="mt-4 text-center text-sm text-primary hover:underline"
               >

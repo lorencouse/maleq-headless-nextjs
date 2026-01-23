@@ -44,7 +44,7 @@ export default function SubcategoryGrid({
           return (
             <Link
               key={subcategory.id}
-              href={`/shop/category/${subcategory.slug}`}
+              href={`/product-category/${subcategory.slug}`}
               className='group relative overflow-hidden rounded-xl aspect-[3/2] sm:aspect-[4/3]'
             >
               {/* Background Image or Gradient */}

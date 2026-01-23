@@ -50,7 +50,7 @@ export default function CartItem({ item }: CartItemProps) {
     <div className="flex flex-col sm:flex-row gap-4 py-6 border-b border-border">
       {/* Product Image */}
       <Link
-        href={`/shop/product/${item.slug}`}
+        href={`/product/${item.slug}`}
         className="relative w-full sm:w-32 h-32 flex-shrink-0 bg-muted rounded-lg overflow-hidden group"
       >
         {item.image ? (
@@ -73,7 +73,7 @@ export default function CartItem({ item }: CartItemProps) {
         <div className="flex-1">
           {/* Name */}
           <Link
-            href={`/shop/product/${item.slug}`}
+            href={`/product/${item.slug}`}
             className="text-lg font-medium text-foreground hover:text-primary transition-colors"
           >
             {item.name}

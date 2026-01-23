@@ -124,11 +124,11 @@ export default function SearchAutocomplete({ onClose, autoFocus = false }: Searc
         e.preventDefault();
         if (selectedIndex >= 0) {
           if (selectedIndex < products.length) {
-            router.push(`/shop/product/${products[selectedIndex].slug}`);
+            router.push(`/product/${products[selectedIndex].slug}`);
             onClose?.();
           } else {
             const categoryIndex = selectedIndex - products.length;
-            router.push(`/shop/category/${categories[categoryIndex].slug}`);
+            router.push(`/product-category/${categories[categoryIndex].slug}`);
             onClose?.();
           }
         } else {
@@ -236,7 +236,7 @@ export default function SearchAutocomplete({ onClose, autoFocus = false }: Searc
                     {categories.map((category, index) => (
                       <Link
                         key={category.id}
-                        href={`/shop/category/${category.slug}`}
+                        href={`/product-category/${category.slug}`}
                         onClick={() => {
                           setIsOpen(false);
                           onClose?.();
@@ -267,7 +267,7 @@ export default function SearchAutocomplete({ onClose, autoFocus = false }: Searc
                     {products.map((product, index) => (
                       <Link
                         key={product.id}
-                        href={`/shop/product/${product.slug}`}
+                        href={`/product/${product.slug}`}
                         onClick={() => {
                           setIsOpen(false);
                           onClose?.();

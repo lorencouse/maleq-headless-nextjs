@@ -23,7 +23,7 @@ const LOCAL_DB_NAME = 'local';
 const LOCAL_DB_USER = 'root';
 const LOCAL_DB_PASS = 'root';
 
-const NEW_PRODUCT_URL_BASE = '/shop/product/';
+const NEW_PRODUCT_URL_BASE = '/product/';
 
 interface Product {
   id: number;

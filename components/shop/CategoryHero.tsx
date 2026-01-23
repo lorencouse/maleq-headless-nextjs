@@ -62,7 +62,7 @@ export default function CategoryHero({ category, productCount, parentCategory }:
                   <>
                     <span>/</span>
                     <Link
-                      href={`/shop/category/${parentCategory.slug}`}
+                      href={`/product-category/${parentCategory.slug}`}
                       className="hover:text-white transition-colors"
                     >
                       {parentCategory.name}

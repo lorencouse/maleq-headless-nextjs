@@ -100,7 +100,7 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
       value: categoryNodes.map((cat: any) => cat.name).join(', '),
       links: categoryNodes.map((cat: any) => ({
         text: cat.name,
-        url: `/shop/category/${cat.slug}`,
+        url: `/product-category/${cat.slug}`,
       })),
     });
   }

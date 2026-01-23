@@ -195,7 +195,7 @@ async function main() {
           // REPLACE: Update to new product URL
           const product = productBySlug.get(match.newSlug.toLowerCase());
           if (product) {
-            const newUrl = `/shop/product/${product.slug}`;
+            const newUrl = `/product/${product.slug}`;
             for (const oldUrl of matches) {
               content = content.split(oldUrl).join(newUrl);
               totalReplacements++;
