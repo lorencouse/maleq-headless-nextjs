@@ -16,12 +16,6 @@ export default function BlogCard({ post }: BlogCardProps) {
     });
   };
 
-  if (post.featuredImage?.node) {
-    console.log('Image URL:', post.featuredImage.node.sourceUrl);
-  } else {
-    console.log('No featured image available for this post.');
-  }
-
   return (
     <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all'>
       {/* Featured Image */}

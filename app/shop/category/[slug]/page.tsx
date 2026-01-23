@@ -20,16 +20,16 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   if (!category) {
     return {
-      title: 'Category Not Found | Maleq',
+      title: 'Category Not Found | Male Q',
     };
   }
 
   return {
-    title: `${category.name} | Shop | Maleq`,
-    description: `Browse our ${category.name} collection at Maleq. ${category.count} products available with fast, discreet shipping.`,
+    title: `${category.name} | Shop | Male Q`,
+    description: `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`,
     openGraph: {
-      title: `${category.name} | Maleq`,
-      description: `Shop ${category.name} at Maleq. Fast, discreet shipping available.`,
+      title: `${category.name} | Male Q`,
+      description: `Shop ${category.name} at Male Q. Fast, discreet shipping available.`,
       type: 'website',
     },
   };

@@ -3,8 +3,8 @@ import Link from 'next/link';
 import LoginForm from '@/components/auth/LoginForm';
 
 export const metadata: Metadata = {
-  title: 'Sign In | Maleq',
-  description: 'Sign in to your Maleq account to view orders, manage addresses, and more.',
+  title: 'Sign In | Male Q',
+  description: 'Sign in to your Male Q account to view orders, manage addresses, and more.',
 };
 
 export default function LoginPage() {
@@ -13,7 +13,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="text-3xl font-bold text-primary">Maleq</span>
+            <span className="text-3xl font-bold text-primary">Male Q</span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-foreground">Welcome back</h1>
           <p className="mt-2 text-muted-foreground">

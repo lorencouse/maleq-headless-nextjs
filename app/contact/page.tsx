@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import ContactForm from '@/components/contact/ContactForm';
 
 export const metadata: Metadata = {
-  title: 'Contact Us | Maleq',
-  description: 'Get in touch with Maleq. We\'re here to help with any questions about your orders, products, or general inquiries.',
+  title: 'Contact Us | Male Q',
+  description: 'Get in touch with Male Q. We\'re here to help with any questions about your orders, products, or general inquiries.',
 };
 
 export default function ContactPage() {

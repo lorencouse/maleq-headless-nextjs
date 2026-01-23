@@ -16,8 +16,8 @@ const inter = Inter({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
-const SITE_NAME = 'Maleq';
-const SITE_DESCRIPTION = 'Discover premium adult products at Maleq. Shop our curated collection with fast, discreet shipping and excellent customer service.';
+const SITE_NAME = 'Male Q';
+const SITE_DESCRIPTION = 'Discover premium adult products at Male Q. Shop our curated collection with fast, discreet shipping and excellent customer service.';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -88,11 +88,11 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: '/favicon/favicon.ico',
+    shortcut: '/favicon/favicon-16x16.png',
+    apple: '/favicon/apple-touch-icon.png',
   },
-  manifest: '/site.webmanifest',
+  manifest: '/favicon/site.webmanifest',
 };
 
 export default function RootLayout({
@@ -120,9 +120,6 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <CartProvider>
-            <a href="#main-content" className="skip-link">
-              Skip to main content
-            </a>
             <Toaster />
             <Header />
             <main id="main-content" className="flex-grow" role="main">

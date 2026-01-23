@@ -7,7 +7,7 @@ import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 
 export const metadata: Metadata = {
-  title: 'Shop | Maleq',
+  title: 'Shop | Male Q',
   description: 'Browse our collection of quality products. Filter by category, price, and more.',
 };
 

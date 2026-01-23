@@ -49,7 +49,7 @@ export default function Header() {
             <Link href='/' className='text-2xl font-bold'>
               <Image
                 src='/images/MQ-logo.png'
-                alt='Maleq'
+                alt='Male Q'
                 width={60}
                 height={60}
                 className='inline-block'

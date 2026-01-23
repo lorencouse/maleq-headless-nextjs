@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Maleq',
-  description: 'Learn how Maleq collects, uses, and protects your personal information.',
+  title: 'Privacy Policy | Male Q',
+  description: 'Learn how Male Q collects, uses, and protects your personal information.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -21,7 +21,7 @@ export default function PrivacyPolicyPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-4">Introduction</h2>
               <p className="text-muted-foreground">
-                Maleq (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases through our online store.
+                Male Q (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and make purchases through our online store.
               </p>
               <p className="text-muted-foreground mt-4">
                 Please read this policy carefully. If you do not agree with the terms of this privacy policy, please do not access the site.

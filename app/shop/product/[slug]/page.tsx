@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     ? product.shortDescription.replace(/<[^>]*>/g, '').slice(0, 160)
     : product.description
     ? product.description.replace(/<[^>]*>/g, '').slice(0, 160)
-    : `Shop ${product.name} at Maleq. Fast, discreet shipping available.`;
+    : `Shop ${product.name} at Male Q. Fast, discreet shipping available.`;
 
   return {
     title: product.name,
@@ -110,7 +110,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ? product.shortDescription.replace(/<[^>]*>/g, '').slice(0, 300)
     : product.description
     ? product.description.replace(/<[^>]*>/g, '').slice(0, 300)
-    : `Shop ${product.name} at Maleq.`;
+    : `Shop ${product.name} at Male Q.`;
 
   const stockStatus = product.stockStatus === 'IN_STOCK' ? 'InStock' : 'OutOfStock';
   const productImages = product.gallery?.map(img => img.url) || (product.image ? [product.image.url] : []);

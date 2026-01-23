@@ -121,7 +121,7 @@ export default function RelatedProducts({
                   )}
 
                   {product.onSale && (
-                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
                       SALE
                     </div>
                   )}
@@ -157,7 +157,7 @@ export default function RelatedProducts({
                 <div className="flex items-center gap-2">
                   {product.onSale && product.regularPrice ? (
                     <>
-                      <span className="font-bold text-red-600">
+                      <span className="font-bold text-primary">
                         {formatPrice(product.salePrice)}
                       </span>
                       <span className="text-sm text-muted-foreground line-through">

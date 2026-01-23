@@ -84,8 +84,8 @@ export default function ContactForm() {
   if (submitted) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -108,7 +108,7 @@ export default function ContactForm() {
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-            Name <span className="text-red-500">*</span>
+            Name <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -117,18 +117,18 @@ export default function ContactForm() {
             value={formData.name}
             onChange={handleChange}
             className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
-              errors.name ? 'border-red-500' : 'border-input'
+              errors.name ? 'border-destructive' : 'border-input'
             }`}
             placeholder="Your name"
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.name}</p>
           )}
         </div>
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-            Email <span className="text-red-500">*</span>
+            Email <span className="text-destructive">*</span>
           </label>
           <input
             type="email"
@@ -137,19 +137,19 @@ export default function ContactForm() {
             value={formData.email}
             onChange={handleChange}
             className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
-              errors.email ? 'border-red-500' : 'border-input'
+              errors.email ? 'border-destructive' : 'border-input'
             }`}
             placeholder="your@email.com"
           />
           {errors.email && (
-            <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.email}</p>
           )}
         </div>
       </div>
 
       <div>
         <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
-          Subject <span className="text-red-500">*</span>
+          Subject <span className="text-destructive">*</span>
         </label>
         <select
           id="subject"
@@ -157,7 +157,7 @@ export default function ContactForm() {
           value={formData.subject}
           onChange={handleChange}
           className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
-            errors.subject ? 'border-red-500' : 'border-input'
+            errors.subject ? 'border-destructive' : 'border-input'
           }`}
         >
           <option value="">Select a subject</option>
@@ -170,13 +170,13 @@ export default function ContactForm() {
           <option value="Other">Other</option>
         </select>
         {errors.subject && (
-          <p className="mt-1 text-sm text-red-500">{errors.subject}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.subject}</p>
         )}
       </div>
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-          Message <span className="text-red-500">*</span>
+          Message <span className="text-destructive">*</span>
         </label>
         <textarea
           id="message"
@@ -185,12 +185,12 @@ export default function ContactForm() {
           onChange={handleChange}
           rows={6}
           className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none ${
-            errors.message ? 'border-red-500' : 'border-input'
+            errors.message ? 'border-destructive' : 'border-input'
           }`}
           placeholder="How can we help you?"
         />
         {errors.message && (
-          <p className="mt-1 text-sm text-red-500">{errors.message}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.message}</p>
         )}
       </div>
 

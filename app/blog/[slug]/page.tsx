@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
   if (!post) {
     return {
-      title: 'Post Not Found | Maleq',
+      title: 'Post Not Found | Male Q',
     };
   }
 
@@ -35,10 +35,10 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     ? post.excerpt.replace(/<[^>]*>/g, '').slice(0, 160)
     : post.content
     ? post.content.replace(/<[^>]*>/g, '').slice(0, 160)
-    : `Read ${post.title} on the Maleq blog.`;
+    : `Read ${post.title} on the Male Q blog.`;
 
   return {
-    title: `${post.title} | Maleq Blog`,
+    title: `${post.title} | Male Q Blog`,
     description,
     openGraph: {
       title: post.title,

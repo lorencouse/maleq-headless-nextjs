@@ -3,8 +3,8 @@ import Link from 'next/link';
 import RegisterForm from '@/components/auth/RegisterForm';
 
 export const metadata: Metadata = {
-  title: 'Create Account | Maleq',
-  description: 'Create a Maleq account to track orders, save addresses, and enjoy a faster checkout.',
+  title: 'Create Account | Male Q',
+  description: 'Create a Male Q account to track orders, save addresses, and enjoy a faster checkout.',
 };
 
 export default function RegisterPage() {
@@ -13,11 +13,11 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="text-3xl font-bold text-primary">Maleq</span>
+            <span className="text-3xl font-bold text-primary">Male Q</span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-foreground">Create your account</h1>
           <p className="mt-2 text-muted-foreground">
-            Join Maleq for a better shopping experience
+            Join Male Q for a better shopping experience
           </p>
         </div>
 

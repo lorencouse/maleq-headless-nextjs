@@ -79,7 +79,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <span className="text-3xl font-bold text-primary">Maleq</span>
+            <span className="text-3xl font-bold text-primary">Male Q</span>
           </Link>
           <h1 className="mt-6 text-2xl font-bold text-foreground">Reset your password</h1>
           <p className="mt-2 text-muted-foreground">

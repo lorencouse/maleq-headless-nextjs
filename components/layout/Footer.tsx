@@ -12,7 +12,7 @@ export default function Footer() {
           {/* About */}
           <div>
             <h3 className='text-foreground text-lg font-semibold mb-4'>
-              Maleq
+              Male Q
             </h3>
             <p className='text-sm'>
               Your trusted online store for quality products and engaging
@@ -119,12 +119,12 @@ export default function Footer() {
         <div className='flex justify-center items-center gap-3 border-t border-border mt-8 pt-8 text-sm text-center'>
           <Image
             src='/images/MQ-logo.png'
-            alt='Maleq'
+            alt='Male Q'
             width={40}
             height={40}
             className='inline-block'
           />
-          <p>&copy; {currentYear} Maleq. All rights reserved.</p>
+          <p>&copy; {currentYear} Male Q. All rights reserved.</p>
         </div>
       </div>
     </footer>

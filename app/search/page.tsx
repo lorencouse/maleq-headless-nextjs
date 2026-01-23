@@ -12,7 +12,7 @@ export async function generateMetadata({ searchParams }: SearchPageProps): Promi
   const query = params.q || '';
 
   return {
-    title: query ? `Search results for "${query}" | Maleq` : 'Search | Maleq',
+    title: query ? `Search results for "${query}" | Male Q` : 'Search | Male Q',
     description: query
       ? `Browse search results for "${query}" in our collection of quality products.`
       : 'Search our collection of quality products.',

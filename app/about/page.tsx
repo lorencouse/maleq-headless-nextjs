@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'About Us | Maleq',
-  description: 'Learn about Maleq - your trusted online destination for quality products and exceptional service.',
+  title: 'About Us | Male Q',
+  description: 'Learn about Male Q - your trusted online destination for quality products and exceptional service.',
 };
 
 export default function AboutPage() {
@@ -13,7 +13,7 @@ export default function AboutPage() {
       <section className="bg-gradient-to-b from-primary/10 to-background py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-            About Maleq
+            About Male Q
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
             Your trusted destination for quality products, exceptional service, and a shopping experience that puts you first.
@@ -29,7 +29,7 @@ export default function AboutPage() {
               <h2 className="text-3xl font-bold text-foreground mb-6">Our Story</h2>
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Maleq was founded with a simple mission: to provide customers with high-quality products at competitive prices, backed by outstanding customer service.
+                  Male Q was founded with a simple mission: to provide customers with high-quality products at competitive prices, backed by outstanding customer service.
                 </p>
                 <p>
                   What started as a small operation has grown into a trusted online retailer, serving customers across the country. We&apos;ve built our reputation on reliability, quality, and a commitment to customer satisfaction.
@@ -97,7 +97,7 @@ export default function AboutPage() {
       {/* Why Choose Us Section */}
       <section className="py-16 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-foreground text-center mb-12">Why Choose Maleq?</h2>
+          <h2 className="text-3xl font-bold text-foreground text-center mb-12">Why Choose Male Q?</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">

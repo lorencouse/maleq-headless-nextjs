@@ -139,7 +139,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
                 {/* Sale Badge */}
                 {product.onSale && (
-                  <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
+                  <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
                     SALE
                   </div>
                 )}
@@ -193,7 +193,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               <div className="mb-4">
                 {product.onSale && product.regularPrice ? (
                   <div className="flex items-baseline gap-3">
-                    <span className="text-2xl font-bold text-red-600">
+                    <span className="text-2xl font-bold text-primary">
                       {formatPrice(product.salePrice)}
                     </span>
                     <span className="text-lg text-muted-foreground line-through">
@@ -210,18 +210,18 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Stock Status */}
               <div className="flex items-center gap-2 mb-4">
                 {displayStockStatus === 'IN_STOCK' ? (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-success">
+                    <span className="w-2 h-2 bg-success rounded-full"></span>
                     In Stock
                   </span>
                 ) : displayStockStatus === 'OUT_OF_STOCK' ? (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-red-600">
-                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
+                    <span className="w-2 h-2 bg-destructive rounded-full"></span>
                     Out of Stock
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-yellow-600">
-                    <span className="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-warning">
+                    <span className="w-2 h-2 bg-warning rounded-full"></span>
                     On Backorder
                   </span>
                 )}

@@ -100,8 +100,8 @@ export default function RegisterForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
@@ -118,12 +118,12 @@ export default function RegisterForm() {
             onChange={handleChange}
             autoComplete="given-name"
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-              validationErrors.firstName ? 'border-red-500' : 'border-input'
+              validationErrors.firstName ? 'border-destructive' : 'border-input'
             }`}
             placeholder="John"
           />
           {validationErrors.firstName && (
-            <p className="mt-1 text-sm text-red-500">{validationErrors.firstName}</p>
+            <p className="mt-1 text-sm text-destructive">{validationErrors.firstName}</p>
           )}
         </div>
 
@@ -139,12 +139,12 @@ export default function RegisterForm() {
             onChange={handleChange}
             autoComplete="family-name"
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-              validationErrors.lastName ? 'border-red-500' : 'border-input'
+              validationErrors.lastName ? 'border-destructive' : 'border-input'
             }`}
             placeholder="Doe"
           />
           {validationErrors.lastName && (
-            <p className="mt-1 text-sm text-red-500">{validationErrors.lastName}</p>
+            <p className="mt-1 text-sm text-destructive">{validationErrors.lastName}</p>
           )}
         </div>
       </div>
@@ -161,12 +161,12 @@ export default function RegisterForm() {
           onChange={handleChange}
           autoComplete="email"
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-            validationErrors.email ? 'border-red-500' : 'border-input'
+            validationErrors.email ? 'border-destructive' : 'border-input'
           }`}
           placeholder="your@email.com"
         />
         {validationErrors.email && (
-          <p className="mt-1 text-sm text-red-500">{validationErrors.email}</p>
+          <p className="mt-1 text-sm text-destructive">{validationErrors.email}</p>
         )}
       </div>
 
@@ -183,7 +183,7 @@ export default function RegisterForm() {
             onChange={handleChange}
             autoComplete="new-password"
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12 ${
-              validationErrors.password ? 'border-red-500' : 'border-input'
+              validationErrors.password ? 'border-destructive' : 'border-input'
             }`}
             placeholder="At least 8 characters"
           />
@@ -205,7 +205,7 @@ export default function RegisterForm() {
           </button>
         </div>
         {validationErrors.password && (
-          <p className="mt-1 text-sm text-red-500">{validationErrors.password}</p>
+          <p className="mt-1 text-sm text-destructive">{validationErrors.password}</p>
         )}
       </div>
 
@@ -221,12 +221,12 @@ export default function RegisterForm() {
           onChange={handleChange}
           autoComplete="new-password"
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-            validationErrors.confirmPassword ? 'border-red-500' : 'border-input'
+            validationErrors.confirmPassword ? 'border-destructive' : 'border-input'
           }`}
           placeholder="Confirm your password"
         />
         {validationErrors.confirmPassword && (
-          <p className="mt-1 text-sm text-red-500">{validationErrors.confirmPassword}</p>
+          <p className="mt-1 text-sm text-destructive">{validationErrors.confirmPassword}</p>
         )}
       </div>
 

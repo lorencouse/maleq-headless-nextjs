@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Shipping & Returns | Maleq',
-  description: 'Learn about Maleq shipping options, delivery times, return policy, and refund process.',
+  title: 'Shipping & Returns | Male Q',
+  description: 'Learn about Male Q shipping options, delivery times, return policy, and refund process.',
 };
 
 export default function ShippingReturnsPage() {

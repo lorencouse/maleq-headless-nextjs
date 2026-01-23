@@ -5,11 +5,11 @@ import BlogCard from '@/components/blog/BlogCard';
 import { Post } from '@/lib/types/wordpress';
 
 export const metadata: Metadata = {
-  title: 'Blog | Maleq',
-  description: 'Read the latest articles, guides, and insights from Maleq. Tips, product reviews, and expert advice for your intimate wellness.',
+  title: 'Blog | Male Q',
+  description: 'Read the latest articles, guides, and insights from Male Q. Tips, product reviews, and expert advice for your intimate wellness.',
   openGraph: {
-    title: 'Blog | Maleq',
-    description: 'Read the latest articles, guides, and insights from Maleq.',
+    title: 'Blog | Male Q',
+    description: 'Read the latest articles, guides, and insights from Male Q.',
     type: 'website',
   },
 };

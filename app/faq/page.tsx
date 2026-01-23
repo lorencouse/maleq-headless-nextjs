@@ -3,8 +3,8 @@ import FaqAccordion from '@/components/faq/FaqAccordion';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Frequently Asked Questions | Maleq',
-  description: 'Find answers to common questions about orders, shipping, returns, and more at Maleq.',
+  title: 'Frequently Asked Questions | Male Q',
+  description: 'Find answers to common questions about orders, shipping, returns, and more at Male Q.',
 };
 
 const faqCategories = [
@@ -154,7 +154,7 @@ export default function FaqPage() {
             Frequently Asked Questions
           </h1>
           <p className="text-lg text-muted-foreground">
-            Find answers to common questions about shopping with Maleq
+            Find answers to common questions about shopping with Male Q
           </p>
         </div>
 

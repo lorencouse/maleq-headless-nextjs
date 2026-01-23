@@ -117,22 +117,22 @@ export default function StockAlertButton({
   if (isSubscribed) {
     return (
       <div className={`${className}`}>
-        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg">
-          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center gap-2 p-3 bg-info/10 rounded-lg">
+          <svg className="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           <div className="flex-1">
-            <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            <p className="text-sm font-medium text-info">
               Stock alert set!
             </p>
-            <p className="text-xs text-blue-600 dark:text-blue-400">
+            <p className="text-xs text-info/80">
               We&apos;ll email {email} when available
             </p>
           </div>
           <button
             onClick={handleUnsubscribe}
             disabled={isLoading}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 transition-colors disabled:opacity-50"
+            className="text-sm text-info hover:text-info-hover transition-colors disabled:opacity-50"
           >
             {isLoading ? '...' : 'Remove'}
           </button>
@@ -147,7 +147,7 @@ export default function StockAlertButton({
       return (
         <button
           onClick={() => setShowForm(true)}
-          className={`w-full py-3 px-6 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors font-semibold flex items-center justify-center gap-2 ${className}`}
+          className={`w-full py-3 px-6 border-2 border-info text-info rounded-lg hover:bg-info/10 transition-colors font-semibold flex items-center justify-center gap-2 ${className}`}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -160,7 +160,7 @@ export default function StockAlertButton({
     return (
       <div className={`p-4 border border-border rounded-lg bg-muted/30 ${className}`}>
         <div className="flex items-center gap-2 mb-3">
-          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           <span className="font-medium text-foreground">Get Stock Alert</span>
@@ -184,13 +184,13 @@ export default function StockAlertButton({
           <button
             onClick={handleSubscribe}
             disabled={isLoading || !email.trim()}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? '...' : 'Notify'}
           </button>
         </div>
         {error && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="mt-2 text-sm text-destructive">{error}</p>
         )}
         <button
           onClick={() => {
@@ -223,7 +223,7 @@ export default function StockAlertButton({
       <button
         onClick={handleSubscribe}
         disabled={isLoading || !email.trim()}
-        className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+        className="px-4 py-2 bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
       >
         {isLoading ? '...' : 'Notify Me'}
       </button>

@@ -1,4 +1,4 @@
-# Maleq Headless - Project TODO
+# Male Q Headless - Project TODO
 
 ## Priority Legend
 - `[HIGH]` - Critical for launch
@@ -173,6 +173,11 @@ Account
 - [x] Promo/Sale banner component (2025-01-22)
 - [x] Mr. Q / Miss Q guide sections (2025-01-22)
 - [x] Social media and YouTube section (2025-01-22)
+- [x] Remove 'Skip to Main Content' link from header (2025-01-22)
+- [x] Update favicon paths and site.webmanifest (2025-01-22)
+- [x] Change site title to Male Q (2025-01-22)
+- [x] Fix navigation dropdown layout and red hover states (2025-01-22)
+- [x] Fix mobile menu not opening (2025-01-22)
 
 ---
 
@@ -183,6 +188,6 @@ Account
 - API documentation: `docs/API_DOCUMENTATION.md`
 - Store specifications: `docs/STORE_SPECIFICATIONS.md`
 
-Remove 'Skip to Main Content' link from header
-Update favicon and app icons
-Change site title to MaleQ
+Test and fix login/signup flows before launch.
+Remove all email mentions of @maleq.com before going live. Direct users to contact us page instead.
+Test contast us form functionality.

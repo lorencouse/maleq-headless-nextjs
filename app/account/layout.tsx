@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'My Account | Maleq',
-  description: 'Manage your Maleq account. View orders, update addresses, and manage your profile.',
+  title: 'My Account | Male Q',
+  description: 'Manage your Male Q account. View orders, update addresses, and manage your profile.',
 };
 
 export default function AccountLayout({

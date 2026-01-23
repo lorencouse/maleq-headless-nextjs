@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | Maleq',
-  description: 'Read the terms and conditions for using the Maleq website and services.',
+  title: 'Terms of Service | Male Q',
+  description: 'Read the terms and conditions for using the Male Q website and services.',
 };
 
 export default function TermsPage() {
@@ -21,7 +21,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-4">Agreement to Terms</h2>
               <p className="text-muted-foreground">
-                By accessing and using the Maleq website (&quot;Site&quot;), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
+                By accessing and using the Male Q website (&quot;Site&quot;), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing this site.
               </p>
             </section>
 
@@ -100,7 +100,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-4">Intellectual Property</h2>
               <p className="text-muted-foreground">
-                All content on this website, including text, graphics, logos, images, and software, is the property of Maleq or its content suppliers and is protected by copyright and trademark laws.
+                All content on this website, including text, graphics, logos, images, and software, is the property of Male Q or its content suppliers and is protected by copyright and trademark laws.
               </p>
               <p className="text-muted-foreground mt-4">
                 You may not reproduce, distribute, modify, or create derivative works from any content without our express written permission.
@@ -144,7 +144,7 @@ export default function TermsPage() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-4">Indemnification</h2>
               <p className="text-muted-foreground">
-                You agree to indemnify and hold Maleq harmless from any claims, losses, or damages arising from your use of the site, violation of these terms, or infringement of any rights of another party.
+                You agree to indemnify and hold Male Q harmless from any claims, losses, or damages arising from your use of the site, violation of these terms, or infringement of any rights of another party.
               </p>
             </section>
 
