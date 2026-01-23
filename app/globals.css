@@ -284,6 +284,12 @@ select:focus {
   border-color: var(--foreground);
 }
 
+/* Fix for Dark Reader extension overriding toast container */
+[data-rht-toaster] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
 /* Custom scrollbar styles */
 .scrollbar-thin {
   scrollbar-width: thin;

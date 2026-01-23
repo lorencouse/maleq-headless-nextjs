@@ -14,6 +14,11 @@ export function Toaster() {
       position="top-right"
       reverseOrder={false}
       gutter={8}
+      containerStyle={{
+        // Prevent browser extensions (Dark Reader etc.) from adding background
+        background: 'transparent',
+        backgroundColor: 'transparent',
+      }}
       toastOptions={{
         // Default options
         duration: 4000,
