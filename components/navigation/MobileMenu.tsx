@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -26,10 +26,14 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const { user, isAuthenticated, logout } = useAuthStore();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+  const prevPathname = useRef(pathname);
 
-  // Close menu on route change
+  // Close menu on route change (but not on initial mount)
   useEffect(() => {
-    onClose();
+    if (prevPathname.current !== pathname) {
+      onClose();
+      prevPathname.current = pathname;
+    }
   }, [pathname, onClose]);
 
   // Prevent body scroll when open

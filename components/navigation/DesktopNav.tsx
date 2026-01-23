@@ -27,12 +27,6 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
 
   // Calculate columns based on number of children
   const columns = section.columns || Math.min(section.children.length, 4);
-  const gridCols = {
-    1: 'grid-cols-1 max-w-xs',
-    2: 'grid-cols-2 max-w-2xl',
-    3: 'grid-cols-3 max-w-4xl',
-    4: 'grid-cols-4 max-w-6xl',
-  }[columns] || 'grid-cols-4 max-w-6xl';
 
   return (
     <div
@@ -49,7 +43,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
+                className="text-sm font-semibold text-primary hover:text-red-500 transition-colors"
               >
                 {item.label}
               </Link>
@@ -58,32 +52,37 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
         )}
 
         {/* Main menu grid */}
-        <div className={`grid ${gridCols} gap-6`}>
+        <div
+          className="grid gap-x-8 gap-y-6"
+          style={{
+            gridTemplateColumns: `repeat(${columns}, minmax(160px, 1fr))`,
+          }}
+        >
           {section.children.map((group) => (
-            <div key={group.label} className="space-y-3">
+            <div key={group.label} className="min-w-[160px]">
               {/* Group header */}
               <Link
                 href={group.href}
                 onClick={onClose}
-                className="block font-semibold text-foreground hover:text-primary transition-colors"
+                className="block font-semibold text-foreground hover:text-red-500 transition-colors mb-3"
               >
                 {group.label}
               </Link>
 
               {/* Group items */}
               {group.children && (
-                <ul className="space-y-1.5">
+                <ul className="space-y-2">
                   {group.children.map((item) => (
                     <li key={item.href}>
                       <Link
                         href={item.href}
                         onClick={onClose}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors group"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-red-500 transition-colors group"
                       >
                         {item.icon && (
                           <NavIcon
                             iconKey={item.icon}
-                            className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors"
+                            className="w-4 h-4 text-muted-foreground group-hover:text-red-500 transition-colors flex-shrink-0"
                           />
                         )}
                         <span>{item.label}</span>
@@ -97,9 +96,9 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
               <Link
                 href={group.href}
                 onClick={onClose}
-                className="inline-block text-xs font-medium text-primary hover:text-primary-hover transition-colors mt-2"
+                className="inline-block text-xs font-medium text-primary hover:text-red-500 transition-colors mt-3"
               >
-                View All {group.label} &rarr;
+                View All &rarr;
               </Link>
             </div>
           ))}
@@ -111,7 +110,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
             <Link
               href={section.href}
               onClick={onClose}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-red-500 transition-colors"
             >
               Shop All Products
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,19 +132,19 @@ function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
       className="absolute top-full left-0 mt-0 pt-2 z-50"
       onMouseLeave={onClose}
     >
-      <div className="bg-card border border-border rounded-lg shadow-xl p-2 min-w-[200px]">
+      <div className="bg-card border border-border rounded-lg shadow-xl p-3 min-w-[220px]">
         {section.children.map((group) => (
-          <div key={group.label}>
+          <div key={group.label} className="space-y-1">
             {group.children?.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className="flex flex-col px-3 py-2 rounded-md hover:bg-muted transition-colors"
+                className="flex flex-col px-3 py-2.5 rounded-md hover:bg-muted hover:text-red-500 transition-colors"
               >
                 <span className="text-sm font-medium text-foreground">{item.label}</span>
                 {item.description && (
-                  <span className="text-xs text-muted-foreground">{item.description}</span>
+                  <span className="text-xs text-muted-foreground mt-0.5">{item.description}</span>
                 )}
               </Link>
             ))}
