@@ -6,10 +6,126 @@
  * Creates a detailed document showing:
  * - Old links and their proposed new links/SKUs
  * - Unmatched links that need manual review
+ * - Fuzzy match suggestions for unmatched items
  */
 
 import mysql from 'mysql2/promise';
 import { writeFileSync } from 'fs';
+
+/**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/**
+ * Calculate similarity score between two slugs (0-1, higher is better)
+ */
+function calculateSimilarity(searchSlug: string, productSlug: string): number {
+  const search = searchSlug.toLowerCase();
+  const product = productSlug.toLowerCase();
+
+  // Exact match
+  if (search === product) return 1;
+
+  // Check if one contains the other (prefix/suffix match)
+  if (product.includes(search) || search.includes(product)) {
+    const longer = Math.max(search.length, product.length);
+    const shorter = Math.min(search.length, product.length);
+    return 0.7 + (shorter / longer) * 0.3;
+  }
+
+  // Token-based matching
+  const searchTokens = search.split('-').filter(t => t.length > 2);
+  const productTokens = product.split('-').filter(t => t.length > 2);
+
+  let matchedTokens = 0;
+  for (const st of searchTokens) {
+    for (const pt of productTokens) {
+      if (st === pt || pt.includes(st) || st.includes(pt)) {
+        matchedTokens++;
+        break;
+      }
+    }
+  }
+
+  const tokenScore = searchTokens.length > 0
+    ? matchedTokens / searchTokens.length
+    : 0;
+
+  // Levenshtein-based similarity
+  const maxLen = Math.max(search.length, product.length);
+  const distance = levenshteinDistance(search, product);
+  const levenshteinScore = 1 - distance / maxLen;
+
+  // Combined score (weight token matching more heavily)
+  return tokenScore * 0.6 + levenshteinScore * 0.4;
+}
+
+interface FuzzyMatch {
+  slug: string;
+  name: string;
+  sku: string;
+  score: number;
+}
+
+/**
+ * Find top fuzzy matches for a given slug
+ */
+function findFuzzyMatches(
+  searchSlug: string,
+  productBySlug: Map<string, any>,
+  limit: number = 3,
+  minScore: number = 0.3
+): FuzzyMatch[] {
+  const matches: FuzzyMatch[] = [];
+
+  for (const [slug, product] of productBySlug) {
+    // Skip products with very short slugs (likely false positives)
+    if (slug.length < 4) continue;
+    // Skip products without names
+    if (!product.name || product.name.trim() === '') continue;
+
+    const score = calculateSimilarity(searchSlug, slug);
+    if (score >= minScore) {
+      matches.push({
+        slug,
+        name: product.name,
+        sku: product.sku || 'N/A',
+        score,
+      });
+    }
+  }
+
+  // Sort by score descending and take top results
+  return matches
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+}
 
 const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
 const LOCAL_DB_NAME = 'local';
@@ -430,6 +546,42 @@ async function main() {
   }
 
   lines.push('');
+
+  // Fuzzy Match Suggestions section
+  console.log('Generating fuzzy match suggestions...');
+  lines.push('---');
+  lines.push('');
+  lines.push('## Fuzzy Match Suggestions');
+  lines.push('');
+  lines.push('These unmatched slugs have similar products that may be replacements:');
+  lines.push('');
+
+  let fuzzyMatchCount = 0;
+  for (const [slug] of unmatchedUrlsBySlug) {
+    const matches = findFuzzyMatches(slug, productBySlug, 3, 0.35);
+    if (matches.length > 0) {
+      fuzzyMatchCount++;
+      lines.push(`### \`${slug}\``);
+      lines.push('');
+      lines.push('| Suggested Product | SKU | Similarity |');
+      lines.push('|-------------------|-----|------------|');
+      for (const match of matches) {
+        const name = match.name.length > 50
+          ? match.name.substring(0, 50) + '...'
+          : match.name;
+        const scorePercent = Math.round(match.score * 100);
+        lines.push(`| [${name}](/shop/product/${match.slug}) | ${match.sku} | ${scorePercent}% |`);
+      }
+      lines.push('');
+    }
+  }
+
+  if (fuzzyMatchCount === 0) {
+    lines.push('No fuzzy matches found for unmatched URLs.');
+    lines.push('');
+  } else {
+    console.log(`Found fuzzy matches for ${fuzzyMatchCount} unmatched slugs`);
+  }
 
   // Unmatched Shortcodes section
   lines.push('---');
