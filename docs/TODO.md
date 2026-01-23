@@ -108,7 +108,7 @@ Account
 ## WordPress & Data
 
 - [x] `[HIGH]` Update block product URLs to use new domain paths (Completed 2026-01-23 - migration scripts)
-- [x] `[HIGH]` Change WP default link behavior to assign correct paths (Completed 2026-01-23 - headless-url-rewrite.php)
+- [x] `[HIGH]` Adopt WordPress-style URLs in Next.js (Completed 2026-01-23 - /product/{slug}, /product-category/{slug})
 - [ ] `[MED]` Review and update reusable blocks with correct URLs
 
 ---
