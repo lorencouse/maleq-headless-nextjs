@@ -1,6 +1,6 @@
 # Product Link Migration Status
 
-Generated: 2026-01-23T21:40:40.560Z
+Generated: 2026-01-23T21:42:20.806Z
 
 ## Migration Summary
 
@@ -11,9 +11,211 @@ matched to existing products have been converted to the new format.
 - URLs converted from `maleq.com/product/{slug}` to `/shop/product/{slug}`
 - Shortcodes converted from `[add_to_cart id="..."]` to `[add_to_cart sku="..."]`
 
+### Successfully Migrated
+- **352** URLs converted (73 unique products)
+- **268** shortcodes converted (107 unique products)
+
 ### Remaining Issues
 - **1828** URLs reference discontinued products
 - **582** shortcodes reference discontinued products
+
+---
+
+## Successfully Migrated URLs
+
+These URLs have been converted to the new `/shop/product/{slug}` format:
+
+| Product Slug | Product Name | SKU | Posts Count |
+|--------------|--------------|-----|-------------|
+| lube-shooter | Lube Shooter | VAR-KIN-LUBE-SHOOTER | 1 |
+| swiss-navy-water-based-lube | Swiss Navy Water Based Lube | VAR-MD-SWISS-NAVY-WATER-BASED-LUBE | 38 |
+| swiss-navy-silicone-lube | Swiss Navy Silicone Lube | VAR-MD-SWISS-NAVY-SILICONE-LUBE | 64 |
+| tenga-egg | Tenga Egg | VAR-TE-TENGA-EGG | 14 |
+| cloud-9-pro-sensual-silicone-cock-ring-3-pack | Cloud 9 Pro Sensual Silicone Cock Ring 3... | VAR-WTC-CLOUD-9-PRO-SENSUAL-SILICONE-C | 18 |
+| pro-sensual-xl-pro-rings-black-clear-2-pack | Pro Sensual Xl Pro Rings Black & Clear 2... | 685239852240 | 13 |
+| fantasy-c-rinz-mr-big-cock-ring-ball-stretcher | Fantasy C-rinz Mr Big Cock Ring & Ball S... | 603912358384 | 9 |
+| colt-anal-douche | Colt Anal Douche | 716770031471 | 10 |
+| colt-shower-shot-water-dong | Colt Shower Shot Water Dong | 716770034380 | 7 |
+| realistic-8in-w-balls-clear | Realistic 8in W/balls Clear | 669729901038 | 3 |
+| bam-realistic-cock-bx | Bam Realistic Cock Bx | 782421436001 | 3 |
+| clone-a-willy-deep-tone-brown | Clone a Willy Deep Tone Brown | 763290078783 | 2 |
+| clone-a-pussy-hot-pink | Clone a Pussy Hot Pink | 763290085392 | 3 |
+| king-cock-double-penetrator-flesh | King Cock Double Penetrator Flesh | 603912350036 | 4 |
+| vac-u-lock-code-black-realistic-hung | Vac U Lock Code Black Realistic Hung | 782421026486 | 3 |
+| crystal-jellies-double-dong-18in-purple | Crystal Jellies Double Dong 18in Purple | 782421932619 | 6 |
+| master-series-mini-face-fuck-strap-on | Master Series Mini Face Fuck Strap on | 848518013507 | 3 |
+| fifty-shades-greedy-girl-g-spot-rabbit | Fifty Shades Greedy Girl G Spot Rabbit | 5060108815734 | 2 |
+| inmi-shegasm-pro-thrust-thrusting-suction-rabbit | Inmi Shegasm Pro-thrust Thrusting Suctio... | 848518031761 | 4 |
+| trojan-bareskin-lubricated-24pk | Trojan Bareskin Lubricated 24pk | 022600998532 | 4 |
+| trojan-naturalamb-condoms-3pk | Trojan Naturalamb Condoms 3pk | 022600002789 | 2 |
+| metal-worx-cock-cage | Metal Worx Cock Cage | 603912309409 | 1 |
+| fetish-fantasy-extreme-the-prisoner | Fetish Fantasy Extreme the Prisoner | 603912325645 | 2 |
+| master-series-mistress-femdom-pegging-kit | Master Series Mistress Femdom Pegging Ki... | 848518027184 | 2 |
+| dr-joel-graduated-prostate-probe | Dr Joel Graduated Prostate Probe | 716770075475 | 2 |
+| au-naturel-mister-perfect | Au Naturel Mister Perfect | VAR-BL-AU-NATUREL-MISTER-PERFECT | 5 |
+| naturally-yours-ding-dong | Naturally Yours Ding Dong | VAR-BL-NATURALLY-YOURS-DING-DONG | 4 |
+| dr-skin-cockvibe | Dr Skin Cockvibe | VAR-BL-DR-SKIN-COCKVIBE | 3 |
+| fantasy-for-her-flexible-please-her | Fantasy for Her Flexible Please Her | 603912755732 | 2 |
+| special-order-sexflesh-double-up-dennis-realistic-ass | Sexflesh Double Up Dennis Realistic Ass | 848518003898 | 2 |
+| stay-hard-cock-sleeve-kit-clear | Stay Hard Cock Sleeve Kit Clear | 853858007284 | 2 |
+| anal-fantasy-ass-gasm-cockring-anal-beads | Anal Fantasy Ass-gasm Cockring Anal Bead... | 603912765816 | 2 |
+| wicked-toy-breeze-gel-3-3-oz | Wicked Toy Breeze Gel 3.3 Oz | 713079902242 | 4 |
+| silicone-rechargeable-vibrating-plug-urethral-sounding-black | Silicone Rechargeable Vibrating Plug Ure... | 8714273533128 | 2 |
+| boneyard-piss-holer-w-interchangeable-vibrating-bullet | Boneyard Piss Holer W/ Interchangeable V... | 666987004082 | 2 |
+| urethral-sounding-plug-set-black | Urethral Sounding Plug Set Black | 8714273548030 | 2 |
+| master-series-urethral-sound-trainer-set-silicone | Master Series Urethral Sound Trainer Set... | 848518022394 | 2 |
+| master-series-hardware-nail-screw-silicone-urethral-sounds | Master Series Hardware Nail & Screw Sili... | 848518031303 | 2 |
+| master-series-dockers-silicone-urethral-sound-set | Master Series Dockers Silicone Urethral ... | 848518027368 | 2 |
+| mancage-model-16-chastity-4-5-in-cage-w-plug | Mancage Model 16 Chastity 4.5 in Cage W/... | 8714273929228 | 2 |
+| gun-oil-h2o-gel-3-3-oz-tube | Gun Oil H2o Gel 3.3 Oz Tube | 892172001202 | 2 |
+| silicone-anal-trainer-kit | Silicone Anal Trainer Kit | 716770088659 | 1 |
+| silicone-curve-anal-kit | Silicone Curve Anal Kit | 716770100757 | 2 |
+| strap-u-triple-peg-28x-dildo-set-silicone-w-remote | Strap U Triple Peg 28x Dildo Set Silicon... | 848518045751 | 2 |
+| bang-backdoor-adventure-3pc-butt-plug-bullet-blindfold-kit-black | Bang! Backdoor Adventure 3pc Butt Plug B... | 848518039934 | 2 |
+| luxe-bling-plugs-training-kit-black-w-rainbow-gems | Luxe Bling Plugs Training Kit Black W/ R... | 819835020691 | 2 |
+| intimate-earth-adventure-anal-serum-for-women | Intimate Earth Adventure Anal Serum for ... | 854397006042 | 2 |
+| butt-eze-anal-desensitizer-w-hemp-seed-oil-2-oz-bottle | Butt Eze Anal Desensitizer W/ Hemp Seed ... | 679359001039 | 2 |
+| king-cock-plus-6-5-in-thrusting-cock-w-balls | King Cock Plus 6.5 in Thrusting Cock W/ ... | 603912765786 | 2 |
+| cloud-9-comfort-cock-rings-w-flat-back-5-pk-pro-sensual-line | Cloud 9 Comfort Cock Rings W/flat Back 5... | 850013016860 | 2 |
+| master-series-stainless-steel-beaded-cock-ring-1-75in | Master Series Stainless Steel Beaded Coc... | 848518005656 | 2 |
+| shane-diesel-dildo | Shane Diesel Dildo | VAR-NSN-SHANE-DIESEL-DILDO | 2 |
+| enhance-travel-pump-system | Enhance Travel Pump System | 716770058607 | 9 |
+| renegade-powerhouse-pump-black | Renegade Powerhouse Pump Black | 657447094385 | 7 |
+| precision-pump-with-erection-enhancer | Precision Pump with Erection Enhancer | 716770018137 | 5 |
+| expandable-butt-plug | Expandable Butt Plug | VAR-SE-EXPANDABLE-BUTT-PLUG | 2 |
+| performance-vs5-silicone-3-snap-cock-strap-black | Performance Vs5 Silicone 3 Snap Cock Str... | 850002870121 | 6 |
+| temptasia-reina-teal-g-spot-dildo | Temptasia Reina Teal G Spot Dildo | 819835021810 | 4 |
+| cloud-9-health-wellness-wand-kit-9-function-flexible-head-purple | Cloud 9 Health & Wellness Wand Kit 9 Fun... | 685239852950 | 2 |
+| master-series-anal-desensitizing-lube-4-25-oz | Master Series Anal Desensitizing Lube 4.... | 848518001313 | 4 |
+| pdx-elite-tip-teazer-power-pump | Pdx Elite Tip Teazer Power Pump | 603912744828 | 2 |
+| pdx-elite-suck-n-pump-stroker | Pdx Elite Suck N Pump Stroker | 603912751505 | 2 |
+| classix-pleasure-pump-pump | Classix Pleasure Pump Pump | 603912755565 | 2 |
+| swiss-navy-masturbation-cream-5-oz | Swiss Navy Masturbation Cream 5 Oz | 699439009403 | 2 |
+| elbow-grease-hot-cream | Elbow Grease Hot Cream | VAR-BC-ELBOW-GREASE-HOT-CREAM | 2 |
+| temptasia-twist-kit-set-of-3 | Temptasia Twist Kit Set of 3 | 819835022602 | 6 |
+| fetish-fantasy-big-daddy-hollow-10in-strap-on-black | Fetish Fantasy Big Daddy Hollow 10in Str... | 603912264586 | 2 |
+| erection-assistant-hollow-strap-on | Erection Assistant Hollow Strap-on | VAR-NW-ERECTION-ASSISTANT-HOLLOW-STRA | 2 |
+| luxe-little-thumper-black-anal-plug | Luxe Little Thumper Black Anal Plug | 702730697764 | 2 |
+| dr-joel-prostate-locator | Dr Joel Prostate Locator | VAR-SE-DR-JOEL-PROSTATE-LOCATOR | 2 |
+| glas-8-ribbed-g-spot-glass-dildo | Glas 8 Ribbed G Spot Glass Dildo " | 4890808219232 | 4 |
+| silicone-pegging-probe | Silicone Pegging Probe | 716770090201 | 2 |
+| addiction-100-silicone-ben-7-black | Addiction 100% Silicone Ben 7 Black " | 677613873118 | 2 |
+
+---
+
+## Successfully Migrated Shortcodes
+
+These shortcodes have been converted to SKU-based format:
+
+| SKU | New Shortcode | Product Name | Product Slug | Posts Count |
+|-----|---------------|--------------|--------------|-------------|
+| 716770078155 | [add_to_cart sku="716770078155"] | Booty Call Double Dare - Pink |  | 7 |
+| 716770112873 | [add_to_cart sku="716770112873"] | Party Boy Silicone Studs - 6 i... |  | 15 |
+| 716770108609 | [add_to_cart sku="716770108609"] | Silicone Studs - Purple |  | 7 |
+| 813356000071 | [add_to_cart sku="813356000071"] | Lifestyles - 40 bowl |  | 10 |
+| VAR-PIPEDR-REAL-FEEL-DELUXE-7 | [add_to_cart sku="VAR-PIPEDR-REAL-FEEL-DELUXE-7"] | Real Feel Deluxe #7 | real-feel-deluxe-7 | 14 |
+| 716770065100 | [add_to_cart sku="716770065100"] | First Time Love Beads - Purple |  | 9 |
+| VAR-SCR-SCREAMING-O-VIBRATING-RING | [add_to_cart sku="VAR-SCR-SCREAMING-O-VIBRATING-RING"] | Screaming O Vibrating Ring | screaming-o-vibrating-ring | 8 |
+| 840215119360 | [add_to_cart sku="840215119360"] | Ballsling Ball Split Sling - C... |  | 6 |
+| 716770106773 | [add_to_cart sku="716770106773"] |  |  | 4 |
+| 845830084468 | [add_to_cart sku="845830084468"] | Peak Performance Sport Jock Gr... |  | 5 |
+| 603912774955 | [add_to_cart sku="603912774955"] | King Cock Clear W/ Balls - Cle... |  | 4 |
+| VAR-SE-TWISTED-LOVE-TWISTED-PROBE | [add_to_cart sku="VAR-SE-TWISTED-LOVE-TWISTED-PROBE"] | Twisted Love Twisted Probe | twisted-love-twisted-probe | 3 |
+| VAR-SE-BOOTY-CALL-BOOTY-SHAKER | [add_to_cart sku="VAR-SE-BOOTY-CALL-BOOTY-SHAKER"] | Booty Call Booty Shaker | booty-call-booty-shaker | 2 |
+| VAR-NO-50K-PURE | [add_to_cart sku="VAR-NO-50K-PURE"] | 50k Pure | 50k-pure | 7 |
+| VAR-NC-SENSUELLE-NUBII-TULLA-BULLET | [add_to_cart sku="VAR-NC-SENSUELLE-NUBII-TULLA-BULLET"] | Sensuelle Nubii Tulla Bullet | sensuelle-nubii-tulla-bullet | 7 |
+| 716770104267 | [add_to_cart sku="716770104267"] |  |  | 7 |
+| 716770098634 | [add_to_cart sku="716770098634"] |  |  | 7 |
+| 603912358384 | [add_to_cart sku="603912358384"] | Fantasy C-rinz Mr Big Cock Rin... | fantasy-c-rinz-mr-big-cock-ring-ball-stretcher | 4 |
+| 716770031471 | [add_to_cart sku="716770031471"] | Colt Anal Douche | colt-anal-douche | 3 |
+| 716770034380 | [add_to_cart sku="716770034380"] | Colt Shower Shot Water Dong | colt-shower-shot-water-dong | 2 |
+| 716770094087 | [add_to_cart sku="716770094087"] |  |  | 2 |
+| VAR-SE-REFLECTIVE-GEL-VEINED-DOUBLE-D | [add_to_cart sku="VAR-SE-REFLECTIVE-GEL-VEINED-DOUBLE-D"] | Reflective Gel Veined Double D... | reflective-gel-veined-double-dong | 5 |
+| 840215120427 | [add_to_cart sku="840215120427"] |  |  | 1 |
+| 669729901038 | [add_to_cart sku="669729901038"] | Realistic 8in W/balls Clear | realistic-8in-w-balls-clear | 1 |
+| 782421436001 | [add_to_cart sku="782421436001"] | Bam Realistic Cock Bx | bam-realistic-cock-bx | 1 |
+| 763290078783 | [add_to_cart sku="763290078783"] | Clone a Willy Deep Tone Brown | clone-a-willy-deep-tone-brown | 1 |
+| 763290085392 | [add_to_cart sku="763290085392"] | Clone a Pussy Hot Pink | clone-a-pussy-hot-pink | 1 |
+| 716770092151 | [add_to_cart sku="716770092151"] | Lock N Play Remote Panty Tease... |  | 6 |
+| 070907202128 | [add_to_cart sku="070907202128"] | Lifestyles Ultra Sensitive - 1... |  | 5 |
+| VAR-OX-360-DUAL-USE-COCKRING | [add_to_cart sku="VAR-OX-360-DUAL-USE-COCKRING"] | 360 Dual Use Cockring | 360-dual-use-cockring | 2 |
+| 603912350036 | [add_to_cart sku="603912350036"] | King Cock Double Penetrator Fl... | king-cock-double-penetrator-flesh | 1 |
+| 782421932619 | [add_to_cart sku="782421932619"] | Crystal Jellies Double Dong 18... | crystal-jellies-double-dong-18in-purple | 2 |
+| 603912361049 | [add_to_cart sku="603912361049"] |  |  | 2 |
+| 603912750553 | [add_to_cart sku="603912750553"] |  |  | 1 |
+| 5060108815734 | [add_to_cart sku="5060108815734"] | Fifty Shades Greedy Girl G Spo... | fifty-shades-greedy-girl-g-spot-rabbit | 1 |
+| 848518031761 | [add_to_cart sku="848518031761"] | Inmi Shegasm Pro-thrust Thrust... | inmi-shegasm-pro-thrust-thrusting-suction-rabbit | 2 |
+| 022600998532 | [add_to_cart sku="022600998532"] | Trojan Bareskin Lubricated 24p... | trojan-bareskin-lubricated-24pk | 2 |
+| 022600002789 | [add_to_cart sku="022600002789"] | Trojan Naturalamb Condoms 3pk | trojan-naturalamb-condoms-3pk | 1 |
+| 603912309409 | [add_to_cart sku="603912309409"] | Metal Worx Cock Cage | metal-worx-cock-cage | 1 |
+| 603912325645 | [add_to_cart sku="603912325645"] | Fetish Fantasy Extreme the Pri... | fetish-fantasy-extreme-the-prisoner | 1 |
+| 762983302129 | [add_to_cart sku="762983302129"] |  |  | 1 |
+| VAR-SE-FIRST-TIME-TRAVEL-TEASER-KIT | [add_to_cart sku="VAR-SE-FIRST-TIME-TRAVEL-TEASER-KIT"] | First Time Travel Teaser Kit | first-time-travel-teaser-kit | 1 |
+| 716770075475 | [add_to_cart sku="716770075475"] | Dr Joel Graduated Prostate Pro... | dr-joel-graduated-prostate-probe | 1 |
+| 716770108593 | [add_to_cart sku="716770108593"] |  |  | 1 |
+| 716770098610 | [add_to_cart sku="716770098610"] | Size - Ivory |  | 3 |
+| 716770098696 | [add_to_cart sku="716770098696"] | Size - Clear |  | 3 |
+| VAR-TE-TENGA-EGG | [add_to_cart sku="VAR-TE-TENGA-EGG"] | Tenga Egg | tenga-egg | 2 |
+| 716770054944 | [add_to_cart sku="716770054944"] | High Intensity Bullet - Black |  | 4 |
+| VAR-SE-ULTIMATE-DOUCHE | [add_to_cart sku="VAR-SE-ULTIMATE-DOUCHE"] | Ultimate Douche | ultimate-douche | 3 |
+| VAR-BL-AU-NATUREL-MISTER-PERFECT | [add_to_cart sku="VAR-BL-AU-NATUREL-MISTER-PERFECT"] | Au Naturel Mister Perfect | au-naturel-mister-perfect | 2 |
+| VAR-BL-NATURALLY-YOURS-DING-DONG | [add_to_cart sku="VAR-BL-NATURALLY-YOURS-DING-DONG"] | Naturally Yours Ding Dong | naturally-yours-ding-dong | 2 |
+| VAR-BL-DR-SKIN-COCKVIBE | [add_to_cart sku="VAR-BL-DR-SKIN-COCKVIBE"] | Dr Skin Cockvibe | dr-skin-cockvibe | 2 |
+| 641684154315 | [add_to_cart sku="641684154315"] | Barbae Female Enhancement - 1 ... |  | 1 |
+| 603912755732 | [add_to_cart sku="603912755732"] | Fantasy for Her Flexible Pleas... | fantasy-for-her-flexible-please-her | 1 |
+| VAR-NW-CLIT-TASTIC-TULIP-FINGER-MASSA | [add_to_cart sku="VAR-NW-CLIT-TASTIC-TULIP-FINGER-MASSA"] | Clit-tastic Tulip Finger Massa... | clit-tastic-tulip-finger-massager | 1 |
+| 853858007284 | [add_to_cart sku="853858007284"] | Stay Hard Cock Sleeve Kit Clea... | stay-hard-cock-sleeve-kit-clear | 1 |
+| 603912765816 | [add_to_cart sku="603912765816"] | Anal Fantasy Ass-gasm Cockring... | anal-fantasy-ass-gasm-cockring-anal-beads | 1 |
+| 713079902242 | [add_to_cart sku="713079902242"] | Wicked Toy Breeze Gel 3.3 Oz | wicked-toy-breeze-gel-3-3-oz | 2 |
+| 716770111937 | [add_to_cart sku="716770111937"] |  |  | 1 |
+| 8714273533128 | [add_to_cart sku="8714273533128"] | Silicone Rechargeable Vibratin... | silicone-rechargeable-vibrating-plug-urethral-sounding-black | 1 |
+| 666987004082 | [add_to_cart sku="666987004082"] | Boneyard Piss Holer W/ Interch... | boneyard-piss-holer-w-interchangeable-vibrating-bullet | 1 |
+| 8714273548030 | [add_to_cart sku="8714273548030"] | Urethral Sounding Plug Set Bla... | urethral-sounding-plug-set-black | 1 |
+| 848518022394 | [add_to_cart sku="848518022394"] | Master Series Urethral Sound T... | master-series-urethral-sound-trainer-set-silicone | 1 |
+| 848518031303 | [add_to_cart sku="848518031303"] | Master Series Hardware Nail & ... | master-series-hardware-nail-screw-silicone-urethral-sounds | 1 |
+| 848518027368 | [add_to_cart sku="848518027368"] | Master Series Dockers Silicone... | master-series-dockers-silicone-urethral-sound-set | 1 |
+| 8714273929228 | [add_to_cart sku="8714273929228"] | Mancage Model 16 Chastity 4.5 ... | mancage-model-16-chastity-4-5-in-cage-w-plug | 1 |
+| 892172001202 | [add_to_cart sku="892172001202"] | Gun Oil H2o Gel 3.3 Oz Tube | gun-oil-h2o-gel-3-3-oz-tube | 1 |
+| 716770088659 | [add_to_cart sku="716770088659"] | Silicone Anal Trainer Kit | silicone-anal-trainer-kit | 1 |
+| 716770100757 | [add_to_cart sku="716770100757"] | Silicone Curve Anal Kit | silicone-curve-anal-kit | 1 |
+| 848518045751 | [add_to_cart sku="848518045751"] | Strap U Triple Peg 28x Dildo S... | strap-u-triple-peg-28x-dildo-set-silicone-w-remote | 1 |
+| 848518039934 | [add_to_cart sku="848518039934"] | Bang! Backdoor Adventure 3pc B... | bang-backdoor-adventure-3pc-butt-plug-bullet-blindfold-kit-black | 1 |
+| 819835020691 | [add_to_cart sku="819835020691"] | Luxe Bling Plugs Training Kit ... | luxe-bling-plugs-training-kit-black-w-rainbow-gems | 1 |
+| 854397006042 | [add_to_cart sku="854397006042"] | Intimate Earth Adventure Anal ... | intimate-earth-adventure-anal-serum-for-women | 1 |
+| 679359001039 | [add_to_cart sku="679359001039"] | Butt Eze Anal Desensitizer W/ ... | butt-eze-anal-desensitizer-w-hemp-seed-oil-2-oz-bottle | 1 |
+| 603912765786 | [add_to_cart sku="603912765786"] | King Cock Plus 6.5 in Thrustin... | king-cock-plus-6-5-in-thrusting-cock-w-balls | 1 |
+| 850013016860 | [add_to_cart sku="850013016860"] | Cloud 9 Comfort Cock Rings W/f... | cloud-9-comfort-cock-rings-w-flat-back-5-pk-pro-sensual-line | 1 |
+| 716770069948 | [add_to_cart sku="716770069948"] |  |  | 4 |
+| 848518005656 | [add_to_cart sku="848518005656"] | Master Series Stainless Steel ... | master-series-stainless-steel-beaded-cock-ring-1-75in | 1 |
+| VAR-NSN-SHANE-DIESEL-DILDO | [add_to_cart sku="VAR-NSN-SHANE-DIESEL-DILDO"] | Shane Diesel Dildo | shane-diesel-dildo | 1 |
+| 716770088338 | [add_to_cart sku="716770088338"] | Lock N Play Remote Panty Tease... |  | 2 |
+| VAR-SE-BOOTY-CALL-BOOTY-VIBRO-KIT | [add_to_cart sku="VAR-SE-BOOTY-CALL-BOOTY-VIBRO-KIT"] | Booty Call Booty Vibro Kit | booty-call-booty-vibro-kit | 2 |
+| 840215119353 | [add_to_cart sku="840215119353"] |  |  | 3 |
+| VAR-SE-JEWEL-LARGE-AMETHYST-PLUG | [add_to_cart sku="VAR-SE-JEWEL-LARGE-AMETHYST-PLUG"] | Jewel Large Amethyst Plug | jewel-large-amethyst-plug | 2 |
+| 716770089687 | [add_to_cart sku="716770089687"] | Booty Call Booty Starter - Bla... |  | 2 |
+| 716770092519 | [add_to_cart sku="716770092519"] |  |  | 1 |
+| 716770058607 | [add_to_cart sku="716770058607"] | Enhance Travel Pump System | enhance-travel-pump-system | 2 |
+| 657447094385 | [add_to_cart sku="657447094385"] | Renegade Powerhouse Pump Black | renegade-powerhouse-pump-black | 2 |
+| 716770018137 | [add_to_cart sku="716770018137"] | Precision Pump with Erection E... | precision-pump-with-erection-enhancer | 1 |
+| VAR-SE-EXPANDABLE-BUTT-PLUG | [add_to_cart sku="VAR-SE-EXPANDABLE-BUTT-PLUG"] | Expandable Butt Plug | expandable-butt-plug | 1 |
+| 850002870121 | [add_to_cart sku="850002870121"] | Performance Vs5 Silicone 3 Sna... | performance-vs5-silicone-3-snap-cock-strap-black | 2 |
+| 819835021810 | [add_to_cart sku="819835021810"] | Temptasia Reina Teal G Spot Di... | temptasia-reina-teal-g-spot-dildo | 2 |
+| 685239852950 | [add_to_cart sku="685239852950"] | Cloud 9 Health & Wellness Wand... | cloud-9-health-wellness-wand-kit-9-function-flexible-head-purple | 1 |
+| 782631289121 | [add_to_cart sku="782631289121"] | Natural Realskin Hot Cock Curv... |  | 2 |
+| 603912744828 | [add_to_cart sku="603912744828"] | Pdx Elite Tip Teazer Power Pum... | pdx-elite-tip-teazer-power-pump | 1 |
+| 603912751505 | [add_to_cart sku="603912751505"] | Pdx Elite Suck N Pump Stroker | pdx-elite-suck-n-pump-stroker | 1 |
+| 603912755565 | [add_to_cart sku="603912755565"] | Classix Pleasure Pump Pump | classix-pleasure-pump-pump | 1 |
+| 699439009403 | [add_to_cart sku="699439009403"] | Swiss Navy Masturbation Cream ... | swiss-navy-masturbation-cream-5-oz | 1 |
+| VAR-BC-ELBOW-GREASE-HOT-CREAM | [add_to_cart sku="VAR-BC-ELBOW-GREASE-HOT-CREAM"] | Elbow Grease Hot Cream | elbow-grease-hot-cream | 1 |
+| 819835022602 | [add_to_cart sku="819835022602"] | Temptasia Twist Kit Set of 3 | temptasia-twist-kit-set-of-3 | 3 |
+| 603912264586 | [add_to_cart sku="603912264586"] | Fetish Fantasy Big Daddy Hollo... | fetish-fantasy-big-daddy-hollow-10in-strap-on-black | 1 |
+| VAR-NW-ERECTION-ASSISTANT-HOLLOW-STRA | [add_to_cart sku="VAR-NW-ERECTION-ASSISTANT-HOLLOW-STRA"] | Erection Assistant Hollow Stra... | erection-assistant-hollow-strap-on | 1 |
+| VAR-SE-FIRST-TIME-G-SPOT-TULIP | [add_to_cart sku="VAR-SE-FIRST-TIME-G-SPOT-TULIP"] | First Time G Spot Tulip | first-time-g-spot-tulip | 1 |
+| 702730697764 | [add_to_cart sku="702730697764"] | Luxe Little Thumper Black Anal... | luxe-little-thumper-black-anal-plug | 1 |
+| VAR-SE-DR-JOEL-PROSTATE-LOCATOR | [add_to_cart sku="VAR-SE-DR-JOEL-PROSTATE-LOCATOR"] | Dr Joel Prostate Locator | dr-joel-prostate-locator | 1 |
+| 4890808219232 | [add_to_cart sku="4890808219232"] | Glas 8 Ribbed G Spot Glass Dil... | glas-8-ribbed-g-spot-glass-dildo | 2 |
+| 716770090201 | [add_to_cart sku="716770090201"] | Silicone Pegging Probe | silicone-pegging-probe | 1 |
+| 677613873118 | [add_to_cart sku="677613873118"] | Addiction 100% Silicone Ben 7 ... | addiction-100-silicone-ben-7-black | 1 |
 
 ---
 

@@ -55,6 +55,24 @@ interface UnmatchedShortcode {
   oldProductId: number;
 }
 
+interface MigratedUrl {
+  postId: number;
+  postTitle: string;
+  newUrl: string;
+  slug: string;
+  productName: string;
+  sku: string;
+}
+
+interface MigratedShortcode {
+  postId: number;
+  postTitle: string;
+  newShortcode: string;
+  sku: string;
+  productName: string;
+  productSlug: string;
+}
+
 async function main() {
   const connection = await mysql.createConnection({
     socketPath: LOCAL_MYSQL_SOCKET,
@@ -91,7 +109,15 @@ async function main() {
 
   console.log(`Loaded ${products.length} products`);
 
-  // Get posts with links
+  // Build SKU to product map
+  const productBySku = new Map<string, any>();
+  for (const p of products) {
+    if (p.sku) {
+      productBySku.set(p.sku, p);
+    }
+  }
+
+  // Get posts with links (both old and new format)
   const [posts] = await connection.execute(`
     SELECT ID, post_title, post_type, post_content
     FROM wp_posts
@@ -99,6 +125,7 @@ async function main() {
     AND post_status = 'publish'
     AND (
       post_content LIKE '%maleq%/product/%'
+      OR post_content LIKE '%/shop/product/%'
       OR post_content LIKE '%add_to_cart%'
     )
   `) as [any[], any];
@@ -109,6 +136,8 @@ async function main() {
   const unmatchedUrls: UnmatchedUrl[] = [];
   const matchedShortcodes: MatchedShortcode[] = [];
   const unmatchedShortcodes: UnmatchedShortcode[] = [];
+  const migratedUrls: MigratedUrl[] = [];
+  const migratedShortcodes: MigratedShortcode[] = [];
 
   for (const post of posts) {
     const content = post.post_content || '';
@@ -174,6 +203,40 @@ async function main() {
         });
       }
     }
+
+    // Extract migrated URLs (new format: /shop/product/{slug})
+    const newUrlRegex = /\/shop\/product\/([^"'\s<>\/\?#]+)/gi;
+    while ((match = newUrlRegex.exec(content)) !== null) {
+      const slug = match[1].toLowerCase();
+      const product = productBySlug.get(slug);
+      if (product) {
+        migratedUrls.push({
+          postId: post.ID,
+          postTitle: post.post_title,
+          newUrl: match[0],
+          slug,
+          productName: product.name,
+          sku: product.sku || 'N/A',
+        });
+      }
+    }
+
+    // Extract migrated shortcodes (new format: [add_to_cart sku="..."])
+    const newScRegex = /\[add_to_cart\s+sku="([^"]+)"\]/gi;
+    while ((match = newScRegex.exec(content)) !== null) {
+      const sku = match[1];
+      const product = productBySku.get(sku);
+      if (product) {
+        migratedShortcodes.push({
+          postId: post.ID,
+          postTitle: post.post_title,
+          newShortcode: match[0],
+          sku,
+          productName: product.name,
+          productSlug: product.slug,
+        });
+      }
+    }
   }
 
   // Generate markdown report
@@ -191,6 +254,26 @@ async function main() {
   lines.push('### Completed');
   lines.push('- URLs converted from `maleq.com/product/{slug}` to `/shop/product/{slug}`');
   lines.push('- Shortcodes converted from `[add_to_cart id="..."]` to `[add_to_cart sku="..."]`');
+  lines.push('');
+  // Deduplicate migrated URLs by slug
+  const uniqueMigratedUrls = new Map<string, MigratedUrl>();
+  for (const item of migratedUrls) {
+    if (!uniqueMigratedUrls.has(item.slug)) {
+      uniqueMigratedUrls.set(item.slug, item);
+    }
+  }
+
+  // Deduplicate migrated shortcodes by SKU
+  const uniqueMigratedSc = new Map<string, MigratedShortcode>();
+  for (const item of migratedShortcodes) {
+    if (!uniqueMigratedSc.has(item.sku)) {
+      uniqueMigratedSc.set(item.sku, item);
+    }
+  }
+
+  lines.push('### Successfully Migrated');
+  lines.push(`- **${migratedUrls.length}** URLs converted (${uniqueMigratedUrls.size} unique products)`);
+  lines.push(`- **${migratedShortcodes.length}** shortcodes converted (${uniqueMigratedSc.size} unique products)`);
   lines.push('');
   lines.push('### Remaining Issues');
   lines.push(`- **${unmatchedUrls.length}** URLs reference discontinued products`);
@@ -211,6 +294,62 @@ async function main() {
     if (!uniqueMatchedSc.has(item.oldProductId)) {
       uniqueMatchedSc.set(item.oldProductId, item);
     }
+  }
+
+  // Migrated URLs section
+  if (uniqueMigratedUrls.size > 0) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## Successfully Migrated URLs');
+    lines.push('');
+    lines.push('These URLs have been converted to the new `/shop/product/{slug}` format:');
+    lines.push('');
+    lines.push('| Product Slug | Product Name | SKU | Posts Count |');
+    lines.push('|--------------|--------------|-----|-------------|');
+
+    // Count posts per slug
+    const postCountBySlug = new Map<string, number>();
+    for (const item of migratedUrls) {
+      postCountBySlug.set(item.slug, (postCountBySlug.get(item.slug) || 0) + 1);
+    }
+
+    for (const [slug, item] of uniqueMigratedUrls) {
+      const name =
+        item.productName.length > 40
+          ? item.productName.substring(0, 40) + '...'
+          : item.productName;
+      const count = postCountBySlug.get(slug) || 1;
+      lines.push(`| ${slug} | ${name} | ${item.sku} | ${count} |`);
+    }
+    lines.push('');
+  }
+
+  // Migrated Shortcodes section
+  if (uniqueMigratedSc.size > 0) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## Successfully Migrated Shortcodes');
+    lines.push('');
+    lines.push('These shortcodes have been converted to SKU-based format:');
+    lines.push('');
+    lines.push('| SKU | New Shortcode | Product Name | Product Slug | Posts Count |');
+    lines.push('|-----|---------------|--------------|--------------|-------------|');
+
+    // Count posts per SKU
+    const postCountBySku = new Map<string, number>();
+    for (const item of migratedShortcodes) {
+      postCountBySku.set(item.sku, (postCountBySku.get(item.sku) || 0) + 1);
+    }
+
+    for (const [sku, item] of uniqueMigratedSc) {
+      const name =
+        item.productName.length > 30
+          ? item.productName.substring(0, 30) + '...'
+          : item.productName;
+      const count = postCountBySku.get(sku) || 1;
+      lines.push(`| ${sku} | ${item.newShortcode} | ${name} | ${item.productSlug} | ${count} |`);
+    }
+    lines.push('');
   }
 
   // Only show matched sections if there are items (pre-migration)
@@ -350,7 +489,7 @@ async function main() {
 
   console.log(`\nReport saved to: ${reportPath}`);
   console.log(
-    `\nMatched: ${uniqueMatchedUrls.size} unique URLs, ${uniqueMatchedSc.size} unique shortcodes`
+    `\nMigrated: ${uniqueMigratedUrls.size} unique URLs, ${uniqueMigratedSc.size} unique shortcodes`
   );
   console.log(
     `Unmatched: ${unmatchedUrlsBySlug.size} unique URL slugs, ${unmatchedScById.size} unique shortcode IDs`
