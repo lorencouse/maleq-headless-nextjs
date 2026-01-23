@@ -559,24 +559,32 @@ async function main() {
   lines.push('```');
   lines.push('');
 
-  let fuzzyMatchCount = 0;
+  // Build fuzzy matches for all unmatched slugs and sort by best match score
+  const fuzzyResults: Array<{ slug: string; matches: FuzzyMatch[] }> = [];
   for (const [slug] of unmatchedUrlsBySlug) {
     const matches = findFuzzyMatches(slug, productBySlug, 3, 0.35);
     if (matches.length > 0) {
-      fuzzyMatchCount++;
-      lines.push(`### \`${slug}\``);
-      lines.push('');
-      for (const match of matches) {
-        const name = match.name.length > 50
-          ? match.name.substring(0, 50) + '...'
-          : match.name;
-        const scorePercent = Math.round(match.score * 100);
-        // Format: - [ ] old-slug -> new-slug (Product Name) [SKU] {score%}
-        lines.push(`- [ ] \`${slug}\` → \`${match.slug}\` — ${name} (${scorePercent}%)`);
-      }
-      lines.push('- [ ] **REMOVE** - Delete all links to `' + slug + '`');
-      lines.push('');
+      fuzzyResults.push({ slug, matches });
     }
+  }
+
+  // Sort by highest match score (best match first)
+  fuzzyResults.sort((a, b) => b.matches[0].score - a.matches[0].score);
+
+  let fuzzyMatchCount = fuzzyResults.length;
+  for (const { slug, matches } of fuzzyResults) {
+    lines.push(`### \`${slug}\``);
+    lines.push('');
+    for (const match of matches) {
+      const name = match.name.length > 50
+        ? match.name.substring(0, 50) + '...'
+        : match.name;
+      const scorePercent = Math.round(match.score * 100);
+      // Format: - [ ] old-slug -> new-slug (Product Name) [SKU] {score%}
+      lines.push(`- [ ] \`${slug}\` → \`${match.slug}\` — ${name} (${scorePercent}%)`);
+    }
+    lines.push('- [ ] **REMOVE** - Delete all links to `' + slug + '`');
+    lines.push('');
   }
 
   if (fuzzyMatchCount === 0) {
