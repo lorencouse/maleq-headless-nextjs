@@ -44,21 +44,23 @@ export default function Header() {
     <header className='bg-background border-b border-border shadow-sm transition-colors sticky top-0 z-40' role="banner">
       <nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' aria-label="Main navigation">
         <div className='flex justify-between h-16 items-center'>
-          {/* Logo */}
-          <div className='flex-shrink-0'>
-            <Link href='/' className='text-2xl font-bold'>
-              <Image
-                src='/images/MQ-logo.png'
-                alt='Male Q'
-                width={60}
-                height={60}
-                className='inline-block'
-              />
-            </Link>
-          </div>
+          {/* Logo and Navigation */}
+          <div className='flex items-center gap-6'>
+            <div className='flex-shrink-0'>
+              <Link href='/' className='text-2xl font-bold'>
+                <Image
+                  src='/images/MQ-logo.png'
+                  alt='Male Q'
+                  width={60}
+                  height={60}
+                  className='inline-block'
+                />
+              </Link>
+            </div>
 
-          {/* Navigation Links */}
-          <DesktopNav />
+            {/* Navigation Links */}
+            <DesktopNav />
+          </div>
 
           {/* Cart & User Actions */}
           <div className='flex items-center space-x-2'>
