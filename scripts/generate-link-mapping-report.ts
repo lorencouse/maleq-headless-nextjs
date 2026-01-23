@@ -321,7 +321,8 @@ async function main() {
     }
 
     // Extract migrated URLs (new format: /product/{slug})
-    const newUrlRegex = /\/shop\/product\/([^"'\s<>\/\?#]+)/gi;
+    // Match new format URLs: /product/{slug} (standalone, not after /shop or domain)
+    const newUrlRegex = /(?:^|["'\s>])\/product\/([^"'\s<>\/\?#]+)/gi;
     while ((match = newUrlRegex.exec(content)) !== null) {
       const slug = match[1].toLowerCase();
       const product = productBySlug.get(slug);
