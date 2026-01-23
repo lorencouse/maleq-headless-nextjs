@@ -553,7 +553,10 @@ async function main() {
   lines.push('');
   lines.push('## Fuzzy Match Suggestions');
   lines.push('');
-  lines.push('These unmatched slugs have similar products that may be replacements:');
+  lines.push('Check the box next to the correct replacement product, then run:');
+  lines.push('```bash');
+  lines.push('bun scripts/apply-fuzzy-matches.ts');
+  lines.push('```');
   lines.push('');
 
   let fuzzyMatchCount = 0;
@@ -563,15 +566,15 @@ async function main() {
       fuzzyMatchCount++;
       lines.push(`### \`${slug}\``);
       lines.push('');
-      lines.push('| Suggested Product | SKU | Similarity |');
-      lines.push('|-------------------|-----|------------|');
       for (const match of matches) {
         const name = match.name.length > 50
           ? match.name.substring(0, 50) + '...'
           : match.name;
         const scorePercent = Math.round(match.score * 100);
-        lines.push(`| [${name}](/shop/product/${match.slug}) | ${match.sku} | ${scorePercent}% |`);
+        // Format: - [ ] old-slug -> new-slug (Product Name) [SKU] {score%}
+        lines.push(`- [ ] \`${slug}\` → \`${match.slug}\` — ${name} (${scorePercent}%)`);
       }
+      lines.push('- [ ] **REMOVE** - Delete all links to `' + slug + '`');
       lines.push('');
     }
   }
