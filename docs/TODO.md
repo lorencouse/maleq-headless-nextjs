@@ -1,6 +1,7 @@
 # Male Q Headless - Project TODO
 
 ## Priority Legend
+
 - `[HIGH]` - Critical for launch
 - `[MED]` - Important but not blocking
 - `[LOW]` - Nice to have / polish
@@ -10,12 +11,14 @@
 ## Navigation & Header
 
 ### Navbar Updates
+
 - [x] `[HIGH]` Implement dropdown menus for main navigation categories (Completed 2025-01-22)
 - [x] `[MED]` Add SVG icons next to navigation text links (Completed 2025-01-22)
 - [ ] `[MED]` Update header styling with heavy black underlines
 - [ ] `[LOW]` Add bolded black font accents for emphasis
 
 ### Planned Navigation Structure
+
 ```
 Guides
 ├── Health
@@ -66,6 +69,7 @@ Account
 ## Product Pages
 
 ### Trust Badges & Info
+
 - [x] `[HIGH]` Add "Discreet Shipping" badge/section (Completed 2025-01-22)
 - [x] `[HIGH]` Add "Secure Checkout" trust badge (Completed 2025-01-22)
 - [x] `[MED]` Add shipping time estimate badge (Completed 2025-01-22)
@@ -73,6 +77,7 @@ Account
 - [ ] `[LOW]` Add satisfaction guarantee section
 
 ### Product Features
+
 - [ ] `[MED]` Add product add-ons functionality (batteries, accessories, etc.)
 - [ ] `[MED]` Set in-stock variations as primary variation automatically
 - [ ] `[LOW]` Add product comparison feature
@@ -82,16 +87,19 @@ Account
 ## Content & SEO
 
 ### Product Content
+
 - [ ] `[HIGH]` SEO optimize product descriptions
 - [ ] `[HIGH]` Add missing category hero images
 - [ ] `[MED]` Migrate product photos from old DB descriptions to gallery
 - [ ] `[MED]` Auto-match migrated images with new products
 
 ### Reviews
+
 - [ ] `[HIGH]` Populate product reviews (content exists, needs import/display)
 - [x] ~~Clean up duplicate comments in database~~ (Completed 2025-01-22)
 
 ### Blog & Guides
+
 - [ ] `[MED]` Verify all blog post images are migrated
 - [ ] `[LOW]` Add related posts section to blog articles
 
@@ -195,3 +203,7 @@ Add auto-discount functionality for threshold-based discounts (e.g. spend $100, 
 Impliment and test blog category pages and tags pages.
 Do full SEO audit before launch.
 Fix product specs styling not showing on some products.
+Update FAQs page with real content.
+Update Shipping Tiers
+Test checkout with real payment methods.
+Add additional datafeeds from STC
