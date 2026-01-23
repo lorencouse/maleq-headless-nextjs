@@ -3,7 +3,7 @@
 /**
  * Update Brand Name Script
  *
- * Safely updates "Maleq" to "Male Q" in the WordPress database.
+ * Safely updates "Maleq" to "Male Q" and "Femaleq" to "Female Q" in the WordPress database.
  * Only updates text content, not URLs, file paths, or serialized data.
  *
  * Usage:
@@ -27,6 +27,9 @@ const REPLACEMENTS = [
   { old: 'Maleq', new: 'Male Q' },
   { old: 'MaleQ', new: 'Male Q' },
   { old: 'MALEQ', new: 'MALE Q' },
+  { old: 'Femaleq', new: 'Female Q' },
+  { old: 'FemaleQ', new: 'Female Q' },
+  { old: 'FEMALEQ', new: 'FEMALE Q' },
 ];
 
 // Options that are safe to update (text content, not URLs)
@@ -96,7 +99,8 @@ async function main() {
       `SELECT option_id, option_name, option_value
        FROM wp_options
        WHERE option_name IN (?)
-       AND (option_value LIKE '%Maleq%' OR option_value LIKE '%MaleQ%' OR option_value LIKE '%MALEQ%')`,
+       AND (option_value LIKE '%Maleq%' OR option_value LIKE '%MaleQ%' OR option_value LIKE '%MALEQ%'
+            OR option_value LIKE '%Femaleq%' OR option_value LIKE '%FemaleQ%' OR option_value LIKE '%FEMALEQ%')`,
       [SAFE_OPTIONS]
     );
 
@@ -127,7 +131,9 @@ async function main() {
       `SELECT ID, post_title, post_excerpt
        FROM wp_posts
        WHERE (post_title LIKE '%Maleq%' OR post_title LIKE '%MaleQ%'
-              OR post_excerpt LIKE '%Maleq%' OR post_excerpt LIKE '%MaleQ%')
+              OR post_title LIKE '%Femaleq%' OR post_title LIKE '%FemaleQ%'
+              OR post_excerpt LIKE '%Maleq%' OR post_excerpt LIKE '%MaleQ%'
+              OR post_excerpt LIKE '%Femaleq%' OR post_excerpt LIKE '%FemaleQ%')
        AND post_status != 'auto-draft'`
     );
 
@@ -167,9 +173,12 @@ async function main() {
     const [postsContent] = await connection.query<mysql.RowDataPacket[]>(
       `SELECT ID, post_content
        FROM wp_posts
-       WHERE (post_content LIKE '%Maleq%' OR post_content LIKE '%MaleQ%')
+       WHERE (post_content LIKE '%Maleq%' OR post_content LIKE '%MaleQ%'
+              OR post_content LIKE '%Femaleq%' OR post_content LIKE '%FemaleQ%')
        AND post_content NOT LIKE '%maleq.com%'
        AND post_content NOT LIKE '%maleq.org%'
+       AND post_content NOT LIKE '%femaleq.com%'
+       AND post_content NOT LIKE '%femaleq.org%'
        AND post_status != 'auto-draft'`
     );
 
@@ -177,8 +186,10 @@ async function main() {
     const [postsContentWithUrls] = await connection.query<mysql.RowDataPacket[]>(
       `SELECT ID, post_content
        FROM wp_posts
-       WHERE (post_content LIKE '%Maleq%' OR post_content LIKE '%MaleQ%')
-       AND (post_content LIKE '%maleq.com%' OR post_content LIKE '%maleq.org%')
+       WHERE (post_content LIKE '%Maleq%' OR post_content LIKE '%MaleQ%'
+              OR post_content LIKE '%Femaleq%' OR post_content LIKE '%FemaleQ%')
+       AND (post_content LIKE '%maleq.com%' OR post_content LIKE '%maleq.org%'
+            OR post_content LIKE '%femaleq.com%' OR post_content LIKE '%femaleq.org%')
        AND post_status != 'auto-draft'`
     );
 
@@ -210,7 +221,8 @@ async function main() {
     const [postmeta] = await connection.query<mysql.RowDataPacket[]>(
       `SELECT meta_id, post_id, meta_key, meta_value
        FROM wp_postmeta
-       WHERE (meta_value LIKE '%Maleq%' OR meta_value LIKE '%MaleQ%')
+       WHERE (meta_value LIKE '%Maleq%' OR meta_value LIKE '%MaleQ%'
+              OR meta_value LIKE '%Femaleq%' OR meta_value LIKE '%FemaleQ%')
        AND meta_value NOT LIKE 'a:%'
        AND meta_value NOT LIKE 'O:%'
        AND meta_value NOT LIKE '%://%'
@@ -244,7 +256,8 @@ async function main() {
     console.log('\n🏷️  Checking wp_terms...');
     const [terms] = await connection.query<mysql.RowDataPacket[]>(
       `SELECT term_id, name FROM wp_terms
-       WHERE (name LIKE '%Maleq%' OR name LIKE '%MaleQ%')`
+       WHERE (name LIKE '%Maleq%' OR name LIKE '%MaleQ%'
+              OR name LIKE '%Femaleq%' OR name LIKE '%FemaleQ%')`
     );
 
     if (terms.length > 0) {
