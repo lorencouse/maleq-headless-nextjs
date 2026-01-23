@@ -179,27 +179,25 @@ async function main() {
   // Generate markdown report
   const lines: string[] = [];
 
-  lines.push('# Product Link Migration - Detailed Mapping');
+  lines.push('# Product Link Migration Status');
   lines.push('');
   lines.push(`Generated: ${new Date().toISOString()}`);
   lines.push('');
-  lines.push('## Summary');
+  lines.push('## Migration Summary');
   lines.push('');
-  lines.push(`- **Matched URLs:** ${matchedUrls.length}`);
-  lines.push(`- **Unmatched URLs:** ${unmatchedUrls.length}`);
-  lines.push(`- **Matched Shortcodes:** ${matchedShortcodes.length}`);
-  lines.push(`- **Unmatched Shortcodes:** ${unmatchedShortcodes.length}`);
+  lines.push('The product link migration has been executed. URLs and shortcodes that could be');
+  lines.push('matched to existing products have been converted to the new format.');
   lines.push('');
-
-  // Matched URLs section
-  lines.push('---');
+  lines.push('### Completed');
+  lines.push('- URLs converted from `maleq.com/product/{slug}` to `/shop/product/{slug}`');
+  lines.push('- Shortcodes converted from `[add_to_cart id="..."]` to `[add_to_cart sku="..."]`');
   lines.push('');
-  lines.push('## Matched URLs - Ready to Update');
-  lines.push('');
-  lines.push('These URLs have been matched to existing products and can be updated:');
+  lines.push('### Remaining Issues');
+  lines.push(`- **${unmatchedUrls.length}** URLs reference discontinued products`);
+  lines.push(`- **${unmatchedShortcodes.length}** shortcodes reference discontinued products`);
   lines.push('');
 
-  // Deduplicate by old slug and show unique mappings
+  // Deduplicate matched URLs by slug
   const uniqueMatchedUrls = new Map<string, MatchedUrl>();
   for (const item of matchedUrls) {
     if (!uniqueMatchedUrls.has(item.oldSlug)) {
@@ -207,28 +205,7 @@ async function main() {
     }
   }
 
-  lines.push('| Old Slug | New URL | Product Name | SKU |');
-  lines.push('|----------|---------|--------------|-----|');
-
-  for (const item of uniqueMatchedUrls.values()) {
-    const name =
-      item.productName.length > 40
-        ? item.productName.substring(0, 40) + '...'
-        : item.productName;
-    lines.push(`| ${item.oldSlug} | ${item.newUrl} | ${name} | ${item.sku} |`);
-  }
-
-  lines.push('');
-
-  // Matched Shortcodes section
-  lines.push('---');
-  lines.push('');
-  lines.push('## Matched Shortcodes - Ready to Update');
-  lines.push('');
-  lines.push('These shortcodes have been matched to existing products:');
-  lines.push('');
-
-  // Deduplicate by old product ID
+  // Deduplicate matched shortcodes by product ID
   const uniqueMatchedSc = new Map<number, MatchedShortcode>();
   for (const item of matchedShortcodes) {
     if (!uniqueMatchedSc.has(item.oldProductId)) {
@@ -236,24 +213,52 @@ async function main() {
     }
   }
 
-  lines.push('| Old Product ID | Old Shortcode | New Shortcode | Product Name | SKU |');
-  lines.push('|----------------|---------------|---------------|--------------|-----|');
+  // Only show matched sections if there are items (pre-migration)
+  if (uniqueMatchedUrls.size > 0) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## Matched URLs - Ready to Update');
+    lines.push('');
+    lines.push('These URLs have been matched to existing products and can be updated:');
+    lines.push('');
+    lines.push('| Old Slug | New URL | Product Name | SKU |');
+    lines.push('|----------|---------|--------------|-----|');
 
-  for (const item of uniqueMatchedSc.values()) {
-    const name =
-      item.productName.length > 30
-        ? item.productName.substring(0, 30) + '...'
-        : item.productName;
-    const newSc =
-      item.sku !== 'N/A'
-        ? `[add_to_cart sku="${item.sku}"]`
-        : `Link: ${item.newUrl}`;
-    lines.push(
-      `| ${item.oldProductId} | ${item.oldShortcode} | ${newSc} | ${name} | ${item.sku} |`
-    );
+    for (const item of uniqueMatchedUrls.values()) {
+      const name =
+        item.productName.length > 40
+          ? item.productName.substring(0, 40) + '...'
+          : item.productName;
+      lines.push(`| ${item.oldSlug} | ${item.newUrl} | ${name} | ${item.sku} |`);
+    }
+    lines.push('');
   }
 
-  lines.push('');
+  if (uniqueMatchedSc.size > 0) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## Matched Shortcodes - Ready to Update');
+    lines.push('');
+    lines.push('These shortcodes have been matched to existing products:');
+    lines.push('');
+    lines.push('| Old Product ID | Old Shortcode | New Shortcode | Product Name | SKU |');
+    lines.push('|----------------|---------------|---------------|--------------|-----|');
+
+    for (const item of uniqueMatchedSc.values()) {
+      const name =
+        item.productName.length > 30
+          ? item.productName.substring(0, 30) + '...'
+          : item.productName;
+      const newSc =
+        item.sku !== 'N/A'
+          ? `[add_to_cart sku="${item.sku}"]`
+          : `Link: ${item.newUrl}`;
+      lines.push(
+        `| ${item.oldProductId} | ${item.oldShortcode} | ${newSc} | ${name} | ${item.sku} |`
+      );
+    }
+    lines.push('');
+  }
 
   // Unmatched URLs section
   lines.push('---');
@@ -320,15 +325,23 @@ async function main() {
   lines.push('');
   lines.push('## Next Steps');
   lines.push('');
+  if (uniqueMatchedUrls.size > 0 || uniqueMatchedSc.size > 0) {
+    lines.push(
+      '1. **For matched items:** Run `bun scripts/update-product-links-v2.ts --execute` to apply changes'
+    );
+  }
   lines.push(
-    '1. **For matched items:** Run `bun scripts/update-product-links.ts --execute` to apply changes'
+    '1. **For unmatched URLs:** Either find replacement products or remove the broken links'
   );
   lines.push(
-    '2. **For unmatched URLs:** Either find replacement products or remove the broken links'
+    '2. **For unmatched shortcodes:** Either find replacement products or convert to text/remove'
   );
-  lines.push(
-    '3. **For unmatched shortcodes:** Either find replacement products or convert to text/remove'
-  );
+  lines.push('');
+  lines.push('### Options for Unmatched Items');
+  lines.push('');
+  lines.push('- **Remove:** Delete the link/shortcode from the post content');
+  lines.push('- **Replace:** Find a similar product and update the link manually');
+  lines.push('- **Archive:** If the entire post is about discontinued products, consider unpublishing');
   lines.push('');
 
   const reportPath =

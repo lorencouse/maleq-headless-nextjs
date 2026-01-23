@@ -1,148 +1,19 @@
-# Product Link Migration - Detailed Mapping
+# Product Link Migration Status
 
-Generated: 2026-01-23T21:26:45.298Z
+Generated: 2026-01-23T21:40:40.560Z
 
-## Summary
+## Migration Summary
 
-- **Matched URLs:** 352
-- **Unmatched URLs:** 1828
-- **Matched Shortcodes:** 184
-- **Unmatched Shortcodes:** 666
+The product link migration has been executed. URLs and shortcodes that could be
+matched to existing products have been converted to the new format.
 
----
+### Completed
+- URLs converted from `maleq.com/product/{slug}` to `/shop/product/{slug}`
+- Shortcodes converted from `[add_to_cart id="..."]` to `[add_to_cart sku="..."]`
 
-## Matched URLs - Ready to Update
-
-These URLs have been matched to existing products and can be updated:
-
-| Old Slug | New URL | Product Name | SKU |
-|----------|---------|--------------|-----|
-| lube-shooter | /shop/product/lube-shooter | Lube Shooter | VAR-KIN-LUBE-SHOOTER |
-| swiss-navy-water-based-lube | /shop/product/swiss-navy-water-based-lube | Swiss Navy Water Based Lube | VAR-MD-SWISS-NAVY-WATER-BASED-LUBE |
-| swiss-navy-silicone-lube | /shop/product/swiss-navy-silicone-lube | Swiss Navy Silicone Lube | VAR-MD-SWISS-NAVY-SILICONE-LUBE |
-| tenga-egg | /shop/product/tenga-egg | Tenga Egg | VAR-TE-TENGA-EGG |
-| cloud-9-pro-sensual-silicone-cock-ring-3-pack | /shop/product/cloud-9-pro-sensual-silicone-cock-ring-3-pack | Cloud 9 Pro Sensual Silicone Cock Ring 3... | VAR-WTC-CLOUD-9-PRO-SENSUAL-SILICONE-C |
-| pro-sensual-xl-pro-rings-black-clear-2-pack | /shop/product/pro-sensual-xl-pro-rings-black-clear-2-pack | Pro Sensual Xl Pro Rings Black & Clear 2... | 685239852240 |
-| fantasy-c-rinz-mr-big-cock-ring-ball-stretcher | /shop/product/fantasy-c-rinz-mr-big-cock-ring-ball-stretcher | Fantasy C-rinz Mr Big Cock Ring & Ball S... | 603912358384 |
-| colt-anal-douche | /shop/product/colt-anal-douche | Colt Anal Douche | 716770031471 |
-| colt-shower-shot-water-dong | /shop/product/colt-shower-shot-water-dong | Colt Shower Shot Water Dong | 716770034380 |
-| realistic-8in-w-balls-clear | /shop/product/realistic-8in-w-balls-clear | Realistic 8in W/balls Clear | 669729901038 |
-| bam-realistic-cock-bx | /shop/product/bam-realistic-cock-bx | Bam Realistic Cock Bx | 782421436001 |
-| clone-a-willy-deep-tone-brown | /shop/product/clone-a-willy-deep-tone-brown | Clone a Willy Deep Tone Brown | 763290078783 |
-| clone-a-pussy-hot-pink | /shop/product/clone-a-pussy-hot-pink | Clone a Pussy Hot Pink | 763290085392 |
-| king-cock-double-penetrator-flesh | /shop/product/king-cock-double-penetrator-flesh | King Cock Double Penetrator Flesh | 603912350036 |
-| vac-u-lock-code-black-realistic-hung | /shop/product/vac-u-lock-code-black-realistic-hung | Vac U Lock Code Black Realistic Hung | 782421026486 |
-| crystal-jellies-double-dong-18in-purple | /shop/product/crystal-jellies-double-dong-18in-purple | Crystal Jellies Double Dong 18in Purple | 782421932619 |
-| master-series-mini-face-fuck-strap-on | /shop/product/master-series-mini-face-fuck-strap-on | Master Series Mini Face Fuck Strap on | 848518013507 |
-| fifty-shades-greedy-girl-g-spot-rabbit | /shop/product/fifty-shades-greedy-girl-g-spot-rabbit | Fifty Shades Greedy Girl G Spot Rabbit | 5060108815734 |
-| inmi-shegasm-pro-thrust-thrusting-suction-rabbit | /shop/product/inmi-shegasm-pro-thrust-thrusting-suction-rabbit | Inmi Shegasm Pro-thrust Thrusting Suctio... | 848518031761 |
-| trojan-bareskin-lubricated-24pk | /shop/product/trojan-bareskin-lubricated-24pk | Trojan Bareskin Lubricated 24pk | 022600998532 |
-| trojan-naturalamb-condoms-3pk | /shop/product/trojan-naturalamb-condoms-3pk | Trojan Naturalamb Condoms 3pk | 022600002789 |
-| metal-worx-cock-cage | /shop/product/metal-worx-cock-cage | Metal Worx Cock Cage | 603912309409 |
-| fetish-fantasy-extreme-the-prisoner | /shop/product/fetish-fantasy-extreme-the-prisoner | Fetish Fantasy Extreme the Prisoner | 603912325645 |
-| master-series-mistress-femdom-pegging-kit | /shop/product/master-series-mistress-femdom-pegging-kit | Master Series Mistress Femdom Pegging Ki... | 848518027184 |
-| dr-joel-graduated-prostate-probe | /shop/product/dr-joel-graduated-prostate-probe | Dr Joel Graduated Prostate Probe | 716770075475 |
-| au-naturel-mister-perfect | /shop/product/au-naturel-mister-perfect | Au Naturel Mister Perfect | VAR-BL-AU-NATUREL-MISTER-PERFECT |
-| naturally-yours-ding-dong | /shop/product/naturally-yours-ding-dong | Naturally Yours Ding Dong | VAR-BL-NATURALLY-YOURS-DING-DONG |
-| dr-skin-cockvibe | /shop/product/dr-skin-cockvibe | Dr Skin Cockvibe | VAR-BL-DR-SKIN-COCKVIBE |
-| fantasy-for-her-flexible-please-her | /shop/product/fantasy-for-her-flexible-please-her | Fantasy for Her Flexible Please Her | 603912755732 |
-| special-order-sexflesh-double-up-dennis-realistic-ass | /shop/product/special-order-sexflesh-double-up-dennis-realistic-ass | Sexflesh Double Up Dennis Realistic Ass | 848518003898 |
-| stay-hard-cock-sleeve-kit-clear | /shop/product/stay-hard-cock-sleeve-kit-clear | Stay Hard Cock Sleeve Kit Clear | 853858007284 |
-| anal-fantasy-ass-gasm-cockring-anal-beads | /shop/product/anal-fantasy-ass-gasm-cockring-anal-beads | Anal Fantasy Ass-gasm Cockring Anal Bead... | 603912765816 |
-| wicked-toy-breeze-gel-3-3-oz | /shop/product/wicked-toy-breeze-gel-3-3-oz | Wicked Toy Breeze Gel 3.3 Oz | 713079902242 |
-| silicone-rechargeable-vibrating-plug-urethral-sounding-black | /shop/product/silicone-rechargeable-vibrating-plug-urethral-sounding-black | Silicone Rechargeable Vibrating Plug Ure... | 8714273533128 |
-| boneyard-piss-holer-w-interchangeable-vibrating-bullet | /shop/product/boneyard-piss-holer-w-interchangeable-vibrating-bullet | Boneyard Piss Holer W/ Interchangeable V... | 666987004082 |
-| urethral-sounding-plug-set-black | /shop/product/urethral-sounding-plug-set-black | Urethral Sounding Plug Set Black | 8714273548030 |
-| master-series-urethral-sound-trainer-set-silicone | /shop/product/master-series-urethral-sound-trainer-set-silicone | Master Series Urethral Sound Trainer Set... | 848518022394 |
-| master-series-hardware-nail-screw-silicone-urethral-sounds | /shop/product/master-series-hardware-nail-screw-silicone-urethral-sounds | Master Series Hardware Nail & Screw Sili... | 848518031303 |
-| master-series-dockers-silicone-urethral-sound-set | /shop/product/master-series-dockers-silicone-urethral-sound-set | Master Series Dockers Silicone Urethral ... | 848518027368 |
-| mancage-model-16-chastity-4-5-in-cage-w-plug | /shop/product/mancage-model-16-chastity-4-5-in-cage-w-plug | Mancage Model 16 Chastity 4.5 in Cage W/... | 8714273929228 |
-| gun-oil-h2o-gel-3-3-oz-tube | /shop/product/gun-oil-h2o-gel-3-3-oz-tube | Gun Oil H2o Gel 3.3 Oz Tube | 892172001202 |
-| silicone-anal-trainer-kit | /shop/product/silicone-anal-trainer-kit | Silicone Anal Trainer Kit | 716770088659 |
-| silicone-curve-anal-kit | /shop/product/silicone-curve-anal-kit | Silicone Curve Anal Kit | 716770100757 |
-| strap-u-triple-peg-28x-dildo-set-silicone-w-remote | /shop/product/strap-u-triple-peg-28x-dildo-set-silicone-w-remote | Strap U Triple Peg 28x Dildo Set Silicon... | 848518045751 |
-| bang-backdoor-adventure-3pc-butt-plug-bullet-blindfold-kit-black | /shop/product/bang-backdoor-adventure-3pc-butt-plug-bullet-blindfold-kit-black | Bang! Backdoor Adventure 3pc Butt Plug B... | 848518039934 |
-| luxe-bling-plugs-training-kit-black-w-rainbow-gems | /shop/product/luxe-bling-plugs-training-kit-black-w-rainbow-gems | Luxe Bling Plugs Training Kit Black W/ R... | 819835020691 |
-| intimate-earth-adventure-anal-serum-for-women | /shop/product/intimate-earth-adventure-anal-serum-for-women | Intimate Earth Adventure Anal Serum for ... | 854397006042 |
-| butt-eze-anal-desensitizer-w-hemp-seed-oil-2-oz-bottle | /shop/product/butt-eze-anal-desensitizer-w-hemp-seed-oil-2-oz-bottle | Butt Eze Anal Desensitizer W/ Hemp Seed ... | 679359001039 |
-| king-cock-plus-6-5-in-thrusting-cock-w-balls | /shop/product/king-cock-plus-6-5-in-thrusting-cock-w-balls | King Cock Plus 6.5 in Thrusting Cock W/ ... | 603912765786 |
-| cloud-9-comfort-cock-rings-w-flat-back-5-pk-pro-sensual-line | /shop/product/cloud-9-comfort-cock-rings-w-flat-back-5-pk-pro-sensual-line | Cloud 9 Comfort Cock Rings W/flat Back 5... | 850013016860 |
-| master-series-stainless-steel-beaded-cock-ring-1-75in | /shop/product/master-series-stainless-steel-beaded-cock-ring-1-75in | Master Series Stainless Steel Beaded Coc... | 848518005656 |
-| shane-diesel-dildo | /shop/product/shane-diesel-dildo | Shane Diesel Dildo | VAR-NSN-SHANE-DIESEL-DILDO |
-| enhance-travel-pump-system | /shop/product/enhance-travel-pump-system | Enhance Travel Pump System | 716770058607 |
-| renegade-powerhouse-pump-black | /shop/product/renegade-powerhouse-pump-black | Renegade Powerhouse Pump Black | 657447094385 |
-| precision-pump-with-erection-enhancer | /shop/product/precision-pump-with-erection-enhancer | Precision Pump with Erection Enhancer | 716770018137 |
-| expandable-butt-plug | /shop/product/expandable-butt-plug | Expandable Butt Plug | VAR-SE-EXPANDABLE-BUTT-PLUG |
-| performance-vs5-silicone-3-snap-cock-strap-black | /shop/product/performance-vs5-silicone-3-snap-cock-strap-black | Performance Vs5 Silicone 3 Snap Cock Str... | 850002870121 |
-| temptasia-reina-teal-g-spot-dildo | /shop/product/temptasia-reina-teal-g-spot-dildo | Temptasia Reina Teal G Spot Dildo | 819835021810 |
-| cloud-9-health-wellness-wand-kit-9-function-flexible-head-purple | /shop/product/cloud-9-health-wellness-wand-kit-9-function-flexible-head-purple | Cloud 9 Health & Wellness Wand Kit 9 Fun... | 685239852950 |
-| master-series-anal-desensitizing-lube-4-25-oz | /shop/product/master-series-anal-desensitizing-lube-4-25-oz | Master Series Anal Desensitizing Lube 4.... | 848518001313 |
-| pdx-elite-tip-teazer-power-pump | /shop/product/pdx-elite-tip-teazer-power-pump | Pdx Elite Tip Teazer Power Pump | 603912744828 |
-| pdx-elite-suck-n-pump-stroker | /shop/product/pdx-elite-suck-n-pump-stroker | Pdx Elite Suck N Pump Stroker | 603912751505 |
-| classix-pleasure-pump-pump | /shop/product/classix-pleasure-pump-pump | Classix Pleasure Pump Pump | 603912755565 |
-| swiss-navy-masturbation-cream-5-oz | /shop/product/swiss-navy-masturbation-cream-5-oz | Swiss Navy Masturbation Cream 5 Oz | 699439009403 |
-| elbow-grease-hot-cream | /shop/product/elbow-grease-hot-cream | Elbow Grease Hot Cream | VAR-BC-ELBOW-GREASE-HOT-CREAM |
-| temptasia-twist-kit-set-of-3 | /shop/product/temptasia-twist-kit-set-of-3 | Temptasia Twist Kit Set of 3 | 819835022602 |
-| fetish-fantasy-big-daddy-hollow-10in-strap-on-black | /shop/product/fetish-fantasy-big-daddy-hollow-10in-strap-on-black | Fetish Fantasy Big Daddy Hollow 10in Str... | 603912264586 |
-| erection-assistant-hollow-strap-on | /shop/product/erection-assistant-hollow-strap-on | Erection Assistant Hollow Strap-on | VAR-NW-ERECTION-ASSISTANT-HOLLOW-STRA |
-| luxe-little-thumper-black-anal-plug | /shop/product/luxe-little-thumper-black-anal-plug | Luxe Little Thumper Black Anal Plug | 702730697764 |
-| dr-joel-prostate-locator | /shop/product/dr-joel-prostate-locator | Dr Joel Prostate Locator | VAR-SE-DR-JOEL-PROSTATE-LOCATOR |
-| glas-8-ribbed-g-spot-glass-dildo | /shop/product/glas-8-ribbed-g-spot-glass-dildo | Glas 8 Ribbed G Spot Glass Dildo " | 4890808219232 |
-| silicone-pegging-probe | /shop/product/silicone-pegging-probe | Silicone Pegging Probe | 716770090201 |
-| addiction-100-silicone-ben-7-black | /shop/product/addiction-100-silicone-ben-7-black | Addiction 100% Silicone Ben 7 Black " | 677613873118 |
-
----
-
-## Matched Shortcodes - Ready to Update
-
-These shortcodes have been matched to existing products:
-
-| Old Product ID | Old Shortcode | New Shortcode | Product Name | SKU |
-|----------------|---------------|---------------|--------------|-----|
-| 194009 | [add_to_cart id="194009"] | [add_to_cart sku="716770078155"] | Booty Call Double Dare - Pink | 716770078155 |
-| 193956 | [add_to_cart id="193956"] | [add_to_cart sku="716770112873"] | Party Boy Silicone Studs - 6 i... | 716770112873 |
-| 193951 | [add_to_cart id="193951"] | [add_to_cart sku="716770108609"] | Silicone Studs - Purple | 716770108609 |
-| 193524 | [add_to_cart id="193524"] | [add_to_cart sku="813356000071"] | Lifestyles - 40 bowl | 813356000071 |
-| 192987 | [add_to_cart id="192987"] | [add_to_cart sku="VAR-PIPEDR-REAL-FEEL-DELUXE-7"] | Real Feel Deluxe #7 | VAR-PIPEDR-REAL-FEEL-DELUXE-7 |
-| 193888 | [add_to_cart id="193888"] | [add_to_cart sku="716770065100"] | First Time Love Beads - Purple | 716770065100 |
-| 193802 | [add_to_cart id="193802"] | [add_to_cart sku="VAR-SCR-SCREAMING-O-VIBRATING-RING"] | Screaming O Vibrating Ring | VAR-SCR-SCREAMING-O-VIBRATING-RING |
-| 192820 | [add_to_cart id="192820"] | [add_to_cart sku="840215119360"] | Ballsling Ball Split Sling - C... | 840215119360 |
-| 194000 | [add_to_cart id="194000"] | [add_to_cart sku="716770106773"] |  | 716770106773 |
-| 191151 | [add_to_cart id="191151"] | [add_to_cart sku="845830084468"] | Peak Performance Sport Jock Gr... | 845830084468 |
-| 193252 | [add_to_cart id="193252"] | [add_to_cart sku="603912774955"] | King Cock Clear W/ Balls - Cle... | 603912774955 |
-| 193999 | [add_to_cart id="193999"] | [add_to_cart sku="VAR-SE-TWISTED-LOVE-TWISTED-PROBE"] | Twisted Love Twisted Probe | VAR-SE-TWISTED-LOVE-TWISTED-PROBE |
-| 194005 | [add_to_cart id="194005"] | [add_to_cart sku="VAR-SE-BOOTY-CALL-BOOTY-SHAKER"] | Booty Call Booty Shaker | VAR-SE-BOOTY-CALL-BOOTY-SHAKER |
-| 191793 | [add_to_cart id="191793"] | [add_to_cart sku="VAR-NO-50K-PURE"] | 50k Pure | VAR-NO-50K-PURE |
-| 191831 | [add_to_cart id="191831"] | [add_to_cart sku="VAR-NC-SENSUELLE-NUBII-TULLA-BULLET"] | Sensuelle Nubii Tulla Bullet | VAR-NC-SENSUELLE-NUBII-TULLA-BULLET |
-| 193960 | [add_to_cart id="193960"] | [add_to_cart sku="716770104267"] |  | 716770104267 |
-| 193967 | [add_to_cart id="193967"] | [add_to_cart sku="716770098634"] |  | 716770098634 |
-| 193997 | [add_to_cart id="193997"] | [add_to_cart sku="716770094087"] |  | 716770094087 |
-| 193980 | [add_to_cart id="193980"] | [add_to_cart sku="VAR-SE-REFLECTIVE-GEL-VEINED-DOUBLE-D"] | Reflective Gel Veined Double D... | VAR-SE-REFLECTIVE-GEL-VEINED-DOUBLE-D |
-| 192828 | [add_to_cart id="192828"] | [add_to_cart sku="840215120427"] |  | 840215120427 |
-| 193939 | [add_to_cart id="193939"] | [add_to_cart sku="716770092151"] | Lock N Play Remote Panty Tease... | 716770092151 |
-| 193527 | [add_to_cart id="193527"] | [add_to_cart sku="070907202128"] | Lifestyles Ultra Sensitive - 1... | 070907202128 |
-| 192807 | [add_to_cart id="192807"] | [add_to_cart sku="VAR-OX-360-DUAL-USE-COCKRING"] | 360 Dual Use Cockring | VAR-OX-360-DUAL-USE-COCKRING |
-| 193095 | [add_to_cart id="193095"] | [add_to_cart sku="603912361049"] |  | 603912361049 |
-| 192999 | [add_to_cart id="192999"] | [add_to_cart sku="603912750553"] |  | 603912750553 |
-| 193634 | [add_to_cart id="193634"] | [add_to_cart sku="762983302129"] |  | 762983302129 |
-| 193859 | [add_to_cart id="193859"] | [add_to_cart sku="VAR-SE-FIRST-TIME-TRAVEL-TEASER-KIT"] | First Time Travel Teaser Kit | VAR-SE-FIRST-TIME-TRAVEL-TEASER-KIT |
-| 193950 | [add_to_cart id="193950"] | [add_to_cart sku="716770108593"] |  | 716770108593 |
-| 193966 | [add_to_cart id="193966"] | [add_to_cart sku="716770098610"] | Size - Ivory | 716770098610 |
-| 193973 | [add_to_cart id="193973"] | [add_to_cart sku="716770098696"] | Size - Clear | 716770098696 |
-| 193935 | [add_to_cart id="193935"] | [add_to_cart sku="716770054944"] | High Intensity Bullet - Black | 716770054944 |
-| 193987 | [add_to_cart id="193987"] | [add_to_cart sku="VAR-SE-ULTIMATE-DOUCHE"] | Ultimate Douche | VAR-SE-ULTIMATE-DOUCHE |
-| 192032 | [add_to_cart id="192032"] | [add_to_cart sku="641684154315"] | Barbae Female Enhancement - 24... | 641684154315 |
-| 192668 | [add_to_cart id="192668"] | [add_to_cart sku="VAR-NW-CLIT-TASTIC-TULIP-FINGER-MASSA"] | Clit-tastic Tulip Finger Massa... | VAR-NW-CLIT-TASTIC-TULIP-FINGER-MASSA |
-| 194063 | [add_to_cart id="194063"] | [add_to_cart sku="716770111937"] |  | 716770111937 |
-| 194205 | [add_to_cart id="194205"] | [add_to_cart sku="716770069948"] |  | 716770069948 |
-| 193941 | [add_to_cart id="193941"] | [add_to_cart sku="716770088338"] | Lock N Play Remote Panty Tease... | 716770088338 |
-| 194011 | [add_to_cart id="194011"] | [add_to_cart sku="VAR-SE-BOOTY-CALL-BOOTY-VIBRO-KIT"] | Booty Call Booty Vibro Kit | VAR-SE-BOOTY-CALL-BOOTY-VIBRO-KIT |
-| 192819 | [add_to_cart id="192819"] | [add_to_cart sku="840215119353"] |  | 840215119353 |
-| 194061 | [add_to_cart id="194061"] | [add_to_cart sku="VAR-SE-JEWEL-LARGE-AMETHYST-PLUG"] | Jewel Large Amethyst Plug | VAR-SE-JEWEL-LARGE-AMETHYST-PLUG |
-| 194003 | [add_to_cart id="194003"] | [add_to_cart sku="716770089687"] | Booty Call Booty Starter - Bla... | 716770089687 |
-| 193998 | [add_to_cart id="193998"] | [add_to_cart sku="716770092519"] |  | 716770092519 |
-| 192599 | [add_to_cart id="192599"] | [add_to_cart sku="782631289121"] | Natural Realskin Hot Cock Curv... | 782631289121 |
-| 193871 | [add_to_cart id="193871"] | [add_to_cart sku="VAR-SE-FIRST-TIME-G-SPOT-TULIP"] | First Time G Spot Tulip | VAR-SE-FIRST-TIME-G-SPOT-TULIP |
+### Remaining Issues
+- **1828** URLs reference discontinued products
+- **582** shortcodes reference discontinued products
 
 ---
 
@@ -567,10 +438,7 @@ These product IDs do not exist in the current database:
 | 187393 | Post IDs: 143, 189, 265 |
 | 187372 | Post IDs: 143, 265 |
 | 56832 | Post IDs: 144, 179, 231 (+5 more) |
-| 166194 | Post IDs: 144, 259, 264 (+1 more) |
-| 235753 | Post IDs: 147, 171, 437579 |
 | 235718 | Post IDs: 147, 171 |
-| 180805 | Post IDs: 147, 171 |
 | 106557 | Post IDs: 149, 178, 437362 |
 | 237268 | Post IDs: 152 |
 | 296703 | Post IDs: 152 |
@@ -584,24 +452,18 @@ These product IDs do not exist in the current database:
 | 132705 | Post IDs: 160 |
 | 293316 | Post IDs: 160, 263 |
 | 377084 | Post IDs: 160 |
-| 377094 | Post IDs: 160 |
-| 267857 | Post IDs: 160 |
 | 377106 | Post IDs: 160 |
 | 376612 | Post IDs: 160, 206 |
 | 377139 | Post IDs: 160 |
-| 377682 | Post IDs: 161 |
 | 377687 | Post IDs: 161 |
 | 377717 | Post IDs: 161 |
-| 377663 | Post IDs: 161 |
 | 295856 | Post IDs: 162, 271, 437126 |
 | 377842 | Post IDs: 164, 276 |
 | 292821 | Post IDs: 164 |
 | 377891 | Post IDs: 164 |
 | 377892 | Post IDs: 164, 167 |
-| 165159 | Post IDs: 164 |
 | 377858 | Post IDs: 164 |
 | 377873 | Post IDs: 164 |
-| 373182 | Post IDs: 164, 437327 |
 | 293571 | Post IDs: 164 |
 | 377868 | Post IDs: 164 |
 | 378556 | Post IDs: 165 |
@@ -627,27 +489,20 @@ These product IDs do not exist in the current database:
 | 295509 | Post IDs: 169 |
 | 140899 | Post IDs: 169, 227, 260 (+1 more) |
 | 312993 | Post IDs: 169 |
-| 378966 | Post IDs: 169, 279 |
-| 376020 | Post IDs: 169, 435242 |
 | 291355 | Post IDs: 169 |
 | 164304 | Post IDs: 169, 186, 437193 |
 | 291526 | Post IDs: 169, 437441 |
-| 379079 | Post IDs: 170 |
-| 379080 | Post IDs: 170 |
 | 379089 | Post IDs: 170, 265 |
 | 169387 | Post IDs: 170 |
 | 379058 | Post IDs: 170 |
 | 169383 | Post IDs: 170, 265 |
 | 293771 | Post IDs: 170, 265 |
 | 379137 | Post IDs: 170 |
-| 379127 | Post IDs: 170 |
 | 383518 | Post IDs: 171 |
 | 383496 | Post IDs: 171, 437581 |
 | 383488 | Post IDs: 171 |
 | 383548 | Post IDs: 171 |
 | 383506 | Post IDs: 171 |
-| 379433 | Post IDs: 173 |
-| 162010 | Post IDs: 173 |
 | 292111 | Post IDs: 173, 282 |
 | 379410 | Post IDs: 173, 282 |
 | 291996 | Post IDs: 173 |
@@ -673,7 +528,6 @@ These product IDs do not exist in the current database:
 | 140126 | Post IDs: 184, 272 |
 | 6451 | Post IDs: 184, 231 |
 | 433401 | Post IDs: 184, 292 |
-| 180276 | Post IDs: 186 |
 | 435562 | Post IDs: 186 |
 | 380195 | Post IDs: 186, 383052 |
 | 435552 | Post IDs: 186 |
@@ -703,9 +557,7 @@ These product IDs do not exist in the current database:
 | 376491 | Post IDs: 206 |
 | 376494 | Post IDs: 206 |
 | 375318 | Post IDs: 207 |
-| 243297 | Post IDs: 207 |
 | 372658 | Post IDs: 207, 230 |
-| 243295 | Post IDs: 209 |
 | 231367 | Post IDs: 210 |
 | 56060 | Post IDs: 216, 268, 296 |
 | 164179 | Post IDs: 223, 231 |
@@ -715,11 +567,8 @@ These product IDs do not exist in the current database:
 | 288248 | Post IDs: 223 |
 | 163925 | Post IDs: 224 |
 | 133691 | Post IDs: 225 |
-| 134241 | Post IDs: 225, 437336 |
 | 296277 | Post IDs: 225 |
-| 236733 | Post IDs: 225 |
 | 236773 | Post IDs: 225 |
-| 320148 | Post IDs: 225 |
 | 251290 | Post IDs: 225, 382828, 433832 |
 | 131088 | Post IDs: 225 |
 | 237013 | Post IDs: 225 |
@@ -754,7 +603,6 @@ These product IDs do not exist in the current database:
 | 146277 | Post IDs: 233 |
 | 434679 | Post IDs: 242, 248 |
 | 376065 | Post IDs: 244 |
-| 376073 | Post IDs: 244 |
 | 376086 | Post IDs: 244 |
 | 376036 | Post IDs: 244 |
 | 376043 | Post IDs: 244 |
@@ -775,14 +623,12 @@ These product IDs do not exist in the current database:
 | 374052 | Post IDs: 247 |
 | 298873 | Post IDs: 247 |
 | 302368 | Post IDs: 247 |
-| 440860 | Post IDs: 248 |
 | 434681 | Post IDs: 248 |
 | 383740 | Post IDs: 248 |
 | 383741 | Post IDs: 248 |
 | 432400 | Post IDs: 248 |
 | 440873 | Post IDs: 248 |
 | 380219 | Post IDs: 249, 435537 |
-| 434389 | Post IDs: 253 |
 | 434554 | Post IDs: 253 |
 | 402915 | Post IDs: 253 |
 | 434365 | Post IDs: 253 |
@@ -790,8 +636,6 @@ These product IDs do not exist in the current database:
 | 376543 | Post IDs: 254, 384072 |
 | 423883 | Post IDs: 254 |
 | 436014 | Post IDs: 254 |
-| 439255 | Post IDs: 254 |
-| 439254 | Post IDs: 254 |
 | 439283 | Post IDs: 254 |
 | 439325 | Post IDs: 254 |
 | 424143 | Post IDs: 254 |
@@ -801,31 +645,18 @@ These product IDs do not exist in the current database:
 | 424072 | Post IDs: 254 |
 | 439440 | Post IDs: 255 |
 | 439447 | Post IDs: 255 |
-| 439463 | Post IDs: 255 |
 | 439468 | Post IDs: 255 |
-| 439503 | Post IDs: 255 |
 | 439452 | Post IDs: 255 |
-| 439455 | Post IDs: 255 |
-| 439473 | Post IDs: 255 |
 | 439478 | Post IDs: 255 |
-| 439485 | Post IDs: 255 |
-| 439515 | Post IDs: 255 |
 | 439509 | Post IDs: 255 |
-| 439556 | Post IDs: 255 |
 | 424914 | Post IDs: 255 |
 | 439545 | Post IDs: 255 |
 | 439623 | Post IDs: 255 |
 | 439608 | Post IDs: 255 |
-| 439698 | Post IDs: 255 |
 | 382940 | Post IDs: 255 |
-| 439773 | Post IDs: 256 |
-| 439761 | Post IDs: 256 |
 | 439785 | Post IDs: 256 |
 | 439744 | Post IDs: 256 |
 | 291289 | Post IDs: 256 |
-| 439751 | Post IDs: 256 |
-| 439741 | Post IDs: 256 |
-| 439794 | Post IDs: 256 |
 | 403485 | Post IDs: 256 |
 | 439873 | Post IDs: 256 |
 | 439879 | Post IDs: 256 |
@@ -833,19 +664,14 @@ These product IDs do not exist in the current database:
 | 439735 | Post IDs: 256 |
 | 439763 | Post IDs: 256 |
 | 268017 | Post IDs: 257, 295 |
-| 439948 | Post IDs: 257 |
-| 440231 | Post IDs: 257 |
 | 380134 | Post IDs: 257, 288, 293 (+1 more) |
 | 439966 | Post IDs: 257 |
-| 440572 | Post IDs: 258 |
 | 169319 | Post IDs: 258 |
-| 435079 | Post IDs: 259 |
 | 410075 | Post IDs: 259 |
 | 130176 | Post IDs: 259, 269, 270 (+1 more) |
 | 216077 | Post IDs: 259, 269, 270 (+1 more) |
 | 434257 | Post IDs: 259 |
 | 440618 | Post IDs: 259, 440651 |
-| 434232 | Post IDs: 259 |
 | 380094 | Post IDs: 259, 277 |
 | 380097 | Post IDs: 259, 269, 277 |
 | 420959 | Post IDs: 259 |
@@ -858,15 +684,12 @@ These product IDs do not exist in the current database:
 | 293561 | Post IDs: 260 |
 | 293566 | Post IDs: 260 |
 | 438165 | Post IDs: 260 |
-| 440698 | Post IDs: 260 |
 | 372852 | Post IDs: 262 |
 | 293271 | Post IDs: 263, 287 |
 | 433154 | Post IDs: 263 |
 | 416806 | Post IDs: 263 |
 | 403626 | Post IDs: 263 |
 | 416792 | Post IDs: 263 |
-| 236728 | Post IDs: 263 |
-| 320142 | Post IDs: 263 |
 | 433199 | Post IDs: 263 |
 | 245008 | Post IDs: 267 |
 | 178423 | Post IDs: 269, 270 |
@@ -878,25 +701,19 @@ These product IDs do not exist in the current database:
 | 221151 | Post IDs: 273, 274, 281 (+1 more) |
 | 167034 | Post IDs: 274, 284 |
 | 244654 | Post IDs: 275, 289 |
-| 176216 | Post IDs: 275, 289 |
-| 375415 | Post IDs: 275, 289 |
 | 56638 | Post IDs: 275, 289 |
-| 176356 | Post IDs: 275 |
 | 382681 | Post IDs: 276, 437131 |
 | 149520 | Post IDs: 276 |
-| 173434 | Post IDs: 276 |
 | 235804 | Post IDs: 276 |
 | 380105 | Post IDs: 277 |
-| 372920 | Post IDs: 277, 438068 |
 | 373460 | Post IDs: 279 |
-| 373303 | Post IDs: 279, 384169 |
 | 251108 | Post IDs: 279 |
 | 373452 | Post IDs: 279, 437625 |
-| 306215 | Post IDs: 279 |
 | 305986 | Post IDs: 279 |
 | 373471 | Post IDs: 279 |
 | 307556 | Post IDs: 279 |
 | 376891 | Post IDs: 279 |
+| 378966 | Post IDs: 279 |
 | 373465 | Post IDs: 279 |
 | 434059 | Post IDs: 281 |
 | 434076 | Post IDs: 281 |
@@ -921,25 +738,20 @@ These product IDs do not exist in the current database:
 | 144766 | Post IDs: 287, 382817 |
 | 160857 | Post IDs: 287, 291, 437149 (+1 more) |
 | 383243 | Post IDs: 289, 437070 |
-| 168020 | Post IDs: 289 |
 | 383281 | Post IDs: 289 |
-| 168098 | Post IDs: 289 |
-| 383298 | Post IDs: 289 |
 | 375403 | Post IDs: 289 |
 | 383329 | Post IDs: 289 |
 | 375616 | Post IDs: 291 |
 | 433380 | Post IDs: 292 |
-| 433455 | Post IDs: 292 |
-| 433425 | Post IDs: 292 |
 | 433433 | Post IDs: 292 |
 | 433441 | Post IDs: 292 |
 | 380135 | Post IDs: 293, 440132 |
 | 164070 | Post IDs: 294 |
 | 440172 | Post IDs: 296 |
 | 237858 | Post IDs: 382813 |
-| 384109 | Post IDs: 384165 |
 | 288122 | Post IDs: 384177 |
 | 385956 | Post IDs: 386017 |
+| 376020 | Post IDs: 435242 |
 | 434164 | Post IDs: 435433 |
 | 291349 | Post IDs: 435480 |
 | 415563 | Post IDs: 435498 |
@@ -948,8 +760,6 @@ These product IDs do not exist in the current database:
 | 376211 | Post IDs: 435702 |
 | 372514 | Post IDs: 437068 |
 | 381784 | Post IDs: 437095 |
-| 375297 | Post IDs: 437100 |
-| 434647 | Post IDs: 437102 |
 | 434680 | Post IDs: 437112 |
 | 385289 | Post IDs: 437118 |
 | 380815 | Post IDs: 437122 |
@@ -967,11 +777,7 @@ These product IDs do not exist in the current database:
 | 434441 | Post IDs: 437279 |
 | 437304 | Post IDs: 437319 |
 | 131481 | Post IDs: 437337 |
-| 432694 | Post IDs: 437340 |
-| 433274 | Post IDs: 437341 |
-| 433277 | Post IDs: 437341 |
 | 382692 | Post IDs: 437439 |
-| 382753 | Post IDs: 437440 |
 | 379845 | Post IDs: 437627 |
 | 379869 | Post IDs: 437632 |
 | 237293 | Post IDs: 437633 |
@@ -984,20 +790,21 @@ These product IDs do not exist in the current database:
 | 403238 | Post IDs: 440131 |
 | 440152 | Post IDs: 440153 |
 | 440155 | Post IDs: 440304 |
-| 440365 | Post IDs: 440370 |
-| 440376 | Post IDs: 440390, 442232 |
-| 440524 | Post IDs: 440999 |
 | 382191 | Post IDs: 442132 |
 | 440192 | Post IDs: 442133 |
 | 380071 | Post IDs: 442134 |
 | 380072 | Post IDs: 442134 |
 | 440472 | Post IDs: 442171 |
-| 440602 | Post IDs: 442226 |
 
 ---
 
 ## Next Steps
 
-1. **For matched items:** Run `bun scripts/update-product-links.ts --execute` to apply changes
-2. **For unmatched URLs:** Either find replacement products or remove the broken links
-3. **For unmatched shortcodes:** Either find replacement products or convert to text/remove
+1. **For unmatched URLs:** Either find replacement products or remove the broken links
+2. **For unmatched shortcodes:** Either find replacement products or convert to text/remove
+
+### Options for Unmatched Items
+
+- **Remove:** Delete the link/shortcode from the post content
+- **Replace:** Find a similar product and update the link manually
+- **Archive:** If the entire post is about discontinued products, consider unpublishing
