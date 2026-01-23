@@ -190,4 +190,8 @@ Account
 
 Test and fix login/signup flows before launch.
 Remove all email mentions of @maleq.com before going live. Direct users to contact us page instead.
-Test contast us form functionality.
+Test contact us form functionality.
+Add auto-discount functionality for threshold-based discounts (e.g. spend $100, get $10 off).
+Impliment and test blog category pages and tags pages.
+Do full SEO audit before launch.
+Fix product specs styling not showing on some products.
