@@ -572,19 +572,32 @@ async function main() {
   fuzzyResults.sort((a, b) => b.matches[0].score - a.matches[0].score);
 
   let fuzzyMatchCount = fuzzyResults.length;
+  let autoApprovedCount = 0;
   for (const { slug, matches } of fuzzyResults) {
     lines.push(`### \`${slug}\``);
     lines.push('');
+    let hasAutoApproved = false;
     for (const match of matches) {
       const name = match.name.length > 50
         ? match.name.substring(0, 50) + '...'
         : match.name;
       const scorePercent = Math.round(match.score * 100);
-      // Format: - [ ] old-slug -> new-slug (Product Name) [SKU] {score%}
-      lines.push(`- [ ] \`${slug}\` → \`${match.slug}\` — ${name} (${scorePercent}%)`);
+      // Auto-approve matches over 90% (only the first/best one per slug)
+      const isAutoApproved = scorePercent >= 90 && !hasAutoApproved;
+      const checkbox = isAutoApproved ? '[x]' : '[ ]';
+      if (isAutoApproved) {
+        hasAutoApproved = true;
+        autoApprovedCount++;
+      }
+      // Format: - [ ] old-slug -> new-slug (Product Name) {score%}
+      lines.push(`- ${checkbox} \`${slug}\` → \`${match.slug}\` — ${name} (${scorePercent}%)`);
     }
     lines.push('- [ ] **REMOVE** - Delete all links to `' + slug + '`');
     lines.push('');
+  }
+
+  if (autoApprovedCount > 0) {
+    console.log(`Auto-approved ${autoApprovedCount} matches with score >= 90%`);
   }
 
   if (fuzzyMatchCount === 0) {
