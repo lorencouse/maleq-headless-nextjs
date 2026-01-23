@@ -107,8 +107,8 @@ Account
 
 ## WordPress & Data
 
-- [ ] `[HIGH]` Update block product URLs to use new domain paths
-- [ ] `[HIGH]` Change WP default link behavior to assign correct paths
+- [x] `[HIGH]` Update block product URLs to use new domain paths (Completed 2026-01-23 - migration scripts)
+- [x] `[HIGH]` Change WP default link behavior to assign correct paths (Completed 2026-01-23 - headless-url-rewrite.php)
 - [ ] `[MED]` Review and update reusable blocks with correct URLs
 
 ---
@@ -207,3 +207,5 @@ Update FAQs page with real content.
 Update Shipping Tiers
 Test checkout with real payment methods.
 Add additional datafeeds from STC
+Correct variation image not loading on initial product page load.
+Manually add missing product 'kits' before deploy.
