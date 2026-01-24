@@ -7,7 +7,7 @@ import {
   GET_TAG_BY_SLUG,
   GET_ALL_TAGS,
 } from '@/lib/queries/posts';
-import BlogCard from '@/components/blog/BlogCard';
+import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { Post } from '@/lib/types/wordpress';
 
 interface BlogTagPageProps {
@@ -80,13 +80,16 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
     }),
     getClient().query({
       query: GET_POSTS_BY_TAG,
-      variables: { tag: slug, first: 24 },
+      variables: { tag: slug, first: 12 },
     }),
   ]);
 
   const tag: Tag | null = tagResult.data?.tag;
   const posts: Post[] = postsResult.data?.posts?.nodes || [];
-  const pageInfo = postsResult.data?.posts?.pageInfo;
+  const pageInfo = postsResult.data?.posts?.pageInfo || {
+    hasNextPage: false,
+    endCursor: null,
+  };
 
   if (!tag) {
     notFound();
@@ -125,61 +128,19 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
 
         {/* Post count */}
         <p className="text-sm text-muted-foreground">
-          {posts.length} {posts.length === 1 ? 'article' : 'articles'} tagged with "{tag.name}"
+          {tag.count} {tag.count === 1 ? 'article' : 'articles'} tagged with "{tag.name}"
         </p>
       </div>
 
-      {/* Posts Grid */}
-      {posts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {posts.map((post) => (
-            <BlogCard key={post.id} post={post} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <svg
-            className="w-16 h-16 mx-auto mb-4 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-            />
-          </svg>
-          <h2 className="text-xl font-semibold text-foreground mb-2">No articles yet</h2>
-          <p className="text-muted-foreground mb-6">
-            There are no articles with this tag yet. Check back soon!
-          </p>
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
-          >
-            Browse All Articles
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M14 5l7 7m0 0l-7 7m7-7H3"
-              />
-            </svg>
-          </Link>
-        </div>
-      )}
-
-      {/* Pagination placeholder */}
-      {pageInfo?.hasNextPage && (
-        <div className="mt-12 text-center">
-          <button className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium">
-            Load More Articles
-          </button>
-        </div>
-      )}
+      {/* Posts Grid with Load More */}
+      <BlogPostsGrid
+        initialPosts={posts}
+        initialPageInfo={{
+          hasNextPage: pageInfo.hasNextPage,
+          endCursor: pageInfo.endCursor,
+        }}
+        tagSlug={slug}
+      />
 
       {/* Back to blog */}
       <div className="mt-12 pt-8 border-t border-border">
