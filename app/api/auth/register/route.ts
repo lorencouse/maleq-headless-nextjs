@@ -1,5 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCustomer, getCustomerByEmail } from '@/lib/woocommerce/customers';
+import {
+  errorResponse,
+  validationError,
+  handleApiError,
+} from '@/lib/api/response';
+import {
+  validateRequired,
+  validateEmail,
+  validateLength,
+  hasErrors,
+  combineValidationErrors,
+} from '@/lib/api/validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,36 +19,37 @@ export async function POST(request: NextRequest) {
     const { email, password, firstName, lastName } = body;
 
     // Validate required fields
-    if (!email || !password || !firstName || !lastName) {
-      return NextResponse.json(
-        { error: 'Email, password, first name, and last name are required' },
-        { status: 400 }
-      );
-    }
+    const requiredErrors = validateRequired(body, [
+      'email',
+      'password',
+      'firstName',
+      'lastName',
+    ]);
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: 'Please enter a valid email address' },
-        { status: 400 }
-      );
+    const emailError = validateEmail(email);
+    if (emailError && !requiredErrors.email) {
+      requiredErrors.email = emailError;
     }
 
     // Validate password strength
-    if (password.length < 8) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters long' },
-        { status: 400 }
-      );
+    const passwordError = validateLength(password, 'password', 8);
+    if (passwordError && !requiredErrors.password) {
+      requiredErrors.password = passwordError;
+    }
+
+    const errors = combineValidationErrors(requiredErrors);
+    if (hasErrors(errors)) {
+      return validationError(errors);
     }
 
     // Check if customer already exists
     const existingCustomer = await getCustomerByEmail(email);
     if (existingCustomer) {
-      return NextResponse.json(
-        { error: 'An account with this email already exists' },
-        { status: 409 }
+      return errorResponse(
+        'An account with this email already exists',
+        409,
+        'ACCOUNT_EXISTS'
       );
     }
 
@@ -65,13 +78,6 @@ export async function POST(request: NextRequest) {
       token,
     });
   } catch (error) {
-    console.error('Registration error:', error);
-
-    const message = error instanceof Error ? error.message : 'Registration failed';
-
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Registration failed');
   }
 }

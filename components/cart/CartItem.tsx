@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CartItem as CartItemType } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice, calculateSavings } from '@/lib/utils/cart-helpers';
+import QuantitySelector from '@/components/ui/QuantitySelector';
 
 interface CartItemProps {
   item: CartItemType;
@@ -20,24 +21,11 @@ export default function CartItem({ item }: CartItemProps) {
   const savings = calculateSavings(item.regularPrice, item.price);
   const hasSavings = savings > 0;
 
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value) || 1;
+  const handleQuantityChange = (newQuantity: number) => {
     if (newQuantity >= 1 && newQuantity <= item.maxQuantity) {
       setIsUpdating(true);
       updateQuantity(item.id, newQuantity);
       setIsUpdating(false);
-    }
-  };
-
-  const handleIncrement = () => {
-    if (item.quantity < item.maxQuantity) {
-      updateQuantity(item.id, item.quantity + 1);
-    }
-  };
-
-  const handleDecrement = () => {
-    if (item.quantity > 1) {
-      updateQuantity(item.id, item.quantity - 1);
     }
   };
 
@@ -130,37 +118,14 @@ export default function CartItem({ item }: CartItemProps) {
         {/* Quantity & Actions */}
         <div className="flex sm:flex-col items-center sm:items-end gap-4 sm:gap-2">
           {/* Quantity Selector */}
-          <div className="flex items-center border border-border rounded-lg">
-            <button
-              onClick={handleDecrement}
-              disabled={item.quantity <= 1 || isUpdating}
-              className="px-3 py-2 text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Decrease quantity"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-              </svg>
-            </button>
-            <input
-              type="number"
-              min="1"
-              max={item.maxQuantity}
-              value={item.quantity}
-              onChange={handleQuantityChange}
-              className="w-16 text-center py-2 bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              aria-label="Quantity"
-            />
-            <button
-              onClick={handleIncrement}
-              disabled={item.quantity >= item.maxQuantity || isUpdating}
-              className="px-3 py-2 text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Increase quantity"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
+          <QuantitySelector
+            quantity={item.quantity}
+            min={1}
+            max={item.maxQuantity}
+            disabled={isUpdating}
+            onQuantityChange={handleQuantityChange}
+            showInput
+          />
 
           {/* Line Subtotal */}
           <div className="text-right">

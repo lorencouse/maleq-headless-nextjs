@@ -2,13 +2,14 @@
  * Shopping Cart Store
  *
  * Global state management for shopping cart using Zustand
- * Includes localStorage persistence and automatic total calculations
+ * Uses persist middleware for automatic localStorage persistence
  */
 
 'use client';
 
 import { create } from 'zustand';
-import { CartStore, CartItem, AddToCartParams } from '../types/cart';
+import { persist } from 'zustand/middleware';
+import { CartStore, CartItem, AddToCartParams, CartValidationResult, CartValidationError } from '../types/cart';
 import {
   generateCartItemId,
   calculateLineSubtotal,
@@ -17,9 +18,6 @@ import {
   calculateCartTotal,
   validateQuantity,
   mergeCartItem,
-  persistCart,
-  loadCart,
-  clearPersistedCart,
   createEmptyCart,
   isSameProduct,
 } from '../utils/cart-helpers';
@@ -27,13 +25,15 @@ import {
 /**
  * Cart Store
  *
- * Manages shopping cart state with persistence
+ * Manages shopping cart state with automatic persistence via Zustand middleware
  */
-export const useCartStore = create<CartStore>((set, get) => ({
-  // Initial state
-  ...createEmptyCart(),
-  isLoading: false,
-  error: undefined,
+export const useCartStore = create<CartStore>()(
+  persist(
+    (set, get) => ({
+      // Initial state
+      ...createEmptyCart(),
+      isLoading: false,
+      error: undefined,
 
   /**
    * Add item to cart
@@ -167,7 +167,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
       ...createEmptyCart(),
       error: undefined,
     });
-    clearPersistedCart();
+    // Persist middleware automatically handles storage clearing
   },
 
   /**
@@ -246,53 +246,107 @@ export const useCartStore = create<CartStore>((set, get) => ({
       state.discount
     );
 
-    const updatedCart = {
-      ...state,
+    set({
       subtotal,
       itemCount,
       total,
       updatedAt: Date.now(),
-    };
-
-    set(updatedCart);
-
-    // Persist to localStorage
-    persistCart({
-      items: updatedCart.items,
-      subtotal: updatedCart.subtotal,
-      tax: updatedCart.tax,
-      shipping: updatedCart.shipping,
-      discount: updatedCart.discount,
-      total: updatedCart.total,
-      itemCount: updatedCart.itemCount,
-      currency: updatedCart.currency,
-      couponCode: updatedCart.couponCode,
-      updatedAt: updatedCart.updatedAt,
     });
+    // Persist middleware automatically handles storage
+  },
+
+  /**
+   * Validate cart before checkout
+   * Checks for stock availability, quantity limits, and item validity
+   * Call this before proceeding to checkout
+   */
+  validateCart: (): CartValidationResult => {
+    const state = get();
+    const errors: CartValidationError[] = [];
+
+    for (const item of state.items) {
+      // Check if item is out of stock
+      if (!item.inStock) {
+        errors.push({
+          itemId: item.id,
+          type: 'out_of_stock',
+          message: `"${item.name}" is currently out of stock`,
+          currentValue: 0,
+          expectedValue: item.quantity,
+        });
+        continue;
+      }
+
+      // Check if requested quantity exceeds available stock
+      if (item.stockQuantity !== undefined && item.stockQuantity !== null) {
+        if (item.quantity > item.stockQuantity) {
+          errors.push({
+            itemId: item.id,
+            type: 'insufficient_stock',
+            message: `Only ${item.stockQuantity} of "${item.name}" available (you have ${item.quantity} in cart)`,
+            currentValue: item.stockQuantity,
+            expectedValue: item.quantity,
+          });
+        }
+      }
+
+      // Check if quantity exceeds max allowed
+      if (item.maxQuantity && item.quantity > item.maxQuantity) {
+        errors.push({
+          itemId: item.id,
+          type: 'insufficient_stock',
+          message: `Maximum ${item.maxQuantity} of "${item.name}" allowed per order`,
+          currentValue: item.maxQuantity,
+          expectedValue: item.quantity,
+        });
+      }
+
+      // Check for invalid price (should be positive)
+      if (item.price <= 0) {
+        errors.push({
+          itemId: item.id,
+          type: 'product_unavailable',
+          message: `"${item.name}" has an invalid price`,
+          currentValue: item.price,
+          expectedValue: null,
+        });
+      }
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+    };
   },
 
   /**
    * Hydrate cart from localStorage
-   * Call this on app initialization
+   * Note: With persist middleware, hydration is automatic.
+   * This method is kept for backwards compatibility with CartProvider.
    */
   hydrate: () => {
-    if (typeof window === 'undefined') return;
-
-    set({ isLoading: true });
-
-    const savedCart = loadCart();
-
-    if (savedCart) {
-      set({
-        ...savedCart,
-        isLoading: false,
-        error: undefined,
-      });
-    } else {
-      set({ isLoading: false });
-    }
+    // Persist middleware handles hydration automatically
+    // This is a no-op for backwards compatibility
   },
-}));
+    }),
+    {
+      name: 'maleq-cart', // Storage key (kebab-case standardized)
+      partialize: (state) => ({
+        // Only persist cart data, not UI state
+        items: state.items,
+        subtotal: state.subtotal,
+        tax: state.tax,
+        shipping: state.shipping,
+        discount: state.discount,
+        total: state.total,
+        itemCount: state.itemCount,
+        currency: state.currency,
+        couponCode: state.couponCode,
+        updatedAt: state.updatedAt,
+      }),
+    }
+  )
+);
 
 /**
  * Hook to get cart item count (for header badge)

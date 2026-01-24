@@ -1,5 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isValidEmail } from '@/lib/utils/stock-alerts';
+import { NextRequest } from 'next/server';
+import {
+  successResponse,
+  validationError,
+  handleApiError,
+} from '@/lib/api/response';
+import {
+  validateRequired,
+  validateEmail,
+  hasErrors,
+} from '@/lib/api/validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,68 +16,35 @@ export async function POST(request: NextRequest) {
     const { productId, productName, email } = body;
 
     // Validate required fields
-    if (!productId) {
-      return NextResponse.json(
-        { success: false, message: 'Product ID is required' },
-        { status: 400 }
-      );
+    const errors = validateRequired(body, ['productId', 'productName', 'email']);
+
+    // Validate email format
+    const emailError = validateEmail(email);
+    if (emailError && !errors.email) {
+      errors.email = emailError;
     }
 
-    if (!productName) {
-      return NextResponse.json(
-        { success: false, message: 'Product name is required' },
-        { status: 400 }
-      );
+    if (hasErrors(errors)) {
+      return validationError(errors);
     }
 
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: 'Email is required' },
-        { status: 400 }
+    // In production, integrate with your email service or database
+    // For now, log the subscription (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(
+        `Stock alert subscription: ${email} for "${productName}" (${productId}) at ${new Date().toISOString()}`
       );
     }
-
-    if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { success: false, message: 'Please enter a valid email address' },
-        { status: 400 }
-      );
-    }
-
-    // In production, integrate with your email service or database:
-    // - Store subscription in database
-    // - Set up webhook to trigger when product comes back in stock
-    // - Send email notification when stock is restored
-
-    // Example database integration (commented out):
-    // await db.stockAlerts.create({
-    //   data: {
-    //     productId,
-    //     productName,
-    //     email,
-    //     subscribedAt: new Date(),
-    //     notified: false,
-    //   },
-    // });
-
-    // For now, log the subscription
-    console.log(
-      `Stock alert subscription: ${email} for "${productName}" (${productId}) at ${new Date().toISOString()}`
-    );
 
     // Simulate processing delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return NextResponse.json({
-      success: true,
-      message: "You'll be notified when this product is back in stock!",
-    });
-  } catch (error) {
-    console.error('Stock alert subscription error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to subscribe. Please try again.' },
-      { status: 500 }
+    return successResponse(
+      { productId, productName, email },
+      "You'll be notified when this product is back in stock!"
     );
+  } catch (error) {
+    return handleApiError(error, 'Failed to subscribe. Please try again.');
   }
 }
 
@@ -78,29 +54,21 @@ export async function DELETE(request: NextRequest) {
     const productId = searchParams.get('productId');
     const email = searchParams.get('email');
 
-    if (!productId || !email) {
-      return NextResponse.json(
-        { success: false, message: 'Product ID and email are required' },
-        { status: 400 }
-      );
+    const errors: Record<string, string> = {};
+    if (!productId) errors.productId = 'Product ID is required';
+    if (!email) errors.email = 'Email is required';
+
+    if (hasErrors(errors)) {
+      return validationError(errors);
     }
 
     // In production, remove from database
-    // await db.stockAlerts.delete({
-    //   where: { productId_email: { productId, email } },
-    // });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Stock alert unsubscribed: ${email} for product ${productId}`);
+    }
 
-    console.log(`Stock alert unsubscribed: ${email} for product ${productId}`);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Stock alert removed',
-    });
+    return successResponse(null, 'Stock alert removed');
   } catch (error) {
-    console.error('Stock alert unsubscribe error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to unsubscribe. Please try again.' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to unsubscribe. Please try again.');
   }
 }

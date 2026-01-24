@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import { parsePrice } from '@/lib/utils/woocommerce-format';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 
 interface QuickAddButtonProps {
@@ -17,13 +18,6 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
 
   const isVariable = product.type === 'VARIABLE';
   const isOutOfStock = product.stockStatus === 'OUT_OF_STOCK';
-
-  // Helper to convert price string to number
-  const priceToNumber = (price: string | null | undefined): number => {
-    if (!price) return 0;
-    const cleaned = price.replace(/[^0-9.]/g, '');
-    return parseFloat(cleaned) || 0;
-  };
 
   const handleClick = async () => {
     // For variable products, navigate to product page
@@ -40,8 +34,8 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
     setIsAdding(true);
 
     try {
-      const currentPrice = priceToNumber(product.salePrice || product.price || product.regularPrice);
-      const regularPrice = priceToNumber(product.regularPrice);
+      const currentPrice = parsePrice(product.salePrice || product.price || product.regularPrice);
+      const regularPrice = parsePrice(product.regularPrice);
 
       addItem({
         productId: product.databaseId?.toString() || product.id,

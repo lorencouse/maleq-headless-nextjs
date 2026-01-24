@@ -4,14 +4,10 @@ import { useState } from 'react';
 import ProductImageGallery from './ProductImageGallery';
 import ProductPageClient from './ProductPageClient';
 import { EnhancedProduct } from '@/lib/products/product-service';
+import { VariationImage } from '@/lib/types/product';
 
 interface ProductDetailsWrapperProps {
   product: EnhancedProduct;
-}
-
-interface VariationImage {
-  url: string;
-  altText: string;
 }
 
 export default function ProductDetailsWrapper({ product }: ProductDetailsWrapperProps) {

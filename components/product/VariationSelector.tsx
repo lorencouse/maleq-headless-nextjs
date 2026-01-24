@@ -7,6 +7,7 @@ import {
   formatPrice,
   formatVariationName,
 } from '@/lib/utils/woocommerce-format';
+import StockStatusBadge from '@/components/ui/StockStatusBadge';
 
 interface VariationAttribute {
   name: string;
@@ -175,26 +176,12 @@ export default function VariationSelector({
           {/* SKU and Stock Status */}
           <div className="flex items-center justify-between text-sm">
             <p className="text-muted-foreground">SKU: {selectedVariation.sku}</p>
-            <div className="flex items-center gap-2">
-              {selectedVariation.stockStatus === 'IN_STOCK' ? (
-                <>
-                  <div className="w-2 h-2 bg-success rounded-full"></div>
-                  <span className="text-success font-medium">In Stock</span>
-                </>
-              ) : selectedVariation.stockStatus === 'LOW_STOCK' ? (
-                <>
-                  <div className="w-2 h-2 bg-warning rounded-full"></div>
-                  <span className="text-warning font-medium">
-                    Low Stock ({selectedVariation.stockQuantity} left)
-                  </span>
-                </>
-              ) : (
-                <>
-                  <div className="w-2 h-2 bg-destructive rounded-full"></div>
-                  <span className="text-destructive font-medium">Out of Stock</span>
-                </>
-              )}
-            </div>
+            <StockStatusBadge
+              status={selectedVariation.stockStatus}
+              quantity={selectedVariation.stockQuantity}
+              showQuantity={selectedVariation.stockStatus === 'LOW_STOCK'}
+              size="sm"
+            />
           </div>
 
           {/* Weight and Dimensions */}

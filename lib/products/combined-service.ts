@@ -1,4 +1,5 @@
 import { getClient } from '@/lib/apollo/client';
+import type { ApolloQueryResult } from '@apollo/client';
 import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
@@ -12,7 +13,36 @@ import {
   GET_ALL_MATERIALS,
   GET_GLOBAL_ATTRIBUTES,
 } from '@/lib/queries/products';
-import type { Product as WooProduct, ProductCategory } from '@/lib/types/woocommerce';
+import type {
+  Product as WooProduct,
+  ProductCategory,
+  GraphQLProduct,
+  GraphQLImage,
+  GraphQLCategory,
+  GraphQLTag,
+  GraphQLAttribute,
+  GraphQLVariation,
+  GraphQLVariationAttribute,
+  GraphQLNodeConnection,
+  GraphQLHierarchicalCategory,
+  GraphQLPageInfo,
+} from '@/lib/types/woocommerce';
+
+/** Response type for paginated category queries */
+interface CategoryQueryResponse {
+  productCategories: {
+    nodes: ProductCategory[];
+    pageInfo: GraphQLPageInfo;
+  };
+}
+
+/** Response type for paginated brand queries */
+interface BrandQueryResponse {
+  productBrands: {
+    nodes: FilterOption[];
+    pageInfo: GraphQLPageInfo;
+  };
+}
 
 // Unified product interface for frontend consumption
 export interface UnifiedProduct {
@@ -93,19 +123,22 @@ export interface FilterOption {
  * Convert WooCommerce GraphQL product to unified format
  * Note: GraphQL returns nested objects with `nodes` arrays
  */
-function convertWooProduct(product: WooProduct): UnifiedProduct {
+function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct {
+  // Cast to GraphQL type for access to nested nodes structure
+  const gqlProduct = product as GraphQLProduct;
+
   // Helper to extract nodes from GraphQL response
-  const getNodes = <T>(data: { nodes?: T[] } | T[] | undefined): T[] => {
+  const getNodes = <T>(data: GraphQLNodeConnection<T> | T[] | undefined): T[] => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
     return data.nodes || [];
   };
 
-  const galleryNodes = getNodes(product.galleryImages as any);
-  const categoryNodes = getNodes(product.productCategories as any);
-  const tagNodes = getNodes(product.productTags as any);
-  const attributeNodes = getNodes(product.attributes as any);
-  const variationNodes = getNodes(product.variations as any);
+  const galleryNodes = getNodes<GraphQLImage>(gqlProduct.galleryImages);
+  const categoryNodes = getNodes<GraphQLCategory>(gqlProduct.productCategories);
+  const tagNodes = getNodes<GraphQLTag>(gqlProduct.productTags);
+  const attributeNodes = getNodes<GraphQLAttribute>(gqlProduct.attributes);
+  const variationNodes = getNodes<GraphQLVariation>(gqlProduct.variations);
 
   return {
     id: product.id,
@@ -121,26 +154,26 @@ function convertWooProduct(product: WooProduct): UnifiedProduct {
     onSale: product.onSale || false,
     stockStatus: product.stockStatus || 'OUT_OF_STOCK',
     stockQuantity: product.stockQuantity || null,
-    weight: (product as any).weight || null,
-    length: (product as any).length || null,
-    width: (product as any).width || null,
-    height: (product as any).height || null,
+    weight: gqlProduct.weight || null,
+    length: gqlProduct.length || null,
+    width: gqlProduct.width || null,
+    height: gqlProduct.height || null,
     image: product.image
       ? {
           url: product.image.sourceUrl,
           altText: product.image.altText || product.name,
         }
       : null,
-    galleryImages: galleryNodes.map((img: any) => ({
+    galleryImages: galleryNodes.map((img) => ({
       url: img.sourceUrl,
       altText: img.altText || product.name,
     })),
-    categories: categoryNodes.map((cat: any) => ({
+    categories: categoryNodes.map((cat) => ({
       id: cat.id,
       name: cat.name,
       slug: cat.slug,
     })),
-    tags: tagNodes.map((tag: any) => ({
+    tags: tagNodes.map((tag) => ({
       id: tag.id,
       name: tag.name,
       slug: tag.slug,
@@ -148,13 +181,13 @@ function convertWooProduct(product: WooProduct): UnifiedProduct {
     type: product.type || 'SIMPLE',
     averageRating: product.averageRating,
     reviewCount: product.reviewCount,
-    attributes: attributeNodes.map((attr: any) => ({
+    attributes: attributeNodes.map((attr) => ({
       name: attr.name,
       options: attr.options || [],
       visible: attr.visible ?? true,
     })),
-    variations: variationNodes.map((v: any) => {
-      const attrNodes = getNodes(v.attributes as any);
+    variations: variationNodes.map((v) => {
+      const attrNodes = getNodes<GraphQLVariationAttribute>(v.attributes);
       return {
         id: v.id,
         name: v.name,
@@ -164,7 +197,7 @@ function convertWooProduct(product: WooProduct): UnifiedProduct {
         salePrice: v.salePrice || null,
         stockStatus: v.stockStatus || 'OUT_OF_STOCK',
         stockQuantity: v.stockQuantity || null,
-        attributes: attrNodes.map((a: any) => ({
+        attributes: attrNodes.map((a) => ({
           name: a.name,
           value: a.value,
         })),
@@ -314,8 +347,7 @@ export async function getProductCategories(): Promise<ProductCategory[]> {
 
     // Paginate through all categories
     while (hasNextPage) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: any = await getClient().query({
+      const result: ApolloQueryResult<CategoryQueryResponse> = await getClient().query<CategoryQueryResponse>({
         query: GET_ALL_PRODUCT_CATEGORIES,
         variables: {
           first: 100,
@@ -355,10 +387,10 @@ export async function getHierarchicalCategories(): Promise<HierarchicalCategory[
       query: GET_HIERARCHICAL_CATEGORIES,
     });
 
-    const nodes = data?.productCategories?.nodes || [];
+    const nodes: GraphQLHierarchicalCategory[] = data?.productCategories?.nodes || [];
 
     // Recursively convert GraphQL response to HierarchicalCategory
-    function convertCategory(cat: any): HierarchicalCategory {
+    function convertCategory(cat: GraphQLHierarchicalCategory): HierarchicalCategory {
       const children = cat.children?.nodes || [];
       return {
         id: cat.id,
@@ -366,21 +398,17 @@ export async function getHierarchicalCategories(): Promise<HierarchicalCategory[
         slug: cat.slug,
         count: cat.count || 0,
         children: children
-          .filter((child: any) => child.count && child.count > 0)
+          .filter((child) => child.count && child.count > 0)
           .map(convertCategory)
-          .sort((a: HierarchicalCategory, b: HierarchicalCategory) =>
-            a.name.localeCompare(b.name)
-          ),
+          .sort((a, b) => a.name.localeCompare(b.name)),
       };
     }
 
     // Filter out empty categories and sort alphabetically
     return nodes
-      .filter((cat: any) => cat.count && cat.count > 0)
+      .filter((cat) => cat.count && cat.count > 0)
       .map(convertCategory)
-      .sort((a: HierarchicalCategory, b: HierarchicalCategory) =>
-        a.name.localeCompare(b.name)
-      );
+      .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching hierarchical categories:', error);
     return [];
@@ -410,31 +438,37 @@ export async function getProductsByCategory(category: string, limit = 12): Promi
 export async function getBrands(): Promise<FilterOption[]> {
   try {
     // First, try to fetch all brands with a simple query
-    const { data } = await getClient().query({
+    const { data } = await getClient().query<BrandQueryResponse>({
       query: GET_ALL_BRANDS,
       fetchPolicy: 'network-only',
     });
 
-    let allBrands = data?.productBrands?.nodes || [];
-    console.log(`getBrands: Simple query returned ${allBrands.length} brands`);
+    let allBrands: FilterOption[] = data?.productBrands?.nodes || [];
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`getBrands: Simple query returned ${allBrands.length} brands`);
+    }
 
     // If we got exactly 100 brands (WPGraphQL default limit), pagination might be needed
     if (allBrands.length === 100) {
-      console.log('getBrands: Hit limit, using pagination to fetch all brands...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('getBrands: Hit limit, using pagination to fetch all brands...');
+      }
       allBrands = await fetchBrandsWithPagination();
     }
 
-    console.log(`getBrands: Total ${allBrands.length} brands fetched`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`getBrands: Total ${allBrands.length} brands fetched`);
+    }
 
     return allBrands
-      .filter((brand: FilterOption) => brand.count && brand.count > 0)
-      .map((brand: FilterOption) => ({
+      .filter((brand) => brand.count && brand.count > 0)
+      .map((brand) => ({
         id: brand.id,
         name: brand.name,
         slug: brand.slug,
         count: brand.count,
       }))
-      .sort((a: FilterOption, b: FilterOption) => a.name.localeCompare(b.name));
+      .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching brands:', error);
     return [];
@@ -453,11 +487,12 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
 
   while (hasNextPage && pageCount < maxPages) {
     pageCount++;
-    console.log(`getBrands pagination: Fetching page ${pageCount}, cursor: ${afterCursor}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`getBrands pagination: Fetching page ${pageCount}, cursor: ${afterCursor}`);
+    }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: any = await getClient().query({
+      const result: ApolloQueryResult<BrandQueryResponse> = await getClient().query<BrandQueryResponse>({
         query: GET_BRANDS_PAGE,
         variables: {
           first: 100,
@@ -469,7 +504,9 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
       const nodes = result.data?.productBrands?.nodes || [];
       const pageInfo = result.data?.productBrands?.pageInfo;
 
-      console.log(`getBrands page ${pageCount}: got ${nodes.length} nodes, hasNextPage: ${pageInfo?.hasNextPage}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`getBrands page ${pageCount}: got ${nodes.length} nodes, hasNextPage: ${pageInfo?.hasNextPage}`);
+      }
 
       allBrands.push(...nodes);
 
@@ -483,7 +520,9 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
     }
   }
 
-  console.log(`getBrands pagination: Total ${allBrands.length} brands in ${pageCount} pages`);
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`getBrands pagination: Total ${allBrands.length} brands in ${pageCount} pages`);
+  }
   return allBrands;
 }
 

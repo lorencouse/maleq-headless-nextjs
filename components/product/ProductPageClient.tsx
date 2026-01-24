@@ -9,29 +9,13 @@ import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockAlertButton from '@/components/product/StockAlertButton';
 import SocialShare from '@/components/product/SocialShare';
 import TrustBadges from '@/components/product/TrustBadges';
+import StockStatusBadge from '@/components/ui/StockStatusBadge';
 import { formatAttributeName, formatAttributeValue, formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
-
-interface VariationImage {
-  url: string;
-  altText: string;
-}
+import { VariationImage, SelectedVariation } from '@/lib/types/product';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
   onVariationImageChange?: (image: VariationImage | null) => void;
-}
-
-interface SelectedVariation {
-  id: string;
-  name: string;
-  sku: string | null;
-  price: string | null;
-  regularPrice: string | null;
-  salePrice: string | null;
-  stockStatus: string;
-  stockQuantity: number | null;
-  attributes: Array<{ name: string; value: string }>;
-  image?: VariationImage | null;
 }
 
 export default function ProductPageClient({ product, onVariationImageChange }: ProductPageClientProps) {
@@ -143,33 +127,13 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
       </div>
 
       {/* Stock Status */}
-      <div className="mb-6 flex items-center gap-3">
-        {displayStockStatus === 'IN_STOCK' ? (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-success rounded-full"></div>
-            <p className="text-success font-medium">In Stock</p>
-          </div>
-        ) : displayStockStatus === 'LOW_STOCK' ? (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-warning rounded-full"></div>
-            <p className="text-warning font-medium">Low Stock</p>
-          </div>
-        ) : displayStockStatus === 'OUT_OF_STOCK' ? (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-destructive rounded-full"></div>
-            <p className="text-destructive font-medium">Out of Stock</p>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-accent rounded-full"></div>
-            <p className="text-accent font-medium">On Backorder</p>
-          </div>
-        )}
-        {displayStockQuantity && displayStockQuantity > 0 && (
-          <p className="text-sm text-muted-foreground">
-            ({displayStockQuantity} available)
-          </p>
-        )}
+      <div className="mb-6">
+        <StockStatusBadge
+          status={displayStockStatus || 'OUT_OF_STOCK'}
+          quantity={displayStockQuantity}
+          showQuantity={true}
+          size="lg"
+        />
       </div>
 
       {/* Short Description */}

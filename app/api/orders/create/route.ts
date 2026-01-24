@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createOrder, CreateOrderData, OrderLineItem, OrderAddress } from '@/lib/woocommerce/orders';
 import { getStripeServer } from '@/lib/stripe/server';
+import { errorResponse, handleApiError } from '@/lib/api/response';
 
 /**
  * Create Order API Route
@@ -87,10 +88,7 @@ export async function POST(request: NextRequest) {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status !== 'succeeded') {
-      return NextResponse.json(
-        { error: 'Payment has not been completed' },
-        { status: 400 }
-      );
+      return errorResponse('Payment has not been completed', 400, 'PAYMENT_INCOMPLETE');
     }
 
     // Verify the amount matches
@@ -182,18 +180,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Error creating order:', error);
-
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to create order' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to create order');
   }
 }

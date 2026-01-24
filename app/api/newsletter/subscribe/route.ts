@@ -1,5 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { isValidEmail } from '@/lib/utils/newsletter';
+import { NextRequest } from 'next/server';
+import {
+  successResponse,
+  validationError,
+  handleApiError,
+} from '@/lib/api/response';
+import { validateEmail } from '@/lib/api/validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,18 +12,9 @@ export async function POST(request: NextRequest) {
     const { email, source = 'footer' } = body;
 
     // Validate email
-    if (!email) {
-      return NextResponse.json(
-        { success: false, message: 'Email is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { success: false, message: 'Please enter a valid email address' },
-        { status: 400 }
-      );
+    const emailError = validateEmail(email);
+    if (emailError) {
+      return validationError({ email: emailError });
     }
 
     // In production, integrate with your email service provider:
@@ -27,42 +23,16 @@ export async function POST(request: NextRequest) {
     // - SendGrid: Use their contacts API
     // - Or store in your own database
 
-    // Example Mailchimp integration (commented out):
-    // const MAILCHIMP_API_KEY = process.env.MAILCHIMP_API_KEY;
-    // const MAILCHIMP_LIST_ID = process.env.MAILCHIMP_LIST_ID;
-    // const MAILCHIMP_SERVER = process.env.MAILCHIMP_SERVER;
-    //
-    // const response = await fetch(
-    //   `https://${MAILCHIMP_SERVER}.api.mailchimp.com/3.0/lists/${MAILCHIMP_LIST_ID}/members`,
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       'Authorization': `apikey ${MAILCHIMP_API_KEY}`,
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({
-    //       email_address: email,
-    //       status: 'subscribed',
-    //       merge_fields: { SOURCE: source },
-    //     }),
-    //   }
-    // );
-
-    // For now, log the subscription (replace with actual integration)
-    console.log(`Newsletter subscription: ${email} from ${source} at ${new Date().toISOString()}`);
+    // For development, log the subscription
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Newsletter subscription: ${email} from ${source} at ${new Date().toISOString()}`);
+    }
 
     // Simulate processing delay
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    return NextResponse.json({
-      success: true,
-      message: 'Thank you for subscribing!',
-    });
+    return successResponse(undefined, 'Thank you for subscribing!');
   } catch (error) {
-    console.error('Newsletter subscription error:', error);
-    return NextResponse.json(
-      { success: false, message: 'Failed to subscribe. Please try again.' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Failed to subscribe. Please try again.');
   }
 }

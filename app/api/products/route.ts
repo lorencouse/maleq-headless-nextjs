@@ -1,23 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllProducts, getFilteredProducts, UnifiedProduct } from '@/lib/products/combined-service';
+import { parseIntSafe, parseFloatSafe } from '@/lib/api/validation';
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
 
-    const limit = parseInt(searchParams.get('limit') || '24', 10);
+    const limit = parseIntSafe(searchParams.get('limit'), 24, 1, 100);
     const after = searchParams.get('after') || undefined;
     const category = searchParams.get('category') || undefined;
     const brand = searchParams.get('brand') || undefined;
     const color = searchParams.get('color') || undefined;
     const material = searchParams.get('material') || undefined;
     const search = searchParams.get('search') || undefined;
-    const minPrice = searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined;
-    const maxPrice = searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined;
-    const minLength = searchParams.get('minLength') ? parseFloat(searchParams.get('minLength')!) : undefined;
-    const maxLength = searchParams.get('maxLength') ? parseFloat(searchParams.get('maxLength')!) : undefined;
-    const minWeight = searchParams.get('minWeight') ? parseFloat(searchParams.get('minWeight')!) : undefined;
-    const maxWeight = searchParams.get('maxWeight') ? parseFloat(searchParams.get('maxWeight')!) : undefined;
+    const minPriceRaw = searchParams.get('minPrice');
+    const maxPriceRaw = searchParams.get('maxPrice');
+    const minLengthRaw = searchParams.get('minLength');
+    const maxLengthRaw = searchParams.get('maxLength');
+    const minWeightRaw = searchParams.get('minWeight');
+    const maxWeightRaw = searchParams.get('maxWeight');
+
+    const minPrice = minPriceRaw ? parseFloatSafe(minPriceRaw, 0, 0) : undefined;
+    const maxPrice = maxPriceRaw ? parseFloatSafe(maxPriceRaw, 10000, 0) : undefined;
+    const minLength = minLengthRaw ? parseFloatSafe(minLengthRaw, 0, 0) : undefined;
+    const maxLength = maxLengthRaw ? parseFloatSafe(maxLengthRaw, 24, 0) : undefined;
+    const minWeight = minWeightRaw ? parseFloatSafe(minWeightRaw, 0, 0) : undefined;
+    const maxWeight = maxWeightRaw ? parseFloatSafe(maxWeightRaw, 10, 0) : undefined;
     const inStock = searchParams.get('inStock') === 'true';
     const onSale = searchParams.get('onSale') === 'true';
     const sort = searchParams.get('sort') || 'newest';

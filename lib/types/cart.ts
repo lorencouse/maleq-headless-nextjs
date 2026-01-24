@@ -142,6 +142,9 @@ export interface CartActions {
 
   /** Hydrate cart from localStorage (for client-side persistence) */
   hydrate: () => void;
+
+  /** Validate cart before checkout - checks stock, prices, availability */
+  validateCart: () => CartValidationResult;
 }
 
 /**
@@ -190,6 +193,6 @@ export interface CartValidationError {
   itemId: string;
   type: 'out_of_stock' | 'insufficient_stock' | 'price_changed' | 'product_unavailable';
   message: string;
-  currentValue?: any;
-  expectedValue?: any;
+  currentValue?: string | number | null;
+  expectedValue?: string | number | null;
 }

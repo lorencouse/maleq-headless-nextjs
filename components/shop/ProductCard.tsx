@@ -7,6 +7,7 @@ import { UnifiedProduct } from '@/lib/products/combined-service';
 import QuickAddButton from './QuickAddButton';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import QuickViewModal from '@/components/product/QuickViewModal';
+import { formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
 
 interface ProductCardProps {
   product: UnifiedProduct;
@@ -14,14 +15,6 @@ interface ProductCardProps {
 
 export default function ProductCard({ product }: ProductCardProps) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
-  const formatPrice = (price: string | null | undefined) => {
-    if (!price) return 'N/A';
-    // WPGraphQL returns prices already formatted (e.g., "$82.35")
-    // If it starts with $, return as-is; otherwise format it
-    if (price.startsWith('$')) return price;
-    const num = parseFloat(price.replace(/[^0-9.-]/g, ''));
-    return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
-  };
 
   // Get first category
   const primaryCategory = product.categories?.[0];
@@ -83,8 +76,8 @@ export default function ProductCard({ product }: ProductCardProps) {
               productId={product.databaseId?.toString() || product.id}
               name={product.name}
               slug={product.slug}
-              price={parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0')}
-              regularPrice={parseFloat(product.regularPrice?.replace(/[^0-9.]/g, '') || '0')}
+              price={parsePrice(product.price)}
+              regularPrice={parsePrice(product.regularPrice)}
               image={product.image || undefined}
               inStock={product.stockStatus === 'IN_STOCK'}
               variant="icon"

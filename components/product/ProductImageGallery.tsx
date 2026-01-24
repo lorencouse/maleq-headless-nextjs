@@ -2,22 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-
-interface ProductImage {
-  id: string;
-  url: string;
-  altText: string;
-  title: string;
-  isPrimary: boolean;
-}
-
-interface VariationImage {
-  url: string;
-  altText: string;
-}
+import { VariationImage, GalleryProductImage } from '@/lib/types/product';
 
 interface ProductImageGalleryProps {
-  images: ProductImage[];
+  images: GalleryProductImage[];
   productName: string;
   selectedVariationImage?: VariationImage | null;
 }

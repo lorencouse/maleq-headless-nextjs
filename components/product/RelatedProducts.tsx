@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import WishlistButton from '@/components/wishlist/WishlistButton';
+import { useHorizontalScroll } from '@/lib/hooks/useHorizontalScroll';
+import { formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
 
 interface RelatedProductsProps {
   products: UnifiedProduct[];
@@ -17,46 +18,19 @@ export default function RelatedProducts({
   currentProductId,
   title = 'Related Products',
 }: RelatedProductsProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const {
+    scrollContainerRef,
+    canScrollLeft,
+    canScrollRight,
+    scrollLeft,
+    scrollRight,
+    checkScroll,
+  } = useHorizontalScroll({ cardWidth: 280 });
 
   // Filter out current product
   const filteredProducts = products.filter(
     (p) => p.id !== currentProductId && p.databaseId?.toString() !== currentProductId
   );
-
-  const checkScroll = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      setCanScrollLeft(container.scrollLeft > 0);
-      setCanScrollRight(
-        container.scrollLeft < container.scrollWidth - container.clientWidth - 10
-      );
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, [filteredProducts]);
-
-  const scroll = (direction: 'left' | 'right') => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      const cardWidth = 280; // Approximate card width
-      const scrollAmount = direction === 'left' ? -cardWidth * 2 : cardWidth * 2;
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
-  const formatPrice = (price: string | null | undefined) => {
-    if (!price) return 'N/A';
-    if (price.startsWith('$')) return price;
-    const num = parseFloat(price.replace(/[^0-9.-]/g, ''));
-    return isNaN(num) ? 'N/A' : `$${num.toFixed(2)}`;
-  };
 
   if (filteredProducts.length === 0) {
     return null;
@@ -69,7 +43,7 @@ export default function RelatedProducts({
         {filteredProducts.length > 4 && (
           <div className="flex gap-2">
             <button
-              onClick={() => scroll('left')}
+              onClick={scrollLeft}
               disabled={!canScrollLeft}
               className="p-2 rounded-full border border-input hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Scroll left"
@@ -79,7 +53,7 @@ export default function RelatedProducts({
               </svg>
             </button>
             <button
-              onClick={() => scroll('right')}
+              onClick={scrollRight}
               disabled={!canScrollRight}
               className="p-2 rounded-full border border-input hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Scroll right"
@@ -137,8 +111,8 @@ export default function RelatedProducts({
                       productId={product.databaseId?.toString() || product.id}
                       name={product.name}
                       slug={product.slug}
-                      price={parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0')}
-                      regularPrice={parseFloat(product.regularPrice?.replace(/[^0-9.]/g, '') || '0')}
+                      price={parsePrice(product.price)}
+                      regularPrice={parsePrice(product.regularPrice)}
                       image={product.image || undefined}
                       inStock={product.stockStatus === 'IN_STOCK'}
                       variant="icon"

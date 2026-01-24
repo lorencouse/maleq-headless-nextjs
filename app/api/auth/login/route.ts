@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateCustomer } from '@/lib/woocommerce/customers';
+import {
+  unauthorizedError,
+  handleApiError,
+  validationError,
+} from '@/lib/api/response';
+import { validateRequired, hasErrors } from '@/lib/api/validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,11 +13,9 @@ export async function POST(request: NextRequest) {
     const { email, password } = body;
 
     // Validate required fields
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+    const errors = validateRequired(body, ['email', 'password']);
+    if (hasErrors(errors)) {
+      return validationError(errors);
     }
 
     // Authenticate with WooCommerce/WordPress
@@ -30,21 +34,13 @@ export async function POST(request: NextRequest) {
       token,
     });
   } catch (error) {
-    console.error('Login error:', error);
-
     const message = error instanceof Error ? error.message : 'Login failed';
 
-    // Return appropriate status codes for different errors
+    // Return appropriate status codes for authentication errors
     if (message.includes('No account found') || message.includes('Incorrect password')) {
-      return NextResponse.json(
-        { error: message },
-        { status: 401 }
-      );
+      return unauthorizedError(message);
     }
 
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Login failed');
   }
 }

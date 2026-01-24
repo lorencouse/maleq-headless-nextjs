@@ -8,6 +8,7 @@ import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
 import { formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
 import WishlistButton from '@/components/wishlist/WishlistButton';
+import StockStatusBadge from '@/components/ui/StockStatusBadge';
 
 interface QuickViewModalProps {
   product: UnifiedProduct;
@@ -208,23 +209,11 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               </div>
 
               {/* Stock Status */}
-              <div className="flex items-center gap-2 mb-4">
-                {displayStockStatus === 'IN_STOCK' ? (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-success">
-                    <span className="w-2 h-2 bg-success rounded-full"></span>
-                    In Stock
-                  </span>
-                ) : displayStockStatus === 'OUT_OF_STOCK' ? (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-destructive">
-                    <span className="w-2 h-2 bg-destructive rounded-full"></span>
-                    Out of Stock
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 text-sm text-warning">
-                    <span className="w-2 h-2 bg-warning rounded-full"></span>
-                    On Backorder
-                  </span>
-                )}
+              <div className="mb-4">
+                <StockStatusBadge
+                  status={displayStockStatus || 'OUT_OF_STOCK'}
+                  size="sm"
+                />
               </div>
 
               {/* Short Description */}

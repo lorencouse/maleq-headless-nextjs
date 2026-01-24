@@ -2,6 +2,16 @@ import { getClient } from '@/lib/apollo/client';
 import { GET_PRODUCT_BY_SLUG, GET_ALL_PRODUCT_SLUGS } from '@/lib/queries/products';
 import type { UnifiedProduct } from './combined-service';
 import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommerce-format';
+import type {
+  GraphQLProduct,
+  GraphQLImage,
+  GraphQLCategory,
+  GraphQLTag,
+  GraphQLBrand,
+  GraphQLAttribute,
+  GraphQLVariation,
+  GraphQLVariationAttribute,
+} from '@/lib/types/woocommerce';
 
 export interface ProductSpecificationLink {
   text: string;
@@ -70,7 +80,7 @@ export interface EnhancedProduct extends UnifiedProduct {
 /**
  * Extract product specifications from WooCommerce product
  */
-function extractSpecifications(product: any, isVariable: boolean): ProductSpecification[] {
+function extractSpecifications(product: GraphQLProduct, isVariable: boolean): ProductSpecification[] {
   const specs: ProductSpecification[] = [];
 
   // Only show parent SKU for non-variable products
@@ -80,12 +90,12 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
   }
 
   // Brands
-  if (product.productBrands?.nodes?.length > 0) {
-    const brandNodes = product.productBrands.nodes;
+  const brandNodes = product.productBrands?.nodes;
+  if (brandNodes && brandNodes.length > 0) {
     specs.push({
       label: 'Brand',
-      value: brandNodes.map((brand: any) => brand.name).join(', '),
-      links: brandNodes.map((brand: any) => ({
+      value: brandNodes.map((brand: GraphQLBrand) => brand.name).join(', '),
+      links: brandNodes.map((brand: GraphQLBrand) => ({
         text: brand.name,
         url: `/shop?brand=${brand.slug}`,
       })),
@@ -93,12 +103,12 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
   }
 
   // Categories
-  if (product.productCategories?.nodes?.length > 0) {
-    const categoryNodes = product.productCategories.nodes;
+  const categoryNodes = product.productCategories?.nodes;
+  if (categoryNodes && categoryNodes.length > 0) {
     specs.push({
       label: 'Categories',
-      value: categoryNodes.map((cat: any) => cat.name).join(', '),
-      links: categoryNodes.map((cat: any) => ({
+      value: categoryNodes.map((cat: GraphQLCategory) => cat.name).join(', '),
+      links: categoryNodes.map((cat: GraphQLCategory) => ({
         text: cat.name,
         url: `/product-category/${cat.slug}`,
       })),
@@ -106,10 +116,11 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
   }
 
   // Tags
-  if (product.productTags?.nodes?.length > 0) {
+  const tagNodes = product.productTags?.nodes;
+  if (tagNodes && tagNodes.length > 0) {
     specs.push({
       label: 'Tags',
-      value: product.productTags.nodes.map((tag: any) => tag.name).join(', ')
+      value: tagNodes.map((tag: GraphQLTag) => tag.name).join(', ')
     });
   }
 
@@ -152,17 +163,18 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
   }
 
   // Product attributes (non-variation attributes for display)
-  if (product.attributes?.nodes) {
-    for (const attr of product.attributes.nodes) {
+  const attributeNodes = product.attributes?.nodes;
+  if (attributeNodes) {
+    for (const attr of attributeNodes) {
       // Only show visible, non-variation attributes in specifications
-      if (attr.visible && !attr.variation && attr.options?.length > 0) {
+      if (attr.visible && !attr.variation && attr.options && attr.options.length > 0) {
         const attrName = attr.name.toLowerCase();
         const isColor = attrName === 'pa_color' || attrName === 'color';
         const isMaterial = attrName === 'pa_material' || attrName === 'material';
 
         // Flatten options - some may contain comma-separated values that need splitting
-        const flattenedOptions = attr.options.flatMap((opt: string) =>
-          opt.split(/[,\/]+/).map((o: string) => o.trim()).filter((o: string) => o.length > 0)
+        const flattenedOptions = attr.options.flatMap((opt) =>
+          opt.split(/[,\/]+/).map((o) => o.trim()).filter((o) => o.length > 0)
         );
 
         // Add links for color and material attributes
@@ -170,8 +182,8 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
           const filterParam = isColor ? 'color' : 'material';
           specs.push({
             label: formatAttributeName(attr.name),
-            value: flattenedOptions.map((opt: string) => formatAttributeValue(opt)).join(', '),
-            links: flattenedOptions.map((opt: string) => ({
+            value: flattenedOptions.map((opt) => formatAttributeValue(opt)).join(', '),
+            links: flattenedOptions.map((opt) => ({
               text: formatAttributeValue(opt),
               // Use lowercase slug format for the URL
               url: `/shop?${filterParam}=${opt.toLowerCase().replace(/\s+/g, '-')}`,
@@ -180,7 +192,7 @@ function extractSpecifications(product: any, isVariable: boolean): ProductSpecif
         } else {
           specs.push({
             label: formatAttributeName(attr.name),
-            value: flattenedOptions.map((opt: string) => formatAttributeValue(opt)).join(', ')
+            value: flattenedOptions.map((opt) => formatAttributeValue(opt)).join(', ')
           });
         }
       }
@@ -200,18 +212,21 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       variables: { slug },
     });
 
-    const product = data?.product;
+    const product = data?.product as GraphQLProduct | null;
     if (!product) return null;
 
     const isVariable = product.type === 'VARIABLE';
     const specifications = extractSpecifications(product, isVariable);
 
     // Extract brands
-    const brands: ProductBrand[] = product.productBrands?.nodes?.map((brand: any) => ({
-      id: brand.id,
-      name: brand.name,
-      slug: brand.slug,
-    })) || [];
+    const brandNodes = product.productBrands?.nodes;
+    const brands: ProductBrand[] = brandNodes
+      ? brandNodes.map((brand: GraphQLBrand) => ({
+          id: brand.id,
+          name: brand.name,
+          slug: brand.slug,
+        }))
+      : [];
 
     // Extract dimensions
     const dimensions: ProductDimensions = {
@@ -220,6 +235,98 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       width: product.width || null,
       height: product.height || null,
     };
+
+    // Extract gallery images
+    const galleryNodes = product.galleryImages?.nodes;
+    const galleryImages = galleryNodes
+      ? galleryNodes.map((img: GraphQLImage) => ({
+          url: img.sourceUrl,
+          altText: img.altText || product.name,
+        }))
+      : undefined;
+
+    // Extract categories
+    const categoryNodes = product.productCategories?.nodes;
+    const categories = categoryNodes
+      ? categoryNodes.map((cat: GraphQLCategory) => ({
+          id: cat.id,
+          name: cat.name,
+          slug: cat.slug,
+        }))
+      : [];
+
+    // Extract tags
+    const tagNodes = product.productTags?.nodes;
+    const tags = tagNodes
+      ? tagNodes.map((tag: GraphQLTag) => ({
+          id: tag.id,
+          name: tag.name,
+          slug: tag.slug,
+        }))
+      : undefined;
+
+    // Extract attributes
+    const attributeNodes = product.attributes?.nodes;
+    const attributes = attributeNodes
+      ? attributeNodes.map((attr: GraphQLAttribute) => ({
+          name: attr.name,
+          options: attr.options || [],
+          visible: attr.visible ?? true,
+        }))
+      : undefined;
+
+    // Extract variations
+    const variationNodes = product.variations?.nodes;
+    const variations = variationNodes
+      ? variationNodes.map((v: GraphQLVariation) => {
+          const varAttrNodes = v.attributes?.nodes;
+          return {
+            id: v.id,
+            name: v.name,
+            sku: v.sku || null,
+            description: v.description || null,
+            price: v.price || null,
+            regularPrice: v.regularPrice || null,
+            salePrice: v.salePrice || null,
+            stockStatus: v.stockStatus || 'OUT_OF_STOCK',
+            stockQuantity: v.stockQuantity || null,
+            weight: v.weight || null,
+            length: v.length || null,
+            width: v.width || null,
+            height: v.height || null,
+            attributes: varAttrNodes
+              ? varAttrNodes.map((a: GraphQLVariationAttribute) => ({
+                  name: a.name,
+                  value: a.value,
+                }))
+              : [],
+            image: v.image ? {
+              url: v.image.sourceUrl,
+              altText: v.image.altText || v.name,
+            } : null,
+          };
+        })
+      : undefined;
+
+    // Build gallery array
+    const gallery = [
+      // Primary image first
+      ...(product.image ? [{
+        id: product.image.id || '0',
+        url: product.image.sourceUrl,
+        altText: product.image.altText || product.name,
+        isPrimary: true,
+      }] : []),
+      // Gallery images
+      ...(galleryNodes
+        ? galleryNodes.map((img: GraphQLImage, index: number) => ({
+            id: img.id || String(index + 1),
+            url: img.sourceUrl,
+            altText: img.altText || product.name,
+            isPrimary: false,
+          }))
+        : []),
+    ];
 
     const enhancedProduct: EnhancedProduct = {
       id: product.id,
@@ -239,68 +346,16 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         url: product.image.sourceUrl,
         altText: product.image.altText || product.name,
       } : null,
-      galleryImages: product.galleryImages?.nodes?.map((img: any) => ({
-        url: img.sourceUrl,
-        altText: img.altText || product.name,
-      })),
-      categories: product.productCategories?.nodes?.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        slug: cat.slug,
-      })) || [],
-      tags: product.productTags?.nodes?.map((tag: any) => ({
-        id: tag.id,
-        name: tag.name,
-        slug: tag.slug,
-      })),
+      galleryImages,
+      categories,
+      tags,
       type: product.type || 'SIMPLE',
       averageRating: product.averageRating,
       reviewCount: product.reviewCount,
-      attributes: product.attributes?.nodes?.map((attr: any) => ({
-        name: attr.name,
-        options: attr.options || [],
-        visible: attr.visible ?? true,
-      })),
-      variations: product.variations?.nodes?.map((v: any) => ({
-        id: v.id,
-        name: v.name,
-        sku: v.sku || null,
-        description: v.description || null,
-        price: v.price || null,
-        regularPrice: v.regularPrice || null,
-        salePrice: v.salePrice || null,
-        stockStatus: v.stockStatus || 'OUT_OF_STOCK',
-        stockQuantity: v.stockQuantity || null,
-        weight: v.weight || null,
-        length: v.length || null,
-        width: v.width || null,
-        height: v.height || null,
-        attributes: v.attributes?.nodes?.map((a: any) => ({
-          name: a.name,
-          value: a.value,
-        })) || [],
-        image: v.image ? {
-          url: v.image.sourceUrl,
-          altText: v.image.altText || v.name,
-        } : null,
-      })),
+      attributes,
+      variations,
       specifications,
-      gallery: [
-        // Primary image first
-        ...(product.image ? [{
-          id: product.image.id || '0',
-          url: product.image.sourceUrl,
-          altText: product.image.altText || product.name,
-          isPrimary: true,
-        }] : []),
-        // Gallery images
-        ...(product.galleryImages?.nodes?.map((img: any, index: number) => ({
-          id: img.id || String(index + 1),
-          url: img.sourceUrl,
-          altText: img.altText || product.name,
-          isPrimary: false,
-        })) || []),
-      ],
+      gallery,
       brands,
       dimensions,
       featured: product.featured || false,

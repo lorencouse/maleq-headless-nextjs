@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { CartItem } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice } from '@/lib/utils/cart-helpers';
+import QuantitySelector from '@/components/ui/QuantitySelector';
 
 interface MiniCartItemProps {
   item: CartItem;
@@ -84,27 +85,14 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
 
         {/* Quantity Controls */}
         <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center border border-border rounded">
-            <button
-              onClick={() => handleQuantityChange(item.quantity - 1)}
-              disabled={item.quantity <= 1 || isUpdating}
-              className="px-2 py-1 text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Decrease quantity"
-            >
-              -
-            </button>
-            <span className="px-3 py-1 text-sm font-medium min-w-[32px] text-center">
-              {item.quantity}
-            </span>
-            <button
-              onClick={() => handleQuantityChange(item.quantity + 1)}
-              disabled={item.quantity >= item.maxQuantity || isUpdating}
-              className="px-2 py-1 text-sm hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Increase quantity"
-            >
-              +
-            </button>
-          </div>
+          <QuantitySelector
+            quantity={item.quantity}
+            min={1}
+            max={item.maxQuantity}
+            disabled={isUpdating}
+            size="sm"
+            onQuantityChange={handleQuantityChange}
+          />
 
           {/* Remove Button */}
           <button

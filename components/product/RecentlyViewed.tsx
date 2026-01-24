@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/utils/recently-viewed';
 import WishlistButton from '@/components/wishlist/WishlistButton';
+import { useHorizontalScroll } from '@/lib/hooks/useHorizontalScroll';
 
 interface RecentlyViewedProps {
   currentProductId?: string;
@@ -18,9 +19,14 @@ export default function RecentlyViewed({
   maxItems = 8,
 }: RecentlyViewedProps) {
   const [items, setItems] = useState<RecentlyViewedItem[]>([]);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const {
+    scrollContainerRef,
+    canScrollLeft,
+    canScrollRight,
+    scrollLeft,
+    scrollRight,
+    checkScroll,
+  } = useHorizontalScroll({ cardWidth: 220 });
 
   useEffect(() => {
     const viewed = getRecentlyViewed();
@@ -30,31 +36,6 @@ export default function RecentlyViewed({
       .slice(0, maxItems);
     setItems(filtered);
   }, [currentProductId, maxItems]);
-
-  const checkScroll = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      setCanScrollLeft(container.scrollLeft > 0);
-      setCanScrollRight(
-        container.scrollLeft < container.scrollWidth - container.clientWidth - 10
-      );
-    }
-  };
-
-  useEffect(() => {
-    checkScroll();
-    window.addEventListener('resize', checkScroll);
-    return () => window.removeEventListener('resize', checkScroll);
-  }, [items]);
-
-  const scroll = (direction: 'left' | 'right') => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      const cardWidth = 220;
-      const scrollAmount = direction === 'left' ? -cardWidth * 2 : cardWidth * 2;
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
 
   const formatPrice = (price: number) => {
     return `$${price.toFixed(2)}`;
@@ -71,7 +52,7 @@ export default function RecentlyViewed({
         {items.length > 4 && (
           <div className="flex gap-2">
             <button
-              onClick={() => scroll('left')}
+              onClick={scrollLeft}
               disabled={!canScrollLeft}
               className="p-2 rounded-full border border-input hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Scroll left"
@@ -81,7 +62,7 @@ export default function RecentlyViewed({
               </svg>
             </button>
             <button
-              onClick={() => scroll('right')}
+              onClick={scrollRight}
               disabled={!canScrollRight}
               className="p-2 rounded-full border border-input hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Scroll right"

@@ -104,3 +104,129 @@ export interface ProductConnection {
     endCursor?: string;
   };
 }
+
+// GraphQL Response Types (with nested nodes arrays)
+// These match the actual GraphQL response structure from WPGraphQL/WooGraphQL
+
+/** GraphQL wrapper for array responses */
+export interface GraphQLNodeConnection<T> {
+  nodes: T[];
+}
+
+/** GraphQL product response with nested nodes */
+export interface GraphQLProduct {
+  id: string;
+  databaseId: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  shortDescription?: string | null;
+  sku?: string | null;
+  price?: string | null;
+  regularPrice?: string | null;
+  salePrice?: string | null;
+  onSale?: boolean;
+  stockStatus?: string;
+  stockQuantity?: number | null;
+  weight?: string | null;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
+  featured?: boolean;
+  purchaseNote?: string | null;
+  externalUrl?: string | null;
+  buttonText?: string | null;
+  type?: string;
+  averageRating?: number;
+  reviewCount?: number;
+  image?: GraphQLImage | null;
+  galleryImages?: GraphQLNodeConnection<GraphQLImage>;
+  productCategories?: GraphQLNodeConnection<GraphQLCategory>;
+  productTags?: GraphQLNodeConnection<GraphQLTag>;
+  productBrands?: GraphQLNodeConnection<GraphQLBrand>;
+  attributes?: GraphQLNodeConnection<GraphQLAttribute>;
+  variations?: GraphQLNodeConnection<GraphQLVariation>;
+}
+
+export interface GraphQLImage {
+  id?: string;
+  sourceUrl: string;
+  altText?: string | null;
+}
+
+export interface GraphQLCategory {
+  id: string;
+  name: string;
+  slug: string;
+  count?: number;
+}
+
+export interface GraphQLTag {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface GraphQLBrand {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface GraphQLAttribute {
+  name: string;
+  options?: string[];
+  visible?: boolean;
+  variation?: boolean;
+}
+
+export interface GraphQLVariation {
+  id: string;
+  name: string;
+  sku?: string | null;
+  description?: string | null;
+  price?: string | null;
+  regularPrice?: string | null;
+  salePrice?: string | null;
+  stockStatus?: string;
+  stockQuantity?: number | null;
+  weight?: string | null;
+  length?: string | null;
+  width?: string | null;
+  height?: string | null;
+  image?: GraphQLImage | null;
+  attributes?: GraphQLNodeConnection<GraphQLVariationAttribute>;
+}
+
+export interface GraphQLVariationAttribute {
+  name: string;
+  value: string;
+}
+
+/** GraphQL hierarchical category (with nested children) */
+export interface GraphQLHierarchicalCategory {
+  id: string;
+  name: string;
+  slug: string;
+  count?: number;
+  children?: GraphQLNodeConnection<GraphQLHierarchicalCategory>;
+}
+
+/** GraphQL page info for pagination */
+export interface GraphQLPageInfo {
+  hasNextPage: boolean;
+  hasPreviousPage?: boolean;
+  startCursor?: string | null;
+  endCursor?: string | null;
+}
+
+/** GraphQL paginated connection response */
+export interface GraphQLPaginatedConnection<T> {
+  nodes: T[];
+  pageInfo: GraphQLPageInfo;
+}
+
+/** GraphQL query result wrapper */
+export interface GraphQLQueryResult<T> {
+  data: T;
+}
