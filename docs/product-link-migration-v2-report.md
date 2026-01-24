@@ -1,18 +1,18 @@
 # Product Link Migration Report v2
 
-Generated: 2026-01-23T21:37:49.925Z
-Mode: EXECUTED
+Generated: 2026-01-23T23:38:11.904Z
+Mode: DRY RUN
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| Posts Updated | 119 |
-| URLs Found | 2180 |
-| URLs Matched | 352 |
-| Shortcodes Found | 851 |
-| Shortcodes Matched (by ID) | 184 |
-| Shortcodes Matched (by context) | 84 |
+| Posts Updated | 0 |
+| URLs Found | 1644 |
+| URLs Matched | 0 |
+| Shortcodes Found | 583 |
+| Shortcodes Matched (by ID) | 0 |
+| Shortcodes Matched (by context) | 0 |
 | Shortcodes Unmatched | 583 |
 
 ## Still Unmatched Shortcodes

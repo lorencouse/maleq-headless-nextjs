@@ -209,3 +209,4 @@ Test checkout with real payment methods.
 Add additional datafeeds from STC
 Correct variation image not loading on initial product page load.
 Manually add missing product 'kits' before deploy.
+update prices: <$5 x 5, $5-$9 x 4, $10-$30 x 3.5, $31-$49 x 3, $50-100 x 2.5, >$100 x 2.1 
