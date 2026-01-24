@@ -6,7 +6,7 @@
  */
 
 interface DevEditLinkProps {
-  type: 'post' | 'product' | 'page';
+  type: 'post' | 'product';
   databaseId: number | undefined;
 }
 
@@ -24,7 +24,6 @@ export default function DevEditLink({ type, databaseId }: DevEditLinkProps) {
   const typeLabels = {
     post: 'Post',
     product: 'Product',
-    page: 'Page',
   };
 
   return (
