@@ -41,7 +41,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
           {/* Brand */}
           {product.brands && product.brands.length > 0 && (
             <a
-              href={`/shop?brand=${product.brands[0].slug}`}
+              href={`/brand/${product.brands[0].slug}`}
               className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
             >
               {product.brands[0].name}
