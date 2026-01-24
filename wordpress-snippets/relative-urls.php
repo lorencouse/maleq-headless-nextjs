@@ -97,11 +97,12 @@ function maleq_convert_to_absolute_urls($content) {
 
 /**
  * Strip domain from content when saving posts
- * This ensures the database stores relative URLs
+ * This ensures the database stores relative URLs (including images)
+ * Next.js processWordPressContent() will convert them back to absolute at runtime
  */
 add_filter('content_save_pre', 'maleq_strip_domain_on_save', 10, 1);
 function maleq_strip_domain_on_save($content) {
-    return maleq_convert_to_relative_urls($content, true);
+    return maleq_convert_to_relative_urls($content, false);
 }
 
 /**
@@ -126,7 +127,7 @@ function maleq_filter_graphql_urls($result, $source, $args, $context, $info, $ty
         return $result;
     }
 
-    return maleq_convert_to_relative_urls($result, true);
+    return maleq_convert_to_relative_urls($result, false);
 }
 
 /**
@@ -138,11 +139,11 @@ function maleq_filter_rest_urls($response, $post, $request) {
     $data = $response->get_data();
 
     if (isset($data['content']['rendered'])) {
-        $data['content']['rendered'] = maleq_convert_to_relative_urls($data['content']['rendered'], true);
+        $data['content']['rendered'] = maleq_convert_to_relative_urls($data['content']['rendered'], false);
     }
 
     if (isset($data['excerpt']['rendered'])) {
-        $data['excerpt']['rendered'] = maleq_convert_to_relative_urls($data['excerpt']['rendered'], true);
+        $data['excerpt']['rendered'] = maleq_convert_to_relative_urls($data['excerpt']['rendered'], false);
     }
 
     $response->set_data($data);
@@ -184,8 +185,8 @@ if (defined('WP_CLI') && WP_CLI) {
         $updated = 0;
 
         foreach ($posts as $post) {
-            $new_content = maleq_convert_to_relative_urls($post->post_content, true);
-            $new_excerpt = maleq_convert_to_relative_urls($post->post_excerpt, true);
+            $new_content = maleq_convert_to_relative_urls($post->post_content, false);
+            $new_excerpt = maleq_convert_to_relative_urls($post->post_excerpt, false);
 
             if ($new_content !== $post->post_content || $new_excerpt !== $post->post_excerpt) {
                 $updated++;
