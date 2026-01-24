@@ -116,7 +116,8 @@ export default function NewsletterSignup({
             }}
             placeholder={placeholder}
             disabled={isLoading}
-            className="flex-1 px-3 py-2 bg-input text-foreground text-sm rounded-l border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            className="flex-1 px-3 py-2 bg-input text-foreground text-sm border border-border border-r-0 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            style={{ borderRadius: '0.25rem 0 0 0.25rem' }}
           />
           <button
             type="submit"

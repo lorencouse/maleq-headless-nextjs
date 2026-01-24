@@ -38,11 +38,13 @@ export interface Variation {
 interface VariationSelectorProps {
   variations: Variation[];
   onVariationChange?: (variation: Variation) => void;
+  productId?: number; // Parent product database ID (for debugging)
 }
 
 export default function VariationSelector({
   variations,
-  onVariationChange
+  onVariationChange,
+  productId
 }: VariationSelectorProps) {
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
@@ -173,9 +175,12 @@ export default function VariationSelector({
             </div>
           </div>
 
-          {/* SKU and Stock Status */}
+          {/* SKU, Product ID, and Stock Status */}
           <div className="flex items-center justify-between text-sm">
-            <p className="text-muted-foreground">SKU: {selectedVariation.sku}</p>
+            <p className="text-muted-foreground">
+              SKU: {selectedVariation.sku}
+              {productId && <span className="ml-3">ID: {productId}</span>}
+            </p>
             <StockStatusBadge
               status={selectedVariation.stockStatus}
               quantity={selectedVariation.stockQuantity}

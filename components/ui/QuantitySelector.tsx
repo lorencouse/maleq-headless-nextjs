@@ -7,6 +7,7 @@ interface QuantitySelectorProps {
   disabled?: boolean;
   size?: 'sm' | 'md';
   onQuantityChange: (newQuantity: number) => void;
+  onRemove?: () => void; // Called when minus is clicked at min quantity
   showInput?: boolean;
 }
 
@@ -17,6 +18,7 @@ export default function QuantitySelector({
   disabled = false,
   size = 'md',
   onQuantityChange,
+  onRemove,
   showInput = false,
 }: QuantitySelectorProps) {
   const handleIncrement = () => {
@@ -28,6 +30,8 @@ export default function QuantitySelector({
   const handleDecrement = () => {
     if (quantity > min) {
       onQuantityChange(quantity - 1);
+    } else if (quantity === min && onRemove) {
+      onRemove();
     }
   };
 
@@ -44,12 +48,13 @@ export default function QuantitySelector({
     <div className={`flex items-center border border-border ${isSmall ? 'rounded' : 'rounded-lg'}`}>
       <button
         onClick={handleDecrement}
-        disabled={quantity <= min || disabled}
+        disabled={(quantity <= min && !onRemove) || disabled}
         className={`
           ${isSmall ? 'px-2 py-1 text-sm' : 'px-3 py-2'}
           text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors
+          ${quantity === min && onRemove ? 'hover:text-destructive' : ''}
         `}
-        aria-label="Decrease quantity"
+        aria-label={quantity === min && onRemove ? "Remove item" : "Decrease quantity"}
       >
         {isSmall ? (
           '-'

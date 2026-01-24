@@ -124,6 +124,7 @@ export default function CartItem({ item }: CartItemProps) {
             max={item.maxQuantity}
             disabled={isUpdating}
             onQuantityChange={handleQuantityChange}
+            onRemove={handleRemove}
             showInput
           />
 

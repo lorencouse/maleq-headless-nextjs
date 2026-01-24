@@ -168,30 +168,87 @@ html {
   color: var(--foreground);
 }
 
-/* Modern link styling with smooth transitions */
+/* Modern link styling - bold black with red hover underline */
 .entry-content p a,
 .entry-content a {
-  color: var(--primary);
-  font-weight: 500;
-  text-decoration: none;
-  background-image: linear-gradient(
-    to right,
-    var(--primary) 0%,
-    var(--primary) 100%
-  );
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 0% 2px;
-  transition:
-    background-size 0.3s ease,
-    color 0.2s ease;
   position: relative;
+  font-weight: 800;
+  color: #000000;
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+
+/* Red underline (always visible) */
+.entry-content p a::before,
+.entry-content a::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--primary);
+}
+
+/* Black underline (expands on hover) */
+.entry-content p a::after,
+.entry-content a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: #000000;
+  transition: width 0.3s ease;
+}
+
+.entry-content p a:hover::after,
+.entry-content a:hover::after {
+  width: 100%;
 }
 
 .entry-content p a:hover,
 .entry-content a:hover {
-  color: var(--primary-hover);
-  background-size: 100% 2px;
+  opacity: 1;
+}
+
+/* Dark mode adjustments */
+.dark .entry-content p a,
+.dark .entry-content a {
+  color: #ffffff;
+}
+
+/* Dark mode: hover underline is white */
+.dark .entry-content p a::after,
+.dark .entry-content a::after {
+  background-color: #ffffff;
+}
+
+/* Image links - no default underline, red underline on hover */
+.entry-content a:has(img) {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0;
+}
+
+.entry-content a:has(img)::before {
+  display: none;
+}
+
+.entry-content a:has(img)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 3px;
+  background-color: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.entry-content a:has(img):hover::after {
+  width: 100%;
 }
 
 .entry-content p a:focus-visible,
@@ -226,6 +283,12 @@ html {
   margin-right: auto;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
+}
+
+/* Images with captions - flat bottom corners */
+figure:has(figcaption) img,
+.wp-block-image:has(figcaption) img {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 /* Hover effect only for linked images */
@@ -771,9 +834,14 @@ p.product-specs-cn::before,
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border-bottom: 2px solid var(--primary);
+  border-bottom: 2px solid black;
   color: var(--foreground);
   margin-bottom: 1rem;
+}
+
+.dark .schema-faq-question,
+.dark .schema-how-to-step-name {
+  border-bottom-color: white;
 }
 
 .schema-faq-question::before {
@@ -1020,6 +1088,17 @@ figure.wp-block-video.aligncenter {
 
 /* Note: Shadow tokens in globals.css auto-adjust for dark mode,
    so explicit dark mode shadow overrides are no longer needed */
+
+/* ============================================================================
+   BLOG ADD TO CART - Custom React Component Placeholder
+   ============================================================================ */
+
+/* Container for custom React add-to-cart component */
+.blog-add-to-cart-placeholder {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
 
 /* ============================================================================
    PRINT STYLES - Optimized for Printing

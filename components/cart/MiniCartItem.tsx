@@ -92,6 +92,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
             disabled={isUpdating}
             size="sm"
             onQuantityChange={handleQuantityChange}
+            onRemove={handleRemove}
           />
 
           {/* Remove Button */}

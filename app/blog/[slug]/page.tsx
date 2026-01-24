@@ -18,6 +18,7 @@ import {
 } from '@/lib/utils/image';
 import VideoAutoplay from '@/components/blog/VideoAutoplay';
 import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
+import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -213,6 +214,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Enhance star ratings in product specs */}
       <StarRatingEnhancer />
+
+      {/* Intercept add-to-cart links and use local cart */}
+      <AddToCartEnhancer />
 
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (

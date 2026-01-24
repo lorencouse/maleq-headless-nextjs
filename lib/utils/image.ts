@@ -81,6 +81,7 @@ export function processContentImages(html: string | undefined): string {
  * Process HTML content to fix all WordPress URLs
  * - Converts relative image URLs to absolute
  * - Handles any remaining absolute URLs from old domains
+ * - Cleans up WooCommerce verbose price text
  *
  * @param html - The HTML content from WordPress
  * @returns Processed HTML
@@ -111,6 +112,23 @@ export function processWordPressContent(html: string | undefined): string {
       baseUrl + '$1'
     );
   }
+
+  // Replace WooCommerce add-to-cart shortcode output with custom placeholder
+  // Product data is fetched via API using the product ID
+  // Match <p class="product woocommerce...">...</p> blocks specifically
+  // Use [\s\S] instead of . with s flag for ES2017 compatibility
+  processed = processed.replace(
+    /<p\s+class="product woocommerce[^"]*"[^>]*>([\s\S]+?)<\/p>/g,
+    (match, innerContent) => {
+      const productIdMatch = innerContent.match(/data-product_id="(\d+)"/);
+
+      // If no product ID found, return original
+      if (!productIdMatch) return match;
+
+      const productId = productIdMatch[1];
+      return `<div class="blog-add-to-cart-placeholder" data-product-id="${productId}"></div>`;
+    }
+  );
 
   return processed;
 }

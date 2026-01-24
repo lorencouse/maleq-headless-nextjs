@@ -153,6 +153,7 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
               sku: v.sku || '',
               stockQuantity: v.stockQuantity || 0,
             }))}
+            productId={product.databaseId}
             onVariationChange={(variation) => {
               setSelectedVariation({
                 ...variation,
@@ -252,6 +253,17 @@ export default function ProductPageClient({ product, onVariationImageChange }: P
           <div className="flex justify-between">
             <span className="text-muted-foreground">SKU:</span>
             <span className="font-medium text-foreground">{displaySku}</span>
+          </div>
+        )}
+        {/* Debug: Product/Variation IDs */}
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Product ID:</span>
+          <span className="font-medium text-foreground">{product.databaseId}</span>
+        </div>
+        {selectedVariation && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Variation ID:</span>
+            <span className="font-medium text-foreground">{selectedVariation.id}</span>
           </div>
         )}
         {product.averageRating && product.averageRating > 0 && (

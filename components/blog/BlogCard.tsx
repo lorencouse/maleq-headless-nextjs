@@ -19,9 +19,9 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all'>
       {/* Featured Image */}
-      {post.featuredImage?.node && (
-        <Link href={`/blog/${post.slug}`}>
-          <div className='relative h-48 w-full'>
+      <Link href={`/blog/${post.slug}`}>
+        <div className='relative h-48 w-full bg-muted'>
+          {post.featuredImage?.node ? (
             <Image
               src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
               alt={post.featuredImage.node.altText || post.title}
@@ -29,9 +29,15 @@ export default function BlogCard({ post }: BlogCardProps) {
               className='object-cover'
               sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
             />
-          </div>
-        </Link>
-      )}
+          ) : (
+            <div className='w-full h-full flex items-center justify-center'>
+              <svg className='w-12 h-12 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z' />
+              </svg>
+            </div>
+          )}
+        </div>
+      </Link>
 
       <div className='p-6'>
         {/* Categories & Date */}
