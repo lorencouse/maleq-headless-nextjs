@@ -29,6 +29,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `wpgraphql-materials.php` | Creates Product Materials taxonomy for filtering | `wordpress-snippets/register-material-wpgraphql.php` |
 | `wpgraphql-increase-limit.php` | Increases WPGraphQL max query limit from 100 to 500 | `wordpress-snippets/wpgraphql-increase-limit.php` |
 | `wpgraphql-render-blocks.php` | Renders Gutenberg blocks (including reusable blocks) in GraphQL content | `wordpress-snippets/wpgraphql-render-blocks.php` |
+| `maleq-relative-urls.php` | Converts URLs to relative paths for database portability across environments | `wordpress-snippets/relative-urls.php` |
 
 ### Installation Steps
 
@@ -39,6 +40,7 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress-snippets/register-material-wpgraphql.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-materials.php
    cp wordpress-snippets/wpgraphql-increase-limit.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-increase-limit.php
    cp wordpress-snippets/wpgraphql-render-blocks.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-render-blocks.php
+   cp wordpress-snippets/relative-urls.php /path/to/wordpress/wp-content/mu-plugins/maleq-relative-urls.php
    ```
 
 2. **Run material migration** (one-time setup):
@@ -67,6 +69,29 @@ Copy these files to: `wp-content/mu-plugins/`
 - These plugins require WPGraphQL and WooGraphQL to be installed
 - After deployment, clear any GraphQL/object caches
 
+### Relative URLs System
+
+The `maleq-relative-urls.php` plugin makes the WordPress database portable across environments:
+
+**How it works:**
+- WordPress stores all URLs as relative paths (e.g., `/wp-content/uploads/...`, `/product/...`)
+- Next.js `processWordPressContent()` function converts them to absolute URLs at runtime using `NEXT_PUBLIC_IMAGE_BASE_URL`
+
+**One-time migration** (if existing content has absolute URLs):
+```bash
+# From project root - converts existing URLs in database
+bun scripts/convert-urls-to-relative.ts --execute
+```
+
+**Local development:**
+Set in `.env.local`:
+```
+NEXT_PUBLIC_IMAGE_BASE_URL=http://maleq-local.local
+```
+
+**Production:**
+Either set `NEXT_PUBLIC_IMAGE_BASE_URL=https://www.maleq.com` in Vercel, or omit it (defaults to `https://www.maleq.com`)
+
 ---
 
 ## Environment Variables
@@ -79,6 +104,7 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
 |----------|-------------|---------|
 | `NEXT_PUBLIC_WORDPRESS_API_URL` | WordPress GraphQL endpoint | `https://your-wp-site.com/graphql` |
 | `NEXT_PUBLIC_SITE_URL` | Production site URL | `https://maleq.com` |
+| `NEXT_PUBLIC_IMAGE_BASE_URL` | Base URL for WordPress images (defaults to `https://www.maleq.com`) | `https://www.maleq.com` |
 | `WOOCOMMERCE_URL` | WooCommerce REST API base URL | `https://your-wp-site.com` |
 | `WOOCOMMERCE_CONSUMER_KEY` | WooCommerce API key | `ck_xxxxx` |
 | `WOOCOMMERCE_CONSUMER_SECRET` | WooCommerce API secret | `cs_xxxxx` |
