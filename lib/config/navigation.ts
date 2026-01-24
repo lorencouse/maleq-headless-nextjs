@@ -129,7 +129,7 @@ export const mainNavigation: NavSection[] = [
         href: '/blog',
         children: [
           { label: 'Sex & Intimacy', href: '/blog/category/sex', description: 'Tips and techniques' },
-          { label: 'Relationships', href: '/blog/category/relationships', description: 'Connection advice' },
+          { label: 'Relationships', href: '/blog/category/relationship', description: 'Connection advice' },
           { label: 'Health & Wellness', href: '/blog/category/health', description: 'Sexual health info' },
           { label: 'Product Guides', href: '/blog/category/guides', description: 'How-to guides' },
         ],
