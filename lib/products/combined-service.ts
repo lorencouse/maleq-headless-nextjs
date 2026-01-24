@@ -8,6 +8,7 @@ import {
   GET_HIERARCHICAL_CATEGORIES,
   GET_ALL_BRANDS,
   GET_BRANDS_PAGE,
+  GET_BRAND_BY_SLUG,
   GET_ALL_MATERIALS,
   GET_GLOBAL_ATTRIBUTES,
 } from '@/lib/queries/products';
@@ -545,4 +546,53 @@ export async function getGlobalAttributes(): Promise<{
     console.error('Error fetching global attributes:', error);
     return { colors: [], materials: [] };
   }
+}
+
+// Brand interface with additional details
+export interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  count: number;
+  description?: string | null;
+}
+
+/**
+ * Get a single brand by slug
+ */
+export async function getBrandBySlug(slug: string): Promise<Brand | null> {
+  try {
+    const { data } = await getClient().query({
+      query: GET_BRAND_BY_SLUG,
+      variables: { slug },
+    });
+
+    const brand = data?.productBrand;
+    if (!brand) return null;
+
+    return {
+      id: brand.id,
+      name: brand.name,
+      slug: brand.slug,
+      count: brand.count || 0,
+      description: brand.description || null,
+    };
+  } catch (error) {
+    console.error('Error fetching brand by slug:', error);
+    return null;
+  }
+}
+
+/**
+ * Get products by brand slug
+ */
+export async function getProductsByBrand(
+  brandSlug: string,
+  limit = 24
+): Promise<UnifiedProduct[]> {
+  const result = await getFilteredProducts({
+    limit,
+    brand: brandSlug,
+  });
+  return result.products;
 }

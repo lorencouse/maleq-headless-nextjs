@@ -17,6 +17,7 @@ interface ShopPageClientProps {
   hasMore: boolean;
   searchQuery?: string;
   initialCategory?: string;
+  initialBrand?: string;
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -43,6 +44,7 @@ export default function ShopPageClient({
   hasMore: initialHasMore,
   searchQuery,
   initialCategory,
+  initialBrand,
 }: ShopPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -56,9 +58,9 @@ export default function ShopPageClient({
   const isInitialMount = useRef(true);
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
 
-  // Parse filters from URL (use initialCategory as fallback for category pages)
+  // Parse filters from URL (use initialCategory/initialBrand as fallback for category/brand pages)
   const categoryFilter = searchParams.get('category') || initialCategory || '';
-  const brandFilter = searchParams.get('brand') || '';
+  const brandFilter = searchParams.get('brand') || initialBrand || '';
   const colorFilter = searchParams.get('color') || '';
   const materialFilter = searchParams.get('material') || '';
   const minPriceFilter = parseInt(searchParams.get('minPrice') || '0', 10);

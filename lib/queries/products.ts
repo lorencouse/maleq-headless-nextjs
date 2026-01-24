@@ -341,6 +341,19 @@ export const GET_BRANDS_PAGE = gql`
   }
 `;
 
+// Get a single brand by slug
+export const GET_BRAND_BY_SLUG = gql`
+  query GetBrandBySlug($slug: ID!) {
+    productBrand(id: $slug, idType: SLUG) {
+      id
+      name
+      slug
+      count
+      description
+    }
+  }
+`;
+
 // Get all product materials
 export const GET_ALL_MATERIALS = gql`
   query GetAllMaterials {
