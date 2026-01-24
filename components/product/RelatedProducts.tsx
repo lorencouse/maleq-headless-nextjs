@@ -122,11 +122,13 @@ export default function RelatedProducts({
               </Link>
 
               <div className="p-4">
-                <Link href={`/product/${product.slug}`}>
-                  <h3 className="font-medium text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
-                    {product.name}
-                  </h3>
-                </Link>
+                <div className="border-b-2 border-primary pb-2 mb-2">
+                  <Link href={`/product/${product.slug}`}>
+                    <h3 className="heading-plain font-medium text-foreground line-clamp-2 hover:text-primary transition-colors">
+                      {product.name}
+                    </h3>
+                  </Link>
+                </div>
 
                 <div className="flex items-center gap-2">
                   {product.onSale && product.regularPrice ? (

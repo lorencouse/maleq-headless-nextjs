@@ -4,6 +4,7 @@ import { gql } from '@apollo/client';
 export const POST_FIELDS = gql`
   fragment PostFields on Post {
     id
+    databaseId
     title
     slug
     excerpt
@@ -210,6 +211,44 @@ export const GET_TAG_BY_SLUG = gql`
       slug
       count
       description
+    }
+  }
+`;
+
+// Create a comment mutation
+export const CREATE_COMMENT = gql`
+  mutation CreateComment($input: CreateCommentInput!) {
+    createComment(input: $input) {
+      success
+      comment {
+        id
+        content
+        date
+        author {
+          node {
+            name
+            email
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Get related posts by category (excluding current post is done client-side)
+export const GET_RELATED_POSTS = gql`
+  ${POST_FIELDS}
+  query GetRelatedPosts($categorySlug: String!, $first: Int = 5) {
+    posts(
+      first: $first
+      where: {
+        categoryName: $categorySlug
+        orderby: { field: DATE, order: DESC }
+      }
+    ) {
+      nodes {
+        ...PostFields
+      }
     }
   }
 `;

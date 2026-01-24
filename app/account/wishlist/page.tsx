@@ -179,11 +179,13 @@ export default function WishlistPage() {
 
                 {/* Product Info */}
                 <div className="p-4">
-                  <Link href={`/product/${item.slug}`}>
-                    <h3 className="font-medium text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
-                      {item.name}
-                    </h3>
-                  </Link>
+                  <div className="border-b-2 border-primary pb-2 mb-2">
+                    <Link href={`/product/${item.slug}`}>
+                      <h3 className="heading-plain font-medium text-foreground line-clamp-2 hover:text-primary transition-colors">
+                        {item.name}
+                      </h3>
+                    </Link>
+                  </div>
 
                   <div className="flex items-center gap-2 mb-4">
                     <span className="text-lg font-bold text-foreground">

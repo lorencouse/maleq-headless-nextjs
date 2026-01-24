@@ -225,28 +225,51 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: 600;
+  font-family: var(--font-poppins), Poppins, sans-serif;
+  font-weight: 700;
+  font-style: normal;
   line-height: 1.2;
   margin-bottom: 0.5rem;
 }
 
 h1 {
-  font-size: 2.25rem;
+  font-size: 42px;
 }
 h2 {
-  font-size: 1.875rem;
+  font-size: 36px;
+  border-bottom: 5px solid black;
+  padding-bottom: 0.75rem;
+}
+
+.dark h2 {
+  border-bottom-color: white;
 }
 h3 {
-  font-size: 1.5rem;
+  font-size: 28px;
+  border-bottom: 3px solid var(--primary);
+  padding-bottom: 0.5rem;
 }
 h4 {
-  font-size: 1.25rem;
+  font-size: 24px;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: 0.5rem;
 }
 h5 {
-  font-size: 1.125rem;
+  font-size: 20px;
 }
 h6 {
-  font-size: 1rem;
+  font-size: 18px;
+}
+
+/* Utility class for headings without underlines */
+h1.heading-plain,
+h2.heading-plain,
+h3.heading-plain,
+h4.heading-plain,
+h5.heading-plain,
+h6.heading-plain {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 p {

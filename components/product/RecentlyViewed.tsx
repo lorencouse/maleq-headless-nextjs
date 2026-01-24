@@ -119,11 +119,13 @@ export default function RecentlyViewed({
               </Link>
 
               <div className="p-3">
-                <Link href={`/product/${item.slug}`}>
-                  <h3 className="font-medium text-sm text-foreground line-clamp-2 hover:text-primary transition-colors mb-2">
-                    {item.name}
-                  </h3>
-                </Link>
+                <div className="border-b-2 border-primary pb-2 mb-2">
+                  <Link href={`/product/${item.slug}`}>
+                    <h3 className="heading-plain font-medium text-sm text-foreground line-clamp-2 hover:text-primary transition-colors">
+                      {item.name}
+                    </h3>
+                  </Link>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-sm text-foreground">

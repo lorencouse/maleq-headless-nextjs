@@ -90,19 +90,18 @@ html {
   transition: color 0.2s ease;
 }
 
-/* Modern gradient underline for h2 */
+/* Bold black underline for h2 */
 .entry-content h2 {
+  font-family: var(--font-poppins), Poppins, sans-serif;
+  font-weight: 700;
+  font-style: normal;
+  font-size: clamp(1.75rem, 4vw, 36px);
+  border-bottom: 5px solid black;
   padding-bottom: 0.75rem;
-  border-bottom: 3px solid transparent;
-  background-image: linear-gradient(
-    90deg,
-    var(--primary) 0%,
-    var(--primary-light) 100%
-  );
-  background-position: 0 100%;
-  background-repeat: no-repeat;
-  background-size: 100% 3px;
-  font-size: clamp(1.5rem, 4vw, 1.875rem);
+}
+
+.dark .entry-content h2 {
+  border-bottom-color: white;
 }
 
 .entry-content h3 {
@@ -981,13 +980,7 @@ figure.wp-block-video.aligncenter {
    DARK MODE ADJUSTMENTS - Optimized Contrast
    ============================================================================ */
 
-.dark .entry-content h2 {
-  background-image: linear-gradient(
-    90deg,
-    var(--primary) 0%,
-    var(--primary-light) 100%
-  );
-}
+/* Dark mode h2 handled inline above */
 
 .dark .wp-block-table tbody tr:nth-child(even) td {
   background-color: rgba(255, 255, 255, 0.03);

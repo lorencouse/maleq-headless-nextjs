@@ -566,7 +566,7 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
               {categoryImage ? (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-full bg-black/60 backdrop-blur-sm py-3 px-4 text-center">
-                    <h3 className="text-white font-bold text-sm sm:text-base leading-tight line-clamp-2">
+                    <h3 className="heading-plain text-white font-bold text-sm sm:text-base leading-tight line-clamp-2">
                       {category.name}
                     </h3>
                     <p className="text-white/90 text-xs mt-1">
@@ -580,7 +580,7 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
                     {config.icon}
                   </div>
                   <div>
-                    <h3 className="text-white font-bold text-sm sm:text-base leading-tight mb-1 line-clamp-2">
+                    <h3 className="heading-plain text-white font-bold text-sm sm:text-base leading-tight mb-1 line-clamp-2">
                       {category.name}
                     </h3>
                     <p className="text-white/90 text-xs">

@@ -77,7 +77,7 @@ export default function SubcategoryGrid({
               {categoryImage ? (
                 <div className='absolute inset-0 flex items-center justify-center'>
                   <div className='flex flex-col justify-around items-center w-full bg-black/40 backdrop-blur-sm pt-4 px-3 text-center'>
-                    <h3 className='text-white font-semibold text-xs sm:text-sm leading-tight line-clamp-2'>
+                    <h3 className='heading-plain text-white font-semibold text-xs sm:text-sm leading-tight line-clamp-2'>
                       {subcategory.name}
                     </h3>
                     <p className='text-white/90 text-[10px] sm:text-xs mt-0.5'>
@@ -92,7 +92,7 @@ export default function SubcategoryGrid({
                     {config.icon}
                   </div>
                   <div>
-                    <h3 className='text-white font-semibold text-xs sm:text-sm leading-tight mb-0.5 line-clamp-2'>
+                    <h3 className='heading-plain text-white font-semibold text-xs sm:text-sm leading-tight mb-0.5 line-clamp-2'>
                       {subcategory.name}
                     </h3>
                     <p className='text-white/90 text-[10px] sm:text-xs'>

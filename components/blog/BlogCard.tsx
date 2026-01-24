@@ -55,14 +55,16 @@ export default function BlogCard({ post }: BlogCardProps) {
         </div>
 
         {/* Title */}
-        <h2 className='text-xl font-bold text-foreground mb-2 line-clamp-2'>
-          <Link
-            href={`/blog/${post.slug}`}
-            className='hover:text-primary transition-colors'
-          >
-            {post.title}
-          </Link>
-        </h2>
+        <div className='border-b-4 border-black dark:border-white pb-2 mb-2'>
+          <h2 className='heading-plain text-xl font-bold text-foreground line-clamp-2'>
+            <Link
+              href={`/blog/${post.slug}`}
+              className='hover:text-primary transition-colors'
+            >
+              {post.title}
+            </Link>
+          </h2>
+        </div>
 
         {/* Excerpt */}
         {/* <div
