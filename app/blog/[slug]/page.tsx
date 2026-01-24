@@ -19,6 +19,7 @@ import {
 import VideoAutoplay from '@/components/blog/VideoAutoplay';
 import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
+import DevEditLink from '@/components/dev/DevEditLink';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -138,6 +139,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <article className='single-post max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+      {/* Dev: Edit in WordPress link */}
+      <DevEditLink type="post" databaseId={post.databaseId} />
+
       {/* Header */}
       <header className='entry-header mb-8'>
         {/* Categories */}

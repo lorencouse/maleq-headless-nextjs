@@ -10,6 +10,7 @@ import RelatedProducts from '@/components/product/RelatedProducts';
 import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 import { ProductSchema } from '@/components/seo/StructuredData';
+import DevEditLink from '@/components/dev/DevEditLink';
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering for fresh stock data
 
@@ -120,6 +121,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      {/* Dev: Edit in WordPress link */}
+      <DevEditLink type="product" databaseId={product.databaseId} />
+
       {/* Product Structured Data */}
       <ProductSchema
         name={product.name}
