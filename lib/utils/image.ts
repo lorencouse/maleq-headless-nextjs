@@ -56,3 +56,61 @@ export function getImagePath(url: string | undefined): string {
     return url;
   }
 }
+
+/**
+ * Process HTML content to fix relative image URLs
+ * Converts /wp-content/uploads/... to full URLs using the image base
+ *
+ * @param html - The HTML content from WordPress
+ * @returns HTML with absolute image URLs
+ */
+export function processContentImages(html: string | undefined): string {
+  if (!html) return '';
+
+  const baseUrl = getImageBaseUrl();
+
+  // Replace relative wp-content URLs with absolute URLs
+  // Matches src="/wp-content/..." and href="/wp-content/..."
+  return html.replace(
+    /(src|href)=(["'])(\/wp-content\/[^"']+)(["'])/gi,
+    `$1=$2${baseUrl}$3$4`
+  );
+}
+
+/**
+ * Process HTML content to fix all WordPress URLs
+ * - Converts relative image URLs to absolute
+ * - Handles any remaining absolute URLs from old domains
+ *
+ * @param html - The HTML content from WordPress
+ * @returns Processed HTML
+ */
+export function processWordPressContent(html: string | undefined): string {
+  if (!html) return '';
+
+  const baseUrl = getImageBaseUrl();
+  let processed = html;
+
+  // Replace relative wp-content URLs with absolute URLs
+  processed = processed.replace(
+    /(src|href)=(["'])(\/wp-content\/[^"']+)(["'])/gi,
+    `$1=$2${baseUrl}$3$4`
+  );
+
+  // Also handle any remaining old domain URLs for wp-content
+  const oldDomains = [
+    'http://maleq-local.local',
+    'https://maleq-local.local',
+    'http://staging.maleq.com',
+    'https://staging.maleq.com',
+  ];
+
+  for (const oldDomain of oldDomains) {
+    processed = processed.replace(
+      new RegExp(oldDomain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(/wp-content/[^"\'<>\\s]+)', 'gi'),
+      baseUrl + '$1'
+    );
+  }
+
+  return processed;
+}

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Post } from '@/lib/types/wordpress';
-import { getProductionImageUrl } from '@/lib/utils/image';
+import { getProductionImageUrl, processWordPressContent } from '@/lib/utils/image';
 import VideoAutoplay from '@/components/blog/VideoAutoplay';
 import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import './blog-post.css';
@@ -180,7 +180,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Content */}
       <div
         className='entry-content prose prose-lg max-w-none mb-12 blog-content'
-        dangerouslySetInnerHTML={{ __html: post.content }}
+        dangerouslySetInnerHTML={{ __html: processWordPressContent(post.content) }}
       />
 
       {/* Enable lazy loading autoplay for videos */}
@@ -237,7 +237,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     </div>
                     <div
                       className='text-muted-foreground'
-                      dangerouslySetInnerHTML={{ __html: comment.content }}
+                      dangerouslySetInnerHTML={{ __html: processWordPressContent(comment.content) }}
                     />
                   </div>
                 </div>
