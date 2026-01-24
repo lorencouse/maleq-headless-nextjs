@@ -137,13 +137,79 @@ export const GET_ALL_POST_SLUGS = gql`
 // Get all categories
 export const GET_ALL_CATEGORIES = gql`
   query GetAllCategories {
-    categories {
+    categories(where: { hideEmpty: true }) {
+      nodes {
+        id
+        name
+        slug
+        count
+        description
+      }
+    }
+  }
+`;
+
+// Get a single category by slug
+export const GET_CATEGORY_BY_SLUG = gql`
+  query GetCategoryBySlug($slug: ID!) {
+    category(id: $slug, idType: SLUG) {
+      id
+      name
+      slug
+      count
+      description
+    }
+  }
+`;
+
+// Get posts by tag
+export const GET_POSTS_BY_TAG = gql`
+  ${POST_FIELDS}
+  query GetPostsByTag($tag: String!, $first: Int = 10, $after: String) {
+    posts(
+      first: $first
+      after: $after
+      where: {
+        tag: $tag
+        orderby: { field: DATE, order: DESC }
+      }
+    ) {
+      nodes {
+        ...PostFields
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
+
+// Get all tags
+export const GET_ALL_TAGS = gql`
+  query GetAllTags {
+    tags(where: { hideEmpty: true }, first: 100) {
       nodes {
         id
         name
         slug
         count
       }
+    }
+  }
+`;
+
+// Get a single tag by slug
+export const GET_TAG_BY_SLUG = gql`
+  query GetTagBySlug($slug: ID!) {
+    tag(id: $slug, idType: SLUG) {
+      id
+      name
+      slug
+      count
+      description
     }
   }
 `;
