@@ -7,6 +7,7 @@ import {
   GET_TAG_BY_SLUG,
   GET_ALL_TAGS,
 } from '@/lib/queries/posts';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { Post } from '@/lib/types/wordpress';
 
@@ -60,11 +61,13 @@ export async function generateStaticParams() {
 
   const tags: Tag[] = data?.tags?.nodes || [];
 
-  return tags
+  const params = tags
     .filter((tag) => tag.count > 0)
     .map((tag) => ({
       slug: tag.slug,
     }));
+
+  return limitStaticParams(params, DEV_LIMITS.blogTags);
 }
 
 export const dynamic = 'force-dynamic';

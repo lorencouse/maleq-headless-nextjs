@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getProductsByCategory, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
 import { findCategoryBySlug, flattenCategories, findParentCategory } from '@/lib/utils/category-helpers';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import CategoryHero from '@/components/shop/CategoryHero';
 import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
@@ -38,9 +39,10 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 export async function generateStaticParams() {
   const categories = await getHierarchicalCategories();
   const allCategories = flattenCategories(categories);
-  return allCategories.map((category) => ({
+  const params = allCategories.map((category) => ({
     slug: category.slug,
   }));
+  return limitStaticParams(params, DEV_LIMITS.categories);
 }
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering

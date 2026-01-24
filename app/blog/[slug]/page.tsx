@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_POST_BY_SLUG, GET_ALL_POST_SLUGS } from '@/lib/queries/posts';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -78,11 +79,11 @@ export async function generateStaticParams() {
     query: GET_ALL_POST_SLUGS,
   });
 
-  return (
-    data?.posts?.nodes?.map((post: { slug: string }) => ({
-      slug: post.slug,
-    })) || []
-  );
+  const params = data?.posts?.nodes?.map((post: { slug: string }) => ({
+    slug: post.slug,
+  })) || [];
+
+  return limitStaticParams(params, DEV_LIMITS.blogPosts);
 }
 
 interface BlogPostPageProps {

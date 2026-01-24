@@ -7,6 +7,7 @@ import {
   GET_CATEGORY_BY_SLUG,
   GET_ALL_CATEGORIES,
 } from '@/lib/queries/posts';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { Post } from '@/lib/types/wordpress';
 
@@ -60,11 +61,13 @@ export async function generateStaticParams() {
 
   const categories: Category[] = data?.categories?.nodes || [];
 
-  return categories
+  const params = categories
     .filter((cat) => cat.count > 0)
     .map((category) => ({
       slug: category.slug,
     }));
+
+  return limitStaticParams(params, DEV_LIMITS.blogCategories);
 }
 
 export const dynamic = 'force-dynamic';

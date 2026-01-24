@@ -119,3 +119,12 @@ export {
   countWords,
   isBlank,
 } from './text-utils';
+
+// Static params utilities
+export {
+  DEV_LIMITS,
+  isDevelopment,
+  shouldLimitParams,
+  limitStaticParams,
+  logStaticParamsInfo,
+} from './static-params';

@@ -9,6 +9,7 @@ import {
   getGlobalAttributes,
   getFilteredProducts,
 } from '@/lib/products/combined-service';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
@@ -45,9 +46,10 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 
 export async function generateStaticParams() {
   const brands = await getBrands();
-  return brands.map((brand) => ({
+  const params = brands.map((brand) => ({
     slug: brand.slug,
   }));
+  return limitStaticParams(params, DEV_LIMITS.brands);
 }
 
 export const dynamic = 'force-dynamic'; // Use dynamic rendering

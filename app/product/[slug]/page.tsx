@@ -1,4 +1,5 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { getProductsByCategory } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -68,10 +69,12 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 // Generate static params for all products
+// In development, limits to DEV_LIMITS.products pages for faster builds
 export async function generateStaticParams() {
   try {
     const slugs = await getAllProductSlugs();
-    return slugs.map((slug) => ({ slug }));
+    const params = slugs.map((slug) => ({ slug }));
+    return limitStaticParams(params, DEV_LIMITS.products);
   } catch (error) {
     console.error('Error generating static params:', error);
     return [];
