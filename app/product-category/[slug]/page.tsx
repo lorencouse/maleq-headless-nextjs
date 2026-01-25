@@ -45,7 +45,9 @@ export async function generateStaticParams() {
   return limitStaticParams(params, DEV_LIMITS.categories);
 }
 
-export const dynamic = 'force-dynamic'; // Use dynamic rendering
+// ISR: Revalidate every 24 hours for fresh product/stock data
+export const revalidate = 86400;
+export const dynamicParams = true; // Allow runtime generation
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;

@@ -52,7 +52,9 @@ export async function generateStaticParams() {
   return limitStaticParams(params, DEV_LIMITS.brands);
 }
 
-export const dynamic = 'force-dynamic'; // Use dynamic rendering
+// ISR: Revalidate every 24 hours for fresh product/stock data
+export const revalidate = 86400;
+export const dynamicParams = true; // Allow runtime generation
 
 export default async function BrandPage({ params, searchParams }: BrandPageProps) {
   const { slug } = await params;

@@ -21,8 +21,8 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR: Revalidate every 5 minutes for fresh content
-export const revalidate = 300;
+// ISR: Revalidate every 24 hours (home page shows products)
+export const revalidate = 86400;
 
 export default async function Home() {
   // Fetch data in parallel

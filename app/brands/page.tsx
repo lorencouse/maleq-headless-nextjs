@@ -12,7 +12,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate every 24 hours for fresh product data
+export const revalidate = 86400;
 
 export default async function BrandsPage() {
   const brands = await getBrands();

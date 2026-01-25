@@ -11,7 +11,8 @@ export const metadata: Metadata = {
   description: 'Browse our collection of quality products. Filter by category, price, and more.',
 };
 
-export const dynamic = 'force-dynamic'; // Use dynamic rendering
+// ISR: Revalidate every 24 hours for fresh product/stock data
+export const revalidate = 86400;
 
 interface ShopPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

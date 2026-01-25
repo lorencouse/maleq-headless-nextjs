@@ -29,8 +29,8 @@ import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
-// ISR: Revalidate every 2 minutes for fresh content and comments
-export const revalidate = 120;
+// ISR: Revalidate every 1 week for blog content
+export const revalidate = 604800;
 export const dynamicParams = true; // Allow runtime generation of any blog post
 
 // Generate metadata for blog post

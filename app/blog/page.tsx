@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR: Revalidate every 5 minutes for fresh content
-export const revalidate = 300;
+// ISR: Revalidate every 1 week for blog content
+export const revalidate = 604800;
 
 export default async function BlogPage() {
   const { data } = await getClient().query({

@@ -12,7 +12,9 @@ import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 import { ProductSchema } from '@/components/seo/StructuredData';
 import DevEditLink from '@/components/dev/DevEditLink';
 
-export const dynamic = 'force-dynamic'; // Use dynamic rendering for fresh stock data
+// ISR: Revalidate every 24 hours for fresh stock/price data
+export const revalidate = 86400;
+export const dynamicParams = true; // Allow runtime generation of any product page
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 

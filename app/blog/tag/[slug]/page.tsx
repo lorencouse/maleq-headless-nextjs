@@ -72,8 +72,8 @@ export async function generateStaticParams() {
   return limitStaticParams(params, DEV_LIMITS.blogTags);
 }
 
-// ISR: Revalidate every 5 minutes
-export const revalidate = 300;
+// ISR: Revalidate every 1 week for blog content
+export const revalidate = 604800;
 export const dynamicParams = true; // Allow runtime generation
 
 export default async function BlogTagPage({ params }: BlogTagPageProps) {
