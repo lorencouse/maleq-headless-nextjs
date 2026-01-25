@@ -31,7 +31,7 @@ export default function ProductSpecifications({
                         {linkIndex > 0 && ', '}
                         <Link
                           href={link.url}
-                          className='text-primary hover:text-primary-hover hover:underline transition-colors'
+                          className='link-animated'
                         >
                           {link.text}
                         </Link>
