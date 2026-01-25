@@ -1,7 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { Brand } from '@/lib/products/combined-service';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 interface BrandHeroProps {
   brand: Brand;
@@ -33,16 +33,15 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
             {/* Text Content */}
             <div className="flex-1">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-sm text-white/80 mb-2 drop-shadow-md">
-                <Link href="/shop" className="hover:text-white transition-colors">
-                  Shop
-                </Link>
-                <span>/</span>
-                <Link href="/brands" className="hover:text-white transition-colors">
-                  Brands
-                </Link>
-                <span>/</span>
-                <span className="text-white">{brand.name}</span>
+              <div className="drop-shadow-md [&_nav]:mb-2">
+                <Breadcrumbs
+                  variant="light"
+                  items={[
+                    { label: 'Shop', href: '/shop' },
+                    { label: 'Brands', href: '/brands' },
+                    { label: brand.name },
+                  ]}
+                />
               </div>
 
               {/* Title */}

@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
 import { getCategoryConfig, getCategoryImage } from '@/lib/config/category-icons';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 interface CategoryHeroProps {
   category: HierarchicalCategory;
@@ -54,23 +54,17 @@ export default function CategoryHero({ category, productCount, parentCategory }:
             {/* Text Content */}
             <div className="flex-1">
               {/* Breadcrumb */}
-              <div className="flex items-center gap-2 text-sm text-white/80 mb-2 drop-shadow-md">
-                <Link href="/shop" className="hover:text-white transition-colors">
-                  Shop
-                </Link>
-                {parentCategory && (
-                  <>
-                    <span>/</span>
-                    <Link
-                      href={`/product-category/${parentCategory.slug}`}
-                      className="hover:text-white transition-colors"
-                    >
-                      {parentCategory.name}
-                    </Link>
-                  </>
-                )}
-                <span>/</span>
-                <span className="text-white">{category.name}</span>
+              <div className="drop-shadow-md [&_nav]:mb-2">
+                <Breadcrumbs
+                  variant="light"
+                  items={[
+                    { label: 'Shop', href: '/shop' },
+                    ...(parentCategory
+                      ? [{ label: parentCategory.name, href: `/product-category/${parentCategory.slug}` }]
+                      : []),
+                    { label: category.name },
+                  ]}
+                />
               </div>
 
               {/* Title */}

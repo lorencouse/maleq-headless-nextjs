@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { getClient } from '@/lib/apollo/client';
 import {
   GET_POSTS_BY_CATEGORY,
@@ -109,16 +110,15 @@ export default async function BlogCategoryPage({ params }: BlogCategoryPageProps
       {/* Hero Section */}
       <div className="mb-12">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <Link href="/blog" className="hover:text-foreground transition-colors">
-            Blog
-          </Link>
-          <span>/</span>
-          <span className="text-foreground">{category.name}</span>
-        </div>
+        <Breadcrumbs
+          items={[
+            { label: 'Blog', href: '/blog' },
+            { label: category.name },
+          ]}
+        />
 
         {/* Title */}
-        <h1 className="text-4xl font-bold text-foreground mb-4">{category.name}</h1>
+        <h1 className="text-4xl font-bold text-foreground">{category.name}</h1>
 
         {/* Description */}
         {category.description && (

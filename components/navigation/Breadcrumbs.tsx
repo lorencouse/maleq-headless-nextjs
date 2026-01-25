@@ -9,13 +9,17 @@ export interface BreadcrumbItem {
 
 interface BreadcrumbsProps {
   items: BreadcrumbItem[];
+  /** Use light variant for dark backgrounds (e.g., hero sections) */
+  variant?: 'default' | 'light';
 }
 
-export default function Breadcrumbs({ items }: BreadcrumbsProps) {
+export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsProps) {
+  const isLight = variant === 'light';
+
   return (
     <nav aria-label="Breadcrumb" className="mb-6">
       <ol
-        className="flex items-center flex-wrap gap-2 text-sm"
+        className="flex items-center flex-wrap gap-1 text-sm"
         itemScope
         itemType="https://schema.org/BreadcrumbList"
       >
@@ -29,19 +33,16 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
           <Link
             href="/"
             itemProp="item"
-            className="text-muted-foreground hover:text-foreground transition-colors"
+            className={`hover:underline underline-offset-4 transition-colors ${
+              isLight
+                ? 'text-white/80 hover:text-white'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
           >
             <span itemProp="name">Home</span>
           </Link>
           <meta itemProp="position" content="1" />
-          <svg
-            className="w-4 h-4 mx-2 text-muted-foreground/50"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
+          <span className={`mx-2 ${isLight ? 'text-white/50' : 'text-muted-foreground/50'}`}>/</span>
         </li>
 
         {/* Dynamic items */}
@@ -60,30 +61,33 @@ export default function Breadcrumbs({ items }: BreadcrumbsProps) {
               {isLast || !item.href ? (
                 <span
                   itemProp="name"
-                  className={isLast ? 'text-foreground font-medium' : 'text-muted-foreground'}
+                  className={`relative font-semibold ${
+                    isLight ? 'text-white' : 'text-foreground'
+                  }`}
                   aria-current={isLast ? 'page' : undefined}
                 >
                   {item.label}
+                  {/* Heavy underline accent */}
+                  <span className={`absolute -bottom-1 left-0 w-full h-0.5 ${
+                    isLight ? 'bg-white' : 'bg-foreground'
+                  }`} />
                 </span>
               ) : (
                 <Link
                   href={item.href}
                   itemProp="item"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className={`hover:underline underline-offset-4 transition-colors ${
+                    isLight
+                      ? 'text-white/80 hover:text-white'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
               )}
               <meta itemProp="position" content={position.toString()} />
               {!isLast && (
-                <svg
-                  className="w-4 h-4 mx-2 text-muted-foreground/50"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                <span className={`mx-2 ${isLight ? 'text-white/50' : 'text-muted-foreground/50'}`}>/</span>
               )}
             </li>
           );

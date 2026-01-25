@@ -11,6 +11,7 @@ import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 import { ProductSchema } from '@/components/seo/StructuredData';
 import DevEditLink from '@/components/dev/DevEditLink';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 // ISR: Revalidate every 24 hours for fresh stock/price data
 export const revalidate = 86400;
@@ -141,19 +142,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
 
       {/* Breadcrumb */}
-      <div className="mb-8 text-sm text-muted-foreground">
-        <a href="/shop" className="hover:text-primary transition-colors">Shop</a>
-        {primaryCategory && (
-          <>
-            {' '}/{' '}
-            <a href={`/product-category/${primaryCategory.slug}`} className="hover:text-primary transition-colors">
-              {primaryCategory.name}
-            </a>
-          </>
-        )}
-        {' '}/{' '}
-        <span className="text-foreground">{product.name}</span>
-      </div>
+      <Breadcrumbs
+        items={[
+          { label: 'Shop', href: '/shop' },
+          ...(primaryCategory
+            ? [{ label: primaryCategory.name, href: `/product-category/${primaryCategory.slug}` }]
+            : []),
+          { label: product.name },
+        ]}
+      />
 
       {/* Product Details with Image Gallery */}
       <ProductDetailsWrapper product={product} />
