@@ -298,6 +298,18 @@ a:hover {
   opacity: 0.8;
 }
 
+/* Ensure pointer cursor on all interactive elements */
+button,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+select,
+label[for],
+.cursor-pointer {
+  cursor: pointer;
+}
+
 input,
 textarea,
 select {
