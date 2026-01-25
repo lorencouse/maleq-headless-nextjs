@@ -609,6 +609,38 @@ figcaption a:hover {
   opacity: 1;
 }
 
+/* Brand link - red text, no underline, black expands on hover */
+.link-brand {
+  position: relative;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+
+.link-brand::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: #000000;
+  transition: width 0.3s ease;
+}
+
+.link-brand:hover::after {
+  width: 100%;
+}
+
+.link-brand:hover {
+  opacity: 1;
+}
+
+.dark .link-brand::after {
+  background-color: #ffffff;
+}
+
 /* Current/active breadcrumb item */
 .link-current {
   font-weight: 800;

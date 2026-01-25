@@ -38,7 +38,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
           {product.brands && product.brands.length > 0 && (
             <a
               href={`/brand/${product.brands[0].slug}`}
-              className="link-animated"
+              className="link-brand"
             >
               {product.brands[0].name}
             </a>
@@ -47,7 +47,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
           {product.categories && product.categories.length > 0 && (
             <a
               href={`/product-category/${product.categories[0].slug}`}
-              className="link-animated"
+              className="link-subtle"
             >
               {product.categories[0].name}
             </a>
