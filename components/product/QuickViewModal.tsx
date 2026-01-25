@@ -180,7 +180,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {product.categories?.[0] && (
                 <a
                   href={`/product-category/${product.categories[0].slug}`}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-2"
+                  className="text-sm link-animated mb-2 inline-block"
                   onClick={onClose}
                 >
                   {product.categories[0].name}
@@ -307,7 +307,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               <Link
                 href={`/product/${product.slug}`}
                 onClick={onClose}
-                className="mt-4 text-center text-sm text-primary hover:underline"
+                className="mt-4 text-center text-sm link-animated inline-block mx-auto"
               >
                 View Full Product Details
               </Link>

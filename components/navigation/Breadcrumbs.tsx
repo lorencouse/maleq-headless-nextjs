@@ -33,11 +33,7 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
           <Link
             href="/"
             itemProp="item"
-            className={`hover:underline underline-offset-4 transition-colors ${
-              isLight
-                ? 'text-white/80 hover:text-white'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
+            className={isLight ? 'link-animated-light' : 'link-animated'}
           >
             <span itemProp="name">Home</span>
           </Link>
@@ -61,26 +57,16 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
               {isLast || !item.href ? (
                 <span
                   itemProp="name"
-                  className={`relative font-semibold ${
-                    isLight ? 'text-white' : 'text-foreground'
-                  }`}
+                  className={isLight ? 'link-current-light' : 'link-current'}
                   aria-current={isLast ? 'page' : undefined}
                 >
                   {item.label}
-                  {/* Heavy underline accent */}
-                  <span className={`absolute -bottom-1 left-0 w-full h-0.5 ${
-                    isLight ? 'bg-white' : 'bg-foreground'
-                  }`} />
                 </span>
               ) : (
                 <Link
                   href={item.href}
                   itemProp="item"
-                  className={`hover:underline underline-offset-4 transition-colors ${
-                    isLight
-                      ? 'text-white/80 hover:text-white'
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                  className={isLight ? 'link-animated-light' : 'link-animated'}
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
