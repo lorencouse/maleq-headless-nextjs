@@ -124,9 +124,9 @@ export default function VariationSelector({
     <div className="space-y-6">
       {/* Attribute Selectors */}
       {attributeOptions.map(({ name, values }) => (
-        <div key={name}>
-          <label className="block text-sm font-semibold text-foreground mb-3">
-            {formatAttributeName(name)}
+        <div key={name} className="flex flex-wrap items-center gap-3">
+          <label className="text-sm font-semibold text-foreground whitespace-nowrap">
+            {formatAttributeName(name)}:
           </label>
           <div className="flex flex-wrap gap-2">
             {values.map(value => {
