@@ -30,6 +30,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `wpgraphql-increase-limit.php` | Increases WPGraphQL max query limit from 100 to 500 | `wordpress-snippets/wpgraphql-increase-limit.php` |
 | `wpgraphql-render-blocks.php` | Renders Gutenberg blocks (including reusable blocks) in GraphQL content | `wordpress-snippets/wpgraphql-render-blocks.php` |
 | `maleq-relative-urls.php` | Converts URLs to relative paths for database portability across environments | `wordpress-snippets/relative-urls.php` |
+| `wholesale-price-display.php` | Displays wholesale price in WooCommerce product/variation edit panels | `wordpress/mu-plugins/wholesale-price-display.php` |
 
 ### Installation Steps
 
@@ -41,6 +42,7 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress-snippets/wpgraphql-increase-limit.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-increase-limit.php
    cp wordpress-snippets/wpgraphql-render-blocks.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-render-blocks.php
    cp wordpress-snippets/relative-urls.php /path/to/wordpress/wp-content/mu-plugins/maleq-relative-urls.php
+   cp wordpress/mu-plugins/wholesale-price-display.php /path/to/wordpress/wp-content/mu-plugins/wholesale-price-display.php
    ```
 
 2. **Run material migration** (one-time setup):
