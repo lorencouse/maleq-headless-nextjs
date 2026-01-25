@@ -552,6 +552,63 @@ figcaption a:hover {
   opacity: 1;
 }
 
+/* Subtle variant - no underline by default, red expands on hover */
+.link-subtle {
+  position: relative;
+  font-weight: 600;
+  color: var(--foreground);
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+
+.link-subtle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.link-subtle:hover::after {
+  width: 100%;
+}
+
+.link-subtle:hover {
+  opacity: 1;
+}
+
+/* Light variant for dark backgrounds */
+.link-subtle-light {
+  position: relative;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+
+.link-subtle-light::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.link-subtle-light:hover::after {
+  width: 100%;
+}
+
+.link-subtle-light:hover {
+  color: #ffffff;
+  opacity: 1;
+}
+
 /* Current/active breadcrumb item */
 .link-current {
   font-weight: 800;

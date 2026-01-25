@@ -33,7 +33,7 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
           <Link
             href="/"
             itemProp="item"
-            className={isLight ? 'link-animated-light' : 'link-animated'}
+            className={isLight ? 'link-subtle-light' : 'link-subtle'}
           >
             <span itemProp="name">Home</span>
           </Link>
@@ -66,7 +66,7 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
                 <Link
                   href={item.href}
                   itemProp="item"
-                  className={isLight ? 'link-animated-light' : 'link-animated'}
+                  className={isLight ? 'link-subtle-light' : 'link-subtle'}
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
