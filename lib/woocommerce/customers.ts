@@ -207,78 +207,66 @@ export async function deleteCustomer(customerId: number): Promise<void> {
 
 /**
  * Authenticate customer (validate password)
- * Note: WooCommerce doesn't have a direct password validation endpoint,
- * so we use WordPress's authentication endpoint
+ * Uses custom Male Q auth endpoint for secure password validation
+ * @param login - Email address or username
+ * @param password - User password
  */
 export async function authenticateCustomer(
-  email: string,
+  login: string,
   password: string
 ): Promise<{ customer: WooCommerceCustomer; token: string }> {
   if (!WOOCOMMERCE_URL) {
     throw new Error('WooCommerce URL not configured');
   }
 
-  // First, try to authenticate with WordPress
-  const authUrl = `${WOOCOMMERCE_URL}/wp-json/jwt-auth/v1/token`;
+  // Use our custom auth endpoint for secure password validation
+  const authUrl = `${WOOCOMMERCE_URL}/wp-json/maleq/v1/validate-password`;
 
-  try {
-    const authResponse = await fetch(authUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: email,
-        password: password,
-      }),
-    });
+  const authResponse = await fetch(authUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ login, password }),
+  });
 
-    if (!authResponse.ok) {
-      const error = await authResponse.json().catch(() => ({ message: 'Unknown error' }));
+  const authData = await authResponse.json();
 
-      if (error.code === '[jwt_auth] invalid_username' || error.code === '[jwt_auth] invalid_email') {
-        throw new Error('No account found with this email');
-      }
-      if (error.code === '[jwt_auth] incorrect_password') {
-        throw new Error('Incorrect password');
-      }
-
-      throw new Error(error.message || 'Authentication failed');
+  if (!authResponse.ok) {
+    // Handle specific error codes from our endpoint
+    if (authData.code === 'invalid_login') {
+      throw new Error('No account found with this email or username');
     }
-
-    const authData = await authResponse.json();
-
-    // Get customer data
-    const customer = await getCustomerByEmail(email);
-
-    if (!customer) {
-      throw new Error('Customer account not found');
+    if (authData.code === 'incorrect_password') {
+      throw new Error('Incorrect password');
     }
-
-    return {
-      customer,
-      token: authData.token,
-    };
-  } catch (error) {
-    // If JWT auth plugin is not installed, fall back to simple validation
-    // This is less secure but works without additional plugins
-    if (error instanceof Error && error.message.includes('fetch')) {
-      // Try basic auth validation by fetching customer
-      const customer = await getCustomerByEmail(email);
-
-      if (!customer) {
-        throw new Error('No account found with this email');
-      }
-
-      // Generate a simple session token (in production, use proper JWT)
-      const token = Buffer.from(`${customer.id}:${Date.now()}`).toString('base64');
-
-      return {
-        customer,
-        token,
-      };
-    }
-
-    throw error;
+    throw new Error(authData.message || 'Authentication failed');
   }
+
+  // Customer data is returned directly from the auth endpoint
+  if (!authData.customer) {
+    throw new Error('Customer account not found');
+  }
+
+  // Map the response to WooCommerceCustomer format
+  const customer: WooCommerceCustomer = {
+    id: authData.customer.id,
+    date_created: '',
+    date_modified: '',
+    email: authData.customer.email,
+    first_name: authData.customer.first_name || '',
+    last_name: authData.customer.last_name || '',
+    role: authData.customer.role || 'customer',
+    username: authData.customer.username || '',
+    billing: authData.customer.billing || {} as CustomerAddress,
+    shipping: authData.customer.shipping || {} as CustomerAddress,
+    is_paying_customer: false,
+    avatar_url: authData.customer.avatar_url || '',
+    meta_data: [],
+  };
+
+  return {
+    customer,
+    token: authData.token,
+  };
 }
