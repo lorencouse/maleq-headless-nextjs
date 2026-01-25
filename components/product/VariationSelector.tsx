@@ -125,7 +125,7 @@ export default function VariationSelector({
       {/* Attribute Selectors */}
       {attributeOptions.map(({ name, values }) => (
         <div key={name} className="flex flex-wrap items-end gap-3">
-          <label className="text-base font-semibold text-foreground whitespace-nowrap pb-2">
+          <label className="text-2xl font-semibold text-foreground whitespace-nowrap pb-1">
             {formatAttributeName(name)}:
           </label>
           <div className="flex flex-wrap gap-2">
