@@ -232,6 +232,7 @@ export async function getAllProducts(params: {
     const { data } = await getClient().query({
       query,
       variables,
+      fetchPolicy: 'no-cache',
     });
 
     const products: WooProduct[] = data?.products?.nodes || [];
@@ -315,6 +316,7 @@ export async function getFilteredProducts(params: {
     const { data } = await getClient().query({
       query: FILTER_PRODUCTS,
       variables,
+      fetchPolicy: 'no-cache',
     });
 
     const products: WooProduct[] = data?.products?.nodes || [];
@@ -353,6 +355,7 @@ export async function getProductCategories(): Promise<ProductCategory[]> {
           first: 100,
           after: afterCursor,
         },
+        fetchPolicy: 'no-cache',
       });
 
       const nodes: ProductCategory[] = result.data?.productCategories?.nodes || [];
@@ -385,6 +388,7 @@ export async function getHierarchicalCategories(): Promise<HierarchicalCategory[
   try {
     const { data } = await getClient().query({
       query: GET_HIERARCHICAL_CATEGORIES,
+      fetchPolicy: 'no-cache',
     });
 
     const nodes: GraphQLHierarchicalCategory[] = data?.productCategories?.nodes || [];
@@ -534,6 +538,7 @@ export async function getMaterials(): Promise<FilterOption[]> {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_MATERIALS,
+      fetchPolicy: 'no-cache',
     });
 
     const nodes = data?.productMaterials?.nodes || [];
@@ -564,7 +569,7 @@ export async function getGlobalAttributes(): Promise<{
   try {
     // Fetch colors and materials in parallel
     const [colorResult, materials] = await Promise.all([
-      getClient().query({ query: GET_GLOBAL_ATTRIBUTES }),
+      getClient().query({ query: GET_GLOBAL_ATTRIBUTES, fetchPolicy: 'no-cache' }),
       getMaterials(),
     ]);
 
@@ -604,6 +609,7 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
     const { data } = await getClient().query({
       query: GET_BRAND_BY_SLUG,
       variables: { slug },
+      fetchPolicy: 'no-cache',
     });
 
     const brand = data?.productBrand;

@@ -21,7 +21,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate every 5 minutes for fresh content
+export const revalidate = 300;
 
 export default async function Home() {
   // Fetch data in parallel
@@ -29,6 +30,7 @@ export default async function Home() {
     getClient().query({
       query: GET_ALL_POSTS,
       variables: { first: 6 },
+      fetchPolicy: 'no-cache',
     }),
     getAllProducts({ limit: 8 }),
     getHierarchicalCategories(),

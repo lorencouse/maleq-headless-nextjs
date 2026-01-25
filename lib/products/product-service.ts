@@ -210,6 +210,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
     const { data } = await getClient().query({
       query: GET_PRODUCT_BY_SLUG,
       variables: { slug },
+      fetchPolicy: 'no-cache',
     });
 
     const product = data?.product as GraphQLProduct | null;
@@ -378,6 +379,7 @@ export async function getAllProductSlugs(): Promise<string[]> {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_PRODUCT_SLUGS,
+      fetchPolicy: 'no-cache',
     });
 
     return data?.products?.nodes?.map((p: { slug: string }) => p.slug) || [];

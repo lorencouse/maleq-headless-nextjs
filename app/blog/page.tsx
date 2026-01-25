@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate every 5 minutes for fresh content
+export const revalidate = 300;
 
 export default async function BlogPage() {
   const { data } = await getClient().query({
@@ -22,6 +23,7 @@ export default async function BlogPage() {
     variables: {
       first: 12,
     },
+    fetchPolicy: 'no-cache',
   });
 
   const posts: Post[] = data?.posts?.nodes || [];

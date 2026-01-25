@@ -29,7 +29,9 @@ import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
-export const dynamic = 'force-dynamic'; // Use dynamic rendering for fresh content
+// ISR: Revalidate every 2 minutes for fresh content and comments
+export const revalidate = 120;
+export const dynamicParams = true; // Allow runtime generation of any blog post
 
 // Generate metadata for blog post
 export async function generateMetadata({
@@ -39,6 +41,7 @@ export async function generateMetadata({
   const { data } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
+    fetchPolicy: 'no-cache',
   });
 
   const post: Post = data?.postBy;
@@ -95,6 +98,7 @@ export async function generateMetadata({
 export async function generateStaticParams() {
   const { data } = await getClient().query({
     query: GET_ALL_POST_SLUGS,
+    fetchPolicy: 'no-cache',
   });
 
   const params =
@@ -115,6 +119,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { data } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
+    fetchPolicy: 'no-cache',
   });
 
   const post: Post = data?.postBy;
@@ -130,6 +135,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     const { data: relatedData } = await getClient().query({
       query: GET_RELATED_POSTS,
       variables: { categorySlug, first: 10 },
+      fetchPolicy: 'no-cache',
     });
     relatedPosts = relatedData?.posts?.nodes || [];
   }

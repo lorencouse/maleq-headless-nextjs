@@ -95,6 +95,7 @@ export async function fetchProductsByIds(ids: number[]): Promise<Map<number, Blo
         const { data } = await getClient().query({
           query: GET_PRODUCT_BY_DATABASE_ID,
           variables: { id: id.toString() },
+          fetchPolicy: 'no-cache',
         });
         return data?.product;
       } catch (error) {

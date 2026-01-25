@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
   const { data } = await getClient().query({
     query: GET_CATEGORY_BY_SLUG,
     variables: { slug },
+    fetchPolicy: 'no-cache',
   });
 
   const category: Category | null = data?.category;
@@ -57,6 +58,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
 export async function generateStaticParams() {
   const { data } = await getClient().query({
     query: GET_ALL_CATEGORIES,
+    fetchPolicy: 'no-cache',
   });
 
   const categories: Category[] = data?.categories?.nodes || [];
@@ -70,7 +72,9 @@ export async function generateStaticParams() {
   return limitStaticParams(params, DEV_LIMITS.blogCategories);
 }
 
-export const dynamic = 'force-dynamic';
+// ISR: Revalidate every 5 minutes
+export const revalidate = 300;
+export const dynamicParams = true; // Allow runtime generation
 
 export default async function BlogCategoryPage({ params }: BlogCategoryPageProps) {
   const { slug } = await params;
@@ -80,10 +84,12 @@ export default async function BlogCategoryPage({ params }: BlogCategoryPageProps
     getClient().query({
       query: GET_CATEGORY_BY_SLUG,
       variables: { slug },
+      fetchPolicy: 'no-cache',
     }),
     getClient().query({
       query: GET_POSTS_BY_CATEGORY,
       variables: { categoryName: slug, first: 12 },
+      fetchPolicy: 'no-cache',
     }),
   ]);
 
