@@ -33,12 +33,12 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
       {/* Product Details */}
       <div>
         {/* Brand and Category - moved from page.tsx */}
-        <div className="mb-4 flex items-center gap-4 text-sm">
+        <div className="mb-4 flex items-center gap-4">
           {/* Brand */}
           {product.brands && product.brands.length > 0 && (
             <a
               href={`/brand/${product.brands[0].slug}`}
-              className="link-brand"
+              className="link-brand text-base"
             >
               {product.brands[0].name}
             </a>
@@ -47,7 +47,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
           {product.categories && product.categories.length > 0 && (
             <a
               href={`/product-category/${product.categories[0].slug}`}
-              className="link-subtle"
+              className="link-subtle text-sm !font-normal"
             >
               {product.categories[0].name}
             </a>
