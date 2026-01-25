@@ -16,6 +16,11 @@ import {
   getProductionImageUrl,
   processWordPressContent,
 } from '@/lib/utils/image';
+import {
+  extractProductIdsFromContent,
+  fetchProductsByIds,
+  productMapToObject,
+} from '@/lib/utils/blog-products';
 import VideoAutoplay from '@/components/blog/VideoAutoplay';
 import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
@@ -129,6 +134,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     relatedPosts = relatedData?.posts?.nodes || [];
   }
 
+  // Extract and batch fetch products from WooCommerce shortcodes in content
+  const productIds = extractProductIdsFromContent(post.content);
+  const productMap = await fetchProductsByIds(productIds);
+  const blogProducts = productMapToObject(productMap);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -220,7 +230,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <StarRatingEnhancer />
 
       {/* Intercept add-to-cart links and use local cart */}
-      <AddToCartEnhancer />
+      <AddToCartEnhancer products={blogProducts} />
 
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (

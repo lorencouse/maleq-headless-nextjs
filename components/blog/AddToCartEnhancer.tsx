@@ -6,85 +6,27 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { getProductionImageUrl } from '@/lib/utils/image';
+import { BlogProduct } from '@/lib/utils/blog-products';
 
 interface ProductPlaceholder {
   element: HTMLElement;
   productId: string;
 }
 
-interface ProductData {
-  id: number;
-  name: string;
-  slug: string;
-  sku: string;
-  price: number;
-  regularPrice: number;
-  image: { url: string; altText: string } | null;
-  inStock: boolean;
-}
-
-/**
- * Parse WooCommerce price strings (e.g., "$29.99") to numbers
- */
-function parseWooPrice(price: string | number | null | undefined): number {
-  if (price === null || price === undefined) return 0;
-  if (typeof price === 'number') return price;
-  const cleaned = price.replace(/[^0-9.]/g, '');
-  return parseFloat(cleaned) || 0;
+interface AddToCartEnhancerProps {
+  products: Record<string, BlogProduct>;
 }
 
 /**
  * Custom Add to Cart component rendered in place of WooCommerce shortcodes
+ * Uses pre-fetched product data (no client-side fetching needed)
  */
-function BlogAddToCart({ productId }: { productId: string }) {
+function BlogAddToCart({ product }: { product: BlogProduct }) {
   const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [product, setProduct] = useState<ProductData | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const addItem = useCartStore((state) => state.addItem);
 
-  // Fetch product data by ID on mount
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const response = await fetch(`/api/products/${productId}`);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to load product');
-        }
-
-        const data = await response.json();
-
-        setProduct({
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
-          sku: data.sku || '',
-          price: parseWooPrice(data.salePrice || data.price),
-          regularPrice: parseWooPrice(data.regularPrice) || parseWooPrice(data.price),
-          image: data.image ? {
-            url: getProductionImageUrl(data.image.url),
-            altText: data.image.altText || data.name,
-          } : null,
-          inStock: data.inStock ?? true,
-        });
-      } catch (err) {
-        console.error('Could not fetch product details:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load product');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [productId]);
-
   const handleAddToCart = () => {
-    if (!product) return;
-
     setIsAdding(true);
 
     try {
@@ -92,7 +34,7 @@ function BlogAddToCart({ productId }: { productId: string }) {
         productId: product.id.toString(),
         name: product.name,
         slug: product.slug,
-        sku: product.sku,
+        sku: product.sku || '',
         price: product.price,
         regularPrice: product.regularPrice,
         image: product.image || undefined,
@@ -116,31 +58,7 @@ function BlogAddToCart({ productId }: { productId: string }) {
     }
   };
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-6 max-w-sm mx-auto">
-        <div className="w-[325px] h-[325px] bg-muted animate-pulse rounded-lg" />
-        <div className="w-48 h-4 bg-muted animate-pulse rounded" />
-        <div className="w-32 h-6 bg-muted animate-pulse rounded" />
-        <div className="w-40 h-12 bg-muted animate-pulse rounded-lg" />
-      </div>
-    );
-  }
-
-  // Error state
-  if (error || !product) {
-    return (
-      <div className="flex flex-col items-center gap-3 py-6 max-w-sm mx-auto">
-        <div className="w-[325px] h-[325px] bg-muted rounded-lg flex items-center justify-center">
-          <span className="text-muted-foreground text-sm">Product unavailable</span>
-        </div>
-        <p className="text-sm text-muted-foreground">{error || 'Product not found'}</p>
-      </div>
-    );
-  }
-
-  const isOnSale = product.regularPrice > product.price;
+  const isOnSale = product.onSale;
 
   return (
     <div className="flex flex-col items-center gap-3 py-6 max-w-sm mx-auto">
@@ -255,10 +173,23 @@ function BlogAddToCart({ productId }: { productId: string }) {
 }
 
 /**
- * Enhances WooCommerce add-to-cart shortcodes in blog content
- * Finds placeholder divs and renders custom React components
+ * Fallback component when product data is not available
  */
-export default function AddToCartEnhancer() {
+function ProductUnavailable() {
+  return (
+    <div className="flex flex-col items-center gap-3 py-6 max-w-sm mx-auto">
+      <div className="w-[325px] h-[325px] bg-muted rounded-lg flex items-center justify-center">
+        <span className="text-muted-foreground text-sm">Product unavailable</span>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Enhances WooCommerce add-to-cart shortcodes in blog content
+ * Uses pre-fetched product data passed from server component
+ */
+export default function AddToCartEnhancer({ products }: AddToCartEnhancerProps) {
   const [placeholders, setPlaceholders] = useState<ProductPlaceholder[]>([]);
 
   useEffect(() => {
@@ -280,15 +211,21 @@ export default function AddToCartEnhancer() {
 
   return (
     <>
-      {placeholders.map((placeholder, index) =>
-        createPortal(
-          <BlogAddToCart
-            key={`${placeholder.productId}-${index}`}
-            productId={placeholder.productId}
-          />,
+      {placeholders.map((placeholder, index) => {
+        const product = products[placeholder.productId];
+
+        return createPortal(
+          product ? (
+            <BlogAddToCart
+              key={`${placeholder.productId}-${index}`}
+              product={product}
+            />
+          ) : (
+            <ProductUnavailable key={`unavailable-${placeholder.productId}-${index}`} />
+          ),
           placeholder.element
-        )
-      )}
+        );
+      })}
     </>
   );
 }
