@@ -5,7 +5,6 @@ import {
   formatAttributeName,
   formatAttributeValue,
   formatPrice,
-  formatVariationName,
 } from '@/lib/utils/woocommerce-format';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
 
@@ -44,7 +43,7 @@ interface VariationSelectorProps {
 export default function VariationSelector({
   variations,
   onVariationChange,
-  productId
+  productId,
 }: VariationSelectorProps) {
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
@@ -166,7 +165,7 @@ export default function VariationSelector({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Selected:</p>
-              <p className="font-semibold text-foreground">{formatVariationName(selectedVariation.name, selectedVariation.attributes)}</p>
+              <p className="font-semibold text-foreground">{selectedVariation.name}</p>
             </div>
             <div className="text-right">
               <p className="text-2xl font-bold text-foreground">

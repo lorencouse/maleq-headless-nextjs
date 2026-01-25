@@ -17,9 +17,9 @@ export default function BlogCard({ post }: BlogCardProps) {
   };
 
   return (
-    <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all'>
+    <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group'>
       {/* Featured Image */}
-      <Link href={`/blog/${post.slug}`}>
+      <Link href={`/blog/${post.slug}`} className='blog-card-link'>
         <div className='relative h-48 w-full bg-muted'>
           {post.featuredImage?.node ? (
             <Image
@@ -61,7 +61,7 @@ export default function BlogCard({ post }: BlogCardProps) {
         </div>
 
         {/* Title */}
-        <div className='border-b-4 border-black dark:border-white pb-2 mb-2'>
+        <div className='relative pb-2 mb-2'>
           <h2 className='heading-plain text-xl font-bold text-foreground line-clamp-2'>
             <Link
               href={`/blog/${post.slug}`}
@@ -70,6 +70,10 @@ export default function BlogCard({ post }: BlogCardProps) {
               {post.title}
             </Link>
           </h2>
+          {/* Red underline (always visible) */}
+          <span className='absolute bottom-0 left-0 w-full h-0.5 bg-primary' />
+          {/* Black underline (expands on hover) */}
+          <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
         </div>
 
         {/* Excerpt */}
@@ -79,7 +83,7 @@ export default function BlogCard({ post }: BlogCardProps) {
         /> */}
 
         {/* Meta Info */}
-        <div className='flex items-center justify-between text-sm text-muted-foreground border-t border-border mt-3 pt-3'>
+        <div className='flex items-center justify-between text-sm text-muted-foreground mt-3'>
           <div className='flex items-center space-x-2'>
             {post.author?.node?.avatar?.url && (
               <Image

@@ -29,12 +29,14 @@ export default function ProductReviews({
   };
 
   return (
-    <div className="mt-16 border-t border-border pt-12">
-      <h2 className="text-2xl font-bold text-foreground mb-8">Customer Reviews</h2>
+    <div className='mt-16 border-t border-border pt-12'>
+      <h2 className='text-2xl font-bold text-foreground mb-8'>
+        Customer Reviews
+      </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8'>
         {/* Summary - Left Side on Desktop */}
-        <div className="lg:col-span-1">
+        <div className='lg:col-span-1'>
           <ReviewSummary
             averageRating={averageRating || 0}
             reviewCount={reviewCount || 0}
@@ -43,7 +45,7 @@ export default function ProductReviews({
         </div>
 
         {/* Reviews List - Right Side on Desktop */}
-        <div className="lg:col-span-2">
+        <div className='lg:col-span-2'>
           {showWriteReview ? (
             <WriteReviewForm
               productId={productId}

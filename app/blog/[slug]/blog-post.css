@@ -676,7 +676,7 @@ body {
 p.product-specs,
 p.product-specs-cn {
   position: relative;
-  border-radius: var(--radius-lg);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-shadow: var(--shadow-sm);
   background: var(--card);
   border: 1px solid var(--border);
@@ -716,7 +716,7 @@ p.product-specs-cn::before {
   padding: var(--space-3) var(--space-6);
   border-bottom: 2px solid var(--border);
   background: var(--input);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: 0;
   color: var(--foreground);
   text-transform: uppercase;
   letter-spacing: 0.05em;

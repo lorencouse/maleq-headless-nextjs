@@ -14,10 +14,10 @@ export default function ProductSpecifications({
 
   return (
     <div className='border-t border-border pt-8 mt-8'>
-      <h2 className='text-2xl font-bold text-foreground mb-6'>
+      <h2 className='text-2xl font-bold text-foreground mb-8'>
         Product Specifications
       </h2>
-      <div className='bg-muted rounded-b-lg p-6'>
+      <div className='bg-muted rounded-lg p-6 mt-6'>
         <dl className='grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4'>
           {specifications.map((spec, index) => (
             <div key={index} className='border-b border-border pb-3'>

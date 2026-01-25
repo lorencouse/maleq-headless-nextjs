@@ -22,7 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group'>
-      <Link href={`/product/${product.slug}`}>
+      <Link href={`/product/${product.slug}`} className='product-card-link'>
         {/* Product Image */}
         <div className='relative h-64 w-full overflow-hidden bg-input'>
           {product.image ? (
@@ -101,28 +101,16 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
 
         <div className='p-4'>
-          {/* Category */}
-          {primaryCategory && (
-            <div className='mb-2'>
-              <span className='text-xs text-muted-foreground'>
-                {primaryCategory.name}
-              </span>
-            </div>
-          )}
-
           {/* Product Name */}
-          <div className='border-b-2 border-primary pb-2 mb-2'>
-            <h3 className='heading-plain text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
+          <div className='relative pb-2 mb-2'>
+            <h3 className='heading-plain text-base font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
               {product.name}
             </h3>
+            {/* Red underline (always visible) */}
+            <span className='absolute bottom-0 left-0 w-full h-0.5 bg-primary' />
+            {/* Black underline (expands on hover) */}
+            <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
           </div>
-
-          {/* Short Description */}
-          {product.shortDescription && (
-            <div className='text-sm text-muted-foreground mb-3 line-clamp-2'>
-              {product.shortDescription.replace(/<[^>]*>/g, '')}
-            </div>
-          )}
 
           {/* Price */}
           <div className='flex items-center gap-2'>

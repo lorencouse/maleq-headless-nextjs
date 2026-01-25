@@ -464,16 +464,17 @@ figcaption a:hover {
 }
 
 /* Image links - no default underline, red underline on hover */
-a:has(img) {
+/* Exclude product/blog card links which have their own hover animation */
+a:has(img):not(.product-card-link):not(.blog-card-link) {
   position: relative;
   display: inline-block;
 }
 
-a:has(img)::before {
+a:has(img):not(.product-card-link):not(.blog-card-link)::before {
   display: none;
 }
 
-a:has(img)::after {
+a:has(img):not(.product-card-link):not(.blog-card-link)::after {
   content: '';
   position: absolute;
   left: 0;
@@ -484,7 +485,7 @@ a:has(img)::after {
   transition: width 0.3s ease;
 }
 
-a:has(img):hover::after {
+a:has(img):not(.product-card-link):not(.blog-card-link):hover::after {
   width: 100%;
 }
 
@@ -582,8 +583,7 @@ a:has(img):hover::after {
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  outline: none;
   border-color: var(--primary);
 }
 
