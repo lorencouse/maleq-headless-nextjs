@@ -142,6 +142,36 @@ const faqCategories = [
       },
     ],
   },
+  {
+    title: 'Product Care',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+      </svg>
+    ),
+    items: [
+      {
+        question: 'How should I clean my products?',
+        answer: 'Most products should be cleaned before and after each use with warm water and mild antibacterial soap, or a specialized toy cleaner. Always check the product instructions for specific care guidelines. Avoid harsh chemicals that could damage the material.',
+      },
+      {
+        question: 'How should I store my products?',
+        answer: 'Store products in a cool, dry place away from direct sunlight. Many items come with storage pouches or cases. Keep silicone items separate from other materials to prevent chemical reactions. Avoid storing in plastic bags which can trap moisture.',
+      },
+      {
+        question: 'What type of lubricant should I use?',
+        answer: 'Water-based lubricants are safe with all materials. Silicone-based lubes provide longer-lasting lubrication but should NOT be used with silicone products. Oil-based lubricants should not be used with latex products. Check the product page for specific recommendations.',
+      },
+      {
+        question: 'How do I know when to replace a product?',
+        answer: 'Replace products if you notice any discoloration, unusual odor, tackiness, tears, or cracks. High-quality silicone products can last years with proper care, while other materials may need replacement sooner. When in doubt, replace for safety.',
+      },
+      {
+        question: 'Are batteries included with products?',
+        answer: 'Battery inclusion varies by product. Check the product description for details. We recommend using high-quality alkaline batteries for best performance. Rechargeable products typically include charging cables.',
+      },
+    ],
+  },
 ];
 
 export default function FaqPage() {

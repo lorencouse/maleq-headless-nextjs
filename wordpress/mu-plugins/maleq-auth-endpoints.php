@@ -14,10 +14,17 @@ if (!defined('ABSPATH')) {
  * Register custom REST API endpoints for authentication
  */
 add_action('rest_api_init', function () {
-    // Password validation endpoint
+    // Password validation endpoint (login)
     register_rest_route('maleq/v1', '/validate-password', [
         'methods' => 'POST',
         'callback' => 'maleq_validate_password',
+        'permission_callback' => '__return_true',
+    ]);
+
+    // Verify password endpoint (for password change)
+    register_rest_route('maleq/v1', '/verify-password', [
+        'methods' => 'POST',
+        'callback' => 'maleq_verify_password',
         'permission_callback' => '__return_true',
     ]);
 
@@ -32,6 +39,34 @@ add_action('rest_api_init', function () {
     register_rest_route('maleq/v1', '/reset-password', [
         'methods' => 'POST',
         'callback' => 'maleq_reset_password',
+        'permission_callback' => '__return_true',
+    ]);
+
+    // Avatar upload endpoint
+    register_rest_route('maleq/v1', '/upload-avatar', [
+        'methods' => 'POST',
+        'callback' => 'maleq_upload_avatar',
+        'permission_callback' => '__return_true',
+    ]);
+
+    // Delete account endpoint
+    register_rest_route('maleq/v1', '/delete-account', [
+        'methods' => 'POST',
+        'callback' => 'maleq_delete_account',
+        'permission_callback' => '__return_true',
+    ]);
+
+    // Get customer data endpoint
+    register_rest_route('maleq/v1', '/customer/(?P<id>\d+)', [
+        'methods' => 'GET',
+        'callback' => 'maleq_get_customer',
+        'permission_callback' => '__return_true',
+    ]);
+
+    // Update customer data endpoint
+    register_rest_route('maleq/v1', '/customer/(?P<id>\d+)', [
+        'methods' => 'PUT',
+        'callback' => 'maleq_update_customer',
         'permission_callback' => '__return_true',
     ]);
 });
@@ -290,4 +325,342 @@ function maleq_validate_token($user_id, $token) {
 
     // Validate token
     return wp_hash($token) === $stored_hash;
+}
+
+/**
+ * Verify user password (for password change validation)
+ */
+function maleq_verify_password(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('user_id'));
+    $password = $request->get_param('password');
+
+    if (empty($user_id) || empty($password)) {
+        return new WP_Error(
+            'missing_params',
+            'User ID and password are required',
+            ['status' => 400]
+        );
+    }
+
+    $user = get_user_by('ID', $user_id);
+
+    if (!$user) {
+        return new WP_Error(
+            'invalid_user',
+            'User not found',
+            ['status' => 404]
+        );
+    }
+
+    if (!wp_check_password($password, $user->user_pass, $user->ID)) {
+        return new WP_Error(
+            'incorrect_password',
+            'Incorrect password',
+            ['status' => 401]
+        );
+    }
+
+    return [
+        'success' => true,
+        'valid' => true,
+    ];
+}
+
+/**
+ * Upload user avatar
+ */
+function maleq_upload_avatar(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('user_id'));
+    $files = $request->get_file_params();
+
+    if (empty($user_id)) {
+        return new WP_Error(
+            'missing_user_id',
+            'User ID is required',
+            ['status' => 400]
+        );
+    }
+
+    if (empty($files['file'])) {
+        return new WP_Error(
+            'missing_file',
+            'No file uploaded',
+            ['status' => 400]
+        );
+    }
+
+    $user = get_user_by('ID', $user_id);
+    if (!$user) {
+        return new WP_Error(
+            'invalid_user',
+            'User not found',
+            ['status' => 404]
+        );
+    }
+
+    // Include required files for media handling
+    require_once ABSPATH . 'wp-admin/includes/image.php';
+    require_once ABSPATH . 'wp-admin/includes/file.php';
+    require_once ABSPATH . 'wp-admin/includes/media.php';
+
+    // Handle the upload
+    $upload = wp_handle_upload($files['file'], ['test_form' => false]);
+
+    if (isset($upload['error'])) {
+        return new WP_Error(
+            'upload_failed',
+            $upload['error'],
+            ['status' => 500]
+        );
+    }
+
+    // Create attachment
+    $attachment = [
+        'post_mime_type' => $upload['type'],
+        'post_title' => sanitize_file_name(pathinfo($upload['file'], PATHINFO_FILENAME)),
+        'post_content' => '',
+        'post_status' => 'inherit',
+    ];
+
+    $attachment_id = wp_insert_attachment($attachment, $upload['file']);
+
+    if (is_wp_error($attachment_id)) {
+        return new WP_Error(
+            'attachment_failed',
+            'Failed to create attachment',
+            ['status' => 500]
+        );
+    }
+
+    // Generate attachment metadata
+    $attachment_data = wp_generate_attachment_metadata($attachment_id, $upload['file']);
+    wp_update_attachment_metadata($attachment_id, $attachment_data);
+
+    // Delete old avatar if exists
+    $old_avatar_id = get_user_meta($user_id, 'maleq_avatar_attachment_id', true);
+    if ($old_avatar_id) {
+        wp_delete_attachment($old_avatar_id, true);
+    }
+
+    // Store new avatar attachment ID
+    update_user_meta($user_id, 'maleq_avatar_attachment_id', $attachment_id);
+    update_user_meta($user_id, 'maleq_avatar_url', $upload['url']);
+
+    return [
+        'success' => true,
+        'avatar_url' => $upload['url'],
+        'attachment_id' => $attachment_id,
+    ];
+}
+
+/**
+ * Filter avatar URL to use custom avatar if set
+ */
+add_filter('get_avatar_url', function($url, $id_or_email, $args) {
+    $user_id = null;
+
+    if (is_numeric($id_or_email)) {
+        $user_id = (int) $id_or_email;
+    } elseif (is_object($id_or_email) && isset($id_or_email->user_id)) {
+        $user_id = (int) $id_or_email->user_id;
+    } elseif (is_string($id_or_email) && is_email($id_or_email)) {
+        $user = get_user_by('email', $id_or_email);
+        if ($user) {
+            $user_id = $user->ID;
+        }
+    }
+
+    if ($user_id) {
+        $custom_avatar = get_user_meta($user_id, 'maleq_avatar_url', true);
+        if (!empty($custom_avatar)) {
+            return $custom_avatar;
+        }
+    }
+
+    return $url;
+}, 10, 3);
+
+/**
+ * Delete user account
+ */
+function maleq_delete_account(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('user_id'));
+    $password = $request->get_param('password');
+
+    if (empty($user_id) || empty($password)) {
+        return new WP_Error(
+            'missing_params',
+            'User ID and password are required',
+            ['status' => 400]
+        );
+    }
+
+    $user = get_user_by('ID', $user_id);
+
+    if (!$user) {
+        return new WP_Error(
+            'invalid_user',
+            'User not found',
+            ['status' => 404]
+        );
+    }
+
+    // Verify password before deletion
+    if (!wp_check_password($password, $user->user_pass, $user->ID)) {
+        return new WP_Error(
+            'incorrect_password',
+            'Incorrect password',
+            ['status' => 401]
+        );
+    }
+
+    // Don't allow deleting administrators
+    if (in_array('administrator', $user->roles)) {
+        return new WP_Error(
+            'cannot_delete_admin',
+            'Administrator accounts cannot be deleted this way',
+            ['status' => 403]
+        );
+    }
+
+    // Delete custom avatar if exists
+    $avatar_id = get_user_meta($user_id, 'maleq_avatar_attachment_id', true);
+    if ($avatar_id) {
+        wp_delete_attachment($avatar_id, true);
+    }
+
+    // Include required file for wp_delete_user
+    require_once ABSPATH . 'wp-admin/includes/user.php';
+
+    // Delete the user (reassign content to admin)
+    $deleted = wp_delete_user($user_id, 1);
+
+    if (!$deleted) {
+        return new WP_Error(
+            'delete_failed',
+            'Failed to delete account',
+            ['status' => 500]
+        );
+    }
+
+    return [
+        'success' => true,
+        'message' => 'Account deleted successfully',
+    ];
+}
+
+/**
+ * Get customer data
+ */
+function maleq_get_customer(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('id'));
+
+    if (empty($user_id)) {
+        return new WP_Error(
+            'missing_user_id',
+            'User ID is required',
+            ['status' => 400]
+        );
+    }
+
+    $user = get_user_by('ID', $user_id);
+
+    if (!$user) {
+        return new WP_Error(
+            'invalid_user',
+            'User not found',
+            ['status' => 404]
+        );
+    }
+
+    return maleq_get_customer_data($user);
+}
+
+/**
+ * Update customer data
+ */
+function maleq_update_customer(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('id'));
+    $data = $request->get_json_params();
+
+    if (empty($user_id)) {
+        return new WP_Error(
+            'missing_user_id',
+            'User ID is required',
+            ['status' => 400]
+        );
+    }
+
+    $user = get_user_by('ID', $user_id);
+
+    if (!$user) {
+        return new WP_Error(
+            'invalid_user',
+            'User not found',
+            ['status' => 404]
+        );
+    }
+
+    // Update basic user data
+    $user_data = ['ID' => $user_id];
+
+    if (isset($data['first_name'])) {
+        $user_data['first_name'] = sanitize_text_field($data['first_name']);
+        update_user_meta($user_id, 'first_name', $user_data['first_name']);
+    }
+
+    if (isset($data['last_name'])) {
+        $user_data['last_name'] = sanitize_text_field($data['last_name']);
+        update_user_meta($user_id, 'last_name', $user_data['last_name']);
+    }
+
+    if (isset($data['email'])) {
+        $new_email = sanitize_email($data['email']);
+        // Check if email is already in use by another user
+        $existing_user = get_user_by('email', $new_email);
+        if ($existing_user && $existing_user->ID !== $user_id) {
+            return new WP_Error(
+                'email_exists',
+                'This email address is already in use',
+                ['status' => 400]
+            );
+        }
+        $user_data['user_email'] = $new_email;
+    }
+
+    if (isset($data['password']) && !empty($data['password'])) {
+        if (strlen($data['password']) < 8) {
+            return new WP_Error(
+                'weak_password',
+                'Password must be at least 8 characters',
+                ['status' => 400]
+            );
+        }
+        $user_data['user_pass'] = $data['password'];
+    }
+
+    // Update user
+    $result = wp_update_user($user_data);
+
+    if (is_wp_error($result)) {
+        return $result;
+    }
+
+    // Update billing address
+    if (isset($data['billing']) && is_array($data['billing'])) {
+        foreach ($data['billing'] as $key => $value) {
+            update_user_meta($user_id, 'billing_' . $key, sanitize_text_field($value));
+        }
+    }
+
+    // Update shipping address
+    if (isset($data['shipping']) && is_array($data['shipping'])) {
+        foreach ($data['shipping'] as $key => $value) {
+            update_user_meta($user_id, 'shipping_' . $key, sanitize_text_field($value));
+        }
+    }
+
+    // Return updated customer data
+    $user = get_user_by('ID', $user_id);
+    return maleq_get_customer_data($user);
 }

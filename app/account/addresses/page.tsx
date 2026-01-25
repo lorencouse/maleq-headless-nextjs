@@ -136,6 +136,58 @@ export default function AddressesPage() {
     setMessage(null);
   };
 
+  const handleCopyBillingToShipping = async () => {
+    if (!customerData?.billing || !user?.id) return;
+
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      // Copy billing to shipping, excluding email field
+      const shippingFromBilling = {
+        first_name: customerData.billing.first_name,
+        last_name: customerData.billing.last_name,
+        company: customerData.billing.company,
+        address_1: customerData.billing.address_1,
+        address_2: customerData.billing.address_2,
+        city: customerData.billing.city,
+        state: customerData.billing.state,
+        postcode: customerData.billing.postcode,
+        country: customerData.billing.country,
+        phone: customerData.billing.phone,
+      };
+
+      const response = await fetch(`/api/customers/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          shipping: shippingFromBilling,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to copy address');
+      }
+
+      const data = await response.json();
+      setCustomerData({
+        billing: data.billing || emptyAddress,
+        shipping: data.shipping || emptyAddress,
+      });
+      setMessage({ type: 'success', text: 'Shipping address updated from billing!' });
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to copy address',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleCancel = () => {
     setEditingType(null);
     setEditAddress(emptyAddress);
@@ -399,14 +451,26 @@ export default function AddressesPage() {
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h2 className="font-semibold text-foreground">Shipping Address</h2>
-                {editingType !== 'shipping' && customerData?.shipping.address_1 && (
-                  <button
-                    onClick={() => handleEdit('shipping')}
-                    className="text-sm text-primary hover:text-primary-hover font-medium"
-                  >
-                    Edit
-                  </button>
-                )}
+                <div className="flex gap-3">
+                  {editingType !== 'shipping' && customerData?.billing.address_1 && (
+                    <button
+                      onClick={handleCopyBillingToShipping}
+                      disabled={isSaving}
+                      className="text-sm text-muted-foreground hover:text-foreground font-medium cursor-pointer disabled:opacity-50"
+                      title="Copy billing address to shipping"
+                    >
+                      Use billing address
+                    </button>
+                  )}
+                  {editingType !== 'shipping' && customerData?.shipping.address_1 && (
+                    <button
+                      onClick={() => handleEdit('shipping')}
+                      className="text-sm text-primary hover:text-primary-hover font-medium cursor-pointer"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="p-4">
                 {editingType === 'shipping'

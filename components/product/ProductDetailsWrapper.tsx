@@ -10,8 +10,31 @@ interface ProductDetailsWrapperProps {
   product: EnhancedProduct;
 }
 
+// Get the initial variation image for variable products
+function getInitialVariationImage(product: EnhancedProduct): VariationImage | null {
+  if (product.type !== 'VARIABLE' || !product.variations || product.variations.length === 0) {
+    return null;
+  }
+
+  // Find the first in-stock variation with an image, or fallback to first variation with image
+  const inStockWithImage = product.variations.find(
+    v => v.stockStatus === 'IN_STOCK' && v.image?.url
+  );
+
+  if (inStockWithImage?.image) {
+    return inStockWithImage.image;
+  }
+
+  // Fallback to first variation with an image
+  const withImage = product.variations.find(v => v.image?.url);
+  return withImage?.image || null;
+}
+
 export default function ProductDetailsWrapper({ product }: ProductDetailsWrapperProps) {
-  const [selectedVariationImage, setSelectedVariationImage] = useState<VariationImage | null>(null);
+  // Initialize with first variation's image for variable products
+  const [selectedVariationImage, setSelectedVariationImage] = useState<VariationImage | null>(
+    () => getInitialVariationImage(product)
+  );
 
   // Prepare gallery images
   const galleryImages = product.gallery.map(img => ({

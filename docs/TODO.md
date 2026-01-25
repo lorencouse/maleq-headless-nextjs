@@ -74,12 +74,12 @@ Account
 - [x] `[HIGH]` Add "Secure Checkout" trust badge (Completed 2025-01-22)
 - [x] `[MED]` Add shipping time estimate badge (Completed 2025-01-22)
 - [x] `[MED]` Add quality guarantee badge (Completed 2025-01-22)
-- [ ] `[LOW]` Add satisfaction guarantee section
+- [x] `[LOW]` Add satisfaction guarantee section (Completed 2026-01-25)
 
 ### Product Features
 
 - [ ] `[MED]` Add product add-ons functionality (batteries, accessories, etc.)
-- [ ] `[MED]` Set in-stock variations as primary variation automatically
+- [x] `[MED]` Set in-stock variations as primary variation automatically (Completed 2026-01-25)
 - [ ] `[LOW]` Add product comparison feature
 
 ---
@@ -117,7 +117,7 @@ Account
 
 - [x] `[HIGH]` Create improved home page design with better UX (Completed 2025-01-22)
 - [x] `[MED]` Add featured categories section with icons (Completed 2025-01-22)
-- [ ] `[MED]` Add testimonials/reviews section
+- [x] `[MED]` Add testimonials/reviews section (Completed 2026-01-25)
 - [x] `[MED]` Add "Why Shop With Us" benefits section (Completed 2025-01-22)
 - [ ] `[LOW]` Add trending products carousel
 - [x] `[LOW]` Add blog posts preview section (Completed 2025-01-22)
@@ -151,7 +151,7 @@ Account
 - [ ] `[MED]` Set up monitoring and error tracking (Sentry configured)
 - [ ] `[MED]` Configure CDN for static assets
 - [ ] `[MED]` Set up database backups
-- [ ] `[LOW]` Create 404 and error page designs
+- [x] `[LOW]` Create 404 and error page designs (Completed 2026-01-25)
 
 ---
 
@@ -186,6 +186,98 @@ Account
 - [x] Change site title to Male Q (2025-01-22)
 - [x] Fix navigation dropdown layout and red hover states (2025-01-22)
 - [x] Fix mobile menu not opening (2025-01-22)
+- [x] Product pricing with logarithmic markup formula (2026-01-24)
+- [x] Psychological pricing (.97 regular, .X7 sale endings) (2026-01-24)
+- [x] Wholesale price display in WooCommerce admin (2026-01-24)
+- [x] Price update script: `scripts/update-prices.ts` (2026-01-24)
+
+---
+
+## Authentication & User Flows
+
+- [ ] `[HIGH]` Test and fix login/signup flows before launch
+  - Verify email verification works
+  - Test password reset flow end-to-end
+  - Check session persistence across pages
+- [ ] `[HIGH]` Remove all @maleq.com email mentions before going live
+  - Direct users to contact page instead
+  - Update email templates if any exist
+- [ ] `[MED]` Test contact us form functionality
+  - Verify form submissions are received
+  - Check spam protection is working
+
+---
+
+## Checkout & Payments
+
+- [ ] `[HIGH]` Test checkout with real payment methods
+  - Test Stripe live mode with real cards
+  - Verify order confirmation emails
+  - Test failed payment handling
+- [ ] `[MED]` Add auto-discount functionality for threshold-based discounts
+  - e.g., Spend $100, get $10 off
+  - Consider tiered discounts for larger orders
+- [ ] `[MED]` Update shipping tiers
+  - Review current shipping rates
+  - Configure weight-based or price-based tiers
+
+---
+
+## Blog & Content Pages
+
+- [ ] `[MED]` Implement and test blog category pages
+  - Verify `/blog/category/[slug]` routes work
+  - Check pagination and filtering
+- [ ] `[MED]` Implement and test blog tag pages
+  - Verify `/blog/tag/[slug]` routes work
+  - Ensure proper SEO metadata
+- [x] `[MED]` Update FAQs page with real content (Completed 2026-01-25)
+  - Shipping FAQs included
+  - Returns/refund FAQs included
+  - Product care FAQs added
+
+---
+
+## Product Data & Pricing
+
+- [x] `[HIGH]` Update product prices with markup formula (Completed 2026-01-24)
+  - Logarithmic curve: 3x at ≤$5 → 2.1x at ≥$100
+  - Regular prices end in .97 (psychological pricing)
+  - Sale prices end in .67/.77/.87/.97
+  - Sale price is 10% off regular price
+  - Script: `scripts/update-prices.ts`
+- [ ] `[HIGH]` Update add_to_cart shortcodes to new product IDs
+  - Find all shortcodes in WordPress content
+  - Map old IDs to new IDs
+  - Run update script
+- [ ] `[MED]` Add additional datafeeds from STC
+  - Identify available feeds
+  - Create import scripts
+- [ ] `[MED]` Manually add missing product 'kits' before deploy
+  - Identify kit products not in datafeed
+  - Create manually in WooCommerce
+
+---
+
+## Bug Fixes
+
+- [x] `[HIGH]` Fix variation image not loading on initial product page load (Completed 2026-01-25)
+  - Initialize variation image in ProductDetailsWrapper
+  - Default to first in-stock variation with image
+- [ ] `[MED]` Fix product specs styling not showing on some products
+  - Identify affected products
+  - Debug conditional rendering logic
+
+---
+
+## SEO & Launch Prep
+
+- [ ] `[HIGH]` Complete full SEO audit before launch
+  - Check all meta titles and descriptions
+  - Verify structured data (JSON-LD)
+  - Test Open Graph tags
+  - Submit sitemap to Google Search Console
+  - Check canonical URLs
 
 ---
 
@@ -195,19 +287,3 @@ Account
 - Deployment guide: `docs/DEPLOYMENT_GUIDE.md`
 - API documentation: `docs/API_DOCUMENTATION.md`
 - Store specifications: `docs/STORE_SPECIFICATIONS.md`
-
-Test and fix login/signup flows before launch.
-Remove all email mentions of @maleq.com before going live. Direct users to contact us page instead.
-Test contact us form functionality.
-Add auto-discount functionality for threshold-based discounts (e.g. spend $100, get $10 off).
-Impliment and test blog category pages and tags pages.
-Do full SEO audit before launch.
-Fix product specs styling not showing on some products.
-Update FAQs page with real content.
-Update Shipping Tiers
-Test checkout with real payment methods.
-Add additional datafeeds from STC
-Correct variation image not loading on initial product page load.
-Manually add missing product 'kits' before deploy.
-update prices: <$5 x 5, $5-$9 x 4, $10-$30 x 3.5, $31-$49 x 3, $50-100 x 2.5, >$100 x 2.1
-Update add_to_cart shortcode to new IDs

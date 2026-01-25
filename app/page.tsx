@@ -7,6 +7,7 @@ import ProductCard from '@/components/shop/ProductCard';
 import BlogCard from '@/components/blog/BlogCard';
 import HomeHero from '@/components/home/HomeHero';
 import HomeBenefits from '@/components/home/HomeBenefits';
+import TestimonialsSection from '@/components/home/TestimonialsSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import SocialSection from '@/components/home/SocialSection';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
@@ -102,6 +103,9 @@ export default async function Home() {
           </div>
         </section>
       )}
+
+      {/* Testimonials */}
+      <TestimonialsSection />
 
       {/* Social Media / YouTube Section */}
       <SocialSection />

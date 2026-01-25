@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomer, updateCustomer } from '@/lib/woocommerce/customers';
+
+const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
 export async function GET(
   request: NextRequest,
@@ -16,14 +17,26 @@ export async function GET(
       );
     }
 
-    const customer = await getCustomer(customerId);
+    // Use our custom endpoint instead of WooCommerce REST API
+    const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    return NextResponse.json(customer);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch customer');
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching customer:', error);
 
     return NextResponse.json(
-      { error: 'Failed to fetch customer' },
+      { error: error instanceof Error ? error.message : 'Failed to fetch customer' },
       { status: 500 }
     );
   }
@@ -46,9 +59,22 @@ export async function PUT(
 
     const body = await request.json();
 
-    const customer = await updateCustomer(customerId, body);
+    // Use our custom endpoint instead of WooCommerce REST API
+    const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
 
-    return NextResponse.json(customer);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to update customer');
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating customer:', error);
 
