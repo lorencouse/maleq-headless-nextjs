@@ -95,7 +95,7 @@ export default function TestimonialsSection() {
           {testimonials.map((testimonial) => (
             <div
               key={testimonial.id}
-              className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow"
+              className="bg-card border border-border rounded-xl p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <StarRating rating={testimonial.rating} />

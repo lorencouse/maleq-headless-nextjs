@@ -58,7 +58,7 @@ export default function HomeBenefits() {
           {benefits.map((benefit, index) => (
             <div
               key={index}
-              className="bg-card border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/20 transition-all"
+              className="bg-card border border-border rounded-xl p-6"
             >
               <div className={`w-14 h-14 rounded-xl ${benefit.color} flex items-center justify-center mb-4`}>
                 {benefit.icon}

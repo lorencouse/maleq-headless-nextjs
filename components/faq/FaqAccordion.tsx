@@ -35,7 +35,7 @@ export default function FaqAccordion({ items, allowMultiple = false }: FaqAccord
       {items.map((item, index) => (
         <div
           key={index}
-          className="border border-border rounded-xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow"
+          className="border border-border rounded-xl overflow-hidden bg-card shadow-sm"
         >
           <button
             onClick={() => toggleItem(index)}

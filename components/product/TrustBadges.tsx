@@ -91,7 +91,7 @@ export default function TrustBadges({ variant = 'default', className = '' }: Tru
       {badges.map((badge, index) => (
         <div
           key={index}
-          className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border/50 hover:border-primary/30 transition-colors"
+          className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border/50"
         >
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
             {badge.icon}
