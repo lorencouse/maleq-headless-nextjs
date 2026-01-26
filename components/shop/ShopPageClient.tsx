@@ -342,6 +342,11 @@ export default function ShopPageClient({
     updateURL(DEFAULT_FILTERS, sortBy);
   };
 
+  // Clear search and go back to shop
+  const handleClearSearch = () => {
+    router.push('/shop');
+  };
+
   // Remove single filter
   const handleRemoveFilter = (key: keyof FilterState) => {
     const newFilters = { ...filters };
@@ -488,7 +493,9 @@ export default function ShopPageClient({
           brands={availableBrands.length > 0 ? availableBrands : brands}
           colors={availableColors.length > 0 ? availableColors : colors}
           materials={availableMaterials.length > 0 ? availableMaterials : materials}
+          searchQuery={searchQuery}
           onRemoveFilter={handleRemoveFilter}
+          onClearSearch={handleClearSearch}
           onClearAll={handleClearFilters}
         />
 

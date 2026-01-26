@@ -11,7 +11,9 @@ interface ActiveFiltersProps {
   brands?: FilterOption[];
   colors?: FilterOption[];
   materials?: FilterOption[];
+  searchQuery?: string;
   onRemoveFilter: (key: keyof FilterState) => void;
+  onClearSearch?: () => void;
   onClearAll: () => void;
 }
 
@@ -35,7 +37,9 @@ export default function ActiveFilters({
   brands = [],
   colors = [],
   materials = [],
+  searchQuery,
   onRemoveFilter,
+  onClearSearch,
   onClearAll,
 }: ActiveFiltersProps) {
   const activeFilters: { key: keyof FilterState; label: string }[] = [];
@@ -90,13 +94,32 @@ export default function ActiveFilters({
     activeFilters.push({ key: 'onSale', label: 'On Sale' });
   }
 
-  if (activeFilters.length === 0) {
+  // Show nothing if no search and no filters
+  if (!searchQuery && activeFilters.length === 0) {
     return null;
   }
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
       <span className="text-sm text-muted-foreground">Active filters:</span>
+
+      {/* Search query pill */}
+      {searchQuery && onClearSearch && (
+        <button
+          onClick={onClearSearch}
+          className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary text-secondary-foreground text-sm rounded-full hover:bg-secondary/80 transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          &ldquo;{searchQuery}&rdquo;
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+
+      {/* Other filter pills */}
       {activeFilters.map(({ key, label }) => (
         <button
           key={key}
@@ -109,12 +132,16 @@ export default function ActiveFilters({
           </svg>
         </button>
       ))}
-      <button
-        onClick={onClearAll}
-        className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
-      >
-        Clear all
-      </button>
+
+      {/* Clear all - only show if there are filters beyond just search */}
+      {(activeFilters.length > 0 || (searchQuery && activeFilters.length > 0)) && (
+        <button
+          onClick={onClearAll}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
+        >
+          Clear all
+        </button>
+      )}
     </div>
   );
 }
