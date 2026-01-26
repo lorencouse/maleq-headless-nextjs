@@ -252,3 +252,26 @@ export const GET_RELATED_POSTS = gql`
     }
   }
 `;
+
+// Search posts by keyword
+export const SEARCH_POSTS = gql`
+  ${POST_FIELDS}
+  query SearchPosts($search: String!, $first: Int = 20, $categoryName: String) {
+    posts(
+      first: $first
+      where: {
+        search: $search
+        categoryName: $categoryName
+        orderby: { field: RELEVANCE, order: DESC }
+      }
+    ) {
+      nodes {
+        ...PostFields
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;

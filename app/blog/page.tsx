@@ -1,7 +1,9 @@
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { getClient } from '@/lib/apollo/client';
-import { GET_ALL_POSTS } from '@/lib/queries/posts';
+import { GET_ALL_POSTS, SEARCH_POSTS } from '@/lib/queries/posts';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
+import BlogSearch from '@/components/blog/BlogSearch';
 import { Post } from '@/lib/types/wordpress';
 
 export const metadata: Metadata = {
@@ -17,12 +19,19 @@ export const metadata: Metadata = {
 // ISR: Revalidate every 1 week for blog content
 export const revalidate = 604800;
 
-export default async function BlogPage() {
+interface BlogPageProps {
+  searchParams: Promise<{ q?: string }>;
+}
+
+export default async function BlogPage({ searchParams }: BlogPageProps) {
+  const { q: searchQuery } = await searchParams;
+
+  // Use search query if provided, otherwise get all posts
   const { data } = await getClient().query({
-    query: GET_ALL_POSTS,
-    variables: {
-      first: 12,
-    },
+    query: searchQuery ? SEARCH_POSTS : GET_ALL_POSTS,
+    variables: searchQuery
+      ? { search: searchQuery, first: 20 }
+      : { first: 12 },
     fetchPolicy: 'no-cache',
   });
 
@@ -35,18 +44,34 @@ export default async function BlogPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-foreground mb-4">Blog</h1>
-        <p className="text-lg text-muted-foreground">
-          Insights, stories, and updates from our team
-        </p>
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Blog</h1>
+            <p className="text-lg text-muted-foreground">
+              Insights, stories, and updates from our team
+            </p>
+          </div>
+          <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
+            <BlogSearch />
+          </Suspense>
+        </div>
+
+        {/* Search results indicator */}
+        {searchQuery && (
+          <p className="text-sm text-muted-foreground">
+            {posts.length === 0
+              ? `No articles found for "${searchQuery}"`
+              : `Showing ${posts.length} result${posts.length !== 1 ? 's' : ''} for "${searchQuery}"`}
+          </p>
+        )}
       </div>
 
       {/* Posts Grid with Load More */}
       <BlogPostsGrid
         initialPosts={posts}
         initialPageInfo={{
-          hasNextPage: pageInfo.hasNextPage,
+          hasNextPage: !searchQuery && pageInfo.hasNextPage,
           endCursor: pageInfo.endCursor,
         }}
       />

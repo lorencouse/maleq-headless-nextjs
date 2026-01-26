@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { getClient } from '@/lib/apollo/client';
@@ -7,13 +8,16 @@ import {
   GET_POSTS_BY_CATEGORY,
   GET_CATEGORY_BY_SLUG,
   GET_ALL_CATEGORIES,
+  SEARCH_POSTS,
 } from '@/lib/queries/posts';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
+import BlogSearch from '@/components/blog/BlogSearch';
 import { Post } from '@/lib/types/wordpress';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ q?: string }>;
 }
 
 interface Category {
@@ -77,38 +81,42 @@ export async function generateStaticParams() {
 export const revalidate = 604800;
 export const dynamicParams = true; // Allow runtime generation
 
-export default async function BlogCategoryPage({ params }: BlogCategoryPageProps) {
+export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;
+  const { q: searchQuery } = await searchParams;
 
-  // Fetch category and posts in parallel
-  const [categoryResult, postsResult] = await Promise.all([
-    getClient().query({
-      query: GET_CATEGORY_BY_SLUG,
-      variables: { slug },
-      fetchPolicy: 'no-cache',
-    }),
-    getClient().query({
-      query: GET_POSTS_BY_CATEGORY,
-      variables: { categoryName: slug, first: 12 },
-      fetchPolicy: 'no-cache',
-    }),
-  ]);
+  // Fetch category first
+  const categoryResult = await getClient().query({
+    query: GET_CATEGORY_BY_SLUG,
+    variables: { slug },
+    fetchPolicy: 'no-cache',
+  });
 
   const category: Category | null = categoryResult.data?.category;
+
+  if (!category) {
+    notFound();
+  }
+
+  // Fetch posts (with search if provided)
+  const postsResult = await getClient().query({
+    query: searchQuery ? SEARCH_POSTS : GET_POSTS_BY_CATEGORY,
+    variables: searchQuery
+      ? { search: searchQuery, first: 20, categoryName: slug }
+      : { categoryName: slug, first: 12 },
+    fetchPolicy: 'no-cache',
+  });
+
   const posts: Post[] = postsResult.data?.posts?.nodes || [];
   const pageInfo = postsResult.data?.posts?.pageInfo || {
     hasNextPage: false,
     endCursor: null,
   };
 
-  if (!category) {
-    notFound();
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Hero Section */}
-      <div className="mb-12">
+      <div className="mb-8">
         {/* Breadcrumb */}
         <Breadcrumbs
           items={[
@@ -117,28 +125,40 @@ export default async function BlogCategoryPage({ params }: BlogCategoryPageProps
           ]}
         />
 
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-foreground">{category.name}</h1>
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mt-4">
+          <div>
+            {/* Title */}
+            <h1 className="text-4xl font-bold text-foreground">{category.name}</h1>
 
-        {/* Description */}
-        {category.description && (
-          <p
-            className="text-lg text-muted-foreground max-w-2xl mb-4"
-            dangerouslySetInnerHTML={{ __html: category.description }}
-          />
-        )}
+            {/* Description */}
+            {category.description && (
+              <p
+                className="text-lg text-muted-foreground max-w-2xl mt-2"
+                dangerouslySetInnerHTML={{ __html: category.description }}
+              />
+            )}
 
-        {/* Post count */}
-        <p className="text-sm text-muted-foreground">
-          {category.count} {category.count === 1 ? 'article' : 'articles'} in this category
-        </p>
+            {/* Post count / search results */}
+            <p className="text-sm text-muted-foreground mt-2">
+              {searchQuery
+                ? posts.length === 0
+                  ? `No articles found for "${searchQuery}"`
+                  : `Showing ${posts.length} result${posts.length !== 1 ? 's' : ''} for "${searchQuery}"`
+                : `${category.count} ${category.count === 1 ? 'article' : 'articles'} in this category`}
+            </p>
+          </div>
+
+          <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
+            <BlogSearch categorySlug={slug} placeholder={`Search in ${category.name}...`} />
+          </Suspense>
+        </div>
       </div>
 
       {/* Posts Grid with Load More */}
       <BlogPostsGrid
         initialPosts={posts}
         initialPageInfo={{
-          hasNextPage: pageInfo.hasNextPage,
+          hasNextPage: !searchQuery && pageInfo.hasNextPage,
           endCursor: pageInfo.endCursor,
         }}
         categorySlug={slug}
