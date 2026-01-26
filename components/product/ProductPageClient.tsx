@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import VariationSelector from './VariationSelector';
+import ProductAddons, { SelectedAddon } from './ProductAddons';
 import { EnhancedProduct } from '@/lib/products/product-service';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
@@ -18,6 +19,7 @@ import {
   parsePrice,
 } from '@/lib/utils/woocommerce-format';
 import { VariationImage, SelectedVariation } from '@/lib/types/product';
+import { isAddonEligibleBySlug } from '@/lib/config/product-addons';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
@@ -32,6 +34,16 @@ export default function ProductPageClient({
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+
+  // Check if product is eligible for addons based on its categories
+  const isAddonEligible = useMemo(() => {
+    const categorySlugs = product.categories?.map((cat) => cat.slug) || [];
+    return isAddonEligibleBySlug(categorySlugs);
+  }, [product.categories]);
+
+  // Calculate total price including addons
+  const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
 
   // Get initial variation - prefer first in-stock variation
   const getInitialVariation = (): SelectedVariation | null => {
@@ -94,6 +106,7 @@ export default function ProductPageClient({
         selectedVariation?.regularPrice || product.regularPrice,
       );
 
+      // Add main product to cart
       addItem({
         productId: product.databaseId?.toString() || product.id,
         variationId: selectedVariation?.id,
@@ -117,7 +130,45 @@ export default function ProductPageClient({
         type: product.type,
       });
 
-      showSuccess(`${product.name} added to cart!`);
+      // Add selected addons as separate cart items with real product data
+      // Use addon.id as productId for unique cart identification (until real WooCommerce IDs are added)
+      const wpBaseUrl = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace('/graphql', '');
+
+      for (const addon of selectedAddons) {
+        const cartProductId = addon.productId && addon.productId !== '0'
+          ? addon.productId
+          : addon.id; // Fallback to unique addon ID
+
+        // Build full image URL from relative path
+        const imageUrl = addon.image
+          ? (addon.image.startsWith('http') ? addon.image : `${wpBaseUrl}${addon.image}`)
+          : undefined;
+
+        addItem({
+          productId: cartProductId,
+          name: `Add-on: ${addon.name}`,
+          slug: addon.slug,
+          sku: addon.sku,
+          price: addon.price,
+          regularPrice: addon.regularPrice,
+          quantity: 1,
+          image: imageUrl ? { url: imageUrl, altText: addon.name } : undefined,
+          maxQuantity: 99,
+          inStock: true,
+          type: 'SIMPLE',
+        });
+      }
+
+      // Build success message
+      const addonCount = selectedAddons.length;
+      const successMessage = addonCount > 0
+        ? `${product.name} + ${addonCount} add-on${addonCount > 1 ? 's' : ''} added to cart!`
+        : `${product.name} added to cart!`;
+
+      showSuccess(successMessage);
+
+      // Clear addon selections after adding
+      setSelectedAddons([]);
 
       // Reset quantity after adding
       setQuantity(1);
@@ -224,6 +275,11 @@ export default function ProductPageClient({
         </div>
       )}
 
+      {/* Product Addons - Show for eligible categories */}
+      {isAddonEligible && displayStockStatus !== 'OUT_OF_STOCK' && (
+        <ProductAddons onAddonsChange={setSelectedAddons} />
+      )}
+
       {/* Add to Cart */}
       <div className='mb-8'>
         {displayStockStatus === 'OUT_OF_STOCK' ? (
@@ -247,6 +303,26 @@ export default function ProductPageClient({
           </>
         ) : (
           <>
+            {/* Total with addons display */}
+            {addonsTotal > 0 && (
+              <div className='mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10'>
+                <div className='flex justify-between items-center text-sm'>
+                  <span className='text-muted-foreground'>Product:</span>
+                  <span className='text-foreground'>{formatPrice(displayPrice)}</span>
+                </div>
+                <div className='flex justify-between items-center text-sm'>
+                  <span className='text-muted-foreground'>Add-ons:</span>
+                  <span className='text-foreground'>+${addonsTotal.toFixed(2)}</span>
+                </div>
+                <div className='flex justify-between items-center text-sm font-semibold mt-2 pt-2 border-t border-border'>
+                  <span className='text-foreground'>Total:</span>
+                  <span className='text-primary'>
+                    ${(parsePrice(displayPrice) + addonsTotal).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className='flex gap-4 mb-4'>
               <input
                 type='number'
@@ -261,7 +337,7 @@ export default function ProductPageClient({
                 disabled={isAdding}
                 className='flex-1 bg-primary text-primary-foreground py-3.5 px-6 rounded-xl hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-lg'
               >
-                {isAdding ? 'Adding...' : 'Add to Cart'}
+                {isAdding ? 'Adding...' : addonsTotal > 0 ? 'Add All to Cart' : 'Add to Cart'}
               </button>
             </div>
             <WishlistButton
