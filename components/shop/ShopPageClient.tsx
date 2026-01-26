@@ -580,7 +580,7 @@ export default function ShopPageClient({
 
             {/* Results Count */}
             <p className="text-sm text-muted-foreground">
-              {totalCount} {totalCount === 1 ? 'product' : 'products'}
+              Showing {totalCount} {totalCount === 1 ? 'product' : 'products'}
             </p>
           </div>
 
