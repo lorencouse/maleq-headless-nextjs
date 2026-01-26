@@ -92,20 +92,20 @@ export default function ProductCarousel({
             <button
               onClick={scrollLeft}
               disabled={!canScrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all hidden sm:block"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all"
               aria-label="Scroll left"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={scrollRight}
               disabled={!canScrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all hidden sm:block"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all"
               aria-label="Scroll right"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
