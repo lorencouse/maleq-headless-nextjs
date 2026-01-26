@@ -8,6 +8,18 @@ import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice, calculateSavings } from '@/lib/utils/cart-helpers';
 import QuantitySelector from '@/components/ui/QuantitySelector';
 
+// Build WordPress base URL for images
+const wpBaseUrl = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace('/graphql', '');
+
+/**
+ * Get full image URL, handling relative paths
+ */
+function getImageUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${wpBaseUrl}${url}`;
+}
+
 interface CartItemProps {
   item: CartItemType;
 }
@@ -41,9 +53,9 @@ export default function CartItem({ item }: CartItemProps) {
         href={`/product/${item.slug}`}
         className="relative w-full sm:w-32 h-32 flex-shrink-0 bg-muted rounded-lg overflow-hidden group"
       >
-        {item.image ? (
+        {item.image?.url ? (
           <Image
-            src={item.image.url}
+            src={getImageUrl(item.image.url)}
             alt={item.image.altText || item.name}
             fill
             className="object-cover group-hover:scale-105 transition-transform"

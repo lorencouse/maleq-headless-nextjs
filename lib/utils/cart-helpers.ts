@@ -9,7 +9,10 @@ import { Cart, CartItem } from '../types/cart';
 /**
  * Generate a unique cart item ID from product and variation IDs
  */
-export function generateCartItemId(productId: string, variationId?: string): string {
+export function generateCartItemId(
+  productId: string,
+  variationId?: string,
+): string {
   return variationId ? `${productId}-${variationId}` : productId;
 }
 
@@ -42,10 +45,83 @@ export function calculateCartTotal(
   subtotal: number,
   tax: number = 0,
   shipping: number = 0,
-  discount: number = 0
+  discount: number = 0,
+  autoDiscount: number = 0,
 ): number {
-  const total = subtotal + tax + shipping - discount;
+  const total = subtotal + tax + shipping - discount - autoDiscount;
   return Number(Math.max(0, total).toFixed(2));
+}
+
+/**
+ * Auto-discount tier configuration
+ * Each tier defines a minimum subtotal threshold and the discount amount
+ */
+export interface AutoDiscountTier {
+  minSubtotal: number;
+  discountAmount: number;
+  label: string;
+}
+
+/**
+ * Default auto-discount tiers
+ * Can be customized or fetched from an API/config
+ */
+export const AUTO_DISCOUNT_TIERS: AutoDiscountTier[] = [
+  { minSubtotal: 300, discountAmount: 50, label: 'Spend $300, Save $50' },
+  { minSubtotal: 200, discountAmount: 25, label: 'Spend $200, Save $25' },
+  { minSubtotal: 100, discountAmount: 10, label: 'Spend $100, Save $10' },
+];
+
+/**
+ * Calculate auto-discount based on subtotal
+ * Returns the best matching tier (highest discount the customer qualifies for)
+ */
+export function calculateAutoDiscount(subtotal: number): {
+  amount: number;
+  label?: string;
+  nextTier?: { amountNeeded: number; discountAmount: number };
+} {
+  // Sort tiers by minSubtotal descending to find the best match first
+  const sortedTiers = [...AUTO_DISCOUNT_TIERS].sort(
+    (a, b) => b.minSubtotal - a.minSubtotal,
+  );
+
+  // Find the best qualifying tier
+  for (const tier of sortedTiers) {
+    if (subtotal >= tier.minSubtotal) {
+      // Find next tier (if any) for upsell messaging
+      const nextTierIndex = sortedTiers.indexOf(tier) - 1;
+      const nextTier =
+        nextTierIndex >= 0 ? sortedTiers[nextTierIndex] : undefined;
+
+      return {
+        amount: tier.discountAmount,
+        label: tier.label,
+        nextTier: nextTier
+          ? {
+              amountNeeded: Number(
+                (nextTier.minSubtotal - subtotal).toFixed(2),
+              ),
+              discountAmount: nextTier.discountAmount,
+            }
+          : undefined,
+      };
+    }
+  }
+
+  // No qualifying tier - find the next tier they can reach
+  const lowestTier = sortedTiers[sortedTiers.length - 1];
+  if (lowestTier && subtotal < lowestTier.minSubtotal) {
+    return {
+      amount: 0,
+      nextTier: {
+        amountNeeded: Number((lowestTier.minSubtotal - subtotal).toFixed(2)),
+        discountAmount: lowestTier.discountAmount,
+      },
+    };
+  }
+
+  return { amount: 0 };
 }
 
 /**
@@ -54,7 +130,7 @@ export function calculateCartTotal(
 export function validateQuantity(
   quantity: number,
   maxQuantity: number,
-  inStock: boolean
+  inStock: boolean,
 ): { isValid: boolean; validQuantity: number; message?: string } {
   // Must be at least 1
   if (quantity < 1) {
@@ -99,7 +175,10 @@ export function formatPrice(price: number, currency: string = 'USD'): string {
 /**
  * Calculate savings amount
  */
-export function calculateSavings(regularPrice: number, salePrice: number): number {
+export function calculateSavings(
+  regularPrice: number,
+  salePrice: number,
+): number {
   return Number(Math.max(0, regularPrice - salePrice).toFixed(2));
 }
 
@@ -108,7 +187,7 @@ export function calculateSavings(regularPrice: number, salePrice: number): numbe
  */
 export function calculateSavingsPercentage(
   regularPrice: number,
-  salePrice: number
+  salePrice: number,
 ): number {
   if (regularPrice <= 0) return 0;
   const savings = ((regularPrice - salePrice) / regularPrice) * 100;
@@ -120,11 +199,11 @@ export function calculateSavingsPercentage(
  */
 export function mergeCartItem(
   existingItem: CartItem,
-  newQuantity: number
+  newQuantity: number,
 ): CartItem {
   const updatedQuantity = Math.min(
     existingItem.quantity + newQuantity,
-    existingItem.maxQuantity
+    existingItem.maxQuantity,
   );
 
   return {
@@ -189,7 +268,7 @@ export function clearPersistedCart(): void {
  */
 export function isSameProduct(
   item1: { productId: string; variationId?: string },
-  item2: { productId: string; variationId?: string }
+  item2: { productId: string; variationId?: string },
 ): boolean {
   return (
     item1.productId === item2.productId &&
@@ -226,6 +305,8 @@ export function createEmptyCart(): Cart {
     tax: 0,
     shipping: 0,
     discount: 0,
+    autoDiscount: 0,
+    autoDiscountLabel: undefined,
     total: 0,
     itemCount: 0,
     currency: 'USD',
@@ -260,7 +341,7 @@ export function estimateTax(subtotal: number, taxRate: number = 0.08): number {
  */
 export function getFreeShippingProgress(
   subtotal: number,
-  threshold: number = 100
+  threshold: number = 100,
 ): {
   qualifies: boolean;
   remaining: number;

@@ -4,7 +4,7 @@ import { useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore, useCartSubtotal, useIsCartEmpty } from '@/lib/store/cart-store';
-import { formatPrice } from '@/lib/utils/cart-helpers';
+import { formatPrice, calculateAutoDiscount } from '@/lib/utils/cart-helpers';
 import MiniCartItem from './MiniCartItem';
 
 interface MiniCartProps {
@@ -17,6 +17,11 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
   const itemCount = useCartStore((state) => state.itemCount);
   const subtotal = useCartSubtotal();
   const isEmpty = useIsCartEmpty();
+  const autoDiscount = useCartStore((state) => state.autoDiscount);
+  const autoDiscountLabel = useCartStore((state) => state.autoDiscountLabel);
+
+  // Get next tier info for upsell messaging
+  const autoDiscountInfo = calculateAutoDiscount(subtotal);
 
   // Close on ESC key
   const handleKeyDown = useCallback(
@@ -124,10 +129,26 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
 
               {/* Footer */}
               <div className="border-t border-border p-4 space-y-4">
+                {/* Auto-Discount Upsell */}
+                {autoDiscountInfo.nextTier && (
+                  <div className="p-2 bg-primary/10 rounded-lg text-xs text-primary text-center">
+                    Add {formatPrice(autoDiscountInfo.nextTier.amountNeeded)} more for{' '}
+                    {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off!
+                  </div>
+                )}
+
+                {/* Auto-Discount Applied */}
+                {autoDiscount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-primary">
+                    <span>Auto Discount</span>
+                    <span>-{formatPrice(autoDiscount)}</span>
+                  </div>
+                )}
+
                 {/* Subtotal */}
                 <div className="flex items-center justify-between text-lg font-semibold">
                   <span>Subtotal</span>
-                  <span>{formatPrice(subtotal)}</span>
+                  <span>{formatPrice(subtotal - autoDiscount)}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Shipping and taxes calculated at checkout

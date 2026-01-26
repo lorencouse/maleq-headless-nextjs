@@ -20,6 +20,7 @@ import {
   mergeCartItem,
   createEmptyCart,
   isSameProduct,
+  calculateAutoDiscount,
 } from '../utils/cart-helpers';
 
 /**
@@ -239,16 +240,23 @@ export const useCartStore = create<CartStore>()(
     const state = get();
     const subtotal = calculateCartSubtotal(state.items);
     const itemCount = calculateItemCount(state.items);
+
+    // Calculate auto-discount based on subtotal
+    const autoDiscountResult = calculateAutoDiscount(subtotal);
+
     const total = calculateCartTotal(
       subtotal,
       state.tax,
       state.shipping,
-      state.discount
+      state.discount,
+      autoDiscountResult.amount
     );
 
     set({
       subtotal,
       itemCount,
+      autoDiscount: autoDiscountResult.amount,
+      autoDiscountLabel: autoDiscountResult.label,
       total,
       updatedAt: Date.now(),
     });
@@ -338,6 +346,8 @@ export const useCartStore = create<CartStore>()(
         tax: state.tax,
         shipping: state.shipping,
         discount: state.discount,
+        autoDiscount: state.autoDiscount,
+        autoDiscountLabel: state.autoDiscountLabel,
         total: state.total,
         itemCount: state.itemCount,
         currency: state.currency,

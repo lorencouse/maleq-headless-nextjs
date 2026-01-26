@@ -84,7 +84,13 @@ export interface Cart {
   /** Discount amount (from coupons) */
   discount: number;
 
-  /** Total (subtotal + tax + shipping - discount) */
+  /** Auto-discount amount (threshold-based) */
+  autoDiscount: number;
+
+  /** Auto-discount label for display */
+  autoDiscountLabel?: string;
+
+  /** Total (subtotal + tax + shipping - discount - autoDiscount) */
   total: number;
 
   /** Total item count (sum of all quantities) */

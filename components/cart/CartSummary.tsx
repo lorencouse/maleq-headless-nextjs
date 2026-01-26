@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCartStore, useCartSubtotal, useCartTotal } from '@/lib/store/cart-store';
-import { formatPrice, getFreeShippingProgress } from '@/lib/utils/cart-helpers';
+import { formatPrice, getFreeShippingProgress, calculateAutoDiscount } from '@/lib/utils/cart-helpers';
 import CouponInput from './CouponInput';
 
 const FREE_SHIPPING_THRESHOLD = 100;
@@ -15,6 +15,11 @@ export default function CartSummary() {
   const discount = useCartStore((state) => state.discount);
   const couponCode = useCartStore((state) => state.couponCode);
   const itemCount = useCartStore((state) => state.itemCount);
+  const autoDiscount = useCartStore((state) => state.autoDiscount);
+  const autoDiscountLabel = useCartStore((state) => state.autoDiscountLabel);
+
+  // Get next tier info for upsell messaging
+  const autoDiscountInfo = calculateAutoDiscount(subtotal);
 
   const freeShipping = getFreeShippingProgress(subtotal, FREE_SHIPPING_THRESHOLD);
 
@@ -49,6 +54,29 @@ export default function CartSummary() {
         </div>
       )}
 
+      {/* Auto-Discount Applied Banner */}
+      {autoDiscount > 0 && (
+        <div className="mb-4 p-3 bg-primary/10 text-primary rounded-lg text-sm flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="font-medium">{autoDiscountLabel}</span>
+        </div>
+      )}
+
+      {/* Next Discount Tier Progress */}
+      {autoDiscountInfo.nextTier && (
+        <div className="mb-4 p-3 bg-background rounded-lg">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="text-muted-foreground">Save more</span>
+            <span className="font-medium text-primary">
+              Add {formatPrice(autoDiscountInfo.nextTier.amountNeeded)} for{' '}
+              {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Coupon Input */}
       <CouponInput />
 
@@ -63,8 +91,15 @@ export default function CartSummary() {
 
         {discount > 0 && couponCode && (
           <div className="flex justify-between text-sm">
-            <span className="text-primary">Discount ({couponCode})</span>
+            <span className="text-primary">Coupon ({couponCode})</span>
             <span className="text-primary">-{formatPrice(discount)}</span>
+          </div>
+        )}
+
+        {autoDiscount > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-primary">Auto Discount</span>
+            <span className="text-primary">-{formatPrice(autoDiscount)}</span>
           </div>
         )}
 
