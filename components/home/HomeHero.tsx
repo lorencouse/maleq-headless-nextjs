@@ -75,7 +75,10 @@ export default function HomeHero() {
 
           {/* Trust indicators */}
           <div className='flex flex-wrap gap-6 mt-10 pt-10 border-t border-white/10'>
-            <div className='flex items-center gap-2 text-sm text-zinc-300'>
+            <Link
+              href='/privacy'
+              className='flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors'
+            >
               <svg
                 className='w-5 h-5 text-primary'
                 fill='none'
@@ -90,8 +93,11 @@ export default function HomeHero() {
                 />
               </svg>
               <span>Secure Checkout</span>
-            </div>
-            <div className='flex items-center gap-2 text-sm text-zinc-300'>
+            </Link>
+            <Link
+              href='/shipping-returns'
+              className='flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors'
+            >
               <svg
                 className='w-5 h-5 text-primary'
                 fill='none'
@@ -106,8 +112,11 @@ export default function HomeHero() {
                 />
               </svg>
               <span>Plain Packaging</span>
-            </div>
-            <div className='flex items-center gap-2 text-sm text-zinc-300'>
+            </Link>
+            <Link
+              href='/shipping-returns'
+              className='flex items-center gap-2 text-sm text-zinc-300 hover:text-white transition-colors'
+            >
               <svg
                 className='w-5 h-5 text-primary'
                 fill='none'
@@ -122,7 +131,7 @@ export default function HomeHero() {
                 />
               </svg>
               <span>Fast Shipping</span>
-            </div>
+            </Link>
           </div>
         </div>
       </div>
