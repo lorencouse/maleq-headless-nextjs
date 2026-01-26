@@ -3,18 +3,30 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
 
 export default function LoginForm() {
   const router = useRouter();
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
-
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      identifier: '',
+      password: '',
+      rememberMe: false,
+    },
+  });
+
+  const onSubmit = async (data: LoginFormData) => {
     clearError();
     setLoading(true);
 
@@ -22,16 +34,16 @@ export default function LoginForm() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ login: identifier, password }),
+        body: JSON.stringify({ login: data.identifier, password: data.password }),
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        throw new Error(result.error || 'Login failed');
       }
 
-      login(data.user, data.token);
+      login(result.user, result.token);
       router.push('/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
@@ -39,7 +51,7 @@ export default function LoginForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
           <p className="text-sm text-destructive">{error}</p>
@@ -47,19 +59,22 @@ export default function LoginForm() {
       )}
 
       <div>
-        <label htmlFor="login" className="block text-sm font-medium text-foreground mb-2">
+        <label htmlFor="identifier" className="block text-sm font-medium text-foreground mb-2">
           Email or Username
         </label>
         <input
           type="text"
-          id="login"
-          value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
-          required
+          id="identifier"
+          {...register('identifier')}
           autoComplete="username"
-          className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
+          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
+            errors.identifier ? 'border-destructive' : 'border-input'
+          }`}
           placeholder="Email or username"
         />
+        {errors.identifier && (
+          <p className="mt-1 text-sm text-destructive">{errors.identifier.message}</p>
+        )}
       </div>
 
       <div>
@@ -70,11 +85,11 @@ export default function LoginForm() {
           <input
             type={showPassword ? 'text' : 'password'}
             id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
+            {...register('password')}
             autoComplete="current-password"
-            className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12"
+            className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12 ${
+              errors.password ? 'border-destructive' : 'border-input'
+            }`}
             placeholder="Enter your password"
           />
           <button
@@ -94,12 +109,16 @@ export default function LoginForm() {
             )}
           </button>
         </div>
+        {errors.password && (
+          <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
+        )}
       </div>
 
       <div className="flex items-center justify-between">
         <label className="flex items-center">
           <input
             type="checkbox"
+            {...register('rememberMe')}
             className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
           />
           <span className="ml-2 text-sm text-muted-foreground">Remember me</span>

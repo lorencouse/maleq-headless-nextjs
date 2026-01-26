@@ -1,58 +1,38 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import { contactSchema, type ContactFormData } from '@/lib/validations/contact';
 
 export default function ContactForm() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-  });
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      subject: '',
+      message: '',
+    },
+  });
 
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.subject.trim()) {
-      newErrors.subject = 'Subject is required';
-    }
-
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
-
+  const onSubmit = async (data: ContactFormData) => {
     setIsLoading(true);
 
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(data),
       });
 
       const result = await response.json();
@@ -60,7 +40,7 @@ export default function ContactForm() {
       if (result.success) {
         setSubmitted(true);
         showSuccess(result.message);
-        setFormData({ name: '', email: '', subject: '', message: '' });
+        reset();
       } else {
         showError(result.message);
       }
@@ -68,16 +48,6 @@ export default function ContactForm() {
       showError('Failed to send message. Please try again.');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
     }
   };
 
@@ -104,7 +74,7 @@ export default function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
@@ -113,16 +83,14 @@ export default function ContactForm() {
           <input
             type="text"
             id="name"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
+            {...register('name')}
             className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
               errors.name ? 'border-destructive' : 'border-input'
             }`}
             placeholder="Your name"
           />
           {errors.name && (
-            <p className="mt-1 text-sm text-destructive">{errors.name}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
           )}
         </div>
 
@@ -133,16 +101,14 @@ export default function ContactForm() {
           <input
             type="email"
             id="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
+            {...register('email')}
             className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
               errors.email ? 'border-destructive' : 'border-input'
             }`}
             placeholder="your@email.com"
           />
           {errors.email && (
-            <p className="mt-1 text-sm text-destructive">{errors.email}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
           )}
         </div>
       </div>
@@ -153,9 +119,7 @@ export default function ContactForm() {
         </label>
         <select
           id="subject"
-          name="subject"
-          value={formData.subject}
-          onChange={handleChange}
+          {...register('subject')}
           className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
             errors.subject ? 'border-destructive' : 'border-input'
           }`}
@@ -170,7 +134,7 @@ export default function ContactForm() {
           <option value="Other">Other</option>
         </select>
         {errors.subject && (
-          <p className="mt-1 text-sm text-destructive">{errors.subject}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.subject.message}</p>
         )}
       </div>
 
@@ -180,9 +144,7 @@ export default function ContactForm() {
         </label>
         <textarea
           id="message"
-          name="message"
-          value={formData.message}
-          onChange={handleChange}
+          {...register('message')}
           rows={6}
           className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none ${
             errors.message ? 'border-destructive' : 'border-input'
@@ -190,7 +152,7 @@ export default function ContactForm() {
           placeholder="How can we help you?"
         />
         {errors.message && (
-          <p className="mt-1 text-sm text-destructive">{errors.message}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.message.message}</p>
         )}
       </div>
 

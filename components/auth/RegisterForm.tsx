@@ -3,73 +3,33 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
 
 export default function RegisterForm() {
   const router = useRouter();
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
-
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
   const [showPassword, setShowPassword] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-    if (!formData.firstName.trim()) {
-      errors.firstName = 'First name is required';
-    }
-
-    if (!formData.lastName.trim()) {
-      errors.lastName = 'Last name is required';
-    }
-
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        errors.email = 'Please enter a valid email address';
-      }
-    }
-
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear validation error when user starts typing
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: RegisterFormData) => {
     clearError();
-
-    if (!validateForm()) {
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -77,20 +37,20 @@ export default function RegisterForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          password: data.password,
         }),
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(result.error || 'Registration failed');
       }
 
-      login(data.user, data.token);
+      login(result.user, result.token);
       router.push('/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
@@ -98,7 +58,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
           <p className="text-sm text-destructive">{error}</p>
@@ -113,17 +73,15 @@ export default function RegisterForm() {
           <input
             type="text"
             id="firstName"
-            name="firstName"
-            value={formData.firstName}
-            onChange={handleChange}
+            {...register('firstName')}
             autoComplete="given-name"
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-              validationErrors.firstName ? 'border-destructive' : 'border-input'
+              errors.firstName ? 'border-destructive' : 'border-input'
             }`}
             placeholder="John"
           />
-          {validationErrors.firstName && (
-            <p className="mt-1 text-sm text-destructive">{validationErrors.firstName}</p>
+          {errors.firstName && (
+            <p className="mt-1 text-sm text-destructive">{errors.firstName.message}</p>
           )}
         </div>
 
@@ -134,17 +92,15 @@ export default function RegisterForm() {
           <input
             type="text"
             id="lastName"
-            name="lastName"
-            value={formData.lastName}
-            onChange={handleChange}
+            {...register('lastName')}
             autoComplete="family-name"
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-              validationErrors.lastName ? 'border-destructive' : 'border-input'
+              errors.lastName ? 'border-destructive' : 'border-input'
             }`}
             placeholder="Doe"
           />
-          {validationErrors.lastName && (
-            <p className="mt-1 text-sm text-destructive">{validationErrors.lastName}</p>
+          {errors.lastName && (
+            <p className="mt-1 text-sm text-destructive">{errors.lastName.message}</p>
           )}
         </div>
       </div>
@@ -156,17 +112,15 @@ export default function RegisterForm() {
         <input
           type="email"
           id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
+          {...register('email')}
           autoComplete="email"
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-            validationErrors.email ? 'border-destructive' : 'border-input'
+            errors.email ? 'border-destructive' : 'border-input'
           }`}
           placeholder="your@email.com"
         />
-        {validationErrors.email && (
-          <p className="mt-1 text-sm text-destructive">{validationErrors.email}</p>
+        {errors.email && (
+          <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
         )}
       </div>
 
@@ -178,12 +132,10 @@ export default function RegisterForm() {
           <input
             type={showPassword ? 'text' : 'password'}
             id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
+            {...register('password')}
             autoComplete="new-password"
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12 ${
-              validationErrors.password ? 'border-destructive' : 'border-input'
+              errors.password ? 'border-destructive' : 'border-input'
             }`}
             placeholder="At least 8 characters"
           />
@@ -204,8 +156,8 @@ export default function RegisterForm() {
             )}
           </button>
         </div>
-        {validationErrors.password && (
-          <p className="mt-1 text-sm text-destructive">{validationErrors.password}</p>
+        {errors.password && (
+          <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
         )}
       </div>
 
@@ -216,17 +168,15 @@ export default function RegisterForm() {
         <input
           type={showPassword ? 'text' : 'password'}
           id="confirmPassword"
-          name="confirmPassword"
-          value={formData.confirmPassword}
-          onChange={handleChange}
+          {...register('confirmPassword')}
           autoComplete="new-password"
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-            validationErrors.confirmPassword ? 'border-destructive' : 'border-input'
+            errors.confirmPassword ? 'border-destructive' : 'border-input'
           }`}
           placeholder="Confirm your password"
         />
-        {validationErrors.confirmPassword && (
-          <p className="mt-1 text-sm text-destructive">{validationErrors.confirmPassword}</p>
+        {errors.confirmPassword && (
+          <p className="mt-1 text-sm text-destructive">{errors.confirmPassword.message}</p>
         )}
       </div>
 

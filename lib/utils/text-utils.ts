@@ -5,6 +5,8 @@
  * cleaning, and transforming text content.
  */
 
+import DOMPurify from 'dompurify';
+
 /** Words that should remain lowercase in title case (unless first word) */
 const LOWERCASE_WORDS = [
   'the', 'a', 'an', 'and', 'but', 'or', 'for', 'nor',
@@ -81,12 +83,48 @@ export function normalizeWhitespace(text: string): string {
 }
 
 /**
- * Remove HTML tags from text
+ * Remove HTML tags from text (with XSS protection)
  *
  * @example
  * stripHtml('<p>Hello <strong>World</strong></p>') // 'Hello World'
  */
 export function stripHtml(html: string): string {
+  // Use DOMPurify to safely strip HTML (prevents XSS)
+  if (typeof window !== 'undefined') {
+    return DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_TRUSTED_TYPE: false }) as string;
+  }
+  // Server-side fallback - still safe as we're only stripping
+  return html.replace(/<[^>]*>/g, '');
+}
+
+/**
+ * Sanitize HTML content while allowing safe tags
+ * Use this when you need to render HTML but want XSS protection
+ *
+ * @example
+ * sanitizeHtml('<p>Hello</p><script>alert("xss")</script>') // '<p>Hello</p>'
+ */
+export function sanitizeHtml(html: string, options?: {
+  allowedTags?: string[];
+  allowedAttributes?: Record<string, string[]>;
+}): string {
+  if (typeof window !== 'undefined') {
+    const config: { ALLOWED_TAGS?: string[]; ALLOWED_ATTR?: string[]; RETURN_TRUSTED_TYPE?: boolean } = {
+      RETURN_TRUSTED_TYPE: false,
+    };
+
+    if (options?.allowedTags) {
+      config.ALLOWED_TAGS = options.allowedTags;
+    }
+
+    if (options?.allowedAttributes) {
+      config.ALLOWED_ATTR = Object.values(options.allowedAttributes).flat();
+    }
+
+    return DOMPurify.sanitize(html, config) as string;
+  }
+
+  // Server-side: strip all HTML as fallback
   return html.replace(/<[^>]*>/g, '');
 }
 

@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import NewsletterPopup from "@/components/newsletter/NewsletterPopup";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import QueryProvider from "@/components/providers/QueryProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -125,17 +126,19 @@ export default function RootLayout({
           url={SITE_URL}
           searchUrl={`${SITE_URL}/search?q={search_term_string}`}
         />
-        <ThemeProvider>
-          <CartProvider>
-            <Toaster />
-            <Header />
-            <main id="main-content" className="flex-grow" role="main">
-              {children}
-            </main>
-            <Footer />
-            <NewsletterPopup delay={45000} showOnExitIntent />
-          </CartProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          <ThemeProvider>
+            <CartProvider>
+              <Toaster />
+              <Header />
+              <main id="main-content" className="flex-grow" role="main">
+                {children}
+              </main>
+              <Footer />
+              <NewsletterPopup delay={45000} showOnExitIntent />
+            </CartProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );
