@@ -1,4 +1,5 @@
 import { getClient } from '@/lib/apollo/client';
+import Fuse from 'fuse.js';
 import {
   SEARCH_POSTS,
   SEARCH_POSTS_BY_TITLE,
@@ -12,6 +13,7 @@ import {
   calculateRelevanceScore,
   matchesAllTerms,
   matchesAnyTerm,
+  getTopSpellingCorrections,
 } from '@/lib/utils/search-helpers';
 
 interface CategoryNode {
@@ -48,7 +50,7 @@ export interface BlogSearchSuggestion {
 
 /**
  * Search blog posts with relevance ranking
- * Uses stemming, tokenization, and fuzzy matching for improved results
+ * Uses stemming, tokenization, fuzzy matching, and spelling corrections
  * Returns posts sorted by: all terms in title > any term in title > relevance score
  */
 export async function searchBlogPosts(
@@ -61,7 +63,7 @@ export async function searchBlogPosts(
   const { first = 20, categorySlug } = options;
 
   // Tokenize the search query for multi-word and stemming support
-  const searchTerms = tokenizeQuery(query);
+  let searchTerms = tokenizeQuery(query);
   if (searchTerms.length === 0) {
     return {
       posts: [],
@@ -73,8 +75,12 @@ export async function searchBlogPosts(
     // Use the primary term for database search (most significant word)
     const primaryTerm = searchTerms[0];
 
+    // Generate spelling corrections for fallback
+    const spellingVariants = searchTerms.flatMap(term => getTopSpellingCorrections(term, 3));
+    const uniqueVariants = [...new Set([primaryTerm, ...spellingVariants])];
+
     // Fetch both title matches and content matches in parallel
-    const [titleResult, contentResult] = await Promise.all([
+    let [titleResult, contentResult] = await Promise.all([
       getClient().query({
         query: SEARCH_POSTS_BY_TITLE,
         variables: {
@@ -95,8 +101,46 @@ export async function searchBlogPosts(
       }),
     ]);
 
-    const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
-    const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+    let titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
+    let contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+
+    // If no results, try spelling corrections
+    if (titlePosts.length === 0 && contentPosts.length === 0 && uniqueVariants.length > 1) {
+      for (const variant of uniqueVariants.slice(1)) {
+        const [variantTitleResult, variantContentResult] = await Promise.all([
+          getClient().query({
+            query: SEARCH_POSTS_BY_TITLE,
+            variables: {
+              titleSearch: variant,
+              first: first * 2,
+              categoryName: categorySlug || null,
+            },
+            fetchPolicy: 'no-cache',
+          }),
+          getClient().query({
+            query: SEARCH_POSTS,
+            variables: {
+              search: variant,
+              first: first * 3,
+              categoryName: categorySlug || null,
+            },
+            fetchPolicy: 'no-cache',
+          }),
+        ]);
+
+        const variantTitlePosts = variantTitleResult.data?.posts?.nodes || [];
+        const variantContentPosts = variantContentResult.data?.posts?.nodes || [];
+
+        if (variantTitlePosts.length > 0 || variantContentPosts.length > 0) {
+          titlePosts = variantTitlePosts;
+          contentPosts = variantContentPosts;
+          titleResult = variantTitleResult;
+          // Update search terms to match the successful variant
+          searchTerms = [variant];
+          break;
+        }
+      }
+    }
 
     // Combine and deduplicate results
     const seenIds = new Set<string>();
@@ -109,7 +153,34 @@ export async function searchBlogPosts(
       }
     }
 
-    // Score and categorize all posts
+    // Use Fuse.js for better fuzzy matching and relevance scoring
+    if (allPosts.length > 0) {
+      const fuse = new Fuse(allPosts, {
+        keys: [
+          { name: 'title', weight: 0.6 },
+          { name: 'excerpt', weight: 0.4 },
+        ],
+        threshold: 0.4,
+        distance: 100,
+        includeScore: true,
+        ignoreLocation: true,
+      });
+
+      const fuseResults = fuse.search(query);
+
+      if (fuseResults.length > 0) {
+        const relevantPosts = fuseResults.slice(0, first).map(r => r.item);
+        return {
+          posts: relevantPosts,
+          pageInfo: {
+            hasNextPage: fuseResults.length > first,
+            endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
+          },
+        };
+      }
+    }
+
+    // Fallback to custom scoring if Fuse.js finds nothing
     const scoredPosts = allPosts.map(post => {
       const titleLower = post.title?.toLowerCase() || '';
       const allTermsInTitle = matchesAllTerms(titleLower, searchTerms);
@@ -129,19 +200,14 @@ export async function searchBlogPosts(
 
     // Sort by: all terms in title > any term in title > relevance score
     scoredPosts.sort((a, b) => {
-      // All terms in title first
       if (a.allTermsInTitle && !b.allTermsInTitle) return -1;
       if (!a.allTermsInTitle && b.allTermsInTitle) return 1;
-
-      // Then any term in title
       if (a.anyTermInTitle && !b.anyTermInTitle) return -1;
       if (!a.anyTermInTitle && b.anyTermInTitle) return 1;
-
-      // Finally by relevance score
       return b.relevanceScore - a.relevanceScore;
     });
 
-    // Filter out posts with zero relevance (no matches at all)
+    // Filter out posts with zero relevance
     const relevantPosts = scoredPosts
       .filter(s => s.relevanceScore > 0 || s.anyTermInTitle)
       .slice(0, first)
@@ -195,7 +261,7 @@ export async function getBlogPosts(
 
 /**
  * Get blog search suggestions for autocomplete
- * Uses stemming, tokenization, and fuzzy matching for improved suggestions
+ * Uses stemming, tokenization, fuzzy matching, and spelling corrections
  * Returns title matches first, then content matches sorted by relevance
  */
 export async function getBlogSearchSuggestions(
@@ -210,8 +276,12 @@ export async function getBlogSearchSuggestions(
   }
 
   // Tokenize the search query
-  const searchTerms = tokenizeQuery(query);
+  let searchTerms = tokenizeQuery(query);
   const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : query;
+
+  // Generate spelling corrections
+  const spellingVariants = searchTerms.flatMap(term => getTopSpellingCorrections(term, 3));
+  const uniqueVariants = [...new Set([primaryTerm, ...spellingVariants])];
 
   const [titleResult, contentResult, categoriesResult] = await Promise.all([
     getClient().query({
@@ -230,9 +300,37 @@ export async function getBlogSearchSuggestions(
     }),
   ]);
 
-  const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
-  const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+  let titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
+  let contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
   const allCategories: CategoryNode[] = categoriesResult.data?.categories?.nodes || [];
+
+  // If no results, try spelling corrections
+  if (titlePosts.length === 0 && contentPosts.length === 0 && uniqueVariants.length > 1) {
+    for (const variant of uniqueVariants.slice(1)) {
+      const [variantTitleResult, variantContentResult] = await Promise.all([
+        getClient().query({
+          query: SEARCH_POSTS_BY_TITLE,
+          variables: { titleSearch: variant, first: limit * 2 },
+          fetchPolicy: 'no-cache',
+        }),
+        getClient().query({
+          query: SEARCH_POSTS,
+          variables: { search: variant, first: limit * 3 },
+          fetchPolicy: 'no-cache',
+        }),
+      ]);
+
+      const variantTitlePosts = variantTitleResult.data?.posts?.nodes || [];
+      const variantContentPosts = variantContentResult.data?.posts?.nodes || [];
+
+      if (variantTitlePosts.length > 0 || variantContentPosts.length > 0) {
+        titlePosts = variantTitlePosts;
+        contentPosts = variantContentPosts;
+        searchTerms = [variant];
+        break;
+      }
+    }
+  }
 
   // Combine and deduplicate results
   const seenIds = new Set<string>();

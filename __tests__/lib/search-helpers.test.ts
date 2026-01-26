@@ -317,5 +317,20 @@ describe('Search Helpers', () => {
       // Extra letter
       expect(getTopSpellingCorrections('rabbbit', 5)).toContain('rabbit');
     });
+
+    it('should handle transposed letters', () => {
+      // reveiw -> review (swapped 'e' and 'i')
+      const corrections = generateSpellingVariants('reveiw');
+      expect(corrections).toContain('review');
+    });
+
+    it('should handle vowel transpositions', () => {
+      // teh -> the (common typo, swapped letters)
+      expect(generateSpellingVariants('teh')).toContain('the');
+
+      // freind -> friend (swapped 'i' and 'e')
+      const friendVariants = generateSpellingVariants('freind');
+      expect(friendVariants).toContain('friend');
+    });
   });
 });
