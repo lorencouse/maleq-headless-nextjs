@@ -1,44 +1,72 @@
 /**
- * Search Index - Pre-indexes product/blog names for typo-tolerant spell checking
- * Uses nspell (Hunspell) to identify misspelled words, then Fuse.js to find corrections
- * Only corrects words that are NOT valid English words
+ * Search Index - Spell checking and fuzzy suggestions
+ *
+ * Combines:
+ * 1. simple-spellchecker for English word corrections
+ * 2. Fuse.js for product-specific fuzzy matches (brands, product names)
  */
 
+import SpellChecker, { Dictionary } from 'simple-spellchecker';
 import Fuse from 'fuse.js';
+import path from 'path';
 import { getClient } from '@/lib/apollo/client';
 import { gql } from '@apollo/client';
 
-// Lazy-loaded English word dictionary for spell checking
-let englishWordSet: Set<string> | null = null;
+// ============================================================================
+// Dictionary (English spell checking)
+// ============================================================================
 
-/**
- * Get or load the English word dictionary
- */
-async function getEnglishWordSet(): Promise<Set<string>> {
-  if (englishWordSet) return englishWordSet;
+let dictionary: Dictionary | null = null;
+let dictionaryLoading: Promise<Dictionary> | null = null;
 
-  // Dynamic import to avoid blocking server startup
-  const { default: englishWords } = await import('an-array-of-english-words');
-  englishWordSet = new Set(englishWords);
-  return englishWordSet;
+async function getDictionary(): Promise<Dictionary> {
+  if (dictionary) return dictionary;
+  if (dictionaryLoading) return dictionaryLoading;
+
+  const dictPath = path.join(process.cwd(), 'node_modules', 'simple-spellchecker', 'dict');
+
+  dictionaryLoading = new Promise((resolve, reject) => {
+    SpellChecker.getDictionary('en-US', dictPath, (err, dict) => {
+      if (err || !dict) {
+        console.error('[SpellCheck] Dictionary load error:', err);
+        reject(err || new Error('Failed to load dictionary'));
+        return;
+      }
+      dictionary = dict;
+      resolve(dict);
+    });
+  });
+
+  return dictionaryLoading;
 }
 
-/**
- * Check if a word is a valid English word
- */
-async function isValidEnglishWord(word: string): Promise<boolean> {
-  const wordSet = await getEnglishWordSet();
-  return wordSet.has(word.toLowerCase());
+// ============================================================================
+// Product Vocabulary (Fuse.js fuzzy matching)
+// ============================================================================
+
+interface VocabularyItem {
+  term: string;
+  type: 'product' | 'brand' | 'category';
 }
 
-// Cache for vocabulary sets - words that exist in our product/blog data
-let productVocabulary: Set<string> | null = null;
-let blogVocabulary: Set<string> | null = null;
+let productVocabulary: VocabularyItem[] | null = null;
+let vocabularyTimestamp = 0;
+let vocabularyLoading: Promise<VocabularyItem[]> | null = null;
+const VOCABULARY_TTL = 10 * 60 * 1000; // 10 minutes
 
-// Simple query to get all product names
-const GET_ALL_PRODUCT_NAMES = gql`
-  query GetAllProductNames {
-    products(first: 1000) {
+const GET_SEARCH_VOCABULARY = gql`
+  query GetSearchVocabulary {
+    products(first: 500) {
+      nodes {
+        name
+      }
+    }
+    productBrands(first: 200) {
+      nodes {
+        name
+      }
+    }
+    productCategories(first: 100, where: { hideEmpty: true }) {
       nodes {
         name
       }
@@ -46,314 +74,267 @@ const GET_ALL_PRODUCT_NAMES = gql`
   }
 `;
 
-// Simple query to get all post titles
-const GET_ALL_POST_TITLES = gql`
-  query GetAllPostTitles {
-    posts(first: 500, where: { status: PUBLISH }) {
-      nodes {
-        title
+async function getProductVocabulary(): Promise<VocabularyItem[]> {
+  const now = Date.now();
+
+  if (productVocabulary && (now - vocabularyTimestamp) < VOCABULARY_TTL) {
+    return productVocabulary;
+  }
+
+  if (vocabularyLoading) return vocabularyLoading;
+
+  vocabularyLoading = (async () => {
+    try {
+      const { data } = await getClient().query({
+        query: GET_SEARCH_VOCABULARY,
+        fetchPolicy: 'no-cache',
+      });
+
+      const vocabulary: VocabularyItem[] = [];
+      const seen = new Set<string>();
+
+      // Extract unique words from product names
+      const products = data?.products?.nodes || [];
+      for (const p of products) {
+        if (p.name) {
+          // Add full product name
+          const name = p.name.toLowerCase();
+          if (!seen.has(name)) {
+            seen.add(name);
+            vocabulary.push({ term: name, type: 'product' });
+          }
+          // Also add individual significant words (3+ chars)
+          const words = name.split(/[\s\-_,]+/);
+          for (const word of words) {
+            const clean = word.replace(/[^a-z]/g, '');
+            if (clean.length >= 3 && !seen.has(clean)) {
+              seen.add(clean);
+              vocabulary.push({ term: clean, type: 'product' });
+            }
+          }
+        }
+      }
+
+      // Add brand names
+      const brands = data?.productBrands?.nodes || [];
+      for (const b of brands) {
+        if (b.name) {
+          const name = b.name.toLowerCase();
+          if (!seen.has(name)) {
+            seen.add(name);
+            vocabulary.push({ term: name, type: 'brand' });
+          }
+        }
+      }
+
+      // Add category names
+      const categories = data?.productCategories?.nodes || [];
+      for (const c of categories) {
+        if (c.name) {
+          const name = c.name.toLowerCase();
+          if (!seen.has(name)) {
+            seen.add(name);
+            vocabulary.push({ term: name, type: 'category' });
+          }
+        }
+      }
+
+      productVocabulary = vocabulary;
+      vocabularyTimestamp = now;
+      vocabularyLoading = null;
+
+      console.log(`[SpellCheck] Loaded ${vocabulary.length} vocabulary terms`);
+      return vocabulary;
+    } catch (error) {
+      console.error('[SpellCheck] Failed to load vocabulary:', error);
+      vocabularyLoading = null;
+      return [];
+    }
+  })();
+
+  return vocabularyLoading;
+}
+
+// ============================================================================
+// Combined Suggestions
+// ============================================================================
+
+/**
+ * Get spelling suggestions combining dictionary + product vocabulary
+ * Handles multi-word queries by only correcting misspelled words
+ */
+async function getCombinedSuggestions(searchTerm: string): Promise<string[]> {
+  const term = searchTerm.toLowerCase().trim();
+  const words = term.split(/\s+/);
+  const suggestions: string[] = [];
+  const seen = new Set<string>();
+
+  try {
+    const dict = await getDictionary();
+    const vocabulary = await getProductVocabulary();
+
+    // Build Fuse index for vocabulary
+    const fuse = vocabulary.length > 0
+      ? new Fuse(vocabulary, {
+          keys: ['term'],
+          threshold: 0.4,
+          distance: 100,
+          includeScore: true,
+        })
+      : null;
+
+    // Single word query
+    if (words.length === 1 && words[0].length >= 3) {
+      const word = words[0];
+
+      // Get dictionary suggestions
+      const dictSuggestions = dict.getSuggestions(word, 5, 3);
+      for (const s of dictSuggestions) {
+        const lower = s.toLowerCase();
+        if (lower !== word && !seen.has(lower)) {
+          seen.add(lower);
+          suggestions.push(lower);
+        }
+      }
+
+      // Get Fuse.js suggestions
+      if (fuse) {
+        const fuseResults = fuse.search(word, { limit: 5 });
+        for (const result of fuseResults) {
+          const suggestion = result.item.term;
+          if (suggestion !== word && !seen.has(suggestion)) {
+            seen.add(suggestion);
+            suggestions.push(suggestion);
+          }
+        }
       }
     }
-  }
-`;
+    // Multi-word query - get alternatives for each word (even if spelled correctly)
+    // Since we only run this when search has 0 results, suggest alternatives
+    else if (words.length > 1) {
+      const wordAlternatives: Map<number, string[]> = new Map();
 
-interface NameItem {
-  name: string;
-}
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        if (word.length < 3) continue;
 
-// Cache for indexes - avoid rebuilding on every search
-let productNameIndex: Fuse<NameItem> | null = null;
-let postTitleIndex: Fuse<NameItem> | null = null;
-let productNameIndexTimestamp = 0;
-let postTitleIndexTimestamp = 0;
+        const alternatives: string[] = [];
 
-// Cache for 5 minutes
-const CACHE_TTL = 5 * 60 * 1000;
-
-// Fuse.js options for spell checking
-// Lower threshold = stricter matching (0 = exact, 1 = match anything)
-const SPELL_CHECK_OPTIONS = {
-  keys: ['name'],
-  threshold: 0.4, // Stricter to avoid false matches like "whtie" -> "tie"
-  distance: 100,  // Allow matches anywhere in the string
-  ignoreLocation: true,
-  includeScore: true,
-  minMatchCharLength: 2,
-  shouldSort: true,
-};
-
-/**
- * Build or get cached product name index
- */
-async function getProductNameIndex(): Promise<Fuse<NameItem>> {
-  const now = Date.now();
-
-  if (productNameIndex && (now - productNameIndexTimestamp) < CACHE_TTL) {
-    return productNameIndex;
-  }
-
-  try {
-    const { data } = await getClient().query({
-      query: GET_ALL_PRODUCT_NAMES,
-      fetchPolicy: 'no-cache',
-    });
-
-    const productNames: string[] = (data?.products?.nodes || [])
-      .map((p: { name: string }) => p.name?.toLowerCase())
-      .filter((name: string) => name);
-
-    // Extract individual words from product names for better matching
-    // This ensures "purrple" matches "purple", not "venus butterfly ii-purple"
-    const words = new Set<string>();
-    productNames.forEach(name => {
-      // Split on spaces, hyphens, and other separators
-      name.split(/[\s\-_,]+/).forEach(word => {
-        const cleanWord = word.replace(/[^a-z0-9]/g, '');
-        if (cleanWord.length >= 3) {
-          words.add(cleanWord);
+        // Get dictionary suggestions (these are similar words)
+        const dictSuggestions = dict.getSuggestions(word, 4, 3);
+        for (const s of dictSuggestions) {
+          const lower = s.toLowerCase();
+          if (lower !== word && !alternatives.includes(lower)) {
+            alternatives.push(lower);
+          }
         }
-      });
-    });
 
-    // Also add common search terms that might not be in product names
-    const commonTerms = [
-      'vibrator', 'dildo', 'toy', 'silicone', 'rabbit', 'prostate',
-      'massage', 'ring', 'pump', 'sleeve', 'lubricant', 'lube',
-      'purple', 'pink', 'black', 'blue', 'red', 'white', 'green',
-      'small', 'medium', 'large', 'mini', 'xl', 'rechargeable',
-      'waterproof', 'wireless', 'remote', 'control', 'beginner',
-      // Common English words that should NOT be corrected
-      'water', 'based', 'safe', 'body', 'skin', 'soft', 'hard',
-      'long', 'short', 'new', 'best', 'top', 'sale', 'free',
-      'size', 'color', 'type', 'style', 'brand', 'price'
-    ];
-    commonTerms.forEach(term => words.add(term));
-
-    // Store vocabulary for checking if words exist
-    productVocabulary = new Set(words);
-
-    const allTerms = Array.from(words).map(name => ({ name }));
-
-    productNameIndex = new Fuse(allTerms, SPELL_CHECK_OPTIONS);
-    productNameIndexTimestamp = now;
-
-    return productNameIndex;
-  } catch (error) {
-    console.error('Failed to build product name index:', error);
-    // Return empty index on failure
-    return new Fuse([], SPELL_CHECK_OPTIONS);
-  }
-}
-
-/**
- * Build or get cached post title index
- */
-async function getPostTitleIndex(): Promise<Fuse<NameItem>> {
-  const now = Date.now();
-
-  if (postTitleIndex && (now - postTitleIndexTimestamp) < CACHE_TTL) {
-    return postTitleIndex;
-  }
-
-  try {
-    const { data } = await getClient().query({
-      query: GET_ALL_POST_TITLES,
-      fetchPolicy: 'no-cache',
-    });
-
-    const titles: NameItem[] = (data?.posts?.nodes || [])
-      .map((p: { title: string }) => ({ name: p.title.toLowerCase() }))
-      .filter((item: NameItem) => item.name);
-
-    // Extract individual words from titles for better matching
-    const words = new Set<string>();
-    titles.forEach(item => {
-      item.name.split(/\s+/).forEach(word => {
-        if (word.length >= 3) {
-          words.add(word.replace(/[^a-z]/g, ''));
+        // Get Fuse.js suggestions from product vocabulary
+        if (fuse) {
+          const fuseResults = fuse.search(word, { limit: 3 });
+          for (const result of fuseResults) {
+            const suggestion = result.item.term;
+            if (suggestion !== word && !alternatives.includes(suggestion)) {
+              alternatives.push(suggestion);
+            }
+          }
         }
-      });
-    });
 
-    // Also add common blog terms and English words that should NOT be corrected
-    const commonTerms = [
-      'review', 'guide', 'tips', 'how', 'best', 'top', 'comparison',
-      'versus', 'beginner', 'advanced', 'complete', 'ultimate',
-      // Common English words
-      'water', 'based', 'safe', 'body', 'skin', 'soft', 'hard',
-      'long', 'short', 'new', 'sale', 'free', 'size', 'color',
-      'type', 'style', 'brand', 'price', 'love', 'life', 'health'
-    ];
-    commonTerms.forEach(term => words.add(term));
+        if (alternatives.length > 0) {
+          wordAlternatives.set(i, alternatives.slice(0, 3));
+        }
+      }
 
-    // Store vocabulary for checking if words exist
-    blogVocabulary = new Set(words);
+      console.log('[SpellCheck] Word alternatives:', Object.fromEntries(wordAlternatives));
 
-    const allTerms = Array.from(words).map(name => ({ name }));
+      // Build full phrase suggestions by replacing words with alternatives
+      if (wordAlternatives.size > 0) {
+        // Try alternatives for each word that has them
+        for (const [wordIndex, alternatives] of wordAlternatives) {
+          for (const alt of alternatives) {
+            const newPhrase = words.map((w, i) =>
+              i === wordIndex ? alt : w
+            ).join(' ');
 
-    postTitleIndex = new Fuse(allTerms, SPELL_CHECK_OPTIONS);
-    postTitleIndexTimestamp = now;
+            if (!seen.has(newPhrase) && newPhrase !== term) {
+              seen.add(newPhrase);
+              suggestions.push(newPhrase);
+            }
 
-    return postTitleIndex;
-  } catch (error) {
-    console.error('Failed to build post title index:', error);
-    return new Fuse([], SPELL_CHECK_OPTIONS);
-  }
-}
-
-// Type for Fuse.js search results
-interface FuseSearchResult {
-  item: NameItem;
-  score?: number;
-  refIndex: number;
-}
-
-/**
- * Find the best match from Fuse results, preferring similar word lengths
- * This prevents "whtie" from matching "tie" instead of "white"
- */
-function findBestMatch(
-  word: string,
-  results: FuseSearchResult[]
-): NameItem | null {
-  if (results.length === 0) return null;
-
-  // Filter to only include results with valid scores that indicate a typo
-  const validResults = results.filter(
-    r => r.score !== undefined && r.score > 0.05 && r.score < 0.5
-  );
-
-  if (validResults.length === 0) return null;
-
-  // Score each result by combining Fuse score with length similarity
-  // Strongly prefer matches where word length is similar (within ±1 character)
-  const scored = validResults.map(r => {
-    const lengthDiff = Math.abs(r.item.name.length - word.length);
-    // Penalize matches with different lengths more aggressively
-    // This prevents "whtie" (5 chars) from matching "tie" (3 chars) over "white" (5 chars)
-    let lengthPenalty = 0;
-    if (lengthDiff > 1) {
-      // Strong penalty for words more than 1 character different in length
-      lengthPenalty = lengthDiff * 0.15;
+            // Stop if we have enough suggestions
+            if (suggestions.length >= 5) break;
+          }
+          if (suggestions.length >= 5) break;
+        }
+      }
     }
-    const combinedScore = (r.score || 0) + lengthPenalty;
-    return { item: r.item, combinedScore };
-  });
-
-  // Sort by combined score (lower is better)
-  scored.sort((a, b) => a.combinedScore - b.combinedScore);
-
-  // Only return if the best match has a reasonable combined score
-  if (scored[0].combinedScore < 0.5) {
-    return scored[0].item;
+  } catch (error) {
+    console.error('[SpellCheck] Error:', error);
   }
 
-  return null;
+  // Return top 5 unique suggestions
+  const final = suggestions.slice(0, 5);
+  console.log(`[SpellCheck] Suggestions for "${term}":`, final);
+  return final;
 }
 
+// ============================================================================
+// Exports
+// ============================================================================
+
 /**
- * Find the best matching product search term using Fuse.js
- * Returns the corrected term if a good match is found, otherwise returns original
+ * Get spelling/fuzzy suggestions for a product search term
  */
 export async function correctProductSearchTerm(
   searchTerm: string
-): Promise<{ correctedTerm: string; wasCorrect: boolean }> {
-  const index = await getProductNameIndex();
-  const term = searchTerm.toLowerCase().trim();
-
-  // Search for each word in the query
-  const words = term.split(/\s+/);
-  const correctedWords: string[] = [];
-  let anyCorrections = false;
-
-  for (const word of words) {
-    if (word.length < 3) {
-      correctedWords.push(word);
-      continue;
-    }
-
-    // IMPORTANT: Only try to correct words that are NOT valid English words
-    // AND not in our product vocabulary. This prevents "water" from being
-    // incorrectly changed to "power"
-    if (await isValidEnglishWord(word) || productVocabulary?.has(word)) {
-      correctedWords.push(word);
-      continue;
-    }
-
-    // Word not in vocabulary - try to find a correction
-    const results = index.search(word);
-    const bestMatch = findBestMatch(word, results);
-
-    if (bestMatch) {
-      correctedWords.push(bestMatch.name);
-      anyCorrections = true;
-    } else {
-      correctedWords.push(word);
-    }
-  }
-
-  const correctedTerm = correctedWords.join(' ');
-
+): Promise<{ suggestions: string[]; wasCorrect: boolean }> {
+  const suggestions = await getCombinedSuggestions(searchTerm);
   return {
-    correctedTerm: anyCorrections ? correctedTerm : searchTerm,
-    wasCorrect: !anyCorrections,
+    suggestions,
+    wasCorrect: suggestions.length === 0,
   };
 }
 
 /**
- * Find the best matching blog search term using Fuse.js
- * Returns the corrected term if a good match is found, otherwise returns original
+ * Get spelling/fuzzy suggestions for a blog search term
  */
 export async function correctBlogSearchTerm(
   searchTerm: string
-): Promise<{ correctedTerm: string; wasCorrect: boolean }> {
-  const index = await getPostTitleIndex();
-  const term = searchTerm.toLowerCase().trim();
+): Promise<{ suggestions: string[]; wasCorrect: boolean }> {
+  // Blog uses only dictionary suggestions (no product vocabulary)
+  const suggestions: string[] = [];
 
-  // Search for each word in the query
-  const words = term.split(/\s+/);
-  const correctedWords: string[] = [];
-  let anyCorrections = false;
+  try {
+    const dict = await getDictionary();
+    const term = searchTerm.toLowerCase().trim();
+    const words = term.split(/\s+/);
 
-  for (const word of words) {
-    if (word.length < 3) {
-      correctedWords.push(word);
-      continue;
+    if (words.length === 1 && words[0].length >= 3) {
+      const dictSuggestions = dict.getSuggestions(words[0], 5, 3);
+      for (const s of dictSuggestions) {
+        const lower = s.toLowerCase();
+        if (lower !== term && suggestions.length < 5) {
+          suggestions.push(lower);
+        }
+      }
     }
-
-    // IMPORTANT: Only try to correct words that are NOT valid English words
-    // AND not in our blog vocabulary
-    if (await isValidEnglishWord(word) || blogVocabulary?.has(word)) {
-      correctedWords.push(word);
-      continue;
-    }
-
-    // Word not in vocabulary - try to find a correction
-    const results = index.search(word);
-    const bestMatch = findBestMatch(word, results);
-
-    if (bestMatch) {
-      correctedWords.push(bestMatch.name);
-      anyCorrections = true;
-    } else {
-      correctedWords.push(word);
-    }
+  } catch (error) {
+    console.error('[SpellCheck] Blog spell check error:', error);
   }
 
-  const correctedTerm = correctedWords.join(' ');
-
   return {
-    correctedTerm: anyCorrections ? correctedTerm : searchTerm,
-    wasCorrect: !anyCorrections,
+    suggestions,
+    wasCorrect: suggestions.length === 0,
   };
 }
 
 /**
- * Clear cached indexes (useful for testing or after product updates)
+ * Clear cached data
  */
 export function clearSearchIndexes(): void {
-  productNameIndex = null;
-  postTitleIndex = null;
-  productNameIndexTimestamp = 0;
-  postTitleIndexTimestamp = 0;
+  dictionary = null;
+  dictionaryLoading = null;
+  productVocabulary = null;
+  vocabularyTimestamp = 0;
+  vocabularyLoading = null;
 }

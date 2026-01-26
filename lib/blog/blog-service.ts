@@ -14,7 +14,6 @@ import {
   matchesAllTerms,
   matchesAnyTerm,
 } from '@/lib/utils/search-helpers';
-import { correctBlogSearchTerm } from '@/lib/search/search-index';
 
 interface CategoryNode {
   id: string;
@@ -30,8 +29,8 @@ export interface BlogSearchResult {
     hasNextPage: boolean;
     endCursor: string | null;
   };
-  /** If spelling was corrected, this contains the corrected term */
-  correctedTerm?: string;
+  /** Spelling suggestions shown only when no results found */
+  suggestions?: string[];
 }
 
 export interface BlogCategory {
@@ -74,15 +73,9 @@ export async function searchBlogPosts(
   }
 
   try {
-    // Use Fuse.js to correct spelling BEFORE database query
-    const { correctedTerm: fuseCorrection, wasCorrect } = await correctBlogSearchTerm(query);
-    const searchQuery = fuseCorrection;
-    let correctedTerm: string | undefined = wasCorrect ? undefined : fuseCorrection;
-
-    // Update search terms if correction was made
-    if (!wasCorrect) {
-      searchTerms = tokenizeQuery(fuseCorrection);
-    }
+    // Use the query directly - browser handles spell checking visually,
+    // and Fuse.js handles fuzzy matching for typo tolerance
+    const searchQuery = query;
 
     // Use the primary term for database search (most significant word)
     const primaryTerm = searchTerms[0] || query;
@@ -146,7 +139,6 @@ export async function searchBlogPosts(
             hasNextPage: fuseResults.length > first,
             endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
           },
-          correctedTerm,
         };
       }
     }
@@ -184,13 +176,23 @@ export async function searchBlogPosts(
       .slice(0, first)
       .map(s => s.post);
 
+    // If no results found, check for spelling suggestions
+    let suggestions: string[] | undefined;
+    if (relevantPosts.length === 0) {
+      const { correctBlogSearchTerm } = await import('@/lib/search/search-index');
+      const result = await correctBlogSearchTerm(query);
+      if (result.suggestions.length > 0) {
+        suggestions = result.suggestions;
+      }
+    }
+
     return {
       posts: relevantPosts,
       pageInfo: {
         hasNextPage: relevantPosts.length >= first,
         endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
       },
-      correctedTerm,
+      suggestions,
     };
   } catch (error) {
     console.error('Error searching blog posts:', error);
@@ -233,7 +235,7 @@ export async function getBlogPosts(
 
 /**
  * Get blog search suggestions for autocomplete
- * Uses Fuse.js for typo-tolerant spell checking BEFORE database queries
+ * Uses Fuse.js for fuzzy matching and relevance scoring
  * Returns title matches first, then content matches sorted by relevance
  */
 export async function getBlogSearchSuggestions(
@@ -247,12 +249,12 @@ export async function getBlogSearchSuggestions(
     return { posts: [], categories: [] };
   }
 
-  // Use Fuse.js to correct spelling BEFORE database query
-  const { correctedTerm: fuseCorrection, wasCorrect } = await correctBlogSearchTerm(query);
-  const searchQuery = fuseCorrection;
+  // Use the query directly - browser handles spell checking visually,
+  // and Fuse.js handles fuzzy matching for typo tolerance
+  const searchQuery = query;
 
   // Tokenize the search query
-  let searchTerms = tokenizeQuery(searchQuery);
+  const searchTerms = tokenizeQuery(searchQuery);
   const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : searchQuery;
 
   const [titleResult, contentResult, categoriesResult] = await Promise.all([

@@ -9,7 +9,7 @@
 ## Project Context
 
 - Next.js 15 headless WooCommerce e-commerce site
-- Uses Bun as package manager
+- **Uses Bun as package manager** - always use `bun add`, `bun remove`, `bun install`
 - Main branch: `initial-setup`
 - WordPress backend with WPGraphQL
 
@@ -94,11 +94,12 @@ Located in `scripts/`:
 
 ### Search System (`lib/search/` and `lib/utils/search-helpers.ts`)
 
-**Fuse.js Pre-Indexing** (`lib/search/search-index.ts`):
-- `correctProductSearchTerm(term)` - Corrects typos in product searches BEFORE DB query
-- `correctBlogSearchTerm(term)` - Corrects typos in blog searches BEFORE DB query
-- Pre-indexes all product names and blog titles with 5-minute cache
-- Handles typos like "rabit" → "rabbit", "reveiw" → "review"
+**Spell Checking** (`lib/search/search-index.ts`):
+- `correctProductSearchTerm(term)` - Returns spelling suggestions when no results found
+- `correctBlogSearchTerm(term)` - Returns spelling suggestions when no results found
+- Uses `simple-spellchecker` package with English dictionary
+- Returns up to 3 suggestions for "Did you mean?" UI
+- Only triggered when search returns zero results
 
 **Search Helpers** (`lib/utils/search-helpers.ts`):
 - `tokenizeQuery(query)` - Splits query into searchable terms, removes stop words
@@ -145,7 +146,8 @@ Located in `scripts/`:
 
 ## Installed Packages for Common Tasks
 
-- **Fuse.js** - Fuzzy search and typo tolerance
+- **Fuse.js** - Fuzzy search and relevance ranking
+- **simple-spellchecker** - Spell checking with "Did you mean?" suggestions
 - **react-hook-form** + **@hookform/resolvers** - Form handling
 - **zod** - Schema validation
 - **@tanstack/react-query** - Data fetching and caching

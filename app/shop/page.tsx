@@ -133,18 +133,18 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     total?: number;
     availableFilters?: Awaited<ReturnType<typeof searchProducts>>['availableFilters'];
-    correctedTerm?: string;
+    suggestions?: string[];
   };
 
   if (searchQuery) {
-    // Use search with relevance ranking
+    // Use search with relevance ranking (Fuse.js handles fuzzy matching for typo tolerance)
     const searchResult = await searchProducts(searchQuery, { limit: 24, offset: 0 });
     productsResult = {
       products: searchResult.products,
       pageInfo: { hasNextPage: searchResult.pageInfo.hasNextPage, endCursor: null },
       total: searchResult.pageInfo.total,
       availableFilters: searchResult.availableFilters,
-      correctedTerm: searchResult.correctedTerm,
+      suggestions: searchResult.suggestions,
     };
   } else if (hasFilters) {
     // For category-only filtering, fetch more products to extract available filter options
@@ -192,7 +192,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     productsResult = await getAllProducts({ limit: 24 });
   }
 
-  const { products, pageInfo, total: searchTotal, availableFilters, correctedTerm } = productsResult;
+  const { products, pageInfo, total: searchTotal, availableFilters, suggestions } = productsResult;
 
   // Also fetch sale products for featured section (only when no search/filters active)
   const saleProductsPromise = !hasSearchOrFilters
@@ -281,14 +281,23 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </Suspense>
         </div>
 
-        {/* Spelling Correction Notice */}
-        {correctedTerm && searchQuery && (
-          <div className="mb-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+        {/* Did you mean? suggestions when no results */}
+        {suggestions && suggestions.length > 0 && searchQuery && products.length === 0 && (
+          <div className="mb-3 p-3 bg-muted/50 border border-border rounded-lg flex justify-end">
             <p className="text-sm text-foreground">
-              Showing results for <span className="font-semibold text-primary">&quot;{correctedTerm}&quot;</span>
-              <span className="text-muted-foreground ml-1">
-                (searched for &quot;{searchQuery}&quot;)
-              </span>
+              Did you mean:{' '}
+              {suggestions.map((suggestion, index) => (
+                <span key={suggestion}>
+                  <a
+                    href={`/shop?q=${encodeURIComponent(suggestion)}`}
+                    className="font-semibold text-primary hover:text-primary/80 underline"
+                  >
+                    {suggestion}
+                  </a>
+                  {index < suggestions.length - 1 && ', '}
+                </span>
+              ))}
+              ?
             </p>
           </div>
         )}

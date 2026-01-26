@@ -467,19 +467,17 @@ export async function searchProducts(
     materials: FilterOption[];
     colors: FilterOption[];
   };
-  /** If spelling was corrected, this contains the corrected term */
-  correctedTerm?: string;
+  /** Spelling suggestions shown only when no results found */
+  suggestions?: string[];
 }> {
   const { limit = 24, offset = 0 } = options;
 
   // Import search helpers dynamically to avoid circular deps
   const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm } = await import('@/lib/utils/search-helpers');
-  const { correctProductSearchTerm } = await import('@/lib/search/search-index');
 
-  // Use Fuse.js to correct spelling BEFORE database query
-  const { correctedTerm: fuseCorrection, wasCorrect } = await correctProductSearchTerm(searchTerm);
-  const searchQuery = fuseCorrection;
-  const correctedTerm: string | undefined = wasCorrect ? undefined : fuseCorrection;
+  // Use the search term directly - browser handles spell checking visually,
+  // and Fuse.js handles fuzzy matching for typo tolerance
+  const searchQuery = searchTerm;
 
   const searchTerms = tokenizeQuery(searchQuery);
   if (searchTerms.length === 0) {
@@ -647,6 +645,20 @@ export async function searchProducts(
     // Apply offset and limit for pagination
     const paginatedProducts = allRelevantProducts.slice(offset, offset + limit);
 
+    // If no results found, check for spelling suggestions
+    let suggestions: string[] | undefined;
+    console.log('[Search] Total results:', total, 'for term:', searchTerm);
+    if (total === 0) {
+      console.log('[Search] No results, checking spelling suggestions...');
+      const { correctProductSearchTerm } = await import('@/lib/search/search-index');
+      const result = await correctProductSearchTerm(searchTerm);
+      console.log('[Search] Spell check result:', result);
+      if (result.suggestions.length > 0) {
+        suggestions = result.suggestions;
+        console.log('[Search] Using suggestions:', suggestions);
+      }
+    }
+
     return {
       products: paginatedProducts,
       pageInfo: {
@@ -654,7 +666,7 @@ export async function searchProducts(
         total,
       },
       availableFilters,
-      correctedTerm,
+      suggestions,
     };
   } catch (error) {
     console.error('Error searching products:', error);

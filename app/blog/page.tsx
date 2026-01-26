@@ -29,7 +29,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     ? await searchBlogPosts(searchQuery, { first: 20 })
     : await getBlogPosts({ first: 12 });
 
-  const { posts, pageInfo, correctedTerm } = result;
+  const { posts, pageInfo, suggestions } = result;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -47,14 +47,23 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           </Suspense>
         </div>
 
-        {/* Spelling Correction Notice */}
-        {correctedTerm && searchQuery && (
-          <div className="mb-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+        {/* Did you mean? suggestions when no results */}
+        {suggestions && suggestions.length > 0 && searchQuery && posts.length === 0 && (
+          <div className="mb-3 p-3 bg-muted/50 border border-border rounded-lg flex justify-end">
             <p className="text-sm text-foreground">
-              Showing results for <span className="font-semibold text-primary">&quot;{correctedTerm}&quot;</span>
-              <span className="text-muted-foreground ml-1">
-                (searched for &quot;{searchQuery}&quot;)
-              </span>
+              Did you mean:{' '}
+              {suggestions.map((suggestion, index) => (
+                <span key={suggestion}>
+                  <a
+                    href={`/blog?q=${encodeURIComponent(suggestion)}`}
+                    className="font-semibold text-primary hover:text-primary/80 underline"
+                  >
+                    {suggestion}
+                  </a>
+                  {index < suggestions.length - 1 && ', '}
+                </span>
+              ))}
+              ?
             </p>
           </div>
         )}
