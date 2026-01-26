@@ -94,7 +94,7 @@ export default function NewsletterPopup({
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border animate-in fade-in zoom-in duration-300">
+      <div className="relative w-full max-w-md bg-card rounded-xl shadow-2xl border border-border animate-in fade-in zoom-in duration-300 select-none">
         {/* Close button */}
         <button
           onClick={handleClose}

@@ -11,7 +11,7 @@ export default function SatisfactionGuarantee({
 }: SatisfactionGuaranteeProps) {
   if (variant === 'compact') {
     return (
-      <div className={`flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 ${className}`}>
+      <div className={`flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 select-none ${className}`}>
         <div className="flex-shrink-0">
           <svg
             className="w-8 h-8 text-green-600 dark:text-green-400"
@@ -41,7 +41,7 @@ export default function SatisfactionGuarantee({
 
   // Default full version
   return (
-    <div className={`p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 ${className}`}>
+    <div className={`p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 select-none ${className}`}>
       <div className="flex items-start gap-4">
         <div className="flex-shrink-0 w-14 h-14 rounded-full bg-green-100 dark:bg-green-800/50 flex items-center justify-center">
           <svg

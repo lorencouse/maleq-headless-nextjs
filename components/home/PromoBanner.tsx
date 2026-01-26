@@ -24,7 +24,7 @@ export default function PromoBanner({
   };
 
   return (
-    <section className={`${bgClasses[variant]} text-white py-6 relative overflow-hidden`}>
+    <section className={`${bgClasses[variant]} text-white py-6 relative overflow-hidden select-none`}>
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-10">
         <div

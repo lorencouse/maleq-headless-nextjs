@@ -60,7 +60,7 @@ const socialLinks = [
 
 export default function SocialSection() {
   return (
-    <section className="py-12 bg-muted/30">
+    <section className="py-12 bg-muted/30 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-foreground mb-2">Follow Us</h2>

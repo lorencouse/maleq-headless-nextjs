@@ -16,7 +16,7 @@ export default function CategoryHero({ category, productCount, parentCategory }:
   const categoryImage = getCategoryImage(category.slug);
 
   return (
-    <section className="mb-8">
+    <section className="mb-8 select-none">
       {/* Hero Banner */}
       <div className={`relative overflow-hidden rounded-2xl ${!categoryImage ? `bg-gradient-to-r ${config.gradient}` : ''}`}>
         {/* Background Image or Pattern */}

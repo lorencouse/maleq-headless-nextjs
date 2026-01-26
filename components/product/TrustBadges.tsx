@@ -53,7 +53,7 @@ interface TrustBadgesProps {
 export default function TrustBadges({ variant = 'default', className = '' }: TrustBadgesProps) {
   if (variant === 'compact') {
     return (
-      <div className={`flex flex-wrap gap-3 ${className}`}>
+      <div className={`flex flex-wrap gap-3 select-none ${className}`}>
         {badges.map((badge, index) => (
           <div
             key={index}
@@ -69,7 +69,7 @@ export default function TrustBadges({ variant = 'default', className = '' }: Tru
 
   if (variant === 'horizontal') {
     return (
-      <div className={`flex justify-between gap-4 py-4 border-y border-border ${className}`}>
+      <div className={`flex justify-between gap-4 py-4 border-y border-border select-none ${className}`}>
         {badges.map((badge, index) => (
           <div key={index} className="flex items-center gap-3 flex-1 min-w-0">
             <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
@@ -87,7 +87,7 @@ export default function TrustBadges({ variant = 'default', className = '' }: Tru
 
   // Default grid layout
   return (
-    <div className={`grid grid-cols-2 gap-4 ${className}`}>
+    <div className={`grid grid-cols-2 gap-4 select-none ${className}`}>
       {badges.map((badge, index) => (
         <div
           key={index}

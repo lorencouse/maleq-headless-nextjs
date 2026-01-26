@@ -10,7 +10,7 @@ interface BrandHeroProps {
 
 export default function BrandHero({ brand, productCount }: BrandHeroProps) {
   return (
-    <section className="mb-8">
+    <section className="mb-8 select-none">
       {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/90 to-primary-hover/90">
         {/* Background Pattern */}

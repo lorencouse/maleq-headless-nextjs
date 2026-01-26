@@ -52,7 +52,7 @@ const promoCards: PromoCard[] = [
 
 export default function ShopHero() {
   return (
-    <section className="mb-10">
+    <section className="mb-10 select-none">
       {/* Main Hero Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-foreground to-zinc-800 dark:from-zinc-900 dark:to-zinc-800 mb-6">
         <div className="absolute inset-0 opacity-10">

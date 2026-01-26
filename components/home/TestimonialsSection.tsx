@@ -80,7 +80,7 @@ export default function TestimonialsSection() {
   };
 
   return (
-    <section className="bg-muted/30 py-16">
+    <section className="bg-muted/30 py-16 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">

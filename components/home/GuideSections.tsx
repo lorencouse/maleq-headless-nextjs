@@ -15,7 +15,7 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Intro */}
           <div className="lg:w-1/3 lg:sticky lg:top-24">
-            <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-2xl p-6 border border-blue-500/20">
+            <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-2xl p-6 border border-blue-500/20 select-none">
               <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
@@ -60,7 +60,7 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
         <div className="flex flex-col lg:flex-row-reverse gap-8 items-start">
           {/* Intro */}
           <div className="lg:w-1/3 lg:sticky lg:top-24">
-            <div className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 rounded-2xl p-6 border border-pink-500/20">
+            <div className="bg-gradient-to-br from-pink-500/10 to-rose-500/10 rounded-2xl p-6 border border-pink-500/20 select-none">
               <div className="w-16 h-16 bg-pink-500/20 rounded-2xl flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />

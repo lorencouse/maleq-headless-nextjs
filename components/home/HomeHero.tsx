@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 export default function HomeHero() {
   return (
-    <section className='relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white overflow-hidden'>
+    <section className='relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white overflow-hidden select-none'>
       {/* Background pattern */}
       <div className='absolute inset-0 opacity-5'>
         <div
