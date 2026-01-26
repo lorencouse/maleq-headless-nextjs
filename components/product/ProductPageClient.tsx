@@ -230,7 +230,7 @@ export default function ProductPageClient({
             variations={product.variations.map((v) => ({
               ...v,
               sku: v.sku || '',
-              stockQuantity: v.stockQuantity || 0,
+              stockQuantity: v.stockQuantity ?? 0,
             }))}
             productId={product.databaseId}
             onVariationChange={(variation) => {
@@ -372,22 +372,13 @@ export default function ProductPageClient({
             <span className='font-medium text-foreground'>{displaySku}</span>
           </div>
         )}
-        {/* Debug: Product/Variation IDs */}
         <div className='flex justify-between'>
           <span className='text-muted-foreground'>Product ID:</span>
           <span className='font-medium text-foreground'>
             {product.databaseId}
           </span>
         </div>
-        {selectedVariation && (
-          <div className='flex justify-between'>
-            <span className='text-muted-foreground'>Variation ID:</span>
-            <span className='font-medium text-foreground'>
-              {selectedVariation.id}
-            </span>
-          </div>
-        )}
-        {product.averageRating && product.averageRating > 0 && (
+        {(product.averageRating ?? 0) > 0 && (
           <div className='flex justify-between'>
             <span className='text-muted-foreground'>Rating:</span>
             <span className='font-medium text-foreground'>
@@ -395,7 +386,7 @@ export default function ProductPageClient({
             </span>
           </div>
         )}
-        {product.reviewCount && product.reviewCount > 0 && (
+        {(product.reviewCount ?? 0) > 0 && (
           <div className='flex justify-between'>
             <span className='text-muted-foreground'>Reviews:</span>
             <span className='font-medium text-foreground'>
