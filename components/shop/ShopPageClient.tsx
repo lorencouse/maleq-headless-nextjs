@@ -66,6 +66,20 @@ export default function ShopPageClient({
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
   const hasExtractedInitialFilters = useRef(false);
 
+  // Track if user entered page with filters/search (browse mode hides hero)
+  const isInBrowseMode = useRef(
+    !!searchQuery ||
+    searchParams.has('category') ||
+    searchParams.has('brand') ||
+    searchParams.has('color') ||
+    searchParams.has('material') ||
+    searchParams.has('minPrice') ||
+    searchParams.has('maxPrice') ||
+    searchParams.has('inStock') ||
+    searchParams.has('onSale') ||
+    searchParams.has('browse')
+  );
+
   // Extract filter options from products
   const extractFilterOptions = useCallback((productList: UnifiedProduct[]) => {
     const brandMap = new Map<string, { name: string; slug: string; count: number }>();
@@ -173,6 +187,9 @@ export default function ShopPageClient({
 
   // Update URL with filters
   const updateURL = useCallback((newFilters: FilterState, newSort: SortOption) => {
+    // Mark that we're now in browse mode (user has interacted with filters)
+    isInBrowseMode.current = true;
+
     const params = new URLSearchParams();
 
     // Preserve search query if present
@@ -191,6 +208,11 @@ export default function ShopPageClient({
     if (newFilters.inStock) params.set('inStock', 'true');
     if (newFilters.onSale) params.set('onSale', 'true');
     if (newSort !== 'newest') params.set('sort', newSort);
+
+    // If no filters/search but in browse mode, keep browse param to hide hero
+    if (params.toString() === '' && isInBrowseMode.current) {
+      params.set('browse', '1');
+    }
 
     const queryString = params.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
@@ -361,8 +383,13 @@ export default function ShopPageClient({
     if (filters.onSale) params.set('onSale', 'true');
     if (sortBy !== 'newest') params.set('sort', sortBy);
 
+    // If no other filters, keep browse param to hide hero
+    if (params.toString() === '') {
+      params.set('browse', '1');
+    }
+
     const queryString = params.toString();
-    router.replace(queryString ? `/shop?${queryString}` : '/shop', { scroll: false });
+    router.replace(`/shop?${queryString}`, { scroll: false });
   };
 
   // Remove single filter

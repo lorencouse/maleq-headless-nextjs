@@ -51,8 +51,12 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     (maxPrice !== undefined && maxPrice < 500) ||
     inStock || onSale;
 
+  // Check if user is in "browse mode" (has used filters/search at any point)
+  // The 'browse' param is set when user clears all filters to keep hero hidden
+  const browseMode = params.browse === '1';
+
   // Check if search or filters are active
-  const hasSearchOrFilters = searchQuery || hasFilters;
+  const hasSearchOrFilters = searchQuery || hasFilters || browseMode;
 
   // Fetch products based on search query or filters
   let productsResult: {
