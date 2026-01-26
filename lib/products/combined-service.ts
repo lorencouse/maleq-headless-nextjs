@@ -1,5 +1,6 @@
 import { getClient } from '@/lib/apollo/client';
 import type { ApolloQueryResult } from '@apollo/client';
+import Fuse from 'fuse.js';
 import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
@@ -470,7 +471,7 @@ export async function searchProducts(
   const { limit = 24, offset = 0 } = options;
 
   // Import search helpers dynamically to avoid circular deps
-  const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm } = await import('@/lib/utils/search-helpers');
+  const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm, getTopSpellingCorrections } = await import('@/lib/utils/search-helpers');
 
   const searchTerms = tokenizeQuery(searchTerm);
   if (searchTerms.length === 0) {
@@ -483,6 +484,19 @@ export async function searchProducts(
     const fetchLimit = Math.max(100, (offset + limit) * 2);
     const primaryTerm = searchTerms[0];
 
+    // Build list of search terms to try (original + spelling corrections)
+    const searchVariants = [primaryTerm];
+
+    // Add top spelling corrections for each search term
+    for (const term of searchTerms) {
+      const corrections = getTopSpellingCorrections(term, 3);
+      searchVariants.push(...corrections);
+    }
+
+    // Deduplicate search variants
+    const uniqueVariants = [...new Set(searchVariants)];
+
+    // Search with original terms
     const [titleResult, contentResult] = await Promise.all([
       getClient().query({
         query: SEARCH_PRODUCTS_BY_TITLE,
@@ -496,8 +510,38 @@ export async function searchProducts(
       }),
     ]);
 
-    const titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
-    const contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
+    let titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
+    let contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
+
+    // If no results, try spelling corrections
+    if (titleProducts.length === 0 && contentProducts.length === 0 && uniqueVariants.length > 1) {
+      // Try each spelling variant until we get results
+      for (const variant of uniqueVariants.slice(1)) { // Skip first (original term)
+        const [variantTitleResult, variantContentResult] = await Promise.all([
+          getClient().query({
+            query: SEARCH_PRODUCTS_BY_TITLE,
+            variables: { titleSearch: variant, first: fetchLimit },
+            fetchPolicy: 'no-cache',
+          }),
+          getClient().query({
+            query: SEARCH_PRODUCTS,
+            variables: { search: variant, first: fetchLimit },
+            fetchPolicy: 'no-cache',
+          }),
+        ]);
+
+        const variantTitleProducts = variantTitleResult.data?.products?.nodes || [];
+        const variantContentProducts = variantContentResult.data?.products?.nodes || [];
+
+        if (variantTitleProducts.length > 0 || variantContentProducts.length > 0) {
+          titleProducts = variantTitleProducts;
+          contentProducts = variantContentProducts;
+          // Update search terms to use the successful variant for scoring
+          searchTerms[0] = variant;
+          break;
+        }
+      }
+    }
 
     // Convert to unified format and deduplicate
     const allProductsMap = new Map<string, UnifiedProduct>();
@@ -515,39 +559,62 @@ export async function searchProducts(
 
     const allProducts = Array.from(allProductsMap.values());
 
-    // Score and categorize products
-    const scored = allProducts.map(product => {
-      const titleText = product.name;
-      const allInTitle = matchesAllTerms(titleText, searchTerms);
-      const anyInTitle = matchesAnyTerm(titleText, searchTerms);
-      const relevanceScore = calculateRelevanceScore(product, searchTerms);
-
-      return {
-        product,
-        allInTitle,
-        anyInTitle,
-        score: relevanceScore,
-      };
+    // Use Fuse.js for fuzzy matching and relevance scoring
+    const fuse = new Fuse(allProducts, {
+      keys: [
+        { name: 'name', weight: 0.5 },
+        { name: 'shortDescription', weight: 0.3 },
+        { name: 'description', weight: 0.2 },
+      ],
+      threshold: 0.4, // 0 = exact match, 1 = match anything
+      distance: 100,
+      includeScore: true,
+      ignoreLocation: true,
+      useExtendedSearch: true,
+      findAllMatches: true,
     });
 
-    // Sort by: all terms in title > any term in title > relevance score
-    scored.sort((a, b) => {
-      // All terms in title first
-      if (a.allInTitle && !b.allInTitle) return -1;
-      if (!a.allInTitle && b.allInTitle) return 1;
+    // Search with Fuse.js using the original search term
+    const fuseResults = fuse.search(searchTerm);
 
-      // Then any term in title
-      if (a.anyInTitle && !b.anyInTitle) return -1;
-      if (!a.anyInTitle && b.anyInTitle) return 1;
+    // If Fuse found results, use those (already sorted by relevance)
+    // Otherwise fall back to all products that matched from DB
+    let allRelevantProducts: UnifiedProduct[];
+    let total: number;
 
-      // Then by score
-      return b.score - a.score;
-    });
+    if (fuseResults.length > 0) {
+      allRelevantProducts = fuseResults.map(r => r.item);
+      total = fuseResults.length;
+    } else {
+      // Fall back to custom scoring if Fuse finds nothing
+      const scored = allProducts.map(product => {
+        const titleText = product.name;
+        const allInTitle = matchesAllTerms(titleText, searchTerms);
+        const anyInTitle = matchesAnyTerm(titleText, searchTerms);
+        const relevanceScore = calculateRelevanceScore(product, searchTerms);
 
-    // Filter out products with zero relevance
-    const relevant = scored.filter(s => s.score > 0 || s.anyInTitle);
-    const total = relevant.length;
-    const allRelevantProducts = relevant.map(s => s.product);
+        return {
+          product,
+          allInTitle,
+          anyInTitle,
+          score: relevanceScore,
+        };
+      });
+
+      // Sort by: all terms in title > any term in title > relevance score
+      scored.sort((a, b) => {
+        if (a.allInTitle && !b.allInTitle) return -1;
+        if (!a.allInTitle && b.allInTitle) return 1;
+        if (a.anyInTitle && !b.anyInTitle) return -1;
+        if (!a.anyInTitle && b.anyInTitle) return 1;
+        return b.score - a.score;
+      });
+
+      // Filter out products with zero relevance
+      const relevant = scored.filter(s => s.score > 0 || s.anyInTitle);
+      total = relevant.length;
+      allRelevantProducts = relevant.map(s => s.product);
+    }
 
     // Extract available filter options from ALL relevant products (before pagination)
     const brandMap = new Map<string, { name: string; slug: string; count: number }>();

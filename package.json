@@ -21,6 +21,7 @@
     "@apollo/experimental-nextjs-app-support": "^0.11.5",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.3",
+    "fuse.js": "^7.1.0",
     "graphql": "^16.9.0",
     "mysql2": "^3.16.1",
     "next": "15",

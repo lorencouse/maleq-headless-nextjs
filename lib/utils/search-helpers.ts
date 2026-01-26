@@ -235,3 +235,112 @@ export function matchesAnyTerm(
   if (!text || searchTerms.length === 0) return false;
   return searchTerms.some(term => textContainsTerm(text, term));
 }
+
+/**
+ * Generate targeted spelling correction variants for a word
+ * Focuses on the most common typo patterns with smart prioritization
+ * Returns unique variants sorted by likelihood of being correct
+ */
+export function generateSpellingVariants(word: string): string[] {
+  const lower = word.toLowerCase();
+  const variants: { word: string; priority: number }[] = [];
+
+  // Skip very short words
+  if (lower.length < 3) return [];
+
+  // Common consonants that are often doubled
+  const doubleConsonants = new Set(['b', 'c', 'd', 'f', 'g', 'l', 'm', 'n', 'p', 'r', 's', 't']);
+
+  // 1. HIGH PRIORITY: Double a consonant that appears once (rabit -> rabbit)
+  for (let i = 0; i < lower.length; i++) {
+    const char = lower[i];
+    if (doubleConsonants.has(char)) {
+      // Check if this letter is NOT already doubled
+      const prevChar = i > 0 ? lower[i - 1] : '';
+      const nextChar = i < lower.length - 1 ? lower[i + 1] : '';
+      if (prevChar !== char && nextChar !== char) {
+        const variant = lower.slice(0, i) + char + lower.slice(i);
+        variants.push({ word: variant, priority: 10 });
+      }
+    }
+  }
+
+  // 2. HIGH PRIORITY: Remove one of a doubled/tripled letter (rabbbit -> rabbit)
+  for (let i = 1; i < lower.length; i++) {
+    if (lower[i] === lower[i - 1]) {
+      const variant = lower.slice(0, i) + lower.slice(i + 1);
+      if (variant.length >= 3) {
+        variants.push({ word: variant, priority: 10 });
+      }
+    }
+  }
+
+  // 3. MEDIUM PRIORITY: Swap adjacent letters (raibbt -> rabbit)
+  for (let i = 0; i < lower.length - 1; i++) {
+    const variant = lower.slice(0, i) + lower[i + 1] + lower[i] + lower.slice(i + 2);
+    if (variant !== lower) {
+      variants.push({ word: variant, priority: 5 });
+    }
+  }
+
+  // 4. MEDIUM PRIORITY: Common vowel substitutions
+  const vowelSubs: Record<string, string[]> = {
+    'a': ['e', 'i', 'o'],
+    'e': ['a', 'i'],
+    'i': ['e', 'y'],
+    'o': ['a', 'u'],
+    'u': ['o'],
+    'y': ['i', 'e'],
+  };
+
+  for (let i = 0; i < lower.length; i++) {
+    const char = lower[i];
+    if (vowelSubs[char]) {
+      for (const sub of vowelSubs[char]) {
+        const variant = lower.slice(0, i) + sub + lower.slice(i + 1);
+        variants.push({ word: variant, priority: 3 });
+      }
+    }
+  }
+
+  // 5. LOWER PRIORITY: Add common missing letters at likely positions
+  // Focus on adding vowels between consonants
+  const vowels = new Set(['a', 'e', 'i', 'o', 'u']);
+  const consonants = new Set(['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z']);
+
+  for (let i = 1; i < lower.length; i++) {
+    const prevChar = lower[i - 1];
+    const currChar = lower[i];
+    // If two consonants are adjacent, try adding a vowel between them
+    if (consonants.has(prevChar) && consonants.has(currChar)) {
+      for (const vowel of vowels) {
+        const variant = lower.slice(0, i) + vowel + lower.slice(i);
+        variants.push({ word: variant, priority: 2 });
+      }
+    }
+  }
+
+  // Deduplicate and sort by priority
+  const seen = new Set<string>();
+  const uniqueVariants: { word: string; priority: number }[] = [];
+
+  for (const v of variants) {
+    if (!seen.has(v.word) && v.word !== lower) {
+      seen.add(v.word);
+      uniqueVariants.push(v);
+    }
+  }
+
+  uniqueVariants.sort((a, b) => b.priority - a.priority);
+
+  return uniqueVariants.map(v => v.word);
+}
+
+/**
+ * Get the most likely spelling corrections for a search term
+ * Returns terms prioritized by likelihood of being the intended word
+ */
+export function getTopSpellingCorrections(word: string, limit = 5): string[] {
+  const variants = generateSpellingVariants(word);
+  return variants.slice(0, limit);
+}

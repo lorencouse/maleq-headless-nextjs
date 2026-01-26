@@ -8,6 +8,8 @@ import {
   calculateRelevanceScore,
   matchesAllTerms,
   matchesAnyTerm,
+  generateSpellingVariants,
+  getTopSpellingCorrections,
 } from '@/lib/utils/search-helpers';
 
 describe('Search Helpers', () => {
@@ -256,6 +258,64 @@ describe('Search Helpers', () => {
     it('should handle plurals and stems in search', () => {
       expect(textContainsTerm('rabbit toy', 'rabbits')).toBe(true);
       expect(textContainsTerm('toys for adults', 'toy')).toBe(true);
+    });
+  });
+
+  describe('generateSpellingVariants', () => {
+    it('should generate variants with added letters', () => {
+      const variants = generateSpellingVariants('rabit');
+      // Should include 'rabbit' (adding 'b')
+      expect(variants).toContain('rabbit');
+    });
+
+    it('should generate variants with removed letters', () => {
+      const variants = generateSpellingVariants('rabbbit');
+      // Should include 'rabbit' (removing extra 'b')
+      expect(variants).toContain('rabbit');
+    });
+
+    it('should generate variants with replaced letters', () => {
+      const variants = generateSpellingVariants('rabbet');
+      // Should include 'rabbit' (replacing 'e' with 'i')
+      expect(variants).toContain('rabbit');
+    });
+
+    it('should generate variants with swapped letters', () => {
+      const variants = generateSpellingVariants('rabibt');
+      // Should include 'rabbit' (swapping 'b' and 'i')
+      expect(variants).toContain('rabbit');
+    });
+
+    it('should skip very short words', () => {
+      const variants = generateSpellingVariants('ab');
+      expect(variants).toHaveLength(0);
+    });
+
+    it('should return unique variants', () => {
+      const variants = generateSpellingVariants('test');
+      const uniqueVariants = [...new Set(variants)];
+      expect(variants.length).toBe(uniqueVariants.length);
+    });
+  });
+
+  describe('getTopSpellingCorrections', () => {
+    it('should return limited number of corrections', () => {
+      const corrections = getTopSpellingCorrections('rabit', 3);
+      expect(corrections.length).toBeLessThanOrEqual(3);
+    });
+
+    it('should prioritize words with double consonants', () => {
+      const corrections = getTopSpellingCorrections('rabit', 10);
+      // 'rabbit' should be in top results because it has 'bb'
+      expect(corrections).toContain('rabbit');
+    });
+
+    it('should include the correct spelling for common typos', () => {
+      // Missing letter
+      expect(getTopSpellingCorrections('rabit', 5)).toContain('rabbit');
+
+      // Extra letter
+      expect(getTopSpellingCorrections('rabbbit', 5)).toContain('rabbit');
     });
   });
 });
