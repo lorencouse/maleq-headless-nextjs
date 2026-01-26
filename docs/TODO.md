@@ -119,14 +119,14 @@ Account
 - [x] `[MED]` Add featured categories section with icons (Completed 2025-01-22)
 - [x] `[MED]` Add testimonials/reviews section (Completed 2026-01-25)
 - [x] `[MED]` Add "Why Shop With Us" benefits section (Completed 2025-01-22)
-- [ ] `[LOW]` Add trending products carousel
+- [x] `[LOW]` Add trending products carousel (Completed 2026-01-25)
 - [x] `[LOW]` Add blog posts preview section (Completed 2025-01-22)
 
 ---
 
 ## Account & User Features
 
-- [ ] `[LOW]` Add order tracking page with live status
+- [x] `[LOW]` Add order tracking page with live status (Completed 2026-01-25)
 - [ ] `[LOW]` Add returns/RMA request form
 - [ ] `[LOW]` Add help center/FAQ integration in account area
 
@@ -214,9 +214,11 @@ Account
   - Test Stripe live mode with real cards
   - Verify order confirmation emails
   - Test failed payment handling
-- [ ] `[MED]` Add auto-discount functionality for threshold-based discounts
-  - e.g., Spend $100, get $10 off
-  - Consider tiered discounts for larger orders
+- [x] `[MED]` Add auto-discount functionality for threshold-based discounts (Completed 2026-01-25)
+  - Spend $100, get $10 off
+  - Spend $150, get $15 off
+  - Spend $200, get $25 off
+  - Upsell messaging shows how much more to spend for next tier
 - [ ] `[MED]` Update shipping tiers
   - Review current shipping rates
   - Configure weight-based or price-based tiers
@@ -287,3 +289,9 @@ Account
 - Deployment guide: `docs/DEPLOYMENT_GUIDE.md`
 - API documentation: `docs/API_DOCUMENTATION.md`
 - Store specifications: `docs/STORE_SPECIFICATIONS.md`
+
+
+- Add add-on kit missing image
+fix product gallery images to be single row carrosel 
+On product cards, make title, price, and add to cart section float to bottom of card
+

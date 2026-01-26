@@ -283,6 +283,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
           const varAttrNodes = v.attributes?.nodes;
           return {
             id: v.id,
+            databaseId: v.databaseId,
             name: v.name,
             sku: v.sku || null,
             description: v.description || null,

@@ -8,6 +8,7 @@ interface OrganizationProps {
   contactPoint?: {
     telephone?: string;
     email?: string;
+    url?: string;
     contactType?: string;
   };
 }

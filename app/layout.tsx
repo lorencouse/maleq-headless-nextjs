@@ -116,7 +116,7 @@ export default function RootLayout({
           url={SITE_URL}
           logo={`${SITE_URL}/logo.png`}
           contactPoint={{
-            email: 'support@maleq.com',
+            url: `${SITE_URL}/contact`,
             contactType: 'customer service',
           }}
         />

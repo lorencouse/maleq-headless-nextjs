@@ -168,7 +168,6 @@ export default function TermsPage() {
                 For questions about these Terms of Service, please contact us:
               </p>
               <ul className="list-none text-muted-foreground mt-2 space-y-1">
-                <li>Email: legal@maleq.com</li>
                 <li>Contact form: <a href="/contact" className="text-primary hover:underline">Contact Us</a></li>
               </ul>
             </section>

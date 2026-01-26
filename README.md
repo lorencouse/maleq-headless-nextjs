@@ -224,4 +224,4 @@ This project is proprietary. All rights reserved.
 
 ## Support
 
-For support, please contact [support@maleq.com](mailto:support@maleq.com).
+For support, please use the [Contact Form](https://www.maleq.com/contact).

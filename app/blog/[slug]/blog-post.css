@@ -575,7 +575,7 @@ figure.wp-block-video figcaption a,
   font-size: 1.0625rem;
   line-height: 1.7;
   background: var(--card);
-  border-radius: var(--radius-lg);
+  border-radius: 0, 0, var(--radius-lg), var(--radius-lg);
   box-shadow: var(--shadow-sm);
   color: var(--foreground);
 }

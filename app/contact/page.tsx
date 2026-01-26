@@ -31,8 +31,8 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">Email</h3>
-                    <p className="text-muted-foreground">support@maleq.com</p>
+                    <h3 className="font-medium text-foreground">Contact Us</h3>
+                    <p className="text-muted-foreground">Use the form below</p>
                   </div>
                 </div>
 
