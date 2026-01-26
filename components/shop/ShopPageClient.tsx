@@ -362,7 +362,7 @@ export default function ShopPageClient({
     if (sortBy !== 'newest') params.set('sort', sortBy);
 
     const queryString = params.toString();
-    router.push(queryString ? `/shop?${queryString}` : '/shop');
+    router.push(queryString ? `/shop?${queryString}` : '/shop', { scroll: false });
   };
 
   // Remove single filter
