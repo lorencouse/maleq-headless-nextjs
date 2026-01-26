@@ -275,11 +275,12 @@ export function generateSpellingVariants(word: string): string[] {
     }
   }
 
-  // 3. MEDIUM PRIORITY: Swap adjacent letters (raibbt -> rabbit)
+  // 3. HIGHEST PRIORITY: Swap adjacent letters (reveiw -> review, teh -> the)
+  // Transpositions are the most common typo type - prioritize them first
   for (let i = 0; i < lower.length - 1; i++) {
     const variant = lower.slice(0, i) + lower[i + 1] + lower[i] + lower.slice(i + 2);
     if (variant !== lower) {
-      variants.push({ word: variant, priority: 5 });
+      variants.push({ word: variant, priority: 15 });
     }
   }
 

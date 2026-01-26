@@ -13,8 +13,8 @@ import {
   calculateRelevanceScore,
   matchesAllTerms,
   matchesAnyTerm,
-  getTopSpellingCorrections,
 } from '@/lib/utils/search-helpers';
+import { correctBlogSearchTerm } from '@/lib/search/search-index';
 
 interface CategoryNode {
   id: string;
@@ -52,7 +52,7 @@ export interface BlogSearchSuggestion {
 
 /**
  * Search blog posts with relevance ranking
- * Uses stemming, tokenization, fuzzy matching, and spelling corrections
+ * Uses Fuse.js for typo-tolerant spell checking BEFORE database queries
  * Returns posts sorted by: all terms in title > any term in title > relevance score
  */
 export async function searchBlogPosts(
@@ -74,15 +74,21 @@ export async function searchBlogPosts(
   }
 
   try {
-    // Use the primary term for database search (most significant word)
-    const primaryTerm = searchTerms[0];
+    // Use Fuse.js to correct spelling BEFORE database query
+    const { correctedTerm: fuseCorrection, wasCorrect } = await correctBlogSearchTerm(query);
+    const searchQuery = fuseCorrection;
+    let correctedTerm: string | undefined = wasCorrect ? undefined : fuseCorrection;
 
-    // Generate spelling corrections for fallback
-    const spellingVariants = searchTerms.flatMap(term => getTopSpellingCorrections(term, 3));
-    const uniqueVariants = [...new Set([primaryTerm, ...spellingVariants])];
+    // Update search terms if correction was made
+    if (!wasCorrect) {
+      searchTerms = tokenizeQuery(fuseCorrection);
+    }
+
+    // Use the primary term for database search (most significant word)
+    const primaryTerm = searchTerms[0] || query;
 
     // Fetch both title matches and content matches in parallel
-    let [titleResult, contentResult] = await Promise.all([
+    const [titleResult, contentResult] = await Promise.all([
       getClient().query({
         query: SEARCH_POSTS_BY_TITLE,
         variables: {
@@ -95,7 +101,7 @@ export async function searchBlogPosts(
       getClient().query({
         query: SEARCH_POSTS,
         variables: {
-          search: query,
+          search: searchQuery,
           first: first * 3,
           categoryName: categorySlug || null,
         },
@@ -103,49 +109,8 @@ export async function searchBlogPosts(
       }),
     ]);
 
-    let titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
-    let contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
-    let correctedTerm: string | undefined;
-
-    // If no results, try spelling corrections
-    if (titlePosts.length === 0 && contentPosts.length === 0 && uniqueVariants.length > 1) {
-      for (const variant of uniqueVariants.slice(1)) {
-        const [variantTitleResult, variantContentResult] = await Promise.all([
-          getClient().query({
-            query: SEARCH_POSTS_BY_TITLE,
-            variables: {
-              titleSearch: variant,
-              first: first * 2,
-              categoryName: categorySlug || null,
-            },
-            fetchPolicy: 'no-cache',
-          }),
-          getClient().query({
-            query: SEARCH_POSTS,
-            variables: {
-              search: variant,
-              first: first * 3,
-              categoryName: categorySlug || null,
-            },
-            fetchPolicy: 'no-cache',
-          }),
-        ]);
-
-        const variantTitlePosts = variantTitleResult.data?.posts?.nodes || [];
-        const variantContentPosts = variantContentResult.data?.posts?.nodes || [];
-
-        if (variantTitlePosts.length > 0 || variantContentPosts.length > 0) {
-          titlePosts = variantTitlePosts;
-          contentPosts = variantContentPosts;
-          titleResult = variantTitleResult;
-          // Track the spelling correction used
-          correctedTerm = variant;
-          // Update search terms to match the successful variant
-          searchTerms = [variant];
-          break;
-        }
-      }
-    }
+    const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
+    const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
 
     // Combine and deduplicate results
     const seenIds = new Set<string>();
@@ -268,7 +233,7 @@ export async function getBlogPosts(
 
 /**
  * Get blog search suggestions for autocomplete
- * Uses stemming, tokenization, fuzzy matching, and spelling corrections
+ * Uses Fuse.js for typo-tolerant spell checking BEFORE database queries
  * Returns title matches first, then content matches sorted by relevance
  */
 export async function getBlogSearchSuggestions(
@@ -282,13 +247,13 @@ export async function getBlogSearchSuggestions(
     return { posts: [], categories: [] };
   }
 
-  // Tokenize the search query
-  let searchTerms = tokenizeQuery(query);
-  const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : query;
+  // Use Fuse.js to correct spelling BEFORE database query
+  const { correctedTerm: fuseCorrection, wasCorrect } = await correctBlogSearchTerm(query);
+  const searchQuery = fuseCorrection;
 
-  // Generate spelling corrections
-  const spellingVariants = searchTerms.flatMap(term => getTopSpellingCorrections(term, 3));
-  const uniqueVariants = [...new Set([primaryTerm, ...spellingVariants])];
+  // Tokenize the search query
+  let searchTerms = tokenizeQuery(searchQuery);
+  const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : searchQuery;
 
   const [titleResult, contentResult, categoriesResult] = await Promise.all([
     getClient().query({
@@ -298,7 +263,7 @@ export async function getBlogSearchSuggestions(
     }),
     getClient().query({
       query: SEARCH_POSTS,
-      variables: { search: query, first: limit * 3 },
+      variables: { search: searchQuery, first: limit * 3 },
       fetchPolicy: 'no-cache',
     }),
     getClient().query({
@@ -307,37 +272,9 @@ export async function getBlogSearchSuggestions(
     }),
   ]);
 
-  let titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
-  let contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+  const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
+  const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
   const allCategories: CategoryNode[] = categoriesResult.data?.categories?.nodes || [];
-
-  // If no results, try spelling corrections
-  if (titlePosts.length === 0 && contentPosts.length === 0 && uniqueVariants.length > 1) {
-    for (const variant of uniqueVariants.slice(1)) {
-      const [variantTitleResult, variantContentResult] = await Promise.all([
-        getClient().query({
-          query: SEARCH_POSTS_BY_TITLE,
-          variables: { titleSearch: variant, first: limit * 2 },
-          fetchPolicy: 'no-cache',
-        }),
-        getClient().query({
-          query: SEARCH_POSTS,
-          variables: { search: variant, first: limit * 3 },
-          fetchPolicy: 'no-cache',
-        }),
-      ]);
-
-      const variantTitlePosts = variantTitleResult.data?.posts?.nodes || [];
-      const variantContentPosts = variantContentResult.data?.posts?.nodes || [];
-
-      if (variantTitlePosts.length > 0 || variantContentPosts.length > 0) {
-        titlePosts = variantTitlePosts;
-        contentPosts = variantContentPosts;
-        searchTerms = [variant];
-        break;
-      }
-    }
-  }
 
   // Combine and deduplicate results
   const seenIds = new Set<string>();

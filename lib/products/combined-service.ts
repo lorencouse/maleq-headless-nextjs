@@ -473,9 +473,15 @@ export async function searchProducts(
   const { limit = 24, offset = 0 } = options;
 
   // Import search helpers dynamically to avoid circular deps
-  const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm, getTopSpellingCorrections } = await import('@/lib/utils/search-helpers');
+  const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm } = await import('@/lib/utils/search-helpers');
+  const { correctProductSearchTerm } = await import('@/lib/search/search-index');
 
-  const searchTerms = tokenizeQuery(searchTerm);
+  // Use Fuse.js to correct spelling BEFORE database query
+  const { correctedTerm: fuseCorrection, wasCorrect } = await correctProductSearchTerm(searchTerm);
+  const searchQuery = fuseCorrection;
+  const correctedTerm: string | undefined = wasCorrect ? undefined : fuseCorrection;
+
+  const searchTerms = tokenizeQuery(searchQuery);
   if (searchTerms.length === 0) {
     return { products: [], pageInfo: { hasNextPage: false, total: 0 } };
   }
@@ -486,19 +492,7 @@ export async function searchProducts(
     const fetchLimit = Math.max(100, (offset + limit) * 2);
     const primaryTerm = searchTerms[0];
 
-    // Build list of search terms to try (original + spelling corrections)
-    const searchVariants = [primaryTerm];
-
-    // Add top spelling corrections for each search term
-    for (const term of searchTerms) {
-      const corrections = getTopSpellingCorrections(term, 3);
-      searchVariants.push(...corrections);
-    }
-
-    // Deduplicate search variants
-    const uniqueVariants = [...new Set(searchVariants)];
-
-    // Search with original terms
+    // Search with corrected terms
     const [titleResult, contentResult] = await Promise.all([
       getClient().query({
         query: SEARCH_PRODUCTS_BY_TITLE,
@@ -507,46 +501,13 @@ export async function searchProducts(
       }),
       getClient().query({
         query: SEARCH_PRODUCTS,
-        variables: { search: searchTerm, first: fetchLimit },
+        variables: { search: searchQuery, first: fetchLimit },
         fetchPolicy: 'no-cache',
       }),
     ]);
 
-    let titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
-    let contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
-    let correctedTerm: string | undefined;
-
-    // If no results, try spelling corrections
-    if (titleProducts.length === 0 && contentProducts.length === 0 && uniqueVariants.length > 1) {
-      // Try each spelling variant until we get results
-      for (const variant of uniqueVariants.slice(1)) { // Skip first (original term)
-        const [variantTitleResult, variantContentResult] = await Promise.all([
-          getClient().query({
-            query: SEARCH_PRODUCTS_BY_TITLE,
-            variables: { titleSearch: variant, first: fetchLimit },
-            fetchPolicy: 'no-cache',
-          }),
-          getClient().query({
-            query: SEARCH_PRODUCTS,
-            variables: { search: variant, first: fetchLimit },
-            fetchPolicy: 'no-cache',
-          }),
-        ]);
-
-        const variantTitleProducts = variantTitleResult.data?.products?.nodes || [];
-        const variantContentProducts = variantContentResult.data?.products?.nodes || [];
-
-        if (variantTitleProducts.length > 0 || variantContentProducts.length > 0) {
-          titleProducts = variantTitleProducts;
-          contentProducts = variantContentProducts;
-          // Track the spelling correction used
-          correctedTerm = variant;
-          // Update search terms to use the successful variant for scoring
-          searchTerms[0] = variant;
-          break;
-        }
-      }
-    }
+    const titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
+    const contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
 
     // Convert to unified format and deduplicate
     const allProductsMap = new Map<string, UnifiedProduct>();
