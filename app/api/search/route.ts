@@ -15,10 +15,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Search products and filter categories that match
-    const [products, allCategories] = await Promise.all([
-      searchProducts(query, limit),
+    const [searchResult, allCategories] = await Promise.all([
+      searchProducts(query, { limit }),
       getProductCategories(),
     ]);
+
+    const products = searchResult.products;
 
     // Filter categories that match the search term
     const matchingCategories = allCategories

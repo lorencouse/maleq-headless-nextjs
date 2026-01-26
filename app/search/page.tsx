@@ -1,6 +1,9 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { searchProducts, getHierarchicalCategories } from '@/lib/products/combined-service';
+import {
+  searchProducts,
+  getHierarchicalCategories,
+} from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import ShopSearch from '@/components/shop/ShopSearch';
 
@@ -24,11 +27,22 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const query = params.q || '';
 
-  // Get products and hierarchical categories
-  const [products, categories] = await Promise.all([
-    query ? searchProducts(query, 24) : Promise.resolve([]),
+  // Get products and categories
+  // For search, filter options come from the search results
+  const [searchResult, categories] = await Promise.all([
+    query ? searchProducts(query, { limit: 24, offset: 0 }) : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, total: 0 }, availableFilters: undefined }),
     getHierarchicalCategories(),
   ]);
+
+  const products = searchResult.products;
+  const hasMore = searchResult.pageInfo.hasNextPage;
+  const totalResults = searchResult.pageInfo.total;
+
+  // Use filter options from search results (only shows filters relevant to the search)
+  const availableFilters = searchResult.availableFilters;
+  const brands = availableFilters?.brands ?? [];
+  const colors = availableFilters?.colors ?? [];
+  const materials = availableFilters?.materials ?? [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -42,11 +56,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <ShopSearch />
           </Suspense>
         </div>
-        <p className="text-muted-foreground">
-          {query
-            ? `${products.length} ${products.length === 1 ? 'product' : 'products'} found`
-            : 'Enter a search term to find products'}
-        </p>
+        {!query && (
+          <p className="text-muted-foreground">
+            Enter a search term to find products
+          </p>
+        )}
       </div>
 
       {/* Search Results */}
@@ -56,8 +70,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             <ShopPageClient
               initialProducts={products}
               categories={categories}
-              hasMore={false}
+              brands={brands}
+              colors={colors}
+              materials={materials}
+              hasMore={hasMore}
               searchQuery={query}
+              initialTotal={totalResults}
             />
           </Suspense>
         ) : (
