@@ -94,7 +94,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     productsResult = await getAllProducts({ limit: 24 });
   }
 
-  const { products, pageInfo, total: initialTotal, availableFilters } = productsResult;
+  const { products, pageInfo, total: searchTotal, availableFilters } = productsResult;
 
   // Also fetch sale products for featured section (only when no search/filters active)
   const saleProductsPromise = !hasSearchOrFilters
@@ -113,6 +113,30 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const brands = availableFilters?.brands ?? globalBrands;
   const colors = availableFilters?.colors ?? globalColors;
   const materials = availableFilters?.materials ?? globalMaterials;
+
+  // Helper to find category count recursively
+  function findCategoryCount(cats: typeof categories, slug: string): number | null {
+    for (const cat of cats) {
+      if (cat.slug === slug) return cat.count;
+      if (cat.children.length > 0) {
+        const found = findCategoryCount(cat.children, slug);
+        if (found !== null) return found;
+      }
+    }
+    return null;
+  }
+
+  // Calculate initial total for display
+  // For search: use searchTotal
+  // For category filter: use category count from taxonomy
+  // For other filters: show current page count (we don't have exact totals)
+  let initialTotal: number | undefined = searchTotal;
+  if (!initialTotal && category) {
+    const categoryCount = findCategoryCount(categories, category);
+    if (categoryCount !== null) {
+      initialTotal = categoryCount;
+    }
+  }
 
   // Show featured sections only when no search or filters are active
   const showFeaturedSections = !hasSearchOrFilters;
