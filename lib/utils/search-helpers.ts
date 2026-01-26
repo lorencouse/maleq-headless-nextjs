@@ -133,11 +133,17 @@ export function textContainsTerm(text: string | null | undefined, searchTerm: st
   // Direct match
   if (textLower.includes(termLower)) return true;
 
-  // Stem match - check if any word in text matches the stem
+  // Check each word in the text for stem or fuzzy match
   const textWords = textLower.split(/\s+/);
   for (const word of textWords) {
     const cleanWord = word.replace(/[^a-z0-9]/g, '');
+    if (!cleanWord) continue;
+
+    // Stem match
     if (simpleStem(cleanWord) === termStem) return true;
+
+    // Fuzzy match using Levenshtein distance
+    if (isFuzzyMatch(cleanWord, termLower)) return true;
   }
 
   return false;
