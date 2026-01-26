@@ -80,11 +80,20 @@ export default function ShopPageClient({
     searchParams.has('browse')
   );
 
-  // Track the search/category context for which we have filter options
-  // Only update filter options when search query or category changes
-  const filterOptionsContext = useRef<{ search?: string; category?: string }>({
+  // Track base filter options (from search/category context)
+  // These are the full list of options before any brand/color/material filters are applied
+  const baseFilterOptions = useRef<{
+    search?: string;
+    category?: string;
+    brands: FilterOption[];
+    materials: FilterOption[];
+    colors: FilterOption[];
+  }>({
     search: searchQuery,
     category: searchParams.get('category') || undefined,
+    brands: brands,
+    materials: materials,
+    colors: colors,
   });
 
   // Extract filter options from products
@@ -294,28 +303,56 @@ export default function ShopPageClient({
           if (data.total !== undefined) {
             setTotalCount(data.total);
           }
-          // Only update filter options when search query or category changes
-          // This keeps the filter list stable when applying brand/material/price filters
-          const currentContext = filterOptionsContext.current;
-          const contextChanged =
-            currentContext.search !== filterParams.search ||
-            currentContext.category !== filterParams.category;
 
-          if (contextChanged || (!currentContext.search && !currentContext.category)) {
+          // Faceted search: update filter options based on context and current selections
+          const baseContext = baseFilterOptions.current;
+          const contextChanged =
+            baseContext.search !== filterParams.search ||
+            baseContext.category !== filterParams.category;
+
+          if (contextChanged) {
+            // Search/category changed - update base options
             if (data.availableBrands) {
+              baseFilterOptions.current.brands = data.availableBrands;
               setAvailableBrands(data.availableBrands);
             }
             if (data.availableMaterials) {
+              baseFilterOptions.current.materials = data.availableMaterials;
               setAvailableMaterials(data.availableMaterials);
             }
             if (data.availableColors) {
+              baseFilterOptions.current.colors = data.availableColors;
               setAvailableColors(data.availableColors);
             }
-            // Update the context
-            filterOptionsContext.current = {
-              search: filterParams.search,
-              category: filterParams.category,
-            };
+            baseFilterOptions.current.search = filterParams.search;
+            baseFilterOptions.current.category = filterParams.category;
+          } else if (data.availableBrands || data.availableMaterials || data.availableColors) {
+            // Same context but filters applied - faceted update
+            // Keep base options for selected filters, update others from filtered results
+            const hasBrandFilter = !!filterParams.brand;
+            const hasMaterialFilter = !!filterParams.material;
+            const hasColorFilter = !!filterParams.color;
+
+            // Brands: show base options if brand is selected, otherwise show filtered
+            if (hasBrandFilter) {
+              setAvailableBrands(baseFilterOptions.current.brands);
+            } else if (data.availableBrands) {
+              setAvailableBrands(data.availableBrands);
+            }
+
+            // Materials: show base options if material is selected, otherwise show filtered
+            if (hasMaterialFilter) {
+              setAvailableMaterials(baseFilterOptions.current.materials);
+            } else if (data.availableMaterials) {
+              setAvailableMaterials(data.availableMaterials);
+            }
+
+            // Colors: show base options if color is selected, otherwise show filtered
+            if (hasColorFilter) {
+              setAvailableColors(baseFilterOptions.current.colors);
+            } else if (data.availableColors) {
+              setAvailableColors(data.availableColors);
+            }
           }
         }
         setHasMore(data.pageInfo?.hasNextPage || false);

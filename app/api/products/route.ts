@@ -196,8 +196,10 @@ export async function GET(request: NextRequest) {
       products = paginatedProducts;
     } else if (hasFilters) {
       // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
+      // Fetch more products to extract available filter options for faceted search
+      const filterFetchLimit = Math.max(fetchLimit * 4, 100);
       const result = await getFilteredProducts({
-        limit: fetchLimit,
+        limit: filterFetchLimit,
         after,
         category,
         brand,
@@ -208,8 +210,16 @@ export async function GET(request: NextRequest) {
         inStock,
         onSale,
       });
-      products = result.products;
-      pageInfo = result.pageInfo;
+
+      // Extract available filter options from all fetched products
+      availableFilters = extractFilterOptions(result.products);
+
+      // Paginate the results
+      products = result.products.slice(0, limit);
+      pageInfo = {
+        hasNextPage: result.products.length > limit || result.pageInfo.hasNextPage,
+        endCursor: result.pageInfo.endCursor,
+      };
     } else {
       // No filters - use basic query
       const result = await getAllProducts({ limit: fetchLimit, after });
