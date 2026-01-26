@@ -35,6 +35,20 @@ export const PRODUCT_FIELDS = gql`
         slug
       }
     }
+    productBrands {
+      nodes {
+        id
+        name
+        slug
+      }
+    }
+    productMaterials {
+      nodes {
+        id
+        name
+        slug
+      }
+    }
     ... on SimpleProduct {
       price
       regularPrice
@@ -42,6 +56,15 @@ export const PRODUCT_FIELDS = gql`
       onSale
       stockStatus
       stockQuantity
+      attributes {
+        nodes {
+          id
+          name
+          options
+          variation
+          visible
+        }
+      }
     }
     ... on VariableProduct {
       price
@@ -50,12 +73,30 @@ export const PRODUCT_FIELDS = gql`
       onSale
       stockStatus
       stockQuantity
+      attributes {
+        nodes {
+          id
+          name
+          options
+          variation
+          visible
+        }
+      }
     }
     ... on ExternalProduct {
       price
       regularPrice
       salePrice
       onSale
+      attributes {
+        nodes {
+          id
+          name
+          options
+          variation
+          visible
+        }
+      }
     }
     ... on GroupProduct {
       price

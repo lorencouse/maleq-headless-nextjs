@@ -1,6 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllProducts, getFilteredProducts, UnifiedProduct } from '@/lib/products/combined-service';
+import { getAllProducts, getFilteredProducts, searchProducts, UnifiedProduct, FilterOption } from '@/lib/products/combined-service';
 import { parseIntSafe, parseFloatSafe } from '@/lib/api/validation';
+
+/**
+ * Extract available filter options from a list of products
+ * Returns unique brands, materials, and colors with counts
+ */
+function extractFilterOptions(products: UnifiedProduct[]): {
+  availableBrands: FilterOption[];
+  availableMaterials: FilterOption[];
+  availableColors: FilterOption[];
+} {
+  const brandMap = new Map<string, { name: string; slug: string; count: number }>();
+  const materialMap = new Map<string, { name: string; slug: string; count: number }>();
+  const colorMap = new Map<string, { name: string; slug: string; count: number }>();
+
+  for (const product of products) {
+    // Extract brands from productBrands taxonomy
+    if (product.brands) {
+      for (const brand of product.brands) {
+        const existing = brandMap.get(brand.slug);
+        if (existing) {
+          existing.count++;
+        } else {
+          brandMap.set(brand.slug, { name: brand.name, slug: brand.slug, count: 1 });
+        }
+      }
+    }
+
+    // Extract materials from productMaterials taxonomy
+    if (product.materials) {
+      for (const material of product.materials) {
+        const existing = materialMap.get(material.slug);
+        if (existing) {
+          existing.count++;
+        } else {
+          materialMap.set(material.slug, { name: material.name, slug: material.slug, count: 1 });
+        }
+      }
+    }
+
+    // Extract colors from attributes
+    if (product.attributes) {
+      for (const attr of product.attributes) {
+        const attrNameLower = attr.name.toLowerCase();
+
+        if (attrNameLower === 'color' || attrNameLower === 'pa_color') {
+          for (const option of attr.options) {
+            const slug = option.toLowerCase().replace(/\s+/g, '-');
+            const existing = colorMap.get(slug);
+            if (existing) {
+              existing.count++;
+            } else {
+              colorMap.set(slug, { name: option, slug, count: 1 });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Convert maps to arrays and sort by name
+  const availableBrands = Array.from(brandMap.values())
+    .map(b => ({ id: b.slug, name: b.name, slug: b.slug, count: b.count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const availableMaterials = Array.from(materialMap.values())
+    .map(m => ({ id: m.slug, name: m.name, slug: m.slug, count: m.count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  const availableColors = Array.from(colorMap.values())
+    .map(c => ({ id: c.slug, name: c.name, slug: c.slug, count: c.count }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  return { availableBrands, availableMaterials, availableColors };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +82,7 @@ export async function GET(request: NextRequest) {
 
     const limit = parseIntSafe(searchParams.get('limit'), 24, 1, 100);
     const after = searchParams.get('after') || undefined;
+    const offset = parseIntSafe(searchParams.get('offset'), 0, 0, 10000);
     const category = searchParams.get('category') || undefined;
     const brand = searchParams.get('brand') || undefined;
     const color = searchParams.get('color') || undefined;
@@ -41,15 +116,84 @@ export async function GET(request: NextRequest) {
 
     let products: UnifiedProduct[];
     let pageInfo;
+    let totalCount: number | undefined;
+    let availableFilters: ReturnType<typeof extractFilterOptions> | undefined;
 
     // For dimension filters, we need to fetch more products to filter client-side
     const fetchLimit = hasDimensionFilters ? Math.max(limit * 4, 100) : limit;
 
     if (search) {
-      // Search query uses basic getAllProducts
-      const result = await getAllProducts({ limit: fetchLimit, after, search });
+      // Search uses advanced relevance ranking with offset-based pagination
+      // Fetch more results to allow for post-filtering
+      const searchFetchLimit = hasFilters ? Math.max(fetchLimit * 3, 100) : fetchLimit;
+      const result = await searchProducts(search, { limit: searchFetchLimit, offset: 0 });
       products = result.products;
-      pageInfo = result.pageInfo;
+
+      // Apply filters to search results
+      if (hasFilters) {
+        products = products.filter((product) => {
+          // Category filter
+          if (category && !product.categories.some(c => c.slug === category)) {
+            return false;
+          }
+
+          // Brand filter (check productBrands taxonomy)
+          if (brand) {
+            const productBrand = product.brands?.find(b => b.slug === brand);
+            if (!productBrand) return false;
+          }
+
+          // Price filter
+          const productPrice = parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0');
+          if (minPrice !== undefined && minPrice > 0 && productPrice < minPrice) {
+            return false;
+          }
+          if (maxPrice !== undefined && maxPrice < 10000 && productPrice > maxPrice) {
+            return false;
+          }
+
+          // Stock filter
+          if (inStock && product.stockStatus !== 'IN_STOCK') {
+            return false;
+          }
+
+          // On sale filter
+          if (onSale && !product.onSale) {
+            return false;
+          }
+
+          // Color filter (check attributes)
+          if (color) {
+            const colorAttr = product.attributes?.find(a => a.name.toLowerCase() === 'color');
+            if (!colorAttr || !colorAttr.options.some(o => o.toLowerCase() === color.toLowerCase())) {
+              return false;
+            }
+          }
+
+          // Material filter (check productMaterials taxonomy)
+          if (material) {
+            const productMaterial = product.materials?.find(m => m.slug === material);
+            if (!productMaterial) return false;
+          }
+
+          return true;
+        });
+      }
+
+      // Track total count and extract available filters before pagination
+      totalCount = products.length;
+      availableFilters = extractFilterOptions(products);
+
+      // Apply offset-based pagination after filtering
+      const startIndex = offset;
+      const endIndex = offset + limit;
+      const paginatedProducts = products.slice(startIndex, endIndex);
+
+      pageInfo = {
+        hasNextPage: endIndex < totalCount,
+        endCursor: null, // Search uses offset, not cursor
+      };
+      products = paginatedProducts;
     } else if (hasFilters) {
       // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
       const result = await getFilteredProducts({
@@ -140,7 +284,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       products,
       pageInfo,
-      total: products.length,
+      total: totalCount ?? products.length,
+      ...(availableFilters && {
+        availableBrands: availableFilters.availableBrands,
+        availableMaterials: availableFilters.availableMaterials,
+        availableColors: availableFilters.availableColors,
+      }),
     });
   } catch (error) {
     console.error('Error fetching products:', error);

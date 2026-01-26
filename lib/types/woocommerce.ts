@@ -144,6 +144,7 @@ export interface GraphQLProduct {
   productCategories?: GraphQLNodeConnection<GraphQLCategory>;
   productTags?: GraphQLNodeConnection<GraphQLTag>;
   productBrands?: GraphQLNodeConnection<GraphQLBrand>;
+  productMaterials?: GraphQLNodeConnection<GraphQLMaterial>;
   attributes?: GraphQLNodeConnection<GraphQLAttribute>;
   variations?: GraphQLNodeConnection<GraphQLVariation>;
 }
@@ -173,6 +174,12 @@ export interface GraphQLBrand {
   slug: string;
 }
 
+export interface GraphQLMaterial {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface GraphQLAttribute {
   name: string;
   options?: string[];
@@ -182,6 +189,7 @@ export interface GraphQLAttribute {
 
 export interface GraphQLVariation {
   id: string;
+  databaseId: number;
   name: string;
   sku?: string | null;
   description?: string | null;

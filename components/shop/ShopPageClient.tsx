@@ -18,6 +18,7 @@ interface ShopPageClientProps {
   searchQuery?: string;
   initialCategory?: string;
   initialBrand?: string;
+  initialTotal?: number;
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -45,6 +46,7 @@ export default function ShopPageClient({
   searchQuery,
   initialCategory,
   initialBrand,
+  initialTotal,
 }: ShopPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -53,10 +55,91 @@ export default function ShopPageClient({
   const [products, setProducts] = useState(initialProducts);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialHasMore);
+  const [totalCount, setTotalCount] = useState(initialTotal ?? initialProducts.length);
   const [cursor, setCursor] = useState<string | null>(null);
+  const [searchOffset, setSearchOffset] = useState(initialProducts.length); // Track offset for search pagination
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [availableBrands, setAvailableBrands] = useState<FilterOption[]>(brands);
+  const [availableMaterials, setAvailableMaterials] = useState<FilterOption[]>(materials);
+  const [availableColors, setAvailableColors] = useState<FilterOption[]>(colors);
   const isInitialMount = useRef(true);
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
+  const hasExtractedInitialFilters = useRef(false);
+
+  // Extract filter options from products
+  const extractFilterOptions = useCallback((productList: UnifiedProduct[]) => {
+    const brandMap = new Map<string, { name: string; slug: string; count: number }>();
+    const materialMap = new Map<string, { name: string; slug: string; count: number }>();
+    const colorMap = new Map<string, { name: string; slug: string; count: number }>();
+
+    for (const product of productList) {
+      // Extract brands from productBrands taxonomy
+      if (product.brands) {
+        for (const brand of product.brands) {
+          const existing = brandMap.get(brand.slug);
+          if (existing) {
+            existing.count++;
+          } else {
+            brandMap.set(brand.slug, { name: brand.name, slug: brand.slug, count: 1 });
+          }
+        }
+      }
+
+      // Extract materials from productMaterials taxonomy
+      if (product.materials) {
+        for (const material of product.materials) {
+          const existing = materialMap.get(material.slug);
+          if (existing) {
+            existing.count++;
+          } else {
+            materialMap.set(material.slug, { name: material.name, slug: material.slug, count: 1 });
+          }
+        }
+      }
+
+      // Extract colors from attributes
+      if (product.attributes) {
+        for (const attr of product.attributes) {
+          const attrNameLower = attr.name.toLowerCase();
+
+          if (attrNameLower === 'color' || attrNameLower === 'pa_color') {
+            for (const option of attr.options) {
+              const slug = option.toLowerCase().replace(/\s+/g, '-');
+              const existing = colorMap.get(slug);
+              if (existing) {
+                existing.count++;
+              } else {
+                colorMap.set(slug, { name: option, slug, count: 1 });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      brands: Array.from(brandMap.values())
+        .map(b => ({ id: b.slug, name: b.name, slug: b.slug, count: b.count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      materials: Array.from(materialMap.values())
+        .map(m => ({ id: m.slug, name: m.name, slug: m.slug, count: m.count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      colors: Array.from(colorMap.values())
+        .map(c => ({ id: c.slug, name: c.name, slug: c.slug, count: c.count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+  }, []);
+
+  // Extract filter options from initial products for search pages
+  useEffect(() => {
+    if (searchQuery && initialProducts.length > 0 && !hasExtractedInitialFilters.current) {
+      hasExtractedInitialFilters.current = true;
+      const extracted = extractFilterOptions(initialProducts);
+      if (extracted.brands.length > 0) setAvailableBrands(extracted.brands);
+      if (extracted.materials.length > 0) setAvailableMaterials(extracted.materials);
+      if (extracted.colors.length > 0) setAvailableColors(extracted.colors);
+    }
+  }, [searchQuery, initialProducts, extractFilterOptions]);
 
   // Parse filters from URL (use initialCategory/initialBrand as fallback for category/brand pages)
   const categoryFilter = searchParams.get('category') || initialCategory || '';
@@ -92,6 +175,9 @@ export default function ShopPageClient({
   const updateURL = useCallback((newFilters: FilterState, newSort: SortOption) => {
     const params = new URLSearchParams();
 
+    // Preserve search query if present
+    if (searchQuery) params.set('q', searchQuery);
+
     if (newFilters.category) params.set('category', newFilters.category);
     if (newFilters.brand) params.set('brand', newFilters.brand);
     if (newFilters.color) params.set('color', newFilters.color);
@@ -108,7 +194,7 @@ export default function ShopPageClient({
 
     const queryString = params.toString();
     router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
-  }, [pathname, router]);
+  }, [pathname, router, searchQuery]);
 
   // Fetch products from API
   const fetchProducts = useCallback(async (
@@ -128,14 +214,19 @@ export default function ShopPageClient({
       sort: SortOption;
       search?: string;
     },
-    afterCursor?: string | null
+    afterCursor?: string | null,
+    offset?: number // For search pagination
   ) => {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('limit', '24');
 
-      if (afterCursor) {
+      // For search queries, use offset-based pagination
+      if (filterParams.search && offset !== undefined && offset > 0) {
+        params.set('offset', offset.toString());
+      } else if (afterCursor) {
+        // For non-search queries, use cursor-based pagination
         params.set('after', afterCursor);
       }
 
@@ -158,10 +249,32 @@ export default function ShopPageClient({
       const data = await response.json();
 
       if (data.products) {
-        if (afterCursor) {
+        // For search "load more", append products and update offset
+        if (filterParams.search && offset !== undefined && offset > 0) {
+          setProducts((prev) => [...prev, ...data.products]);
+          setSearchOffset((prev) => prev + data.products.length);
+        } else if (afterCursor) {
           setProducts((prev) => [...prev, ...data.products]);
         } else {
           setProducts(data.products);
+          // Reset search offset when doing a fresh search
+          if (filterParams.search) {
+            setSearchOffset(data.products.length);
+          }
+          // Update total count for fresh queries (not load more)
+          if (data.total !== undefined) {
+            setTotalCount(data.total);
+          }
+          // Update available filter options if provided (for search queries)
+          if (data.availableBrands) {
+            setAvailableBrands(data.availableBrands);
+          }
+          if (data.availableMaterials) {
+            setAvailableMaterials(data.availableMaterials);
+          }
+          if (data.availableColors) {
+            setAvailableColors(data.availableColors);
+          }
         }
         setHasMore(data.pageInfo?.hasNextPage || false);
         setCursor(data.pageInfo?.endCursor || null);
@@ -260,22 +373,44 @@ export default function ShopPageClient({
   // Load more products
   const handleLoadMore = () => {
     if (isLoading || !hasMore) return;
-    fetchProducts({
-      category: categoryFilter,
-      brand: brandFilter,
-      color: colorFilter,
-      material: materialFilter,
-      minPrice: minPriceFilter,
-      maxPrice: maxPriceFilter,
-      minLength: minLengthFilter,
-      maxLength: maxLengthFilter,
-      minWeight: minWeightFilter,
-      maxWeight: maxWeightFilter,
-      inStock: inStockFilter,
-      onSale: onSaleFilter,
-      sort: sortBy,
-      search: searchQuery,
-    }, cursor);
+
+    // For search queries, use offset-based pagination
+    if (searchQuery) {
+      fetchProducts({
+        category: categoryFilter,
+        brand: brandFilter,
+        color: colorFilter,
+        material: materialFilter,
+        minPrice: minPriceFilter,
+        maxPrice: maxPriceFilter,
+        minLength: minLengthFilter,
+        maxLength: maxLengthFilter,
+        minWeight: minWeightFilter,
+        maxWeight: maxWeightFilter,
+        inStock: inStockFilter,
+        onSale: onSaleFilter,
+        sort: sortBy,
+        search: searchQuery,
+      }, null, searchOffset);
+    } else {
+      // For non-search queries, use cursor-based pagination
+      fetchProducts({
+        category: categoryFilter,
+        brand: brandFilter,
+        color: colorFilter,
+        material: materialFilter,
+        minPrice: minPriceFilter,
+        maxPrice: maxPriceFilter,
+        minLength: minLengthFilter,
+        maxLength: maxLengthFilter,
+        minWeight: minWeightFilter,
+        maxWeight: maxWeightFilter,
+        inStock: inStockFilter,
+        onSale: onSaleFilter,
+        sort: sortBy,
+        search: searchQuery,
+      }, cursor);
+    }
   };
 
   // Close mobile filter on resize
@@ -310,9 +445,9 @@ export default function ShopPageClient({
           <h2 className="text-lg font-semibold text-foreground mb-4">Filters</h2>
           <FilterPanel
             categories={categories}
-            brands={brands}
-            colors={colors}
-            materials={materials}
+            brands={availableBrands}
+            colors={availableColors}
+            materials={availableMaterials}
             filters={filters}
             onFilterChange={handleFilterChange}
             onClearFilters={handleClearFilters}
@@ -338,7 +473,7 @@ export default function ShopPageClient({
 
             {/* Results Count */}
             <p className="text-sm text-muted-foreground">
-              {products.length} {products.length === 1 ? 'product' : 'products'}
+              {totalCount} {totalCount === 1 ? 'product' : 'products'}
             </p>
           </div>
 
@@ -350,9 +485,9 @@ export default function ShopPageClient({
         <ActiveFilters
           filters={filters}
           categories={categories}
-          brands={brands}
-          colors={colors}
-          materials={materials}
+          brands={availableBrands.length > 0 ? availableBrands : brands}
+          colors={availableColors.length > 0 ? availableColors : colors}
+          materials={availableMaterials.length > 0 ? availableMaterials : materials}
           onRemoveFilter={handleRemoveFilter}
           onClearAll={handleClearFilters}
         />
@@ -436,9 +571,9 @@ export default function ShopPageClient({
           <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-background z-50 lg:hidden overflow-y-auto">
             <FilterPanel
               categories={categories}
-              brands={brands}
-              colors={colors}
-              materials={materials}
+              brands={availableBrands}
+              colors={availableColors}
+              materials={availableMaterials}
               filters={filters}
               onFilterChange={handleFilterChange}
               onClearFilters={handleClearFilters}

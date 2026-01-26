@@ -3,6 +3,7 @@ import type { ApolloQueryResult } from '@apollo/client';
 import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
+  SEARCH_PRODUCTS,
   SEARCH_PRODUCTS_BY_TITLE,
   GET_ALL_PRODUCT_CATEGORIES,
   FILTER_PRODUCTS,
@@ -81,6 +82,16 @@ export interface UnifiedProduct {
     name: string;
     slug: string;
   }[];
+  brands?: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+  materials?: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
   type: string;
   averageRating?: number;
   reviewCount?: number;
@@ -138,6 +149,8 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
   const galleryNodes = getNodes<GraphQLImage>(gqlProduct.galleryImages);
   const categoryNodes = getNodes<GraphQLCategory>(gqlProduct.productCategories);
   const tagNodes = getNodes<GraphQLTag>(gqlProduct.productTags);
+  const brandNodes = getNodes<{ id: string; name: string; slug: string }>(gqlProduct.productBrands);
+  const materialNodes = getNodes<{ id: string; name: string; slug: string }>(gqlProduct.productMaterials);
   const attributeNodes = getNodes<GraphQLAttribute>(gqlProduct.attributes);
   const variationNodes = getNodes<GraphQLVariation>(gqlProduct.variations);
 
@@ -178,6 +191,16 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
       id: tag.id,
       name: tag.name,
       slug: tag.slug,
+    })),
+    brands: brandNodes.map((brand) => ({
+      id: brand.id,
+      name: brand.name,
+      slug: brand.slug,
+    })),
+    materials: materialNodes.map((material) => ({
+      id: material.id,
+      name: material.name,
+      slug: material.slug,
     })),
     type: product.type || 'SIMPLE',
     averageRating: product.averageRating,
@@ -422,11 +445,187 @@ export async function getHierarchicalCategories(): Promise<HierarchicalCategory[
 }
 
 /**
- * Search products
+ * Search products with advanced relevance ranking
+ * Features: stemming, multi-word search, fuzzy matching, relevance scoring
+ *
+ * Ranking priority:
+ * 1. All search terms in title (highest)
+ * 2. Some search terms in title
+ * 3. Content matches sorted by relevance score
+ *
+ * Uses offset-based pagination since results are re-ranked client-side
  */
-export async function searchProducts(searchTerm: string, limit = 12): Promise<UnifiedProduct[]> {
-  const result = await getAllProducts({ search: searchTerm, limit });
-  return result.products;
+export async function searchProducts(
+  searchTerm: string,
+  options: { limit?: number; offset?: number } = {}
+): Promise<{
+  products: UnifiedProduct[];
+  pageInfo: { hasNextPage: boolean; total: number };
+  availableFilters?: {
+    brands: FilterOption[];
+    materials: FilterOption[];
+    colors: FilterOption[];
+  };
+}> {
+  const { limit = 24, offset = 0 } = options;
+
+  // Import search helpers dynamically to avoid circular deps
+  const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm } = await import('@/lib/utils/search-helpers');
+
+  const searchTerms = tokenizeQuery(searchTerm);
+  if (searchTerms.length === 0) {
+    return { products: [], pageInfo: { hasNextPage: false, total: 0 } };
+  }
+
+  try {
+    // Fetch more results than needed for ranking (we'll paginate after sorting)
+    // This ensures we have enough results to rank properly
+    const fetchLimit = Math.max(100, (offset + limit) * 2);
+    const primaryTerm = searchTerms[0];
+
+    const [titleResult, contentResult] = await Promise.all([
+      getClient().query({
+        query: SEARCH_PRODUCTS_BY_TITLE,
+        variables: { titleSearch: primaryTerm, first: fetchLimit },
+        fetchPolicy: 'no-cache',
+      }),
+      getClient().query({
+        query: SEARCH_PRODUCTS,
+        variables: { search: searchTerm, first: fetchLimit },
+        fetchPolicy: 'no-cache',
+      }),
+    ]);
+
+    const titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
+    const contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
+
+    // Convert to unified format and deduplicate
+    const allProductsMap = new Map<string, UnifiedProduct>();
+
+    for (const p of titleProducts) {
+      const unified = convertWooProduct(p);
+      allProductsMap.set(unified.id, unified);
+    }
+    for (const p of contentProducts) {
+      const unified = convertWooProduct(p);
+      if (!allProductsMap.has(unified.id)) {
+        allProductsMap.set(unified.id, unified);
+      }
+    }
+
+    const allProducts = Array.from(allProductsMap.values());
+
+    // Score and categorize products
+    const scored = allProducts.map(product => {
+      const titleText = product.name;
+      const allInTitle = matchesAllTerms(titleText, searchTerms);
+      const anyInTitle = matchesAnyTerm(titleText, searchTerms);
+      const relevanceScore = calculateRelevanceScore(product, searchTerms);
+
+      return {
+        product,
+        allInTitle,
+        anyInTitle,
+        score: relevanceScore,
+      };
+    });
+
+    // Sort by: all terms in title > any term in title > relevance score
+    scored.sort((a, b) => {
+      // All terms in title first
+      if (a.allInTitle && !b.allInTitle) return -1;
+      if (!a.allInTitle && b.allInTitle) return 1;
+
+      // Then any term in title
+      if (a.anyInTitle && !b.anyInTitle) return -1;
+      if (!a.anyInTitle && b.anyInTitle) return 1;
+
+      // Then by score
+      return b.score - a.score;
+    });
+
+    // Filter out products with zero relevance
+    const relevant = scored.filter(s => s.score > 0 || s.anyInTitle);
+    const total = relevant.length;
+    const allRelevantProducts = relevant.map(s => s.product);
+
+    // Extract available filter options from ALL relevant products (before pagination)
+    const brandMap = new Map<string, { name: string; slug: string; count: number }>();
+    const materialMap = new Map<string, { name: string; slug: string; count: number }>();
+    const colorMap = new Map<string, { name: string; slug: string; count: number }>();
+
+    for (const product of allRelevantProducts) {
+      // Extract brands from productBrands taxonomy
+      if (product.brands) {
+        for (const brand of product.brands) {
+          const existing = brandMap.get(brand.slug);
+          if (existing) {
+            existing.count++;
+          } else {
+            brandMap.set(brand.slug, { name: brand.name, slug: brand.slug, count: 1 });
+          }
+        }
+      }
+
+      // Extract materials from productMaterials taxonomy
+      if (product.materials) {
+        for (const material of product.materials) {
+          const existing = materialMap.get(material.slug);
+          if (existing) {
+            existing.count++;
+          } else {
+            materialMap.set(material.slug, { name: material.name, slug: material.slug, count: 1 });
+          }
+        }
+      }
+
+      // Extract colors from attributes
+      if (product.attributes) {
+        for (const attr of product.attributes) {
+          const attrNameLower = attr.name.toLowerCase();
+
+          if (attrNameLower === 'color' || attrNameLower === 'pa_color') {
+            for (const option of attr.options) {
+              const slug = option.toLowerCase().replace(/\s+/g, '-');
+              const existing = colorMap.get(slug);
+              if (existing) {
+                existing.count++;
+              } else {
+                colorMap.set(slug, { name: option, slug, count: 1 });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    const availableFilters = {
+      brands: Array.from(brandMap.values())
+        .map(b => ({ id: b.slug, name: b.name, slug: b.slug, count: b.count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      materials: Array.from(materialMap.values())
+        .map(m => ({ id: m.slug, name: m.name, slug: m.slug, count: m.count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+      colors: Array.from(colorMap.values())
+        .map(c => ({ id: c.slug, name: c.name, slug: c.slug, count: c.count }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    };
+
+    // Apply offset and limit for pagination
+    const paginatedProducts = allRelevantProducts.slice(offset, offset + limit);
+
+    return {
+      products: paginatedProducts,
+      pageInfo: {
+        hasNextPage: offset + limit < total,
+        total,
+      },
+      availableFilters,
+    };
+  } catch (error) {
+    console.error('Error searching products:', error);
+    return { products: [], pageInfo: { hasNextPage: false, total: 0 } };
+  }
 }
 
 /**
