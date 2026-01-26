@@ -193,7 +193,7 @@ export default function ShopPageClient({
     if (newSort !== 'newest') params.set('sort', newSort);
 
     const queryString = params.toString();
-    router.push(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+    router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
   }, [pathname, router, searchQuery]);
 
   // Fetch products from API
@@ -362,7 +362,7 @@ export default function ShopPageClient({
     if (sortBy !== 'newest') params.set('sort', sortBy);
 
     const queryString = params.toString();
-    router.push(queryString ? `/shop?${queryString}` : '/shop', { scroll: false });
+    router.replace(queryString ? `/shop?${queryString}` : '/shop', { scroll: false });
   };
 
   // Remove single filter
