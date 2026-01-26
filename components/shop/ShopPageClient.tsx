@@ -342,9 +342,15 @@ export default function ShopPageClient({
     updateURL(DEFAULT_FILTERS, sortBy);
   };
 
-  // Clear search and go back to shop
+  // Clear search - go to /search (empty state) or /shop depending on context
   const handleClearSearch = () => {
-    router.push('/shop');
+    // If we're on the search page, stay there with empty query
+    // Otherwise go to shop
+    if (pathname === '/search') {
+      router.push('/search');
+    } else {
+      router.push('/shop');
+    }
   };
 
   // Remove single filter
