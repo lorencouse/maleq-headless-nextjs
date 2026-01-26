@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_ALL_POSTS } from '@/lib/queries/posts';
-import { getAllProducts, getHierarchicalCategories } from '@/lib/products/combined-service';
+import { getAllProducts, getHierarchicalCategories, getTrendingProducts } from '@/lib/products/combined-service';
 import ProductCard from '@/components/shop/ProductCard';
 import BlogCard from '@/components/blog/BlogCard';
 import HomeHero from '@/components/home/HomeHero';
@@ -11,6 +11,7 @@ import TestimonialsSection from '@/components/home/TestimonialsSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import SocialSection from '@/components/home/SocialSection';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
+import ProductCarousel from '@/components/product/ProductCarousel';
 
 export const metadata: Metadata = {
   title: 'Male Q | Premium Adult Products - Fast & Discreet Shipping',
@@ -27,7 +28,7 @@ export const revalidate = 86400;
 
 export default async function Home() {
   // Fetch data in parallel
-  const [postsData, productsResult, categories] = await Promise.all([
+  const [postsData, productsResult, categories, trendingProducts] = await Promise.all([
     getClient().query({
       query: GET_ALL_POSTS,
       variables: { first: 6 },
@@ -35,6 +36,7 @@ export default async function Home() {
     }),
     getAllProducts({ limit: 8 }),
     getHierarchicalCategories(),
+    getTrendingProducts(12),
   ]);
 
   const posts = postsData?.data?.posts?.nodes || [];
@@ -77,6 +79,31 @@ export default async function Home() {
           </div>
         )}
       </section>
+
+      {/* Trending Products Carousel */}
+      {trendingProducts.length > 0 && (
+        <section className="py-12 bg-muted/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <ProductCarousel
+              products={trendingProducts}
+              title="Trending Now"
+              subtitle="Limited time offers on popular items"
+              badge={
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full">
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clipRule="evenodd" />
+                  </svg>
+                  Hot Deals
+                </span>
+              }
+              viewAllLink="/shop?onSale=true"
+              showGradients
+              showMobileHint
+              variant="section"
+            />
+          </div>
+        </section>
+      )}
 
       {/* Why Shop With Us */}
       <HomeBenefits />
