@@ -2,11 +2,40 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import AccountLayout from '@/components/account/AccountLayout';
+import ProductCard from '@/components/shop/ProductCard';
 import { useWishlistStore, WishlistItem } from '@/lib/store/wishlist-store';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import { UnifiedProduct } from '@/lib/products/combined-service';
+
+/**
+ * Convert a WishlistItem to UnifiedProduct format for ProductCard
+ */
+function wishlistItemToProduct(item: WishlistItem): UnifiedProduct {
+  const priceString = `$${item.price.toFixed(2)}`;
+  const regularPriceString = item.regularPrice ? `$${item.regularPrice.toFixed(2)}` : priceString;
+  const isOnSale = item.regularPrice ? item.price < item.regularPrice : false;
+
+  return {
+    id: item.productId,
+    databaseId: parseInt(item.productId) || 0,
+    name: item.name,
+    slug: item.slug,
+    description: null,
+    shortDescription: null,
+    sku: null,
+    price: priceString,
+    regularPrice: regularPriceString,
+    salePrice: isOnSale ? priceString : null,
+    onSale: isOnSale,
+    stockStatus: item.inStock ? 'IN_STOCK' : 'OUT_OF_STOCK',
+    stockQuantity: null,
+    image: item.image || null,
+    categories: [],
+    type: 'SIMPLE',
+  };
+}
 
 export default function WishlistPage() {
   const { items, removeItem, clearWishlist, hydrate } = useWishlistStore();
@@ -18,24 +47,9 @@ export default function WishlistPage() {
     setMounted(true);
   }, [hydrate]);
 
-  const handleAddToCart = (item: WishlistItem) => {
-    try {
-      addToCart({
-        productId: item.productId,
-        name: item.name,
-        slug: item.slug,
-        sku: '',
-        price: item.price,
-        regularPrice: item.regularPrice || item.price,
-        quantity: 1,
-        image: item.image,
-        inStock: item.inStock,
-        maxQuantity: 999,
-      });
-      showSuccess(`${item.name} added to cart!`);
-    } catch (error) {
-      showError('Failed to add to cart');
-    }
+  const handleRemove = (productId: string) => {
+    removeItem(productId);
+    showSuccess('Removed from wishlist');
   };
 
   const handleAddAllToCart = () => {
@@ -61,10 +75,6 @@ export default function WishlistPage() {
     });
 
     showSuccess(`${inStockItems.length} items added to cart!`);
-  };
-
-  const formatPrice = (price: number) => {
-    return `$${price.toFixed(2)}`;
   };
 
   if (!mounted) {
@@ -147,83 +157,12 @@ export default function WishlistPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => (
-              <div
+              <ProductCard
                 key={item.id}
-                className="bg-card border border-border rounded-lg overflow-hidden group"
-              >
-                {/* Product Image */}
-                <Link href={`/product/${item.slug}`}>
-                  <div className="relative aspect-square bg-muted">
-                    {item.image ? (
-                      <Image
-                        src={item.image.url}
-                        alt={item.image.altText || item.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-muted-foreground">
-                        No Image
-                      </div>
-                    )}
-                    {!item.inStock && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="bg-foreground text-background px-3 py-1 text-sm font-medium rounded">
-                          Out of Stock
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-
-                {/* Product Info */}
-                <div className="p-4">
-                  <div className="border-b-2 border-primary pb-2 mb-2">
-                    <Link href={`/product/${item.slug}`}>
-                      <h3 className="heading-plain font-medium text-foreground line-clamp-2 hover:text-primary transition-colors">
-                        {item.name}
-                      </h3>
-                    </Link>
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-lg font-bold text-foreground">
-                      {formatPrice(item.price)}
-                    </span>
-                    {item.regularPrice && item.regularPrice > item.price && (
-                      <span className="text-sm text-muted-foreground line-through">
-                        {formatPrice(item.regularPrice)}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleAddToCart(item)}
-                      disabled={!item.inStock}
-                      className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Add to Cart
-                    </button>
-                    <button
-                      onClick={() => removeItem(item.productId)}
-                      className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                      aria-label="Remove from wishlist"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                product={wishlistItemToProduct(item)}
+                isWishlist
+                onRemove={handleRemove}
+              />
             ))}
           </div>
         )}

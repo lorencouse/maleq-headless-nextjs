@@ -61,20 +61,22 @@ const navItems = [
 export default function AccountLayout({ children }: AccountLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, isAuthenticated, logout, hasHydrated } = useAuthStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Only redirect after hydration is complete
+    if (hasHydrated && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router]);
 
   const handleLogout = () => {
     logout();
     router.push('/');
   };
 
-  if (!isAuthenticated) {
+  // Show loading while hydrating or if not authenticated
+  if (!hasHydrated || !isAuthenticated) {
     return (
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>

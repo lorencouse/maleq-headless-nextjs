@@ -204,10 +204,10 @@ export default function OrdersPage() {
                 {/* Order Actions */}
                 <div className="px-4 py-3 border-t border-border flex justify-end gap-3">
                   <Link
-                    href={`/order-confirmation/${order.id}`}
-                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                    href={`/account/orders/${order.id}`}
+                    className="px-4 py-2 text-sm font-medium text-primary hover:text-primary-hover transition-colors cursor-pointer"
                   >
-                    View Details
+                    View Details & Track
                   </Link>
                 </div>
               </div>
