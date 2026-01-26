@@ -467,6 +467,8 @@ export async function searchProducts(
     materials: FilterOption[];
     colors: FilterOption[];
   };
+  /** If spelling was corrected, this contains the corrected term */
+  correctedTerm?: string;
 }> {
   const { limit = 24, offset = 0 } = options;
 
@@ -512,6 +514,7 @@ export async function searchProducts(
 
     let titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
     let contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
+    let correctedTerm: string | undefined;
 
     // If no results, try spelling corrections
     if (titleProducts.length === 0 && contentProducts.length === 0 && uniqueVariants.length > 1) {
@@ -536,6 +539,8 @@ export async function searchProducts(
         if (variantTitleProducts.length > 0 || variantContentProducts.length > 0) {
           titleProducts = variantTitleProducts;
           contentProducts = variantContentProducts;
+          // Track the spelling correction used
+          correctedTerm = variant;
           // Update search terms to use the successful variant for scoring
           searchTerms[0] = variant;
           break;
@@ -688,6 +693,7 @@ export async function searchProducts(
         total,
       },
       availableFilters,
+      correctedTerm,
     };
   } catch (error) {
     console.error('Error searching products:', error);

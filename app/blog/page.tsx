@@ -25,9 +25,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { q: searchQuery } = await searchParams;
 
   // Use search if provided, otherwise get all posts
-  const { posts, pageInfo } = searchQuery
+  const result = searchQuery
     ? await searchBlogPosts(searchQuery, { first: 20 })
     : await getBlogPosts({ first: 12 });
+
+  const { posts, pageInfo, correctedTerm } = result;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -44,6 +46,18 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             <BlogSearch />
           </Suspense>
         </div>
+
+        {/* Spelling Correction Notice */}
+        {correctedTerm && searchQuery && (
+          <div className="mb-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <p className="text-sm text-foreground">
+              Showing results for <span className="font-semibold text-primary">&quot;{correctedTerm}&quot;</span>
+              <span className="text-muted-foreground ml-1">
+                (searched for &quot;{searchQuery}&quot;)
+              </span>
+            </p>
+          </div>
+        )}
 
         {/* Search results indicator */}
         {searchQuery && (

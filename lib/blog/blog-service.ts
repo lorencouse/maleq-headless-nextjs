@@ -30,6 +30,8 @@ export interface BlogSearchResult {
     hasNextPage: boolean;
     endCursor: string | null;
   };
+  /** If spelling was corrected, this contains the corrected term */
+  correctedTerm?: string;
 }
 
 export interface BlogCategory {
@@ -103,6 +105,7 @@ export async function searchBlogPosts(
 
     let titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
     let contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+    let correctedTerm: string | undefined;
 
     // If no results, try spelling corrections
     if (titlePosts.length === 0 && contentPosts.length === 0 && uniqueVariants.length > 1) {
@@ -135,6 +138,8 @@ export async function searchBlogPosts(
           titlePosts = variantTitlePosts;
           contentPosts = variantContentPosts;
           titleResult = variantTitleResult;
+          // Track the spelling correction used
+          correctedTerm = variant;
           // Update search terms to match the successful variant
           searchTerms = [variant];
           break;
@@ -176,6 +181,7 @@ export async function searchBlogPosts(
             hasNextPage: fuseResults.length > first,
             endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
           },
+          correctedTerm,
         };
       }
     }
@@ -219,6 +225,7 @@ export async function searchBlogPosts(
         hasNextPage: relevantPosts.length >= first,
         endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
       },
+      correctedTerm,
     };
   } catch (error) {
     console.error('Error searching blog posts:', error);

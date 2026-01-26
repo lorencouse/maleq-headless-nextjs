@@ -133,6 +133,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     total?: number;
     availableFilters?: Awaited<ReturnType<typeof searchProducts>>['availableFilters'];
+    correctedTerm?: string;
   };
 
   if (searchQuery) {
@@ -143,6 +144,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       pageInfo: { hasNextPage: searchResult.pageInfo.hasNextPage, endCursor: null },
       total: searchResult.pageInfo.total,
       availableFilters: searchResult.availableFilters,
+      correctedTerm: searchResult.correctedTerm,
     };
   } else if (hasFilters) {
     // For category-only filtering, fetch more products to extract available filter options
@@ -190,7 +192,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     productsResult = await getAllProducts({ limit: 24 });
   }
 
-  const { products, pageInfo, total: searchTotal, availableFilters } = productsResult;
+  const { products, pageInfo, total: searchTotal, availableFilters, correctedTerm } = productsResult;
 
   // Also fetch sale products for featured section (only when no search/filters active)
   const saleProductsPromise = !hasSearchOrFilters
@@ -278,6 +280,19 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             <ShopSearch />
           </Suspense>
         </div>
+
+        {/* Spelling Correction Notice */}
+        {correctedTerm && searchQuery && (
+          <div className="mb-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+            <p className="text-sm text-foreground">
+              Showing results for <span className="font-semibold text-primary">&quot;{correctedTerm}&quot;</span>
+              <span className="text-muted-foreground ml-1">
+                (searched for &quot;{searchQuery}&quot;)
+              </span>
+            </p>
+          </div>
+        )}
+
         <p className="text-muted-foreground">
           {searchQuery
             ? `Found ${initialTotal ?? products.length} products`
