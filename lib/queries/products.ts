@@ -484,3 +484,18 @@ export const FILTER_PRODUCTS = gql`
     }
   }
 `;
+
+// Search products by category slug (for category-based search results)
+export const SEARCH_PRODUCTS_BY_CATEGORY = gql`
+  ${PRODUCT_FIELDS}
+  query SearchProductsByCategory($category: String!, $first: Int = 200) {
+    products(
+      first: $first
+      where: { category: $category, orderby: { field: DATE, order: DESC } }
+    ) {
+      nodes {
+        ...ProductFields
+      }
+    }
+  }
+`;

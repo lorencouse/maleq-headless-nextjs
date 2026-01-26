@@ -6,6 +6,7 @@ import ShopHero from '@/components/shop/ShopHero';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
+import DidYouMean from '@/components/search/DidYouMean';
 
 /**
  * Extract available filter options from a list of products
@@ -282,24 +283,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         </div>
 
         {/* Did you mean? suggestions when no results */}
-        {suggestions && suggestions.length > 0 && searchQuery && products.length === 0 && (
-          <div className="mb-3 p-3 bg-muted/50 border border-border rounded-lg flex justify-end">
-            <p className="text-sm text-foreground">
-              Did you mean:{' '}
-              {suggestions.map((suggestion, index) => (
-                <span key={suggestion}>
-                  <a
-                    href={`/shop?q=${encodeURIComponent(suggestion)}`}
-                    className="font-semibold text-primary hover:text-primary/80 underline"
-                  >
-                    {suggestion}
-                  </a>
-                  {index < suggestions.length - 1 && ', '}
-                </span>
-              ))}
-              ?
-            </p>
-          </div>
+        {suggestions && searchQuery && products.length === 0 && (
+          <DidYouMean suggestions={suggestions} basePath="/shop" />
         )}
 
         <p className="text-muted-foreground">

@@ -292,6 +292,11 @@ Account
 
 
 - Add add-on kit missing image
-fix product gallery images to be single row carrosel 
-On product cards, make title, price, and add to cart section float to bottom of card
 
+## Recently Completed (2026-01-25)
+
+- [x] Fix product gallery images to be single row carousel (Completed 2026-01-25)
+- [x] On product cards, make title, price, and add to cart section float to bottom of card (Completed 2026-01-25)
+- [x] Create reusable DidYouMean component with instant search integration (Completed 2026-01-25)
+- [x] Add % off calculation to sale badge (e.g. "20% Off") (Completed 2026-01-25)
+- [x] Fix Load More button for search results pagination (Completed 2026-01-25)

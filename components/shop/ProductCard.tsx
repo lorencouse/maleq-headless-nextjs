@@ -7,7 +7,7 @@ import { UnifiedProduct } from '@/lib/products/combined-service';
 import QuickAddButton from './QuickAddButton';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import QuickViewModal from '@/components/product/QuickViewModal';
-import { formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
+import { formatPrice, parsePrice, calculatePercentOff } from '@/lib/utils/woocommerce-format';
 
 interface ProductCardProps {
   product: UnifiedProduct;
@@ -25,9 +25,9 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
   const isVariable = product.type === 'VARIABLE';
 
   return (
-    <div className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group'>
-      <Link href={`/product/${product.slug}`} className='product-card-link'>
-        {/* Product Image */}
+    <div className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group h-full flex flex-col'>
+      {/* Product Image - Link wrapper */}
+      <Link href={`/product/${product.slug}`} className='product-card-link block'>
         <div className='relative h-64 w-full overflow-hidden bg-background'>
           {product.image ? (
             <Image
@@ -46,7 +46,10 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
           {/* Sale Badge */}
           {product.onSale && (
             <div className='absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded'>
-              SALE
+              {(() => {
+                const percentOff = calculatePercentOff(product.regularPrice, product.salePrice);
+                return percentOff ? `${percentOff}% OFF` : 'SALE';
+              })()}
             </div>
           )}
 
@@ -56,61 +59,64 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
               OUT OF STOCK
             </div>
           )}
-
-        </div>
-
-        <div className='p-4'>
-          {/* Product Name */}
-          <div className='relative pb-2 mb-2'>
-            <h3 className='heading-plain text-base font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
-              {product.name}
-            </h3>
-            {/* Red underline (always visible) */}
-            <span className='absolute bottom-0 left-0 w-full h-0.5 bg-primary' />
-            {/* Black underline (expands on hover) */}
-            <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
-          </div>
-
-          {/* Price */}
-          <div className='flex items-center gap-2'>
-            {product.onSale && product.regularPrice ? (
-              <>
-                <span className='text-lg font-bold text-primary'>
-                  {formatPrice(product.salePrice)}
-                </span>
-                <span className='text-sm text-muted-foreground line-through'>
-                  {formatPrice(product.regularPrice)}
-                </span>
-              </>
-            ) : (
-              <span className='text-lg font-bold text-foreground'>
-                {formatPrice(product.price || product.regularPrice)}
-              </span>
-            )}
-          </div>
-
-          {/* Stock Status */}
-          {product.stockStatus === 'LOW_STOCK' && product.stockQuantity && (
-            <div className='mt-2 text-xs text-warning'>
-              Only {product.stockQuantity} left in stock
-            </div>
-          )}
-
-          {/* Variation Count */}
-          {isVariable &&
-            product.variations &&
-            product.variations.length > 0 && (
-              <div className='mt-2 text-xs text-primary font-medium'>
-                {product.variations.length}{' '}
-                {product.variations.length === 1 ? 'option' : 'options'}{' '}
-                available
-              </div>
-            )}
         </div>
       </Link>
 
-      {/* Add to Cart Button + Mobile Actions */}
-      <div className='p-4 pt-0'>
+      {/* Content section - grows to push footer down */}
+      <Link href={`/product/${product.slug}`} className='product-card-link flex-1 flex flex-col p-4'>
+        {/* Product Name */}
+        <div className='relative pb-2 mb-2'>
+          <h3 className='heading-plain text-base font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
+            {product.name}
+          </h3>
+          {/* Red underline (always visible) */}
+          <span className='absolute bottom-0 left-0 w-full h-0.5 bg-primary' />
+          {/* Black underline (expands on hover) */}
+          <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
+        </div>
+
+        {/* Spacer to push price and info to bottom */}
+        <div className='flex-1' />
+
+        {/* Stock Status */}
+        {product.stockStatus === 'LOW_STOCK' && product.stockQuantity && (
+          <div className='mb-2 text-xs text-warning'>
+            Only {product.stockQuantity} left in stock
+          </div>
+        )}
+
+        {/* Variation Count */}
+        {isVariable &&
+          product.variations &&
+          product.variations.length > 0 && (
+            <div className='mb-2 text-xs text-primary font-medium'>
+              {product.variations.length}{' '}
+              {product.variations.length === 1 ? 'option' : 'options'}{' '}
+              available
+            </div>
+          )}
+
+        {/* Price - at bottom of content section */}
+        <div className='flex items-center gap-2'>
+          {product.onSale && product.regularPrice ? (
+            <>
+              <span className='text-lg font-bold text-primary'>
+                {formatPrice(product.salePrice)}
+              </span>
+              <span className='text-sm text-muted-foreground line-through'>
+                {formatPrice(product.regularPrice)}
+              </span>
+            </>
+          ) : (
+            <span className='text-lg font-bold text-foreground'>
+              {formatPrice(product.price || product.regularPrice)}
+            </span>
+          )}
+        </div>
+      </Link>
+
+      {/* Add to Cart Button + Actions - Fixed at bottom */}
+      <div className='p-4 pt-0 mt-auto'>
         <div className='flex gap-2'>
           <div className='flex-1'>
             <QuickAddButton product={product} />

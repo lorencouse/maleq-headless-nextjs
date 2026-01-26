@@ -153,6 +153,7 @@ export default function SearchAutocomplete({
   >([]);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // Load recent searches from localStorage
   useEffect(() => {
@@ -175,6 +176,7 @@ export default function SearchAutocomplete({
     setCategories([]);
     setPosts([]);
     setBlogCategories([]);
+    setSuggestions([]);
     setSelectedIndex(-1);
   }, [searchMode]);
 
@@ -185,6 +187,7 @@ export default function SearchAutocomplete({
       setCategories([]);
       setPosts([]);
       setBlogCategories([]);
+      setSuggestions([]);
       return;
     }
 
@@ -198,6 +201,7 @@ export default function SearchAutocomplete({
           const data = await response.json();
           setProducts(data.products || []);
           setCategories(data.categories || []);
+          setSuggestions(data.suggestions || []);
           setPosts([]);
           setBlogCategories([]);
         } else {
@@ -207,6 +211,7 @@ export default function SearchAutocomplete({
           const data = await response.json();
           setPosts(data.posts || []);
           setBlogCategories(data.categories || []);
+          setSuggestions(data.suggestions || []);
           setProducts([]);
           setCategories([]);
         }
@@ -629,6 +634,27 @@ export default function SearchAutocomplete({
                     No {searchMode === 'products' ? 'products' : 'articles'}{' '}
                     found for &quot;{query}&quot;
                   </p>
+                  {/* Did you mean? suggestions */}
+                  {suggestions.length > 0 && (
+                    <p className='text-sm text-muted-foreground mt-2'>
+                      Did you mean:{' '}
+                      {suggestions.map((suggestion, index) => (
+                        <span key={suggestion}>
+                          <button
+                            onClick={() => {
+                              setQuery(suggestion);
+                              handleSearch(suggestion);
+                            }}
+                            className='font-medium text-primary hover:text-primary/80 underline'
+                          >
+                            {suggestion}
+                          </button>
+                          {index < suggestions.length - 1 && ', '}
+                        </span>
+                      ))}
+                      ?
+                    </p>
+                  )}
                 </div>
               )}
 

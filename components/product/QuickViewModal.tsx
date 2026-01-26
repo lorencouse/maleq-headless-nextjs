@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { formatPrice, parsePrice } from '@/lib/utils/woocommerce-format';
+import { formatPrice, parsePrice, calculatePercentOff } from '@/lib/utils/woocommerce-format';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
 
@@ -144,7 +144,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 {/* Sale Badge */}
                 {product.onSale && (
                   <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
-                    SALE
+                    {(() => {
+                      const percentOff = calculatePercentOff(product.regularPrice, product.salePrice);
+                      return percentOff ? `${percentOff}% OFF` : 'SALE';
+                    })()}
                   </div>
                 )}
               </div>

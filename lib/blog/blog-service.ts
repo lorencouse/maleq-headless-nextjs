@@ -244,6 +244,7 @@ export async function getBlogSearchSuggestions(
 ): Promise<{
   posts: BlogSearchSuggestion[];
   categories: BlogCategory[];
+  suggestions?: string[];
 }> {
   if (!query || query.length < 2) {
     return { posts: [], categories: [] };
@@ -355,9 +356,20 @@ export async function getBlogSearchSuggestions(
     };
   });
 
+  // If no results found, check for spelling suggestions
+  let suggestions: string[] | undefined;
+  if (postSuggestions.length === 0 && matchingCategories.length === 0) {
+    const { correctBlogSearchTerm } = await import('@/lib/search/search-index');
+    const result = await correctBlogSearchTerm(query);
+    if (result.suggestions.length > 0) {
+      suggestions = result.suggestions;
+    }
+  }
+
   return {
     posts: postSuggestions,
     categories: matchingCategories,
+    suggestions,
   };
 }
 

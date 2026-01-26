@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
+import DidYouMean from '@/components/search/DidYouMean';
 
 export const metadata: Metadata = {
   title: 'Blog | Male Q',
@@ -48,24 +49,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         </div>
 
         {/* Did you mean? suggestions when no results */}
-        {suggestions && suggestions.length > 0 && searchQuery && posts.length === 0 && (
-          <div className="mb-3 p-3 bg-muted/50 border border-border rounded-lg flex justify-end">
-            <p className="text-sm text-foreground">
-              Did you mean:{' '}
-              {suggestions.map((suggestion, index) => (
-                <span key={suggestion}>
-                  <a
-                    href={`/blog?q=${encodeURIComponent(suggestion)}`}
-                    className="font-semibold text-primary hover:text-primary/80 underline"
-                  >
-                    {suggestion}
-                  </a>
-                  {index < suggestions.length - 1 && ', '}
-                </span>
-              ))}
-              ?
-            </p>
-          </div>
+        {suggestions && searchQuery && posts.length === 0 && (
+          <DidYouMean suggestions={suggestions} basePath="/blog" />
         )}
 
         {/* Search results indicator */}

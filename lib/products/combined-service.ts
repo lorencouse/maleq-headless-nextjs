@@ -6,6 +6,7 @@ import {
   GET_PRODUCTS_BY_CATEGORY,
   SEARCH_PRODUCTS,
   SEARCH_PRODUCTS_BY_TITLE,
+  SEARCH_PRODUCTS_BY_CATEGORY,
   GET_ALL_PRODUCT_CATEGORIES,
   FILTER_PRODUCTS,
   GET_HIERARCHICAL_CATEGORIES,
@@ -485,34 +486,67 @@ export async function searchProducts(
   }
 
   try {
-    // Fetch more results than needed for ranking (we'll paginate after sorting)
-    // This ensures we have enough results to rank properly
-    const fetchLimit = Math.max(100, (offset + limit) * 2);
     const primaryTerm = searchTerms[0];
+    const searchLower = searchQuery.toLowerCase();
 
-    // Search with corrected terms
-    const [titleResult, contentResult] = await Promise.all([
+    // 1. First, find categories that match the search term
+    const allCategories = await getProductCategories();
+    const matchingCategories = allCategories.filter(cat =>
+      cat.name.toLowerCase().includes(searchLower) ||
+      cat.slug.includes(searchLower)
+    );
+
+
+    // 2. Fetch products from multiple sources in parallel
+    const fetchPromises: Promise<{ data: { products?: { nodes: WooProduct[] } } }>[] = [
+      // Title search (highest priority)
       getClient().query({
         query: SEARCH_PRODUCTS_BY_TITLE,
-        variables: { titleSearch: primaryTerm, first: fetchLimit },
+        variables: { titleSearch: primaryTerm, first: 200 },
         fetchPolicy: 'no-cache',
       }),
+      // Content search
       getClient().query({
         query: SEARCH_PRODUCTS,
-        variables: { search: searchQuery, first: fetchLimit },
+        variables: { search: searchQuery, first: 200 },
         fetchPolicy: 'no-cache',
       }),
-    ]);
+    ];
 
-    const titleProducts: WooProduct[] = titleResult.data?.products?.nodes || [];
-    const contentProducts: WooProduct[] = contentResult.data?.products?.nodes || [];
+    // Add category searches for matching categories (limit to top 3 categories)
+    for (const cat of matchingCategories.slice(0, 3)) {
+      fetchPromises.push(
+        getClient().query({
+          query: SEARCH_PRODUCTS_BY_CATEGORY,
+          variables: { category: cat.slug, first: 200 },
+          fetchPolicy: 'no-cache',
+        })
+      );
+    }
 
-    // Convert to unified format and deduplicate
+    const results = await Promise.all(fetchPromises);
+
+    const titleProducts: WooProduct[] = results[0].data?.products?.nodes || [];
+    const contentProducts: WooProduct[] = results[1].data?.products?.nodes || [];
+    const categoryProducts: WooProduct[] = results.slice(2).flatMap(r => r.data?.products?.nodes || []);
+
+
+    // 3. Track which products came from which source for ranking
+    const titleIds = new Set(titleProducts.map(p => p.id));
+    const categoryIds = new Set(categoryProducts.map(p => p.id));
+
+    // 4. Convert and deduplicate
     const allProductsMap = new Map<string, UnifiedProduct>();
 
     for (const p of titleProducts) {
       const unified = convertWooProduct(p);
       allProductsMap.set(unified.id, unified);
+    }
+    for (const p of categoryProducts) {
+      const unified = convertWooProduct(p);
+      if (!allProductsMap.has(unified.id)) {
+        allProductsMap.set(unified.id, unified);
+      }
     }
     for (const p of contentProducts) {
       const unified = convertWooProduct(p);
@@ -523,62 +557,42 @@ export async function searchProducts(
 
     const allProducts = Array.from(allProductsMap.values());
 
-    // Use Fuse.js for fuzzy matching and relevance scoring
-    const fuse = new Fuse(allProducts, {
-      keys: [
-        { name: 'name', weight: 0.5 },
-        { name: 'shortDescription', weight: 0.3 },
-        { name: 'description', weight: 0.2 },
-      ],
-      threshold: 0.4, // 0 = exact match, 1 = match anything
-      distance: 100,
-      includeScore: true,
-      ignoreLocation: true,
-      useExtendedSearch: true,
-      findAllMatches: true,
+    // 5. Score and rank products
+    // Priority: title match > category match > description match
+    const scored = allProducts.map(product => {
+      const titleText = product.name.toLowerCase();
+      const hasTermInTitle = searchTerms.some(term => titleText.includes(term.toLowerCase()));
+      const allTermsInTitle = matchesAllTerms(titleText, searchTerms);
+      const isFromTitle = titleIds.has(product.id);
+      const isFromCategory = categoryIds.has(product.id);
+      const relevanceScore = calculateRelevanceScore(product, searchTerms);
+
+      // Calculate priority score
+      let priority = 0;
+      if (allTermsInTitle) priority = 100;
+      else if (hasTermInTitle) priority = 80;
+      else if (isFromTitle) priority = 60;
+      else if (isFromCategory) priority = 40;
+      else priority = 20;
+
+      return {
+        product,
+        priority,
+        relevanceScore,
+        isFromTitle,
+        isFromCategory,
+      };
     });
 
-    // Search with Fuse.js using the original search term
-    const fuseResults = fuse.search(searchTerm);
+    // Sort by priority first, then relevance score
+    scored.sort((a, b) => {
+      if (a.priority !== b.priority) return b.priority - a.priority;
+      return b.relevanceScore - a.relevanceScore;
+    });
 
-    // If Fuse found results, use those (already sorted by relevance)
-    // Otherwise fall back to all products that matched from DB
-    let allRelevantProducts: UnifiedProduct[];
-    let total: number;
-
-    if (fuseResults.length > 0) {
-      allRelevantProducts = fuseResults.map(r => r.item);
-      total = fuseResults.length;
-    } else {
-      // Fall back to custom scoring if Fuse finds nothing
-      const scored = allProducts.map(product => {
-        const titleText = product.name;
-        const allInTitle = matchesAllTerms(titleText, searchTerms);
-        const anyInTitle = matchesAnyTerm(titleText, searchTerms);
-        const relevanceScore = calculateRelevanceScore(product, searchTerms);
-
-        return {
-          product,
-          allInTitle,
-          anyInTitle,
-          score: relevanceScore,
-        };
-      });
-
-      // Sort by: all terms in title > any term in title > relevance score
-      scored.sort((a, b) => {
-        if (a.allInTitle && !b.allInTitle) return -1;
-        if (!a.allInTitle && b.allInTitle) return 1;
-        if (a.anyInTitle && !b.anyInTitle) return -1;
-        if (!a.anyInTitle && b.anyInTitle) return 1;
-        return b.score - a.score;
-      });
-
-      // Filter out products with zero relevance
-      const relevant = scored.filter(s => s.score > 0 || s.anyInTitle);
-      total = relevant.length;
-      allRelevantProducts = relevant.map(s => s.product);
-    }
+    // All products from our searches are relevant
+    const allRelevantProducts = scored.map(s => s.product);
+    const total = allRelevantProducts.length;
 
     // Extract available filter options from ALL relevant products (before pagination)
     const brandMap = new Map<string, { name: string; slug: string; count: number }>();
@@ -647,15 +661,11 @@ export async function searchProducts(
 
     // If no results found, check for spelling suggestions
     let suggestions: string[] | undefined;
-    console.log('[Search] Total results:', total, 'for term:', searchTerm);
     if (total === 0) {
-      console.log('[Search] No results, checking spelling suggestions...');
       const { correctProductSearchTerm } = await import('@/lib/search/search-index');
       const result = await correctProductSearchTerm(searchTerm);
-      console.log('[Search] Spell check result:', result);
       if (result.suggestions.length > 0) {
         suggestions = result.suggestions;
-        console.log('[Search] Using suggestions:', suggestions);
       }
     }
 

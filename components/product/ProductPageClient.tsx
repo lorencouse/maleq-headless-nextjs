@@ -17,6 +17,7 @@ import {
   formatAttributeValue,
   formatPrice,
   parsePrice,
+  calculatePercentOff,
 } from '@/lib/utils/woocommerce-format';
 import { VariationImage, SelectedVariation } from '@/lib/types/product';
 import { isAddonEligibleBySlug } from '@/lib/config/product-addons';
@@ -193,7 +194,10 @@ export default function ProductPageClient({
               {formatPrice(product.regularPrice)}
             </span>
             <span className='px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full'>
-              SALE
+              {(() => {
+                const percentOff = calculatePercentOff(product.regularPrice, product.salePrice);
+                return percentOff ? `${percentOff}% OFF` : 'SALE';
+              })()}
             </span>
           </div>
         ) : (

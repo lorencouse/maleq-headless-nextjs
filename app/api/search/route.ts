@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       products: productSuggestions,
       categories: matchingCategories,
+      suggestions: searchResult.suggestions || [],
     });
   } catch (error) {
     console.error('Search error:', error);

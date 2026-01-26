@@ -124,13 +124,13 @@ export async function GET(request: NextRequest) {
 
     if (search) {
       // Search uses advanced relevance ranking with offset-based pagination
-      // Fetch more results to allow for post-filtering
-      const searchFetchLimit = hasFilters ? Math.max(fetchLimit * 3, 100) : fetchLimit;
-      const result = await searchProducts(search, { limit: searchFetchLimit, offset: 0 });
-      products = result.products;
-
-      // Apply filters to search results
       if (hasFilters) {
+        // With filters: fetch all results from offset 0 to filter, then paginate
+        const searchFetchLimit = Math.max(limit * 10, 500);
+        const result = await searchProducts(search, { limit: searchFetchLimit, offset: 0 });
+        products = result.products;
+
+        // Apply filters to search results
         products = products.filter((product) => {
           // Category filter
           if (category && !product.categories.some(c => c.slug === category)) {
@@ -178,22 +178,36 @@ export async function GET(request: NextRequest) {
 
           return true;
         });
+
+        // Track total count and extract available filters before pagination
+        totalCount = products.length;
+        availableFilters = extractFilterOptions(products);
+
+        // Apply offset-based pagination after filtering
+        const startIndex = offset;
+        const endIndex = offset + limit;
+        const paginatedProducts = products.slice(startIndex, endIndex);
+
+        pageInfo = {
+          hasNextPage: endIndex < totalCount,
+          endCursor: null, // Search uses offset, not cursor
+        };
+        products = paginatedProducts;
+      } else {
+        // Without filters: pass offset directly to searchProducts for efficient pagination
+        const result = await searchProducts(search, { limit, offset });
+        products = result.products;
+        totalCount = result.pageInfo.total;
+        availableFilters = result.availableFilters ? {
+          availableBrands: result.availableFilters.brands,
+          availableMaterials: result.availableFilters.materials,
+          availableColors: result.availableFilters.colors,
+        } : undefined;
+        pageInfo = {
+          hasNextPage: result.pageInfo.hasNextPage,
+          endCursor: null,
+        };
       }
-
-      // Track total count and extract available filters before pagination
-      totalCount = products.length;
-      availableFilters = extractFilterOptions(products);
-
-      // Apply offset-based pagination after filtering
-      const startIndex = offset;
-      const endIndex = offset + limit;
-      const paginatedProducts = products.slice(startIndex, endIndex);
-
-      pageInfo = {
-        hasNextPage: endIndex < totalCount,
-        endCursor: null, // Search uses offset, not cursor
-      };
-      products = paginatedProducts;
     } else if (hasFilters) {
       // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
       // Fetch more products to extract available filter options for faceted search

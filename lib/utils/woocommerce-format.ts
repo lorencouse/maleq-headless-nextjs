@@ -88,6 +88,30 @@ export function parsePrice(price: string | null | undefined): number {
 }
 
 /**
+ * Calculate the percentage discount between regular and sale price
+ * Returns the percentage off as a whole number (e.g., 20 for 20% off)
+ * Returns null if calculation is not possible or prices are invalid
+ */
+export function calculatePercentOff(
+  regularPrice: string | null | undefined,
+  salePrice: string | null | undefined
+): number | null {
+  const regular = parsePrice(regularPrice);
+  const sale = parsePrice(salePrice);
+
+  // Validate prices
+  if (regular <= 0 || sale <= 0 || sale >= regular) {
+    return null;
+  }
+
+  // Calculate percentage off and round to nearest whole number
+  const percentOff = Math.round(((regular - sale) / regular) * 100);
+
+  // Only return if discount is meaningful (at least 1%)
+  return percentOff >= 1 ? percentOff : null;
+}
+
+/**
  * Format a variation name for display
  * Cleans up WooCommerce variation names which often include raw attribute values
  */

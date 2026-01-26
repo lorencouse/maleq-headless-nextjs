@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const { posts, categories } = await getBlogSearchSuggestions(query, limit);
+    const { posts, categories, suggestions } = await getBlogSearchSuggestions(query, limit);
 
     return NextResponse.json({
       posts,
       categories,
+      suggestions: suggestions || [],
     });
   } catch (error) {
     console.error('Blog search error:', error);
