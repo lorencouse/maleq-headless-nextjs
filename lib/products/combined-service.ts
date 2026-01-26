@@ -3,7 +3,7 @@ import type { ApolloQueryResult } from '@apollo/client';
 import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
-  SEARCH_PRODUCTS,
+  SEARCH_PRODUCTS_BY_TITLE,
   GET_ALL_PRODUCT_CATEGORIES,
   FILTER_PRODUCTS,
   GET_HIERARCHICAL_CATEGORIES,
@@ -99,6 +99,7 @@ export interface UnifiedProduct {
     stockStatus: string;
     stockQuantity: number | null;
     attributes: { name: string; value: string }[];
+    image?: { url: string; altText: string } | null;
   }[];
 }
 
@@ -190,6 +191,7 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
       const attrNodes = getNodes<GraphQLVariationAttribute>(v.attributes);
       return {
         id: v.id,
+        databaseId: v.databaseId,
         name: v.name,
         sku: v.sku || null,
         price: v.price || null,
@@ -225,8 +227,8 @@ export async function getAllProducts(params: {
       query = GET_PRODUCTS_BY_CATEGORY;
       variables = { ...variables, category };
     } else if (search) {
-      query = SEARCH_PRODUCTS;
-      variables = { ...variables, search };
+      query = SEARCH_PRODUCTS_BY_TITLE;
+      variables = { ...variables, titleSearch: search };
     }
 
     const { data } = await getClient().query({
@@ -638,6 +640,19 @@ export async function getProductsByBrand(
   const result = await getFilteredProducts({
     limit,
     brand: brandSlug,
+  });
+  return result.products;
+}
+
+/**
+ * Get trending products (on-sale products with stock)
+ * Returns products that are currently on sale and in stock
+ */
+export async function getTrendingProducts(limit = 12): Promise<UnifiedProduct[]> {
+  const result = await getFilteredProducts({
+    limit,
+    onSale: true,
+    inStock: true,
   });
   return result.products;
 }

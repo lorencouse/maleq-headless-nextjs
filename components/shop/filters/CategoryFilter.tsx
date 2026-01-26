@@ -23,7 +23,6 @@ export default function CategoryFilter({
   onSelect,
 }: CategoryFilterProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Toggle expansion state of a category
   const toggleExpand = useCallback((slug: string) => {
@@ -55,24 +54,6 @@ export default function CategoryFilter({
     if (category.slug === selectedCategory) return true;
     return category.children.some((child) => isInSelectedPath(child));
   }, [selectedCategory]);
-
-  // Flatten categories for search
-  const flattenCategories = useCallback((cats: HierarchicalCategory[]): HierarchicalCategory[] => {
-    return cats.reduce((acc: HierarchicalCategory[], cat) => {
-      acc.push(cat);
-      if (cat.children.length > 0) {
-        acc.push(...flattenCategories(cat.children));
-      }
-      return acc;
-    }, []);
-  }, []);
-
-  // Filter categories by search term
-  const searchResults = searchTerm
-    ? flattenCategories(categories).filter((cat) =>
-        cat.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : [];
 
   // Render a single category item
   const CategoryItem = ({
@@ -150,48 +131,8 @@ export default function CategoryFilter({
     );
   };
 
-  // Total category count for showing search
-  const totalCategories = flattenCategories(categories).length;
-
   return (
     <div className="pt-3 space-y-3">
-      {/* Search Categories */}
-      {totalCategories > 10 && (
-        <div className="relative">
-          <svg
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search..."
-            className="w-full pl-8 pr-8 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm placeholder:text-muted-foreground/60"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors z-10"
-              aria-label="Clear search"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
-      )}
-
       {/* All Categories Option */}
       <button
         onClick={() => onSelect('')}
@@ -206,34 +147,9 @@ export default function CategoryFilter({
 
       {/* Category List */}
       <div className="max-h-80 overflow-y-auto space-y-0.5">
-        {searchTerm ? (
-          // Search results (flat list)
-          <>
-            {searchResults.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleSelect(category.slug, category.children.length > 0)}
-                className={`flex items-center w-full px-3 py-2 text-sm rounded-lg transition-colors ${
-                  selectedCategory === category.slug
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                }`}
-              >
-                {category.name}
-              </button>
-            ))}
-            {searchResults.length === 0 && (
-              <p className="px-3 py-2 text-sm text-muted-foreground">
-                No categories found
-              </p>
-            )}
-          </>
-        ) : (
-          // Hierarchical tree view
-          categories.map((category) => (
-            <CategoryItem key={category.id} category={category} />
-          ))
-        )}
+        {categories.map((category) => (
+          <CategoryItem key={category.id} category={category} />
+        ))}
       </div>
     </div>
   );

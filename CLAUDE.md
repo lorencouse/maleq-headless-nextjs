@@ -33,3 +33,7 @@
 
 - **Always prefer WPGraphQL over WooCommerce REST API** - GraphQL is more reliable and doesn't have the same authentication issues as the REST API
 - For authenticated operations not available via GraphQL, use custom REST endpoints in `wordpress/mu-plugins/` that return data directly
+
+## Plugin Documentation
+
+- **When creating a new mu-plugin**, always update `docs/DEPLOYMENT_GUIDE.md` to add the plugin to the Required Plugins table and installation steps

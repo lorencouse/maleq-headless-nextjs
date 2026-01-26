@@ -4,16 +4,11 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { getClient } from '@/lib/apollo/client';
-import {
-  GET_POSTS_BY_CATEGORY,
-  GET_CATEGORY_BY_SLUG,
-  GET_ALL_CATEGORIES,
-  SEARCH_POSTS,
-} from '@/lib/queries/posts';
+import { GET_CATEGORY_BY_SLUG, GET_ALL_CATEGORIES } from '@/lib/queries/posts';
+import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
-import { Post } from '@/lib/types/wordpress';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -99,19 +94,9 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
   }
 
   // Fetch posts (with search if provided)
-  const postsResult = await getClient().query({
-    query: searchQuery ? SEARCH_POSTS : GET_POSTS_BY_CATEGORY,
-    variables: searchQuery
-      ? { search: searchQuery, first: 20, categoryName: slug }
-      : { categoryName: slug, first: 12 },
-    fetchPolicy: 'no-cache',
-  });
-
-  const posts: Post[] = postsResult.data?.posts?.nodes || [];
-  const pageInfo = postsResult.data?.posts?.pageInfo || {
-    hasNextPage: false,
-    endCursor: null,
-  };
+  const { posts, pageInfo } = searchQuery
+    ? await searchBlogPosts(searchQuery, { first: 20, categorySlug: slug })
+    : await getBlogPosts({ first: 12, categorySlug: slug });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -149,7 +134,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
           </div>
 
           <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
-            <BlogSearch categorySlug={slug} placeholder={`Search in ${category.name}...`} />
+            <BlogSearch />
           </Suspense>
         </div>
       </div>

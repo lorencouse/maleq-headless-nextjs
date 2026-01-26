@@ -1,10 +1,8 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { getClient } from '@/lib/apollo/client';
-import { GET_ALL_POSTS, SEARCH_POSTS } from '@/lib/queries/posts';
+import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
-import { Post } from '@/lib/types/wordpress';
 
 export const metadata: Metadata = {
   title: 'Blog | Male Q',
@@ -26,20 +24,10 @@ interface BlogPageProps {
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { q: searchQuery } = await searchParams;
 
-  // Use search query if provided, otherwise get all posts
-  const { data } = await getClient().query({
-    query: searchQuery ? SEARCH_POSTS : GET_ALL_POSTS,
-    variables: searchQuery
-      ? { search: searchQuery, first: 20 }
-      : { first: 12 },
-    fetchPolicy: 'no-cache',
-  });
-
-  const posts: Post[] = data?.posts?.nodes || [];
-  const pageInfo = data?.posts?.pageInfo || {
-    hasNextPage: false,
-    endCursor: null,
-  };
+  // Use search if provided, otherwise get all posts
+  const { posts, pageInfo } = searchQuery
+    ? await searchBlogPosts(searchQuery, { first: 20 })
+    : await getBlogPosts({ first: 12 });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

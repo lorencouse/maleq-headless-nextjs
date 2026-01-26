@@ -13,6 +13,7 @@ import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
+import ShopSearch from '@/components/shop/ShopSearch';
 
 interface BrandPageProps {
   params: Promise<{ slug: string }>;
@@ -148,9 +149,14 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
 
       {/* All Products Header */}
       <div id="products" className="mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-1">
-          {hasAdditionalFilters ? 'Filtered Results' : `All ${brand.name} Products`}
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-1">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground">
+            {hasAdditionalFilters ? 'Filtered Results' : `All ${brand.name} Products`}
+          </h2>
+          <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
+            <ShopSearch />
+          </Suspense>
+        </div>
         <p className="text-sm text-muted-foreground">
           {products.length} {products.length === 1 ? 'product' : 'products'}
           {hasAdditionalFilters ? ' matching your filters' : ' available'}

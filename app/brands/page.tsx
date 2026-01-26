@@ -1,6 +1,8 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { getBrands } from '@/lib/products/combined-service';
+import ShopSearch from '@/components/shop/ShopSearch';
 
 export const metadata: Metadata = {
   title: 'Shop by Brand | Male Q',
@@ -47,9 +49,14 @@ export default async function BrandsPage() {
           <span>/</span>
           <span className="text-foreground">Brands</span>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-          Shop by Brand
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
+            Shop by Brand
+          </h1>
+          <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
+            <ShopSearch />
+          </Suspense>
+        </div>
         <p className="text-muted-foreground max-w-2xl">
           Explore our curated selection of {brands.length} premium brands. From industry leaders to specialty manufacturers, find the quality products you're looking for.
         </p>

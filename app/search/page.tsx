@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { searchProducts, getHierarchicalCategories } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
+import ShopSearch from '@/components/shop/ShopSearch';
 
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -33,21 +34,19 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Header */}
       <div className="mb-8">
-        {query ? (
-          <>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Search results for &quot;{query}&quot;
-            </h1>
-            <p className="text-muted-foreground">
-              {products.length} {products.length === 1 ? 'product' : 'products'} found
-            </p>
-          </>
-        ) : (
-          <>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Search</h1>
-            <p className="text-muted-foreground">Enter a search term to find products</p>
-          </>
-        )}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+          <h1 className="text-3xl font-bold text-foreground">
+            {query ? `Search results for "${query}"` : 'Search'}
+          </h1>
+          <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
+            <ShopSearch />
+          </Suspense>
+        </div>
+        <p className="text-muted-foreground">
+          {query
+            ? `${products.length} ${products.length === 1 ? 'product' : 'products'} found`
+            : 'Enter a search term to find products'}
+        </p>
       </div>
 
       {/* Search Results */}

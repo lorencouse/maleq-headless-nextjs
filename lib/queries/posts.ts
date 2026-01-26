@@ -253,7 +253,7 @@ export const GET_RELATED_POSTS = gql`
   }
 `;
 
-// Search posts by keyword
+// Search posts by keyword (searches title, content, excerpt)
 export const SEARCH_POSTS = gql`
   ${POST_FIELDS}
   query SearchPosts($search: String!, $first: Int = 20, $categoryName: String) {
@@ -262,7 +262,30 @@ export const SEARCH_POSTS = gql`
       where: {
         search: $search
         categoryName: $categoryName
-        orderby: { field: RELEVANCE, order: DESC }
+        orderby: { field: DATE, order: DESC }
+      }
+    ) {
+      nodes {
+        ...PostFields
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+// Search posts by title only (more relevant results)
+export const SEARCH_POSTS_BY_TITLE = gql`
+  ${POST_FIELDS}
+  query SearchPostsByTitle($titleSearch: String!, $first: Int = 20, $categoryName: String) {
+    posts(
+      first: $first
+      where: {
+        titleSearch: $titleSearch
+        categoryName: $categoryName
+        orderby: { field: DATE, order: DESC }
       }
     ) {
       nodes {

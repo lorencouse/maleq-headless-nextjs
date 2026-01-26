@@ -5,6 +5,7 @@ import ShopPageClient from '@/components/shop/ShopPageClient';
 import ShopHero from '@/components/shop/ShopHero';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
+import ShopSearch from '@/components/shop/ShopSearch';
 
 export const metadata: Metadata = {
   title: 'Shop | Male Q',
@@ -98,9 +99,14 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
       {/* Page Header */}
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-          {hasFilters ? 'Filtered Results' : 'All Products'}
-        </h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
+            {hasFilters ? 'Filtered Results' : 'All Products'}
+          </h1>
+          <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
+            <ShopSearch />
+          </Suspense>
+        </div>
         <p className="text-muted-foreground">
           {hasFilters
             ? `Showing ${products.length} products matching your criteria`

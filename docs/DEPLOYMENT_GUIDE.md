@@ -31,6 +31,9 @@ Copy these files to: `wp-content/mu-plugins/`
 | `wpgraphql-render-blocks.php` | Renders Gutenberg blocks (including reusable blocks) in GraphQL content | `wordpress-snippets/wpgraphql-render-blocks.php` |
 | `maleq-relative-urls.php` | Converts URLs to relative paths for database portability across environments | `wordpress-snippets/relative-urls.php` |
 | `wholesale-price-display.php` | Displays wholesale price in WooCommerce product/variation edit panels | `wordpress/mu-plugins/wholesale-price-display.php` |
+| `maleq-auth-endpoints.php` | Authentication endpoints for login, password reset, and token validation | `wordpress/mu-plugins/maleq-auth-endpoints.php` |
+| `maleq-graphql-title-search.php` | Adds titleSearch parameter to WPGraphQL for searching posts by title only | `wordpress/mu-plugins/maleq-graphql-title-search.php` |
+| `maleq-order-tracking.php` | Order tracking management with admin UI, REST API, and customer email notifications | `wordpress/mu-plugins/maleq-order-tracking.php` |
 
 ### Installation Steps
 
@@ -43,6 +46,9 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress-snippets/wpgraphql-render-blocks.php /path/to/wordpress/wp-content/mu-plugins/wpgraphql-render-blocks.php
    cp wordpress-snippets/relative-urls.php /path/to/wordpress/wp-content/mu-plugins/maleq-relative-urls.php
    cp wordpress/mu-plugins/wholesale-price-display.php /path/to/wordpress/wp-content/mu-plugins/wholesale-price-display.php
+   cp wordpress/mu-plugins/maleq-auth-endpoints.php /path/to/wordpress/wp-content/mu-plugins/maleq-auth-endpoints.php
+   cp wordpress/mu-plugins/maleq-graphql-title-search.php /path/to/wordpress/wp-content/mu-plugins/maleq-graphql-title-search.php
+   cp wordpress/mu-plugins/maleq-order-tracking.php /path/to/wordpress/wp-content/mu-plugins/maleq-order-tracking.php
    ```
 
 2. **Run material migration** (one-time setup):

@@ -214,7 +214,7 @@ export const GET_PRODUCTS_BY_CATEGORY = gql`
   }
 `;
 
-// Search products
+// Search products (searches title, description, etc.)
 export const SEARCH_PRODUCTS = gql`
   ${PRODUCT_FIELDS}
   query SearchProducts($search: String!, $first: Int = 12, $after: String) {
@@ -222,6 +222,28 @@ export const SEARCH_PRODUCTS = gql`
       first: $first
       after: $after
       where: { search: $search, orderby: { field: DATE, order: DESC } }
+    ) {
+      nodes {
+        ...ProductFields
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
+
+// Search products by title/name only (more relevant results)
+export const SEARCH_PRODUCTS_BY_TITLE = gql`
+  ${PRODUCT_FIELDS}
+  query SearchProductsByTitle($titleSearch: String!, $first: Int = 12, $after: String) {
+    products(
+      first: $first
+      after: $after
+      where: { titleSearch: $titleSearch, orderby: { field: DATE, order: DESC } }
     ) {
       nodes {
         ...ProductFields
