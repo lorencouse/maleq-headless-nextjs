@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
+
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
+const TARGET_SIZE = 650;
+const WEBP_QUALITY = 90;
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,18 +36,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file size (max 2MB)
-    const maxSize = 2 * 1024 * 1024;
-    if (file.size > maxSize) {
+    // Validate file size (max 5MB)
+    if (file.size > MAX_UPLOAD_SIZE) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 2MB.' },
+        { error: 'File too large. Maximum size is 5MB.' },
         { status: 400 }
       );
     }
 
-    // Forward to WordPress custom endpoint
+    // Convert file to buffer for processing
+    const arrayBuffer = await file.arrayBuffer();
+    const inputBuffer = Buffer.from(arrayBuffer);
+
+    // Process image with sharp: resize to 650x650 and convert to WebP
+    const processedBuffer = await sharp(inputBuffer)
+      .resize(TARGET_SIZE, TARGET_SIZE, {
+        fit: 'cover',
+        position: 'center',
+      })
+      .webp({
+        quality: WEBP_QUALITY,
+        effort: 6,
+      })
+      .toBuffer();
+
+    // Create a new File object with the processed WebP image
+    const uint8Array = new Uint8Array(processedBuffer);
+    const processedBlob = new Blob([uint8Array], { type: 'image/webp' });
+    const processedFile = new File(
+      [processedBlob],
+      `avatar-${userId}.webp`,
+      { type: 'image/webp' }
+    );
+
+    // Forward processed image to WordPress custom endpoint
     const wpFormData = new FormData();
-    wpFormData.append('file', file);
+    wpFormData.append('file', processedFile);
     wpFormData.append('user_id', userId);
 
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/upload-avatar`, {
