@@ -80,6 +80,13 @@ export default function ShopPageClient({
     searchParams.has('browse')
   );
 
+  // Track the search/category context for which we have filter options
+  // Only update filter options when search query or category changes
+  const filterOptionsContext = useRef<{ search?: string; category?: string }>({
+    search: searchQuery,
+    category: searchParams.get('category') || undefined,
+  });
+
   // Extract filter options from products
   const extractFilterOptions = useCallback((productList: UnifiedProduct[]) => {
     const brandMap = new Map<string, { name: string; slug: string; count: number }>();
@@ -287,15 +294,28 @@ export default function ShopPageClient({
           if (data.total !== undefined) {
             setTotalCount(data.total);
           }
-          // Update available filter options if provided (for search queries)
-          if (data.availableBrands) {
-            setAvailableBrands(data.availableBrands);
-          }
-          if (data.availableMaterials) {
-            setAvailableMaterials(data.availableMaterials);
-          }
-          if (data.availableColors) {
-            setAvailableColors(data.availableColors);
+          // Only update filter options when search query or category changes
+          // This keeps the filter list stable when applying brand/material/price filters
+          const currentContext = filterOptionsContext.current;
+          const contextChanged =
+            currentContext.search !== filterParams.search ||
+            currentContext.category !== filterParams.category;
+
+          if (contextChanged || (!currentContext.search && !currentContext.category)) {
+            if (data.availableBrands) {
+              setAvailableBrands(data.availableBrands);
+            }
+            if (data.availableMaterials) {
+              setAvailableMaterials(data.availableMaterials);
+            }
+            if (data.availableColors) {
+              setAvailableColors(data.availableColors);
+            }
+            // Update the context
+            filterOptionsContext.current = {
+              search: filterParams.search,
+              category: filterParams.category,
+            };
           }
         }
         setHasMore(data.pageInfo?.hasNextPage || false);
