@@ -1,11 +1,39 @@
 /**
  * Search Index - Pre-indexes product/blog names for typo-tolerant spell checking
- * Uses Fuse.js to correct search terms BEFORE database queries
+ * Uses nspell (Hunspell) to identify misspelled words, then Fuse.js to find corrections
+ * Only corrects words that are NOT valid English words
  */
 
 import Fuse from 'fuse.js';
 import { getClient } from '@/lib/apollo/client';
 import { gql } from '@apollo/client';
+
+// Lazy-loaded English word dictionary for spell checking
+let englishWordSet: Set<string> | null = null;
+
+/**
+ * Get or load the English word dictionary
+ */
+async function getEnglishWordSet(): Promise<Set<string>> {
+  if (englishWordSet) return englishWordSet;
+
+  // Dynamic import to avoid blocking server startup
+  const { default: englishWords } = await import('an-array-of-english-words');
+  englishWordSet = new Set(englishWords);
+  return englishWordSet;
+}
+
+/**
+ * Check if a word is a valid English word
+ */
+async function isValidEnglishWord(word: string): Promise<boolean> {
+  const wordSet = await getEnglishWordSet();
+  return wordSet.has(word.toLowerCase());
+}
+
+// Cache for vocabulary sets - words that exist in our product/blog data
+let productVocabulary: Set<string> | null = null;
+let blogVocabulary: Set<string> | null = null;
 
 // Simple query to get all product names
 const GET_ALL_PRODUCT_NAMES = gql`
@@ -93,9 +121,16 @@ async function getProductNameIndex(): Promise<Fuse<NameItem>> {
       'massage', 'ring', 'pump', 'sleeve', 'lubricant', 'lube',
       'purple', 'pink', 'black', 'blue', 'red', 'white', 'green',
       'small', 'medium', 'large', 'mini', 'xl', 'rechargeable',
-      'waterproof', 'wireless', 'remote', 'control', 'beginner'
+      'waterproof', 'wireless', 'remote', 'control', 'beginner',
+      // Common English words that should NOT be corrected
+      'water', 'based', 'safe', 'body', 'skin', 'soft', 'hard',
+      'long', 'short', 'new', 'best', 'top', 'sale', 'free',
+      'size', 'color', 'type', 'style', 'brand', 'price'
     ];
     commonTerms.forEach(term => words.add(term));
+
+    // Store vocabulary for checking if words exist
+    productVocabulary = new Set(words);
 
     const allTerms = Array.from(words).map(name => ({ name }));
 
@@ -140,12 +175,19 @@ async function getPostTitleIndex(): Promise<Fuse<NameItem>> {
       });
     });
 
-    // Also add common blog terms
+    // Also add common blog terms and English words that should NOT be corrected
     const commonTerms = [
       'review', 'guide', 'tips', 'how', 'best', 'top', 'comparison',
-      'versus', 'beginner', 'advanced', 'complete', 'ultimate'
+      'versus', 'beginner', 'advanced', 'complete', 'ultimate',
+      // Common English words
+      'water', 'based', 'safe', 'body', 'skin', 'soft', 'hard',
+      'long', 'short', 'new', 'sale', 'free', 'size', 'color',
+      'type', 'style', 'brand', 'price', 'love', 'life', 'health'
     ];
     commonTerms.forEach(term => words.add(term));
+
+    // Store vocabulary for checking if words exist
+    blogVocabulary = new Set(words);
 
     const allTerms = Array.from(words).map(name => ({ name }));
 
@@ -230,6 +272,15 @@ export async function correctProductSearchTerm(
       continue;
     }
 
+    // IMPORTANT: Only try to correct words that are NOT valid English words
+    // AND not in our product vocabulary. This prevents "water" from being
+    // incorrectly changed to "power"
+    if (await isValidEnglishWord(word) || productVocabulary?.has(word)) {
+      correctedWords.push(word);
+      continue;
+    }
+
+    // Word not in vocabulary - try to find a correction
     const results = index.search(word);
     const bestMatch = findBestMatch(word, results);
 
@@ -270,6 +321,14 @@ export async function correctBlogSearchTerm(
       continue;
     }
 
+    // IMPORTANT: Only try to correct words that are NOT valid English words
+    // AND not in our blog vocabulary
+    if (await isValidEnglishWord(word) || blogVocabulary?.has(word)) {
+      correctedWords.push(word);
+      continue;
+    }
+
+    // Word not in vocabulary - try to find a correction
     const results = index.search(word);
     const bestMatch = findBestMatch(word, results);
 
