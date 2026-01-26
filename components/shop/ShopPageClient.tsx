@@ -342,15 +342,27 @@ export default function ShopPageClient({
     updateURL(DEFAULT_FILTERS, sortBy);
   };
 
-  // Clear search - go to /search (empty state) or /shop depending on context
+  // Clear search - go to /shop but keep other active filters
   const handleClearSearch = () => {
-    // If we're on the search page, stay there with empty query
-    // Otherwise go to shop
-    if (pathname === '/search') {
-      router.push('/search');
-    } else {
-      router.push('/shop');
-    }
+    const params = new URLSearchParams();
+
+    // Preserve all non-search filters
+    if (filters.category) params.set('category', filters.category);
+    if (filters.brand) params.set('brand', filters.brand);
+    if (filters.color) params.set('color', filters.color);
+    if (filters.material) params.set('material', filters.material);
+    if (filters.minPrice > 0) params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice < 500) params.set('maxPrice', filters.maxPrice.toString());
+    if (filters.minLength > 0) params.set('minLength', filters.minLength.toString());
+    if (filters.maxLength < 24) params.set('maxLength', filters.maxLength.toString());
+    if (filters.minWeight > 0) params.set('minWeight', filters.minWeight.toString());
+    if (filters.maxWeight < 10) params.set('maxWeight', filters.maxWeight.toString());
+    if (filters.inStock) params.set('inStock', 'true');
+    if (filters.onSale) params.set('onSale', 'true');
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+
+    const queryString = params.toString();
+    router.push(queryString ? `/shop?${queryString}` : '/shop');
   };
 
   // Remove single filter
