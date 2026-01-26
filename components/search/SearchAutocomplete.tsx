@@ -254,7 +254,7 @@ export default function SearchAutocomplete({
     if (term.trim()) {
       saveRecentSearch(term.trim());
       const url = searchMode === 'products'
-        ? `/search?q=${encodeURIComponent(term.trim())}`
+        ? `/shop?q=${encodeURIComponent(term.trim())}`
         : `/blog?q=${encodeURIComponent(term.trim())}`;
       setIsOpen(false);
       setQuery('');
