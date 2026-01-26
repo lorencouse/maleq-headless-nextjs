@@ -9,7 +9,7 @@ export default function LoginForm() {
   const router = useRouter();
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
 
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
@@ -22,7 +22,7 @@ export default function LoginForm() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ login: identifier, password }),
       });
 
       const data = await response.json();
@@ -47,18 +47,18 @@ export default function LoginForm() {
       )}
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-          Email Address
+        <label htmlFor="login" className="block text-sm font-medium text-foreground mb-2">
+          Email or Username
         </label>
         <input
-          type="email"
-          id="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          id="login"
+          value={identifier}
+          onChange={(e) => setIdentifier(e.target.value)}
           required
-          autoComplete="email"
+          autoComplete="username"
           className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
-          placeholder="your@email.com"
+          placeholder="Email or username"
         />
       </div>
 

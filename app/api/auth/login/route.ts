@@ -10,16 +10,17 @@ import { validateRequired, hasErrors } from '@/lib/api/validation';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { login, email, password } = body;
 
-    // Validate required fields
-    const errors = validateRequired(body, ['email', 'password']);
-    if (hasErrors(errors)) {
-      return validationError(errors);
+    // Support both 'login' and 'email' parameters for backwards compatibility
+    const identifier = login || email;
+
+    if (!identifier || !password) {
+      return validationError({ login: 'Email or username is required', password: 'Password is required' });
     }
 
     // Authenticate with WooCommerce/WordPress
-    const { customer, token } = await authenticateCustomer(email, password);
+    const { customer, token } = await authenticateCustomer(identifier, password);
 
     return NextResponse.json({
       success: true,

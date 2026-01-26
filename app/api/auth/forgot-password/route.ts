@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomerByEmail } from '@/lib/woocommerce/customers';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
@@ -15,43 +14,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if customer exists
-    const customer = await getCustomerByEmail(email);
+    // Use our custom WordPress endpoint for password reset
+    const resetUrl = `${WOOCOMMERCE_URL}/wp-json/maleq/v1/forgot-password`;
 
-    // Always return success to prevent email enumeration
-    // In production, only send email if customer exists
-    if (customer) {
-      // Trigger WordPress password reset
-      // This uses WordPress's built-in password reset functionality
-      try {
-        const resetUrl = `${WOOCOMMERCE_URL}/wp-json/custom/v1/forgot-password`;
+    const response = await fetch(resetUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
 
-        await fetch(resetUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email }),
-        });
-      } catch (err) {
-        // If custom endpoint doesn't exist, try the standard WP approach
-        // Log the error but don't expose it to the user
-        console.error('Password reset endpoint not available:', err);
-
-        // Alternative: Use WooCommerce's lost password endpoint
-        // This typically requires the user to go through WP's standard flow
-      }
-    }
+    const data = await response.json();
 
     // Always return success to prevent email enumeration attacks
+    // The WordPress endpoint handles the actual email sending
     return NextResponse.json({
       success: true,
-      message: 'If an account with that email exists, we have sent password reset instructions.',
+      message: data.message || 'If an account with that email exists, we have sent password reset instructions.',
     });
   } catch (error) {
     console.error('Forgot password error:', error);
 
-    return NextResponse.json(
-      { error: 'Failed to process request' },
-      { status: 500 }
-    );
+    // Still return success to prevent email enumeration
+    return NextResponse.json({
+      success: true,
+      message: 'If an account with that email exists, we have sent password reset instructions.',
+    });
   }
 }
