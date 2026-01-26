@@ -1,11 +1,80 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, searchProducts } from '@/lib/products/combined-service';
+import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, searchProducts, UnifiedProduct, FilterOption } from '@/lib/products/combined-service';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import ShopHero from '@/components/shop/ShopHero';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
+
+/**
+ * Extract available filter options from a list of products
+ */
+function extractFilterOptionsFromProducts(products: UnifiedProduct[]): {
+  brands: FilterOption[];
+  materials: FilterOption[];
+  colors: FilterOption[];
+} {
+  const brandMap = new Map<string, { name: string; slug: string; count: number }>();
+  const materialMap = new Map<string, { name: string; slug: string; count: number }>();
+  const colorMap = new Map<string, { name: string; slug: string; count: number }>();
+
+  for (const product of products) {
+    // Extract brands from productBrands taxonomy
+    if (product.brands) {
+      for (const brand of product.brands) {
+        const existing = brandMap.get(brand.slug);
+        if (existing) {
+          existing.count++;
+        } else {
+          brandMap.set(brand.slug, { name: brand.name, slug: brand.slug, count: 1 });
+        }
+      }
+    }
+
+    // Extract materials from productMaterials taxonomy
+    if (product.materials) {
+      for (const material of product.materials) {
+        const existing = materialMap.get(material.slug);
+        if (existing) {
+          existing.count++;
+        } else {
+          materialMap.set(material.slug, { name: material.name, slug: material.slug, count: 1 });
+        }
+      }
+    }
+
+    // Extract colors from attributes
+    if (product.attributes) {
+      for (const attr of product.attributes) {
+        const attrNameLower = attr.name.toLowerCase();
+        if (attrNameLower === 'color' || attrNameLower === 'pa_color') {
+          for (const option of attr.options) {
+            const slug = option.toLowerCase().replace(/\s+/g, '-');
+            const existing = colorMap.get(slug);
+            if (existing) {
+              existing.count++;
+            } else {
+              colorMap.set(slug, { name: option, slug, count: 1 });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    brands: Array.from(brandMap.values())
+      .map(b => ({ id: b.slug, name: b.name, slug: b.slug, count: b.count }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    materials: Array.from(materialMap.values())
+      .map(m => ({ id: m.slug, name: m.name, slug: m.slug, count: m.count }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+    colors: Array.from(colorMap.values())
+      .map(c => ({ id: c.slug, name: c.name, slug: c.slug, count: c.count }))
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  };
+}
 
 interface ShopPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -76,19 +145,46 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       availableFilters: searchResult.availableFilters,
     };
   } else if (hasFilters) {
-    // Use filtered query
-    const filteredResult = await getFilteredProducts({
-      limit: 24,
-      category,
-      brand,
-      color,
-      material,
-      minPrice,
-      maxPrice,
-      inStock,
-      onSale,
-    });
-    productsResult = filteredResult;
+    // For category-only filtering, fetch more products to extract available filter options
+    const isCategoryOnly = category && !brand && !color && !material &&
+      !(minPrice !== undefined && minPrice > 0) &&
+      !(maxPrice !== undefined && maxPrice < 500) &&
+      !inStock && !onSale;
+
+    if (isCategoryOnly) {
+      // Fetch more products to extract filter options (similar to search)
+      const fetchLimit = 200; // Fetch enough to get a good sample of available filters
+      const allProductsResult = await getFilteredProducts({
+        limit: fetchLimit,
+        category,
+      });
+
+      // Extract available filter options from all fetched products
+      const extractedFilters = extractFilterOptionsFromProducts(allProductsResult.products);
+
+      productsResult = {
+        products: allProductsResult.products.slice(0, 24), // Return first 24 for display
+        pageInfo: {
+          hasNextPage: allProductsResult.products.length > 24 || allProductsResult.pageInfo.hasNextPage,
+          endCursor: allProductsResult.pageInfo.endCursor,
+        },
+        availableFilters: extractedFilters,
+      };
+    } else {
+      // Use filtered query with all filters
+      const filteredResult = await getFilteredProducts({
+        limit: 24,
+        category,
+        brand,
+        color,
+        material,
+        minPrice,
+        maxPrice,
+        inStock,
+        onSale,
+      });
+      productsResult = filteredResult;
+    }
   } else {
     // No search or filters - get all products
     productsResult = await getAllProducts({ limit: 24 });
