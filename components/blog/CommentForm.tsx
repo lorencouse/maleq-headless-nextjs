@@ -97,7 +97,7 @@ export default function CommentForm({
         </p>
         <button
           onClick={() => setIsSubmitted(false)}
-          className='mt-4 text-primary hover:text-primary-hover font-medium'
+          className='mt-4 px-4 py-2.5 min-h-[44px] text-primary hover:bg-primary/10 rounded-lg font-medium transition-colors'
         >
           Leave another comment
         </button>
@@ -122,7 +122,7 @@ export default function CommentForm({
             name='author'
             value={formData.author}
             onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+            className={`w-full px-4 py-2.5 min-h-[44px] border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
               errors.author ? 'border-destructive' : 'border-border'
             }`}
             placeholder='Your name'
@@ -146,7 +146,7 @@ export default function CommentForm({
             name='email'
             value={formData.email}
             onChange={handleChange}
-            className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
+            className={`w-full px-4 py-2.5 min-h-[44px] border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
               errors.email ? 'border-destructive' : 'border-border'
             }`}
             placeholder='your@email.com'
@@ -174,7 +174,7 @@ export default function CommentForm({
           value={formData.content}
           onChange={handleChange}
           rows={5}
-          className={`w-full px-4 py-2 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y ${
+          className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y ${
             errors.content ? 'border-destructive' : 'border-border'
           }`}
           placeholder='Share your thoughts...'
@@ -195,7 +195,7 @@ export default function CommentForm({
       <button
         type='submit'
         disabled={isSubmitting}
-        className='px-6 py-2 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+        className='px-6 py-2.5 min-h-[44px] bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
       >
         {isSubmitting ? (
           <span className='flex items-center gap-2'>

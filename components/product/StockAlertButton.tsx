@@ -132,7 +132,7 @@ export default function StockAlertButton({
           <button
             onClick={handleUnsubscribe}
             disabled={isLoading}
-            className="text-sm text-info hover:text-info-hover transition-colors disabled:opacity-50"
+            className="px-3 py-2 min-h-[44px] text-sm text-info hover:text-info-hover hover:bg-info/10 rounded-lg transition-colors disabled:opacity-50"
           >
             {isLoading ? '...' : 'Remove'}
           </button>
@@ -179,12 +179,12 @@ export default function StockAlertButton({
             onKeyDown={handleKeyDown}
             placeholder="Your email"
             disabled={isLoading}
-            className="flex-1 px-3 py-2 text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
+            className="flex-1 px-3 py-2.5 min-h-[44px] text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
           />
           <button
             onClick={handleSubscribe}
             disabled={isLoading || !email.trim()}
-            className="px-4 py-2 bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2.5 min-h-[44px] bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isLoading ? '...' : 'Notify'}
           </button>
@@ -197,7 +197,7 @@ export default function StockAlertButton({
             setShowForm(false);
             setError(null);
           }}
-          className="mt-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="mt-2 px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
         >
           Cancel
         </button>
@@ -218,12 +218,12 @@ export default function StockAlertButton({
         onKeyDown={handleKeyDown}
         placeholder="Email for stock alert"
         disabled={isLoading}
-        className="flex-1 px-3 py-2 text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
+        className="flex-1 px-3 py-2.5 min-h-[44px] text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
       />
       <button
         onClick={handleSubscribe}
         disabled={isLoading || !email.trim()}
-        className="px-4 py-2 bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+        className="px-4 py-2.5 min-h-[44px] bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
       >
         {isLoading ? '...' : 'Notify Me'}
       </button>

@@ -82,7 +82,7 @@ export default function CouponInput() {
           </div>
           <button
             onClick={handleRemove}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-lg transition-colors"
           >
             Remove
           </button>
@@ -103,13 +103,13 @@ export default function CouponInput() {
           }}
           onKeyDown={handleKeyDown}
           placeholder="Enter coupon code"
-          className="flex-1 px-3 py-2 text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="flex-1 px-3 py-2.5 min-h-[44px] text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           disabled={isLoading}
         />
         <button
           onClick={handleApply}
           disabled={isLoading || !code.trim()}
-          className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="px-4 py-2.5 min-h-[44px] text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isLoading ? (
             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
