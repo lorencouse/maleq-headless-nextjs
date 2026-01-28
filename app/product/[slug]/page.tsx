@@ -1,5 +1,6 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
+import { stripHtml } from '@/lib/utils/text-utils';
 import { getProductsByCategory } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -32,9 +33,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   const price = product.price?.replace(/[^0-9.]/g, '') || '0';
   const description = product.shortDescription
-    ? product.shortDescription.replace(/<[^>]*>/g, '').slice(0, 160)
+    ? stripHtml(product.shortDescription).slice(0, 160)
     : product.description
-    ? product.description.replace(/<[^>]*>/g, '').slice(0, 160)
+    ? stripHtml(product.description).slice(0, 160)
     : `Shop ${product.name} at Male Q. Fast, discreet shipping available.`;
 
   return {
@@ -114,16 +115,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Prepare structured data
   const productPrice = parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0');
   const productDescription = product.shortDescription
-    ? product.shortDescription.replace(/<[^>]*>/g, '').slice(0, 300)
+    ? stripHtml(product.shortDescription).slice(0, 300)
     : product.description
-    ? product.description.replace(/<[^>]*>/g, '').slice(0, 300)
+    ? stripHtml(product.description).slice(0, 300)
     : `Shop ${product.name} at Male Q.`;
 
   const stockStatus = product.stockStatus === 'IN_STOCK' ? 'InStock' : 'OutOfStock';
   const productImages = product.gallery?.map(img => img.url) || (product.image ? [product.image.url] : []);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Dev: Edit in WordPress link */}
       <DevEditLink type="product" databaseId={product.databaseId} />
 
@@ -160,7 +161,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="mt-16 border-t border-border pt-12">
           <h2 className="text-2xl font-bold text-foreground mb-6">Product Description</h2>
           <div className="prose prose-lg max-w-none text-foreground/80 leading-relaxed dark:prose-invert">
-            {product.description.replace(/<[^>]*>/g, '')}
+            {stripHtml(product.description)}
           </div>
         </div>
       )}

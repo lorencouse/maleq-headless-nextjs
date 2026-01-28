@@ -9,6 +9,7 @@ import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
   }
 
   const description = category.description
-    ? category.description.replace(/<[^>]*>/g, '').slice(0, 160)
+    ? stripHtml(category.description).slice(0, 160)
     : `Browse ${category.name} articles on the Male Q blog. ${category.count} posts available.`;
 
   return {
@@ -99,7 +100,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
     : await getBlogPosts({ first: 12, categorySlug: slug });
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Hero Section */}
       <div className="mb-8">
         {/* Breadcrumb */}

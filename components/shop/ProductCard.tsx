@@ -163,42 +163,44 @@ export default function ProductCard({
               </svg>
             </button>
 
-            {/* Wishlist/Remove Button */}
-            {isWishlist && onRemove ? (
-              <button
-                onClick={() =>
-                  onRemove(product.databaseId?.toString() || product.id)
-                }
-                className='w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors'
-                aria-label='Remove from wishlist'
-              >
-                <svg
-                  className='w-5 h-5'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
+            {/* Wishlist/Remove Button - Hidden on mobile */}
+            <div className='hidden sm:block'>
+              {isWishlist && onRemove ? (
+                <button
+                  onClick={() =>
+                    onRemove(product.databaseId?.toString() || product.id)
+                  }
+                  className='w-11 h-11 flex items-center justify-center rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors'
+                  aria-label='Remove from wishlist'
                 >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                  />
-                </svg>
-              </button>
-            ) : (
-              <WishlistButton
-                productId={product.databaseId?.toString() || product.id}
-                name={product.name}
-                slug={product.slug}
-                price={parsePrice(product.price)}
-                regularPrice={parsePrice(product.regularPrice)}
-                image={product.image || undefined}
-                inStock={product.stockStatus === 'IN_STOCK'}
-                variant='icon'
-                className='w-10 h-10 sm:w-11 sm:h-11 border border-border rounded-lg'
-              />
-            )}
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <WishlistButton
+                  productId={product.databaseId?.toString() || product.id}
+                  name={product.name}
+                  slug={product.slug}
+                  price={parsePrice(product.price)}
+                  regularPrice={parsePrice(product.regularPrice)}
+                  image={product.image || undefined}
+                  inStock={product.stockStatus === 'IN_STOCK'}
+                  variant='icon'
+                  className='w-11 h-11 border border-border rounded-lg'
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>

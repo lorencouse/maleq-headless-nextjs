@@ -16,10 +16,20 @@ interface BreadcrumbsProps {
 export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsProps) {
   const isLight = variant === 'light';
 
+  const linkClass = isLight
+    ? 'text-white/80 hover:text-white'
+    : 'text-muted-foreground hover:text-foreground';
+  const currentClass = isLight
+    ? 'text-white font-medium'
+    : 'text-foreground font-medium';
+  const separatorClass = isLight
+    ? 'text-white/40'
+    : 'text-muted-foreground/40';
+
   return (
-    <nav aria-label="Breadcrumb" className="mb-3 sm:mb-6 overflow-hidden">
+    <nav aria-label="Breadcrumb" className="mb-2 sm:mb-4">
       <ol
-        className="flex items-center text-xs sm:text-sm whitespace-nowrap overflow-x-auto scrollbar-hide"
+        className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm"
         itemScope
         itemType="https://schema.org/BreadcrumbList"
       >
@@ -28,17 +38,17 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
           itemProp="itemListElement"
           itemScope
           itemType="https://schema.org/ListItem"
-          className="flex items-center flex-shrink-0"
+          className="flex items-center"
         >
           <Link
             href="/"
             itemProp="item"
-            className={isLight ? 'link-subtle-light' : 'link-subtle'}
+            className={linkClass}
           >
             <span itemProp="name">Home</span>
           </Link>
           <meta itemProp="position" content="1" />
-          <span className={`mx-1.5 sm:mx-2 ${isLight ? 'text-white/50' : 'text-muted-foreground/50'}`}>/</span>
+          <span className={`ml-1 sm:ml-1.5 ${separatorClass}`}>/</span>
         </li>
 
         {/* Dynamic items */}
@@ -52,12 +62,12 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
               itemProp="itemListElement"
               itemScope
               itemType="https://schema.org/ListItem"
-              className={`flex items-center ${isLast ? 'min-w-0' : 'flex-shrink-0'}`}
+              className="flex items-center min-w-0"
             >
               {isLast || !item.href ? (
                 <span
                   itemProp="name"
-                  className={`${isLight ? 'link-current-light' : 'link-current'} ${isLast ? 'truncate' : ''}`}
+                  className={`${currentClass} truncate`}
                   aria-current={isLast ? 'page' : undefined}
                 >
                   {item.label}
@@ -66,14 +76,14 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
                 <Link
                   href={item.href}
                   itemProp="item"
-                  className={isLight ? 'link-subtle-light' : 'link-subtle'}
+                  className={`${linkClass} truncate`}
                 >
                   <span itemProp="name">{item.label}</span>
                 </Link>
               )}
               <meta itemProp="position" content={position.toString()} />
               {!isLast && (
-                <span className={`mx-1.5 sm:mx-2 flex-shrink-0 ${isLight ? 'text-white/50' : 'text-muted-foreground/50'}`}>/</span>
+                <span className={`ml-1 sm:ml-1.5 flex-shrink-0 ${separatorClass}`}>/</span>
               )}
             </li>
           );

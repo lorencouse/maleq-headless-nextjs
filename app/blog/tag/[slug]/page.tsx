@@ -11,6 +11,7 @@ import {
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { Post } from '@/lib/types/wordpress';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 interface BlogTagPageProps {
   params: Promise<{ slug: string }>;
@@ -42,7 +43,7 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
   }
 
   const description = tag.description
-    ? tag.description.replace(/<[^>]*>/g, '').slice(0, 160)
+    ? stripHtml(tag.description).slice(0, 160)
     : `Browse articles tagged with "${tag.name}" on the Male Q blog. ${tag.count} posts available.`;
 
   return {
@@ -106,7 +107,7 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Hero Section */}
       <div className="mb-12">
         {/* Breadcrumb */}
