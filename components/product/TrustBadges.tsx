@@ -97,7 +97,7 @@ export default function TrustBadges({ variant = 'default', className = '' }: Tru
             <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6">
               {badge.icon}
             </div>
-            <p className="font-semibold text-foreground text-sm sm:text-base">{badge.title}</p>
+            <span className="font-semibold text-foreground text-sm sm:text-base leading-tight">{badge.title}</span>
           </div>
           <p className="text-xs sm:text-sm text-muted-foreground">{badge.description}</p>
         </div>
