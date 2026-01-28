@@ -223,7 +223,7 @@ export default function ProductPageClient({
         {primaryCategory && (
           <a
             href={`/product-category/${primaryCategory.slug}`}
-            className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+            className='link-subtle text-sm'
           >
             {primaryCategory.name}
           </a>
