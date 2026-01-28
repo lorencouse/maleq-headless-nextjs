@@ -54,12 +54,12 @@ export default async function Home() {
 
       {/* Featured Products */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4 mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-foreground">Featured Products</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Featured Products</h2>
             <p className="text-muted-foreground mt-1">Discover our most popular items</p>
           </div>
-          <Link href="/shop" className="text-primary hover:text-primary-hover font-medium flex items-center gap-1">
+          <Link href="/shop" className="text-primary hover:text-primary-hover font-medium flex items-center gap-1 text-sm sm:text-base">
             View All
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -111,12 +111,12 @@ export default async function Home() {
       {/* Recent Blog Posts */}
       {posts.length > 0 && (
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4 mb-8">
             <div>
-              <h2 className="text-3xl font-bold text-foreground">Expert Guides & Reviews</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground">Expert Guides & Reviews</h2>
               <p className="text-muted-foreground mt-1">Unsponsored advice to help you choose</p>
             </div>
-            <Link href="/blog" className="text-primary hover:text-primary-hover font-medium flex items-center gap-1">
+            <Link href="/blog" className="text-primary hover:text-primary-hover font-medium flex items-center gap-1 text-sm sm:text-base">
               View All
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
