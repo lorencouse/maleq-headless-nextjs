@@ -39,6 +39,7 @@ export default function ProductPageClient({
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Check if product is eligible for addons based on its categories
   const isAddonEligible = useMemo(() => {
@@ -230,11 +231,28 @@ export default function ProductPageClient({
       </div>
 
       {/* Short Description */}
-      {product.shortDescription && (
-        <div className='mb-8 text-foreground/80 leading-relaxed'>
-          {stripHtml(product.shortDescription)}
-        </div>
-      )}
+      {product.shortDescription && (() => {
+        const fullText = stripHtml(product.shortDescription);
+        const truncateLength = 150;
+        const shouldTruncate = fullText.length > truncateLength;
+        const displayText = shouldTruncate && !isDescriptionExpanded
+          ? fullText.slice(0, truncateLength).trim() + '...'
+          : fullText;
+
+        return (
+          <div className='mb-8 text-foreground/80 leading-relaxed'>
+            <span>{displayText}</span>
+            {shouldTruncate && (
+              <button
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className='ml-1 text-primary hover:text-primary-hover font-medium transition-colors'
+              >
+                {isDescriptionExpanded ? 'less' : 'more'}
+              </button>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Variation Selector */}
       {isVariable && product.variations && product.variations.length > 0 && (
