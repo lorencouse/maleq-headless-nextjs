@@ -87,19 +87,19 @@ export default function TrustBadges({ variant = 'default', className = '' }: Tru
 
   // Default grid layout
   return (
-    <div className={`grid grid-cols-2 gap-4 select-none ${className}`}>
+    <div className={`grid grid-cols-2 gap-2 sm:gap-4 select-none ${className}`}>
       {badges.map((badge, index) => (
         <div
           key={index}
-          className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border/50"
+          className="p-2 sm:p-4 bg-muted/30 rounded-xl border border-border/50"
         >
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            {badge.icon}
+          <div className="flex items-center gap-2 sm:gap-3 mb-1">
+            <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary [&>svg]:w-5 [&>svg]:h-5 sm:[&>svg]:w-6 sm:[&>svg]:h-6">
+              {badge.icon}
+            </div>
+            <p className="font-semibold text-foreground text-sm sm:text-base">{badge.title}</p>
           </div>
-          <div>
-            <p className="font-semibold text-foreground">{badge.title}</p>
-            <p className="text-sm text-muted-foreground">{badge.description}</p>
-          </div>
+          <p className="text-xs sm:text-sm text-muted-foreground">{badge.description}</p>
         </div>
       ))}
     </div>
