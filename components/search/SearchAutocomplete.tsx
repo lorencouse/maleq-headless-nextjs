@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -43,6 +43,8 @@ interface SearchAutocompleteProps {
   defaultMode?: SearchMode;
   /** Additional CSS classes for the container */
   className?: string;
+  /** Whether to persist search term from URL params */
+  persistFromUrl?: boolean;
 }
 
 interface SearchResultRowProps {
@@ -136,12 +138,16 @@ export default function SearchAutocomplete({
   autoFocus = false,
   defaultMode = 'products',
   className,
+  persistFromUrl = false,
 }: SearchAutocompleteProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const [query, setQuery] = useState('');
+  // Initialize query from URL params if persistFromUrl is enabled
+  const initialQuery = persistFromUrl ? (searchParams.get('q') || '') : '';
+  const [query, setQuery] = useState(initialQuery);
   const [searchMode, setSearchMode] = useState<SearchMode>(defaultMode);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,6 +168,14 @@ export default function SearchAutocomplete({
       setRecentSearches(JSON.parse(saved));
     }
   }, []);
+
+  // Sync query with URL params when they change (for persistFromUrl mode)
+  useEffect(() => {
+    if (persistFromUrl) {
+      const urlQuery = searchParams.get('q') || '';
+      setQuery(urlQuery);
+    }
+  }, [searchParams, persistFromUrl]);
 
   // Auto-focus on mount
   useEffect(() => {
@@ -408,7 +422,7 @@ export default function SearchAutocomplete({
             <div className='flex gap-1 p-1 bg-muted rounded-md'>
               <button
                 onClick={() => setSearchMode('products')}
-                className={`flex-1 px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-2.5 min-h-[44px] text-sm font-medium rounded transition-colors ${
                   searchMode === 'products'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -418,7 +432,7 @@ export default function SearchAutocomplete({
               </button>
               <button
                 onClick={() => setSearchMode('articles')}
-                className={`flex-1 px-3 py-1.5 text-sm font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-2.5 min-h-[44px] text-sm font-medium rounded transition-colors ${
                   searchMode === 'articles'
                     ? 'bg-background text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -443,7 +457,7 @@ export default function SearchAutocomplete({
                   >
                     <button
                       onClick={() => handleSearch(term)}
-                      className='flex items-center gap-2 flex-1 px-1 py-1 text-sm text-foreground hover:bg-muted rounded transition-colors'
+                      className='flex items-center gap-2 flex-1 px-2 py-2.5 min-h-[44px] text-sm text-foreground hover:bg-muted rounded transition-colors'
                     >
                       <svg
                         className='w-4 h-4 text-muted-foreground flex-shrink-0'
@@ -462,7 +476,7 @@ export default function SearchAutocomplete({
                     </button>
                     <button
                       onClick={() => clearRecentSearch(term)}
-                      className='p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity'
+                      className='p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity'
                     >
                       <svg
                         className='w-4 h-4'

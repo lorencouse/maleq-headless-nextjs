@@ -86,7 +86,7 @@ export default function FilterPanel({
           <h2 className="text-lg font-semibold text-foreground">Filters</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors"
+            className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors"
             aria-label="Close filters"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +100,7 @@ export default function FilterPanel({
       {hasActiveFilters && (
         <button
           onClick={onClearFilters}
-          className="w-full mb-4 py-2 px-4 text-sm text-primary hover:text-primary-hover font-medium border border-primary rounded-lg hover:bg-primary/5 transition-colors"
+          className="w-full mb-4 py-3 min-h-[44px] px-4 text-sm text-primary hover:text-primary-hover font-medium border border-primary rounded-lg hover:bg-primary/5 transition-colors"
         >
           Clear All Filters
         </button>
@@ -110,7 +110,7 @@ export default function FilterPanel({
       <div className="mb-6">
         <button
           onClick={() => toggleSection('category')}
-          className="flex justify-between items-center w-full py-2 text-left"
+          className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
           <span className="font-semibold text-foreground">Category</span>
           <svg
@@ -138,7 +138,7 @@ export default function FilterPanel({
         <div className="mb-6">
           <button
             onClick={() => toggleSection('brand')}
-            className="flex justify-between items-center w-full py-2 text-left"
+            className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
           >
             <span className="font-semibold text-foreground">Brand</span>
             <svg
@@ -168,7 +168,7 @@ export default function FilterPanel({
         <div className="mb-6">
           <button
             onClick={() => toggleSection('color')}
-            className="flex justify-between items-center w-full py-2 text-left"
+            className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
           >
             <span className="font-semibold text-foreground">Color</span>
             <svg
@@ -198,7 +198,7 @@ export default function FilterPanel({
         <div className="mb-6">
           <button
             onClick={() => toggleSection('material')}
-            className="flex justify-between items-center w-full py-2 text-left"
+            className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
           >
             <span className="font-semibold text-foreground">Material</span>
             <svg
@@ -227,7 +227,7 @@ export default function FilterPanel({
       <div className="mb-6">
         <button
           onClick={() => toggleSection('price')}
-          className="flex justify-between items-center w-full py-2 text-left"
+          className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
           <span className="font-semibold text-foreground">Price Range</span>
           <svg
@@ -254,7 +254,7 @@ export default function FilterPanel({
       <div className="mb-6">
         <button
           onClick={() => toggleSection('length')}
-          className="flex justify-between items-center w-full py-2 text-left"
+          className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
           <span className="font-semibold text-foreground">Length</span>
           <svg
@@ -292,7 +292,7 @@ export default function FilterPanel({
       <div className="mb-6">
         <button
           onClick={() => toggleSection('weight')}
-          className="flex justify-between items-center w-full py-2 text-left"
+          className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
           <span className="font-semibold text-foreground">Weight</span>
           <svg
@@ -329,7 +329,7 @@ export default function FilterPanel({
       <div className="mb-6">
         <button
           onClick={() => toggleSection('availability')}
-          className="flex justify-between items-center w-full py-2 text-left"
+          className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
           <span className="font-semibold text-foreground">Availability</span>
           <svg

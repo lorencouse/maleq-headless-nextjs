@@ -65,11 +65,11 @@ export default function Header() {
           </div>
 
           {/* Cart & User Actions */}
-          <div className='flex items-center space-x-2'>
+          <div className='flex items-center space-x-1'>
             <ThemeToggle />
             <button
               onClick={() => setIsSearchOpen(true)}
-              className='p-2 text-foreground hover:text-primary transition-colors'
+              className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
               aria-label='Search'
             >
               <svg
@@ -115,21 +115,21 @@ export default function Header() {
                           <Link
                             href='/account'
                             onClick={() => setIsUserMenuOpen(false)}
-                            className='block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors'
+                            className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
                             Dashboard
                           </Link>
                           <Link
                             href='/account/orders'
                             onClick={() => setIsUserMenuOpen(false)}
-                            className='block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors'
+                            className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
                             Orders
                           </Link>
                           <Link
                             href='/account/details'
                             onClick={() => setIsUserMenuOpen(false)}
-                            className='block px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors'
+                            className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
                             Account Details
                           </Link>
@@ -141,7 +141,7 @@ export default function Header() {
               ) : (
                 <Link
                   href='/login'
-                  className='p-2 text-foreground hover:text-primary transition-colors'
+                  className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
                   aria-label='Sign in'
                 >
                   <svg
@@ -162,7 +162,7 @@ export default function Header() {
             {/* Wishlist */}
             <Link
               href='/account/wishlist'
-              className='p-2 text-foreground hover:text-primary relative transition-colors'
+              className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
               aria-label='View wishlist'
             >
               <svg
@@ -185,7 +185,7 @@ export default function Header() {
 
             <button
               onClick={miniCartControls.open}
-              className='p-2 text-foreground hover:text-primary relative transition-colors'
+              className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
               aria-label='Open shopping cart'
             >
               <svg
@@ -211,7 +211,7 @@ export default function Header() {
           <div className='md:hidden'>
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className='p-2 text-foreground hover:text-primary transition-colors'
+              className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
               aria-label='Open menu'
             >
               <svg

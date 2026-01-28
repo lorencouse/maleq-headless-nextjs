@@ -25,11 +25,11 @@ export default function Footer() {
             <h4 className='text-foreground text-sm font-semibold mb-4'>
               Quick Links
             </h4>
-            <ul className='space-y-2'>
+            <ul className='space-y-1'>
               <li>
                 <Link
                   href='/shop'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Shop
                 </Link>
@@ -37,7 +37,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/blog'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Blog
                 </Link>
@@ -45,7 +45,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/about'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   About Us
                 </Link>
@@ -53,7 +53,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/contact'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Contact
                 </Link>
@@ -66,11 +66,11 @@ export default function Footer() {
             <h4 className='text-foreground text-sm font-semibold mb-4'>
               Customer Service
             </h4>
-            <ul className='space-y-2'>
+            <ul className='space-y-1'>
               <li>
                 <Link
                   href='/shipping'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Shipping Info
                 </Link>
@@ -78,7 +78,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/returns'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Returns
                 </Link>
@@ -86,7 +86,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/faq'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   FAQ
                 </Link>
@@ -94,7 +94,7 @@ export default function Footer() {
               <li>
                 <Link
                   href='/privacy'
-                  className='text-sm hover:text-primary transition-colors'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Privacy Policy
                 </Link>

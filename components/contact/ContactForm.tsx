@@ -65,7 +65,7 @@ export default function ContactForm() {
         </p>
         <button
           onClick={() => setSubmitted(false)}
-          className="text-primary hover:underline"
+          className="px-4 py-2.5 min-h-[44px] text-primary hover:bg-primary/10 rounded-lg transition-colors"
         >
           Send another message
         </button>

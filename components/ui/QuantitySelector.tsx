@@ -44,20 +44,25 @@ export default function QuantitySelector({
 
   const isSmall = size === 'sm';
 
+  // Ensure minimum 44px touch targets for accessibility
+  const buttonClass = isSmall
+    ? 'min-w-[36px] min-h-[36px] px-2 py-1.5 text-sm flex items-center justify-center'
+    : 'min-w-[44px] min-h-[44px] px-3 py-2 flex items-center justify-center';
+
   return (
-    <div className={`flex items-center border border-border ${isSmall ? 'rounded' : 'rounded-lg'}`}>
+    <div className={`inline-flex items-center border border-border ${isSmall ? 'rounded' : 'rounded-lg'}`}>
       <button
         onClick={handleDecrement}
         disabled={(quantity <= min && !onRemove) || disabled}
         className={`
-          ${isSmall ? 'px-2 py-1 text-sm' : 'px-3 py-2'}
+          ${buttonClass}
           text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors
           ${quantity === min && onRemove ? 'hover:text-destructive' : ''}
         `}
         aria-label={quantity === min && onRemove ? "Remove item" : "Decrease quantity"}
       >
         {isSmall ? (
-          '-'
+          <span className="text-base font-medium">−</span>
         ) : (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -74,15 +79,15 @@ export default function QuantitySelector({
           onChange={handleInputChange}
           disabled={disabled}
           className={`
-            ${isSmall ? 'w-10 text-sm' : 'w-16'}
-            text-center py-2 bg-transparent focus:outline-none
+            ${isSmall ? 'w-10 text-sm' : 'w-14'}
+            text-center py-2 bg-transparent focus:outline-none font-medium
             [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
           `}
           aria-label="Quantity"
         />
       ) : (
         <span className={`
-          ${isSmall ? 'px-3 py-1 text-sm min-w-[32px]' : 'px-4 py-2 min-w-[48px]'}
+          ${isSmall ? 'px-2 py-1 text-sm min-w-[28px]' : 'px-3 py-2 min-w-[40px]'}
           font-medium text-center
         `}>
           {quantity}
@@ -93,13 +98,13 @@ export default function QuantitySelector({
         onClick={handleIncrement}
         disabled={quantity >= max || disabled}
         className={`
-          ${isSmall ? 'px-2 py-1 text-sm' : 'px-3 py-2'}
+          ${buttonClass}
           text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors
         `}
         aria-label="Increase quantity"
       >
         {isSmall ? (
-          '+'
+          <span className="text-base font-medium">+</span>
         ) : (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

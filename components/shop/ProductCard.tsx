@@ -79,11 +79,11 @@ export default function ProductCard({
       {/* Content section - grows to push footer down */}
       <Link
         href={`/product/${product.slug}`}
-        className='product-card-link flex-1 flex flex-col p-4'
+        className='product-card-link flex-1 flex flex-col p-3 sm:p-4'
       >
         {/* Product Name */}
         <div className='relative pb-2 mb-2'>
-          <h3 className='heading-plain text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
+          <h3 className='heading-plain text-sm sm:text-base lg:text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
             {product.name}
           </h3>
           {/* Red underline (always visible) */}
@@ -97,32 +97,31 @@ export default function ProductCard({
 
         {/* Stock Status */}
         {product.stockStatus === 'LOW_STOCK' && product.stockQuantity && (
-          <div className='mb-2 text-xs text-warning'>
-            Only {product.stockQuantity} left in stock
+          <div className='mb-1.5 sm:mb-2 text-xs text-warning'>
+            Only {product.stockQuantity} left
           </div>
         )}
 
         {/* Variation Count */}
         {isVariable && product.variations && product.variations.length > 0 && (
-          <div className='mb-2 text-xs text-primary font-medium'>
-            {product.variations.length}{' '}
-            {product.variations.length === 1 ? 'option' : 'options'} available
+          <div className='mb-1.5 sm:mb-2 text-xs text-primary font-medium'>
+            {product.variations.length} {product.variations.length === 1 ? 'option' : 'options'}
           </div>
         )}
 
         {/* Price - at bottom of content section */}
-        <div className='flex items-center gap-2'>
+        <div className='flex flex-wrap items-center gap-1 sm:gap-2'>
           {product.onSale && product.regularPrice ? (
             <>
-              <span className='text-lg font-bold text-primary'>
+              <span className='text-base sm:text-lg font-bold text-primary'>
                 {formatPrice(product.salePrice)}
               </span>
-              <span className='text-sm text-muted-foreground line-through'>
+              <span className='text-xs sm:text-sm text-muted-foreground line-through'>
                 {formatPrice(product.regularPrice)}
               </span>
             </>
           ) : (
-            <span className='text-lg font-bold text-foreground'>
+            <span className='text-base sm:text-lg font-bold text-foreground'>
               {formatPrice(product.price || product.regularPrice)}
             </span>
           )}
@@ -130,17 +129,17 @@ export default function ProductCard({
       </Link>
 
       {/* Add to Cart Button + Actions - Fixed at bottom */}
-      <div className='p-4 pt-0 mt-auto'>
-        <div className='flex gap-2'>
-          <div className='flex-1'>
+      <div className='p-3 sm:p-4 pt-0 mt-auto'>
+        <div className='flex gap-1.5 sm:gap-2'>
+          <div className='flex-1 min-w-0'>
             <QuickAddButton product={product} />
           </div>
           {/* Quick Actions - Always visible */}
-          <div className='flex gap-2'>
+          <div className='flex gap-1.5 sm:gap-2 flex-shrink-0'>
             {/* Quick View Button */}
             <button
               onClick={() => setIsQuickViewOpen(true)}
-              className='p-2 rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors'
+              className='w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors'
               aria-label='Quick view'
             >
               <svg
@@ -170,7 +169,7 @@ export default function ProductCard({
                 onClick={() =>
                   onRemove(product.databaseId?.toString() || product.id)
                 }
-                className='p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors'
+                className='w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors'
                 aria-label='Remove from wishlist'
               >
                 <svg
@@ -197,7 +196,7 @@ export default function ProductCard({
                 image={product.image || undefined}
                 inStock={product.stockStatus === 'IN_STOCK'}
                 variant='icon'
-                className='border border-border rounded-lg'
+                className='w-10 h-10 sm:w-11 sm:h-11 border border-border rounded-lg'
               />
             )}
           </div>

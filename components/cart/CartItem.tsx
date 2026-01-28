@@ -150,16 +150,16 @@ export default function CartItem({ item }: CartItemProps) {
 
           {/* Remove Button */}
           {showRemoveConfirm ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 onClick={handleRemove}
-                className="text-xs text-destructive hover:underline"
+                className="px-3 py-2 min-h-[44px] text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
               >
                 Confirm
               </button>
               <button
                 onClick={() => setShowRemoveConfirm(false)}
-                className="text-xs text-muted-foreground hover:underline"
+                className="px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
               >
                 Cancel
               </button>
@@ -167,7 +167,7 @@ export default function CartItem({ item }: CartItemProps) {
           ) : (
             <button
               onClick={() => setShowRemoveConfirm(true)}
-              className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+              className="px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors"
             >
               Remove
             </button>

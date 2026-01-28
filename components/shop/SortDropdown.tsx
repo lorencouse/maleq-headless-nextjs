@@ -39,7 +39,7 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 border border-input rounded-lg bg-background text-foreground hover:bg-muted transition-colors"
+        className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] border border-input rounded-lg bg-background text-foreground hover:bg-muted transition-colors"
       >
         <span className="text-sm">
           <span className="text-muted-foreground">Sort:</span> {selectedOption?.label}
@@ -64,7 +64,7 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                className={`block w-full text-left px-4 py-3 min-h-[44px] text-sm transition-colors ${
                   value === option.value
                     ? 'bg-primary/10 text-primary font-medium'
                     : 'text-foreground hover:bg-muted'

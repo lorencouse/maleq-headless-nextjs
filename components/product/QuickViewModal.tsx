@@ -115,7 +115,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/80 hover:bg-muted transition-colors"
+            className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-background/80 hover:bg-muted transition-colors"
             aria-label="Close quick view"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,7 +160,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                     <button
                       key={index}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
+                      className={`relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
                         selectedImageIndex === index
                           ? 'border-primary'
                           : 'border-transparent hover:border-muted-foreground/30'

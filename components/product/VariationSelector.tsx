@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   formatAttributeName,
   formatAttributeValue,
@@ -76,9 +76,13 @@ export default function VariationSelector({
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string>
   >(() => {
-    // Initialize with first variation's attributes
+    // Initialize with first in-stock variation's attributes, or first variation if none in stock
+    const initialVariation = variations.find(
+      v => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK'
+    ) || variations[0];
+
     const initial: Record<string, string> = {};
-    variations[0]?.attributes.forEach((attr) => {
+    initialVariation?.attributes.forEach((attr) => {
       initial[attr.name] = attr.value;
     });
     return initial;
@@ -92,6 +96,16 @@ export default function VariationSelector({
       ),
     );
   }, [selectedAttributes, variations]);
+
+  // Call onVariationChange on mount with the initial variation
+  // This ensures the parent components have the correct initial variation data
+  useEffect(() => {
+    if (selectedVariation && onVariationChange) {
+      onVariationChange(selectedVariation);
+    }
+    // Only run on mount - we don't want to re-trigger when onVariationChange reference changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handle attribute selection
   const handleAttributeSelect = (attributeName: string, value: string) => {
@@ -130,8 +144,8 @@ export default function VariationSelector({
     <div className='space-y-6 mt-6'>
       {/* Attribute Selectors */}
       {attributeOptions.map(({ name, values }) => (
-        <div key={name} className='flex flex-wrap items-center gap-3'>
-          <label className='text-xl font-semibold text-foreground whitespace-nowrap pb-1'>
+        <div key={name} className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3'>
+          <label className='text-lg sm:text-xl font-semibold text-foreground whitespace-nowrap'>
             {formatAttributeName(name)}:
           </label>
           <div className='flex flex-wrap gap-2'>
@@ -145,7 +159,7 @@ export default function VariationSelector({
                   onClick={() => handleAttributeSelect(name, value)}
                   disabled={!isAvailable}
                   className={`
-                    px-4 py-2.5 border-2 rounded-xl font-medium transition-all
+                    px-3 sm:px-4 py-2.5 min-h-[44px] border-2 rounded-xl text-sm sm:text-base font-medium transition-all
                     ${
                       isSelected
                         ? 'border-primary bg-primary/10 text-foreground'
@@ -170,15 +184,15 @@ export default function VariationSelector({
       {selectedVariation && (
         <div className='p-4 bg-input rounded-xl border border-border space-y-4'>
           {/* Header with name and price */}
-          <div className='flex items-center justify-between'>
+          <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
             <div>
               <p className='text-sm text-muted-foreground'>Selected:</p>
-              <p className='font-semibold text-foreground'>
+              <p className='font-semibold text-foreground text-sm sm:text-base'>
                 {selectedVariation.name}
               </p>
             </div>
-            <div className='text-right'>
-              <p className='text-2xl font-bold text-foreground'>
+            <div className='sm:text-right'>
+              <p className='text-xl sm:text-2xl font-bold text-foreground'>
                 {formatPrice(selectedVariation.price)}
               </p>
             </div>

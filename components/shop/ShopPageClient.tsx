@@ -570,7 +570,7 @@ export default function ShopPageClient({
             {/* Mobile Filter Button */}
             <button
               onClick={() => setIsMobileFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 px-4 py-2 border border-input rounded-lg hover:bg-muted transition-colors"
+              className="lg:hidden flex items-center gap-2 px-4 py-2.5 min-h-[44px] border border-input rounded-lg hover:bg-muted transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -603,8 +603,8 @@ export default function ShopPageClient({
 
         {/* Products Grid */}
         {isLoading && products.length === 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+            {[...Array(10)].map((_, i) => (
               <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
                 <div className="aspect-square bg-muted animate-pulse" />
                 <div className="p-4 space-y-2">
@@ -617,7 +617,7 @@ export default function ShopPageClient({
           </div>
         ) : products.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

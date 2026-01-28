@@ -72,7 +72,7 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
     <button
       onClick={handleClick}
       disabled={isOutOfStock || isAdding}
-      className="w-full bg-primary text-primary-foreground py-2 px-4 rounded-md hover:bg-primary-hover transition-colors disabled:bg-muted disabled:cursor-not-allowed"
+      className="w-full bg-primary text-primary-foreground py-2.5 sm:py-3 px-4 min-h-[44px] text-sm sm:text-base rounded-lg hover:bg-primary-hover transition-colors disabled:bg-muted disabled:cursor-not-allowed font-medium"
     >
       {getButtonText()}
     </button>

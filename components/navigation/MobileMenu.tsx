@@ -85,7 +85,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           <h2 className="text-lg font-semibold text-foreground">Menu</h2>
           <button
             onClick={onClose}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             aria-label="Close menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +223,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                               <Link
                                 href={group.href}
                                 onClick={onClose}
-                                className="block px-4 py-2 text-xs font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                                className="block px-4 py-2.5 min-h-[44px] text-xs font-medium text-primary hover:bg-muted rounded-lg transition-colors flex items-center"
                               >
                                 View All &rarr;
                               </Link>
@@ -238,7 +238,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                       <Link
                         href={section.href}
                         onClick={onClose}
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors mt-2"
+                        className="block px-4 py-2.5 min-h-[44px] text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors mt-2 flex items-center"
                       >
                         View All {section.label} &rarr;
                       </Link>

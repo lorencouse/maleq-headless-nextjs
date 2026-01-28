@@ -121,10 +121,13 @@ export default function WishlistButton({
   }
 
   // Default: icon only
+  // Check if explicit sizing is provided in className
+  const hasExplicitSize = className.includes('w-') || className.includes('h-');
+
   return (
     <button
       onClick={handleToggle}
-      className={`p-2 rounded-full transition-colors ${
+      className={`${hasExplicitSize ? 'flex items-center justify-center' : 'p-2'} rounded-full transition-colors ${
         isWishlisted
           ? 'text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50'
           : 'text-muted-foreground hover:text-foreground bg-background/80 hover:bg-muted'

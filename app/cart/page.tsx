@@ -34,7 +34,7 @@ export default function CartPage() {
               clearCart();
             }
           }}
-          className="text-sm text-muted-foreground hover:text-destructive transition-colors"
+          className="px-4 py-2.5 min-h-[44px] text-sm text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors"
         >
           Clear Cart
         </button>
