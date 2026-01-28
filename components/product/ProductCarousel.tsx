@@ -57,23 +57,10 @@ export default function ProductCarousel({
   const content = (
     <div className={`${wrapperClass} ${className}`}>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          {badge && <div className="mb-1">{badge}</div>}
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{title}</h2>
-          {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
-        </div>
-        {viewAllLink && (
-          <Link
-            href={viewAllLink}
-            className="text-primary hover:text-primary-hover font-medium flex items-center gap-1"
-          >
-            {viewAllText}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
+      <div className="mb-6">
+        {badge && <div className="mb-1">{badge}</div>}
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{title}</h2>
+        {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
       </div>
 
       {/* Carousel */}
@@ -142,6 +129,21 @@ export default function ProductCarousel({
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
+        </div>
+      )}
+
+      {/* View All Link */}
+      {viewAllLink && (
+        <div className="mt-6 text-center">
+          <Link
+            href={viewAllLink}
+            className="text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1"
+          >
+            {viewAllText}
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
       )}
 

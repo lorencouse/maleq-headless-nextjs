@@ -57,11 +57,20 @@ export function FeaturedProductsGrid({
   return (
     <section className="mb-10">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-          <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
-        </div>
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
+        <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
+      </div>
+
+      {/* Products Grid */}
+      <div className={`grid grid-cols-1 ${gridCols[columns]} gap-4 sm:gap-6`}>
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {/* View All Link */}
+      <div className="mt-6 text-center">
         <Link
           href={viewAllHref}
           className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
@@ -71,13 +80,6 @@ export function FeaturedProductsGrid({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>
-      </div>
-
-      {/* Products Grid */}
-      <div className={`grid grid-cols-1 ${gridCols[columns]} gap-4 sm:gap-6`}>
-        {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
       </div>
     </section>
   );

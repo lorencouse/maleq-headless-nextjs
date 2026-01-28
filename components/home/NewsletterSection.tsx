@@ -38,7 +38,7 @@ export default function NewsletterSection() {
   };
 
   return (
-    <section className="py-16 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent select-none">
+    <section className="py-8 sm:py-16 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto text-center">
           {/* Icon */}

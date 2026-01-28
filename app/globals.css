@@ -464,19 +464,25 @@ figure:has(figcaption) img[data-nimg] {
   margin-top: 0.5rem;
 }
 
-/* Style links in paragraphs and figcaptions site-wide */
+/* Content links - same style as .link-animated applied automatically */
 p a,
-figcaption a {
+figcaption a,
+.blog-content a,
+.prose a,
+.entry-content a {
   position: relative;
   font-weight: 800;
-  color: #000000;
+  color: var(--foreground);
   text-decoration: none;
   padding-bottom: 2px;
 }
 
 /* Red underline (always visible) */
 p a::before,
-figcaption a::before {
+figcaption a::before,
+.blog-content a::before,
+.prose a::before,
+.entry-content a::before {
   content: '';
   position: absolute;
   left: 0;
@@ -488,7 +494,10 @@ figcaption a::before {
 
 /* Black underline (expands on hover) */
 p a::after,
-figcaption a::after {
+figcaption a::after,
+.blog-content a::after,
+.prose a::after,
+.entry-content a::after {
   content: '';
   position: absolute;
   left: 0;
@@ -500,30 +509,49 @@ figcaption a::after {
 }
 
 p a:hover::after,
-figcaption a:hover::after {
+figcaption a:hover::after,
+.blog-content a:hover::after,
+.prose a:hover::after,
+.entry-content a:hover::after {
   width: 100%;
 }
 
 p a:hover,
-figcaption a:hover {
+figcaption a:hover,
+.blog-content a:hover,
+.prose a:hover,
+.entry-content a:hover {
+  color: var(--primary) !important;
   opacity: 1;
 }
 
-/* Dark mode adjustments for paragraph/figcaption links */
+/* Dark mode: text is white, hover underline is white */
 .dark p a,
-.dark figcaption a {
+.dark figcaption a,
+.dark .blog-content a,
+.dark .prose a,
+.dark .entry-content a {
   color: #ffffff;
 }
 
-/* Dark mode: hover underline is white */
 .dark p a::after,
-.dark figcaption a::after {
+.dark figcaption a::after,
+.dark .blog-content a::after,
+.dark .prose a::after,
+.dark .entry-content a::after {
   background-color: #ffffff;
 }
 
 /* ============================================
-   ANIMATED LINK STYLES (reusable)
-   Red underline with black hover expansion
+   ANIMATED LINK STYLES - SINGLE SOURCE OF TRUTH
+
+   Style: Bold text, red underline always visible,
+   black underline expands on hover, text turns red on hover
+
+   Usage:
+   - .link-animated class for manual application
+   - Automatically applied to: p a, figcaption a,
+     .blog-content a, .prose a, .entry-content a
    ============================================ */
 
 /* Base animated link - use on any link */
@@ -563,6 +591,7 @@ figcaption a:hover {
 }
 
 .link-animated:hover {
+  color: var(--primary) !important;
   opacity: 1;
 }
 

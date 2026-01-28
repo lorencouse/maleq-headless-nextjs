@@ -31,7 +31,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-1/2 -translate-x-1/2 mt-0 pt-2 z-50"
+      className="absolute top-full left-0 mt-0 pt-2 z-50"
       onMouseLeave={onClose}
     >
       <div className={`bg-card border border-border rounded-lg shadow-xl ${columns === 1 ? 'p-4' : 'p-6'}`}>
@@ -64,7 +64,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
               <Link
                 href={group.href}
                 onClick={onClose}
-                className="block font-semibold text-foreground hover:text-red-500 transition-colors mb-3"
+                className="link-animated inline-block mb-3"
               >
                 {group.label}
               </Link>
