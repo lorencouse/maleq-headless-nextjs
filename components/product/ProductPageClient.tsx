@@ -21,15 +21,18 @@ import {
 } from '@/lib/utils/woocommerce-format';
 import { VariationImage, SelectedVariation } from '@/lib/types/product';
 import { isAddonEligibleBySlug } from '@/lib/config/product-addons';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
   onVariationImageChange?: (image: VariationImage | null) => void;
+  primaryCategory?: { name: string; slug: string } | null;
 }
 
 export default function ProductPageClient({
   product,
   onVariationImageChange,
+  primaryCategory,
 }: ProductPageClientProps) {
   const isVariable = product.type === 'VARIABLE';
   const addItem = useCartStore((state) => state.addItem);
@@ -47,14 +50,15 @@ export default function ProductPageClient({
   const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
 
   // Get initial variation - prefer first in-stock variation
+  // This logic must match VariationSelector's initialization
   const getInitialVariation = (): SelectedVariation | null => {
     if (!isVariable || !product.variations || product.variations.length === 0) {
       return null;
     }
 
-    // Find first in-stock variation
+    // Find first in-stock or low-stock variation
     const inStockVariation = product.variations.find(
-      v => v.stockStatus === 'IN_STOCK'
+      v => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK'
     );
 
     return inStockVariation || product.variations[0];
@@ -207,20 +211,28 @@ export default function ProductPageClient({
         )}
       </div>
 
-      {/* Stock Status */}
-      <div className='mb-6'>
+      {/* Stock Status & Category */}
+      <div className='mb-6 flex items-center justify-between'>
         <StockStatusBadge
           status={displayStockStatus || 'OUT_OF_STOCK'}
           quantity={displayStockQuantity}
           showQuantity={true}
           size='lg'
         />
+        {primaryCategory && (
+          <a
+            href={`/product-category/${primaryCategory.slug}`}
+            className='text-sm text-muted-foreground hover:text-foreground transition-colors'
+          >
+            {primaryCategory.name}
+          </a>
+        )}
       </div>
 
       {/* Short Description */}
       {product.shortDescription && (
         <div className='mb-8 text-foreground/80 leading-relaxed'>
-          {product.shortDescription.replace(/<[^>]*>/g, '')}
+          {stripHtml(product.shortDescription)}
         </div>
       )}
 
@@ -405,7 +417,7 @@ export default function ProductPageClient({
         <SocialShare
           url={`/product/${product.slug}`}
           title={product.name}
-          description={product.shortDescription?.replace(/<[^>]*>/g, '') || ''}
+          description={stripHtml(product.shortDescription || '')}
           image={product.image?.url}
           variant='icons'
         />
