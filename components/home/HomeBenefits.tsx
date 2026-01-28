@@ -60,7 +60,7 @@ export default function HomeBenefits() {
               key={index}
               className="bg-card border border-border rounded-xl p-4 sm:p-6"
             >
-              <div className="flex items-center gap-3 mb-3">
+              <div className="flex items-start gap-3 mb-3">
                 <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl ${benefit.color} flex items-center justify-center flex-shrink-0 [&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-8 sm:[&>svg]:h-8`}>
                   {benefit.icon}
                 </div>
