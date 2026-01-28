@@ -11,23 +11,18 @@ interface ProductDetailsWrapperProps {
 }
 
 // Get the initial variation image for variable products
+// Must match the logic in VariationSelector to stay in sync
 function getInitialVariationImage(product: EnhancedProduct): VariationImage | null {
   if (product.type !== 'VARIABLE' || !product.variations || product.variations.length === 0) {
     return null;
   }
 
-  // Find the first in-stock variation with an image, or fallback to first variation with image
-  const inStockWithImage = product.variations.find(
-    v => v.stockStatus === 'IN_STOCK' && v.image?.url
-  );
+  // Find the first in-stock variation (matching VariationSelector's logic)
+  const initialVariation = product.variations.find(
+    v => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK'
+  ) || product.variations[0];
 
-  if (inStockWithImage?.image) {
-    return inStockWithImage.image;
-  }
-
-  // Fallback to first variation with an image
-  const withImage = product.variations.find(v => v.image?.url);
-  return withImage?.image || null;
+  return initialVariation?.image || null;
 }
 
 export default function ProductDetailsWrapper({ product }: ProductDetailsWrapperProps) {
@@ -43,7 +38,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
   }));
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
       {/* Product Images */}
       <div>
         <ProductImageGallery
@@ -56,7 +51,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
       {/* Product Details */}
       <div>
         {/* Brand and Category - moved from page.tsx */}
-        <div className="mb-4 flex items-center gap-4">
+        <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-4">
           {/* Brand */}
           {product.brands && product.brands.length > 0 && (
             <a
@@ -78,7 +73,7 @@ export default function ProductDetailsWrapper({ product }: ProductDetailsWrapper
         </div>
 
         {/* Product Name */}
-        <h1 className="text-4xl font-bold text-foreground mb-6">{product.name}</h1>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-4 sm:mb-6">{product.name}</h1>
 
         {/* Client-side interactive components */}
         <ProductPageClient

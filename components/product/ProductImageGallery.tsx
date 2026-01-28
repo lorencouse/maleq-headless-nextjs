@@ -100,10 +100,10 @@ export default function ProductImageGallery({
           {canScrollLeft && (
             <button
               onClick={() => scroll('left')}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-background/90 hover:bg-background border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:text-primary transition-colors"
+              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-8 sm:h-8 bg-background/90 hover:bg-background border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:text-primary transition-colors"
               aria-label="Scroll left"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -112,7 +112,7 @@ export default function ProductImageGallery({
           {/* Scrollable Thumbnail Container */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-1 py-1"
+            className="flex gap-2 sm:gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-1 py-1"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {images.map((image) => (
@@ -141,10 +141,10 @@ export default function ProductImageGallery({
           {canScrollRight && (
             <button
               onClick={() => scroll('right')}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-background/90 hover:bg-background border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:text-primary transition-colors"
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-8 sm:h-8 bg-background/90 hover:bg-background border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:text-primary transition-colors"
               aria-label="Scroll right"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>

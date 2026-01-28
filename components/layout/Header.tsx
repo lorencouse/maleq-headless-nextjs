@@ -7,6 +7,7 @@ import ThemeToggle from '@/components/theme/ThemeToggle';
 import { useCartItemCount } from '@/lib/store/cart-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useMiniCartOpen, useMiniCartControls } from '@/lib/store/ui-store';
 import MiniCart from '@/components/cart/MiniCart';
 import SearchAutocomplete from '@/components/search/SearchAutocomplete';
 import MobileMenu from '@/components/navigation/MobileMenu';
@@ -16,7 +17,8 @@ export default function Header() {
   const cartItemCount = useCartItemCount();
   const wishlistItemCount = useWishlistItemCount();
   const { user, isAuthenticated } = useAuthStore();
-  const [isMiniCartOpen, setIsMiniCartOpen] = useState(false);
+  const isMiniCartOpen = useMiniCartOpen();
+  const miniCartControls = useMiniCartControls();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -104,7 +106,7 @@ export default function Header() {
                         className='fixed inset-0 z-40'
                         onClick={() => setIsUserMenuOpen(false)}
                       />
-                      <div className='absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-50'>
+                      <div className='absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-lg z-50'>
                         <div className='p-3 border-b border-border'>
                           <p className='font-medium text-foreground text-sm'>{user?.displayName}</p>
                           <p className='text-xs text-muted-foreground truncate'>{user?.email}</p>
@@ -182,7 +184,7 @@ export default function Header() {
             </Link>
 
             <button
-              onClick={() => setIsMiniCartOpen(true)}
+              onClick={miniCartControls.open}
               className='p-2 text-foreground hover:text-primary relative transition-colors'
               aria-label='Open shopping cart'
             >
@@ -231,7 +233,7 @@ export default function Header() {
       {/* Mini Cart */}
       <MiniCart
         isOpen={isMiniCartOpen}
-        onClose={() => setIsMiniCartOpen(false)}
+        onClose={miniCartControls.close}
       />
 
       {/* Search Modal */}

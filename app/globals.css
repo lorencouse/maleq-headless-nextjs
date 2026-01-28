@@ -232,45 +232,90 @@ h6 {
   margin-bottom: 0.5rem;
 }
 
-h1 {
-  font-size: 42px;
+/* Mobile-first responsive heading sizes */
+h1:not(.heading-plain) {
+  font-size: 28px;
 }
-h2 {
-  font-size: 36px;
+h2:not(.heading-plain) {
+  font-size: 24px;
   border-bottom: 5px solid black;
   padding-bottom: 0.75rem;
 }
 
-.dark h2 {
+.dark h2:not(.heading-plain) {
   border-bottom-color: white;
 }
-h3 {
-  font-size: 28px;
+h3:not(.heading-plain) {
+  font-size: 20px;
   border-bottom: 3px solid black;
   padding-bottom: 0.5rem;
 }
 
-.dark h3 {
+.dark h3:not(.heading-plain) {
   border-bottom-color: white;
 }
 
-h4 {
-  font-size: 24px;
+h4:not(.heading-plain) {
+  font-size: 18px;
   border-bottom: 2px solid black;
   padding-bottom: 0.5rem;
 }
 
-.dark h4 {
+.dark h4:not(.heading-plain) {
   border-bottom-color: white;
 }
-h5 {
-  font-size: 20px;
+h5:not(.heading-plain) {
+  font-size: 16px;
 }
-h6 {
-  font-size: 18px;
+h6:not(.heading-plain) {
+  font-size: 14px;
 }
 
-/* Utility class for headings without underlines */
+/* Tablet and up - larger heading sizes */
+@media (min-width: 640px) {
+  h1:not(.heading-plain) {
+    font-size: 36px;
+  }
+  h2:not(.heading-plain) {
+    font-size: 30px;
+  }
+  h3:not(.heading-plain) {
+    font-size: 24px;
+  }
+  h4:not(.heading-plain) {
+    font-size: 20px;
+  }
+  h5:not(.heading-plain) {
+    font-size: 18px;
+  }
+  h6:not(.heading-plain) {
+    font-size: 16px;
+  }
+}
+
+/* Desktop - full heading sizes */
+@media (min-width: 1024px) {
+  h1:not(.heading-plain) {
+    font-size: 42px;
+  }
+  h2:not(.heading-plain) {
+    font-size: 36px;
+  }
+  h3:not(.heading-plain) {
+    font-size: 28px;
+  }
+  h4:not(.heading-plain) {
+    font-size: 24px;
+  }
+  h5:not(.heading-plain) {
+    font-size: 20px;
+  }
+  h6:not(.heading-plain) {
+    font-size: 18px;
+  }
+}
+
+/* Utility class for headings without underlines - resets global heading styles */
 h1.heading-plain,
 h2.heading-plain,
 h3.heading-plain,
@@ -318,6 +363,7 @@ select {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-family: inherit;
+  font-size: 16px; /* Prevent iOS auto-zoom on focus */
   /* padding removed to allow Tailwind utilities to control spacing */
 }
 

@@ -45,9 +45,9 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
   };
 
   return (
-    <div className="flex gap-3 py-3 border-b border-border last:border-0">
+    <div className="flex gap-2 sm:gap-3 py-3 border-b border-border last:border-0 w-full overflow-hidden">
       {/* Product Image */}
-      <div className="relative w-16 h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden">
+      <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden">
         {item.image?.url ? (
           <Image
             src={getImageUrl(item.image.url)}
@@ -64,7 +64,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
       </div>
 
       {/* Product Details */}
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 overflow-hidden">
         <Link
           href={`/product/${item.slug}`}
           className="text-sm font-medium text-foreground hover:text-primary line-clamp-2 transition-colors"
@@ -74,7 +74,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
 
         {/* Variation Attributes */}
         {item.attributes && Object.keys(item.attributes).length > 0 && (
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-muted-foreground mt-1 truncate">
             {Object.entries(item.attributes).map(([key, value]) => (
               <span key={key} className="mr-2">
                 {key}: {value}
@@ -84,7 +84,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
         )}
 
         {/* Price */}
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
           <span className="text-sm font-medium text-foreground">
             {formatPrice(item.price)}
           </span>
@@ -96,7 +96,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
         </div>
 
         {/* Quantity Controls */}
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex flex-wrap items-center gap-2 mt-2">
           <QuantitySelector
             quantity={item.quantity}
             min={1}
@@ -110,7 +110,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
           {/* Remove Button */}
           <button
             onClick={handleRemove}
-            className="text-muted-foreground hover:text-destructive transition-colors"
+            className="p-1.5 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
             aria-label="Remove item"
           >
             <svg

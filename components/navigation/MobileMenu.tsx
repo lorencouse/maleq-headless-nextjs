@@ -167,7 +167,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                             key={item.href}
                             href={item.href}
                             onClick={onClose}
-                            className="block px-4 py-2 text-sm font-semibold text-primary hover:bg-muted rounded-lg transition-colors"
+                            className="block px-4 py-3 text-sm font-semibold text-primary hover:bg-muted rounded-lg transition-colors"
                           >
                             {item.label}
                           </Link>
@@ -180,7 +180,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                       <div key={group.label}>
                         <button
                           onClick={() => toggleGroup(`${section.label}-${group.label}`)}
-                          className="flex items-center justify-between w-full px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
+                          className="flex items-center justify-between w-full px-4 py-3 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
                         >
                           <span>{group.label}</span>
                           {group.children && group.children.length > 0 && (
@@ -205,7 +205,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 <Link
                                   href={item.href}
                                   onClick={onClose}
-                                  className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-colors ${
+                                  className={`flex items-center gap-2 px-4 py-2.5 text-sm rounded-lg transition-colors min-h-[44px] ${
                                     isActive(item.href)
                                       ? 'bg-primary/10 text-primary'
                                       : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -279,7 +279,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   <Link
                     href={link.href}
                     onClick={onClose}
-                    className="block px-4 py-2 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
+                    className="block px-4 py-3 text-sm text-foreground hover:bg-muted rounded-lg transition-colors min-h-[44px]"
                   >
                     {link.label}
                   </Link>
@@ -288,7 +288,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
               <li>
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                  className="block w-full text-left px-4 py-3 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors min-h-[44px]"
                 >
                   Sign Out
                 </button>

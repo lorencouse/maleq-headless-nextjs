@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cart-store';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { parsePrice } from '@/lib/utils/woocommerce-format';
 import { CartImage } from '@/lib/types/cart';
 
@@ -161,7 +161,7 @@ export function useAddToCart(options: UseAddToCartOptions = {}): UseAddToCartRet
           type: product.type,
         });
 
-        showSuccess(`${product.name} added to cart!`);
+        showAddedToCart(product.name);
         onSuccess?.();
         return true;
       } catch (error) {

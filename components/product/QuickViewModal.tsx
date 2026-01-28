@@ -5,10 +5,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import { useCartStore } from '@/lib/store/cart-store';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { formatPrice, parsePrice, calculatePercentOff } from '@/lib/utils/woocommerce-format';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 interface QuickViewModalProps {
   product: UnifiedProduct;
@@ -75,7 +76,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         type: product.type,
       });
 
-      showSuccess(`${product.name} added to cart!`);
+      showAddedToCart(product.name);
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);
@@ -225,7 +226,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Short Description */}
               {product.shortDescription && (
                 <p className="text-muted-foreground mb-6 line-clamp-3">
-                  {product.shortDescription.replace(/<[^>]*>/g, '')}
+                  {stripHtml(product.shortDescription)}
                 </p>
               )}
 
@@ -238,26 +239,26 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
               {/* Quantity and Add to Cart */}
               {!isVariable && displayStockStatus !== 'OUT_OF_STOCK' && (
-                <div className="flex gap-3 mb-4">
+                <div className="flex gap-2 sm:gap-3 mb-4">
                   <div className="flex items-center border border-input rounded-lg">
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="px-4 py-3 sm:px-3 sm:py-2 text-muted-foreground hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                       aria-label="Decrease quantity"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                       </svg>
                     </button>
-                    <span className="px-4 py-2 text-foreground font-medium min-w-[48px] text-center">
+                    <span className="px-3 sm:px-4 py-3 sm:py-2 text-foreground font-medium min-w-[44px] text-center">
                       {quantity}
                     </span>
                     <button
                       onClick={() => setQuantity((q) => q + 1)}
-                      className="px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="px-4 py-3 sm:px-3 sm:py-2 text-muted-foreground hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                       aria-label="Increase quantity"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                     </button>
@@ -265,7 +266,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   <button
                     onClick={handleAddToCart}
                     disabled={isAdding}
-                    className="flex-1 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
+                    className="flex-1 py-3 sm:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
                   >
                     {isAdding ? 'Adding...' : 'Add to Cart'}
                   </button>

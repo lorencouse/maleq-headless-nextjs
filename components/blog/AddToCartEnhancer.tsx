@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCartStore } from '@/lib/store/cart-store';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { BlogProduct } from '@/lib/utils/blog-products';
 
 interface ProductPlaceholder {
@@ -43,7 +43,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
         maxQuantity: 99,
       });
 
-      showSuccess('Added to cart!');
+      showAddedToCart(product.name);
       setIsAdded(true);
 
       setTimeout(() => {

@@ -7,7 +7,11 @@ import { UnifiedProduct } from '@/lib/products/combined-service';
 import QuickAddButton from './QuickAddButton';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import QuickViewModal from '@/components/product/QuickViewModal';
-import { formatPrice, parsePrice, calculatePercentOff } from '@/lib/utils/woocommerce-format';
+import {
+  formatPrice,
+  parsePrice,
+  calculatePercentOff,
+} from '@/lib/utils/woocommerce-format';
 
 interface ProductCardProps {
   product: UnifiedProduct;
@@ -17,7 +21,11 @@ interface ProductCardProps {
   onRemove?: (productId: string) => void;
 }
 
-export default function ProductCard({ product, isWishlist, onRemove }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  isWishlist,
+  onRemove,
+}: ProductCardProps) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   // Get first category
@@ -27,8 +35,11 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
   return (
     <div className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group h-full flex flex-col'>
       {/* Product Image - Link wrapper */}
-      <Link href={`/product/${product.slug}`} className='product-card-link block'>
-        <div className='relative h-64 w-full overflow-hidden bg-background'>
+      <Link
+        href={`/product/${product.slug}`}
+        className='product-card-link block'
+      >
+        <div className='relative h-44 sm:h-56 lg:h-64 w-full overflow-hidden bg-background'>
           {product.image ? (
             <Image
               src={product.image.url}
@@ -47,7 +58,10 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
           {product.onSale && (
             <div className='absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded'>
               {(() => {
-                const percentOff = calculatePercentOff(product.regularPrice, product.salePrice);
+                const percentOff = calculatePercentOff(
+                  product.regularPrice,
+                  product.salePrice,
+                );
                 return percentOff ? `${percentOff}% OFF` : 'SALE';
               })()}
             </div>
@@ -63,10 +77,13 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
       </Link>
 
       {/* Content section - grows to push footer down */}
-      <Link href={`/product/${product.slug}`} className='product-card-link flex-1 flex flex-col p-4'>
+      <Link
+        href={`/product/${product.slug}`}
+        className='product-card-link flex-1 flex flex-col p-4'
+      >
         {/* Product Name */}
         <div className='relative pb-2 mb-2'>
-          <h3 className='heading-plain text-base font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
+          <h3 className='heading-plain text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
             {product.name}
           </h3>
           {/* Red underline (always visible) */}
@@ -86,15 +103,12 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
         )}
 
         {/* Variation Count */}
-        {isVariable &&
-          product.variations &&
-          product.variations.length > 0 && (
-            <div className='mb-2 text-xs text-primary font-medium'>
-              {product.variations.length}{' '}
-              {product.variations.length === 1 ? 'option' : 'options'}{' '}
-              available
-            </div>
-          )}
+        {isVariable && product.variations && product.variations.length > 0 && (
+          <div className='mb-2 text-xs text-primary font-medium'>
+            {product.variations.length}{' '}
+            {product.variations.length === 1 ? 'option' : 'options'} available
+          </div>
+        )}
 
         {/* Price - at bottom of content section */}
         <div className='flex items-center gap-2'>
@@ -153,11 +167,18 @@ export default function ProductCard({ product, isWishlist, onRemove }: ProductCa
             {/* Wishlist/Remove Button */}
             {isWishlist && onRemove ? (
               <button
-                onClick={() => onRemove(product.databaseId?.toString() || product.id)}
+                onClick={() =>
+                  onRemove(product.databaseId?.toString() || product.id)
+                }
                 className='p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-colors'
                 aria-label='Remove from wishlist'
               >
-                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg
+                  className='w-5 h-5'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'

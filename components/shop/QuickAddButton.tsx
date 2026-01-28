@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cart-store';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { parsePrice } from '@/lib/utils/woocommerce-format';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 
@@ -52,7 +52,7 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
         type: product.type,
       });
 
-      showSuccess(`${product.name} added to cart!`);
+      showAddedToCart(product.name);
     } catch (error) {
       console.error('Error adding to cart:', error);
       showError('Failed to add to cart');
