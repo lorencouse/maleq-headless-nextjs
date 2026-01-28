@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useWishlistItemCount } from '@/lib/store/wishlist-store';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import { mainNavigation, simpleNavLinks, accountNavigation } from '@/lib/config/navigation';
 import { CategoryIcons } from '@/lib/config/category-icons';
@@ -24,6 +25,7 @@ function NavIcon({ iconKey, className = 'w-4 h-4' }: { iconKey?: string; classNa
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
+  const wishlistItemCount = useWishlistItemCount();
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const prevPathname = useRef(pathname);
@@ -297,9 +299,37 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           </div>
         )}
 
+        {/* Quick Actions */}
+        <div className="p-4 border-t border-border">
+          <p className="px-4 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Quick Actions
+          </p>
+          <ul className="space-y-1">
+            <li>
+              <Link
+                href="/account/wishlist"
+                onClick={onClose}
+                className="flex items-center justify-between px-4 py-3 text-sm text-foreground hover:bg-muted rounded-lg transition-colors min-h-[44px]"
+              >
+                <span className="flex items-center gap-3">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  Wishlist
+                </span>
+                {wishlistItemCount > 0 && (
+                  <span className="bg-primary text-primary-foreground text-xs font-semibold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
+                    {wishlistItemCount}
+                  </span>
+                )}
+              </Link>
+            </li>
+          </ul>
+        </div>
+
         {/* Theme Toggle */}
         <div className="p-4 border-t border-border">
-          <div className="flex items-center justify-between px-4">
+          <div className="flex items-center justify-between px-4 py-2">
             <span className="text-sm text-foreground">Dark Mode</span>
             <ThemeToggle />
           </div>

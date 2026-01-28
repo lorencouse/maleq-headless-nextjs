@@ -66,7 +66,12 @@ export default function Header() {
 
           {/* Cart & User Actions */}
           <div className='flex items-center space-x-1'>
-            <ThemeToggle />
+            {/* Desktop only: Theme Toggle */}
+            <div className='hidden md:block'>
+              <ThemeToggle />
+            </div>
+
+            {/* Search - always visible */}
             <button
               onClick={() => setIsSearchOpen(true)}
               className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
@@ -85,8 +90,8 @@ export default function Header() {
               </svg>
             </button>
 
-            {/* User Account */}
-            <div className='relative'>
+            {/* Desktop only: User Account */}
+            <div className='relative hidden md:block'>
               {isAuthenticated ? (
                 <>
                   <button
@@ -159,10 +164,10 @@ export default function Header() {
               )}
             </div>
 
-            {/* Wishlist */}
+            {/* Desktop only: Wishlist */}
             <Link
               href='/account/wishlist'
-              className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
+              className='hidden md:flex p-2.5 min-w-[44px] min-h-[44px] items-center justify-center text-foreground hover:text-primary relative transition-colors'
               aria-label='View wishlist'
             >
               <svg
@@ -183,6 +188,7 @@ export default function Header() {
               )}
             </Link>
 
+            {/* Cart - always visible */}
             <button
               onClick={miniCartControls.open}
               className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
@@ -205,13 +211,11 @@ export default function Header() {
                 </span>
               )}
             </button>
-          </div>
 
-          {/* Mobile menu button */}
-          <div className='md:hidden'>
+            {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
+              className='md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
               aria-label='Open menu'
             >
               <svg
