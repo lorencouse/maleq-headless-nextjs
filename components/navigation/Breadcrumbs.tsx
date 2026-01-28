@@ -17,11 +17,11 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
   const isLight = variant === 'light';
 
   const linkClass = isLight
-    ? 'text-white/80 hover:text-white transition-colors'
-    : 'text-muted-foreground hover:text-foreground transition-colors';
+    ? 'link-subtle-light text-xs sm:text-sm'
+    : 'link-subtle text-xs sm:text-sm';
   const currentClass = isLight
-    ? 'text-white font-medium'
-    : 'text-foreground font-medium';
+    ? 'link-current-light text-xs sm:text-sm'
+    : 'link-current text-xs sm:text-sm';
   const separatorClass = isLight
     ? 'text-white/40'
     : 'text-muted-foreground/40';
@@ -31,7 +31,7 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
 
   return (
     <nav aria-label="Breadcrumb" className="mb-2 sm:mb-4">
-      <ol className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-1.5 text-xs sm:text-sm leading-none">
+      <ol className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-1.5 leading-none">
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;
 
@@ -50,7 +50,7 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
                 </Link>
               )}
               {!isLast && (
-                <span className={`mx-1 sm:mx-1.5 ${separatorClass}`} aria-hidden="true">/</span>
+                <span className={`mx-1 sm:mx-1.5 text-xs sm:text-sm ${separatorClass}`} aria-hidden="true">/</span>
               )}
             </li>
           );
