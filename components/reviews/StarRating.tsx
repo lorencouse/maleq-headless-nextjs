@@ -48,13 +48,13 @@ export default function StarRating({
             onClick={() => handleClick(index)}
             onKeyDown={(e) => handleKeyDown(e, index)}
             disabled={!interactive}
-            className={`relative ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'} ${sizeClasses[size]}`}
+            className={`star-rating-btn relative block ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'} ${sizeClasses[size]}`}
             aria-label={interactive ? `Rate ${index + 1} stars` : undefined}
             tabIndex={interactive ? 0 : -1}
           >
             {/* Empty star */}
             <svg
-              className={`${sizeClasses[size]} text-muted-foreground/30`}
+              className={`block ${sizeClasses[size]} text-muted-foreground/30`}
               fill="currentColor"
               viewBox="0 0 20 20"
             >
@@ -64,11 +64,11 @@ export default function StarRating({
             {/* Filled star (full or partial) */}
             {(filled || partial) && (
               <div
-                className="absolute inset-0 overflow-hidden"
-                style={{ width: filled ? '100%' : `${percentage}%` }}
+                className="absolute top-0 left-0 overflow-hidden"
+                style={{ width: filled ? '100%' : `${percentage}%`, height: '100%' }}
               >
                 <svg
-                  className={`${sizeClasses[size]} text-yellow-400`}
+                  className={`block ${sizeClasses[size]} text-yellow-400`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >

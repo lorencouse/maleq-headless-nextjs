@@ -951,4 +951,10 @@ a:focus-visible {
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Exclude star rating buttons - they have their own touch-friendly sizing */
+  .star-rating-btn {
+    min-height: unset;
+    min-width: unset;
+  }
 }
