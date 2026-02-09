@@ -241,7 +241,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const showFeaturedSections = !hasSearchOrFilters;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Featured Sections - Only show when no filters */}
       {showFeaturedSections && (
         <>

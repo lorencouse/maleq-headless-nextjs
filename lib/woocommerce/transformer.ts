@@ -2,6 +2,7 @@ import type { WTProduct, WTProductType, WTManufacturer, WTProductImage, Category
 import type { WooProduct, WooCategory, WooProductImage } from './types';
 import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { stripHtml } from '../utils/text-utils';
 
 // Map Williams Trading category codes to WooCommerce category IDs
 type CategoryMap = Map<string, number>;
@@ -361,8 +362,8 @@ function cleanDescription(description: string): string {
 function generateShortDescription(description: string): string {
   if (!description) return '';
 
-  // Remove HTML tags for sentence detection
-  const plainText = description.replace(/<[^>]*>/g, '');
+  // Remove HTML tags and decode entities for sentence detection
+  const plainText = stripHtml(description);
 
   // Split by sentence endings
   const sentences = plainText.match(/[^.!?]+[.!?]+/g) || [];

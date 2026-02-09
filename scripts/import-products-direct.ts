@@ -37,6 +37,8 @@ interface ImportOptions {
   skipImages: boolean;
   dryRun: boolean;
   detectVariations: boolean;
+  barcodes?: string[];
+  includeInactive: boolean;
 }
 
 interface ImportStats {
@@ -58,6 +60,7 @@ function parseArgs(): ImportOptions {
     skipImages: false,
     dryRun: false,
     detectVariations: true,
+    includeInactive: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -72,6 +75,25 @@ function parseArgs(): ImportOptions {
       options.dryRun = true;
     } else if (arg === '--no-variations') {
       options.detectVariations = false;
+    } else if (arg === '--barcodes' && i + 1 < args.length) {
+      // Comma-separated list of barcodes
+      options.barcodes = args[i + 1].split(',').map(b => b.trim());
+      options.includeInactive = true; // Auto-enable when using barcodes
+      i++;
+    } else if (arg === '--barcode-file' && i + 1 < args.length) {
+      // Read barcodes from file (one per line)
+      const filePath = args[i + 1];
+      try {
+        const content = readFileSync(filePath, 'utf-8');
+        options.barcodes = content.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+        options.includeInactive = true;
+      } catch (err) {
+        console.error(`Error reading barcode file: ${filePath}`);
+        process.exit(1);
+      }
+      i++;
+    } else if (arg === '--include-inactive') {
+      options.includeInactive = true;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Direct SQL Product Import Script
@@ -84,12 +106,17 @@ Options:
   --skip-images         Skip image URLs (faster import)
   --dry-run             Show what would be imported without making changes
   --no-variations       Disable variation detection (import all as simple)
+  --barcodes <list>     Import only specific barcodes (comma-separated)
+  --barcode-file <path> Import barcodes from file (one per line)
+  --include-inactive    Also search inactive_products.xml
   --help, -h            Show this help message
 
 Examples:
   bun scripts/import-products-direct.ts --limit 50
   bun scripts/import-products-direct.ts --dry-run --limit 10
   bun scripts/import-products-direct.ts --no-variations --limit 100
+  bun scripts/import-products-direct.ts --barcodes 7350075022555,7350075022548
+  bun scripts/import-products-direct.ts --barcode-file data/barcodes.txt
       `);
       process.exit(0);
     }
@@ -640,6 +667,12 @@ class DirectProductImporter {
   async importSimpleProduct(product: XMLProduct): Promise<number | null> {
     if (!this.connection) throw new Error('Not connected');
 
+    // Skip inactive products entirely
+    if (product.active !== '1') {
+      this.stats.skipped++;
+      return null;
+    }
+
     const sku = product.barcode || product.sku;
 
     // Skip if already exists
@@ -791,6 +824,24 @@ class DirectProductImporter {
    */
   async importVariableProduct(group: VariationGroup): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
+
+    // Filter out inactive variations - only import active products
+    const activeProducts = group.products.filter(p => p.active === '1');
+
+    if (activeProducts.length === 0) {
+      // No active variations, skip this entire product group
+      console.log(`  ⊖ Skipping ${group.baseName} - no active variations`);
+      this.stats.skipped += group.products.length;
+      return;
+    }
+
+    if (activeProducts.length < group.products.length) {
+      const skippedCount = group.products.length - activeProducts.length;
+      console.log(`  ⊖ Filtering out ${skippedCount} inactive variation(s)`);
+      this.stats.skipped += skippedCount;
+      // Update the group to only contain active products
+      group.products = activeProducts;
+    }
 
     const firstProduct = group.products[0];
     // Generate SKU: replace non-alphanumeric with dashes, collapse multiple dashes, remove trailing dashes
@@ -1322,15 +1373,82 @@ async function main() {
   if (options.limit) {
     console.log(`  Product Limit: ${options.limit}`);
   }
+  if (options.barcodes) {
+    console.log(`  Barcodes Filter: ${options.barcodes.length} barcodes`);
+  }
+  if (options.includeInactive) {
+    console.log(`  Include Inactive: yes`);
+  }
   console.log();
 
-  // Parse XML
-  const xmlPath = join(process.cwd(), 'data', 'products-filtered.xml');
-  console.log(`Loading products from: ${xmlPath}`);
+  // Parse XML - potentially from multiple files
+  let allProducts: XMLProduct[] = [];
+  const barcodeSet = options.barcodes ? new Set(options.barcodes) : null;
+  const foundBarcodes = new Set<string>();
 
-  const parser = new XMLParser(xmlPath);
-  const allProducts = await parser.parseProducts();
-  console.log(`✓ Parsed ${allProducts.length} products from XML`);
+  // Always search primary XML file first
+  const primaryXmlPath = join(process.cwd(), 'data', 'products-filtered.xml');
+  console.log(`Loading products from: ${primaryXmlPath}`);
+  const primaryParser = new XMLParser(primaryXmlPath);
+  const primaryProducts = await primaryParser.parseProducts();
+  console.log(`✓ Parsed ${primaryProducts.length} products from products-filtered.xml`);
+
+  if (barcodeSet) {
+    // Filter by barcode
+    for (const p of primaryProducts) {
+      if (barcodeSet.has(p.barcode)) {
+        allProducts.push(p);
+        foundBarcodes.add(p.barcode);
+      }
+    }
+    console.log(`  Found ${foundBarcodes.size} matching products`);
+  } else {
+    allProducts = primaryProducts;
+  }
+
+  // Search additional XML files if needed
+  if (options.includeInactive && barcodeSet && foundBarcodes.size < barcodeSet.size) {
+    const additionalFiles = [
+      join(process.cwd(), 'data', 'products.xml'),
+      join(process.cwd(), 'data', 'inactive_products.xml'),
+    ];
+
+    for (const xmlPath of additionalFiles) {
+      if (foundBarcodes.size >= barcodeSet.size) break;
+
+      try {
+        const stat = await import('fs').then(fs => fs.existsSync(xmlPath));
+        if (!stat) continue;
+
+        console.log(`Searching: ${xmlPath.split('/').pop()}`);
+        const parser = new XMLParser(xmlPath);
+        const products = await parser.parseProducts();
+
+        for (const p of products) {
+          if (barcodeSet.has(p.barcode) && !foundBarcodes.has(p.barcode)) {
+            // Force active status for barcode imports
+            p.active = '1';
+            allProducts.push(p);
+            foundBarcodes.add(p.barcode);
+            console.log(`  ✓ Found: ${p.barcode} - ${p.name.substring(0, 50)}...`);
+          }
+        }
+      } catch (err) {
+        // File doesn't exist or can't be parsed, skip
+      }
+    }
+
+    // Report missing barcodes
+    const missingBarcodes = [...barcodeSet].filter(b => !foundBarcodes.has(b));
+    if (missingBarcodes.length > 0) {
+      console.log(`\n⚠ Not found (${missingBarcodes.length}):`);
+      for (const b of missingBarcodes) {
+        console.log(`  ✗ ${b}`);
+      }
+    }
+  }
+
+  console.log(`\n✓ Total products to process: ${allProducts.length}`);
 
   // Filter out excluded product types
   const excludedTypes = loadExcludedProductTypes();

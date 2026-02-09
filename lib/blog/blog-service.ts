@@ -14,6 +14,7 @@ import {
   matchesAllTerms,
   matchesAnyTerm,
 } from '@/lib/utils/search-helpers';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 interface CategoryNode {
   id: string;
@@ -343,7 +344,7 @@ export async function getBlogSearchSuggestions(
   // Format posts for suggestions
   const postSuggestions = topPosts.map((post) => {
     const cleanExcerpt = post.excerpt
-      ? post.excerpt.replace(/<[^>]*>/g, '').slice(0, 100)
+      ? stripHtml(post.excerpt).slice(0, 100)
       : '';
 
     return {

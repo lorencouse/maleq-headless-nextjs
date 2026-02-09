@@ -145,7 +145,8 @@ export default function ProductCard({
         {/* Variation Count */}
         {isVariable && product.variations && product.variations.length > 0 && (
           <div className='mb-1.5 sm:mb-2 text-xs text-primary font-medium'>
-            {product.variations.length} {product.variations.length === 1 ? 'option' : 'options'}
+            {product.variations.length}{' '}
+            {product.variations.length === 1 ? 'option' : 'options'}
           </div>
         )}
 

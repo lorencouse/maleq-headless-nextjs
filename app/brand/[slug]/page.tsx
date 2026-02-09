@@ -14,6 +14,7 @@ import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 interface BrandPageProps {
   params: Promise<{ slug: string }>;
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
   }
 
   const description = brand.description
-    ? brand.description.replace(/<[^>]*>/g, '').slice(0, 160)
+    ? stripHtml(brand.description).slice(0, 160)
     : `Shop ${brand.name} products at Male Q. ${brand.count} products available with fast, discreet shipping.`;
 
   return {
@@ -119,7 +120,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const showFeaturedSections = !hasAdditionalFilters;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
       {/* Brand Hero */}
       <BrandHero
         brand={brand}

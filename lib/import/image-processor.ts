@@ -20,9 +20,10 @@ interface UploadedImage extends ProcessedImage {
  * Image processing utility
  * - Downloads images
  * - Converts to WebP format
- * - Resizes to 650x650 with white background
- * - Maintains aspect ratio (no cropping)
- * - Optimizes for web
+ * - Places on 650x650 white background (centered)
+ * - Shrinks large images to fit, never enlarges small images
+ * - Maintains aspect ratio (no cropping or stretching)
+ * - Optimizes for web (90% WebP quality)
  */
 export class ImageProcessor {
   private cacheDir: string;
@@ -130,11 +131,11 @@ export class ImageProcessor {
       resizeWidth = Math.round(resizeHeight * aspectRatio);
     }
 
-    // Resize image
+    // Resize image (only shrink if larger than target, never enlarge)
     const resizedBuffer = await image
       .resize(resizeWidth, resizeHeight, {
         fit: 'inside',
-        withoutEnlargement: false,
+        withoutEnlargement: true, // Don't stretch small images
       })
       .toBuffer();
 

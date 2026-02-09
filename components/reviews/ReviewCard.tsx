@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import StarRating from './StarRating';
+import { stripHtml } from '@/lib/utils/text-utils';
 
 export interface Review {
   id: number;
@@ -37,9 +38,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       .slice(0, 2);
   };
 
-  // Strip HTML tags from review content
+  // Strip HTML tags and decode entities from review content
   const cleanReview = (html: string) => {
-    return html.replace(/<[^>]*>/g, '');
+    return stripHtml(html);
   };
 
   return (

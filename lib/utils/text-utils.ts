@@ -83,18 +83,27 @@ export function normalizeWhitespace(text: string): string {
 }
 
 /**
- * Remove HTML tags from text (with XSS protection)
+ * Remove HTML tags from text and decode entities (with XSS protection)
  *
  * @example
  * stripHtml('<p>Hello <strong>World</strong></p>') // 'Hello World'
+ * stripHtml('<p>Don&#8217;t worry&#8230;</p>') // 'Don't worry…'
  */
 export function stripHtml(html: string): string {
+  if (!html) return '';
+
+  let result: string;
+
   // Use DOMPurify to safely strip HTML (prevents XSS)
   if (typeof window !== 'undefined') {
-    return DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_TRUSTED_TYPE: false }) as string;
+    result = DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_TRUSTED_TYPE: false }) as string;
+  } else {
+    // Server-side fallback - still safe as we're only stripping
+    result = html.replace(/<[^>]*>/g, '');
   }
-  // Server-side fallback - still safe as we're only stripping
-  return html.replace(/<[^>]*>/g, '');
+
+  // Decode HTML entities after stripping tags
+  return decodeHtmlEntities(result);
 }
 
 /**
@@ -129,19 +138,37 @@ export function sanitizeHtml(html: string, options?: {
 }
 
 /**
- * Clean HTML entities
+ * Decode HTML entities (both named and numeric)
  *
  * @example
  * decodeHtmlEntities('Hello&nbsp;World') // 'Hello World'
+ * decodeHtmlEntities('Don&#8217;t worry&#8230;') // 'Don't worry…'
  */
 export function decodeHtmlEntities(text: string): string {
+  if (!text) return '';
+
   return text
+    // Decode numeric decimal entities (&#8217; -> ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    // Decode numeric hex entities (&#x2019; -> ')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, code) => String.fromCharCode(parseInt(code, 16)))
+    // Decode common named entities
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replace(/&apos;/g, "'")
+    .replace(/&lsquo;/g, '\u2018')  // '
+    .replace(/&rsquo;/g, '\u2019')  // '
+    .replace(/&ldquo;/g, '\u201C')  // "
+    .replace(/&rdquo;/g, '\u201D')  // "
+    .replace(/&ndash;/g, '\u2013')  // –
+    .replace(/&mdash;/g, '\u2014')  // —
+    .replace(/&hellip;/g, '\u2026') // …
+    .replace(/&trade;/g, '\u2122')  // ™
+    .replace(/&reg;/g, '\u00AE')    // ®
+    .replace(/&copy;/g, '\u00A9');  // ©
 }
 
 /**

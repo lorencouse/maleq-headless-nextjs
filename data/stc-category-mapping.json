@@ -1,0 +1,310 @@
+{
+  "lastUpdated": "2026-01-26",
+  "notes": "Review this mapping before import. Categories marked 'REVIEW' need manual verification.",
+  "mapping": {
+    "Women's Lingerie": {
+      "wcCategory": "Lingerie & Clothing",
+      "wcId": 1555,
+      "status": "mapped"
+    },
+    "Men's Clothing": {
+      "wcCategory": "Lingerie & Clothing > Mens Underwear",
+      "wcId": 1650,
+      "status": "mapped"
+    },
+    "Butt Plugs": {
+      "wcCategory": "Anal Toys > Small & Medium Butt Plugs",
+      "wcId": 1662,
+      "parentIds": [1549],
+      "status": "mapped"
+    },
+    "Realistic Dildos": {
+      "wcCategory": "Dildos & Dongs > Dildos & Dongs Realistic",
+      "wcId": 1762,
+      "parentIds": [1548],
+      "status": "mapped"
+    },
+    "Cock Rings": {
+      "wcCategory": "Sextoys for Men > Cock Rings",
+      "wcId": 1735,
+      "parentIds": [1564],
+      "status": "mapped"
+    },
+    "Games & Novelty": {
+      "wcCategory": "Party Games, Gifts & Supplies > Adult Party Games",
+      "wcId": 1673,
+      "parentIds": [1566],
+      "status": "mapped"
+    },
+    "Lubricants": {
+      "wcCategory": "Lubricants",
+      "wcId": 1562,
+      "status": "mapped"
+    },
+    "Bullets & Discreet": {
+      "wcCategory": "Vibrators > Bullets & Eggs",
+      "wcId": 1573,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "Clitoral Stimulation": {
+      "wcCategory": "Vibrators > Clitoral",
+      "wcId": 1655,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "Strap-on Dildos & Harnesses": {
+      "wcCategory": "Sextoys for Women > Strap-ons & Harnesses",
+      "wcId": 1580,
+      "parentIds": [1563],
+      "status": "mapped"
+    },
+    "Rabbit Vibrators": {
+      "wcCategory": "Vibrators > Rabbit Style Vibrators",
+      "wcId": 1572,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "Sexy Accessories": {
+      "wcCategory": "Lingerie & Clothing > Pasties & Accessories",
+      "wcId": 1659,
+      "parentIds": [1555],
+      "status": "REVIEW"
+    },
+    "Restraints": {
+      "wcCategory": "Bondage, Fetish & Kink > Bondage Restraints",
+      "wcId": 1601,
+      "parentIds": [1551],
+      "status": "mapped"
+    },
+    "Personal Massagers": {
+      "wcCategory": "Vibrators > Magic Wands & Body Massagers",
+      "wcId": 1579,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "G Spot Vibrators": {
+      "wcCategory": "Vibrators > G Spot",
+      "wcId": 1576,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "Personal Care": {
+      "wcCategory": "Health & Beauty > Hygiene & Intimate Care",
+      "wcId": 1704,
+      "parentIds": [1554],
+      "status": "mapped"
+    },
+    "Vibrating Dildos": {
+      "wcCategory": "Vibrators > Realistic",
+      "wcId": 1575,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "Penis Enhancers": {
+      "wcCategory": "Sextoys for Men > Male Extensions",
+      "wcId": 1748,
+      "parentIds": [1564],
+      "status": "mapped"
+    },
+    "Whips & Paddles": {
+      "wcCategory": "Bondage, Fetish & Kink > Whips, Paddles & Ticklers",
+      "wcId": 1599,
+      "parentIds": [1551],
+      "status": "mapped"
+    },
+    "Sleeves": {
+      "wcCategory": "Sextoys for Men > Masturbators > Masturbation Sleeves",
+      "wcId": 1696,
+      "parentIds": [1564, 1581],
+      "status": "mapped"
+    },
+    "Sexy Costumes": {
+      "wcCategory": "Lingerie & Clothing > Naughty Role Play",
+      "wcId": 1714,
+      "parentIds": [1555],
+      "status": "mapped"
+    },
+    "Extreme Bondage Gear": {
+      "wcCategory": "Bondage, Fetish & Kink",
+      "wcId": 1551,
+      "status": "mapped"
+    },
+    "Nipple Play": {
+      "wcCategory": "Sextoys for Women > Nipple Play",
+      "wcId": 1644,
+      "parentIds": [1563],
+      "status": "mapped"
+    },
+    "Fetish Clothing": {
+      "wcCategory": "Bondage, Fetish & Kink > Mens Fetish Wear",
+      "wcId": 1606,
+      "parentIds": [1551],
+      "status": "REVIEW"
+    },
+    "Sensual Massage": {
+      "wcCategory": "Health & Beauty > Body Massagers > Massage Lotions & Creams",
+      "wcId": 1652,
+      "parentIds": [1554, 1619],
+      "status": "mapped"
+    },
+    "Books": {
+      "wcCategory": "Books, Adult Games & Music",
+      "wcId": 1556,
+      "status": "mapped"
+    },
+    "Pocket Pussy": {
+      "wcCategory": "Sextoys for Men > Masturbators > Pussy",
+      "wcId": 1694,
+      "parentIds": [1564, 1581],
+      "status": "mapped"
+    },
+    "Bondage Kits & Sets": {
+      "wcCategory": "Bondage, Fetish & Kink > Bondage Kits & Kinky Sets",
+      "wcId": 1602,
+      "parentIds": [1551],
+      "status": "mapped"
+    },
+    "Prostate Massagers": {
+      "wcCategory": "Anal Toys > Prostate Massagers & P Spot Stimulators",
+      "wcId": 1594,
+      "parentIds": [1549],
+      "status": "mapped"
+    },
+    "Gags & Blindfolds": {
+      "wcCategory": "Bondage, Fetish & Kink > Gags & Muzzles",
+      "wcId": 1605,
+      "parentIds": [1551],
+      "status": "mapped",
+      "notes": "May also map to Blindfolds (1604)"
+    },
+    "Club Wear": {
+      "wcCategory": "Lingerie & Clothing > Clothing & Sexy Clubwear",
+      "wcId": 1616,
+      "parentIds": [1555],
+      "status": "mapped"
+    },
+    "Extreme Dildos": {
+      "wcCategory": "Dildos & Dongs > Realistic Large",
+      "wcId": 1592,
+      "parentIds": [1548],
+      "status": "mapped"
+    },
+    "Sex Enhancers": {
+      "wcCategory": "Meds & Supplements",
+      "wcId": 1553,
+      "status": "REVIEW",
+      "notes": "May be excluded if pills/supplements"
+    },
+    "Porn Star Masturbators": {
+      "wcCategory": "Sextoys for Men > Masturbators > Masturbators Porn Star",
+      "wcId": 1697,
+      "parentIds": [1564, 1581],
+      "status": "mapped"
+    },
+    "Luxury Vibrators": {
+      "wcCategory": "Luxury Items",
+      "wcId": 1559,
+      "status": "REVIEW",
+      "notes": "Could also go under Vibrators"
+    },
+    "Classic Vibrators": {
+      "wcCategory": "Vibrators > Classic Vibrators",
+      "wcId": 1570,
+      "parentIds": [1546],
+      "status": "mapped"
+    },
+    "Oral Sex Products": {
+      "wcCategory": "Sextoys for Couples > Oral Products",
+      "wcId": 1587,
+      "parentIds": [1547],
+      "status": "mapped"
+    },
+    "Vibrators": {
+      "wcCategory": "Vibrators",
+      "wcId": 1546,
+      "status": "mapped"
+    },
+    "Accessories": {
+      "wcCategory": "Batteries, Storage, & Odds & Ends",
+      "wcId": 1558,
+      "status": "mapped"
+    },
+    "Penis Pumps": {
+      "wcCategory": "Sextoys for Men > Male Pumps",
+      "wcId": 1733,
+      "parentIds": [1564],
+      "status": "mapped"
+    },
+    "Couples Dildos": {
+      "wcCategory": "Dildos & Dongs > Double Dongs",
+      "wcId": 1590,
+      "parentIds": [1548],
+      "status": "mapped"
+    },
+    "Couples Vibrators": {
+      "wcCategory": "Sextoys for Couples",
+      "wcId": 1547,
+      "status": "mapped"
+    },
+    "Condoms": {
+      "wcCategory": "Condoms",
+      "wcId": 1557,
+      "status": "mapped"
+    },
+    "Gift Sets": {
+      "wcCategory": "Sextoys for Couples > Sensual Kits",
+      "wcId": 1709,
+      "parentIds": [1547],
+      "status": "mapped"
+    },
+    "Anal Beads": {
+      "wcCategory": "Anal Toys > Anal Beads",
+      "wcId": 1593,
+      "parentIds": [1549],
+      "status": "mapped"
+    },
+    "G Spot Dildos": {
+      "wcCategory": "Dildos & Dongs > G-Spot",
+      "wcId": 1642,
+      "parentIds": [1548],
+      "status": "mapped"
+    },
+    "Anal Trainers": {
+      "wcCategory": "Anal Toys > Anal Trainer Kits",
+      "wcId": 1660,
+      "parentIds": [1549],
+      "status": "mapped"
+    },
+    "Lingerie & Clothing": {
+      "wcCategory": "Lingerie & Clothing",
+      "wcId": 1555,
+      "status": "mapped"
+    },
+    "Anal Douches": {
+      "wcCategory": "Anal Toys > Anal Douches, Enemas & Hygiene",
+      "wcId": 1595,
+      "parentIds": [1549],
+      "status": "mapped"
+    },
+    "Blow Job Masturbators": {
+      "wcCategory": "Sextoys for Men > Masturbators > Mouth",
+      "wcId": 1693,
+      "parentIds": [1564, 1581],
+      "status": "mapped"
+    }
+  },
+  "unmapped": [],
+  "excluded": [
+    "DVDs",
+    "Videos",
+    "Magazines",
+    "Pills",
+    "Sexual Enhancement",
+    "Holiday Items",
+    "Christmas",
+    "Display",
+    "Samples",
+    "Promotional"
+  ]
+}

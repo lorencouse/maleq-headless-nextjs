@@ -1,0 +1,215 @@
+{
+  "lastUpdated": "2026-01-26",
+  "notes": "Map STC brand names to existing WooCommerce product_brand terms. Status 'NEW' means brand needs to be created.",
+  "mapping": {
+    "Blush": {
+      "wtCode": "BLSH",
+      "status": "VERIFY",
+      "count": 751
+    },
+    "Doc Johnson": {
+      "wtCode": "DJ",
+      "status": "VERIFY",
+      "count": 638
+    },
+    "Shots": {
+      "wtCode": "SHOT",
+      "status": "VERIFY",
+      "count": 635
+    },
+    "Pipedream": {
+      "wtCode": "PD",
+      "status": "VERIFY",
+      "count": 558
+    },
+    "Nasstoys": {
+      "wtCode": "NASS",
+      "status": "VERIFY",
+      "count": 534
+    },
+    "Rene Rofe": {
+      "wtCode": "RRF",
+      "status": "VERIFY",
+      "count": 413
+    },
+    "NS Novelties": {
+      "wtCode": "NSN",
+      "status": "VERIFY",
+      "count": 321
+    },
+    "Master Series": {
+      "wtCode": "XR",
+      "status": "VERIFY",
+      "notes": "Part of XR Brands",
+      "count": 315
+    },
+    "Magic Silk": {
+      "wtCode": "MS",
+      "status": "VERIFY",
+      "count": 286
+    },
+    "Tantus": {
+      "wtCode": "TAN",
+      "status": "VERIFY",
+      "count": 275
+    },
+    "Pink": {
+      "wtCode": "PINK",
+      "status": "VERIFY",
+      "count": 260
+    },
+    "Male Power": {
+      "wtCode": "MP",
+      "status": "VERIFY",
+      "count": 249
+    },
+    "Hott Products": {
+      "wtCode": "HP",
+      "status": "VERIFY",
+      "count": 202
+    },
+    "Curve Novelties": {
+      "wtCode": "CURVE",
+      "status": "VERIFY",
+      "count": 193
+    },
+    "Dreamgirl": {
+      "wtCode": "DG",
+      "status": "VERIFY",
+      "count": 176
+    },
+    "Glo": {
+      "wtCode": null,
+      "status": "NEW",
+      "count": 174
+    },
+    "Electric Eel": {
+      "wtCode": "EEI",
+      "status": "VERIFY",
+      "count": 169
+    },
+    "Kheper Games": {
+      "wtCode": "KG",
+      "status": "VERIFY",
+      "count": 162
+    },
+    "Adam & Eve": {
+      "wtCode": "AE",
+      "status": "VERIFY",
+      "count": 157
+    },
+    "Sportsheets": {
+      "wtCode": "SS",
+      "status": "VERIFY",
+      "count": 156
+    },
+    "Evolved": {
+      "wtCode": "EVLV",
+      "status": "VERIFY",
+      "count": 155
+    },
+    "Kixies": {
+      "wtCode": null,
+      "status": "NEW",
+      "count": 144
+    },
+    "Little Genie": {
+      "wtCode": "LG",
+      "status": "VERIFY",
+      "count": 117
+    },
+    "Si Novelties": {
+      "wtCode": "SIN",
+      "status": "VERIFY",
+      "count": 111
+    },
+    "Fantasy Lingerie": {
+      "wtCode": "FL",
+      "status": "VERIFY",
+      "count": 104
+    },
+    "Shots America LLC": {
+      "wtCode": "SHOT",
+      "status": "VERIFY",
+      "notes": "Same as Shots",
+      "count": 103
+    },
+    "Topco": {
+      "wtCode": "TOP",
+      "status": "VERIFY",
+      "count": 102
+    },
+    "Forum Novelties": {
+      "wtCode": "FN",
+      "status": "VERIFY",
+      "count": 102
+    },
+    "Oxballs": {
+      "wtCode": "OXB",
+      "status": "VERIFY",
+      "count": 99
+    },
+    "Golden Triangle": {
+      "wtCode": "GT",
+      "status": "VERIFY",
+      "count": 99
+    },
+    "Icon": {
+      "wtCode": "ICON",
+      "status": "VERIFY",
+      "count": 94
+    },
+    "Curve": {
+      "wtCode": "CURVE",
+      "status": "VERIFY",
+      "notes": "Same as Curve Novelties",
+      "count": 91
+    },
+    "Spartacus": {
+      "wtCode": "SPAR",
+      "status": "VERIFY",
+      "count": 90
+    },
+    "VeDO": {
+      "wtCode": "VEDO",
+      "status": "VERIFY",
+      "count": 90
+    },
+    "Zero Tolerance": {
+      "wtCode": "ZT",
+      "status": "VERIFY",
+      "count": 87
+    },
+    "Noir Handmade": {
+      "wtCode": null,
+      "status": "NEW",
+      "count": 87
+    },
+    "Intimate Earth": {
+      "wtCode": "IE",
+      "status": "VERIFY",
+      "count": 86
+    },
+    "ID Lube": {
+      "wtCode": "ID",
+      "status": "VERIFY",
+      "count": 83
+    },
+    "Classic Brands": {
+      "wtCode": "CB",
+      "status": "VERIFY",
+      "count": 83
+    },
+    "Lovely Planet": {
+      "wtCode": null,
+      "status": "NEW",
+      "count": 83
+    }
+  },
+  "newBrandsToCreate": [
+    "Glo",
+    "Kixies",
+    "Noir Handmade",
+    "Lovely Planet"
+  ]
+}

@@ -23,8 +23,10 @@ import {
 } from '@/lib/utils/blog-products';
 import VideoAutoplay from '@/components/blog/VideoAutoplay';
 import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
+import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import DevEditLink from '@/components/dev/DevEditLink';
+import { stripHtml } from '@/lib/utils/text-utils';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -54,9 +56,9 @@ export async function generateMetadata({
 
   // Strip HTML and limit description
   const description = post.excerpt
-    ? post.excerpt.replace(/<[^>]*>/g, '').slice(0, 160)
+    ? stripHtml(post.excerpt).slice(0, 160)
     : post.content
-      ? post.content.replace(/<[^>]*>/g, '').slice(0, 160)
+      ? stripHtml(post.content).slice(0, 160)
       : `Read ${post.title} on the Male Q blog.`;
 
   return {
@@ -234,6 +236,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Enhance star ratings in product specs */}
       <StarRatingEnhancer />
+
+      {/* Enhance checkmarks in product specs tables */}
+      <CheckmarkEnhancer />
 
       {/* Intercept add-to-cart links and use local cart */}
       <AddToCartEnhancer products={blogProducts} />

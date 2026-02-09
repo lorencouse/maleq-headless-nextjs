@@ -192,9 +192,21 @@ export default function VariationSelector({
               </p>
             </div>
             <div className='sm:text-right'>
-              <p className='text-xl sm:text-2xl font-bold text-foreground'>
-                {formatPrice(selectedVariation.price)}
-              </p>
+              {selectedVariation.salePrice && selectedVariation.regularPrice &&
+               selectedVariation.salePrice !== selectedVariation.regularPrice ? (
+                <div className='flex items-baseline gap-2 sm:justify-end'>
+                  <p className='text-xl sm:text-2xl font-bold text-primary'>
+                    {formatPrice(selectedVariation.salePrice)}
+                  </p>
+                  <p className='text-sm text-muted-foreground line-through'>
+                    {formatPrice(selectedVariation.regularPrice)}
+                  </p>
+                </div>
+              ) : (
+                <p className='text-xl sm:text-2xl font-bold text-foreground'>
+                  {formatPrice(selectedVariation.price)}
+                </p>
+              )}
             </div>
           </div>
 
@@ -319,8 +331,16 @@ export default function VariationSelector({
                         </td>
                       );
                     })}
-                    <td className='px-3 py-2.5 font-semibold text-foreground'>
-                      {formatPrice(variation.price)}
+                    <td className='px-3 py-2.5 font-semibold'>
+                      {variation.salePrice && variation.regularPrice &&
+                       variation.salePrice !== variation.regularPrice ? (
+                        <div className='flex items-baseline gap-1.5'>
+                          <span className='text-primary'>{formatPrice(variation.salePrice)}</span>
+                          <span className='text-xs text-muted-foreground line-through'>{formatPrice(variation.regularPrice)}</span>
+                        </div>
+                      ) : (
+                        <span className='text-foreground'>{formatPrice(variation.price)}</span>
+                      )}
                     </td>
                     <td className='px-3 py-2.5'>
                       <span

@@ -670,61 +670,154 @@ body {
 }
 
 /* Product Specs with Modern Layout */
+/* Use high specificity to override Tailwind prose styles */
+.entry-content .product-specs,
+.entry-content .product-specs-cn,
+.entry-content .product-table,
+.entry-content figure.product-table,
+.entry-content figure.wp-block-table.product-table,
 .product-specs,
 .product-specs-cn,
 .product-table,
 p.product-specs,
 p.product-specs-cn {
-  position: relative;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--primary); /* Brand accent */
-  margin: var(--space-8) 0;
-  padding-top: var(--space-12); /* Space for ::before header */
+  position: relative !important;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-top: 3px solid var(--primary) !important; /* Brand accent - red top border */
+  margin: var(--space-8) 0 !important;
+  padding-top: var(--space-12) !important; /* Space for ::before header */
   font-size: 0.9375rem;
   line-height: 2;
-  width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: visible !important;
   transition:
     box-shadow 0.2s ease,
     transform 0.2s ease;
 }
 
+.entry-content .product-specs:hover,
+.entry-content .product-specs-cn:hover,
+.entry-content .product-table:hover,
+.entry-content figure.product-table:hover,
 .product-specs:hover,
 .product-specs-cn:hover,
 .product-table:hover,
 p.product-specs:hover,
 p.product-specs-cn:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-md) !important;
   transform: translateY(-1px);
 }
 
+.entry-content .product-specs::before,
+.entry-content .product-specs-cn::before,
+.entry-content .product-table::before,
+.entry-content figure.product-table::before,
+.entry-content figure.wp-block-table.product-table::before,
 .product-specs::before,
 .product-specs-cn::before,
 .product-table::before,
 p.product-specs::before,
 p.product-specs-cn::before {
-  content: '📋 Product Specs';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  font-weight: 700;
-  font-size: 0.875rem;
-  display: block;
-  padding: var(--space-3) var(--space-6);
-  border-bottom: 2px solid var(--border);
-  background: var(--input);
-  border-radius: 0;
-  color: var(--foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  content: '📋 Product Specs' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+  display: block !important;
+  padding: var(--space-3) var(--space-6) !important;
+  border-bottom: 2px solid var(--border) !important;
+  background: var(--input) !important;
+  border-radius: 0 !important;
+  color: var(--foreground) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
 }
 
 p.product-specs-cn::before,
 .product-specs-cn::before {
   content: '📋 產品資訊';
+}
+
+/* Ensure tables inside product-table are full width */
+.entry-content .product-table table,
+.entry-content figure.product-table table,
+.product-table table {
+  width: 100% !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.entry-content .product-table tbody,
+.entry-content figure.product-table tbody,
+.product-table tbody {
+  display: table-row-group;
+}
+
+.entry-content .product-table tr,
+.entry-content figure.product-table tr,
+.product-table tr {
+  border-bottom: 1px solid var(--border);
+}
+
+.entry-content .product-table tr:last-child,
+.entry-content figure.product-table tr:last-child,
+.product-table tr:last-child {
+  border-bottom: none;
+}
+
+.entry-content .product-table td,
+.entry-content figure.product-table td,
+.product-table td {
+  padding: 0.75rem 1rem !important;
+  vertical-align: middle;
+  border: none !important;
+}
+
+.entry-content .product-table td:first-child,
+.entry-content figure.product-table td:first-child,
+.product-table td:first-child {
+  width: 40%;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.entry-content .product-table td:last-child,
+.entry-content figure.product-table td:last-child,
+.product-table td:last-child {
+  width: 60%;
+  color: var(--muted-foreground);
+}
+
+/* Checkmark and X badges for product specs tables */
+.check-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+  line-height: 1;
+}
+
+.check-badge--success {
+  background: var(--success);
+  box-shadow: 0 1px 3px rgba(34, 197, 94, 0.3);
+}
+
+.check-badge--error {
+  background: var(--destructive);
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
 }
 
 /* When product-specs contains child p elements */

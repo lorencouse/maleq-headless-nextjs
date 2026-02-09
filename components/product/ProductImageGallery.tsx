@@ -10,6 +10,8 @@ interface ProductImageGalleryProps {
   selectedVariationImage?: VariationImage | null;
 }
 
+const isVideo = (url: string) => /\.(mp4|webm|mov|avi|ogv)(\?|$)/i.test(url);
+
 export default function ProductImageGallery({
   images,
   productName,
@@ -80,17 +82,26 @@ export default function ProductImageGallery({
 
   return (
     <div className="space-y-4">
-      {/* Main Image */}
+      {/* Main Image / Video */}
       <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-        <Image
-          src={selectedImage?.url || images[0].url}
-          alt={selectedImage?.altText || productName}
-          title={selectedImage?.title || productName}
-          fill
-          className="object-contain"
-          priority
-          sizes="(max-width: 768px) 100vw, 50vw"
-        />
+        {isVideo(selectedImage?.url || images[0].url) ? (
+          <video
+            src={selectedImage?.url || images[0].url}
+            controls
+            playsInline
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <Image
+            src={selectedImage?.url || images[0].url}
+            alt={selectedImage?.altText || productName}
+            title={selectedImage?.title || productName}
+            fill
+            className="object-contain"
+            priority
+            sizes="(max-width: 768px) 100vw, 50vw"
+          />
+        )}
       </div>
 
       {/* Thumbnail Carousel - Single Row */}
@@ -125,14 +136,22 @@ export default function ProductImageGallery({
                     : 'border-border hover:border-muted-foreground/30'
                 }`}
               >
-                <Image
-                  src={image.url}
-                  alt={image.altText}
-                  title={image.title}
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                />
+                {isVideo(image.url) ? (
+                  <div className="relative w-full h-full bg-muted flex items-center justify-center">
+                    <svg className="w-8 h-8 text-foreground/60" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                ) : (
+                  <Image
+                    src={image.url}
+                    alt={image.altText}
+                    title={image.title}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                  />
+                )}
               </button>
             ))}
           </div>

@@ -190,7 +190,23 @@ export default function ProductPageClient({
     <>
       {/* Price Section */}
       <div className='mb-6'>
-        {product.onSale && product.regularPrice && !selectedVariation ? (
+        {selectedVariation && selectedVariation.salePrice && selectedVariation.regularPrice &&
+         selectedVariation.salePrice !== selectedVariation.regularPrice ? (
+          <div className='flex items-baseline gap-3'>
+            <span className='text-3xl font-bold text-primary'>
+              {formatPrice(selectedVariation.salePrice)}
+            </span>
+            <span className='text-xl text-muted-foreground line-through'>
+              {formatPrice(selectedVariation.regularPrice)}
+            </span>
+            <span className='px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full'>
+              {(() => {
+                const percentOff = calculatePercentOff(selectedVariation.regularPrice, selectedVariation.salePrice);
+                return percentOff ? `${percentOff}% OFF` : 'SALE';
+              })()}
+            </span>
+          </div>
+        ) : product.onSale && product.regularPrice && !selectedVariation ? (
           <div className='flex items-baseline gap-3'>
             <span className='text-3xl font-bold text-primary'>
               {formatPrice(product.salePrice)}

@@ -1148,6 +1148,23 @@ export class XMLParser {
     // Clean up trailing quote marks (often used to indicate inches)
     baseName = baseName.replace(/\s*["″"]\s*$/g, '').trim();
 
+    // Normalize packaging suffixes early so color/size stripping can reach the end
+    for (let i = 0; i < 2; i++) {
+      baseName = baseName.replace(/\s+HANGING\s*$/gi, '');
+      baseName = baseName.replace(/\s+HANGI?\s*$/gi, '');
+      baseName = baseName.replace(/\s+BOXED\s*$/gi, '');
+      baseName = baseName.replace(/\s+CARDED\s*$/gi, '');
+      baseName = baseName.replace(/\s+DISPLAY\s*$/gi, '');
+    }
+
+    // Protect size combos from hyphen-to-space conversion
+    baseName = baseName.replace(/\bx-large\b/gi, 'XLARGE');
+    baseName = baseName.replace(/\bxx-large\b/gi, 'XXLARGE');
+    baseName = baseName.replace(/\bxxx-large\b/gi, 'XXXLARGE');
+    baseName = baseName.replace(/\bx-small\b/gi, 'XSMALL');
+    // Convert hyphens before color words to spaces
+    baseName = baseName.replace(/-(?=black|white|red|blue|green|pink|purple|navy|wine|grey|gray|nude|beige|orange|yellow|silver|gold|clear|brown|teal|ivory|coral|turquoise|burgundy|neon|hot|light|dark|royal|baby|small|medium|large|mini|petite)\b/gi, ' ');
+
     // Remove volume/size patterns with units (anywhere in string)
     // Matches: 2.5 oz, 2.5oz, 2.5 ounces, 8ml, 16 fl oz, 1 O, 4 O (missing z), .5 oz, etc.
     // Also handles ".5 oz" pattern (decimal without leading zero)
@@ -1172,7 +1189,7 @@ export class XMLParser {
     // Remove size abbreviations: S, M, L, XL, XXL, S/M, L/XL, O/S, Queen, Q/S, OS Queen, etc.
     // Match anywhere (not just at end) since they may appear before style names
     // Be careful not to remove single letters that are part of words
-    baseName = baseName.replace(/\s+(XS|XXL|XXXL|2XL|3XL|4XL|S\/M|M\/L|L\/XL|XL\/XXL|O\/S|OS|ONE\s*SIZE|QUEEN|Q\/S|OS\s*QUEEN)\b/gi, '');
+    baseName = baseName.replace(/\s+(XS|X-?SMALL|X-?LARGE|XX-?LARGE|XXX-?LARGE|XXL|XXXL|2XL|3XL|4XL|S\/M|M\/L|L\/XL|XL\/XXL|O\/S|OS|ONE\s*SIZE|QUEEN|Q\/S|OS\s*QUEEN|OSQ|1X|2X|3X|4X|1X\/2X|3X\/4X|1XL|2XL|3XL)\b/gi, '');
     // Also handle single-letter sizes only at end of string to avoid false positives
     baseName = baseName.replace(/\s+[SML]\s*$/gi, '');
 
@@ -1208,6 +1225,7 @@ export class XMLParser {
       'BUBBLE GUM', 'ROOT BEER', 'CHERRY VANILLA', 'CHOCOLATE MINT', 'FRENCH LAVENDER',
       'WARM VANILLA', 'COOL MINT', 'FRESH STRAWBERRY', 'WILD CHERRY',
       // Colors/Finishes
+      'NEON PURPLE', 'NEON RED', 'HOT PNK',
       'BLACK ICE', 'CLASSIC WHITE', 'PROSTATE MASSAGER WHITE', 'PROSTATE MASSAGER BLACK',
       'MIDNIGHT BLACK', 'PEARL WHITE', 'ROSE GOLD', 'MATTE BLACK',
       // Product types/styles that are variations
@@ -1251,7 +1269,11 @@ export class XMLParser {
     // This handles cases like "Dark Heart Chrome Heart Pink Choker" -> "Dark Heart Chrome Heart Choker"
     const colorWords = ['RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
       'SILVER', 'GOLD', 'BRONZE', 'COPPER', 'GREY', 'GRAY', 'BROWN',
-      'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY'];
+      'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY',
+      'WINE', 'BURGUNDY', 'CHARCOAL', 'CORAL', 'FUCHSIA', 'INDIGO',
+      'MAGENTA', 'MAROON', 'OLIVE', 'PLUM', 'SALMON', 'TURQUOISE', 'VIOLET',
+      // Common abbreviations
+      'BLK', 'WHT', 'PNK', 'PRP', 'BLU', 'GRN', 'GLD', 'SLV', 'BRN', 'YLW'];
     for (const color of colorWords) {
       for (const suffix of productSuffixes) {
         const regex = new RegExp(`\\s+${color}\\s+${suffix}`, 'gi');
@@ -1277,10 +1299,16 @@ export class XMLParser {
       'RED', 'BLUE', 'GREEN', 'PINK', 'PURPLE', 'BLACK', 'WHITE', 'CLEAR',
       'SILVER', 'GOLD', 'BRONZE', 'COPPER', 'GREY', 'GRAY', 'BROWN',
       'YELLOW', 'TEAL', 'NAVY', 'NUDE', 'TAN', 'BEIGE', 'IVORY', 'ORANGE',
+      'WINE', 'BURGUNDY', 'CHARCOAL', 'CORAL', 'FUCHSIA', 'INDIGO',
+      'MAGENTA', 'MAROON', 'OLIVE', 'PLUM', 'SALMON', 'TURQUOISE', 'VIOLET',
+      'NEON', 'MIDNIGHT', 'PEARL', 'MATTE', 'ROSE',
+      // Color abbreviations
+      'BLK', 'WHT', 'PNK', 'PRP', 'BLU', 'GRN', 'GLD', 'SLV', 'BRN', 'YLW',
       // Sizes as words (at end only)
-      'SMALL', 'MEDIUM', 'LARGE', 'XLARGE', 'SM', 'MED', 'LG',
+      'SMALL', 'MEDIUM', 'LARGE', 'XLARGE', 'XXLARGE', 'XXXLARGE', 'XSMALL',
+      'XL', 'XXL', 'XXXL', 'XS', 'SM', 'MED', 'LG',
       'MINI', 'PETITE', 'REGULAR', 'JUMBO', 'GIANT', 'KING',
-      'QUEEN', // Plus size
+      'QUEEN', 'EXTRA', // Plus size
       // Container/packaging types only (not product type)
       'TUBE', 'BOTTLE', 'PUMP', 'SACHET', 'SAMPLE',
       'JAR', 'BOWL', 'BOX', 'BAG', 'QUICKIE',
@@ -1292,7 +1320,7 @@ export class XMLParser {
     ];
 
     // Apply multiple times to strip multiple suffixes like "Trident Black Large" -> "Trident"
-    for (let pass = 0; pass < 3; pass++) {
+    for (let pass = 0; pass < 4; pass++) {
       for (const variant of singleWordVariants) {
         const regex = new RegExp(`\\s+${variant}\\s*$`, 'i');
         baseName = baseName.replace(regex, '');
@@ -1382,7 +1410,7 @@ export class XMLParser {
 
     // Size patterns - clothing combo sizes like S/M, L/XL, O/S, Queen, Q/S
     if (!result.size) {
-      const comboSizeMatch = name.match(/\b(s\/m|m\/l|l\/xl|xl\/xxl|o\/s|one\s*size|queen|q\/s|os\s*queen)\b/i);
+      const comboSizeMatch = name.match(/\b(s\/m|m\/l|l\/xl|xl\/xxl|o\/s|one\s*size|queen|q\/s|os\s*queen|1x\/2x|3x\/4x)\b/i);
       if (comboSizeMatch) {
         result.size = comboSizeMatch[1].toUpperCase().replace(/\s+/g, '');
       }
@@ -1400,26 +1428,51 @@ export class XMLParser {
 
     // Size patterns - clothing/general sizes
     if (!result.size) {
-      const sizeWordMatch = name.match(/\b(xs|x-?small|small|sm|s|medium|med|m|large|lg|l|x-?large|xl|xxl|xxxl|2xl|3xl|4xl|mini|petite|regular|plus|jumbo|giant|king)\b/i);
+      const sizeWordMatch = name.match(/\b(xs|x-?small|small|sm|s|medium|med|m|large|lg|l|x-?large|xl|xxl|xx-?large|xxxl|xxx-?large|2xl|3xl|4xl|1x|2x|3x|4x|1xl|2xl|3xl|mini|petite|regular|plus|jumbo|giant|king)\b/i);
       if (sizeWordMatch) {
         result.size = this.normalizeSize(sizeWordMatch[1]);
       }
     }
 
-    // Color patterns
-    const colorWords = [
-      'red', 'blue', 'green', 'pink', 'purple', 'black', 'white', 'clear',
-      'silver', 'gold', 'bronze', 'copper', 'grey', 'gray', 'brown',
-      'yellow', 'orange', 'teal', 'navy', 'nude', 'tan', 'beige', 'ivory',
-      'midnight', 'pearl', 'matte', 'rose'
+    // Color patterns - multi-word colors FIRST (longer matches take priority)
+    const multiWordColors = [
+      'neon green', 'neon pink', 'neon blue', 'neon yellow', 'neon orange', 'neon lime',
+      'neon purple', 'neon red',
+      'hot pink', 'hot pnk', 'hot red',
+      'light blue', 'light pink', 'light purple', 'light green',
+      'dark blue', 'dark green', 'dark purple', 'dark red', 'dark brown',
+      'royal blue', 'baby blue', 'sky blue', 'baby pink', 'dusty rose', 'dusty pink',
+      'wine red', 'burgundy red', 'deep purple', 'forest green', 'lime green',
+      'midnight blue', 'midnight black', 'pearl white', 'rose gold', 'matte black',
+      'black ice', 'classic white',
     ];
-    for (const color of colorWords) {
+    for (const color of multiWordColors) {
       if (lowerName.includes(color)) {
-        // Make sure it's a word boundary match
-        const colorRegex = new RegExp(`\\b${color}\\b`, 'i');
-        if (colorRegex.test(name)) {
-          result.color = color;
-          break;
+        result.color = color;
+        break;
+      }
+    }
+
+    // Single-word colors (only if no multi-word color found)
+    if (!result.color) {
+      const colorWords = [
+        'red', 'blue', 'green', 'pink', 'purple', 'black', 'white', 'clear',
+        'silver', 'gold', 'bronze', 'copper', 'grey', 'gray', 'brown',
+        'yellow', 'orange', 'teal', 'navy', 'nude', 'tan', 'beige', 'ivory',
+        'midnight', 'pearl', 'matte', 'rose',
+        'wine', 'burgundy', 'charcoal', 'coral', 'fuchsia', 'indigo',
+        'magenta', 'maroon', 'olive', 'plum', 'salmon', 'turquoise', 'violet',
+        // Common abbreviations
+        'blk', 'wht', 'pnk', 'prp', 'blu', 'grn', 'gld', 'slv', 'brn', 'ylw',
+      ];
+      for (const color of colorWords) {
+        if (lowerName.includes(color)) {
+          // Make sure it's a word boundary match
+          const colorRegex = new RegExp(`\\b${color}\\b`, 'i');
+          if (colorRegex.test(name)) {
+            result.color = color;
+            break;
+          }
         }
       }
     }
@@ -1545,6 +1598,10 @@ export class XMLParser {
       'q/s': 'Queen',
       'osqueen': 'Queen',
       'os queen': 'Queen',
+      // Plus sizes
+      '1x': '1X', '2x': '2X', '3x': '3X', '4x': '4X',
+      '1xl': '1XL',
+      '1x/2x': '1X/2X', '3x/4x': '3X/4X',
       'mini': 'Mini',
       'petite': 'Petite',
       'regular': 'Regular',
@@ -1709,11 +1766,26 @@ export class XMLParser {
       'pearl': 'Pearl',
       'midnight': 'Midnight',
       'matte': 'Matte',
-      // Compound colors
-      'rose gold': 'Rose Gold',
-      'matte black': 'Matte Black',
-      'pearl white': 'Pearl White',
-      'midnight black': 'Midnight Black',
+      'wine': 'Wine', 'burgundy': 'Burgundy', 'charcoal': 'Charcoal',
+      'coral': 'Coral', 'fuchsia': 'Fuchsia', 'indigo': 'Indigo',
+      'magenta': 'Magenta', 'maroon': 'Maroon', 'olive': 'Olive',
+      'plum': 'Plum', 'salmon': 'Salmon', 'turquoise': 'Turquoise', 'violet': 'Violet',
+      // Multi-word colors
+      'neon green': 'Neon Green', 'neon pink': 'Neon Pink', 'neon blue': 'Neon Blue',
+      'neon yellow': 'Neon Yellow', 'neon orange': 'Neon Orange', 'neon lime': 'Neon Lime',
+      'neon purple': 'Neon Purple', 'neon red': 'Neon Red',
+      'hot pink': 'Hot Pink', 'hot pnk': 'Hot Pink', 'hot red': 'Hot Red',
+      'light blue': 'Light Blue', 'light pink': 'Light Pink', 'light purple': 'Light Purple',
+      'light green': 'Light Green',
+      'dark blue': 'Dark Blue', 'dark green': 'Dark Green', 'dark purple': 'Dark Purple',
+      'dark red': 'Dark Red', 'dark brown': 'Dark Brown',
+      'royal blue': 'Royal Blue', 'baby blue': 'Baby Blue', 'sky blue': 'Sky Blue',
+      'baby pink': 'Baby Pink', 'dusty rose': 'Dusty Rose', 'dusty pink': 'Dusty Pink',
+      'wine red': 'Wine Red', 'burgundy red': 'Burgundy Red', 'deep purple': 'Deep Purple',
+      'forest green': 'Forest Green', 'lime green': 'Lime Green',
+      'midnight blue': 'Midnight Blue', 'midnight black': 'Midnight Black',
+      'pearl white': 'Pearl White', 'rose gold': 'Rose Gold', 'matte black': 'Matte Black',
+      'black ice': 'Black Ice', 'classic white': 'Classic White',
     };
 
     const lower = color.toLowerCase().trim();

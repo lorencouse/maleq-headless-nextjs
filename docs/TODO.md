@@ -248,10 +248,12 @@ Account
   - Sale prices end in .67/.77/.87/.97
   - Sale price is 10% off regular price
   - Script: `scripts/update-prices.ts`
-- [ ] `[HIGH]` Update add_to_cart shortcodes to new product IDs
-  - Find all shortcodes in WordPress content
-  - Map old IDs to new IDs
-  - Run update script
+- [x] `[HIGH]` Update add_to_cart shortcodes to new product IDs (Completed 2026-01-27)
+  - [x] 171 shortcodes updated (100% + 90-99% confidence matches)
+  - 80-89% confidence: 67 shortcodes (need manual review)
+  - No match: 335 shortcodes (discontinued products)
+  - Script: `scripts/fix-product-shortcodes.ts`
+  - Changelog: `data/shortcode-changelog.csv`
 - [ ] `[MED]` Add additional datafeeds from STC
   - Identify available feeds
   - Create import scripts
@@ -269,6 +271,10 @@ Account
 - [ ] `[MED]` Fix product specs styling not showing on some products
   - Identify affected products
   - Debug conditional rendering logic
+- [ ] `[MED]` Re-import missing WordPress reusable blocks/patterns
+  - Some blog posts show truncated content due to missing reusable blocks
+  - Use `scripts/import-reusable-blocks.ts` or re-export from old site
+  - Affected posts include holiday shopping guides
 
 ---
 
@@ -290,7 +296,6 @@ Account
 - API documentation: `docs/API_DOCUMENTATION.md`
 - Store specifications: `docs/STORE_SPECIFICATIONS.md`
 
-
 - Add add-on kit missing image
 
 ## Recently Completed (2026-01-25)
@@ -300,3 +305,34 @@ Account
 - [x] Create reusable DidYouMean component with instant search integration (Completed 2026-01-25)
 - [x] Add % off calculation to sale badge (e.g. "20% Off") (Completed 2026-01-25)
 - [x] Fix Load More button for search results pagination (Completed 2026-01-25)
+
+Try again to find matches for the shortcodes marked - ❌ 329 no match (discontinued products)
+
+Re-import images that are less than 650 in width or height, and place on 650x650 white background, do not stretch or crop.
+
+make it so when a product in manually deleted in woocommerce, its images are also deleted from the uploads folder, including its varation and gallery images.
+
+verify product variations weere created on STC product import. some products are showing multiple color varaitions images in gallery but no variation selector.
+/product/lelo-soraya-2-rabbit-massager-rechargeable
+
+product/hunkyjunk-lockdown-chastity
+
+missing product images: /product/long-sleeve-crochet-teddy-one-size-chartreuse
+/product/long-sleeve-mini-dress-one-size-neon-green
+
+variation images not updating: /product/lelo-gigi-3-app-controlled-g-spot-vibrator
+/product/noje-g-slim-rechargeable
+
+products from STC impotrt don't have product_source meta field set to 'stc', need to set that for all imported products.
+
+
+duplicate image imports with random string appended to filename: crystal-jellies-6in-pink-cd-1.webp (shows one time in gallery)
+crystal-jellies-6in-pink-cd-1-46b436a2.webp (shows 4 times in gallery)
+crystal-jellies-double-dong-18in-purple-1.webp (shows one time in gallery)
+crystal-jellies-double-dong-18in-purple-1-4ab05cb5.webp (shows 4 times in gallery)
+
+video files not showing in image gallery. 
+
+Skip product import for products without images.  Go back through our product XML/CSV, and delete any products that were imported, that don't have images images listed. Update our import script rules to skip products without images in teh future. 
+
+show crossed out original price on vartaible product pages, like we do on single products.  Currently only shows on single products, but not variable products.
