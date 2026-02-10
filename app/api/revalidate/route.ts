@@ -4,8 +4,10 @@ import { NextRequest, NextResponse } from 'next/server';
 // Webhook endpoint for WordPress to trigger revalidation
 // Configure in WordPress: Settings > Webhooks or use a plugin like WP Webhooks
 export async function POST(request: NextRequest) {
-  // Verify the secret token
-  const secret = request.nextUrl.searchParams.get('secret');
+  // Verify the secret token (supports both header and query param)
+  const headerSecret = request.headers.get('x-revalidation-secret');
+  const querySecret = request.nextUrl.searchParams.get('secret');
+  const secret = headerSecret || querySecret;
 
   if (secret !== process.env.REVALIDATION_SECRET) {
     return NextResponse.json({ message: 'Invalid token' }, { status: 401 });

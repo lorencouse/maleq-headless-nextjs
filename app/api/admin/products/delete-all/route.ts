@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { wooClient } from '@/lib/woocommerce/client';
+import { verifyAdminAuth } from '@/lib/api/admin-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes
@@ -9,6 +10,9 @@ export const maxDuration = 300; // 5 minutes
  * WARNING: This is destructive and cannot be undone
  */
 export async function POST(request: NextRequest) {
+  const authError = verifyAdminAuth(request);
+  if (authError) return authError;
+
   const startTime = Date.now();
 
   try {

@@ -1,5 +1,4 @@
 import { getClient } from '@/lib/apollo/client';
-import type { ApolloQueryResult } from '@apollo/client';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import {
   GET_ALL_PRODUCTS,
@@ -376,7 +375,7 @@ export async function getProductCategories(): Promise<ProductCategory[]> {
 
     // Paginate through all categories
     while (hasNextPage) {
-      const result: ApolloQueryResult<CategoryQueryResponse> = await getClient().query<CategoryQueryResponse>({
+      const result: { data: CategoryQueryResponse } = await getClient().query<CategoryQueryResponse>({
         query: GET_ALL_PRODUCT_CATEGORIES,
         variables: {
           first: 100,
@@ -524,7 +523,8 @@ export async function searchProducts(
       );
     }
 
-    const results = await Promise.all(fetchPromises);
+    const settled = await Promise.allSettled(fetchPromises);
+    const results = settled.map(r => r.status === 'fulfilled' ? r.value : { data: { products: { nodes: [] } } });
 
     const titleProducts: WooProduct[] = results[0].data?.products?.nodes || [];
     const contentProducts: WooProduct[] = results[1].data?.products?.nodes || [];
@@ -694,7 +694,7 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
     }
 
     try {
-      const result: ApolloQueryResult<BrandQueryResponse> = await getClient().query<BrandQueryResponse>({
+      const result: { data: BrandQueryResponse } = await getClient().query<BrandQueryResponse>({
         query: GET_BRANDS_PAGE,
         variables: {
           first: 100,

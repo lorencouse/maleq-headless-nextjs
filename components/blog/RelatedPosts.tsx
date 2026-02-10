@@ -12,10 +12,10 @@ export default function RelatedPosts({
   posts,
   currentSlug,
 }: RelatedPostsProps) {
-  // Filter out the current post and limit to 4
+  // Filter out the current post and limit to 3
   const relatedPosts = posts
     .filter((post) => post.slug !== currentSlug)
-    .slice(0, 4);
+    .slice(0, 3);
 
   if (relatedPosts.length === 0) {
     return null;
@@ -32,7 +32,7 @@ export default function RelatedPosts({
   return (
     <section className='border-t border-border pt-8 mt-12'>
       <h2 className='text-2xl font-bold text-foreground'>Related Articles</h2>
-      <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-2 py-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-8'>
         {relatedPosts.map((post) => (
           <article
             key={post.id}
@@ -49,7 +49,7 @@ export default function RelatedPosts({
                     alt={post.featuredImage.node.altText || post.title}
                     fill
                     className='object-cover group-hover:scale-105 transition-transform duration-300'
-                    sizes='(max-width: 768px) 50vw, 25vw'
+                    sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
                   />
                 ) : (
                   <div className='w-full h-full bg-muted flex items-center justify-center'>

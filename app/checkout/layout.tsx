@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Checkout | Male Q',
   description: 'Complete your order securely. Discreet billing and fast shipping available.',
+  robots: { index: false, follow: false },
 };
 
 export default function CheckoutLayout({

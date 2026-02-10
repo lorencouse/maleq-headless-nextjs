@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncService } from '@/lib/williams-trading/sync-service';
+import { verifyAdminAuth } from '@/lib/api/admin-auth';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300; // 5 minutes for test sync (allows time for image uploads)
@@ -9,6 +10,9 @@ export const maxDuration = 300; // 5 minutes for test sync (allows time for imag
  * Tests WooCommerce connection and syncs limited data
  */
 export async function POST(request: NextRequest) {
+  const authError = verifyAdminAuth(request);
+  if (authError) return authError;
+
   const startTime = Date.now();
 
   try {

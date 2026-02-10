@@ -35,11 +35,15 @@ export async function POST(
       );
     }
 
+    // Forward auth token to WordPress
+    const authHeader = request.headers.get('Authorization');
+
     // Use WordPress endpoint to verify password and delete account
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/delete-account`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
       body: JSON.stringify({
         user_id: customerId,

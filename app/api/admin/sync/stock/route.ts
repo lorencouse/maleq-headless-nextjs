@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { syncService } from '@/lib/williams-trading/sync-service';
+import { verifyAdminAuth } from '@/lib/api/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,13 +9,10 @@ export const dynamic = 'force-dynamic';
  * Updates stock quantities in WooCommerce via batch API
  */
 export async function POST(request: NextRequest) {
-  try {
-    // Optional: Add authentication check here
-    // const authHeader = request.headers.get('authorization');
-    // if (!authHeader || authHeader !== `Bearer ${process.env.ADMIN_API_KEY}`) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+  const authError = verifyAdminAuth(request);
+  if (authError) return authError;
 
+  try {
     console.log('Starting stock update to WooCommerce...');
     const result = await syncService.updateStock();
 

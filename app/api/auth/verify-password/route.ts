@@ -14,11 +14,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Forward auth token to WordPress
+    const authHeader = request.headers.get('Authorization');
+
     // Use WordPress endpoint to verify password
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/verify-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
       body: JSON.stringify({
         user_id: userId,

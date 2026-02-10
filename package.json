@@ -17,13 +17,12 @@
     "import:test": "bun scripts/import-products.ts --limit 50"
   },
   "dependencies": {
-    "@apollo/client": "^3.11.8",
-    "@apollo/experimental-nextjs-app-support": "^0.11.5",
     "@hookform/resolvers": "^5.2.2",
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.3",
     "@tanstack/react-query": "^5.90.20",
     "graphql": "^16.9.0",
+    "graphql-request": "^7.4.0",
     "isomorphic-dompurify": "^2.22.0",
     "minisearch": "^7.2.0",
     "next": "15",

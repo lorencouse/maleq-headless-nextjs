@@ -3,7 +3,7 @@
  */
 
 import { getClient } from '@/lib/apollo/client';
-import { gql } from '@apollo/client';
+import { gql } from 'graphql-request';
 import { getProductionImageUrl } from './image';
 
 // GraphQL query to get a single product by database ID

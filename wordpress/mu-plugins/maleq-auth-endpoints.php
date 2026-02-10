@@ -306,6 +306,47 @@ function maleq_reset_password(WP_REST_Request $request) {
 }
 
 /**
+ * Extract Bearer token from Authorization header and validate against a user.
+ * Returns the user_id on success, or a WP_Error on failure.
+ */
+function maleq_authenticate_request(WP_REST_Request $request, $user_id = null) {
+    $auth_header = $request->get_header('Authorization');
+
+    if (empty($auth_header) || !str_starts_with($auth_header, 'Bearer ')) {
+        return new WP_Error(
+            'missing_token',
+            'Authentication required',
+            ['status' => 401]
+        );
+    }
+
+    $token = substr($auth_header, 7); // Strip "Bearer "
+
+    // If no user_id provided, try to get it from the request body
+    if (!$user_id) {
+        $user_id = absint($request->get_param('user_id'));
+    }
+
+    if (empty($user_id)) {
+        return new WP_Error(
+            'missing_user_id',
+            'User ID is required',
+            ['status' => 400]
+        );
+    }
+
+    if (!maleq_validate_token($user_id, $token)) {
+        return new WP_Error(
+            'invalid_token',
+            'Invalid or expired authentication token',
+            ['status' => 401]
+        );
+    }
+
+    return $user_id;
+}
+
+/**
  * Validate auth token
  */
 function maleq_validate_token($user_id, $token) {
@@ -334,10 +375,16 @@ function maleq_verify_password(WP_REST_Request $request) {
     $user_id = absint($request->get_param('user_id'));
     $password = $request->get_param('password');
 
-    if (empty($user_id) || empty($password)) {
+    // Validate auth token
+    $auth_result = maleq_authenticate_request($request, $user_id);
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
+    }
+
+    if (empty($password)) {
         return new WP_Error(
             'missing_params',
-            'User ID and password are required',
+            'Password is required',
             ['status' => 400]
         );
     }
@@ -373,12 +420,10 @@ function maleq_upload_avatar(WP_REST_Request $request) {
     $user_id = absint($request->get_param('user_id'));
     $files = $request->get_file_params();
 
-    if (empty($user_id)) {
-        return new WP_Error(
-            'missing_user_id',
-            'User ID is required',
-            ['status' => 400]
-        );
+    // Validate auth token
+    $auth_result = maleq_authenticate_request($request, $user_id);
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
     }
 
     if (empty($files['file'])) {
@@ -487,10 +532,16 @@ function maleq_delete_account(WP_REST_Request $request) {
     $user_id = absint($request->get_param('user_id'));
     $password = $request->get_param('password');
 
-    if (empty($user_id) || empty($password)) {
+    // Validate auth token
+    $auth_result = maleq_authenticate_request($request, $user_id);
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
+    }
+
+    if (empty($password)) {
         return new WP_Error(
             'missing_params',
-            'User ID and password are required',
+            'Password is required',
             ['status' => 400]
         );
     }
@@ -555,12 +606,10 @@ function maleq_delete_account(WP_REST_Request $request) {
 function maleq_get_customer(WP_REST_Request $request) {
     $user_id = absint($request->get_param('id'));
 
-    if (empty($user_id)) {
-        return new WP_Error(
-            'missing_user_id',
-            'User ID is required',
-            ['status' => 400]
-        );
+    // Validate auth token
+    $auth_result = maleq_authenticate_request($request, $user_id);
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
     }
 
     $user = get_user_by('ID', $user_id);
@@ -583,12 +632,10 @@ function maleq_update_customer(WP_REST_Request $request) {
     $user_id = absint($request->get_param('id'));
     $data = $request->get_json_params();
 
-    if (empty($user_id)) {
-        return new WP_Error(
-            'missing_user_id',
-            'User ID is required',
-            ['status' => 400]
-        );
+    // Validate auth token
+    $auth_result = maleq_authenticate_request($request, $user_id);
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
     }
 
     $user = get_user_by('ID', $user_id);

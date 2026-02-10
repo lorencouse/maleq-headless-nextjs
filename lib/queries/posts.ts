@@ -1,4 +1,4 @@
-import { gql } from '@apollo/client';
+import { gql } from 'graphql-request';
 
 // Fragment for post fields
 export const POST_FIELDS = gql`

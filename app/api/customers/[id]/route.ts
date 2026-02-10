@@ -17,11 +17,15 @@ export async function GET(
       );
     }
 
+    // Forward auth token to WordPress
+    const authHeader = request.headers.get('Authorization');
+
     // Use our custom endpoint instead of WooCommerce REST API
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
     });
 
@@ -58,12 +62,14 @@ export async function PUT(
     }
 
     const body = await request.json();
+    const authHeader = request.headers.get('Authorization');
 
     // Use our custom endpoint instead of WooCommerce REST API
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
       body: JSON.stringify(body),
     });

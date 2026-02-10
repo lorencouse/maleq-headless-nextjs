@@ -101,7 +101,7 @@ Account
 ### Blog & Guides
 
 - [ ] `[MED]` Verify all blog post images are migrated
-- [ ] `[LOW]` Add related posts section to blog articles
+- [x] `[LOW]` Fix related posts section on blog articles (3 cols, same category) (Completed 2026-02-09)
 
 ---
 
@@ -147,10 +147,15 @@ Account
 
 ### Code Audit - Remaining
 
-- [ ] `[MED]` Replace Apollo Client with graphql-request (~25 kB client bundle savings, 38+ files)
+- [x] `[MED]` Replace Apollo Client with graphql-request (~25 kB client bundle savings) (Completed 2026-02-09)
+- [x] `[MED]` Add token validation to auth mu-plugin endpoints (Completed 2026-02-09)
+- [x] `[MED]` Add admin auth to all sync/admin API routes (Completed 2026-02-09)
+- [x] `[MED]` Add noindex to cart/checkout/account pages (Completed 2026-02-09)
+- [x] `[MED]` Add error handling to blog service functions (Completed 2026-02-09)
+- [x] `[MED]` Use Promise.allSettled for resilient search queries (Completed 2026-02-09)
+- [x] `[MED]` Add blog posts to sitemap (Completed 2026-02-09)
 - [ ] `[LOW]` Split large components (ShopPageClient 697 lines, SearchAutocomplete 693 lines)
 - [ ] `[LOW]` Replace order tracking mu-plugin with AST Free WP plugin
-- [ ] `[LOW]` Add token validation to auth mu-plugin delete-account/upload-avatar endpoints
 
 ### Performance
 

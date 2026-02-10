@@ -40,17 +40,15 @@
 
 ## Available Scripts & CLI Tools
 
-Located in `scripts/`:
+Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.ts` for MySQL connections.
+
+**Shared Modules** (`scripts/lib/`):
+- `db.ts` - Shared MySQL connection config (`getConnection()` and `config` exports)
 
 **Data Import/Export:**
 - `import-products-direct.ts` - Import products directly to database
-- `import-categories-direct.ts` - Import product categories
-- `import-manufacturers-direct.ts` - Import brand/manufacturer data
 - `import-images.ts` - Import product images
-- `import-featured-images.ts` - Import featured images
-- `import-post-images.ts` - Import blog post images
 - `import-videos.ts` - Import video content
-- `import-reusable-blocks.ts` - Import WordPress reusable blocks
 - `xml-to-json.ts` - Convert XML exports to JSON
 
 **Database Operations:**
@@ -72,33 +70,31 @@ Located in `scripts/`:
 - `update-prices.ts` - Bulk price updates
 - `update-brand-name.ts` - Update brand names
 - `update-image-urls.ts` - Fix image URLs
-- `update-product-links.ts` / `update-product-links-v2.ts` - Fix internal links
+- `update-product-links-v2.ts` - Fix internal links
 - `variation-updater.ts` - Update product variations
 - `attribute-parser.ts` - Parse product attributes
 
 **URL/Link Management:**
 - `convert-urls-to-relative.ts` - Convert absolute to relative URLs
-- `update-url-format.ts` - Standardize URL formats
 - `generate-link-mapping-report.ts` - Report on internal links
 
 **Analysis:**
 - `analyze-title-patterns.ts` - Analyze product title patterns
 - `apply-fuzzy-matches.ts` - Apply fuzzy matching to data
 - `list-tags.ts` - List all product tags
-- `filter-products.ts` - Filter products for analysis
 
-**Media:**
-- `convert-videos-to-webm.ts` - Convert videos to WebM format
+**Archived** (`scripts/archive/`):
+- One-time migration scripts (imports, category hierarchy, video conversion, etc.)
 
 ## Built-In Search & Utility Functions
 
 ### Search System (`lib/search/` and `lib/utils/search-helpers.ts`)
 
-**Spell Checking** (`lib/search/search-index.ts`):
+**Spell Checking / Fuzzy Suggestions** (`lib/search/search-index.ts`):
 - `correctProductSearchTerm(term)` - Returns spelling suggestions when no results found
 - `correctBlogSearchTerm(term)` - Returns spelling suggestions when no results found
-- Uses `simple-spellchecker` package with English dictionary
-- Returns up to 3 suggestions for "Did you mean?" UI
+- Uses MiniSearch with product/brand/category vocabulary index (fuzzy: 0.3, prefix: true)
+- Returns up to 5 suggestions for "Did you mean?" UI
 - Only triggered when search returns zero results
 
 **Search Helpers** (`lib/utils/search-helpers.ts`):
@@ -109,8 +105,9 @@ Located in `scripts/`:
 - `textContainsTerm(text, term)` - Check if text contains term (with fuzzy matching)
 - `calculateRelevanceScore(item, terms)` - Score item relevance for search terms
 - `matchesAllTerms(text, terms)` / `matchesAnyTerm(text, terms)` - Term matching
-- `generateSpellingVariants(word)` - Generate typo correction candidates
-- `getTopSpellingCorrections(word, limit)` - Get most likely corrections
+
+**Shared Filter Utility** (`lib/utils/product-filter-helpers.ts`):
+- `extractFilterOptionsFromProducts(products)` - Extract brand/material/color filter options from product list
 
 ### Service Layer
 
@@ -146,9 +143,9 @@ Located in `scripts/`:
 
 ## Installed Packages for Common Tasks
 
-- **Fuse.js** - Fuzzy search and relevance ranking
-- **simple-spellchecker** - Spell checking with "Did you mean?" suggestions
+- **minisearch** - Fuzzy search, relevance ranking, and spelling suggestions (~5.8 kB)
+- **isomorphic-dompurify** - XSS protection for HTML content (works server-side and client-side)
 - **react-hook-form** + **@hookform/resolvers** - Form handling
 - **zod** - Schema validation
 - **@tanstack/react-query** - Data fetching and caching
-- **dompurify** - XSS protection for HTML content
+- **graphql-request** - Lightweight GraphQL client for WPGraphQL queries (~5 kB, replaced Apollo Client)

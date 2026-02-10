@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_ALL_PRODUCT_SLUGS, GET_ALL_PRODUCT_CATEGORIES } from '@/lib/queries/products';
+import { GET_ALL_POST_SLUGS } from '@/lib/queries/posts';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
@@ -20,6 +21,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
+    },
+    {
+      url: `${SITE_URL}/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
     },
     {
       url: `${SITE_URL}/about`,
@@ -107,5 +114,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error('Error fetching category slugs for sitemap:', error);
   }
 
-  return [...staticPages, ...productPages, ...categoryPages];
+  // Fetch all blog post slugs
+  let blogPages: MetadataRoute.Sitemap = [];
+  try {
+    const { data: postData } = await client.query({
+      query: GET_ALL_POST_SLUGS,
+    });
+
+    blogPages = (postData?.posts?.nodes || []).map((post: { slug: string }) => ({
+      url: `${SITE_URL}/blog/${post.slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly' as const,
+      priority: 0.6,
+    }));
+  } catch (error) {
+    console.error('Error fetching post slugs for sitemap:', error);
+  }
+
+  return [...staticPages, ...productPages, ...categoryPages, ...blogPages];
 }

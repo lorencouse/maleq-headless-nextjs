@@ -230,21 +230,26 @@ export async function getBlogPosts(
 ): Promise<BlogSearchResult> {
   const { first = 12, after, categorySlug } = options;
 
-  const { data } = await getClient().query({
-    query: categorySlug ? GET_POSTS_BY_CATEGORY : GET_ALL_POSTS,
-    variables: categorySlug
-      ? { categoryName: categorySlug, first, after }
-      : { first, after },
-    fetchPolicy: 'no-cache',
-  });
+  try {
+    const { data } = await getClient().query({
+      query: categorySlug ? GET_POSTS_BY_CATEGORY : GET_ALL_POSTS,
+      variables: categorySlug
+        ? { categoryName: categorySlug, first, after }
+        : { first, after },
+      fetchPolicy: 'no-cache',
+    });
 
-  return {
-    posts: data?.posts?.nodes || [],
-    pageInfo: data?.posts?.pageInfo || {
-      hasNextPage: false,
-      endCursor: null,
-    },
-  };
+    return {
+      posts: data?.posts?.nodes || [],
+      pageInfo: data?.posts?.pageInfo || {
+        hasNextPage: false,
+        endCursor: null,
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    return { posts: [], pageInfo: { hasNextPage: false, endCursor: null } };
+  }
 }
 
 /**
@@ -272,7 +277,7 @@ export async function getBlogSearchSuggestions(
   const searchTerms = tokenizeQuery(searchQuery);
   const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : searchQuery;
 
-  const [titleResult, contentResult, categoriesResult] = await Promise.all([
+  const results = await Promise.allSettled([
     getClient().query({
       query: SEARCH_POSTS_BY_TITLE,
       variables: { titleSearch: primaryTerm, first: limit * 2 },
@@ -289,9 +294,9 @@ export async function getBlogSearchSuggestions(
     }),
   ]);
 
-  const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
-  const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
-  const allCategories: CategoryNode[] = categoriesResult.data?.categories?.nodes || [];
+  const titlePosts: Post[] = results[0].status === 'fulfilled' ? results[0].value.data?.posts?.nodes || [] : [];
+  const contentPosts: Post[] = results[1].status === 'fulfilled' ? results[1].value.data?.posts?.nodes || [] : [];
+  const allCategories: CategoryNode[] = results[2].status === 'fulfilled' ? results[2].value.data?.categories?.nodes || [] : [];
 
   // Combine and deduplicate results
   const seenIds = new Set<string>();
@@ -391,15 +396,20 @@ export async function getBlogSearchSuggestions(
  * Get all blog categories
  */
 export async function getBlogCategories(): Promise<BlogCategory[]> {
-  const { data } = await getClient().query({
-    query: GET_ALL_CATEGORIES,
-    fetchPolicy: 'no-cache',
-  });
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_CATEGORIES,
+      fetchPolicy: 'no-cache',
+    });
 
-  return (data?.categories?.nodes || []).map((cat: CategoryNode) => ({
-    id: cat.id,
-    name: cat.name,
-    slug: cat.slug,
-    count: cat.count,
-  }));
+    return (data?.categories?.nodes || []).map((cat: CategoryNode) => ({
+      id: cat.id,
+      name: cat.name,
+      slug: cat.slug,
+      count: cat.count,
+    }));
+  } catch (error) {
+    console.error('Error fetching blog categories:', error);
+    return [];
+  }
 }

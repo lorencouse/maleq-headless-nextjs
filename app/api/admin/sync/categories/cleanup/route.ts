@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { wooClient } from '@/lib/woocommerce/client';
+import { verifyAdminAuth } from '@/lib/api/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,9 @@ export const dynamic = 'force-dynamic';
  * Use this to clean up before re-syncing with new slug format
  */
 export async function POST(request: NextRequest) {
+  const authError = verifyAdminAuth(request);
+  if (authError) return authError;
+
   try {
     console.log('Starting category cleanup...');
 

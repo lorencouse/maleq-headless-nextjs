@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
 
   // Optimize package imports
   experimental: {
-    optimizePackageImports: ['@apollo/client', 'zustand', 'react-hot-toast'],
+    optimizePackageImports: ['graphql-request', 'zustand', 'react-hot-toast'],
   },
 
   images: {

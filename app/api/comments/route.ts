@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Submit comment to WordPress via GraphQL
-    const { data, errors: graphqlErrors } = await getClient().mutate({
+    const { data } = await getClient().mutate({
       mutation: CREATE_COMMENT,
       variables: {
         input: {
@@ -68,11 +68,6 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-
-    if (graphqlErrors && graphqlErrors.length > 0) {
-      console.error('GraphQL errors:', graphqlErrors);
-      return validationError({ general: 'Failed to submit comment. Please try again.' });
-    }
 
     if (!data?.createComment?.success) {
       return validationError({ general: 'Failed to submit comment. Please try again.' });

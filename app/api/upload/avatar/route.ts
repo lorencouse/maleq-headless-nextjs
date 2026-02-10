@@ -69,13 +69,18 @@ export async function POST(request: NextRequest) {
       { type: 'image/webp' }
     );
 
-    // Forward processed image to WordPress custom endpoint
+    // Forward auth token and processed image to WordPress custom endpoint
+    const authHeader = request.headers.get('Authorization');
+
     const wpFormData = new FormData();
     wpFormData.append('file', processedFile);
     wpFormData.append('user_id', userId);
 
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/upload-avatar`, {
       method: 'POST',
+      headers: {
+        ...(authHeader ? { Authorization: authHeader } : {}),
+      },
       body: wpFormData,
     });
 

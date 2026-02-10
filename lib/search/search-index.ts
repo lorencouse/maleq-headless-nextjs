@@ -9,7 +9,7 @@
 
 import MiniSearch from 'minisearch';
 import { getClient } from '@/lib/apollo/client';
-import { gql } from '@apollo/client';
+import { gql } from 'graphql-request';
 
 // ============================================================================
 // Product Vocabulary Index (MiniSearch)
