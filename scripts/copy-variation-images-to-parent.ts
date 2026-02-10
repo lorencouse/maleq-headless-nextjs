@@ -22,7 +22,8 @@
  *   --product-id <id> Process a specific parent product by ID
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
+import { getConnection } from './lib/db';
 
 interface ParentProduct {
   id: number;
@@ -95,13 +96,7 @@ async function main() {
     console.log('🔍 DRY RUN MODE - No changes will be made\n');
   }
 
-  const connection = await createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'local',
-    socketPath: '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
-  });
+  const connection = await getConnection();
 
   try {
     // Find parent products missing images but with variations that have images

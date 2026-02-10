@@ -9,8 +9,8 @@
  * - Fuzzy match suggestions for unmatched items
  */
 
-import mysql from 'mysql2/promise';
 import { writeFileSync } from 'fs';
+import { getConnection } from './lib/db';
 
 /**
  * Calculate Levenshtein distance between two strings
@@ -127,10 +127,6 @@ function findFuzzyMatches(
     .slice(0, limit);
 }
 
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
 
 interface MatchedUrl {
   postId: number;
@@ -190,12 +186,7 @@ interface MigratedShortcode {
 }
 
 async function main() {
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('Loading products...');
 

@@ -15,12 +15,7 @@
  */
 
 import mysql from 'mysql2/promise';
-
-// Configuration - LocalWP MySQL connection
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 
 // Brand name variations to replace
 const REPLACEMENTS = [
@@ -81,12 +76,7 @@ async function main() {
     console.log('⚠️  EXECUTE MODE - Changes will be made to the database\n');
   }
 
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to database\n');
 

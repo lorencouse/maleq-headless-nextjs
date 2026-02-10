@@ -17,13 +17,7 @@
 
 import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { dirname, join } from 'path';
-import mysql from 'mysql2/promise';
-
-// Configuration
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from '../lib/db';
 
 const LOCAL_UPLOADS_DIR = '/Users/lorencouse/Local Sites/maleq-local/app/public/wp-content/uploads';
 const V1_IMAGES_DIR = '/Users/lorencouse/Local Sites/maleq-local/app/public/wp-content/v1-images';
@@ -193,12 +187,7 @@ async function main() {
 
   // Connect to database
   console.log('🔌 Connecting to local MySQL...');
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
   console.log('✅ Connected\n');
 
   // Extract image URLs

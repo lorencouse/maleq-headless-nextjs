@@ -20,13 +20,7 @@
 import { join } from 'path';
 import { XMLParser, XMLProduct, VariationGroup } from '../lib/import/xml-parser';
 import { readFileSync, writeFileSync } from 'fs';
-import mysql from 'mysql2/promise';
-
-// Local by Flywheel MySQL connection
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 
 // Import configuration
 const PRICE_MULTIPLIER = 3;
@@ -275,12 +269,7 @@ class DirectProductImporter {
   }
 
   async connect(): Promise<void> {
-    this.connection = await mysql.createConnection({
-      socketPath: LOCAL_MYSQL_SOCKET,
-      user: LOCAL_DB_USER,
-      password: LOCAL_DB_PASS,
-      database: LOCAL_DB_NAME,
-    });
+    this.connection = await getConnection();
     console.log('✓ Connected to Local MySQL database\n');
 
     // Initialize product_type taxonomy terms

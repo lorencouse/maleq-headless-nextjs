@@ -11,12 +11,11 @@
  *   bun scripts/review-block-shortcodes.ts --execute    # Apply approved changes
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
 import { writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import * as readline from 'readline';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
+import { getConnection } from './lib/db';
 const REVIEW_FILE_PATH = join(process.cwd(), 'data', 'block-shortcode-review.json');
 
 interface ProductLookup {
@@ -535,12 +534,7 @@ async function main() {
   }
   console.log('');
 
-  const connection = await createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: 'root',
-    password: 'root',
-    database: 'local',
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to database\n');
 

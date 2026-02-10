@@ -134,6 +134,26 @@ Account
 
 ## Technical & Performance
 
+### Code Audit (Completed 2026-02-09)
+
+- [x] `[MED]` Replace Fuse.js + simple-spellchecker with MiniSearch (~15 kB bundle savings)
+- [x] `[MED]` Fix server-side XSS sanitization gap (dompurify -> isomorphic-dompurify)
+- [x] `[MED]` Create shared DB module for CLI scripts (45 scripts migrated to `scripts/lib/db.ts`)
+- [x] `[MED]` Eliminate 3x duplicated filter extraction logic (shared `lib/utils/product-filter-helpers.ts`)
+- [x] `[LOW]` Remove dead code (`lib/api/http-client.ts`, `app/blog/[slug]/post.css`, unused search functions)
+- [x] `[LOW]` Move scripts-only deps to devDependencies (`mysql2`, `csv-parse`), remove `fast-xml-parser`
+- [x] `[LOW]` Archive 14 one-time migration scripts to `scripts/archive/`
+- [x] `[LOW]` Fix CSS issues (border-radius syntax, hardcoded colors -> CSS variables)
+
+### Code Audit - Remaining
+
+- [ ] `[MED]` Replace Apollo Client with graphql-request (~25 kB client bundle savings, 38+ files)
+- [ ] `[LOW]` Split large components (ShopPageClient 697 lines, SearchAutocomplete 693 lines)
+- [ ] `[LOW]` Replace order tracking mu-plugin with AST Free WP plugin
+- [ ] `[LOW]` Add token validation to auth mu-plugin delete-account/upload-avatar endpoints
+
+### Performance
+
 - [ ] `[MED]` Audit and optimize image loading (lazy loading, WebP)
 - [ ] `[MED]` Review and improve Core Web Vitals scores
 - [ ] `[LOW]` Add service worker for offline support
@@ -306,9 +326,7 @@ Account
 - [x] Add % off calculation to sale badge (e.g. "20% Off") (Completed 2026-01-25)
 - [x] Fix Load More button for search results pagination (Completed 2026-01-25)
 
-Try again to find matches for the shortcodes marked - ❌ 329 no match (discontinued products)
-
-Re-import images that are less than 650 in width or height, and place on 650x650 white background, do not stretch or crop.
+Re-import and replace product images for main photos, gallery, and variations that are less than 650 in width or height, and place on 650x650 white background, do not stretch or crop.
 
 make it so when a product in manually deleted in woocommerce, its images are also deleted from the uploads folder, including its varation and gallery images.
 
@@ -317,22 +335,21 @@ verify product variations weere created on STC product import. some products are
 
 product/hunkyjunk-lockdown-chastity
 
-missing product images: /product/long-sleeve-crochet-teddy-one-size-chartreuse
-/product/long-sleeve-mini-dress-one-size-neon-green
-
-variation images not updating: /product/lelo-gigi-3-app-controlled-g-spot-vibrator
-/product/noje-g-slim-rechargeable
 
 products from STC impotrt don't have product_source meta field set to 'stc', need to set that for all imported products.
 
+update/round up all cent prices from STC import to be rounded up - .97 cents for regular price, and .67/.77/.87/.97 for sale prices.  
 
-duplicate image imports with random string appended to filename: crystal-jellies-6in-pink-cd-1.webp (shows one time in gallery)
-crystal-jellies-6in-pink-cd-1-46b436a2.webp (shows 4 times in gallery)
-crystal-jellies-double-dong-18in-purple-1.webp (shows one time in gallery)
-crystal-jellies-double-dong-18in-purple-1-4ab05cb5.webp (shows 4 times in gallery)
+Import all images used in blog posts that are currently hotlinked from external URLs, and update the posts to use the locally hosted images instead.  This includes any images in blog post content, as well as in product-page html body content.
 
-video files not showing in image gallery. 
+Update .product-specs blocks in blog posts to all be 2 collumn tables, with the bolded text on the left colum, and the other text on the right collumn.
 
-Skip product import for products without images.  Go back through our product XML/CSV, and delete any products that were imported, that don't have images images listed. Update our import script rules to skip products without images in teh future. 
+Add apple pay and google pay icons to product, cart, and checkout page.  Also incorperate klarna and afterpay from stripe on checkout page. See if we can use the woocommerce stripe plugin's built in support for these, or if we need to add custom integrations.
 
-show crossed out original price on vartaible product pages, like we do on single products.  Currently only shows on single products, but not variable products.
+fix related articles on blog page not showing cover image. only show 3 related articles instead of 4, and make sure they are pulling from the same category as the current article.
+
+Update product card width to be a minimum of 256px.
+
+Finish setting category images for all product categories that are missing them, and make sure they are showing correctly on category pages and in the category icons section on the home page.  
+
+Update all add_to_cart shortcodes in blog posts, reusable blocks, and reusable patterns, to use new product IDs, and remove any shortcodes for discontinued products.  You can reference the original product URL, in the MaleQ Store link, or on teh image link or caption above the short code to find hints on the product.  Add product id of product or variation from our new BD products (from our migration). Create a changelog of old vs new product IDs for reference.

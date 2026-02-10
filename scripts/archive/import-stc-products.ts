@@ -20,15 +20,9 @@
 
 import { join } from 'path';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
-import mysql from 'mysql2/promise';
 import { STCCSVParser, type STCProduct, type STCVariationGroup } from '../lib/import/stc-csv-parser';
 import { ImageProcessor } from '../lib/import/image-processor';
-
-// Local by Flywheel MySQL connection
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from '../lib/db';
 
 // Import configuration
 const PRICE_MULTIPLIER = 3;
@@ -246,12 +240,7 @@ class STCProductImporter {
   }
 
   async connect(): Promise<void> {
-    this.connection = await mysql.createConnection({
-      socketPath: LOCAL_MYSQL_SOCKET,
-      user: LOCAL_DB_USER,
-      password: LOCAL_DB_PASS,
-      database: LOCAL_DB_NAME,
-    });
+    this.connection = await getConnection();
     console.log('✓ Connected to Local MySQL database\n');
 
     await this.initProductTypeTerms();

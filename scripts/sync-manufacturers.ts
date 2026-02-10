@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
+import { config } from './lib/db';
 
 interface Manufacturer {
   id: string;
@@ -181,8 +182,8 @@ function slugify(name: string): string {
 }
 
 async function main() {
-  const socketPath = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-  const database = 'local';
+  const socketPath = config.socketPath;
+  const database = config.database;
 
   // Load existing manufacturers.json
   const manufacturersPath = join(process.cwd(), 'data', 'manufacturers.json');

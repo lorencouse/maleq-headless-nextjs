@@ -19,15 +19,10 @@
 import { join } from 'path';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { createHash } from 'crypto';
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
 import { STCCSVParser, type STCProduct } from '../lib/import/stc-csv-parser';
 import { ImageProcessor } from '../lib/import/image-processor';
-
-// Local by Flywheel MySQL connection
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from '../lib/db';
 
 // WordPress uploads directory
 const WP_UPLOADS_DIR = '/Users/lorencouse/Local Sites/maleq-local/app/public/wp-content/uploads';
@@ -533,12 +528,7 @@ async function main() {
   console.log(`✓ Created UPC lookup map with ${productsByUpc.size} entries\n`);
 
   // Connect to database
-  const connection = await createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to Local MySQL database\n');
 

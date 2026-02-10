@@ -25,7 +25,8 @@
  *   --limit <n>         Limit number of items to process
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
+import { getConnection } from './lib/db';
 import { unlink, readFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -109,15 +110,6 @@ Example SKU file format:
   return options;
 }
 
-async function getConnection(): Promise<Connection> {
-  return createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'local',
-    socketPath: '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
-  });
-}
 
 async function loadSkusFromFile(filePath: string): Promise<Set<string>> {
   const content = await readFile(filePath, 'utf-8');

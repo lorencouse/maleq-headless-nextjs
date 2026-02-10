@@ -5,14 +5,9 @@
  * Only restores post_content for specified IDs, preserving all other data
  */
 
-import mysql from 'mysql2/promise';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from '../lib/db';
 
 const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
 const BACKUP_FILE = args[0] || 'backups/local-wp-backup-20260126.sql';
@@ -231,12 +226,7 @@ async function main() {
   }
 
   // Connect to database
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to MySQL\n');
 

@@ -10,14 +10,9 @@
  *   bun scripts/restore-reusable-blocks.ts [--dry-run]
  */
 
-import mysql from 'mysql2/promise';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from '../lib/db';
 
 const BACKUP_FILE = 'scripts/old-db.sql';
 
@@ -279,12 +274,7 @@ async function main() {
   console.log('');
 
   // Connect to database
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to MySQL\n');
 
@@ -447,12 +437,7 @@ async function main() {
   await connection.end();
 
   // Final count
-  const connection2 = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection2 = await getConnection();
 
   const [finalCount] = await connection2.execute(
     "SELECT COUNT(*) as count FROM wp_posts WHERE post_type IN ('wp_block', 'wp_template', 'wp_template_part', 'wp_navigation', 'wp_global_styles')"

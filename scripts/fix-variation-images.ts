@@ -18,7 +18,8 @@
  *   bun scripts/fix-variation-images.ts --dry-run      # Preview changes
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
+import { getConnection } from './lib/db';
 
 interface ProductInfo {
   id: number;
@@ -98,15 +99,6 @@ Examples:
   return options;
 }
 
-async function getConnection(): Promise<Connection> {
-  return createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'local',
-    socketPath: '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
-  });
-}
 
 async function getProductBySlug(connection: Connection, slug: string): Promise<number | null> {
   const [rows] = await connection.execute(

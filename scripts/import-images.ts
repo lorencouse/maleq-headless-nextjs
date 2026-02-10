@@ -40,7 +40,8 @@
  *   --concurrency <n>     Number of concurrent image downloads (default: 5)
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
+import { getConnection } from './lib/db';
 import { XMLParser, XMLProduct } from '../lib/import/xml-parser';
 import { ImageProcessor } from '../lib/import/image-processor';
 import * as path from 'path';
@@ -607,12 +608,7 @@ async function main() {
   if (options.productType) console.log(`  Product Type: ${options.productType}`);
 
   // Connect to database
-  const connection = await createConnection({
-    socketPath: '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
-    user: 'root',
-    password: 'root',
-    database: 'local',
-  });
+  const connection = await getConnection();
 
   console.log('\n✓ Connected to Local MySQL database');
 

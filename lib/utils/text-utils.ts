@@ -5,7 +5,7 @@
  * cleaning, and transforming text content.
  */
 
-import DOMPurify from 'dompurify';
+import DOMPurify from 'isomorphic-dompurify';
 
 /** Words that should remain lowercase in title case (unless first word) */
 const LOWERCASE_WORDS = [
@@ -92,15 +92,8 @@ export function normalizeWhitespace(text: string): string {
 export function stripHtml(html: string): string {
   if (!html) return '';
 
-  let result: string;
-
-  // Use DOMPurify to safely strip HTML (prevents XSS)
-  if (typeof window !== 'undefined') {
-    result = DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_TRUSTED_TYPE: false }) as string;
-  } else {
-    // Server-side fallback - still safe as we're only stripping
-    result = html.replace(/<[^>]*>/g, '');
-  }
+  // isomorphic-dompurify works on both server and client
+  const result = DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_TRUSTED_TYPE: false }) as string;
 
   // Decode HTML entities after stripping tags
   return decodeHtmlEntities(result);
@@ -117,24 +110,20 @@ export function sanitizeHtml(html: string, options?: {
   allowedTags?: string[];
   allowedAttributes?: Record<string, string[]>;
 }): string {
-  if (typeof window !== 'undefined') {
-    const config: { ALLOWED_TAGS?: string[]; ALLOWED_ATTR?: string[]; RETURN_TRUSTED_TYPE?: boolean } = {
-      RETURN_TRUSTED_TYPE: false,
-    };
+  // isomorphic-dompurify works on both server and client
+  const config: { ALLOWED_TAGS?: string[]; ALLOWED_ATTR?: string[]; RETURN_TRUSTED_TYPE?: boolean } = {
+    RETURN_TRUSTED_TYPE: false,
+  };
 
-    if (options?.allowedTags) {
-      config.ALLOWED_TAGS = options.allowedTags;
-    }
-
-    if (options?.allowedAttributes) {
-      config.ALLOWED_ATTR = Object.values(options.allowedAttributes).flat();
-    }
-
-    return DOMPurify.sanitize(html, config) as string;
+  if (options?.allowedTags) {
+    config.ALLOWED_TAGS = options.allowedTags;
   }
 
-  // Server-side: strip all HTML as fallback
-  return html.replace(/<[^>]*>/g, '');
+  if (options?.allowedAttributes) {
+    config.ALLOWED_ATTR = Object.values(options.allowedAttributes).flat();
+  }
+
+  return DOMPurify.sanitize(html, config) as string;
 }
 
 /**

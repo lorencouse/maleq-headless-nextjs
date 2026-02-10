@@ -12,12 +12,7 @@
  *   bun scripts/fix-video-urls.ts --execute
  */
 
-import mysql from 'mysql2/promise';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 
 // All domain variants that might appear in video URLs
 const DOMAINS_TO_STRIP = [
@@ -100,12 +95,7 @@ async function main() {
   console.log('==============\n');
   console.log(`Mode: ${execute ? 'EXECUTE' : 'DRY RUN'}\n`);
 
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('Connected to database\n');
 

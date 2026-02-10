@@ -10,7 +10,8 @@
  *   bun scripts/update-reusable-block-shortcodes.ts
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
+import { getConnection } from './lib/db';
 import { readFileSync } from 'fs';
 
 interface ShortcodeMapping {
@@ -37,15 +38,6 @@ function parseArgs(): ProcessOptions {
   };
 }
 
-async function getConnection(): Promise<Connection> {
-  return createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: 'local',
-    socketPath: '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
-  });
-}
 
 function loadMappings(): Map<string, string> {
   const data = JSON.parse(readFileSync('data/shortcode-review.json', 'utf-8'));

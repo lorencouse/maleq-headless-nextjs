@@ -20,14 +20,10 @@
  *   --include-variable  Also delete variable parent products (default: simple only)
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
 import { existsSync, unlinkSync } from 'fs';
 import { join } from 'path';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 const WP_UPLOADS_DIR = '/Users/lorencouse/Local Sites/maleq-local/app/public/wp-content/uploads';
 
 type Mode = 'analyze' | 'dry-run' | 'apply';
@@ -187,12 +183,7 @@ async function main() {
   if (options.limit) console.log(`Limit: ${options.limit}`);
   console.log();
 
-  const connection = await createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to database\n');
 

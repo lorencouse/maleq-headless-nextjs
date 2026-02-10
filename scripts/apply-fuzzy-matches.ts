@@ -14,13 +14,8 @@
  *   --execute    Actually perform the updates
  */
 
-import mysql from 'mysql2/promise';
 import { readFileSync, writeFileSync } from 'fs';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 
 const REPORT_PATH = '/Volumes/Mac Mini M4 -2TB/MacMini-Data/Documents/web-dev/maleq-headless/docs/product-link-mapping.md';
 
@@ -116,12 +111,7 @@ async function main() {
   }
 
   // Connect to database
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('\n✓ Connected to database');
 

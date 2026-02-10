@@ -10,14 +10,8 @@
  */
 
 import { readFileSync } from 'fs';
-import mysql from 'mysql2/promise';
 import { join } from 'path';
-
-// Local by Flywheel MySQL connection
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from '../lib/db';
 
 async function main() {
   console.log('🔍 Reading old-db.sql file...');
@@ -84,12 +78,7 @@ async function main() {
   // Connect to local MySQL
   console.log('🔌 Connecting to local MySQL...');
 
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('✅ Connected to local database');
 

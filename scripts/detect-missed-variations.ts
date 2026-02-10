@@ -27,15 +27,8 @@
  *   --help, -h             Show help
  */
 
-import mysql from 'mysql2/promise';
 import { writeFileSync, readFileSync } from 'fs';
-
-// ==================== DATABASE CONFIG ====================
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 
 // ==================== TYPES ====================
 
@@ -1711,12 +1704,7 @@ async function main(): Promise<void> {
   console.log(`\nDetect Missed Variations - Mode: ${options.mode.toUpperCase()}\n`);
 
   // Connect to database
-  const connection = await mysql.createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
   console.log('Connected to Local MySQL database\n');
 

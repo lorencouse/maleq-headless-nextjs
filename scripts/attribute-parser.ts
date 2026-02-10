@@ -130,22 +130,14 @@ function extractAttributes(product: ProductData): ScriptExtractedAttributes {
 
 // ==================== DATABASE INTERACTION ====================
 
-/**
- * MySQL connection configuration for Local by Flywheel
- */
-const MYSQL_CONFIG = {
-  socketPath: `${process.env.HOME}/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock`,
-  user: 'root',
-  password: 'root',
-  database: 'local',
-};
+import { config } from './lib/db';
 
 /**
  * Execute a MySQL query and return results
  */
 async function queryMySQL(sql: string): Promise<string> {
   const { $ } = await import('bun');
-  const result = await $`mysql --socket="${MYSQL_CONFIG.socketPath}" -u ${MYSQL_CONFIG.user} -p${MYSQL_CONFIG.password} ${MYSQL_CONFIG.database} -e ${sql} 2>/dev/null`.text();
+  const result = await $`mysql --socket="${config.socketPath}" -u ${config.user} -p${config.password} ${config.database} -e ${sql} 2>/dev/null`.text();
   return result;
 }
 

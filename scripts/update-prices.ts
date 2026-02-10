@@ -26,14 +26,8 @@
 
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import mysql from 'mysql2/promise';
 import { XMLParser, type XMLProduct } from '../lib/import/xml-parser';
-
-// Local by Flywheel MySQL connection
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { getConnection } from './lib/db';
 
 // Sale discount percentage
 const SALE_DISCOUNT_PERCENT = 10;
@@ -266,12 +260,7 @@ class PriceUpdater {
   }
 
   async connect(): Promise<void> {
-    this.connection = await mysql.createConnection({
-      socketPath: LOCAL_MYSQL_SOCKET,
-      user: LOCAL_DB_USER,
-      password: LOCAL_DB_PASS,
-      database: LOCAL_DB_NAME,
-    });
+    this.connection = await getConnection();
     console.log('Connected to Local MySQL database\n');
   }
 

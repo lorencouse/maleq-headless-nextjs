@@ -1,5 +1,5 @@
 import { getClient } from '@/lib/apollo/client';
-import Fuse from 'fuse.js';
+import MiniSearch from 'minisearch';
 import {
   SEARCH_POSTS,
   SEARCH_POSTS_BY_TITLE,
@@ -117,34 +117,47 @@ export async function searchBlogPosts(
       }
     }
 
-    // Use Fuse.js for better fuzzy matching and relevance scoring
+    // Use MiniSearch for better fuzzy matching and relevance scoring
     if (allPosts.length > 0) {
-      const fuse = new Fuse(allPosts, {
-        keys: [
-          { name: 'title', weight: 0.6 },
-          { name: 'excerpt', weight: 0.4 },
-        ],
-        threshold: 0.4,
-        distance: 100,
-        includeScore: true,
-        ignoreLocation: true,
+      const miniSearch = new MiniSearch({
+        fields: ['title', 'excerpt'],
+        storeFields: ['title', 'excerpt'],
+        searchOptions: {
+          fuzzy: 0.2,
+          prefix: true,
+          boost: { title: 2 },
+        },
       });
 
-      const fuseResults = fuse.search(query);
+      miniSearch.addAll(allPosts.map((post, i) => ({
+        ...post,
+        id: post.id || String(i),
+      })));
 
-      if (fuseResults.length > 0) {
-        const relevantPosts = fuseResults.slice(0, first).map(r => r.item);
+      const searchResults = miniSearch.search(query);
+
+      if (searchResults.length > 0) {
+        // Map results back to original posts
+        const resultIds = new Set(searchResults.slice(0, first).map(r => r.id));
+        const relevantPosts = allPosts.filter(p => resultIds.has(p.id));
+        // Sort by MiniSearch result order
+        relevantPosts.sort((a, b) => {
+          const aIdx = searchResults.findIndex(r => r.id === a.id);
+          const bIdx = searchResults.findIndex(r => r.id === b.id);
+          return aIdx - bIdx;
+        });
+
         return {
           posts: relevantPosts,
           pageInfo: {
-            hasNextPage: fuseResults.length > first,
+            hasNextPage: searchResults.length > first,
             endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
           },
         };
       }
     }
 
-    // Fallback to custom scoring if Fuse.js finds nothing
+    // Fallback to custom scoring if MiniSearch finds nothing
     const scoredPosts = allPosts.map(post => {
       const titleLower = post.title?.toLowerCase() || '';
       const allTermsInTitle = matchesAllTerms(titleLower, searchTerms);

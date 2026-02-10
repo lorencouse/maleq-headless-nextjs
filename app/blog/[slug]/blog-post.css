@@ -173,7 +173,7 @@ html {
 .entry-content a {
   position: relative;
   font-weight: 800;
-  color: #000000;
+  color: var(--foreground);
   text-decoration: none;
   padding-bottom: 2px;
 }
@@ -190,7 +190,7 @@ html {
   background-color: var(--primary);
 }
 
-/* Black underline (expands on hover) */
+/* Foreground underline (expands on hover) */
 .entry-content p a::after,
 .entry-content a::after {
   content: '';
@@ -199,7 +199,7 @@ html {
   bottom: 0;
   width: 0;
   height: 2px;
-  background-color: #000000;
+  background-color: var(--foreground);
   transition: width 0.3s ease;
 }
 
@@ -213,17 +213,7 @@ html {
   opacity: 1;
 }
 
-/* Dark mode adjustments */
-.dark .entry-content p a,
-.dark .entry-content a {
-  color: #ffffff;
-}
-
-/* Dark mode: hover underline is white */
-.dark .entry-content p a::after,
-.dark .entry-content a::after {
-  background-color: #ffffff;
-}
+/* Dark mode adjustments handled by var(--foreground) token above */
 
 /* Image links - no default underline, red underline on hover */
 .entry-content a:has(img) {
@@ -575,7 +565,7 @@ figure.wp-block-video figcaption a,
   font-size: 1.0625rem;
   line-height: 1.7;
   background: var(--card);
-  border-radius: 0, 0, var(--radius-lg), var(--radius-lg);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   box-shadow: var(--shadow-sm);
   color: var(--foreground);
 }

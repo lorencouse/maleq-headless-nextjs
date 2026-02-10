@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
 
 /**
- * Cleanup Duplicate Gallery Images
+ * Cleanup Duplicate Gallery Images (Bulk)
  *
- * Finds and removes duplicate gallery images that have MD5 hash suffixes
- * (e.g. product-1-46b436a2.webp) when a non-hashed version already exists.
+ * Finds hash-suffixed duplicate attachments (-[a-f0-9]{8}.webp), maps them
+ * back to their originals, replaces references in featured images and galleries,
+ * then deletes the duplicate attachments and files from disk.
  *
  * Usage:
  *   bun scripts/cleanup-duplicate-gallery-images.ts --analyze
@@ -12,304 +13,348 @@
  *   bun scripts/cleanup-duplicate-gallery-images.ts --apply
  *
  * Options:
- *   --analyze   Show analysis of duplicate images without changes
+ *   --analyze   Show analysis of duplicate images (default)
  *   --dry-run   Show what would be cleaned up without making changes
- *   --apply     Actually remove duplicates and update galleries
- *   --limit <n> Limit number of products to process
+ *   --apply     Actually remove duplicates and update references
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
 import { existsSync, unlinkSync } from 'fs';
-import { join, basename } from 'path';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
-const LOCAL_DB_NAME = 'local';
-const LOCAL_DB_USER = 'root';
-const LOCAL_DB_PASS = 'root';
+import { join } from 'path';
+import { getConnection } from './lib/db';
 const WP_UPLOADS_DIR = '/Users/lorencouse/Local Sites/maleq-local/app/public/wp-content/uploads';
-
-// Match hash-suffixed filenames: name-[8 hex chars].webp
-const HASH_PATTERN = /-[a-f0-9]{8}\.webp$/;
-
-interface DuplicateInfo {
-  productId: number;
-  productName: string;
-  galleryIds: number[];
-  duplicates: Array<{
-    attachmentId: number;
-    filename: string;
-    originalFilename: string;
-    originalAttachmentId: number | null;
-    filePath: string;
-  }>;
-}
 
 type Mode = 'analyze' | 'dry-run' | 'apply';
 
-function parseArgs(): { mode: Mode; limit?: number } {
+function parseArgs(): { mode: Mode } {
   const args = process.argv.slice(2);
   let mode: Mode = 'analyze';
-  let limit: number | undefined;
 
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--analyze') mode = 'analyze';
-    else if (args[i] === '--dry-run') mode = 'dry-run';
-    else if (args[i] === '--apply') mode = 'apply';
-    else if (args[i] === '--limit' && i + 1 < args.length) {
-      limit = parseInt(args[i + 1], 10);
-      i++;
-    } else if (args[i] === '--help' || args[i] === '-h') {
+  for (const arg of args) {
+    if (arg === '--analyze') mode = 'analyze';
+    else if (arg === '--dry-run') mode = 'dry-run';
+    else if (arg === '--apply') mode = 'apply';
+    else if (arg === '--help' || arg === '-h') {
       console.log(`
-Cleanup Duplicate Gallery Images
+Cleanup Duplicate Gallery Images (Bulk)
+
+Removes hash-suffixed duplicate attachments and updates all references
+(featured images and gallery meta) to point to the originals.
 
 Usage:
-  bun scripts/cleanup-duplicate-gallery-images.ts [mode] [options]
+  bun scripts/cleanup-duplicate-gallery-images.ts [mode]
 
 Modes:
-  --analyze   Show analysis of duplicate images (default)
+  --analyze   Show analysis of duplicates (default)
   --dry-run   Show what would be cleaned up
-  --apply     Remove duplicates and update galleries
-
-Options:
-  --limit <n> Limit number of products to process
-  --help, -h  Show this help message
+  --apply     Remove duplicates and update references
       `);
       process.exit(0);
     }
   }
 
-  return { mode, limit };
-}
-
-async function findDuplicates(connection: Connection, limit?: number): Promise<DuplicateInfo[]> {
-  // Get all products with gallery images
-  let query = `
-    SELECT
-      p.ID as productId,
-      p.post_title as productName,
-      gallery.meta_value as galleryIds
-    FROM wp_posts p
-    INNER JOIN wp_postmeta gallery ON p.ID = gallery.post_id AND gallery.meta_key = '_product_image_gallery'
-    WHERE p.post_type = 'product'
-      AND p.post_status = 'publish'
-      AND gallery.meta_value != ''
-    ORDER BY p.ID ASC
-  `;
-
-  if (limit) {
-    query += ` LIMIT ${limit}`;
-  }
-
-  const [rows] = await connection.execute(query);
-  const products = rows as any[];
-
-  const duplicates: DuplicateInfo[] = [];
-
-  for (const product of products) {
-    const galleryIds = product.galleryIds.split(',').map((id: string) => parseInt(id.trim(), 10)).filter((id: number) => !isNaN(id));
-
-    if (galleryIds.length === 0) continue;
-
-    // Get attachment info for all gallery IDs
-    const placeholders = galleryIds.map(() => '?').join(',');
-    const [attachments] = await connection.execute(
-      `SELECT
-        p.ID,
-        p.guid,
-        m.meta_value as attached_file
-      FROM wp_posts p
-      LEFT JOIN wp_postmeta m ON p.ID = m.post_id AND m.meta_key = '_wp_attached_file'
-      WHERE p.ID IN (${placeholders})`,
-      galleryIds
-    );
-
-    const attachmentMap = new Map<number, { guid: string; file: string; filename: string }>();
-    for (const att of attachments as any[]) {
-      const filename = basename(att.attached_file || att.guid);
-      attachmentMap.set(att.ID, { guid: att.guid, file: att.attached_file || '', filename });
-    }
-
-    // Find hash-suffixed duplicates
-    const productDuplicates: DuplicateInfo['duplicates'] = [];
-
-    for (const id of galleryIds) {
-      const att = attachmentMap.get(id);
-      if (!att) continue;
-
-      if (HASH_PATTERN.test(att.filename)) {
-        // This is a hash-suffixed file — find the original
-        const originalFilename = att.filename.replace(/-[a-f0-9]{8}\.webp$/, '.webp');
-
-        // Check if the original exists as another attachment in this gallery
-        let originalAttachmentId: number | null = null;
-        for (const [otherId, otherAtt] of attachmentMap) {
-          if (otherId !== id && otherAtt.filename === originalFilename) {
-            originalAttachmentId = otherId;
-            break;
-          }
-        }
-
-        // Also check DB for original attachment even if not in this gallery
-        if (originalAttachmentId === null) {
-          const [origRows] = await connection.execute(
-            `SELECT ID FROM wp_posts WHERE post_type = 'attachment' AND guid LIKE ?`,
-            [`%/${originalFilename}`]
-          );
-          if ((origRows as any[]).length > 0) {
-            originalAttachmentId = (origRows as any[])[0].ID;
-          }
-        }
-
-        const filePath = att.file ? join(WP_UPLOADS_DIR, att.file) : '';
-
-        productDuplicates.push({
-          attachmentId: id,
-          filename: att.filename,
-          originalFilename,
-          originalAttachmentId,
-          filePath,
-        });
-      }
-    }
-
-    if (productDuplicates.length > 0) {
-      duplicates.push({
-        productId: product.productId,
-        productName: product.productName,
-        galleryIds,
-        duplicates: productDuplicates,
-      });
-    }
-  }
-
-  return duplicates;
-}
-
-async function cleanupDuplicates(connection: Connection, duplicates: DuplicateInfo[], mode: Mode): Promise<void> {
-  let totalRemoved = 0;
-  let totalFilesDeleted = 0;
-  let totalGalleriesUpdated = 0;
-
-  for (const product of duplicates) {
-    console.log(`\n[Product #${product.productId}] ${product.productName.substring(0, 60)}`);
-    console.log(`  Gallery IDs: ${product.galleryIds.join(', ')}`);
-
-    const idsToRemove = new Set<number>();
-
-    for (const dup of product.duplicates) {
-      console.log(`  Duplicate: ${dup.filename} (ID: ${dup.attachmentId})`);
-      console.log(`    Original: ${dup.originalFilename} (ID: ${dup.originalAttachmentId ?? 'not found'})`);
-
-      if (dup.originalAttachmentId) {
-        idsToRemove.add(dup.attachmentId);
-      } else {
-        console.log(`    ⚠ No original found — keeping duplicate`);
-      }
-    }
-
-    if (idsToRemove.size === 0) continue;
-
-    // Update gallery to remove duplicate IDs
-    const newGalleryIds = product.galleryIds.filter(id => !idsToRemove.has(id));
-    const newGalleryValue = newGalleryIds.join(',');
-
-    console.log(`  Updated gallery: ${newGalleryValue}`);
-
-    if (mode === 'apply') {
-      // Update gallery meta
-      await connection.execute(
-        `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_product_image_gallery'`,
-        [newGalleryValue, product.productId]
-      );
-      totalGalleriesUpdated++;
-
-      // Delete duplicate attachments and their files
-      for (const dup of product.duplicates) {
-        if (!idsToRemove.has(dup.attachmentId)) continue;
-
-        // Delete attachment post
-        await connection.execute(`DELETE FROM wp_posts WHERE ID = ?`, [dup.attachmentId]);
-        // Delete attachment meta
-        await connection.execute(`DELETE FROM wp_postmeta WHERE post_id = ?`, [dup.attachmentId]);
-
-        // Delete file from disk
-        if (dup.filePath && existsSync(dup.filePath)) {
-          try {
-            unlinkSync(dup.filePath);
-            totalFilesDeleted++;
-            console.log(`  ✓ Deleted file: ${dup.filename}`);
-          } catch (e) {
-            console.log(`  ⚠ Could not delete file: ${dup.filename}`);
-          }
-        }
-
-        totalRemoved++;
-      }
-    } else {
-      totalRemoved += idsToRemove.size;
-    }
-  }
-
-  console.log('\n=== SUMMARY ===');
-  console.log(`Products with duplicates: ${duplicates.length}`);
-  console.log(`Duplicate attachments ${mode === 'apply' ? 'removed' : 'found'}: ${totalRemoved}`);
-  if (mode === 'apply') {
-    console.log(`Files deleted from disk: ${totalFilesDeleted}`);
-    console.log(`Galleries updated: ${totalGalleriesUpdated}`);
-  }
+  return { mode };
 }
 
 async function main() {
-  const { mode, limit } = parseArgs();
+  const { mode } = parseArgs();
 
-  console.log('\n╔══════════════════════════════════════════╗');
-  console.log('║  Cleanup Duplicate Gallery Images         ║');
-  console.log('╚══════════════════════════════════════════╝\n');
-  console.log(`Mode: ${mode}`);
-  if (limit) console.log(`Limit: ${limit}`);
-  console.log();
+  console.log('\n========================================');
+  console.log('  Cleanup Duplicate Gallery Images');
+  console.log('========================================\n');
+  console.log(`Mode: ${mode}\n`);
 
-  const connection = await createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: LOCAL_DB_USER,
-    password: LOCAL_DB_PASS,
-    database: LOCAL_DB_NAME,
-  });
+  const connection = await getConnection();
 
-  console.log('✓ Connected to database\n');
+  console.log('Connected to database\n');
 
   try {
-    console.log('Scanning for duplicate gallery images...');
-    const duplicates = await findDuplicates(connection, limit);
+    // Step 1: Build mapping of hash-suffixed attachment ID -> original attachment ID
+    console.log('Step 1: Finding all hash-suffixed duplicate attachments...');
+
+    const [hashRows] = await connection.execute(`
+      SELECT
+        dup.post_id as dup_id,
+        dup.meta_value as dup_file,
+        REGEXP_REPLACE(dup.meta_value, '-[a-f0-9]{8}\\.webp$', '.webp') as original_file
+      FROM wp_postmeta dup
+      WHERE dup.meta_key = '_wp_attached_file'
+        AND dup.meta_value REGEXP '-[a-f0-9]{8}\\.webp$'
+    `);
+
+    const duplicates = hashRows as Array<{ dup_id: number; dup_file: string; original_file: string }>;
+    console.log(`  Found ${duplicates.length} hash-suffixed attachments\n`);
 
     if (duplicates.length === 0) {
-      console.log('✓ No duplicate gallery images found!');
+      console.log('No duplicates found!');
       return;
     }
 
-    console.log(`Found ${duplicates.length} products with hash-suffixed duplicates`);
-    const totalDuplicates = duplicates.reduce((sum, d) => sum + d.duplicates.length, 0);
-    console.log(`Total duplicate attachments: ${totalDuplicates}`);
+    // Step 2: Look up original attachment IDs for each original_file
+    console.log('Step 2: Mapping duplicates to originals...');
+
+    // Build a lookup of original_file -> original_id
+    const uniqueOriginalFiles = [...new Set(duplicates.map(d => d.original_file))];
+    console.log(`  ${uniqueOriginalFiles.length} unique original filenames to look up`);
+
+    // Query in batches of 500
+    const originalFileToId = new Map<string, number>();
+    for (let i = 0; i < uniqueOriginalFiles.length; i += 500) {
+      const batch = uniqueOriginalFiles.slice(i, i + 500);
+      const placeholders = batch.map(() => '?').join(',');
+      const [rows] = await connection.execute(
+        `SELECT post_id, meta_value FROM wp_postmeta
+         WHERE meta_key = '_wp_attached_file' AND meta_value IN (${placeholders})`,
+        batch
+      );
+      for (const row of rows as any[]) {
+        // If multiple originals exist for the same file, use the lowest ID (first created)
+        if (!originalFileToId.has(row.meta_value) || row.post_id < originalFileToId.get(row.meta_value)!) {
+          originalFileToId.set(row.meta_value, row.post_id);
+        }
+      }
+      if (i % 5000 === 0 && i > 0) {
+        console.log(`  Looked up ${i}/${uniqueOriginalFiles.length}...`);
+      }
+    }
+
+    console.log(`  Found originals for ${originalFileToId.size} files\n`);
+
+    // Build dup_id -> original_id mapping
+    const dupToOriginal = new Map<number, number>();
+    let noOriginalCount = 0;
+
+    for (const dup of duplicates) {
+      const originalId = originalFileToId.get(dup.original_file);
+      if (originalId && originalId !== dup.dup_id) {
+        dupToOriginal.set(dup.dup_id, originalId);
+      } else {
+        noOriginalCount++;
+      }
+    }
+
+    console.log(`  Mapped ${dupToOriginal.size} duplicates to originals`);
+    if (noOriginalCount > 0) {
+      console.log(`  ${noOriginalCount} duplicates have no matching original (will keep)`);
+    }
+    console.log();
 
     if (mode === 'analyze') {
-      // Just show the analysis
-      for (const product of duplicates) {
-        console.log(`\n[#${product.productId}] ${product.productName.substring(0, 60)} — ${product.duplicates.length} duplicate(s)`);
-        for (const dup of product.duplicates) {
-          console.log(`  ${dup.filename} → original: ${dup.originalFilename} (ID: ${dup.originalAttachmentId ?? 'missing'})`);
+      // Just show stats
+      console.log('=== Analysis ===');
+      console.log(`Total hash-suffixed attachments: ${duplicates.length}`);
+      console.log(`Mappable to originals: ${dupToOriginal.size}`);
+      console.log(`No original found: ${noOriginalCount}`);
+
+      // Check how many are used as featured images
+      const dupIds = [...dupToOriginal.keys()];
+      let featuredCount = 0;
+      for (let i = 0; i < dupIds.length; i += 1000) {
+        const batch = dupIds.slice(i, i + 1000);
+        const placeholders = batch.map(() => '?').join(',');
+        const [rows] = await connection.execute(
+          `SELECT COUNT(*) as cnt FROM wp_postmeta WHERE meta_key = '_thumbnail_id' AND meta_value IN (${placeholders})`,
+          batch.map(String)
+        );
+        featuredCount += (rows as any[])[0].cnt;
+      }
+
+      // Check how many are in galleries
+      const [galleryRows] = await connection.execute(
+        `SELECT COUNT(*) as cnt FROM wp_postmeta WHERE meta_key = '_product_image_gallery' AND meta_value != ''`
+      );
+      const totalGalleries = (galleryRows as any[])[0].cnt;
+
+      console.log(`\nDuplicates used as featured images: ${featuredCount}`);
+      console.log(`Total product galleries to scan: ${totalGalleries}`);
+      console.log(`\nRun with --dry-run to see detailed changes, or --apply to fix.`);
+      return;
+    }
+
+    // Step 3: Update featured images (_thumbnail_id)
+    console.log('Step 3: Updating featured image references...');
+    let featuredUpdated = 0;
+
+    // Process in batches
+    const dupIds = [...dupToOriginal.keys()];
+    for (let i = 0; i < dupIds.length; i += 500) {
+      const batch = dupIds.slice(i, i + 500);
+      const placeholders = batch.map(() => '?').join(',');
+
+      const [thumbRows] = await connection.execute(
+        `SELECT meta_id, meta_value FROM wp_postmeta
+         WHERE meta_key = '_thumbnail_id' AND meta_value IN (${placeholders})`,
+        batch.map(String)
+      );
+
+      for (const row of thumbRows as any[]) {
+        const dupId = parseInt(row.meta_value, 10);
+        const originalId = dupToOriginal.get(dupId);
+        if (!originalId) continue;
+
+        featuredUpdated++;
+        if (mode === 'dry-run') {
+          if (featuredUpdated <= 5) {
+            console.log(`  Would update thumbnail: ${dupId} -> ${originalId}`);
+          }
+        } else {
+          await connection.execute(
+            `UPDATE wp_postmeta SET meta_value = ? WHERE meta_id = ?`,
+            [originalId.toString(), row.meta_id]
+          );
+        }
+      }
+
+      if (i % 5000 === 0 && i > 0) {
+        console.log(`  Processed ${i}/${dupIds.length} batches...`);
+      }
+    }
+
+    console.log(`  Featured images ${mode === 'apply' ? 'updated' : 'to update'}: ${featuredUpdated}\n`);
+
+    // Step 4: Update gallery meta (_product_image_gallery)
+    console.log('Step 4: Updating product gallery references...');
+
+    const [allGalleries] = await connection.execute(
+      `SELECT meta_id, post_id, meta_value FROM wp_postmeta WHERE meta_key = '_product_image_gallery' AND meta_value != ''`
+    );
+
+    let galleriesUpdated = 0;
+    let galleryIdsRemoved = 0;
+
+    for (const gallery of allGalleries as any[]) {
+      const ids = gallery.meta_value.split(',').map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => !isNaN(n));
+
+      // Replace duplicate IDs with original IDs, then deduplicate
+      const newIds: number[] = [];
+      const seen = new Set<number>();
+
+      for (const id of ids) {
+        const resolvedId = dupToOriginal.get(id) || id;
+        if (!seen.has(resolvedId)) {
+          seen.add(resolvedId);
+          newIds.push(resolvedId);
+        }
+      }
+
+      if (newIds.length !== ids.length || newIds.some((id, idx) => id !== ids[idx])) {
+        galleriesUpdated++;
+        galleryIdsRemoved += ids.length - newIds.length;
+
+        if (mode === 'dry-run' && galleriesUpdated <= 5) {
+          console.log(`  Product #${gallery.post_id}: ${ids.length} -> ${newIds.length} gallery images`);
+        }
+
+        if (mode === 'apply') {
+          await connection.execute(
+            `UPDATE wp_postmeta SET meta_value = ? WHERE meta_id = ?`,
+            [newIds.join(','), gallery.meta_id]
+          );
+        }
+      }
+    }
+
+    console.log(`  Galleries ${mode === 'apply' ? 'updated' : 'to update'}: ${galleriesUpdated}`);
+    console.log(`  Duplicate IDs ${mode === 'apply' ? 'removed' : 'to remove'} from galleries: ${galleryIdsRemoved}\n`);
+
+    // Step 5: Delete duplicate attachment posts and meta, remove files from disk
+    console.log('Step 5: Deleting duplicate attachments and files...');
+
+    let attachmentsDeleted = 0;
+    let filesDeleted = 0;
+    let filesNotFound = 0;
+
+    // Collect file paths before deleting from DB
+    const dupFileMap = new Map<number, string>();
+    for (const dup of duplicates) {
+      if (dupToOriginal.has(dup.dup_id)) {
+        dupFileMap.set(dup.dup_id, dup.dup_file);
+      }
+    }
+
+    if (mode === 'apply') {
+      // Delete in batches
+      const idsToDelete = [...dupToOriginal.keys()];
+
+      for (let i = 0; i < idsToDelete.length; i += 500) {
+        const batch = idsToDelete.slice(i, i + 500);
+        const placeholders = batch.map(() => '?').join(',');
+
+        // Delete postmeta
+        await connection.execute(
+          `DELETE FROM wp_postmeta WHERE post_id IN (${placeholders})`,
+          batch
+        );
+
+        // Delete posts
+        await connection.execute(
+          `DELETE FROM wp_posts WHERE ID IN (${placeholders})`,
+          batch
+        );
+
+        attachmentsDeleted += batch.length;
+
+        if (i % 5000 === 0 && i > 0) {
+          console.log(`  Deleted ${i}/${idsToDelete.length} attachments from DB...`);
+        }
+      }
+
+      // Delete files from disk
+      console.log(`  Removing files from disk...`);
+      for (const [dupId, filePath] of dupFileMap) {
+        const fullPath = join(WP_UPLOADS_DIR, filePath);
+        if (existsSync(fullPath)) {
+          try {
+            unlinkSync(fullPath);
+            filesDeleted++;
+          } catch {
+            // Skip if can't delete
+          }
+        } else {
+          filesNotFound++;
+        }
+
+        if (filesDeleted % 10000 === 0 && filesDeleted > 0) {
+          console.log(`  Deleted ${filesDeleted} files from disk...`);
         }
       }
     } else {
-      await cleanupDuplicates(connection, duplicates, mode);
+      attachmentsDeleted = dupToOriginal.size;
+      // Check how many files exist on disk
+      for (const [, filePath] of dupFileMap) {
+        const fullPath = join(WP_UPLOADS_DIR, filePath);
+        if (existsSync(fullPath)) {
+          filesDeleted++;
+        } else {
+          filesNotFound++;
+        }
+      }
+    }
+
+    console.log(`  Attachments ${mode === 'apply' ? 'deleted' : 'to delete'}: ${attachmentsDeleted}`);
+    console.log(`  Files ${mode === 'apply' ? 'deleted' : 'to delete'} from disk: ${filesDeleted}`);
+    if (filesNotFound > 0) {
+      console.log(`  Files not found on disk: ${filesNotFound}`);
+    }
+
+    // Final summary
+    console.log('\n=== Summary ===');
+    console.log(`Featured images ${mode === 'apply' ? 'updated' : 'to update'}: ${featuredUpdated}`);
+    console.log(`Galleries ${mode === 'apply' ? 'updated' : 'to update'}: ${galleriesUpdated}`);
+    console.log(`Duplicate gallery entries ${mode === 'apply' ? 'removed' : 'to remove'}: ${galleryIdsRemoved}`);
+    console.log(`Duplicate attachments ${mode === 'apply' ? 'deleted' : 'to delete'}: ${attachmentsDeleted}`);
+    console.log(`Files ${mode === 'apply' ? 'removed' : 'to remove'} from disk: ${filesDeleted}`);
+
+    if (mode === 'dry-run') {
+      console.log('\nRun with --apply to execute these changes.');
     }
   } finally {
     await connection.end();
   }
 
-  console.log('\n✓ Done');
+  console.log('\nDone!');
 }
 
 main().catch(error => {
-  console.error('\n✗ Failed:', error);
+  console.error('\nFailed:', error);
   process.exit(1);
 });

@@ -15,11 +15,10 @@
  *   --post-id <id>  Process a specific post
  */
 
-import { createConnection, Connection } from 'mysql2/promise';
+import type { Connection } from 'mysql2/promise';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
-
-const LOCAL_MYSQL_SOCKET = '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
+import { getConnection } from './lib/db';
 
 interface ShortcodeMatch {
   postId: number;
@@ -448,12 +447,7 @@ async function main() {
   console.log(`Min Confidence: ${options.minConfidence}%`);
   console.log(`Update URLs: ${options.updateUrls}\n`);
 
-  const connection = await createConnection({
-    socketPath: LOCAL_MYSQL_SOCKET,
-    user: 'root',
-    password: 'root',
-    database: 'local',
-  });
+  const connection = await getConnection();
 
   console.log('✓ Connected to database\n');
 

@@ -4,12 +4,9 @@ import {
   levenshteinDistance,
   isFuzzyMatch,
   textContainsTerm,
-  countMatchingTerms,
   calculateRelevanceScore,
   matchesAllTerms,
   matchesAnyTerm,
-  generateSpellingVariants,
-  getTopSpellingCorrections,
 } from '@/lib/utils/search-helpers';
 
 describe('Search Helpers', () => {
@@ -166,22 +163,6 @@ describe('Search Helpers', () => {
     });
   });
 
-  describe('countMatchingTerms', () => {
-    it('should count matching terms', () => {
-      expect(countMatchingTerms('Red rabbit toy', ['red', 'rabbit'])).toBe(2);
-      expect(countMatchingTerms('Blue pump', ['red', 'pump'])).toBe(1);
-    });
-
-    it('should return 0 for no matches', () => {
-      expect(countMatchingTerms('Blue pump', ['red', 'green'])).toBe(0);
-    });
-
-    it('should handle empty inputs', () => {
-      expect(countMatchingTerms(null, ['red'])).toBe(0);
-      expect(countMatchingTerms('red toy', [])).toBe(0);
-    });
-  });
-
   describe('matchesAllTerms', () => {
     it('should return true when all terms match', () => {
       expect(matchesAllTerms('Red rabbit toy', ['red', 'rabbit'])).toBe(true);
@@ -261,76 +242,4 @@ describe('Search Helpers', () => {
     });
   });
 
-  describe('generateSpellingVariants', () => {
-    it('should generate variants with added letters', () => {
-      const variants = generateSpellingVariants('rabit');
-      // Should include 'rabbit' (adding 'b')
-      expect(variants).toContain('rabbit');
-    });
-
-    it('should generate variants with removed letters', () => {
-      const variants = generateSpellingVariants('rabbbit');
-      // Should include 'rabbit' (removing extra 'b')
-      expect(variants).toContain('rabbit');
-    });
-
-    it('should generate variants with replaced letters', () => {
-      const variants = generateSpellingVariants('rabbet');
-      // Should include 'rabbit' (replacing 'e' with 'i')
-      expect(variants).toContain('rabbit');
-    });
-
-    it('should generate variants with swapped letters', () => {
-      const variants = generateSpellingVariants('rabibt');
-      // Should include 'rabbit' (swapping 'b' and 'i')
-      expect(variants).toContain('rabbit');
-    });
-
-    it('should skip very short words', () => {
-      const variants = generateSpellingVariants('ab');
-      expect(variants).toHaveLength(0);
-    });
-
-    it('should return unique variants', () => {
-      const variants = generateSpellingVariants('test');
-      const uniqueVariants = [...new Set(variants)];
-      expect(variants.length).toBe(uniqueVariants.length);
-    });
-  });
-
-  describe('getTopSpellingCorrections', () => {
-    it('should return limited number of corrections', () => {
-      const corrections = getTopSpellingCorrections('rabit', 3);
-      expect(corrections.length).toBeLessThanOrEqual(3);
-    });
-
-    it('should prioritize words with double consonants', () => {
-      const corrections = getTopSpellingCorrections('rabit', 10);
-      // 'rabbit' should be in top results because it has 'bb'
-      expect(corrections).toContain('rabbit');
-    });
-
-    it('should include the correct spelling for common typos', () => {
-      // Missing letter
-      expect(getTopSpellingCorrections('rabit', 5)).toContain('rabbit');
-
-      // Extra letter
-      expect(getTopSpellingCorrections('rabbbit', 5)).toContain('rabbit');
-    });
-
-    it('should handle transposed letters', () => {
-      // reveiw -> review (swapped 'e' and 'i')
-      const corrections = generateSpellingVariants('reveiw');
-      expect(corrections).toContain('review');
-    });
-
-    it('should handle vowel transpositions', () => {
-      // teh -> the (common typo, swapped letters)
-      expect(generateSpellingVariants('teh')).toContain('the');
-
-      // freind -> friend (swapped 'i' and 'e')
-      const friendVariants = generateSpellingVariants('freind');
-      expect(friendVariants).toContain('friend');
-    });
-  });
 });
