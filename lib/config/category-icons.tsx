@@ -468,10 +468,11 @@ export const categoryImages: Record<string, string> = {
 };
 
 // Helper to get category image path
-export function getCategoryImage(slug: string): string | null {
+// Checks static mapping first, then falls back to WP image URL
+export function getCategoryImage(slug: string, wpImageUrl?: string | null): string | null {
   const filename = categoryImages[slug];
   if (filename) {
     return `/images/product-categories/${filename}`;
   }
-  return null;
+  return wpImageUrl || null;
 }

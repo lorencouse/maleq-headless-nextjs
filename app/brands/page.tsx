@@ -12,6 +12,14 @@ export const metadata: Metadata = {
     description: 'Browse our collection of top brands at Male Q.',
     type: 'website',
   },
+  twitter: {
+    card: 'summary',
+    title: 'Shop by Brand | Male Q',
+    description: 'Browse our collection of top brands at Male Q.',
+  },
+  alternates: {
+    canonical: '/brands',
+  },
 };
 
 // ISR: Revalidate every 24 hours for fresh product data

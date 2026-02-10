@@ -217,6 +217,7 @@ export interface GraphQLHierarchicalCategory {
   name: string;
   slug: string;
   count?: number;
+  image?: { sourceUrl: string } | null;
   children?: GraphQLNodeConnection<GraphQLHierarchicalCategory>;
 }
 

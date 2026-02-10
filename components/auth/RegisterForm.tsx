@@ -137,7 +137,7 @@ export default function RegisterForm() {
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12 ${
               errors.password ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="At least 8 characters"
+            placeholder="At least 12 characters"
           />
           <button
             type="button"

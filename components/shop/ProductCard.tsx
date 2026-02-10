@@ -1,17 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import QuickAddButton from './QuickAddButton';
 import WishlistButton from '@/components/wishlist/WishlistButton';
-import QuickViewModal from '@/components/product/QuickViewModal';
 import {
   formatPrice,
   parsePrice,
   calculatePercentOff,
 } from '@/lib/utils/woocommerce-format';
+
+const QuickViewModal = dynamic(
+  () => import('@/components/product/QuickViewModal'),
+  { ssr: false }
+);
 
 interface ProductCardProps {
   product: UnifiedProduct;
@@ -21,7 +26,7 @@ interface ProductCardProps {
   onRemove?: (productId: string) => void;
 }
 
-export default function ProductCard({
+export default memo(function ProductCard({
   product,
   isWishlist,
   onRemove,
@@ -204,12 +209,14 @@ export default function ProductCard({
         </div>
       </div>
 
-      {/* Quick View Modal */}
-      <QuickViewModal
-        product={product}
-        isOpen={isQuickViewOpen}
-        onClose={() => setIsQuickViewOpen(false)}
-      />
+      {/* Quick View Modal - dynamically imported */}
+      {isQuickViewOpen && (
+        <QuickViewModal
+          product={product}
+          isOpen={isQuickViewOpen}
+          onClose={() => setIsQuickViewOpen(false)}
+        />
+      )}
     </div>
   );
-}
+});

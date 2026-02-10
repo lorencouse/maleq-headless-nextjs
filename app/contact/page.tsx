@@ -4,6 +4,9 @@ import ContactForm from '@/components/contact/ContactForm';
 export const metadata: Metadata = {
   title: 'Contact Us | Male Q',
   description: 'Get in touch with Male Q. We\'re here to help with any questions about your orders, products, or general inquiries.',
+  alternates: {
+    canonical: '/contact',
+  },
 };
 
 export default function ContactPage() {

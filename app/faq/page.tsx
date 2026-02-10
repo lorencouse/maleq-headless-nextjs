@@ -5,6 +5,9 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Frequently Asked Questions | Male Q',
   description: 'Find answers to common questions about orders, shipping, returns, and more at Male Q.',
+  alternates: {
+    canonical: '/faq',
+  },
 };
 
 const faqCategories = [

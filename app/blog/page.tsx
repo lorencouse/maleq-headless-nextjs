@@ -4,6 +4,7 @@ import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
 import DidYouMean from '@/components/search/DidYouMean';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'Blog | Male Q',
@@ -12,6 +13,14 @@ export const metadata: Metadata = {
     title: 'Blog | Male Q',
     description: 'Read the latest articles, guides, and insights from Male Q.',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Blog | Male Q',
+    description: 'Read the latest articles, guides, and insights from Male Q.',
+  },
+  alternates: {
+    canonical: '/blog',
   },
 };
 
@@ -34,6 +43,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+      <Breadcrumbs items={[{ label: 'Blog' }]} />
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">

@@ -43,6 +43,14 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
       description,
       type: 'website',
     },
+    twitter: {
+      card: 'summary',
+      title: `${brand.name} | Male Q`,
+      description,
+    },
+    alternates: {
+      canonical: `/brand/${slug}`,
+    },
   };
 }
 

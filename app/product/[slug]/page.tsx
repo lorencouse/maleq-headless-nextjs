@@ -4,10 +4,14 @@ import { stripHtml } from '@/lib/utils/text-utils';
 import { getProductsByCategory } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import dynamic from 'next/dynamic';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
-import ProductReviews from '@/components/reviews/ProductReviews';
 import RelatedProducts from '@/components/product/RelatedProducts';
+
+const ProductReviews = dynamic(
+  () => import('@/components/reviews/ProductReviews')
+);
 import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 import { ProductSchema } from '@/components/seo/StructuredData';

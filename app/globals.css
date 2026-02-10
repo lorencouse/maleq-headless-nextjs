@@ -235,7 +235,14 @@ h6 {
 /* Mobile-first responsive heading sizes */
 h1:not(.heading-plain) {
   font-size: 28px;
+  border-bottom: 6px solid black;
+  padding-bottom: 0.75rem;
 }
+
+.dark h1:not(.heading-plain) {
+  border-bottom-color: white;
+}
+
 h2:not(.heading-plain) {
   font-size: 24px;
   border-bottom: 5px solid black;

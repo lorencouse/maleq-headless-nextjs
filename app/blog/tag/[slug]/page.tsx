@@ -54,6 +54,14 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
       description,
       type: 'website',
     },
+    twitter: {
+      card: 'summary',
+      title: `${tag.name} | Male Q Blog`,
+      description,
+    },
+    alternates: {
+      canonical: `/blog/tag/${slug}`,
+    },
   };
 }
 

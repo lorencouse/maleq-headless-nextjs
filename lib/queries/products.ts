@@ -343,24 +343,36 @@ export const GET_HIERARCHICAL_CATEGORIES = gql`
         name
         slug
         count
+        image {
+          sourceUrl
+        }
         children(first: 50) {
           nodes {
             id
             name
             slug
             count
+            image {
+              sourceUrl
+            }
             children(first: 50) {
               nodes {
                 id
                 name
                 slug
                 count
+                image {
+                  sourceUrl
+                }
                 children(first: 50) {
                   nodes {
                     id
                     name
                     slug
                     count
+                    image {
+                      sourceUrl
+                    }
                   }
                 }
               }

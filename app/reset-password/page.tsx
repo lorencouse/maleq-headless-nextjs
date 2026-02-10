@@ -30,8 +30,8 @@ export default function ResetPasswordPage() {
     }
 
     // Validate password strength
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (password.length < 12) {
+      setError('Password must be at least 12 characters');
       return;
     }
 
@@ -144,7 +144,7 @@ export default function ResetPasswordPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  minLength={8}
+                  minLength={12}
                   autoComplete="new-password"
                   className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12"
                   placeholder="Enter new password"
@@ -167,7 +167,7 @@ export default function ResetPasswordPage() {
                 </button>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Must be at least 8 characters
+                Must be at least 12 characters
               </p>
             </div>
 
@@ -181,7 +181,7 @@ export default function ResetPasswordPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={12}
                 autoComplete="new-password"
                 className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 placeholder="Confirm new password"

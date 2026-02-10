@@ -4,6 +4,9 @@ import Image from 'next/image';
 export const metadata: Metadata = {
   title: 'About Us | Male Q',
   description: 'Learn about Male Q - your trusted online destination for quality products and exceptional service.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {

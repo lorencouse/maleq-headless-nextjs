@@ -12,6 +12,7 @@ import SocialShare from '@/components/product/SocialShare';
 import TrustBadges from '@/components/product/TrustBadges';
 import SatisfactionGuarantee from '@/components/product/SatisfactionGuarantee';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
+import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
 import {
   formatAttributeName,
   formatAttributeValue,
@@ -410,9 +411,12 @@ export default function ProductPageClient({
       </div>
 
       {/* Satisfaction Guarantee */}
-      <div className='mb-8'>
+      <div className='mb-6'>
         <SatisfactionGuarantee variant='compact' />
       </div>
+
+      {/* Discount Tiers */}
+      <DiscountTierBanner variant='compact' className='mb-8' />
 
       {/* Quick Info */}
       <div className='border-t border-border pt-6 space-y-3 text-sm'>

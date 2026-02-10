@@ -26,13 +26,23 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     };
   }
 
+  const description = `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`;
+
   return {
     title: `${category.name} | Shop | Male Q`,
-    description: `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`,
+    description,
     openGraph: {
       title: `${category.name} | Male Q`,
-      description: `Shop ${category.name} at Male Q. Fast, discreet shipping available.`,
+      description,
       type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: `${category.name} | Male Q`,
+      description,
+    },
+    alternates: {
+      canonical: `/product-category/${slug}`,
     },
   };
 }
@@ -136,6 +146,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               <SubcategoryGrid
                 subcategories={childCategories}
                 parentSlug={slug}
+                parentName={category.name}
               />
             </div>
           )}

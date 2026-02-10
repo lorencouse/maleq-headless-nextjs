@@ -26,6 +26,8 @@ import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import DevEditLink from '@/components/dev/DevEditLink';
+import Breadcrumbs from '@/components/navigation/Breadcrumbs';
+import { ArticleSchema } from '@/components/seo/StructuredData';
 import { stripHtml } from '@/lib/utils/text-utils';
 import './blog-post.css';
 
@@ -157,25 +159,43 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <article className='single-post max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+      {/* Blog Post Structured Data */}
+      <ArticleSchema
+        headline={post.title}
+        description={
+          post.excerpt
+            ? stripHtml(post.excerpt).slice(0, 160)
+            : stripHtml(post.content).slice(0, 160)
+        }
+        image={
+          post.featuredImage?.node?.sourceUrl
+            ? getProductionImageUrl(post.featuredImage.node.sourceUrl)
+            : undefined
+        }
+        datePublished={post.date}
+        dateModified={post.modified || undefined}
+        authorName={post.author?.node?.name || 'Male Q'}
+        url={`${SITE_URL}/blog/${slug}`}
+        keywords={post.tags?.nodes?.map((tag: any) => tag.name)}
+        articleSection={post.categories?.nodes?.[0]?.name}
+      />
+
       {/* Dev: Edit in WordPress link */}
       <DevEditLink type="post" databaseId={post.databaseId} />
 
+      {/* Breadcrumb */}
+      <Breadcrumbs
+        items={[
+          { label: 'Blog', href: '/blog' },
+          ...(post.categories?.nodes?.[0]
+            ? [{ label: post.categories.nodes[0].name, href: `/blog/category/${post.categories.nodes[0].slug}` }]
+            : []),
+          { label: post.title },
+        ]}
+      />
+
       {/* Header */}
       <header className='entry-header mb-8'>
-        {/* Categories */}
-        {post.categories?.nodes && post.categories.nodes.length > 0 && (
-          <div className='flex flex-wrap gap-2 mb-4'>
-            {post.categories.nodes.map((category: any) => (
-              <Link
-                key={category.id}
-                href={`/blog/category/${category.slug}`}
-                className='text-sm font-medium text-primary hover:text-primary-hover'
-              >
-                {category.name}
-              </Link>
-            ))}
-          </div>
-        )}
 
         {/* Title */}
         <h1 className='entry-title text-4xl md:text-5xl font-bold text-foreground mb-6'>

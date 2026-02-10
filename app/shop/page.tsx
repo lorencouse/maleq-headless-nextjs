@@ -8,6 +8,7 @@ import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
 import DidYouMean from '@/components/search/DidYouMean';
+import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
 
 interface ShopPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -21,12 +22,28 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
     return {
       title: `Search results for "${searchQuery}" | Male Q`,
       description: `Browse search results for "${searchQuery}" in our collection of quality products.`,
+      robots: { index: false },
     };
   }
 
+  const description = 'Browse our collection of quality products. Filter by category, price, and more.';
+
   return {
     title: 'Shop | Male Q',
-    description: 'Browse our collection of quality products. Filter by category, price, and more.',
+    description,
+    openGraph: {
+      title: 'Shop | Male Q',
+      description,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: 'Shop | Male Q',
+      description,
+    },
+    alternates: {
+      canonical: '/shop',
+    },
   };
 }
 
@@ -193,6 +210,9 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               viewAllText="View All Deals"
             />
           )}
+
+          {/* Discount Tiers */}
+          <DiscountTierBanner variant="compact" className="my-6" />
 
           {/* Section Divider */}
           <div className="border-t border-border my-8" />

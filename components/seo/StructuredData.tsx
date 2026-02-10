@@ -144,6 +144,63 @@ export function ProductSchema({
   );
 }
 
+interface ArticleSchemaProps {
+  headline: string;
+  description: string;
+  image?: string;
+  datePublished: string;
+  dateModified?: string;
+  authorName: string;
+  url: string;
+  keywords?: string[];
+  articleSection?: string;
+}
+
+export function ArticleSchema({
+  headline,
+  description,
+  image,
+  datePublished,
+  dateModified,
+  authorName,
+  url,
+  keywords,
+  articleSection,
+}: ArticleSchemaProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline,
+    description,
+    ...(image && { image }),
+    datePublished,
+    ...(dateModified && { dateModified }),
+    author: {
+      '@type': 'Person',
+      name: authorName,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Male Q',
+      url: 'https://maleq.com',
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+    ...(keywords && keywords.length > 0 && { keywords: keywords.join(', ') }),
+    ...(articleSection && { articleSection }),
+  };
+
+  return (
+    <Script
+      id="article-schema"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 interface BreadcrumbItem {
   name: string;
   url: string;

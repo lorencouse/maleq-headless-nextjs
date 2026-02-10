@@ -53,6 +53,14 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
       description,
       type: 'website',
     },
+    twitter: {
+      card: 'summary',
+      title: `${category.name} | Male Q Blog`,
+      description,
+    },
+    alternates: {
+      canonical: `/blog/category/${slug}`,
+    },
   };
 }
 

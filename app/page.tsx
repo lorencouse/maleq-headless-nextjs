@@ -26,6 +26,14 @@ export const metadata: Metadata = {
     description: 'Shop premium adult products with fast, discreet shipping.',
     type: 'website',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Male Q | Premium Adult Products',
+    description: 'Shop premium adult products with fast, discreet shipping.',
+  },
+  alternates: {
+    canonical: '/',
+  },
 };
 
 // ISR: Revalidate every 24 hours (home page shows products)

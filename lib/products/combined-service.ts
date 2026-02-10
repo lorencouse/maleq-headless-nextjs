@@ -1,4 +1,5 @@
 import { getClient } from '@/lib/apollo/client';
+import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import {
   GET_ALL_PRODUCTS,
@@ -121,6 +122,7 @@ export interface HierarchicalCategory {
   name: string;
   slug: string;
   count: number;
+  image?: string | null;
   children: HierarchicalCategory[];
 }
 
@@ -427,6 +429,7 @@ export async function getHierarchicalCategories(): Promise<HierarchicalCategory[
         name: cat.name,
         slug: cat.slug,
         count: cat.count || 0,
+        image: cat.image?.sourceUrl ? getProductionImageUrl(cat.image.sourceUrl) : null,
         children: children
           .filter((child) => child.count && child.count > 0)
           .map(convertCategory)

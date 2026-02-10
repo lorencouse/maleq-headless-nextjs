@@ -13,39 +13,36 @@ interface CategoryHeroProps {
 
 export default function CategoryHero({ category, productCount, parentCategory }: CategoryHeroProps) {
   const config = getCategoryConfig(category.slug);
-  const categoryImage = getCategoryImage(category.slug);
+  const categoryImage = getCategoryImage(category.slug, category.image);
 
   return (
     <section className="mb-8 select-none">
       {/* Hero Banner */}
-      <div className={`relative overflow-hidden rounded-2xl ${!categoryImage ? `bg-gradient-to-r ${config.gradient}` : ''}`}>
-        {/* Background Image or Pattern */}
-        {categoryImage ? (
-          <>
-            <Image
-              src={categoryImage}
-              alt={category.name}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-            {/* Dark overlay for text readability */}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-black/40" />
-          </>
-        ) : (
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }} />
-          </div>
-        )}
+      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${config.gradient}`}>
+        {/* Pattern Overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }} />
+        </div>
 
         {/* Content */}
         <div className="relative px-6 py-8 sm:px-8 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            {/* Icon - only show when there's no category image */}
-            {!categoryImage && (
+            {/* Category Image (centered, not stretched) or Icon */}
+            {categoryImage ? (
+              <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm">
+                <Image
+                  src={categoryImage}
+                  alt={category.name}
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-contain"
+                  sizes="96px"
+                  priority
+                />
+              </div>
+            ) : (
               <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0 text-white">
                 {config.icon}
               </div>

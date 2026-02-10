@@ -266,10 +266,10 @@ function maleq_reset_password(WP_REST_Request $request) {
     }
 
     // Validate password strength
-    if (strlen($password) < 8) {
+    if (strlen($password) < 12) {
         return new WP_Error(
             'weak_password',
-            'Password must be at least 8 characters',
+            'Password must be at least 12 characters',
             ['status' => 400]
         );
     }
@@ -676,10 +676,10 @@ function maleq_update_customer(WP_REST_Request $request) {
     }
 
     if (isset($data['password']) && !empty($data['password'])) {
-        if (strlen($data['password']) < 8) {
+        if (strlen($data['password']) < 12) {
             return new WP_Error(
                 'weak_password',
-                'Password must be at least 8 characters',
+                'Password must be at least 12 characters',
                 ['status' => 400]
             );
         }
