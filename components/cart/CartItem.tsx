@@ -51,14 +51,14 @@ export default function CartItem({ item }: CartItemProps) {
       {/* Product Image */}
       <Link
         href={`/product/${item.slug}`}
-        className="relative w-full sm:w-32 h-32 flex-shrink-0 bg-muted rounded-lg overflow-hidden group"
+        className="relative w-full sm:w-32 h-32 sm:h-auto sm:self-stretch flex-shrink-0 bg-white rounded-lg overflow-hidden group"
       >
         {item.image?.url ? (
           <Image
             src={getImageUrl(item.image.url)}
             alt={item.image.altText || item.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform"
+            className="object-contain group-hover:scale-105 transition-transform"
             sizes="(max-width: 640px) 100vw, 128px"
           />
         ) : (

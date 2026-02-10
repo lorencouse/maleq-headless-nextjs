@@ -286,7 +286,7 @@ function ShopLoadingSkeleton() {
           <div className="h-10 bg-muted rounded w-32 animate-pulse" />
           <div className="h-10 bg-muted rounded w-40 animate-pulse" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-6">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="aspect-square bg-muted animate-pulse" />

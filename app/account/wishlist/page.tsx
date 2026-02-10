@@ -155,7 +155,7 @@ export default function WishlistPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-6">
             {items.map((item) => (
               <ProductCard
                 key={item.id}

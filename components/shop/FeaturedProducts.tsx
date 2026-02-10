@@ -57,7 +57,7 @@ export function FeaturedProductsGrid({
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
         {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

@@ -540,7 +540,7 @@ export default function ShopPageClient({
 
         {/* Products Grid */}
         {isLoading && products.length === 0 ? (
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
             {[...Array(10)].map((_, i) => (
               <div key={i} className="bg-card border border-border rounded-lg overflow-hidden">
                 <div className="aspect-square bg-muted animate-pulse" />
@@ -554,7 +554,7 @@ export default function ShopPageClient({
           </div>
         ) : products.length > 0 ? (
           <>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
               {products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

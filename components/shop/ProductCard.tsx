@@ -183,7 +183,7 @@ export default memo(function ProductCard({
           {/* Quick View Button */}
           <button
             onClick={() => setIsQuickViewOpen(true)}
-            className='w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0'
+            className='w-10 h-10 sm:w-11 sm:h-11 hidden sm:flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0'
             aria-label='Quick view'
           >
             <svg

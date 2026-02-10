@@ -247,6 +247,9 @@ export default function ProductPageClient({
         )}
       </div>
 
+      {/* Discount Tiers */}
+      <DiscountTierBanner variant='compact' className='mb-4' />
+
       {/* Short Description */}
       {product.shortDescription && (() => {
         const fullText = stripHtml(product.shortDescription);
@@ -415,8 +418,7 @@ export default function ProductPageClient({
         <SatisfactionGuarantee variant='compact' />
       </div>
 
-      {/* Discount Tiers */}
-      <DiscountTierBanner variant='compact' className='mb-8' />
+      {/* Discount Tiers - moved above short description */}
 
       {/* Quick Info */}
       <div className='border-t border-border pt-6 space-y-3 text-sm'>
