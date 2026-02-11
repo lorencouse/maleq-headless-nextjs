@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import { getClient } from '@/lib/apollo/client';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
@@ -95,6 +96,7 @@ export interface UnifiedProduct {
     slug: string;
   }[];
   type: string;
+  source?: string;
   averageRating?: number;
   reviewCount?: number;
   attributes?: {
@@ -206,6 +208,7 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
       slug: material.slug,
     })),
     type: product.type || 'SIMPLE',
+    source: undefined, // Source priority handled at DB level by maleq-stock-priority.php
     averageRating: product.averageRating,
     reviewCount: product.reviewCount,
     attributes: attributeNodes.map((attr) => ({
@@ -369,7 +372,7 @@ export async function getFilteredProducts(params: {
  * Paginates through all categories since WPGraphQL has a bug with hideEmpty filter
  * that incorrectly limits results to 100
  */
-export async function getProductCategories(): Promise<ProductCategory[]> {
+async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
   try {
     const allCategories: ProductCategory[] = [];
     let hasNextPage = true;
@@ -408,11 +411,17 @@ export async function getProductCategories(): Promise<ProductCategory[]> {
   }
 }
 
+export const getProductCategories = unstable_cache(
+  _uncachedGetProductCategories,
+  ['product-categories'],
+  { revalidate: 3600, tags: ['categories'] }
+);
+
 /**
  * Get hierarchical product categories (tree structure)
  * Returns top-level categories with nested children
  */
-export async function getHierarchicalCategories(): Promise<HierarchicalCategory[]> {
+async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategory[]> {
   try {
     const { data } = await getClient().query({
       query: GET_HIERARCHICAL_CATEGORIES,
@@ -447,6 +456,12 @@ export async function getHierarchicalCategories(): Promise<HierarchicalCategory[
     return [];
   }
 }
+
+export const getHierarchicalCategories = unstable_cache(
+  _uncachedGetHierarchicalCategories,
+  ['hierarchical-categories'],
+  { revalidate: 3600, tags: ['categories'] }
+);
 
 /**
  * Search products with advanced relevance ranking
@@ -640,7 +655,7 @@ export async function getProductsByCategory(category: string, limit = 12): Promi
  * Get all product brands for filtering
  * First tries simple query, falls back to paginated query if needed
  */
-export async function getBrands(): Promise<FilterOption[]> {
+async function _uncachedGetBrands(): Promise<FilterOption[]> {
   try {
     // First, try to fetch all brands with a simple query
     const { data } = await getClient().query<BrandQueryResponse>({
@@ -679,6 +694,12 @@ export async function getBrands(): Promise<FilterOption[]> {
     return [];
   }
 }
+
+export const getBrands = unstable_cache(
+  _uncachedGetBrands,
+  ['product-brands'],
+  { revalidate: 3600, tags: ['brands'] }
+);
 
 /**
  * Fetch brands using cursor-based pagination
@@ -763,7 +784,7 @@ export async function getMaterials(): Promise<FilterOption[]> {
  * Get global product attributes (color) for filtering
  * Note: Material is now a separate taxonomy, use getMaterials() instead
  */
-export async function getGlobalAttributes(): Promise<{
+async function _uncachedGetGlobalAttributes(): Promise<{
   colors: FilterOption[];
   materials: FilterOption[];
 }> {
@@ -792,6 +813,12 @@ export async function getGlobalAttributes(): Promise<{
     return { colors: [], materials: [] };
   }
 }
+
+export const getGlobalAttributes = unstable_cache(
+  _uncachedGetGlobalAttributes,
+  ['global-attributes'],
+  { revalidate: 3600, tags: ['attributes'] }
+);
 
 // Brand interface with additional details
 export interface Brand {

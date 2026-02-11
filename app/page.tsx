@@ -3,7 +3,7 @@ import { Metadata } from 'next';
 import { getClient } from '@/lib/apollo/client';
 import { GET_ALL_POSTS } from '@/lib/queries/posts';
 import {
-  getAllProducts,
+  getFilteredProducts,
   getHierarchicalCategories,
   getTrendingProducts,
 } from '@/lib/products/combined-service';
@@ -16,6 +16,7 @@ import NewsletterSection from '@/components/home/NewsletterSection';
 import SocialSection from '@/components/home/SocialSection';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import ProductCarousel from '@/components/product/ProductCarousel';
+import { sortProductsByPriority } from '@/lib/utils/product-sort';
 
 export const metadata: Metadata = {
   title: 'Male Q | Premium Adult Products - Fast & Discreet Shipping',
@@ -48,13 +49,13 @@ export default async function Home() {
         variables: { first: 6 },
         fetchPolicy: 'no-cache',
       }),
-      getAllProducts({ limit: 8 }),
+      getFilteredProducts({ limit: 8, inStock: true }),
       getHierarchicalCategories(),
       getTrendingProducts(12),
     ]);
 
   const posts = postsData?.data?.posts?.nodes || [];
-  const products = productsResult.products;
+  const products = sortProductsByPriority(productsResult.products);
 
   return (
     <div>

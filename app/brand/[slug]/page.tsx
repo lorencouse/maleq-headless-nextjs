@@ -3,12 +3,12 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import {
   getBrandBySlug,
-  getProductsByBrand,
   getBrands,
   getHierarchicalCategories,
   getGlobalAttributes,
   getFilteredProducts,
 } from '@/lib/products/combined-service';
+import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
@@ -98,7 +98,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   }
 
   // Fetch products and sale products in parallel
-  const [products, saleProductsResult] = await Promise.all([
+  const [productsResult, saleProductsResult] = await Promise.all([
     hasAdditionalFilters
       ? getFilteredProducts({
           limit: 24,
@@ -110,18 +110,21 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           maxPrice,
           inStock,
           onSale,
-        }).then(r => r.products)
-      : getProductsByBrand(slug, 24),
+        })
+      : getFilteredProducts({ limit: 24, brand: slug }),
     // Only fetch sale products if no filters are active
     !hasAdditionalFilters
       ? getFilteredProducts({
           limit: 8,
           brand: slug,
           onSale: true,
+          inStock: true,
         })
       : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } }),
   ]);
 
+  const products = sortProductsByPriority(productsResult.products);
+  const productsPageInfo = productsResult.pageInfo;
   const saleProducts = saleProductsResult.products;
 
   // Show featured sections only when no filters are active
@@ -181,7 +184,8 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
             brands={brandsData}
             colors={colorsData}
             materials={materialsData}
-            hasMore={false}
+            hasMore={productsPageInfo.hasNextPage}
+            initialCursor={productsPageInfo.endCursor}
             initialBrand={slug}
           />
         </Suspense>

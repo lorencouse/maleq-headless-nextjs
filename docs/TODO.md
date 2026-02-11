@@ -35,7 +35,6 @@
 ### Product Content
 
 - [ ] `[HIGH]` SEO optimize product descriptions - use information from product title, attributes, and reviews to create unique, keyword-rich descriptions for each product (pull info from product CSV or XML if needed). Add headers, bullet points, and formatting for readability. Insert relevant images where appropriate from product gallery.
-- [ ] `[HIGH]` Add missing category hero images
 - [ ] `[HIGH]` Populate product reviews (content exists, needs import/display)
 - [ ] `[MED]` Migrate product photos from old DB descriptions to wp gallery
 - [ ] `[MED]` Re-import product images < 650px onto 650x650 white background (no stretch/crop)
@@ -44,14 +43,24 @@
 - [ ] `[MED]` Verify all blog post images are migrated
 - [ ] `[MED]` Import hotlinked blog/product images to local hosting
 - [ ] `[MED]` Update `.product-specs` blocks in blog posts to 2-column tables
-- [ ] `[LOW]` Fix product specs not showing on some products (data quality issue - missing brand/attributes from STC import)
+- [ ] `[LOW]` Fix product specs not showing on some products (data quality 
+issue - missing brand/attributes from STC import)
+- [x] Update STC products with stock count (stc_stock_count meta for MUFFS, _stock for STC-only) — 37,760 updated
+- [x] Add product links to order summary on checkout page
+
+
+import images from reusable blocks into media library and update URLs in blocks to point to local media (currently hotlinked from old site, some missing).  Do this after all short codes are updated to new product IDs, and old product images are removed.
+
+Load out of stock items last on shop, tag, manufacturer and category pages, etc.  do not show in recommendations or carousels.  Prioritize loading products from williams_trading, and manually added products, over STC-imported products.
+Fix product page breadbrumbs to not line break, but truncate.
 
 ### Product Data Cleanup
 
 - [ ] `[MED]` Verify STC product variations created correctly (some show gallery images but no variation selector)
   - e.g. `/product/lelo-soraya-2-rabbit-massager-rechargeable`, `/product/hunkyjunk-lockdown-chastity`
 - [ ] `[MED]` Set `product_source` meta field to `'stc'` for all STC-imported products
-- [ ] `[MED]` Round all product prices to .97 regular / .X7 sale endings
+- [ ] `[MED]` Round all product prices to .97 regular / .X7 sale endings.  Update import script to do this automatically for new products.
+Strip () prefixes and suffixes from product titles and descriptiosL (s) (wd) (net) (bulk), ect. Update import script to do this automatically for new products.
 - [ ] `[MED]` Review and update reusable blocks with correct URLs
 
 ---
@@ -59,10 +68,10 @@
 ## Checkout & Payments
 
 - [ ] `[MED]` Update shipping tiers (Free and express domestic, Standard and express international)
-- [ ] `[MED]` Add Apple Pay / Google Pay icons to product, cart, checkout pages
-- [ ] `[MED]` Integrate Klarna / Afterpay via Stripe on checkout page
 - [ ] `[MED]` Test contact form functionality (submissions received, spam protection working)
-- Add infinate scroll to product category pages, with "Load More" button as fallback.  Start loading products as user scrolls to the bottom of page. Ensure proper loading states and error handling for seamless user experience.
+- [x] `[MED]` Add infinite scroll to product category pages with "Load More" button fallback
+- [x] `[MED]` Fix progress bar on checkout page (not progressing to shipping/payment steps)
+- [x] `[MED]` Add sticky "Add to Cart" on product pages for all screen sizes
 
 ---
 
@@ -130,7 +139,7 @@
   - [x] Twitter Card metadata on all public pages
   - [x] Canonical URLs on all pages
   - [ ] Create `/public/og-image.jpg` (1200x630px) - default OG image referenced but file missing
-  - [ ] Search results pages set to `noindex`
+  - [x] Search results pages set to `noindex`
 
 ---
 

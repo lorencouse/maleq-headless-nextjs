@@ -16,6 +16,7 @@ interface ShopPageClientProps {
   colors?: FilterOption[];
   materials?: FilterOption[];
   hasMore: boolean;
+  initialCursor?: string | null;
   searchQuery?: string;
   initialCategory?: string;
   initialBrand?: string;
@@ -44,6 +45,7 @@ export default function ShopPageClient({
   colors = [],
   materials = [],
   hasMore: initialHasMore,
+  initialCursor: initialCursorProp,
   searchQuery,
   initialCategory,
   initialBrand,
@@ -57,7 +59,7 @@ export default function ShopPageClient({
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [totalCount, setTotalCount] = useState(initialTotal ?? initialProducts.length);
-  const [cursor, setCursor] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(initialCursorProp ?? null);
   const [searchOffset, setSearchOffset] = useState(initialProducts.length); // Track offset for search pagination
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [availableBrands, setAvailableBrands] = useState<FilterOption[]>(brands);
@@ -66,6 +68,7 @@ export default function ShopPageClient({
   const isInitialMount = useRef(true);
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
   const hasExtractedInitialFilters = useRef(false);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   // Track if user entered page with filters/search (browse mode hides hero)
   const isInBrowseMode = useRef(
@@ -415,7 +418,7 @@ export default function ShopPageClient({
   };
 
   // Load more products
-  const handleLoadMore = () => {
+  const handleLoadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
 
     // For search queries, use offset-based pagination
@@ -455,7 +458,7 @@ export default function ShopPageClient({
         search: searchQuery,
       }, cursor);
     }
-  };
+  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, sortBy, searchOffset, cursor, fetchProducts]);
 
   // Close mobile filter on resize
   useEffect(() => {
@@ -468,6 +471,24 @@ export default function ShopPageClient({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Infinite scroll: auto-load more when sentinel comes into view
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !isLoading) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, handleLoadMore]);
 
   // Prevent body scroll when mobile filter is open
   useEffect(() => {
@@ -560,26 +581,27 @@ export default function ShopPageClient({
               ))}
             </div>
 
-            {/* Load More */}
+            {/* Load More / Infinite Scroll Sentinel */}
             {hasMore && (
               <div className="mt-12 text-center">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={isLoading}
-                  className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Loading...
-                    </span>
-                  ) : (
-                    'Load More Products'
-                  )}
-                </button>
+                {/* Sentinel for IntersectionObserver auto-loading */}
+                <div ref={loadMoreSentinelRef} aria-hidden="true" />
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Loading more products...
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleLoadMore}
+                    className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
+                  >
+                    Load More Products
+                  </button>
+                )}
               </div>
             )}
           </>

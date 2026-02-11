@@ -6,23 +6,35 @@ import BlogSearch from '@/components/blog/BlogSearch';
 import DidYouMean from '@/components/search/DidYouMean';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
-export const metadata: Metadata = {
-  title: 'Blog | Male Q',
-  description: 'Read the latest articles, guides, and insights from Male Q. Tips, product reviews, and expert advice for your intimate wellness.',
-  openGraph: {
+export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
+  const { q: searchQuery } = await searchParams;
+
+  if (searchQuery) {
+    return {
+      title: `Search results for "${searchQuery}" | Blog | Male Q`,
+      description: `Browse blog search results for "${searchQuery}".`,
+      robots: { index: false },
+    };
+  }
+
+  return {
     title: 'Blog | Male Q',
-    description: 'Read the latest articles, guides, and insights from Male Q.',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary',
-    title: 'Blog | Male Q',
-    description: 'Read the latest articles, guides, and insights from Male Q.',
-  },
-  alternates: {
-    canonical: '/blog',
-  },
-};
+    description: 'Read the latest articles, guides, and insights from Male Q. Tips, product reviews, and expert advice for your intimate wellness.',
+    openGraph: {
+      title: 'Blog | Male Q',
+      description: 'Read the latest articles, guides, and insights from Male Q.',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: 'Blog | Male Q',
+      description: 'Read the latest articles, guides, and insights from Male Q.',
+    },
+    alternates: {
+      canonical: '/blog',
+    },
+  };
+}
 
 // ISR: Revalidate every 1 week for blog content
 export const revalidate = 604800;

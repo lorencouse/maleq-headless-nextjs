@@ -171,6 +171,11 @@ export async function POST(request: NextRequest) {
     // Create the order in WooCommerce
     const order = await createOrder(orderData);
 
+    // Store order ID in PaymentIntent metadata so the webhook can find it
+    await stripe.paymentIntents.update(paymentIntentId, {
+      metadata: { woocommerce_order_id: String(order.id) },
+    });
+
     const response: CreateOrderResponse = {
       orderId: order.id,
       orderKey: order.order_key,

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import VariationSelector from './VariationSelector';
 import ProductAddons, { SelectedAddon } from './ProductAddons';
 import { EnhancedProduct } from '@/lib/products/product-service';
@@ -41,6 +42,20 @@ export default function ProductPageClient({
   const [isAdding, setIsAdding] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const addToCartRef = useRef<HTMLDivElement>(null);
+
+  // Show sticky bar when main add-to-cart button scrolls out of view
+  useEffect(() => {
+    const el = addToCartRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBar(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // Check if product is eligible for addons based on its categories
   const isAddonEligible = useMemo(() => {
@@ -49,7 +64,10 @@ export default function ProductPageClient({
   }, [product.categories]);
 
   // Calculate total price including addons
-  const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+  const addonsTotal = selectedAddons.reduce(
+    (sum, addon) => sum + addon.price,
+    0,
+  );
 
   // Get initial variation - prefer first in-stock variation
   // This logic must match VariationSelector's initialization
@@ -60,7 +78,7 @@ export default function ProductPageClient({
 
     // Find first in-stock or low-stock variation
     const inStockVariation = product.variations.find(
-      v => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK'
+      (v) => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK',
     );
 
     return inStockVariation || product.variations[0];
@@ -139,16 +157,21 @@ export default function ProductPageClient({
 
       // Add selected addons as separate cart items with real product data
       // Use addon.id as productId for unique cart identification (until real WooCommerce IDs are added)
-      const wpBaseUrl = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace('/graphql', '');
+      const wpBaseUrl = (
+        process.env.NEXT_PUBLIC_WORDPRESS_API_URL || ''
+      ).replace('/graphql', '');
 
       for (const addon of selectedAddons) {
-        const cartProductId = addon.productId && addon.productId !== '0'
-          ? addon.productId
-          : addon.id; // Fallback to unique addon ID
+        const cartProductId =
+          addon.productId && addon.productId !== '0'
+            ? addon.productId
+            : addon.id; // Fallback to unique addon ID
 
         // Build full image URL from relative path
         const imageUrl = addon.image
-          ? (addon.image.startsWith('http') ? addon.image : `${wpBaseUrl}${addon.image}`)
+          ? addon.image.startsWith('http')
+            ? addon.image
+            : `${wpBaseUrl}${addon.image}`
           : undefined;
 
         addItem({
@@ -168,9 +191,10 @@ export default function ProductPageClient({
 
       // Build success message
       const addonCount = selectedAddons.length;
-      const successMessage = addonCount > 0
-        ? `${product.name} + ${addonCount} add-on${addonCount > 1 ? 's' : ''} added to cart!`
-        : `${product.name} added to cart!`;
+      const successMessage =
+        addonCount > 0
+          ? `${product.name} + ${addonCount} add-on${addonCount > 1 ? 's' : ''} added to cart!`
+          : `${product.name} added to cart!`;
 
       showSuccess(successMessage);
 
@@ -190,9 +214,11 @@ export default function ProductPageClient({
   return (
     <>
       {/* Price Section */}
-      <div className='mb-6'>
-        {selectedVariation && selectedVariation.salePrice && selectedVariation.regularPrice &&
-         selectedVariation.salePrice !== selectedVariation.regularPrice ? (
+      <div className='my-6'>
+        {selectedVariation &&
+        selectedVariation.salePrice &&
+        selectedVariation.regularPrice &&
+        selectedVariation.salePrice !== selectedVariation.regularPrice ? (
           <div className='flex items-baseline gap-3'>
             <span className='text-3xl font-bold text-primary'>
               {formatPrice(selectedVariation.salePrice)}
@@ -202,7 +228,10 @@ export default function ProductPageClient({
             </span>
             <span className='px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full'>
               {(() => {
-                const percentOff = calculatePercentOff(selectedVariation.regularPrice, selectedVariation.salePrice);
+                const percentOff = calculatePercentOff(
+                  selectedVariation.regularPrice,
+                  selectedVariation.salePrice,
+                );
                 return percentOff ? `${percentOff}% OFF` : 'SALE';
               })()}
             </span>
@@ -217,7 +246,10 @@ export default function ProductPageClient({
             </span>
             <span className='px-3 py-1 bg-primary/10 text-primary text-sm font-semibold rounded-full'>
               {(() => {
-                const percentOff = calculatePercentOff(product.regularPrice, product.salePrice);
+                const percentOff = calculatePercentOff(
+                  product.regularPrice,
+                  product.salePrice,
+                );
                 return percentOff ? `${percentOff}% OFF` : 'SALE';
               })()}
             </span>
@@ -251,28 +283,32 @@ export default function ProductPageClient({
       <DiscountTierBanner variant='compact' className='mb-4' />
 
       {/* Short Description */}
-      {product.shortDescription && (() => {
-        const fullText = stripHtml(product.shortDescription);
-        const truncateLength = 150;
-        const shouldTruncate = fullText.length > truncateLength;
-        const displayText = shouldTruncate && !isDescriptionExpanded
-          ? fullText.slice(0, truncateLength).trim() + '...'
-          : fullText;
+      {product.shortDescription &&
+        (() => {
+          const fullText = stripHtml(product.shortDescription);
+          const truncateLength = 150;
+          const shouldTruncate = fullText.length > truncateLength;
+          const displayText =
+            shouldTruncate && !isDescriptionExpanded
+              ? fullText.slice(0, truncateLength).trim() + '...'
+              : fullText;
 
-        return (
-          <div className='mb-8 text-foreground/80 leading-relaxed'>
-            <span>{displayText}</span>
-            {shouldTruncate && (
-              <button
-                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                className='ml-1 text-primary hover:text-primary-hover font-medium transition-colors'
-              >
-                {isDescriptionExpanded ? 'less' : 'more'}
-              </button>
-            )}
-          </div>
-        );
-      })()}
+          return (
+            <div className='mb-8 text-foreground/80 leading-relaxed'>
+              <span>{displayText}</span>
+              {shouldTruncate && (
+                <button
+                  onClick={() =>
+                    setIsDescriptionExpanded(!isDescriptionExpanded)
+                  }
+                  className='ml-1 text-primary hover:text-primary-hover font-medium transition-colors'
+                >
+                  {isDescriptionExpanded ? 'less' : 'more'}
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
       {/* Variation Selector */}
       {isVariable && product.variations && product.variations.length > 0 && (
@@ -335,7 +371,7 @@ export default function ProductPageClient({
       )}
 
       {/* Add to Cart */}
-      <div className='mb-8'>
+      <div className='mb-8' ref={addToCartRef}>
         {displayStockStatus === 'OUT_OF_STOCK' ? (
           <>
             <StockAlertButton
@@ -362,11 +398,15 @@ export default function ProductPageClient({
               <div className='mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10'>
                 <div className='flex justify-between items-center text-sm'>
                   <span className='text-muted-foreground'>Product:</span>
-                  <span className='text-foreground'>{formatPrice(displayPrice)}</span>
+                  <span className='text-foreground'>
+                    {formatPrice(displayPrice)}
+                  </span>
                 </div>
                 <div className='flex justify-between items-center text-sm'>
                   <span className='text-muted-foreground'>Add-ons:</span>
-                  <span className='text-foreground'>+${addonsTotal.toFixed(2)}</span>
+                  <span className='text-foreground'>
+                    +${addonsTotal.toFixed(2)}
+                  </span>
                 </div>
                 <div className='flex justify-between items-center text-sm font-semibold mt-2 pt-2 border-t border-border'>
                   <span className='text-foreground'>Total:</span>
@@ -391,7 +431,11 @@ export default function ProductPageClient({
                 disabled={isAdding}
                 className='flex-1 bg-primary text-primary-foreground py-3.5 px-6 rounded-xl hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-lg'
               >
-                {isAdding ? 'Adding...' : addonsTotal > 0 ? 'Add All to Cart' : 'Add to Cart'}
+                {isAdding
+                  ? 'Adding...'
+                  : addonsTotal > 0
+                    ? 'Add All to Cart'
+                    : 'Add to Cart'}
               </button>
             </div>
             <WishlistButton
@@ -462,6 +506,41 @@ export default function ProductPageClient({
           variant='icons'
         />
       </div>
+
+      {/* Sticky Add to Cart Bar - portaled to body to avoid parent transform issues */}
+      {showStickyBar && displayStockStatus !== 'OUT_OF_STOCK' && createPortal(
+        <div className='fixed bottom-0 left-0 right-0 z-50 w-screen bg-background/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)]'>
+          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3'>
+            {/* Mobile: stacked layout / Desktop: single row */}
+            <div className='flex items-center justify-between gap-2 mb-1.5 sm:mb-0 sm:hidden'>
+              <p className='font-semibold text-foreground text-sm truncate'>{product.name}</p>
+              <p className='text-primary font-bold text-sm flex-shrink-0'>{formatPrice(displayPrice)}</p>
+            </div>
+            <div className='flex items-center gap-3 sm:gap-4'>
+              <div className='hidden sm:block min-w-0 flex-1'>
+                <p className='font-semibold text-foreground text-base truncate'>{product.name}</p>
+                <p className='text-primary font-bold text-lg'>{formatPrice(displayPrice)}</p>
+              </div>
+              <input
+                type='number'
+                min='1'
+                max={displayStockQuantity || 99}
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                className='w-16 sm:w-20 flex-shrink-0 px-2 py-2.5 border border-border rounded-lg bg-background text-foreground text-center focus:outline-none focus:ring-2 focus:ring-primary'
+              />
+              <button
+                onClick={handleAddToCart}
+                disabled={isAdding}
+                className='flex-1 sm:flex-none bg-primary text-primary-foreground py-2.5 px-6 rounded-lg hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-sm sm:text-base whitespace-nowrap'
+              >
+                {isAdding ? 'Adding...' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </>
   );
 }

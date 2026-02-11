@@ -12,7 +12,18 @@ import StripeProvider from './StripeProvider';
 
 type CheckoutStep = 'contact' | 'shipping' | 'payment';
 
-export default function CheckoutForm() {
+interface CheckoutFormProps {
+  onStepChange?: (step: 'information' | 'shipping' | 'payment') => void;
+}
+
+// Map internal form steps to progress bar steps
+const stepToProgress = {
+  contact: 'information',
+  shipping: 'shipping',
+  payment: 'payment',
+} as const;
+
+export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('contact');
   const [contactComplete, setContactComplete] = useState(false);
@@ -36,6 +47,11 @@ export default function CheckoutForm() {
   const setContact = useCheckoutStore((state) => state.setContact);
   const setShippingAddress = useCheckoutStore((state) => state.setShippingAddress);
   const clearCheckout = useCheckoutStore((state) => state.clearCheckout);
+
+  // Notify parent of step changes for progress bar
+  useEffect(() => {
+    onStepChange?.(stepToProgress[currentStep]);
+  }, [currentStep, onStepChange]);
 
   // Create payment intent when entering payment step
   useEffect(() => {

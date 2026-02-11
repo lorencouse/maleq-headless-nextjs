@@ -26,3 +26,19 @@ export function verifyAdminAuth(request: NextRequest): NextResponse | null {
 
   return null;
 }
+
+/**
+ * Verify cron or admin auth.
+ * Accepts either CRON_SECRET (Vercel cron) or ADMIN_API_KEY (manual trigger).
+ * Returns null if authenticated, or an error response if not.
+ */
+export function verifyCronOrAdminAuth(request: NextRequest): NextResponse | null {
+  const authHeader = request.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+  const adminKey = process.env.ADMIN_API_KEY;
+
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return null;
+  if (adminKey && authHeader === `Bearer ${adminKey}`) return null;
+
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}

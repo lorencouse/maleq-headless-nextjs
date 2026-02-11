@@ -75,10 +75,40 @@ export class WilliamsTradingSyncService {
   }
 
   /**
-   * Build SKU to WooCommerce ID map
+   * Build SKU to WooCommerce ID map via WP stock-mapping endpoint (fast, single query)
    */
   private async buildSkuMap(): Promise<void> {
     this.skuToWooIdMap.clear();
+
+    const wpBaseUrl = process.env.WOOCOMMERCE_URL
+      || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
+    const adminKey = process.env.ADMIN_API_KEY;
+
+    if (wpBaseUrl && adminKey) {
+      // Use the fast WP stock-mapping endpoint
+      try {
+        const response = await fetch(`${wpBaseUrl}/wp-json/maleq/v1/stock-mapping`, {
+          headers: { Authorization: `Bearer ${adminKey}` },
+          cache: 'no-store',
+        });
+
+        if (response.ok) {
+          const products: { id: number; sku: string | null }[] = await response.json();
+          for (const product of products) {
+            if (product.sku && product.id) {
+              this.skuToWooIdMap.set(product.sku, product.id);
+            }
+          }
+          console.log(`Built SKU map with ${this.skuToWooIdMap.size} products (via WP endpoint)`);
+          return;
+        }
+        console.warn(`WP stock-mapping endpoint returned ${response.status}, falling back to WC REST API`);
+      } catch (err) {
+        console.warn('WP stock-mapping endpoint failed, falling back to WC REST API:', err);
+      }
+    }
+
+    // Fallback: paginate WC REST API
     let page = 1;
     const perPage = 100;
 
@@ -96,7 +126,7 @@ export class WilliamsTradingSyncService {
       page++;
     }
 
-    console.log(`Built SKU map with ${this.skuToWooIdMap.size} products`);
+    console.log(`Built SKU map with ${this.skuToWooIdMap.size} products (via WC REST API)`);
   }
 
   /**
@@ -716,6 +746,126 @@ export class WilliamsTradingSyncService {
     }
 
     return { updated, failed };
+  }
+
+  /**
+   * Sync WT stock as wt_stock_count meta (for fulfillment prioritization).
+   * STC handles the main _stock field; this stores WT-specific availability.
+   */
+  async syncWTStockMeta(): Promise<{ updated: number; failed: number; matched: number }> {
+    this.logSync('WT_STOCK_META', { status: 'started' });
+
+    try {
+      const wpBaseUrl = process.env.WOOCOMMERCE_URL
+        || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
+      const adminKey = process.env.ADMIN_API_KEY;
+
+      if (!wpBaseUrl || !adminKey) {
+        throw new Error('WOOCOMMERCE_URL and ADMIN_API_KEY must be set');
+      }
+
+      // 1. Get product mapping from WP (to find WT products by barcode/SKU)
+      console.log('[WT Stock Meta] Fetching product mapping...');
+      const mappingResponse = await fetch(`${wpBaseUrl}/wp-json/maleq/v1/stock-mapping`, {
+        headers: { Authorization: `Bearer ${adminKey}` },
+        cache: 'no-store',
+      });
+
+      if (!mappingResponse.ok) {
+        throw new Error(`Failed to fetch stock mapping: ${mappingResponse.status}`);
+      }
+
+      const products: { id: number; sku: string | null; barcode: string | null; source: string | null }[] =
+        await mappingResponse.json();
+
+      // Build lookup: SKU/barcode -> product ID (only WT-sourced products)
+      const skuToId = new Map<string, number>();
+      for (const p of products) {
+        const isWt = p.source
+          ? p.source.toLowerCase().includes('williams_trading') || p.source.toUpperCase().includes('MUFFS')
+          : false;
+        if (!isWt) continue;
+
+        if (p.sku) skuToId.set(p.sku, p.id);
+        if (p.barcode) skuToId.set(p.barcode, p.id);
+      }
+      console.log(`[WT Stock Meta] Found ${skuToId.size} WT product SKU/barcode entries`);
+
+      // 2. Fetch active products from WT API
+      console.log('[WT Stock Meta] Fetching WT active products...');
+      const wtProducts = await williamsTradingClient.getActiveProducts();
+      console.log(`[WT Stock Meta] Got ${wtProducts.length} active WT products`);
+
+      // 3. Build meta updates
+      const updates: { id: number; meta_key: string; meta_value: string }[] = [];
+      for (const wt of wtProducts) {
+        const upc = wt.upc_code || wt.sku;
+        if (!upc) continue;
+
+        const productId = skuToId.get(upc);
+        if (!productId) continue;
+
+        const qty = typeof wt.stock_quantity === 'string'
+          ? parseInt(wt.stock_quantity, 10)
+          : wt.stock_quantity;
+
+        updates.push({
+          id: productId,
+          meta_key: 'wt_stock_count',
+          meta_value: String(isNaN(qty) ? 0 : qty),
+        });
+      }
+
+      console.log(`[WT Stock Meta] ${updates.length} products matched for wt_stock_count update`);
+
+      if (updates.length === 0) {
+        this.logSync('WT_STOCK_META', { status: 'completed', recordsTotal: 0, recordsUpdated: 0 });
+        return { updated: 0, failed: 0, matched: 0 };
+      }
+
+      // 4. Send in batches of 500
+      const batchSize = 500;
+      let totalUpdated = 0;
+      let totalFailed = 0;
+
+      for (let i = 0; i < updates.length; i += batchSize) {
+        const batch = updates.slice(i, i + batchSize);
+
+        const response = await fetch(`${wpBaseUrl}/wp-json/maleq/v1/stock-update`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${adminKey}`,
+          },
+          body: JSON.stringify({ updates: batch }),
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          console.error(`[WT Stock Meta] Batch failed: ${response.status}`);
+          totalFailed += batch.length;
+          continue;
+        }
+
+        const result = await response.json();
+        totalUpdated += result.updated || 0;
+        totalFailed += result.failed || 0;
+      }
+
+      this.logSync('WT_STOCK_META', {
+        status: 'completed',
+        recordsTotal: updates.length,
+        recordsUpdated: totalUpdated,
+        recordsFailed: totalFailed,
+      });
+
+      console.log(`[WT Stock Meta] Done: ${totalUpdated} updated, ${totalFailed} failed`);
+      return { updated: totalUpdated, failed: totalFailed, matched: updates.length };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logSync('WT_STOCK_META', { status: 'failed', errorMessage });
+      throw error;
+    }
   }
 
   /**

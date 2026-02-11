@@ -31,26 +31,30 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
 
   return (
     <nav aria-label="Breadcrumb" className="mb-2 sm:mb-4">
-      <ol className="flex flex-wrap items-baseline gap-x-1 sm:gap-x-1.5 leading-none">
+      <ol className="flex items-baseline overflow-hidden leading-none">
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;
 
           return (
-            <li key={`${item.label}-${index}`} className="inline-flex items-baseline">
+            <li
+              key={`${item.label}-${index}`}
+              className={`inline-flex items-baseline ${isLast ? 'min-w-0' : 'flex-shrink-0'}`}
+            >
               {isLast || !item.href ? (
                 <span
-                  className={currentClass}
+                  className={`${currentClass} ${isLast ? 'truncate' : ''}`}
                   aria-current={isLast ? 'page' : undefined}
+                  title={isLast ? item.label : undefined}
                 >
                   {item.label}
                 </span>
               ) : (
-                <Link href={item.href} className={linkClass}>
+                <Link href={item.href} className={`${linkClass} whitespace-nowrap`}>
                   {item.label}
                 </Link>
               )}
               {!isLast && (
-                <span className={`mx-1 sm:mx-1.5 text-xs sm:text-sm ${separatorClass}`} aria-hidden="true">/</span>
+                <span className={`mx-1 sm:mx-1.5 text-xs sm:text-sm flex-shrink-0 ${separatorClass}`} aria-hidden="true">/</span>
               )}
             </li>
           );

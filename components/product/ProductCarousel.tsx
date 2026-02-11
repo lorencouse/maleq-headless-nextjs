@@ -50,27 +50,28 @@ export default function ProductCarousel({
 
   const showArrows = products.length > minItemsForArrows;
 
-  const wrapperClass = variant === 'default'
-    ? 'mt-16 border-t border-border pt-12'
-    : '';
+  const wrapperClass =
+    variant === 'default' ? 'mt-12 border-t border-border pt-8' : '';
 
   const content = (
     <div className={`${wrapperClass} ${className}`}>
       {/* Header */}
-      <div className="mb-6">
-        {badge && <div className="mb-1">{badge}</div>}
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">{title}</h2>
-        {subtitle && <p className="text-muted-foreground mt-1">{subtitle}</p>}
+      <div className='mb-8'>
+        {badge && <div className='mb-1'>{badge}</div>}
+        <h2 className='text-2xl sm:text-3xl font-bold text-foreground'>
+          {title}
+        </h2>
+        {subtitle && <p className='text-muted-foreground mt-1'>{subtitle}</p>}
       </div>
 
       {/* Carousel */}
-      <div className="relative">
+      <div className='relative'>
         {/* Gradient fade edges */}
         {showGradients && canScrollLeft && (
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+          <div className='absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none' />
         )}
         {showGradients && canScrollRight && (
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+          <div className='absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none' />
         )}
 
         {/* Overlay Arrows */}
@@ -79,21 +80,41 @@ export default function ProductCarousel({
             <button
               onClick={scrollLeft}
               disabled={!canScrollLeft}
-              className="absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all"
-              aria-label="Scroll left"
+              className='absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all'
+              aria-label='Scroll left'
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className='w-5 h-5 sm:w-6 sm:h-6'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M15 19l-7-7 7-7'
+                />
               </svg>
             </button>
             <button
               onClick={scrollRight}
               disabled={!canScrollRight}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all"
-              aria-label="Scroll right"
+              className='absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all'
+              aria-label='Scroll right'
             >
-              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              <svg
+                className='w-5 h-5 sm:w-6 sm:h-6'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M9 5l7 7-7 7'
+                />
               </svg>
             </button>
           </>
@@ -102,13 +123,13 @@ export default function ProductCarousel({
         <div
           ref={scrollContainerRef}
           onScroll={checkScroll}
-          className="flex gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory px-4 sm:px-8"
+          className='flex gap-4 sm:gap-6 overflow-x-auto pb-4 snap-x snap-mandatory px-4 sm:px-8'
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {products.map((product) => (
             <div
               key={product.id}
-              className="flex-shrink-0 snap-start w-[260px] sm:w-[280px]"
+              className='flex-shrink-0 snap-start w-[260px] sm:w-[280px]'
             >
               <ProductCard product={product} />
             </div>
@@ -118,30 +139,45 @@ export default function ProductCarousel({
 
       {/* Mobile scroll indicator */}
       {showMobileHint && (
-        <div className="flex justify-center mt-4 gap-1 sm:hidden">
-          <p className="text-xs text-muted-foreground">Swipe to see more</p>
+        <div className='flex justify-center mt-4 gap-1 sm:hidden'>
+          <p className='text-xs text-muted-foreground'>Swipe to see more</p>
           <svg
-            className="w-4 h-4 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            className='w-4 h-4 text-muted-foreground'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
             style={{ animation: 'bounce-x 1s ease-in-out infinite' }}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M9 5l7 7-7 7'
+            />
           </svg>
         </div>
       )}
 
       {/* View All Link */}
       {viewAllLink && (
-        <div className="mt-6 text-center">
+        <div className='mt-6 text-center'>
           <Link
             href={viewAllLink}
-            className="text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1"
+            className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
           >
             {viewAllText}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className='w-4 h-4'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M9 5l7 7-7 7'
+              />
             </svg>
           </Link>
         </div>
@@ -149,8 +185,13 @@ export default function ProductCarousel({
 
       <style jsx>{`
         @keyframes bounce-x {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(4px); }
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          50% {
+            transform: translateX(4px);
+          }
         }
       `}</style>
     </div>

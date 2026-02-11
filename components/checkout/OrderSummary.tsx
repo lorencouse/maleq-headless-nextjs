@@ -80,9 +80,12 @@ export default function OrderSummary() {
 
               {/* Product Details */}
               <div className='flex-1 min-w-0'>
-                <p className='text-sm font-medium text-foreground truncate'>
+                <Link
+                  href={`/product/${item.slug}`}
+                  className='text-sm font-medium text-foreground hover:text-primary truncate block'
+                >
                   {item.name}
-                </p>
+                </Link>
                 {item.attributes && Object.keys(item.attributes).length > 0 && (
                   <p className='text-xs text-muted-foreground mt-0.5'>
                     {Object.entries(item.attributes)
@@ -125,7 +128,7 @@ export default function OrderSummary() {
         )}
 
         {freeShipping.qualifies && (
-          <div className='p-2 bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 rounded-lg text-xs flex items-center gap-2'>
+          <div className='p-2 font-semibold text-success bg-success/10 rounded-lg text-sm flex items-center gap-2'>
             <svg
               className='w-4 h-4'
               fill='none'

@@ -49,13 +49,13 @@ export default function CategoryCard({ category }: CategoryCardProps) {
 
       {/* Content - Centered translucent bar for images, bottom content for gradients */}
       {categoryImage ? (
-        <div className='absolute inset-x-0 bottom-0 h-1/3 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-between gap-0 px-3 text-center'>
-          <h3 className='heading-plain text-white font-bold text-sm sm:text-base leading-none line-clamp-2 mt-1'>
+        <div className='absolute inset-x-0 bottom-0 h-1/3 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-between px-3 py-2 text-center'>
+          <span className='text-white font-bold text-sm sm:text-base leading-5 line-clamp-2'>
             {category.name}
-          </h3>
-          <p className='text-white/90 text-xs leading-none -mt-2 pt-0'>
+          </span>
+          <span className='text-white/90 text-xs leading-none'>
             {category.count} {category.count === 1 ? 'item' : 'items'}
-          </p>
+          </span>
         </div>
       ) : (
         <div className='relative h-full flex flex-col justify-between px-4'>

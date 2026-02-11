@@ -1,7 +1,7 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { stripHtml } from '@/lib/utils/text-utils';
-import { getProductsByCategory } from '@/lib/products/combined-service';
+import { getFilteredProducts } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import dynamic from 'next/dynamic';
@@ -106,11 +106,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Get primary category
   const primaryCategory = product.categories?.[0];
 
-  // Fetch related products from same category
-  let relatedProducts: Awaited<ReturnType<typeof getProductsByCategory>> = [];
+  // Fetch related products from same category (in-stock only)
+  let relatedProducts: Awaited<ReturnType<typeof getFilteredProducts>>['products'] = [];
   if (primaryCategory?.slug) {
     try {
-      relatedProducts = await getProductsByCategory(primaryCategory.slug, 8);
+      const result = await getFilteredProducts({ category: primaryCategory.slug, limit: 8, inStock: true });
+      relatedProducts = result.products;
     } catch (error) {
       console.error('Error fetching related products:', error);
     }

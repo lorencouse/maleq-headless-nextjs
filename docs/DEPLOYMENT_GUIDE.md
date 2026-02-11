@@ -34,6 +34,9 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-auth-endpoints.php` | Authentication endpoints for login, password reset, and token validation | `wordpress/mu-plugins/maleq-auth-endpoints.php` |
 | `maleq-graphql-title-search.php` | Adds titleSearch parameter to WPGraphQL for searching posts by title only | `wordpress/mu-plugins/maleq-graphql-title-search.php` |
 | `maleq-order-tracking.php` | Order tracking management with admin UI, REST API, and customer email notifications | `wordpress/mu-plugins/maleq-order-tracking.php` |
+| `maleq-stock-sync.php` | Bulk stock sync endpoints for daily cron (stock-mapping + stock-update) | `wordpress/mu-plugins/maleq-stock-sync.php` |
+| `maleq-stock-priority.php` | Orders products with in-stock items first, prioritizes WT/manual over STC sources | `wordpress/mu-plugins/maleq-stock-priority.php` |
+| `maleq-graphql-product-source.php` | Exposes `_product_source` meta as `productSource` field in WPGraphQL | `wordpress/mu-plugins/maleq-graphql-product-source.php` |
 
 ### Installation Steps
 
@@ -49,6 +52,9 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-auth-endpoints.php /path/to/wordpress/wp-content/mu-plugins/maleq-auth-endpoints.php
    cp wordpress/mu-plugins/maleq-graphql-title-search.php /path/to/wordpress/wp-content/mu-plugins/maleq-graphql-title-search.php
    cp wordpress/mu-plugins/maleq-order-tracking.php /path/to/wordpress/wp-content/mu-plugins/maleq-order-tracking.php
+   cp wordpress/mu-plugins/maleq-stock-sync.php /path/to/wordpress/wp-content/mu-plugins/maleq-stock-sync.php
+   cp wordpress/mu-plugins/maleq-stock-priority.php /path/to/wordpress/wp-content/mu-plugins/maleq-stock-priority.php
+   cp wordpress/mu-plugins/maleq-graphql-product-source.php /path/to/wordpress/wp-content/mu-plugins/maleq-graphql-product-source.php
    ```
 
 2. **Run material migration** (one-time setup):
@@ -126,6 +132,33 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 ID | `G-XXXXXXXXXX` |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry error tracking DSN | `https://xxx@xxx.ingest.sentry.io/xxx` |
 | `REVALIDATION_SECRET` | Secret for on-demand ISR | Random string |
+| `ADMIN_API_KEY` | Admin API key for protected endpoints (must match `MALEQ_ADMIN_KEY` in wp-config.php) | Random string |
+| `CRON_SECRET` | Vercel cron secret for automated jobs (set in Vercel dashboard) | Random string |
+
+### WordPress wp-config.php Constants
+
+Add to `wp-config.php` on the WordPress server:
+```php
+define('MALEQ_ADMIN_KEY', 'your-admin-api-key-here');
+```
+This must match the `ADMIN_API_KEY` env var in Vercel.
+
+### Daily Stock Sync (Cron)
+
+A Vercel cron job runs daily at 6:00 AM UTC to sync stock from STC and Williams Trading:
+- **Endpoint**: `/api/cron/stock-sync`
+- **Schedule**: `0 6 * * *` (configured in `vercel.json`)
+- **Auth**: Uses `CRON_SECRET` (Vercel cron) or `ADMIN_API_KEY` (manual trigger)
+- **What it does**:
+  1. Fetches STC inventory CSV (combined stock) and updates `_stock` for all matched products
+  2. Fetches Williams Trading active products and stores `wt_stock_count` meta for fulfillment prioritization
+
+**Manual trigger**:
+```bash
+curl https://your-site.com/api/cron/stock-sync -H "Authorization: Bearer $ADMIN_API_KEY"
+```
+
+**Requires**: `maleq-stock-sync.php` mu-plugin installed on WordPress
 
 ---
 

@@ -85,7 +85,7 @@ export default function SubcategoryGrid({
       </div>
 
       {/* Subcategories Grid */}
-      <div className='grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-3'>
+      <div className='grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3'>
         {activeSubcategories.map((subcategory) => (
           <CategoryCard key={subcategory.id} category={subcategory} />
         ))}

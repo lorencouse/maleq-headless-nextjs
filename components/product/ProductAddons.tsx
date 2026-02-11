@@ -138,9 +138,9 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
             d='M12 6v6m0 0v6m0-6h6m-6 0H6'
           />
         </svg>
-        <h3 className='text-base font-semibold text-foreground'>
+        <span className='text-2xl font-extrabold text-foreground'>
           Add-on Essentials
-        </h3>
+        </span>
       </div>
 
       {/* Individual Addons */}
@@ -178,7 +178,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
         onClick={handleBundleToggle}
       >
         {/* Best Value Badge */}
-        <div className='absolute -top-2 left-3'>
+        <div className='absolute -top-4 left-3'>
           <span className='px-2 py-0.5 bg-primary text-primary-foreground text-xs font-bold rounded-full'>
             BEST VALUE
           </span>

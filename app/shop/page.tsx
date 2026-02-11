@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, searchProducts } from '@/lib/products/combined-service';
+import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import ShopHero from '@/components/shop/ShopHero';
@@ -142,20 +143,23 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     productsResult = await getAllProducts({ limit: 24 });
   }
 
-  const { products, pageInfo, total: searchTotal, availableFilters, suggestions } = productsResult;
+  const { products: rawProducts, pageInfo, total: searchTotal, availableFilters, suggestions } = productsResult;
+  const products = sortProductsByPriority(rawProducts);
 
   // Also fetch sale products for featured section (only when no search/filters active)
   const saleProductsPromise = !hasSearchOrFilters
-    ? getFilteredProducts({ limit: 8, onSale: true })
+    ? getFilteredProducts({ limit: 8, onSale: true, inStock: true })
     : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } });
 
   // Get categories, brands, and attributes from WooCommerce
-  const [{ products: saleProducts }, categories, globalBrands, { colors: globalColors, materials: globalMaterials }] = await Promise.all([
+  const [{ products: rawSaleProducts }, categories, globalBrands, { colors: globalColors, materials: globalMaterials }] = await Promise.all([
     saleProductsPromise,
     getHierarchicalCategories(),
     getBrands(),
     getGlobalAttributes(),
   ]);
+
+  const saleProducts = rawSaleProducts;
 
   // Use search-specific filter options when available, otherwise use global options
   const brands = availableFilters?.brands ?? globalBrands;
@@ -257,6 +261,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           colors={colors}
           materials={materials}
           hasMore={pageInfo.hasNextPage}
+          initialCursor={pageInfo.endCursor}
           searchQuery={searchQuery}
           initialTotal={initialTotal}
         />

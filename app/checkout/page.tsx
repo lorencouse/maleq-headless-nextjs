@@ -1,16 +1,21 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useIsCartEmpty } from '@/lib/store/cart-store';
 import CheckoutLayout from '@/components/checkout/CheckoutLayout';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import CheckoutProgress from '@/components/checkout/CheckoutProgress';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
+import ExpressCheckout from '@/components/checkout/ExpressCheckout';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const isEmpty = useIsCartEmpty();
+  const [checkoutStep, setCheckoutStep] = useState<'information' | 'shipping' | 'payment'>('information');
+  const handleStepChange = useCallback((step: 'information' | 'shipping' | 'payment') => {
+    setCheckoutStep(step);
+  }, []);
 
   // Redirect to cart if empty
   useEffect(() => {
@@ -40,12 +45,17 @@ export default function CheckoutPage() {
         </p>
       </div>
 
+      {/* Express Checkout (Apple Pay, Google Pay, Link) */}
+      <div className="mb-6">
+        <ExpressCheckout />
+      </div>
+
       {/* Progress Indicator */}
-      <CheckoutProgress currentStep="information" />
+      <CheckoutProgress currentStep={checkoutStep} />
 
       {/* Checkout Content */}
       <CheckoutLayout
-        formSection={<CheckoutForm />}
+        formSection={<CheckoutForm onStepChange={handleStepChange} />}
         summarySection={<OrderSummary />}
       />
 

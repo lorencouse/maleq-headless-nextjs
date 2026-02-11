@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getProductsByCategory, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
+import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
+import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import { findCategoryBySlug, flattenCategories, findParentCategory } from '@/lib/utils/category-helpers';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
@@ -96,7 +97,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   const parentCategory = findParentCategory(allCategories, slug);
 
   // Fetch products and sale products in parallel
-  const [products, saleProductsResult] = await Promise.all([
+  const [productsResult, saleProductsResult] = await Promise.all([
     hasAdditionalFilters
       ? getFilteredProducts({
           limit: 24,
@@ -108,18 +109,21 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           maxPrice,
           inStock,
           onSale,
-        }).then(r => r.products)
-      : getProductsByCategory(slug, 24),
+        })
+      : getAllProducts({ category: slug, limit: 24 }),
     // Only fetch sale products if no filters are active
     !hasAdditionalFilters
       ? getFilteredProducts({
           limit: 8,
           category: slug,
           onSale: true,
+          inStock: true,
         })
       : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } }),
   ]);
 
+  const products = sortProductsByPriority(productsResult.products);
+  const productsPageInfo = productsResult.pageInfo;
   const saleProducts = saleProductsResult.products;
 
   // Get child categories with products
@@ -194,7 +198,8 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
             brands={brandsData}
             colors={colorsData}
             materials={materialsData}
-            hasMore={false}
+            hasMore={productsPageInfo.hasNextPage}
+            initialCursor={productsPageInfo.endCursor}
             initialCategory={slug}
           />
         </Suspense>

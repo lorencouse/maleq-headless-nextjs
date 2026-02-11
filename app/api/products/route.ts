@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllProducts, getFilteredProducts, searchProducts, UnifiedProduct, FilterOption } from '@/lib/products/combined-service';
 import { parseIntSafe, parseFloatSafe } from '@/lib/api/validation';
+import { sortProductsByPriority, sortWithOutOfStockLast } from '@/lib/utils/product-sort';
 
 /**
  * Extract available filter options from a list of products
@@ -285,6 +286,8 @@ export async function GET(request: NextRequest) {
           const priceB = parseFloat(b.price?.replace(/[^0-9.]/g, '') || '0');
           return priceA - priceB;
         });
+        // Push out-of-stock to end while preserving price sort within each group
+        products = sortWithOutOfStockLast(products);
         break;
       case 'price-desc':
         products.sort((a, b) => {
@@ -292,17 +295,24 @@ export async function GET(request: NextRequest) {
           const priceB = parseFloat(b.price?.replace(/[^0-9.]/g, '') || '0');
           return priceB - priceA;
         });
+        products = sortWithOutOfStockLast(products);
         break;
       case 'name-asc':
         products.sort((a, b) => a.name.localeCompare(b.name));
+        products = sortWithOutOfStockLast(products);
         break;
       case 'name-desc':
         products.sort((a, b) => b.name.localeCompare(a.name));
+        products = sortWithOutOfStockLast(products);
         break;
       case 'popularity':
         products.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+        products = sortWithOutOfStockLast(products);
         break;
-      // 'newest' is default, keep original order from DB
+      default:
+        // 'newest' - apply full priority sort (stock + source priority)
+        products = sortProductsByPriority(products);
+        break;
     }
 
     return NextResponse.json({

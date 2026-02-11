@@ -145,6 +145,7 @@ export interface GraphQLProduct {
   productTags?: GraphQLNodeConnection<GraphQLTag>;
   productBrands?: GraphQLNodeConnection<GraphQLBrand>;
   productMaterials?: GraphQLNodeConnection<GraphQLMaterial>;
+  productSource?: string | null;
   attributes?: GraphQLNodeConnection<GraphQLAttribute>;
   variations?: GraphQLNodeConnection<GraphQLVariation>;
 }

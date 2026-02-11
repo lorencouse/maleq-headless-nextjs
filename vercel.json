@@ -59,5 +59,10 @@
       "destination": "/sitemap"
     }
   ],
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/stock-sync",
+      "schedule": "0 6 * * *"
+    }
+  ]
 }

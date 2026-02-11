@@ -35,10 +35,16 @@ export async function POST(request: NextRequest) {
         } else {
           revalidatePath('/shop');
         }
+        revalidateTag('categories');
+        revalidateTag('brands');
+        revalidateTag('attributes');
         break;
 
       case 'all':
         revalidatePath('/', 'layout');
+        revalidateTag('categories');
+        revalidateTag('brands');
+        revalidateTag('attributes');
         break;
 
       default:
