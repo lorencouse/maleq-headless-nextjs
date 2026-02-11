@@ -52,7 +52,7 @@ export class ImageProcessor {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .trim()
+      .replace(/^-|-$/g, '')
       .substring(0, 50); // Limit length
 
     return `${slug}-${index + 1}.webp`;

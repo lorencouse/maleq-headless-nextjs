@@ -271,18 +271,8 @@ class VariationGalleryImporter {
 
       if (variations.length === 0) continue;
 
-      // Count existing gallery images (excluding variation thumbnails)
-      const variationThumbnailIds = new Set(
-        variations.map(v => v.thumbnailId).filter(Boolean) as number[]
-      );
-
-      // Gallery images that are NOT already variation thumbnails
-      const trueGalleryImages = currentGalleryIds.filter(
-        (id: number) => !variationThumbnailIds.has(id) && id !== thumbnailId
-      );
-
-      // If we already have enough non-variation gallery images, skip
-      if (trueGalleryImages.length >= options.maxGallery) continue;
+      // Skip products that already have any gallery images to avoid duplicates
+      if (currentGalleryIds.length > 0) continue;
 
       results.push({
         parentId: row.parentId,
@@ -359,45 +349,26 @@ class VariationGalleryImporter {
     product: VariableProduct,
     maxGallery: number
   ): ImageSource[] {
-    // Build set of image URLs already imported (by matching variation SKU → XML image[0])
-    // We know that for non-first variations, only image[0] was imported.
-    // For the first variation, all images were imported.
+    // For each variation, image[0] was imported as its thumbnail.
+    // Images[1+] are candidates for the parent product gallery.
     const alreadyImportedUrls = new Set<string>();
-
-    // Track which URLs we're planning to import to avoid duplicates
     const plannedUrls = new Set<string>();
     const imagesToImport: ImageSource[] = [];
 
-    // Sort variations by menu_order to identify first variation
     const sortedVariations = [...product.variations].sort((a, b) => a.menuOrder - b.menuOrder);
 
-    // Determine how many more gallery images we can add
     const currentGalleryCount = product.currentGalleryIds.length;
     let slotsAvailable = maxGallery - currentGalleryCount;
 
     if (slotsAvailable <= 0) return [];
 
-    // Phase 1: For the first variation, ALL images were already imported.
-    // Mark them as already imported.
-    const firstVariation = sortedVariations[0];
-    if (firstVariation) {
-      const firstSources = this.findImageSources(firstVariation.sku);
-      if (firstSources) {
-        for (const url of firstSources.urls) {
-          const fullUrl = this.resolveUrl(url, firstSources.source);
-          alreadyImportedUrls.add(fullUrl);
-        }
-      }
-    }
-
-    // Phase 2: For non-first variations, only image[0] was imported.
-    // Mark image[0] as imported, collect image[1+] as candidates.
-    for (let vi = 1; vi < sortedVariations.length; vi++) {
-      const variation = sortedVariations[vi];
+    // For ALL variations (including first): image[0] is the variation thumbnail
+    // (already imported). Images[1+] are gallery candidates.
+    for (const variation of sortedVariations) {
       const sources = this.findImageSources(variation.sku);
       if (!sources) continue;
 
-      // Mark first image as already imported (it was the variation thumbnail)
+      // Mark first image as already imported (it's the variation thumbnail)
       if (sources.urls.length > 0) {
         const firstUrl = this.resolveUrl(sources.urls[0], sources.source);
         alreadyImportedUrls.add(firstUrl);
@@ -608,46 +579,40 @@ class VariationGalleryImporter {
     const newAttachmentIds: number[] = [];
     const existingGalleryCount = product.currentGalleryIds.length;
 
+    // Generate slug once for this product
+    const slug = product.parentTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+      .substring(0, 50);
+
     for (let i = 0; i < missingImages.length; i++) {
       const img = missingImages[i];
       const imageIndex = existingGalleryCount + i + 1; // Continue numbering
 
       try {
-        const baseUrl = img.source === 'muffs' ? WT_IMAGE_BASE : '';
+        // Build full URL
+        const fullUrl = img.url.startsWith('http')
+          ? img.url
+          : `${WT_IMAGE_BASE}${img.url}`;
 
-        // Use ImageProcessor for download + resize + WebP conversion
-        const processed = await this.imageProcessor.processProductImages(
-          [img.url],
-          product.parentTitle,
-          img.url.startsWith('http') ? '' : baseUrl
-        );
-
-        if (processed.length === 0) {
-          console.log(`    Failed to process image from ${img.source}`);
-          continue;
-        }
-
-        // Rename the processed file to avoid collision with existing product images
-        // Generate a unique filename based on product name + gallery index
-        const slug = product.parentTitle
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .replace(/-+/g, '-')
-          .trim()
-          .substring(0, 50);
+        // Use a unique gallery filename as the cache key so each distinct
+        // image URL gets its own cache entry (fixes the bug where
+        // processProductImages always generated the same filename for
+        // single-URL calls, causing cache collisions).
         const galleryFilename = `${slug}-gallery-${imageIndex}.webp`;
 
-        // Rename in cache if needed
-        const processedImg = processed[0];
-        const renamedPath = path.join(path.dirname(processedImg.localPath), galleryFilename);
-        if (processedImg.localPath !== renamedPath && !fs.existsSync(renamedPath)) {
-          fs.copyFileSync(processedImg.localPath, renamedPath);
-        }
-        const finalPath = fs.existsSync(renamedPath) ? renamedPath : processedImg.localPath;
+        console.log(`    Processing image ${imageIndex}: ${fullUrl.slice(-60)}`);
+
+        const processedImg = await this.imageProcessor.processImage(
+          fullUrl,
+          galleryFilename
+        );
 
         const attachmentId = await this.createAttachment(
-          finalPath,
+          processedImg.localPath,
           galleryFilename,
           product.parentTitle,
           imageIndex

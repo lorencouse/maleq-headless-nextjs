@@ -197,9 +197,43 @@ function loadProductTypeCategoryMapping(): Map<string, string[]> {
  * Calculate prices based on import parameters
  */
 function calculatePrices(wholesalePrice: number): { regular: number; sale: number } {
-  const regular = Math.round(wholesalePrice * PRICE_MULTIPLIER * 100) / 100;
-  const sale = Math.round(regular * (1 - SALE_DISCOUNT_PERCENT / 100) * 100) / 100;
+  const baseRegular = wholesalePrice * PRICE_MULTIPLIER;
+  const baseSale = baseRegular * (1 - SALE_DISCOUNT_PERCENT / 100);
+
+  // Apply psychological pricing: regular → .97, sale → .67/.77/.87/.97
+  const regular = roundUpTo97(baseRegular);
+  const sale = roundToSevenEnding(baseSale);
   return { regular, sale };
+}
+
+/**
+ * Round a price UP to end in .97
+ */
+function roundUpTo97(price: number): number {
+  const dollars = Math.floor(price);
+  const cents = Math.round((price - dollars) * 100);
+  if (cents === 97) return price;
+  if (cents > 97) return dollars + 1 + 0.97;
+  return dollars + 0.97;
+}
+
+/**
+ * Round a price DOWN to nearest .67, .77, .87, or .97
+ */
+function roundToSevenEnding(price: number): number {
+  const dollars = Math.floor(price);
+  const cents = Math.round((price - dollars) * 100);
+  const endings = [67, 77, 87, 97];
+  let bestEnding = 97;
+  let bestDollars = dollars - 1;
+  for (const ending of endings) {
+    if (ending <= cents) {
+      bestEnding = ending;
+      bestDollars = dollars;
+    }
+  }
+  if (bestDollars < 0) return 0.67;
+  return bestDollars + bestEnding / 100;
 }
 
 /**
