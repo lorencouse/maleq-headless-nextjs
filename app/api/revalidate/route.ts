@@ -1,5 +1,6 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
+import { invalidateAll as invalidateProductCache } from '@/lib/cache/product-cache';
 
 // Webhook endpoint for WordPress to trigger revalidation
 // Configure in WordPress: Settings > Webhooks or use a plugin like WP Webhooks
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'product':
+        invalidateProductCache();
         if (slug) {
           revalidatePath(`/product/${slug}`);
           revalidatePath('/shop');
@@ -41,6 +43,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'all':
+        invalidateProductCache();
         revalidatePath('/', 'layout');
         revalidateTag('categories');
         revalidateTag('brands');

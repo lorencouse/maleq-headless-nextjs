@@ -94,6 +94,11 @@ export default function ActiveFilters({
     activeFilters.push({ key: 'onSale', label: 'On Sale' });
   }
 
+  if (filters.productType) {
+    const typeLabel = filters.productType === 'simple' ? 'Simple Products' : 'Variable Products';
+    activeFilters.push({ key: 'productType', label: `Type: ${typeLabel}` });
+  }
+
   // Show nothing if no search and no filters
   if (!searchQuery && activeFilters.length === 0) {
     return null;

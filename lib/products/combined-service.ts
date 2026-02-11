@@ -1,5 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import { getClient } from '@/lib/apollo/client';
+import { getCached, setCache, makeCacheKey } from '@/lib/cache/product-cache';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import {
@@ -247,6 +248,10 @@ export async function getAllProducts(params: {
   search?: string;
 } = {}): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
   const { limit = 12, after, category, search } = params;
+  const cacheKey = makeCacheKey('allProducts', { limit, after, category, search });
+  type AllProductsResult = { products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
+  const cached = getCached<AllProductsResult>(cacheKey);
+  if (cached) return cached;
 
   try {
     let query = GET_ALL_PRODUCTS;
@@ -269,13 +274,16 @@ export async function getAllProducts(params: {
     const products: WooProduct[] = data?.products?.nodes || [];
     const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
 
-    return {
+    const result = {
       products: products.map(convertWooProduct),
       pageInfo: {
         hasNextPage: pageInfo.hasNextPage,
         endCursor: pageInfo.endCursor,
       },
     };
+
+    setCache(cacheKey, result);
+    return result;
   } catch (error) {
     console.error('Error fetching products:', error);
     return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
@@ -299,6 +307,10 @@ export async function getFilteredProducts(params: {
   onSale?: boolean;
 }): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
   const { limit = 24, after, category, brand, color, material, minPrice, maxPrice, inStock, onSale } = params;
+  const cacheKey = makeCacheKey('filteredProducts', { limit, after, category, brand, color, material, minPrice, maxPrice, inStock, onSale });
+  type FilteredResult = { products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
+  const cached = getCached<FilteredResult>(cacheKey);
+  if (cached) return cached;
 
   try {
     // Build variables for the filter query
@@ -353,13 +365,16 @@ export async function getFilteredProducts(params: {
     const products: WooProduct[] = data?.products?.nodes || [];
     const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
 
-    return {
+    const result = {
       products: products.map(convertWooProduct),
       pageInfo: {
         hasNextPage: pageInfo.hasNextPage,
         endCursor: pageInfo.endCursor,
       },
     };
+
+    setCache(cacheKey, result);
+    return result;
   } catch (error) {
     console.error('Error fetching filtered products:', error);
     return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
@@ -489,6 +504,10 @@ export async function searchProducts(
   suggestions?: string[];
 }> {
   const { limit = 24, offset = 0 } = options;
+  const cacheKey = makeCacheKey('searchProducts', { searchTerm, limit, offset });
+  type SearchResult = Awaited<ReturnType<typeof searchProducts>>;
+  const cached = getCached<SearchResult>(cacheKey);
+  if (cached) return cached;
 
   // Import search helpers dynamically to avoid circular deps
   const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm } = await import('@/lib/utils/search-helpers');
@@ -628,7 +647,7 @@ export async function searchProducts(
       }
     }
 
-    return {
+    const result = {
       products: paginatedProducts,
       pageInfo: {
         hasNextPage: offset + limit < total,
@@ -637,6 +656,9 @@ export async function searchProducts(
       availableFilters,
       suggestions,
     };
+
+    setCache(cacheKey, result);
+    return result;
   } catch (error) {
     console.error('Error searching products:', error);
     return { products: [], pageInfo: { hasNextPage: false, total: 0 } };

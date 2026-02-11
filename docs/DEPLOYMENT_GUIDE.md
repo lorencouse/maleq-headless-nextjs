@@ -37,6 +37,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-stock-sync.php` | Bulk stock sync endpoints for daily cron (stock-mapping + stock-update) | `wordpress/mu-plugins/maleq-stock-sync.php` |
 | `maleq-stock-priority.php` | Orders products with in-stock items first, prioritizes WT/manual over STC sources | `wordpress/mu-plugins/maleq-stock-priority.php` |
 | `maleq-graphql-product-source.php` | Exposes `_product_source` meta as `productSource` field in WPGraphQL | `wordpress/mu-plugins/maleq-graphql-product-source.php` |
+| `maleq-cache-revalidation.php` | Triggers Next.js cache revalidation on product create/update/delete/stock changes | `wordpress/mu-plugins/maleq-cache-revalidation.php` |
 
 ### Installation Steps
 
@@ -55,6 +56,7 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-stock-sync.php /path/to/wordpress/wp-content/mu-plugins/maleq-stock-sync.php
    cp wordpress/mu-plugins/maleq-stock-priority.php /path/to/wordpress/wp-content/mu-plugins/maleq-stock-priority.php
    cp wordpress/mu-plugins/maleq-graphql-product-source.php /path/to/wordpress/wp-content/mu-plugins/maleq-graphql-product-source.php
+   cp wordpress/mu-plugins/maleq-cache-revalidation.php /path/to/wordpress/wp-content/mu-plugins/maleq-cache-revalidation.php
    ```
 
 2. **Run material migration** (one-time setup):
@@ -76,6 +78,12 @@ Copy these files to: `wp-content/mu-plugins/`
 
    # Test materials
    { productMaterials(first: 10) { nodes { id name slug count } } }
+   ```
+
+4. **Configure cache revalidation** (add to `wp-config.php`):
+   ```php
+   define('MALEQ_FRONTEND_URL', 'https://your-frontend-domain.com');
+   define('MALEQ_REVALIDATION_SECRET', 'same-value-as-REVALIDATION_SECRET-env-var');
    ```
 
 ### Notes
@@ -131,7 +139,7 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
 |----------|-------------|---------|
 | `NEXT_PUBLIC_GA_ID` | Google Analytics 4 ID | `G-XXXXXXXXXX` |
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry error tracking DSN | `https://xxx@xxx.ingest.sentry.io/xxx` |
-| `REVALIDATION_SECRET` | Secret for on-demand ISR | Random string |
+| `REVALIDATION_SECRET` | Secret for cache revalidation webhook (must match `MALEQ_REVALIDATION_SECRET` in wp-config.php) | Random string |
 | `ADMIN_API_KEY` | Admin API key for protected endpoints (must match `MALEQ_ADMIN_KEY` in wp-config.php) | Random string |
 | `CRON_SECRET` | Vercel cron secret for automated jobs (set in Vercel dashboard) | Random string |
 
@@ -140,8 +148,12 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
 Add to `wp-config.php` on the WordPress server:
 ```php
 define('MALEQ_ADMIN_KEY', 'your-admin-api-key-here');
+define('MALEQ_FRONTEND_URL', 'https://your-frontend-domain.com');
+define('MALEQ_REVALIDATION_SECRET', 'your-revalidation-secret-here');
 ```
-This must match the `ADMIN_API_KEY` env var in Vercel.
+- `MALEQ_ADMIN_KEY` must match the `ADMIN_API_KEY` env var in Vercel.
+- `MALEQ_FRONTEND_URL` is the production URL of your Next.js site (e.g., `https://maleq.com`).
+- `MALEQ_REVALIDATION_SECRET` must match the `REVALIDATION_SECRET` env var in Vercel.
 
 ### Daily Stock Sync (Cron)
 
@@ -236,11 +248,28 @@ Every PR automatically gets a preview URL. Configure preview-specific variables 
 - [ ] Order confirmation displays
 - [ ] Email notifications sent
 
+### Cache Revalidation Setup
+
+After your first production deploy, verify the cache revalidation pipeline is working:
+
+1. **Set Vercel env var**: Ensure `REVALIDATION_SECRET` is set in Vercel > Project Settings > Environment Variables
+2. **Set WordPress constants**: Add `MALEQ_FRONTEND_URL` and `MALEQ_REVALIDATION_SECRET` to production `wp-config.php` (see [WordPress wp-config.php Constants](#wordpress-wp-configphp-constants) above)
+3. **Install the mu-plugin**: Copy `maleq-cache-revalidation.php` to production `wp-content/mu-plugins/`
+4. **Test revalidation**: Edit and save any product in WooCommerce, then verify the change appears on the frontend within a few seconds
+5. **Test manually** (optional):
+   ```bash
+   curl -X POST https://your-site.com/api/revalidate \
+     -H "Content-Type: application/json" \
+     -H "x-revalidation-secret: YOUR_SECRET" \
+     -d '{"type": "product"}'
+   ```
+   Should return `{"revalidated": true, ...}`
+
 ### Performance Checks
 
 - [ ] Run Lighthouse audit (target >80)
 - [ ] Check Core Web Vitals in Vercel Analytics
-- [ ] Verify caching headers
+- [ ] Verify caching headers (`Cache-Control: public, s-maxage=300` on `/api/products` responses)
 
 ### SEO Checks
 

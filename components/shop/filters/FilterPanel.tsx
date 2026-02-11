@@ -21,6 +21,7 @@ export interface FilterState {
   maxWeight: number;
   inStock: boolean;
   onSale: boolean;
+  productType: string;
 }
 
 interface FilterPanelProps {
@@ -55,6 +56,7 @@ export default function FilterPanel({
     length: false,
     weight: false,
     availability: true,
+    productType: true,
   });
 
   const toggleSection = (section: string) => {
@@ -76,7 +78,8 @@ export default function FilterPanel({
     filters.minWeight > 0 ||
     filters.maxWeight < 10 ||
     filters.inStock ||
-    filters.onSale;
+    filters.onSale ||
+    filters.productType !== '';
 
   return (
     <div className={`${isMobile ? 'p-4' : ''}`}>
@@ -350,6 +353,47 @@ export default function FilterPanel({
             onInStockChange={(value) => onFilterChange({ ...filters, inStock: value })}
             onSaleChange={(value) => onFilterChange({ ...filters, onSale: value })}
           />
+        )}
+      </div>
+
+      {/* Product Type */}
+      <div className="mb-6">
+        <button
+          onClick={() => toggleSection('productType')}
+          className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
+        >
+          <span className="font-semibold text-foreground">Product Type</span>
+          <svg
+            className={`w-5 h-5 text-muted-foreground transition-transform ${
+              expandedSections.productType ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        {expandedSections.productType && (
+          <div className="flex gap-2 mt-2">
+            {[
+              { value: '', label: 'All' },
+              { value: 'simple', label: 'Simple' },
+              { value: 'variable', label: 'Variable' },
+            ].map((option) => (
+              <button
+                key={option.value}
+                onClick={() => onFilterChange({ ...filters, productType: option.value })}
+                className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                  filters.productType === option.value
+                    ? 'bg-primary text-primary-foreground border-primary'
+                    : 'border-input text-foreground hover:bg-muted'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

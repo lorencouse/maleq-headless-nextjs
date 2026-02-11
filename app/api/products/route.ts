@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
     const maxWeight = maxWeightRaw ? parseFloatSafe(maxWeightRaw, 10, 0) : undefined;
     const inStock = searchParams.get('inStock') === 'true';
     const onSale = searchParams.get('onSale') === 'true';
+    const productType = searchParams.get('productType') || undefined;
     const sort = searchParams.get('sort') || 'newest';
 
     // Check for dimension/weight filters (these are done client-side)
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest) {
                                  (maxWeight !== undefined && maxWeight < 10);
 
     // Determine if we need filtered query (DB-level filtering) or basic query
-    const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category || brand || color || material;
+    const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category || brand || color || material || productType;
 
     let products: UnifiedProduct[];
     let pageInfo;
@@ -177,6 +178,11 @@ export async function GET(request: NextRequest) {
             if (!productMaterial) return false;
           }
 
+          // Product type filter
+          if (productType && product.type !== productType.toUpperCase()) {
+            return false;
+          }
+
           return true;
         });
 
@@ -226,13 +232,22 @@ export async function GET(request: NextRequest) {
         onSale,
       });
 
-      // Extract available filter options from all fetched products
-      availableFilters = extractFilterOptions(result.products);
+      let filteredProducts = result.products;
+
+      // Apply product type filter before pagination (not available via GraphQL)
+      if (productType) {
+        const upperType = productType.toUpperCase();
+        filteredProducts = filteredProducts.filter(p => p.type === upperType);
+      }
+
+      // Extract available filter options from filtered products
+      availableFilters = extractFilterOptions(filteredProducts);
+      totalCount = filteredProducts.length;
 
       // Paginate the results
-      products = result.products.slice(0, limit);
+      products = filteredProducts.slice(0, limit);
       pageInfo = {
-        hasNextPage: result.products.length > limit || result.pageInfo.hasNextPage,
+        hasNextPage: filteredProducts.length > limit || result.pageInfo.hasNextPage,
         endCursor: result.pageInfo.endCursor,
       };
     } else {
@@ -315,7 +330,7 @@ export async function GET(request: NextRequest) {
         break;
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       products,
       pageInfo,
       total: totalCount ?? products.length,
@@ -325,6 +340,10 @@ export async function GET(request: NextRequest) {
         availableColors: availableFilters.availableColors,
       }),
     });
+
+    // CDN/edge caching: cache for 5 min, serve stale up to 1 hour while revalidating
+    response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+    return response;
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(

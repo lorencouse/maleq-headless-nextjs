@@ -9,6 +9,24 @@ import SortDropdown, { SortOption } from './SortDropdown';
 import { UnifiedProduct, HierarchicalCategory, FilterOption } from '@/lib/products/combined-service';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 
+// Module-level cache to preserve product state across navigations
+let productCache: {
+  key: string;
+  products: UnifiedProduct[];
+  totalCount: number;
+  hasMore: boolean;
+  cursor: string | null;
+  searchOffset: number;
+  brands: FilterOption[];
+  materials: FilterOption[];
+  colors: FilterOption[];
+} | null = null;
+
+function getCacheKey(pathname: string, params: URLSearchParams): string {
+  const sorted = new URLSearchParams([...params.entries()].sort());
+  return `${pathname}?${sorted.toString()}`;
+}
+
 interface ShopPageClientProps {
   initialProducts: UnifiedProduct[];
   categories: HierarchicalCategory[];
@@ -36,6 +54,7 @@ const DEFAULT_FILTERS: FilterState = {
   maxWeight: 10,
   inStock: false,
   onSale: false,
+  productType: '',
 };
 
 export default function ShopPageClient({
@@ -55,20 +74,27 @@ export default function ShopPageClient({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [products, setProducts] = useState(initialProducts);
+  // Check for cached state matching current URL
+  const cacheKey = getCacheKey(pathname, searchParams);
+  const cached = productCache?.key === cacheKey ? productCache : null;
+
+  const [products, setProducts] = useState(cached?.products ?? initialProducts);
   const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialHasMore);
-  const [totalCount, setTotalCount] = useState(initialTotal ?? initialProducts.length);
-  const [cursor, setCursor] = useState<string | null>(initialCursorProp ?? null);
-  const [searchOffset, setSearchOffset] = useState(initialProducts.length); // Track offset for search pagination
+  const [hasMore, setHasMore] = useState(cached?.hasMore ?? initialHasMore);
+  const [totalCount, setTotalCount] = useState(cached?.totalCount ?? initialTotal ?? initialProducts.length);
+  const [cursor, setCursor] = useState<string | null>(cached?.cursor ?? initialCursorProp ?? null);
+  const [searchOffset, setSearchOffset] = useState(cached?.searchOffset ?? initialProducts.length);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [availableBrands, setAvailableBrands] = useState<FilterOption[]>(brands);
-  const [availableMaterials, setAvailableMaterials] = useState<FilterOption[]>(materials);
-  const [availableColors, setAvailableColors] = useState<FilterOption[]>(colors);
+  const [availableBrands, setAvailableBrands] = useState<FilterOption[]>(cached?.brands ?? brands);
+  const [availableMaterials, setAvailableMaterials] = useState<FilterOption[]>(cached?.materials ?? materials);
+  const [availableColors, setAvailableColors] = useState<FilterOption[]>(cached?.colors ?? colors);
   const isInitialMount = useRef(true);
+  const restoredFromCache = useRef(!!cached);
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
-  const hasExtractedInitialFilters = useRef(false);
+  const hasExtractedInitialFilters = useRef(!!cached || false);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+
+  const isLoadingMore = useRef(false);
 
   // Track if user entered page with filters/search (browse mode hides hero)
   const isInBrowseMode = useRef(
@@ -81,6 +107,7 @@ export default function ShopPageClient({
     searchParams.has('maxPrice') ||
     searchParams.has('inStock') ||
     searchParams.has('onSale') ||
+    searchParams.has('productType') ||
     searchParams.has('browse')
   );
 
@@ -124,6 +151,7 @@ export default function ShopPageClient({
   const maxWeightFilter = parseFloat(searchParams.get('maxWeight') || '10');
   const inStockFilter = searchParams.get('inStock') === 'true';
   const onSaleFilter = searchParams.get('onSale') === 'true';
+  const productTypeFilter = searchParams.get('productType') || '';
   const sortBy: SortOption = (searchParams.get('sort') as SortOption) || 'newest';
 
   const filters: FilterState = {
@@ -139,6 +167,7 @@ export default function ShopPageClient({
     maxWeight: maxWeightFilter,
     inStock: inStockFilter,
     onSale: onSaleFilter,
+    productType: productTypeFilter,
   };
 
   // Update URL with filters
@@ -163,6 +192,7 @@ export default function ShopPageClient({
     if (newFilters.maxWeight < 10) params.set('maxWeight', newFilters.maxWeight.toString());
     if (newFilters.inStock) params.set('inStock', 'true');
     if (newFilters.onSale) params.set('onSale', 'true');
+    if (newFilters.productType) params.set('productType', newFilters.productType);
     if (newSort !== 'newest') params.set('sort', newSort);
 
     // If no filters/search but in browse mode, keep browse param to hide hero
@@ -189,12 +219,15 @@ export default function ShopPageClient({
       maxWeight: number;
       inStock: boolean;
       onSale: boolean;
+      productType: string;
       sort: SortOption;
       search?: string;
     },
     afterCursor?: string | null,
     offset?: number // For search pagination
   ) => {
+    const isAppending = !!(afterCursor || (filterParams.search && offset !== undefined && offset > 0));
+    isLoadingMore.current = isAppending;
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -221,6 +254,7 @@ export default function ShopPageClient({
       if (filterParams.maxWeight < 10) params.set('maxWeight', filterParams.maxWeight.toString());
       if (filterParams.inStock) params.set('inStock', 'true');
       if (filterParams.onSale) params.set('onSale', 'true');
+      if (filterParams.productType) params.set('productType', filterParams.productType);
       if (filterParams.sort !== 'newest') params.set('sort', filterParams.sort);
 
       const response = await fetch(`/api/products?${params.toString()}`);
@@ -313,10 +347,16 @@ export default function ShopPageClient({
       return;
     }
 
+    // Skip fetch if restored from navigation cache
+    if (restoredFromCache.current) {
+      restoredFromCache.current = false;
+      return;
+    }
+
     // Skip fetch if we have search results from SSR and no filters applied
     // This prevents re-fetching on hydration/Strict Mode double-render
     if (hasInitialSearchResults.current) {
-      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter < 500 || minLengthFilter > 0 || maxLengthFilter < 24 || minWeightFilter > 0 || maxWeightFilter < 10 || inStockFilter || onSaleFilter || sortBy !== 'newest';
+      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter < 500 || minLengthFilter > 0 || maxLengthFilter < 24 || minWeightFilter > 0 || maxWeightFilter < 10 || inStockFilter || onSaleFilter || productTypeFilter || sortBy !== 'newest';
       if (!hasFilters) {
         // Clear the flag so subsequent filter changes will fetch
         hasInitialSearchResults.current = false;
@@ -341,10 +381,28 @@ export default function ShopPageClient({
       maxWeight: maxWeightFilter,
       inStock: inStockFilter,
       onSale: onSaleFilter,
+      productType: productTypeFilter,
       sort: sortBy,
       search: searchQuery,
     });
-  }, [categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, sortBy, searchQuery, fetchProducts]);
+  }, [categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchQuery, fetchProducts]);
+
+  // Update navigation cache when product state settles
+  useEffect(() => {
+    if (products.length > 0 && !isLoading) {
+      productCache = {
+        key: getCacheKey(pathname, searchParams),
+        products,
+        totalCount,
+        hasMore,
+        cursor,
+        searchOffset,
+        brands: availableBrands,
+        materials: availableMaterials,
+        colors: availableColors,
+      };
+    }
+  }, [products, totalCount, hasMore, cursor, searchOffset, availableBrands, availableMaterials, availableColors, isLoading, pathname, searchParams]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters: FilterState) => {
@@ -378,6 +436,7 @@ export default function ShopPageClient({
     if (filters.maxWeight < 10) params.set('maxWeight', filters.maxWeight.toString());
     if (filters.inStock) params.set('inStock', 'true');
     if (filters.onSale) params.set('onSale', 'true');
+    if (filters.productType) params.set('productType', filters.productType);
     if (sortBy !== 'newest') params.set('sort', sortBy);
 
     // If no other filters, keep browse param to hide hero
@@ -413,6 +472,8 @@ export default function ShopPageClient({
       newFilters.inStock = false;
     } else if (key === 'onSale') {
       newFilters.onSale = false;
+    } else if (key === 'productType') {
+      newFilters.productType = '';
     }
     updateURL(newFilters, sortBy);
   };
@@ -436,6 +497,7 @@ export default function ShopPageClient({
         maxWeight: maxWeightFilter,
         inStock: inStockFilter,
         onSale: onSaleFilter,
+        productType: productTypeFilter,
         sort: sortBy,
         search: searchQuery,
       }, null, searchOffset);
@@ -454,11 +516,12 @@ export default function ShopPageClient({
         maxWeight: maxWeightFilter,
         inStock: inStockFilter,
         onSale: onSaleFilter,
+        productType: productTypeFilter,
         sort: sortBy,
         search: searchQuery,
       }, cursor);
     }
-  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, sortBy, searchOffset, cursor, fetchProducts]);
+  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchOffset, cursor, fetchProducts]);
 
   // Close mobile filter on resize
   useEffect(() => {
@@ -575,10 +638,24 @@ export default function ShopPageClient({
           </div>
         ) : products.length > 0 ? (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6">
-              {products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <div className="relative">
+              {/* Loading overlay when re-fetching with filters (not for infinite scroll) */}
+              {isLoading && !isLoadingMore.current && (
+                <div className="absolute inset-0 bg-background/60 z-10 flex items-start justify-center pt-24">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-card rounded-lg shadow-md border border-border">
+                    <svg className="animate-spin h-4 w-4 text-primary" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span className="text-sm text-muted-foreground">Updating results...</span>
+                  </div>
+                </div>
+              )}
+              <div className={`grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6 transition-opacity duration-200 ${isLoading && !isLoadingMore.current ? 'opacity-40 pointer-events-none' : ''}`}>
+                {products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </div>
             </div>
 
             {/* Load More / Infinite Scroll Sentinel */}
