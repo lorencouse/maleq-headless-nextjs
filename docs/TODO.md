@@ -43,25 +43,26 @@
 - [ ] `[MED]` Verify all blog post images are migrated
 - [ ] `[MED]` Import hotlinked blog/product images to local hosting
 - [ ] `[MED]` Update `.product-specs` blocks in blog posts to 2-column tables
-- [ ] `[LOW]` Fix product specs not showing on some products (data quality 
-issue - missing brand/attributes from STC import)
-- [x] Update STC products with stock count (stc_stock_count meta for MUFFS, _stock for STC-only) — 37,760 updated
+- [ ] `[LOW]` Fix product specs not showing on some products (data quality
+      issue - missing brand/attributes from STC import)
+- [x] Update STC products with stock count (stc_stock_count meta for MUFFS, \_stock for STC-only) — 37,760 updated
 - [x] Add product links to order summary on checkout page
 
+import images from reusable blocks into media library and update URLs in blocks to point to local media (currently hotlinked from old site, some missing). Do this after all short codes are updated to new product IDs, and old product images are removed.
 
-import images from reusable blocks into media library and update URLs in blocks to point to local media (currently hotlinked from old site, some missing).  Do this after all short codes are updated to new product IDs, and old product images are removed.
+pink variation (9342851003818) images were added correctly in gallery during last failed import, but still missing green variation (9342851003801) images. Green variation images are still present in gallery after cleanup, but not attached to gallery: http://localhost:3000/product/sensuelle-luna-velvet-touch-vibe
 
-Out of stock items not listed as out of stock on shop and category pages in product grid.  But when link clicked, on product page, shows out of stock.  
-Example: http://localhost:3000/product/d-mystic-wand-battery-operat
-http://localhost:3000/product/wd-master-series-pecker 
+green variation (850013016006) image not imported. Purple image attached. http://localhost:3000/product/cloud-9-health-wellness-borosilicate-kegel-training-set
+
+Add a feature where admin can assign a products primary image on the product page, similar to how we have the edit product button.  Idealy the button would be 'Assign Primary Image' and would assign the currently displayed image as the primary image for the product, and move the current primary to the gallery.  If it is a variable product, it would assign the image to the currently selected variation. 
 
 ### Product Data Cleanup
 
-- [ ] `[MED]` Verify STC product variations created correctly (some show gallery images but no variation selector)
+- [ ] `[MED]` Verify STC product variations created correctly (some show gallery images of other variations, but no variation selector)
   - e.g. `/product/lelo-soraya-2-rabbit-massager-rechargeable`, `/product/hunkyjunk-lockdown-chastity`
 - [ ] `[MED]` Set `product_source` meta field to `'stc'` for all STC-imported products
-- [ ] `[MED]` Round all product prices to .97 regular / .X7 sale endings.  Update import script to do this automatically for new products.
-Strip () prefixes and suffixes from product titles and descriptiosL (s) (wd) (net) (bulk), ect. Update import script to do this automatically for new products.
+- [x] `[MED]` Round all product prices to .97 regular / .X7 sale endings. Update import script to do this automatically for new products.
+
 - [ ] `[MED]` Review and update reusable blocks with correct URLs
 
 ---

@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-01-28T00:20:57.506Z",
-  "duration": "4.88s",
-  "processed": 2,
-  "created": 2,
-  "skipped": 0,
-  "variableProducts": 0,
-  "simpleProducts": 2,
-  "variations": 0,
+  "timestamp": "2026-02-11T01:21:31.578Z",
+  "duration": "1065.13s",
+  "processed": 9461,
+  "created": 8829,
+  "skipped": 632,
+  "variableProducts": 1297,
+  "simpleProducts": 5625,
+  "variations": 3204,
   "errors": [],
   "categoryFallback": {
-    "productsWithNoCategories": 1,
-    "categoriesInferredFromSimilar": 1,
-    "categoriesFromProductType": 0,
-    "stillUncategorized": 0
+    "productsWithNoCategories": 2315,
+    "categoriesInferredFromSimilar": 2236,
+    "categoriesFromProductType": 38,
+    "stillUncategorized": 41
   }
 }

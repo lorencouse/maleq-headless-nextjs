@@ -267,12 +267,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {post.tags?.nodes && post.tags.nodes.length > 0 && (
         <div className='border-t border-border pt-6 mb-12'>
           <h3 className='text-sm font-semibold text-foreground mb-3'>Tags:</h3>
-          <div className='flex flex-wrap gap-2'>
+          <div className='flex flex-wrap items-center gap-2'>
             {post.tags.nodes.map((tag: any) => (
               <Link
                 key={tag.id}
                 href={`/blog/tag/${tag.slug}`}
-                className='px-3 py-1 bg-input text-foreground text-sm rounded-full hover:bg-border transition-colors'
+                className='inline-flex items-center px-3 py-1 bg-input text-foreground text-sm rounded-full hover:bg-border transition-colors leading-none'
               >
                 {tag.name}
               </Link>

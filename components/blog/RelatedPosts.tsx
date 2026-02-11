@@ -1,7 +1,5 @@
-import Link from 'next/link';
-import Image from 'next/image';
 import { Post } from '@/lib/types/wordpress';
-import { getProductionImageUrl } from '@/lib/utils/image';
+import BlogCard from '@/components/blog/BlogCard';
 
 interface RelatedPostsProps {
   posts: Post[];
@@ -21,78 +19,12 @@ export default function RelatedPosts({
     return null;
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   return (
     <section className='border-t border-border pt-8 mt-12'>
       <h2 className='text-2xl font-bold text-foreground'>Related Articles</h2>
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-8'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-8'>
         {relatedPosts.map((post) => (
-          <article
-            key={post.id}
-            className='bg-card border border-border rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all group'
-          >
-            {/* Featured Image */}
-            <Link href={`/blog/${post.slug}`}>
-              <div className='relative h-32 md:h-40 w-full overflow-hidden'>
-                {post.featuredImage?.node ? (
-                  <Image
-                    src={getProductionImageUrl(
-                      post.featuredImage.node.sourceUrl,
-                    )}
-                    alt={post.featuredImage.node.altText || post.title}
-                    fill
-                    className='object-cover group-hover:scale-105 transition-transform duration-300'
-                    sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
-                  />
-                ) : (
-                  <div className='w-full h-full bg-muted flex items-center justify-center'>
-                    <span className='text-muted-foreground text-sm'>
-                      No image
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Link>
-
-            <div className='p-3 md:p-4'>
-              {/* Category */}
-              {post.categories?.nodes && post.categories.nodes.length > 0 && (
-                <Link
-                  href={`/blog/category/${post.categories.nodes[0].slug}`}
-                  className='text-xs font-medium text-primary hover:text-primary-hover'
-                >
-                  {post.categories.nodes[0].name}
-                </Link>
-              )}
-
-              {/* Title */}
-              <div className='border-b-2 border-primary pb-2 mt-1 mb-2'>
-                <h3 className='heading-plain text-sm md:text-base font-bold text-foreground line-clamp-2 leading-tight'>
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className='hover:text-primary transition-colors'
-                  >
-                    {post.title}
-                  </Link>
-                </h3>
-              </div>
-
-              {/* Date */}
-              <time
-                dateTime={post.date}
-                className='text-xs text-muted-foreground'
-              >
-                {formatDate(post.date)}
-              </time>
-            </div>
-          </article>
+          <BlogCard key={post.id} post={post} />
         ))}
       </div>
     </section>

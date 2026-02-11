@@ -13,6 +13,7 @@
 // These patterns are distributor/inventory codes and should be removed
 const JUNK_PATTERNS_EXACT = [
   // Distributor codes
+  '(a)',
   '(d)',
   '(wd)',
   '(cd)',
@@ -130,6 +131,14 @@ function cleanupTitle(title: string): CleanupResult {
   // Fix double spaces
   cleaned = cleaned.replace(/\s{2,}/g, ' ');
 
+  // Capitalize the first letter of the title
+  if (cleaned.length > 0 && cleaned[0] !== cleaned[0].toUpperCase()) {
+    cleaned = cleaned[0].toUpperCase() + cleaned.slice(1);
+    if (!patternsRemoved.length) {
+      patternsRemoved.push('[lowercase first letter]');
+    }
+  }
+
   return {
     original: title,
     cleaned,
@@ -152,7 +161,7 @@ interface ProductRecord {
 }
 
 async function fetchProductsWithPatterns(): Promise<ProductRecord[]> {
-  // Fetch all products and variations that have parentheses in the title
+  // Fetch all products and variations that have parentheses in the title OR start with lowercase
   const sql = `
     SELECT
       ID as id,
@@ -163,7 +172,7 @@ async function fetchProductsWithPatterns(): Promise<ProductRecord[]> {
     FROM wp_posts
     WHERE post_type IN ('product', 'product_variation')
     AND post_status = 'publish'
-    AND post_title LIKE '%(%)%'
+    AND (post_title LIKE '%(%)%' OR CAST(post_title AS BINARY) REGEXP '^[a-z]')
     ORDER BY post_type, ID
   `;
 
@@ -229,19 +238,25 @@ async function runDryRun(): Promise<void> {
   let excerptChanges = 0;
   const changes: { id: number; type: string; field: string; before: string; after: string; removed: string[] }[] = [];
 
+  const emptyAfterClean: { id: number; type: string; original: string }[] = [];
+
   for (const product of products) {
     // Check title
     const titleResult = cleanupTitle(product.title);
     if (titleResult.patternsRemoved.length > 0) {
-      titleChanges++;
-      changes.push({
-        id: product.id,
-        type: product.type,
-        field: 'title',
-        before: titleResult.original,
-        after: titleResult.cleaned,
-        removed: titleResult.patternsRemoved,
-      });
+      if (titleResult.cleaned.length === 0) {
+        emptyAfterClean.push({ id: product.id, type: product.type, original: product.title });
+      } else {
+        titleChanges++;
+        changes.push({
+          id: product.id,
+          type: product.type,
+          field: 'title',
+          before: titleResult.original,
+          after: titleResult.cleaned,
+          removed: titleResult.patternsRemoved,
+        });
+      }
     }
 
     // Check content (description)
@@ -280,6 +295,18 @@ async function runDryRun(): Promise<void> {
     console.log(`... and ${changes.length - 50} more title changes\n`);
   }
 
+  // Show empty titles warning
+  if (emptyAfterClean.length > 0) {
+    console.log('========================================');
+    console.log('  WARNING: TITLES EMPTY AFTER CLEANUP');
+    console.log('========================================\n');
+    for (const item of emptyAfterClean) {
+      const typeLabel = item.type === 'product' ? '[PRODUCT]' : '[VAR]';
+      console.log(`${typeLabel} ID: ${item.id} - Original: "${item.original}"`);
+    }
+    console.log(`\n${emptyAfterClean.length} products would have empty titles - these will be SKIPPED.\n`);
+  }
+
   // Summary
   console.log('========================================');
   console.log('              SUMMARY');
@@ -288,6 +315,7 @@ async function runDryRun(): Promise<void> {
   console.log(`Titles to update: ${titleChanges}`);
   console.log(`Descriptions to update: ${contentChanges}`);
   console.log(`Short descriptions to update: ${excerptChanges}`);
+  console.log(`Empty titles (skipped): ${emptyAfterClean.length}`);
   console.log(`\nTotal changes: ${titleChanges + contentChanges + excerptChanges}`);
   console.log('\nRun with --apply to make these changes');
 }
@@ -302,6 +330,7 @@ async function runApply(): Promise<void> {
   let titleUpdates = 0;
   let contentUpdates = 0;
   let excerptUpdates = 0;
+  let skippedEmpty = 0;
   let processed = 0;
 
   for (const product of products) {
@@ -310,6 +339,11 @@ async function runApply(): Promise<void> {
     // Update title
     const titleResult = cleanupTitle(product.title);
     if (titleResult.patternsRemoved.length > 0) {
+      if (titleResult.cleaned.length === 0) {
+        skippedEmpty++;
+        console.log(`  SKIPPED ID ${product.id}: title would be empty (was: "${product.title}")`);
+        continue;
+      }
       await updateProductTitle(product.id, titleResult.cleaned);
       titleUpdates++;
     }
@@ -346,6 +380,7 @@ async function runApply(): Promise<void> {
   console.log(`Titles updated: ${titleUpdates}`);
   console.log(`Descriptions updated: ${contentUpdates}`);
   console.log(`Short descriptions updated: ${excerptUpdates}`);
+  console.log(`Empty titles skipped: ${skippedEmpty}`);
   console.log(`\nTotal updates: ${titleUpdates + contentUpdates + excerptUpdates}`);
 }
 
