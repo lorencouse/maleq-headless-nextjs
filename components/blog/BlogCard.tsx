@@ -31,8 +31,18 @@ export default function BlogCard({ post }: BlogCardProps) {
             />
           ) : (
             <div className='w-full h-full flex items-center justify-center'>
-              <svg className='w-12 h-12 text-muted-foreground' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z' />
+              <svg
+                className='w-12 h-12 text-muted-foreground'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={1.5}
+                  d='M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z'
+                />
               </svg>
             </div>
           )}
@@ -41,9 +51,9 @@ export default function BlogCard({ post }: BlogCardProps) {
 
       <div className='p-6'>
         {/* Categories & Date */}
-        <div className='flex justify-between items-center mb-3'>
+        <div className='flex flex-row justify-between items-center mb-6'>
           {post.categories?.nodes && post.categories.nodes.length > 0 && (
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex gap-2 h-1'>
               {post.categories.nodes.slice(0, 2).map((category) => (
                 <Link
                   key={category.id}
@@ -55,7 +65,10 @@ export default function BlogCard({ post }: BlogCardProps) {
               ))}
             </div>
           )}
-          <time dateTime={post.date} className='text-xs text-muted-foreground whitespace-nowrap ml-2'>
+          <time
+            dateTime={post.date}
+            className='text-xs text-muted-foreground h-1'
+          >
             {formatDate(post.date)}
           </time>
         </div>
