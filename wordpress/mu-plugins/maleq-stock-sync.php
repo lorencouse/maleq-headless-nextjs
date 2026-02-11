@@ -140,6 +140,9 @@ function maleq_stock_update(WP_REST_Request $request) {
         'errors'  => [],
     ];
 
+    // Track parent variable products that need stock status recalculation
+    $parent_ids_to_sync = [];
+
     foreach ($updates as $update) {
         $post_id = isset($update['id']) ? (int) $update['id'] : 0;
         if (!$post_id) {
@@ -169,6 +172,15 @@ function maleq_stock_update(WP_REST_Request $request) {
                     ['%d']
                 );
 
+                // If this is a variation, recalculate parent variable product stock status
+                $post_type = get_post_type($post_id);
+                if ($post_type === 'product_variation') {
+                    $parent_id = wp_get_post_parent_id($post_id);
+                    if ($parent_id) {
+                        $parent_ids_to_sync[$parent_id] = true;
+                    }
+                }
+
                 $results['updated']++;
             } elseif (isset($update['meta_key']) && isset($update['meta_value'])) {
                 // Custom meta update (e.g., wt_stock_count)
@@ -182,6 +194,33 @@ function maleq_stock_update(WP_REST_Request $request) {
             $results['failed']++;
             $results['errors'][] = "Product $post_id: " . $e->getMessage();
         }
+    }
+
+    // Recalculate parent variable product stock status
+    // Parent is 'instock' if ANY variation is instock, otherwise 'outofstock'
+    foreach (array_keys($parent_ids_to_sync) as $parent_id) {
+        $has_instock = $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->posts} v
+             INNER JOIN {$wpdb->postmeta} pm ON v.ID = pm.post_id AND pm.meta_key = '_stock_status'
+             WHERE v.post_parent = %d AND v.post_type = 'product_variation'
+               AND v.post_status = 'publish' AND pm.meta_value = 'instock'",
+            $parent_id
+        ));
+
+        $parent_status = $has_instock > 0 ? 'instock' : 'outofstock';
+        update_post_meta($parent_id, '_stock_status', $parent_status);
+
+        $wpdb->update(
+            $wpdb->prefix . 'wc_product_meta_lookup',
+            ['stock_status' => $parent_status],
+            ['product_id' => $parent_id],
+            ['%s'],
+            ['%d']
+        );
+    }
+
+    if (!empty($parent_ids_to_sync)) {
+        $results['parents_synced'] = count($parent_ids_to_sync);
     }
 
     // Truncate errors array to avoid massive responses

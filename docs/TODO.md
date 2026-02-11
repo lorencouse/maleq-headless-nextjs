@@ -51,8 +51,9 @@ issue - missing brand/attributes from STC import)
 
 import images from reusable blocks into media library and update URLs in blocks to point to local media (currently hotlinked from old site, some missing).  Do this after all short codes are updated to new product IDs, and old product images are removed.
 
-Load out of stock items last on shop, tag, manufacturer and category pages, etc.  do not show in recommendations or carousels.  Prioritize loading products from williams_trading, and manually added products, over STC-imported products.
-Fix product page breadbrumbs to not line break, but truncate.
+Out of stock items not listed as out of stock on shop and category pages in product grid.  But when link clicked, on product page, shows out of stock.  
+Example: http://localhost:3000/product/d-mystic-wand-battery-operat
+http://localhost:3000/product/wd-master-series-pecker 
 
 ### Product Data Cleanup
 
