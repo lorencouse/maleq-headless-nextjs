@@ -59,6 +59,7 @@ interface ImportOptions {
   productType?: 'simple' | 'variable' | 'variation';
   skipExisting: boolean;
   concurrency: number;
+  xmlFile?: string;
 }
 
 interface ProductToProcess {
@@ -98,6 +99,9 @@ function parseArgs(): ImportOptions {
     } else if (arg === '--concurrency' && i + 1 < args.length) {
       options.concurrency = parseInt(args[i + 1], 10);
       i++;
+    } else if (arg === '--xml-file' && i + 1 < args.length) {
+      options.xmlFile = args[i + 1];
+      i++;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Image Import Script (Direct SQL)
@@ -112,12 +116,14 @@ Options:
   --type <type>         Process only 'simple', 'variable', or 'variation'
   --skip-existing       Skip products that already have images
   --concurrency <n>     Number of concurrent image downloads (default: 5)
+  --xml-file <path>     Load additional XML file for image lookups
   --help, -h            Show this help message
 
 Examples:
   bun scripts/import-images.ts --limit 10 --dry-run
   bun scripts/import-images.ts --type simple --skip-existing
   bun scripts/import-images.ts --product-id 12345
+  bun scripts/import-images.ts --skip-existing --xml-file data/inactive_products.xml
       `);
       process.exit(0);
     }
@@ -181,14 +187,15 @@ class DirectImageImporter {
         p.post_title as productName,
         p.post_name as productSlug,
         pm_sku.meta_value as sku,
-        t.slug as productType,
+        (SELECT t.slug FROM wp_term_relationships tr
+          INNER JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+          INNER JOIN wp_terms t ON tt.term_id = t.term_id
+          WHERE tr.object_id = p.ID AND tt.taxonomy = 'product_type'
+          LIMIT 1) as productType,
         p.post_parent as parentId,
         p.menu_order as menuOrder
       FROM wp_posts p
       LEFT JOIN wp_postmeta pm_sku ON p.ID = pm_sku.post_id AND pm_sku.meta_key = '_sku'
-      LEFT JOIN wp_term_relationships tr ON p.ID = tr.object_id
-      LEFT JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id AND tt.taxonomy = 'product_type'
-      LEFT JOIN wp_terms t ON tt.term_id = t.term_id
       WHERE p.post_type IN ('product', 'product_variation')
       AND p.post_status = 'publish'
     `;
@@ -204,7 +211,12 @@ class DirectImageImporter {
       if (options.productType === 'variation') {
         query += " AND p.post_type = 'product_variation'";
       } else {
-        query += ' AND t.slug = ?';
+        query += ` AND EXISTS (
+          SELECT 1 FROM wp_term_relationships tr2
+          INNER JOIN wp_term_taxonomy tt2 ON tr2.term_taxonomy_id = tt2.term_taxonomy_id
+          INNER JOIN wp_terms t2 ON tt2.term_id = t2.term_id
+          WHERE tr2.object_id = p.ID AND tt2.taxonomy = 'product_type' AND t2.slug = ?
+        )`;
         params.push(options.productType);
       }
     }
@@ -221,10 +233,6 @@ class DirectImageImporter {
     }
 
     query += ' ORDER BY p.post_type DESC, p.post_parent, p.menu_order, p.ID';
-
-    if (options.limit) {
-      query += ` LIMIT ${options.limit}`;
-    }
 
     const [rows] = await this.connection.execute(query, params);
     const products = rows as any[];
@@ -268,6 +276,12 @@ class DirectImageImporter {
         isFirstVariation,
         xmlImages,
       });
+
+      // Apply limit after XML matching (not on SQL query) so we get
+      // the right number of matched products, not just DB rows
+      if (options.limit && result.length >= options.limit) {
+        break;
+      }
     }
 
     return result;
@@ -606,6 +620,7 @@ async function main() {
   if (options.limit) console.log(`  Limit: ${options.limit}`);
   if (options.productId) console.log(`  Product ID: ${options.productId}`);
   if (options.productType) console.log(`  Product Type: ${options.productType}`);
+  if (options.xmlFile) console.log(`  Additional XML: ${options.xmlFile}`);
 
   // Connect to database
   const connection = await getConnection();
@@ -618,6 +633,13 @@ async function main() {
   // Load XML products
   const xmlPath = path.join(process.cwd(), 'data/products-filtered.xml');
   await importer.loadXMLProducts(xmlPath);
+
+  // Load additional XML file if specified (e.g., inactive_products.xml)
+  if (options.xmlFile) {
+    const additionalPath = path.resolve(options.xmlFile);
+    console.log(`\nLoading additional XML: ${additionalPath}`);
+    await importer.loadXMLProducts(additionalPath);
+  }
 
   // Get products needing images
   console.log('\nFinding products that need images...');
