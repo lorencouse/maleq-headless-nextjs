@@ -157,22 +157,20 @@ export default function VariationSelector({
                 <button
                   key={value}
                   onClick={() => handleAttributeSelect(name, value)}
-                  disabled={!isAvailable}
                   className={`
-                    px-3 sm:px-4 py-2.5 min-h-[44px] border-2 rounded-xl text-sm sm:text-base font-medium transition-all
+                    px-3 sm:px-4 py-1.5 min-h-[44px] border-2 rounded-xl text-sm sm:text-base font-medium transition-all hover:shadow-sm
                     ${
                       isSelected
                         ? 'border-primary bg-primary/10 text-foreground'
                         : 'border-border bg-card text-foreground hover:border-muted-foreground'
                     }
-                    ${
-                      !isAvailable
-                        ? 'opacity-40 cursor-not-allowed line-through'
-                        : 'hover:shadow-sm'
-                    }
+                    ${!isAvailable ? 'opacity-70' : ''}
                   `}
                 >
-                  {formatAttributeValue(value)}
+                  <span>{formatAttributeValue(value)}</span>
+                  {!isAvailable && (
+                    <span className='block text-[10px] leading-tight text-destructive'>Out of stock</span>
+                  )}
                 </button>
               );
             })}
