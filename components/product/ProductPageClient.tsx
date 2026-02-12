@@ -271,7 +271,7 @@ export default function ProductPageClient({
         />
         {primaryCategory && (
           <a
-            href={`/product-category/${primaryCategory.slug}`}
+            href={`/sex-toys/${primaryCategory.slug}`}
             className='link-subtle text-sm'
           >
             {primaryCategory.name}

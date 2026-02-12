@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       description,
     },
     alternates: {
-      canonical: `/product-category/${slug}`,
+      canonical: `/sex-toys/${slug}`,
     },
   };
 }
@@ -161,7 +161,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
               products={saleProducts}
               title={`${category.name} on Sale`}
               subtitle="Limited time deals in this category"
-              viewAllHref={`/product-category/${slug}?onSale=true`}
+              viewAllHref={`/sex-toys/${slug}?onSale=true`}
               viewAllText="View All Deals"
             />
           )}

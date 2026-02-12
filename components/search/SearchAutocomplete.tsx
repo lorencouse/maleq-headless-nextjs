@@ -315,7 +315,7 @@ export default function SearchAutocomplete({
             } else {
               const categoryIndex = selectedIndex - products.length;
               router.push(
-                `/product-category/${categories[categoryIndex].slug}`,
+                `/sex-toys/${categories[categoryIndex].slug}`,
               );
               onClose?.();
             }
@@ -514,7 +514,7 @@ export default function SearchAutocomplete({
                         {categories.map((category, index) => (
                           <Link
                             key={category.id}
-                            href={`/product-category/${category.slug}`}
+                            href={`/sex-toys/${category.slug}`}
                             onClick={() => {
                               setIsOpen(false);
                               onClose?.();

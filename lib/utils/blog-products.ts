@@ -34,6 +34,32 @@ const GET_PRODUCT_BY_DATABASE_ID = gql`
   }
 `;
 
+// Query for product variations — gets variation data + parent slug for linking
+const GET_PRODUCT_VARIATION = gql`
+  query GetProductVariation($id: ID!) {
+    productVariation(id: $id, idType: DATABASE_ID) {
+      databaseId
+      name
+      sku
+      price
+      regularPrice
+      salePrice
+      stockStatus
+      image {
+        sourceUrl
+        altText
+      }
+      parent {
+        node {
+          databaseId
+          name
+          slug
+        }
+      }
+    }
+  }
+`;
+
 export interface BlogProduct {
   id: number;
   name: string;
@@ -88,34 +114,62 @@ export async function fetchProductsByIds(ids: number[]): Promise<Map<number, Blo
 
   if (ids.length === 0) return productMap;
 
-  // Fetch all products in parallel
+  // Fetch all products in parallel, falling back to variation query
   const results = await Promise.allSettled(
     ids.map(async (id) => {
+      const idStr = id.toString();
+
+      // Try as a top-level product first
       try {
         const { data } = await getClient().query({
           query: GET_PRODUCT_BY_DATABASE_ID,
-          variables: { id: id.toString() },
+          variables: { id: idStr },
           fetchPolicy: 'no-cache',
         });
-        return data?.product;
-      } catch (error) {
-        console.error(`Error fetching product ${id}:`, error);
-        return null;
+        if (data?.product) {
+          return { type: 'product' as const, data: data.product, requestedId: id };
+        }
+      } catch {
+        // Not a top-level product — fall through to variation query
       }
+
+      // Try as a product variation
+      try {
+        const { data: varData } = await getClient().query({
+          query: GET_PRODUCT_VARIATION,
+          variables: { id: idStr },
+          fetchPolicy: 'no-cache',
+        });
+        if (varData?.productVariation) {
+          return { type: 'variation' as const, data: varData.productVariation, requestedId: id };
+        }
+      } catch {
+        // Not a variation either
+      }
+
+      console.warn(`Product or variation not found for ID ${id}`);
+      return null;
     })
   );
 
   for (const result of results) {
     if (result.status === 'fulfilled' && result.value) {
-      const product = result.value;
+      const { type, data: product, requestedId } = result.value;
+
       const price = parsePrice(product.salePrice || product.price);
       const regularPrice = parsePrice(product.regularPrice) || price;
       const salePrice = product.salePrice ? parsePrice(product.salePrice) : null;
 
-      productMap.set(product.databaseId, {
+      // For variations: use the variation's image/price/stock, but the parent's slug for linking
+      const slug = type === 'variation'
+        ? product.parent?.node?.slug || ''
+        : product.slug;
+      const name = product.name || product.parent?.node?.name || '';
+
+      const blogProduct: BlogProduct = {
         id: product.databaseId,
-        name: product.name,
-        slug: product.slug,
+        name,
+        slug,
         sku: product.sku || null,
         price,
         regularPrice,
@@ -123,10 +177,12 @@ export async function fetchProductsByIds(ids: number[]): Promise<Map<number, Blo
         onSale: salePrice !== null && salePrice < regularPrice,
         image: product.image ? {
           url: getProductionImageUrl(product.image.sourceUrl),
-          altText: product.image.altText || product.name,
+          altText: product.image.altText || name,
         } : null,
         inStock: product.stockStatus === 'IN_STOCK',
-      });
+      };
+
+      productMap.set(requestedId, blogProduct);
     }
   }
 

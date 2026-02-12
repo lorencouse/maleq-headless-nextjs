@@ -32,6 +32,9 @@
 
 ## Content & Data
 
+~~resolve missing blog post: /best-dildo-for-women~~ DONE - was a draft in old-v1-db (not published), imported as draft ID 594126. All 283 published posts were already imported correctly. 71 draft/private posts exist in old-db.sql if needed (use `bun scripts/import-draft-posts.ts --list-drafts`).
+address maleq-link-fix-applied.json broken links
+
 ### Product Content
 
 - [ ] `[HIGH]` SEO optimize product descriptions - use information from product title, attributes, and reviews to create unique, keyword-rich descriptions for each product (pull info from product CSV or XML if needed). Add headers, bullet points, and formatting for readability. Insert relevant images where appropriate from product gallery.
@@ -54,7 +57,7 @@ pink variation (9342851003818) images were added correctly in gallery during las
 
 green variation (850013016006) image not imported. Purple image attached. http://localhost:3000/product/cloud-9-health-wellness-borosilicate-kegel-training-set
 
-Add a feature where admin can assign a products primary image on the product page, similar to how we have the edit product button.  Idealy the button would be 'Assign Primary Image' and would assign the currently displayed image as the primary image for the product, and move the current primary to the gallery.  If it is a variable product, it would assign the image to the currently selected variation. 
+Add a feature where admin can assign a products primary image on the product page, similar to how we have the edit product button. Idealy the button would be 'Assign Primary Image' and would assign the currently displayed image as the primary image for the product, and move the current primary to the gallery. If it is a variable product, it would assign the image to the currently selected variation.
 
 ### Product Data Cleanup
 

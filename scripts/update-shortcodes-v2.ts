@@ -6,7 +6,7 @@
  *
  * Modes:
  *   bun scripts/update-shortcodes-v2.ts --import-v1       Import V1 review data
- *   bun scripts/update-shortcodes-v2.ts --scan             Scan DB for orphaned shortcodes
+ *   bun scripts/update-shortcodes-v2.ts --scan             Scan DB for all shortcodes
  *   bun scripts/update-shortcodes-v2.ts --review           Interactive review
  *   bun scripts/update-shortcodes-v2.ts --apply            Apply approved changes
  *   bun scripts/update-shortcodes-v2.ts --apply --dry-run  Preview apply
@@ -84,6 +84,13 @@ interface StateItem {
   source: 'scan' | 'v1-review' | 'v1-block' | 'v1-needs-fixing';
 }
 
+interface DiscontinuedProduct {
+  oldId: string;
+  context: string;  // Best description we have (slug, caption, link text, etc.)
+  posts: { postId: number; postTitle: string }[];
+  rejectedAt: string;
+}
+
 interface StateFile {
   version: 2;
   createdAt: string;
@@ -92,6 +99,8 @@ interface StateFile {
   // Pattern maps: slug -> approved product mapping for auto-apply
   approvedPatterns: Record<string, { productId: number; productName: string; productSlug: string }>;
   rejectedSlugs: string[];
+  // Discontinued products: oldId -> info about where they appear
+  discontinuedProducts: Record<string, DiscontinuedProduct>;
 }
 
 interface ChangelogEntry {
@@ -163,12 +172,24 @@ const COLOR_SUFFIXES = [
   'clear', 'smoke', 'grey', 'gray', 'brown', 'gold', 'silver', 'red-velvet',
   'periwinkle', 'vanilla', 'chocolate', 'flesh', 'nude', 'natural', 'teal',
   'violet', 'lavender', 'coral', 'aqua', 'navy', 'midnight', 'ice', 'frost',
+  'lilac', 'magenta', 'ivory', 'charcoal', 'rose', 'burgundy', 'crimson',
+  'indigo', 'maroon', 'olive', 'plum', 'ruby', 'sapphire', 'tan', 'turquoise',
 ];
 const SIZE_SUFFIXES = [
   'small', 'medium', 'large', 'xl', 'xxl', 'xs', 'sm', 'md', 'lg',
   '1-oz', '2-oz', '4-oz', '8-oz', '16-oz', 'oz', 'ml', 'pack', 'count', 'net',
 ];
 const VARIANT_WORDS = ['select', 'deluxe', 'premium', 'pro', 'plus', 'mini', 'max', 'ultra'];
+// Generic product-type words filtered from word-overlap matching (not from slug stripping)
+const GENERIC_WORDS = [
+  'vibrator', 'dildo', 'plug', 'ring', 'pump', 'sleeve', 'stroker', 'massager',
+  'lube', 'lubricant', 'cream', 'gel', 'oil', 'spray', 'wash', 'cleaner',
+  'cock', 'anal', 'butt', 'prostate', 'penis', 'nipple',
+  'silicone', 'rubber', 'glass', 'steel', 'leather', 'latex', 'nylon',
+  'rechargeable', 'waterproof', 'wireless', 'remote', 'control',
+  'inch', 'inches', 'set', 'kit', 'pair', 'piece', 'pack',
+  'spot', 'suction', 'thrusting', 'rotating', 'dual', 'double', 'triple',
+];
 
 function stripVariants(slug: string): string {
   let result = slug;
@@ -212,6 +233,13 @@ class ProductIndex {
     for (const product of this.products) {
       this.byId.set(product.id, product);
       this.bySlug.set(product.slug.toLowerCase(), product);
+
+      // Also index without distributor prefix (wd-, wt-, stc-) for better matching
+      const slugLower = product.slug.toLowerCase();
+      const prefixMatch = slugLower.match(/^(wd|wt|stc)-(.+)$/);
+      if (prefixMatch && !this.bySlug.has(prefixMatch[2])) {
+        this.bySlug.set(prefixMatch[2], product);
+      }
 
       const normalized = normalizeForComparison(product.name);
       if (!this.byNormalizedName.has(normalized)) {
@@ -257,12 +285,18 @@ class ProductIndex {
     const exact = this.bySlug.get(normalizedSlug);
     if (exact) addResult(exact, 100, 'exact_slug');
 
-    // 2. Simple variations
+    // 2. Simple variations (also try with common distributor prefixes)
     const simpleVariations = [
       normalizedSlug.replace(/-\d+(-oz|-ml|-pack|-count)?$/, ''),
       normalizedSlug.replace(/^(the-|a-|an-)/, ''),
       normalizedSlug.replace(/-net$/, ''),
     ];
+    // Also try adding distributor prefixes (wd-, etc.) to search slug
+    const DIST_PREFIXES = ['wd-', 'wt-', 'stc-'];
+    for (const prefix of DIST_PREFIXES) {
+      simpleVariations.push(prefix + normalizedSlug);
+      simpleVariations.push(prefix + normalizedSlug.replace(/-net$/, ''));
+    }
     for (const variant of simpleVariations) {
       const match = this.bySlug.get(variant);
       if (match) addResult(match, 95, 'slug_variant');
@@ -276,37 +310,95 @@ class ProductIndex {
       }
     }
 
-    // 4. Word overlap matching
-    const slugWords = normalizedSlug.split('-').filter(w =>
-      !COLOR_SUFFIXES.includes(w) && !SIZE_SUFFIXES.includes(w) &&
-      !VARIANT_WORDS.includes(w) && w.length > 2
-    );
-
-    if (slugWords.length >= 3) {
-      const wordMatches: { product: ProductLookup; count: number; ratio: number }[] = [];
+    // 4. Containment match — one slug contains the other
+    //    Only consider if both slugs have meaningful length (>10 chars)
+    if (results.length === 0 || results[0].confidence < 98) {
+      const containResults: { product: ProductLookup; ratio: number }[] = [];
       for (const [productSlug, product] of this.bySlug) {
-        const productWords = productSlug.split('-').filter(w =>
-          !COLOR_SUFFIXES.includes(w) && !SIZE_SUFFIXES.includes(w) &&
-          !VARIANT_WORDS.includes(w) && w.length > 2
-        );
-        const matchingWords = slugWords.filter(w => productWords.includes(w));
-        const matchRatio = matchingWords.length / Math.max(slugWords.length, productWords.length);
-        if (matchingWords.length >= 3 && matchRatio > 0.6) {
-          wordMatches.push({ product, count: matchingWords.length, ratio: matchRatio });
+        // Skip very short slugs that trivially match inside longer ones
+        if (productSlug.length < 10 || normalizedSlug.length < 10) continue;
+        if (productSlug.includes(normalizedSlug) || normalizedSlug.includes(productSlug)) {
+          const shorter = Math.min(normalizedSlug.length, productSlug.length);
+          const longer = Math.max(normalizedSlug.length, productSlug.length);
+          const ratio = shorter / longer;
+          // Only count if the shorter is at least 50% of the longer
+          if (ratio >= 0.5) {
+            containResults.push({ product, ratio });
+          }
         }
       }
-      wordMatches.sort((a, b) => b.count - a.count || b.ratio - a.ratio);
-      for (const wm of wordMatches.slice(0, 3)) {
-        addResult(wm.product, Math.min(85, 60 + wm.count * 5), 'word_match');
+      containResults.sort((a, b) => b.ratio - a.ratio);
+      for (const cr of containResults.slice(0, 3)) {
+        // Scale: 70% length ratio → 85 confidence, 100% → 99
+        addResult(cr.product, Math.round(55 + cr.ratio * 44), 'contains_slug');
       }
     }
 
-    // 5. Fuzzy similarity (skip if we already have high-confidence matches)
-    if (results.length === 0 || results[0].confidence < 90) {
+    // 5. Prefix matching — shared beginning words are a strong signal
+    const inputWords = normalizedSlug.split('-');
+    if (inputWords.length >= 3) {
+      const prefixResults: { product: ProductLookup; prefixLen: number; inputLen: number; prodLen: number }[] = [];
+      for (const [productSlug, product] of this.bySlug) {
+        const prodWords = productSlug.split('-');
+        // Count matching prefix words
+        let prefixLen = 0;
+        const minLen = Math.min(inputWords.length, prodWords.length);
+        for (let i = 0; i < minLen; i++) {
+          if (inputWords[i] === prodWords[i] || inputWords[i].startsWith(prodWords[i]) || prodWords[i].startsWith(inputWords[i])) {
+            prefixLen++;
+          } else {
+            break;
+          }
+        }
+        if (prefixLen >= 3) {
+          prefixResults.push({ product, prefixLen, inputLen: inputWords.length, prodLen: prodWords.length });
+        }
+      }
+      prefixResults.sort((a, b) => b.prefixLen - a.prefixLen);
+      for (const pr of prefixResults.slice(0, 3)) {
+        // Score: 3-word prefix → 85, scales up with longer prefix
+        // Bonus if prefix covers most of the shorter slug
+        const coverage = pr.prefixLen / Math.min(pr.inputLen, pr.prodLen);
+        const confidence = Math.min(98, Math.round(75 + pr.prefixLen * 3 + coverage * 10));
+        addResult(pr.product, confidence, `prefix_${pr.prefixLen}w`);
+      }
+    }
+
+    // 6. Word overlap matching (with stemmed/prefix word matching, filtering generic words)
+    const isFilteredWord = (w: string) =>
+      COLOR_SUFFIXES.includes(w) || SIZE_SUFFIXES.includes(w) ||
+      VARIANT_WORDS.includes(w) || GENERIC_WORDS.includes(w) || w.length <= 2;
+
+    const slugWords = normalizedSlug.split('-').filter(w => !isFilteredWord(w));
+
+    if (slugWords.length >= 2) {
+      const wordMatches: { product: ProductLookup; count: number; ratio: number }[] = [];
+      for (const [productSlug, product] of this.bySlug) {
+        const productWords = productSlug.split('-').filter(w => !isFilteredWord(w));
+        if (productWords.length === 0) continue;
+        // Match words including prefix matches (e.g., "inches" matches "inch")
+        const matchingWords = slugWords.filter(sw =>
+          productWords.some(pw => sw === pw || sw.startsWith(pw) || pw.startsWith(sw))
+        );
+        const matchRatio = matchingWords.length / Math.max(slugWords.length, productWords.length);
+        if (matchingWords.length >= 2 && matchRatio > 0.5) {
+          wordMatches.push({ product, count: matchingWords.length, ratio: matchRatio });
+        }
+      }
+      wordMatches.sort((a, b) => b.ratio - a.ratio || b.count - a.count);
+      for (const wm of wordMatches.slice(0, 3)) {
+        // Scale confidence by ratio: 0.5 → 65, 0.8 → 86, 1.0 → 98
+        const confidence = Math.round(50 + wm.ratio * 48);
+        addResult(wm.product, confidence, 'word_match');
+      }
+    }
+
+    // 6. Fuzzy similarity (skip if we already have high-confidence matches)
+    if (results.length === 0 || results[0].confidence < 85) {
       const fuzzyResults: { product: ProductLookup; sim: number }[] = [];
       for (const [productSlug, product] of this.bySlug) {
-        // Quick length check to skip obviously different slugs
-        if (Math.abs(normalizedSlug.length - productSlug.length) > normalizedSlug.length * 0.5) continue;
+        // Relaxed length check — allow up to 70% difference for substring-like matches
+        if (Math.abs(normalizedSlug.length - productSlug.length) > normalizedSlug.length * 0.7) continue;
         const sim1 = similarity(normalizedSlug, productSlug);
         const sim2 = sim1 < 0.6 ? similarity(strippedSlug, stripVariants(productSlug)) : sim1;
         const sim = Math.max(sim1, sim2);
@@ -354,8 +446,14 @@ class ProductIndex {
       const nameResults: { product: ProductLookup; score: number }[] = [];
       for (const product of this.products) {
         const prodNorm = normalizeForComparison(product.name);
+        // Skip very short or empty product names — they match everything
+        if (prodNorm.length < 10) continue;
         if (prodNorm.includes(normalized) || normalized.includes(prodNorm)) {
-          const ratio = Math.min(normalized.length, prodNorm.length) / Math.max(normalized.length, prodNorm.length);
+          const shorter = Math.min(normalized.length, prodNorm.length);
+          const longer = Math.max(normalized.length, prodNorm.length);
+          const ratio = shorter / longer;
+          // Require the shorter to be at least 50% of the longer
+          if (ratio < 0.5) continue;
           nameResults.push({ product, score: 70 + ratio * 25 });
         }
       }
@@ -370,6 +468,7 @@ class ProductIndex {
       const fuzzyResults: { product: ProductLookup; sim: number }[] = [];
       for (const product of this.products) {
         const prodNorm = normalizeForComparison(product.name);
+        if (prodNorm.length < 10) continue;
         if (Math.abs(normalized.length - prodNorm.length) > normalized.length * 0.5) continue;
         const sim = similarity(normalized, prodNorm);
         if (sim >= 0.65) {
@@ -421,6 +520,10 @@ class StateManager {
   constructor() {
     if (existsSync(STATE_PATH)) {
       this.state = JSON.parse(readFileSync(STATE_PATH, 'utf-8'));
+      // Ensure discontinuedProducts exists (migration from older state files)
+      if (!this.state.discontinuedProducts) {
+        this.state.discontinuedProducts = {};
+      }
       console.log(`  Loaded state: ${this.state.items.length} items`);
     } else {
       this.state = {
@@ -430,6 +533,7 @@ class StateManager {
         items: [],
         approvedPatterns: {},
         rejectedSlugs: [],
+        discontinuedProducts: {},
       };
       console.log('  Created new state file');
     }
@@ -473,6 +577,25 @@ class StateManager {
     return autoApplied;
   }
 
+  /** Approve ALL pending items with the same old product ID */
+  approveByOldId(oldId: string, productId: number, productName: string, productSlug: string): number {
+    let autoApplied = 0;
+    for (const item of this.state.items) {
+      if (item.decision === 'pending' && item.oldId === oldId) {
+        item.approvedProductId = productId;
+        item.approvedProductName = productName;
+        item.approvedProductSlug = productSlug;
+        item.newShortcode = `[add_to_cart id="${productId}"]`;
+        item.newUrl = `/product/${productSlug}/`;
+        item.decision = 'approved';
+        item.reviewedAt = new Date().toISOString();
+        item.notes = `Auto-applied from same old ID ${oldId}`;
+        autoApplied++;
+      }
+    }
+    return autoApplied;
+  }
+
   addRejectedSlug(slug: string): number {
     if (!this.state.rejectedSlugs.includes(slug)) {
       this.state.rejectedSlugs.push(slug);
@@ -494,13 +617,76 @@ class StateManager {
     return autoRejected;
   }
 
+  /** Mark an old product ID as discontinued. Rejects ALL pending items with that old ID. */
+  addDiscontinuedProduct(oldId: string, item: StateItem): number {
+    // Build context description from best available signal
+    const context = item.context.nearbySlug
+      || item.context.figCaption
+      || item.context.linkText
+      || item.context.imageAlt
+      || item.context.nearestHeading
+      || `old ID ${oldId}`;
+
+    // Collect all posts that reference this old ID
+    const posts = this.state.items
+      .filter(i => i.oldId === oldId)
+      .map(i => ({ postId: i.postId, postTitle: i.postTitle }));
+    // Deduplicate by postId
+    const uniquePosts = Array.from(new Map(posts.map(p => [p.postId, p])).values());
+
+    this.state.discontinuedProducts[oldId] = {
+      oldId,
+      context,
+      posts: uniquePosts,
+      rejectedAt: new Date().toISOString(),
+    };
+
+    // Auto-reject ALL pending items with this old product ID
+    let autoRejected = 0;
+    for (const i of this.state.items) {
+      if (i.decision === 'pending' && i.oldId === oldId) {
+        i.decision = 'rejected';
+        i.approvedProductId = null;
+        i.approvedProductName = null;
+        i.approvedProductSlug = null;
+        i.newShortcode = null;
+        i.newUrl = null;
+        i.reviewedAt = new Date().toISOString();
+        i.notes = `Discontinued product (old ID ${oldId})`;
+        autoRejected++;
+      }
+    }
+    return autoRejected;
+  }
+
+  /** Check if an old product ID is discontinued */
+  isDiscontinued(oldId: string): boolean {
+    return oldId in this.state.discontinuedProducts;
+  }
+
   /** Apply all stored patterns to pending items */
-  applyStoredPatterns(): { approved: number; rejected: number } {
+  applyStoredPatterns(): { approved: number; rejected: number; discontinued: number } {
     let approved = 0;
     let rejected = 0;
+    let discontinued = 0;
 
     for (const item of this.state.items) {
       if (item.decision !== 'pending') continue;
+
+      // Check discontinued products by old ID first
+      if (this.isDiscontinued(item.oldId)) {
+        item.decision = 'rejected';
+        item.approvedProductId = null;
+        item.approvedProductName = null;
+        item.approvedProductSlug = null;
+        item.newShortcode = null;
+        item.newUrl = null;
+        item.reviewedAt = new Date().toISOString();
+        item.notes = `Discontinued product (old ID ${item.oldId})`;
+        discontinued++;
+        continue;
+      }
+
       const slug = item.context.nearbySlug;
       if (!slug) continue;
 
@@ -528,7 +714,7 @@ class StateManager {
       }
     }
 
-    return { approved, rejected };
+    return { approved, rejected, discontinued };
   }
 
   getSummary(): { total: number; pending: number; approved: number; rejected: number } {
@@ -603,14 +789,18 @@ function generateSuggestions(context: ContextSignals, index: ProductIndex): Sugg
     collect(index.suggestFromSlug(context.nearbySlug));
   }
 
-  // Secondary signals: name-based
-  if (context.figCaption) {
+  // Secondary signals: name-based (skip very short/generic text)
+  const MIN_NAME_LENGTH = 8;
+  const GENERIC_LINK_TEXTS = ['shop', 'store', 'buy', 'buy now', 'add to cart', 'mq store', 'shop now', 'click here', 'learn more'];
+
+  if (context.figCaption && context.figCaption.length >= MIN_NAME_LENGTH) {
     collect(index.suggestFromName(context.figCaption));
   }
-  if (context.imageAlt) {
+  if (context.imageAlt && context.imageAlt.length >= MIN_NAME_LENGTH) {
     collect(index.suggestFromName(context.imageAlt));
   }
-  if (context.linkText) {
+  if (context.linkText && context.linkText.length >= MIN_NAME_LENGTH &&
+      !GENERIC_LINK_TEXTS.includes(context.linkText.toLowerCase())) {
     collect(index.suggestFromName(context.linkText));
   }
 
@@ -818,13 +1008,6 @@ async function scanForShortcodes(
 ): Promise<void> {
   console.log('\n── Scan for Shortcodes ─────────────────────────────\n');
 
-  // Get all valid product IDs to identify orphaned shortcodes
-  const [productRows] = await connection.execute(
-    "SELECT ID FROM wp_posts WHERE post_type IN ('product', 'product_variation') AND post_status = 'publish'"
-  );
-  const validIds = new Set((productRows as any[]).map(p => String(p.ID)));
-  console.log(`  Valid product IDs: ${validIds.size}`);
-
   // Query all post types for shortcodes
   const [rows] = await connection.execute(`
     SELECT ID, post_title, post_name, post_content, post_type
@@ -838,9 +1021,9 @@ async function scanForShortcodes(
   console.log(`  Posts with shortcodes: ${posts.length}`);
 
   let totalShortcodes = 0;
-  let orphaned = 0;
   let newItems = 0;
   let alreadyTracked = 0;
+  let autoApprovedCount = 0;
 
   const shortcodeRegex = /\[(add_to_cart|product)\s+id="(\d+)"\]/g;
 
@@ -856,9 +1039,7 @@ async function scanForShortcodes(
       const shortcodeType = match[1] as 'add_to_cart' | 'product';
       const oldId = match[2];
 
-      // Skip if the ID is a valid product (not orphaned)
-      if (validIds.has(oldId)) continue;
-      orphaned++;
+      // ALL shortcodes are candidates - old IDs may collide with new products
 
       // Check if already in state
       if (stateMgr.findItem(post.ID, oldId)) {
@@ -878,7 +1059,11 @@ async function scanForShortcodes(
       let newUrl: string | null = null;
       let notes: string | null = null;
 
-      if (context.nearbySlug && stateMgr.state.approvedPatterns[context.nearbySlug]) {
+      // Check if this old ID is already marked discontinued
+      if (stateMgr.isDiscontinued(oldId)) {
+        decision = 'rejected';
+        notes = `Discontinued product (old ID ${oldId})`;
+      } else if (context.nearbySlug && stateMgr.state.approvedPatterns[context.nearbySlug]) {
         const p = stateMgr.state.approvedPatterns[context.nearbySlug];
         decision = 'approved';
         approvedProductId = p.productId;
@@ -894,6 +1079,24 @@ async function scanForShortcodes(
 
       // Generate suggestions for pending items
       const suggestions = decision === 'pending' ? generateSuggestions(context, index) : [];
+
+      // Auto-approve if top suggestion confidence >= 85%
+      if (decision === 'pending' && suggestions.length > 0 && suggestions[0].confidence >= 85) {
+        const top = suggestions[0];
+        decision = 'approved';
+        approvedProductId = top.product.id;
+        approvedProductName = top.product.name;
+        approvedProductSlug = top.product.slug;
+        newShortcode = `[add_to_cart id="${top.product.id}"]`;
+        newUrl = `/product/${top.product.slug}/`;
+        notes = `Auto-approved (${top.confidence}% confidence, ${top.method})`;
+        // Also store pattern for future matches
+        if (context.nearbySlug) {
+          stateMgr.state.approvedPatterns[context.nearbySlug] = {
+            productId: top.product.id, productName: top.product.name, productSlug: top.product.slug,
+          };
+        }
+      }
 
       const item: StateItem = {
         postId: post.ID,
@@ -917,6 +1120,9 @@ async function scanForShortcodes(
 
       stateMgr.addItem(item);
       newItems++;
+      if (decision === 'approved' && notes?.startsWith('Auto-approved')) {
+        autoApprovedCount++;
+      }
     }
   }
 
@@ -925,9 +1131,9 @@ async function scanForShortcodes(
   const summary = stateMgr.getSummary();
   console.log('\n── Scan Results ────────────────────────────────────');
   console.log(`  Total shortcodes found:  ${totalShortcodes}`);
-  console.log(`  Orphaned (broken ID):    ${orphaned}`);
   console.log(`  Already tracked:         ${alreadyTracked}`);
   console.log(`  New items added:         ${newItems}`);
+  console.log(`  Auto-approved (>=85%):   ${autoApprovedCount}`);
   console.log('');
   console.log(`  State total:   ${summary.total}`);
   console.log(`  Approved:      ${summary.approved}`);
@@ -945,12 +1151,58 @@ async function interactiveReview(
 
   // First, apply stored patterns to any pending items
   const patternResult = stateMgr.applyStoredPatterns();
-  if (patternResult.approved + patternResult.rejected > 0) {
-    console.log(`Auto-applied stored patterns: ${patternResult.approved} approved, ${patternResult.rejected} rejected`);
+  if (patternResult.approved + patternResult.rejected + patternResult.discontinued > 0) {
+    console.log(`Auto-applied stored patterns: ${patternResult.approved} approved, ${patternResult.rejected} rejected, ${patternResult.discontinued} discontinued`);
     stateMgr.save();
   }
 
-  const pendingItems = stateMgr.state.items.filter(i => i.decision === 'pending');
+  // Auto-approve high-confidence items (>=85%)
+  let autoApproved = 0;
+  const pendingForRegen = stateMgr.state.items.filter(i => i.decision === 'pending');
+  let regenIdx = 0;
+  for (const item of pendingForRegen) {
+    regenIdx++;
+    if (regenIdx % 10 === 0 || regenIdx === 1) {
+      process.stdout.write(`  Regenerating suggestions: ${regenIdx}/${pendingForRegen.length}...\r`);
+    }
+
+    // Always regenerate suggestions with latest algorithm
+    item.suggestions = generateSuggestions(item.context, index);
+
+    if (item.suggestions.length > 0 && item.suggestions[0].confidence >= 85) {
+      const top = item.suggestions[0];
+      item.approvedProductId = top.product.id;
+      item.approvedProductName = top.product.name;
+      item.approvedProductSlug = top.product.slug;
+      item.newShortcode = `[add_to_cart id="${top.product.id}"]`;
+      item.newUrl = `/product/${top.product.slug}/`;
+      item.decision = 'approved';
+      item.reviewedAt = new Date().toISOString();
+      item.notes = `Auto-approved (${top.confidence}% confidence, ${top.method})`;
+      autoApproved++;
+
+      if (item.context.nearbySlug) {
+        stateMgr.addApprovedPattern(
+          item.context.nearbySlug, top.product.id, top.product.name, top.product.slug,
+        );
+      }
+    }
+  }
+  process.stdout.write('\r' + ' '.repeat(60) + '\r'); // Clear progress line
+  console.log(`Regenerated suggestions for ${pendingForRegen.length} items`);
+  if (autoApproved > 0) {
+    console.log(`Auto-approved ${autoApproved} items with >=85% confidence`);
+  }
+  stateMgr.save();
+
+  // Sort pending items: highest confidence first, no suggestions last
+  const pendingItems = stateMgr.state.items
+    .filter(i => i.decision === 'pending')
+    .sort((a, b) => {
+      const aConf = a.suggestions.length > 0 ? a.suggestions[0].confidence : -1;
+      const bConf = b.suggestions.length > 0 ? b.suggestions[0].confidence : -1;
+      return bConf - aConf;
+    });
 
   if (pendingItems.length === 0) {
     console.log('No pending items to review!');
@@ -959,14 +1211,14 @@ async function interactiveReview(
     return;
   }
 
-  console.log(`${pendingItems.length} items pending review\n`);
+  console.log(`${pendingItems.length} items pending review (sorted by confidence)\n`);
   console.log('Commands:');
-  console.log('  1/2/3   Pick suggestion 1, 2, or 3');
-  console.log('  r       Reject (discontinued/remove)');
-  console.log('  s       Skip for now');
-  console.log('  i       Enter product ID manually');
-  console.log('  f       Search for product');
-  console.log('  q       Quit and save');
+  console.log('  1/2/3      Pick suggestion 1, 2, or 3');
+  console.log('  <id>       Enter product ID directly (e.g. 195685)');
+  console.log('  r          Reject (discontinued/remove)');
+  console.log('  s          Skip for now');
+  console.log('  f          Search for product');
+  console.log('  q          Quit and save');
   console.log('');
   console.log('═'.repeat(70));
 
@@ -982,10 +1234,8 @@ async function interactiveReview(
       continue;
     }
 
-    // Generate fresh suggestions if none exist
-    if (item.suggestions.length === 0) {
-      item.suggestions = generateSuggestions(item.context, index);
-    }
+    // Always regenerate suggestions with latest algorithm
+    item.suggestions = generateSuggestions(item.context, index);
 
     console.log('');
     console.log(`[${reviewed + 1}/${pendingItems.length}] ${item.postType}: "${item.postTitle}" (post #${item.postId})`);
@@ -1028,7 +1278,7 @@ async function interactiveReview(
 
     let validDecision = false;
     while (!validDecision) {
-      const answer = await prompt('\n>>> (1/2/3/r/s/i/f/q): ');
+      const answer = await prompt('\n>>> (1/2/3/<id>/r/s/f/q): ');
 
       if (answer.toLowerCase() === 'q') {
         console.log('\nSaving and exiting...');
@@ -1052,21 +1302,26 @@ async function interactiveReview(
         item.newShortcode = null;
         item.newUrl = null;
         item.reviewedAt = new Date().toISOString();
-        item.notes = 'Rejected in review';
+        item.notes = `Discontinued product (old ID ${item.oldId})`;
         reviewed++;
         validDecision = true;
 
-        // Auto-reject same slug
+        // Mark as discontinued — auto-rejects ALL pending items with same old ID
+        const autoById = stateMgr.addDiscontinuedProduct(item.oldId, item);
+        // Also reject same slug pattern
+        let autoBySlug = 0;
         if (item.context.nearbySlug) {
-          const autoCount = stateMgr.addRejectedSlug(item.context.nearbySlug);
-          console.log(`  → Rejected${autoCount > 0 ? ` (+${autoCount} auto-rejected same slug)` : ''}`);
-        } else {
-          console.log('  → Rejected');
+          autoBySlug = stateMgr.addRejectedSlug(item.context.nearbySlug);
         }
-      } else if (/^[1-3]$/.test(answer)) {
-        const idx = parseInt(answer, 10) - 1;
-        if (idx < item.suggestions.length) {
-          const selected = item.suggestions[idx];
+        const totalAuto = autoById + autoBySlug;
+        const disc = stateMgr.state.discontinuedProducts[item.oldId];
+        console.log(`  → Discontinued (old ID ${item.oldId}, found in ${disc.posts.length} posts)${totalAuto > 0 ? ` (+${totalAuto} auto-rejected)` : ''}`);
+      } else if (/^\d+$/.test(answer)) {
+        const num = parseInt(answer, 10);
+
+        // 1-3: pick a suggestion
+        if (num >= 1 && num <= 3 && num <= item.suggestions.length) {
+          const selected = item.suggestions[num - 1];
           item.approvedProductId = selected.product.id;
           item.approvedProductName = selected.product.name;
           item.approvedProductSlug = selected.product.slug;
@@ -1074,55 +1329,49 @@ async function interactiveReview(
           item.newUrl = `/product/${selected.product.slug}/`;
           item.decision = 'approved';
           item.reviewedAt = new Date().toISOString();
-          item.notes = `Selected suggestion #${idx + 1}`;
+          item.notes = `Selected suggestion #${num}`;
           reviewed++;
           validDecision = true;
 
-          // Auto-apply to same slug
+          // Auto-apply to all items with same old ID or same slug
+          let autoCount = stateMgr.approveByOldId(item.oldId, selected.product.id, selected.product.name, selected.product.slug);
           if (item.context.nearbySlug) {
-            const autoCount = stateMgr.addApprovedPattern(
+            autoCount += stateMgr.addApprovedPattern(
               item.context.nearbySlug,
               selected.product.id,
               selected.product.name,
               selected.product.slug,
             );
-            console.log(`  → Approved: ${selected.product.name}${autoCount > 0 ? ` (+${autoCount} auto-applied same slug)` : ''}`);
-          } else {
-            console.log(`  → Approved: ${selected.product.name}`);
           }
-        } else {
-          console.log(`  → No suggestion #${answer}. Only ${item.suggestions.length} available.`);
-        }
-      } else if (answer.toLowerCase() === 'i') {
-        const idStr = await prompt('  Enter product ID: ');
-        const productId = parseInt(idStr, 10);
-        if (isNaN(productId)) {
-          console.log('  → Invalid ID.');
-          continue;
-        }
-        const product = index.getById(productId);
-        if (!product) {
-          console.log(`  → Product ID ${productId} not found.`);
-          continue;
-        }
-        item.approvedProductId = product.id;
-        item.approvedProductName = product.name;
-        item.approvedProductSlug = product.slug;
-        item.newShortcode = `[add_to_cart id="${product.id}"]`;
-        item.newUrl = `/product/${product.slug}/`;
-        item.decision = 'manual';
-        item.reviewedAt = new Date().toISOString();
-        item.notes = 'Manual ID entry';
-        reviewed++;
-        validDecision = true;
+          console.log(`  → Approved: ${selected.product.name}${autoCount > 0 ? ` (+${autoCount} auto-applied)` : ''}`);
+        } else if (num > 3) {
+          // Treat as a product ID
+          const product = index.getById(num);
+          if (!product) {
+            console.log(`  → Product ID ${num} not found.`);
+            continue;
+          }
+          item.approvedProductId = product.id;
+          item.approvedProductName = product.name;
+          item.approvedProductSlug = product.slug;
+          item.newShortcode = `[add_to_cart id="${product.id}"]`;
+          item.newUrl = `/product/${product.slug}/`;
+          item.decision = 'manual';
+          item.reviewedAt = new Date().toISOString();
+          item.notes = 'Manual ID entry';
+          reviewed++;
+          validDecision = true;
 
-        if (item.context.nearbySlug) {
-          const autoCount = stateMgr.addApprovedPattern(
-            item.context.nearbySlug, product.id, product.name, product.slug,
-          );
+          // Auto-apply to all items with same old ID or same slug
+          let autoCount = stateMgr.approveByOldId(item.oldId, product.id, product.name, product.slug);
+          if (item.context.nearbySlug) {
+            autoCount += stateMgr.addApprovedPattern(
+              item.context.nearbySlug, product.id, product.name, product.slug,
+            );
+          }
           console.log(`  → Manual: ${product.name}${autoCount > 0 ? ` (+${autoCount} auto-applied)` : ''}`);
         } else {
-          console.log(`  → Manual: ${product.name}`);
+          console.log(`  → No suggestion #${answer}. Only ${item.suggestions.length} available.`);
         }
       } else if (answer.toLowerCase() === 'f') {
         const query = await prompt('  Search: ');
@@ -1152,19 +1401,19 @@ async function interactiveReview(
           reviewed++;
           validDecision = true;
 
+          // Auto-apply to all items with same old ID or same slug
+          let autoCount = stateMgr.approveByOldId(item.oldId, selected.id, selected.name, selected.slug);
           if (item.context.nearbySlug) {
-            const autoCount = stateMgr.addApprovedPattern(
+            autoCount += stateMgr.addApprovedPattern(
               item.context.nearbySlug, selected.id, selected.name, selected.slug,
             );
-            console.log(`  → Selected: ${selected.name}${autoCount > 0 ? ` (+${autoCount} auto-applied)` : ''}`);
-          } else {
-            console.log(`  → Selected: ${selected.name}`);
           }
+          console.log(`  → Selected: ${selected.name}${autoCount > 0 ? ` (+${autoCount} auto-applied)` : ''}`);
         } else {
           console.log('  → Cancelled.');
         }
       } else {
-        console.log('  → Invalid. Use 1/2/3/r/s/i/f/q');
+        console.log('  → Invalid. Use 1/2/3/<id>/r/s/f/q');
       }
     }
 
@@ -1198,16 +1447,36 @@ async function applyChanges(
     return;
   }
 
+  // Fix any approved items missing slug by looking up from DB
+  let fixedSlugs = 0;
+  for (const item of approvedItems) {
+    if (item.approvedProductId && !item.approvedProductSlug) {
+      const [product] = await connection.execute(
+        "SELECT post_name FROM wp_posts WHERE ID = ? AND post_status = 'publish'",
+        [item.approvedProductId]
+      ) as any[];
+      if (product.length > 0 && product[0].post_name) {
+        item.approvedProductSlug = product[0].post_name;
+        item.newUrl = `/product/${product[0].post_name}/`;
+        fixedSlugs++;
+      }
+    }
+  }
+  if (fixedSlugs > 0) {
+    console.log(`Fixed ${fixedSlugs} items missing product slugs`);
+    stateMgr.save();
+  }
+
   // Build global old-ID → new-ID mapping so ALL instances get replaced,
   // even in posts not individually tracked in state
   const idMapping = new Map<string, { newId: number; newSlug: string; newShortcode: string }>();
   const urlMapping = new Map<string, string>(); // old URL → new URL
 
   for (const item of approvedItems) {
-    if (!idMapping.has(item.oldId) && item.approvedProductId && item.approvedProductSlug) {
+    if (!idMapping.has(item.oldId) && item.approvedProductId) {
       idMapping.set(item.oldId, {
         newId: item.approvedProductId,
-        newSlug: item.approvedProductSlug,
+        newSlug: item.approvedProductSlug || '',
         newShortcode: `[add_to_cart id="${item.approvedProductId}"]`,
       });
     }
@@ -1378,6 +1647,8 @@ async function main() {
     console.log(`  Pending:         ${summary.pending}`);
     console.log(`  Patterns:        ${Object.keys(stateMgr.state.approvedPatterns).length}`);
     console.log(`  Rejected slugs:  ${stateMgr.state.rejectedSlugs.length}`);
+    const discCount = Object.keys(stateMgr.state.discontinuedProducts).length;
+    console.log(`  Discontinued:    ${discCount}`);
 
     // Breakdown by source
     const bySrc: Record<string, number> = {};
@@ -1387,6 +1658,18 @@ async function main() {
     console.log('\n  By source:');
     for (const [src, count] of Object.entries(bySrc)) {
       console.log(`    ${src}: ${count}`);
+    }
+
+    // Show discontinued products list
+    if (discCount > 0) {
+      console.log(`\n── Discontinued Products (${discCount}) ─────────────────`);
+      console.log('  These products need manual removal from blog posts:\n');
+      for (const [oldId, disc] of Object.entries(stateMgr.state.discontinuedProducts)) {
+        console.log(`  Old ID ${oldId}: ${disc.context}`);
+        for (const post of disc.posts) {
+          console.log(`    - Post #${post.postId}: ${post.postTitle}`);
+        }
+      }
     }
     return;
   }

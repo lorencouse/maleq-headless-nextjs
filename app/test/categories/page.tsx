@@ -49,7 +49,7 @@ export default async function TestCategoriesPage() {
             return (
               <Link
                 key={category.id}
-                href={`/product-category/${category.slug}`}
+                href={`/sex-toys/${category.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative overflow-hidden rounded-lg border border-green-500/30 bg-card hover:border-green-500 transition-colors"
@@ -99,7 +99,7 @@ export default async function TestCategoriesPage() {
             return (
               <Link
                 key={category.id}
-                href={`/product-category/${category.slug}`}
+                href={`/sex-toys/${category.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="relative overflow-hidden rounded-lg border border-orange-500/30 bg-card hover:border-orange-500 transition-colors"

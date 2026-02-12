@@ -110,7 +110,7 @@ function extractSpecifications(product: GraphQLProduct, isVariable: boolean): Pr
       value: categoryNodes.map((cat: GraphQLCategory) => cat.name).join(', '),
       links: categoryNodes.map((cat: GraphQLCategory) => ({
         text: cat.name,
-        url: `/product-category/${cat.slug}`,
+        url: `/sex-toys/${cat.slug}`,
       })),
     });
   }

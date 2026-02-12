@@ -18,7 +18,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
 
   return (
     <Link
-      href={`/product-category/${category.slug}`}
+      href={`/sex-toys/${category.slug}`}
       className='group relative overflow-hidden rounded-xl aspect-square'
     >
       {/* Background Image or Gradient */}

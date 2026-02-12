@@ -152,7 +152,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         items={[
           { label: 'Shop', href: '/shop' },
           ...(primaryCategory
-            ? [{ label: primaryCategory.name, href: `/product-category/${primaryCategory.slug}` }]
+            ? [{ label: primaryCategory.name, href: `/sex-toys/${primaryCategory.slug}` }]
             : []),
           { label: product.name },
         ]}

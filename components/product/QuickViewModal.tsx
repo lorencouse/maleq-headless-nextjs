@@ -186,7 +186,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Category */}
               {product.categories?.[0] && (
                 <a
-                  href={`/product-category/${product.categories[0].slug}`}
+                  href={`/sex-toys/${product.categories[0].slug}`}
                   className="text-sm link-animated mb-2 inline-block"
                   onClick={onClose}
                 >

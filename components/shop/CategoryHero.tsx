@@ -72,7 +72,7 @@ export default function CategoryHero({
                       ? [
                           {
                             label: parentCategory.name,
-                            href: `/product-category/${parentCategory.slug}`,
+                            href: `/sex-toys/${parentCategory.slug}`,
                           },
                         ]
                       : []),
