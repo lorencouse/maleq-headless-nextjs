@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'http://maleq-local.local/graphql';
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_WORDPRESS_API_URL;
+
+if (!GRAPHQL_URL) {
+  console.error('NEXT_PUBLIC_WORDPRESS_API_URL is not configured');
+}
 
 // GraphQL query to get product by database ID
 const GET_PRODUCT_BY_ID = `
@@ -47,6 +51,13 @@ export async function GET(
     }
 
     // Query product by database ID
+    if (!GRAPHQL_URL) {
+      return NextResponse.json(
+        { error: 'GraphQL endpoint not configured' },
+        { status: 500 }
+      );
+    }
+
     const response = await fetch(GRAPHQL_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

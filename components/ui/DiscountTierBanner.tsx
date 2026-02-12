@@ -2,6 +2,7 @@ import { AUTO_DISCOUNT_TIERS } from '@/lib/utils/cart-helpers';
 
 interface DiscountTierBannerProps {
   className?: string;
+  variant?: 'compact' | 'full';
 }
 
 export default function DiscountTierBanner({

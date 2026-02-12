@@ -99,6 +99,17 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  // Redirect old /product-category/ URLs to /sex-toys/
+  async redirects() {
+    return [
+      {
+        source: '/product-category/:slug*',
+        destination: '/sex-toys/:slug*',
+        permanent: true,
+      },
+    ];
+  },
+
   // Rewrite GraphQL endpoint if needed
   async rewrites() {
     return [
@@ -171,7 +182,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+              "script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https: http:",
               "font-src 'self' data:",
