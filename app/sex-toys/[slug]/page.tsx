@@ -17,35 +17,40 @@ interface CategoryPageProps {
 }
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const categories = await getHierarchicalCategories();
-  const category = findCategoryBySlug(categories, slug);
+  try {
+    const { slug } = await params;
+    const categories = await getHierarchicalCategories();
+    const category = findCategoryBySlug(categories, slug);
 
-  if (!category) {
+    if (!category) {
+      return {
+        title: 'Category Not Found | Male Q',
+      };
+    }
+
+    const description = `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`;
+
     return {
-      title: 'Category Not Found | Male Q',
+      title: `${category.name} | Shop | Male Q`,
+      description,
+      openGraph: {
+        title: `${category.name} | Male Q`,
+        description,
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary',
+        title: `${category.name} | Male Q`,
+        description,
+      },
+      alternates: {
+        canonical: `/sex-toys/${slug}`,
+      },
     };
+  } catch (error) {
+    console.error('generateMetadata error:', error);
+    return { title: 'Shop | Male Q' };
   }
-
-  const description = `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`;
-
-  return {
-    title: `${category.name} | Shop | Male Q`,
-    description,
-    openGraph: {
-      title: `${category.name} | Male Q`,
-      description,
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary',
-      title: `${category.name} | Male Q`,
-      description,
-    },
-    alternates: {
-      canonical: `/sex-toys/${slug}`,
-    },
-  };
 }
 
 export async function generateStaticParams() {
