@@ -83,6 +83,13 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
+        // V2 WordPress backend (headless API + images)
+        protocol: 'https',
+        hostname: 'wp.maleq.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
         // Production WordPress domain (where images are actually hosted)
         protocol: 'https',
         hostname: 'www.maleq.org',
