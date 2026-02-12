@@ -5,8 +5,6 @@
  * cleaning, and transforming text content.
  */
 
-import DOMPurify from 'isomorphic-dompurify';
-
 /** Words that should remain lowercase in title case (unless first word) */
 const LOWERCASE_WORDS = [
   'the', 'a', 'an', 'and', 'but', 'or', 'for', 'nor',
@@ -83,7 +81,9 @@ export function normalizeWhitespace(text: string): string {
 }
 
 /**
- * Remove HTML tags from text and decode entities (with XSS protection)
+ * Remove HTML tags from text and decode entities.
+ * Uses regex-based stripping (no DOM dependency) since this only
+ * strips ALL tags for plain-text extraction from trusted WordPress content.
  *
  * @example
  * stripHtml('<p>Hello <strong>World</strong></p>') // 'Hello World'
@@ -92,38 +92,18 @@ export function normalizeWhitespace(text: string): string {
 export function stripHtml(html: string): string {
   if (!html) return '';
 
-  // isomorphic-dompurify works on both server and client
-  const result = DOMPurify.sanitize(html, { ALLOWED_TAGS: [], RETURN_TRUSTED_TYPE: false }) as string;
+  const stripped = html
+    // Remove script/style tags and their content
+    .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
+    // Remove HTML comments
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // Remove HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Collapse whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  // Decode HTML entities after stripping tags
-  return decodeHtmlEntities(result);
-}
-
-/**
- * Sanitize HTML content while allowing safe tags
- * Use this when you need to render HTML but want XSS protection
- *
- * @example
- * sanitizeHtml('<p>Hello</p><script>alert("xss")</script>') // '<p>Hello</p>'
- */
-export function sanitizeHtml(html: string, options?: {
-  allowedTags?: string[];
-  allowedAttributes?: Record<string, string[]>;
-}): string {
-  // isomorphic-dompurify works on both server and client
-  const config: { ALLOWED_TAGS?: string[]; ALLOWED_ATTR?: string[]; RETURN_TRUSTED_TYPE?: boolean } = {
-    RETURN_TRUSTED_TYPE: false,
-  };
-
-  if (options?.allowedTags) {
-    config.ALLOWED_TAGS = options.allowedTags;
-  }
-
-  if (options?.allowedAttributes) {
-    config.ALLOWED_ATTR = Object.values(options.allowedAttributes).flat();
-  }
-
-  return DOMPurify.sanitize(html, config) as string;
+  return decodeHtmlEntities(stripped);
 }
 
 /**

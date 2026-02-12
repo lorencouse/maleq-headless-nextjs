@@ -13,9 +13,6 @@ const nextConfig: NextConfig = {
   // Generate ETags for caching
   generateEtags: true,
 
-  // Keep isomorphic-dompurify/jsdom as external (has native fs dependencies)
-  serverExternalPackages: ['isomorphic-dompurify'],
-
   // Optimize package imports
   experimental: {
     optimizePackageImports: ['graphql-request', 'zustand', 'react-hot-toast'],
