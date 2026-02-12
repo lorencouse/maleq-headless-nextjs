@@ -2,105 +2,116 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const test = searchParams.get('test');
   const results: Record<string, string> = {};
 
-  // Test 1: GraphQL client
-  try {
-    const { getClient } = await import('@/lib/apollo/client');
-    results['1_graphqlClient'] = 'import OK';
-    const client = getClient();
-    results['1_graphqlClientInstance'] = client ? 'created OK' : 'NULL';
-  } catch (e: unknown) {
-    results['1_graphqlClient'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
+  // Test specific page code paths
+  if (test === 'brand') {
+    try {
+      const { getBrandBySlug, getBrands, getHierarchicalCategories, getGlobalAttributes, getFilteredProducts } = await import('@/lib/products/combined-service');
+      const { stripHtml } = await import('@/lib/utils/text-utils');
+      const { sortProductsByPriority } = await import('@/lib/utils/product-sort');
+
+      results['1_imports'] = 'OK';
+
+      const brand = await getBrandBySlug('adam-eve');
+      results['2_brandBySlug'] = brand ? `OK: ${brand.name} (${brand.count} products)` : 'NULL (not found)';
+
+      const [brands, categories, attrs] = await Promise.all([
+        getBrands(),
+        getHierarchicalCategories(),
+        getGlobalAttributes(),
+      ]);
+      results['3_brands'] = `OK (${brands.length})`;
+      results['4_categories'] = `OK (${categories.length})`;
+      results['5_attrs'] = `OK (colors: ${attrs.colors.length}, materials: ${attrs.materials.length})`;
+
+      if (brand) {
+        const productsResult = await getFilteredProducts({ limit: 2, brand: 'adam-eve' });
+        results['6_filteredProducts'] = `OK (${productsResult.products.length} products)`;
+        const sorted = sortProductsByPriority(productsResult.products);
+        results['7_sorted'] = `OK (${sorted.length} products)`;
+      }
+    } catch (e: unknown) {
+      results['error'] = e instanceof Error ? (e.stack || e.message) : String(e);
+    }
+    return NextResponse.json(results, { headers: { 'Cache-Control': 'no-store' } });
   }
 
-  // Test 2: Basic GraphQL query
+  if (test === 'category') {
+    try {
+      const { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } = await import('@/lib/products/combined-service');
+      const { sortProductsByPriority } = await import('@/lib/utils/product-sort');
+      const { findCategoryBySlug, flattenCategories, findParentCategory } = await import('@/lib/utils/category-helpers');
+
+      results['1_imports'] = 'OK';
+
+      const allCategories = await getHierarchicalCategories();
+      results['2_categories'] = `OK (${allCategories.length} top-level)`;
+
+      const category = findCategoryBySlug(allCategories, 'anal-toys');
+      results['3_findCategory'] = category ? `OK: ${category.name} (${category.count} products)` : 'NULL (not found)';
+
+      if (category) {
+        const parentCategory = findParentCategory(allCategories, 'anal-toys');
+        results['4_parentCategory'] = parentCategory ? `OK: ${parentCategory.name}` : 'NULL (no parent)';
+
+        const [brandsData, attrsData] = await Promise.all([
+          getBrands(),
+          getGlobalAttributes(),
+        ]);
+        results['5_brandsAndAttrs'] = `OK (brands: ${brandsData.length}, colors: ${attrsData.colors.length})`;
+
+        const productsResult = await getAllProducts({ category: 'anal-toys', limit: 2 });
+        results['6_products'] = `OK (${productsResult.products.length} products)`;
+
+        const saleResult = await getFilteredProducts({ limit: 2, category: 'anal-toys', onSale: true, inStock: true });
+        results['7_saleProducts'] = `OK (${saleResult.products.length} products)`;
+      }
+    } catch (e: unknown) {
+      results['error'] = e instanceof Error ? (e.stack || e.message) : String(e);
+    }
+    return NextResponse.json(results, { headers: { 'Cache-Control': 'no-store' } });
+  }
+
+  // Default: run all basic tests
   try {
     const { getClient } = await import('@/lib/apollo/client');
     const { data } = await getClient().query({
       query: '{ posts(first: 1) { nodes { title } } }',
       variables: {},
     });
-    results['2_graphqlQuery'] = `OK: ${JSON.stringify(data).slice(0, 200)}`;
+    results['graphql'] = 'OK';
   } catch (e: unknown) {
-    results['2_graphqlQuery'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
+    results['graphql'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
   }
 
-  // Test 3: Blog service import
   try {
-    const { getBlogPosts } = await import('@/lib/blog/blog-service');
-    results['3_blogServiceImport'] = 'OK';
+    const { stripHtml } = await import('@/lib/utils/text-utils');
+    results['stripHtml'] = stripHtml('<p>test</p>') === 'test' ? 'OK' : 'UNEXPECTED';
   } catch (e: unknown) {
-    results['3_blogServiceImport'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
+    results['stripHtml'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
   }
 
-  // Test 4: Blog service query
   try {
     const { getBlogPosts } = await import('@/lib/blog/blog-service');
     const posts = await getBlogPosts({ first: 1 });
-    results['4_blogPosts'] = `OK (${posts.posts.length} posts)`;
+    results['blogService'] = `OK (${posts.posts.length})`;
   } catch (e: unknown) {
-    results['4_blogPosts'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
+    results['blogService'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
   }
 
-  // Test 5: isomorphic-dompurify / text-utils
-  try {
-    const { stripHtml } = await import('@/lib/utils/text-utils');
-    results['5_textUtilsImport'] = 'OK';
-    const result = stripHtml('<p>Hello <strong>World</strong></p>');
-    results['5_stripHtml'] = `OK: "${result}"`;
-  } catch (e: unknown) {
-    results['5_textUtils'] = `FAIL: ${e instanceof Error ? e.stack || e.message : String(e)}`;
-  }
-
-  // Test 6: Product service
-  try {
-    const { getProductBySlug } = await import('@/lib/products/product-service');
-    results['6_productServiceImport'] = 'OK';
-  } catch (e: unknown) {
-    results['6_productServiceImport'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
-  }
-
-  // Test 7: Combined service
-  try {
-    const { getFilteredProducts } = await import('@/lib/products/combined-service');
-    results['7_combinedServiceImport'] = 'OK';
-  } catch (e: unknown) {
-    results['7_combinedServiceImport'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
-  }
-
-  // Test 8: Combined service query
   try {
     const { getFilteredProducts } = await import('@/lib/products/combined-service');
     const result = await getFilteredProducts({ limit: 1 });
-    results['8_filteredProducts'] = `OK (${result.products.length} products)`;
+    results['combinedService'] = `OK (${result.products.length})`;
   } catch (e: unknown) {
-    results['8_filteredProducts'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
+    results['combinedService'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
   }
 
-  // Test 9: Hierarchical categories (used by sex-toys page)
-  try {
-    const { getHierarchicalCategories } = await import('@/lib/products/combined-service');
-    const cats = await getHierarchicalCategories();
-    results['9_categories'] = `OK (${cats.length} top-level categories)`;
-  } catch (e: unknown) {
-    results['9_categories'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
-  }
+  results['env'] = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'NOT SET';
 
-  // Test 10: Category helpers
-  try {
-    const { findCategoryBySlug } = await import('@/lib/utils/category-helpers');
-    results['10_categoryHelpers'] = 'import OK';
-  } catch (e: unknown) {
-    results['10_categoryHelpers'] = `FAIL: ${e instanceof Error ? e.message : String(e)}`;
-  }
-
-  // Test 11: Environment check
-  results['11_env_WORDPRESS_API_URL'] = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'NOT SET';
-  results['11_env_NODE_ENV'] = process.env.NODE_ENV || 'NOT SET';
-
-  return NextResponse.json(results, {
-    headers: { 'Cache-Control': 'no-store' },
-  });
+  return NextResponse.json(results, { headers: { 'Cache-Control': 'no-store' } });
 }
