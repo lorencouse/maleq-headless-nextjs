@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOrder, CreateOrderData, OrderLineItem, OrderAddress } from '@/lib/woocommerce/orders';
+import { createOrder, getOrder, CreateOrderData, OrderLineItem, OrderAddress } from '@/lib/woocommerce/orders';
 import { getStripeServer } from '@/lib/stripe/server';
-import { errorResponse, handleApiError } from '@/lib/api/response';
+import { errorResponse, handleApiError, validationError } from '@/lib/api/response';
+import { z } from 'zod';
 
 /**
  * Create Order API Route
@@ -9,56 +10,50 @@ import { errorResponse, handleApiError } from '@/lib/api/response';
  * Creates an order in WooCommerce after successful payment.
  */
 
-export interface CreateOrderRequest {
-  paymentIntentId: string;
-  contact: {
-    email: string;
-    phone?: string;
-  };
-  shippingAddress: {
-    firstName: string;
-    lastName: string;
-    company?: string;
-    address1: string;
-    address2?: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  billingAddress?: {
-    firstName: string;
-    lastName: string;
-    company?: string;
-    address1: string;
-    address2?: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  shippingMethod: {
-    id: string;
-    name: string;
-    price: number;
-  };
-  cartItems: Array<{
-    productId: string;
-    variationId?: string;
-    quantity: number;
-    name: string;
-    sku: string;
-  }>;
-  totals: {
-    subtotal: number;
-    shipping: number;
-    tax: number;
-    discount: number;
-    total: number;
-  };
-  couponCode?: string;
-  customerNote?: string;
-}
+const addressSchema = z.object({
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  company: z.string().max(200).optional(),
+  address1: z.string().min(1, 'Address is required').max(500),
+  address2: z.string().max(500).optional(),
+  city: z.string().min(1, 'City is required').max(200),
+  state: z.string().min(1, 'State is required').max(100),
+  zipCode: z.string().min(1, 'ZIP code is required').max(20),
+  country: z.string().min(2, 'Country is required').max(2),
+});
+
+const orderRequestSchema = z.object({
+  paymentIntentId: z.string().min(1).startsWith('pi_'),
+  contact: z.object({
+    email: z.string().email('Valid email is required'),
+    phone: z.string().max(30).optional(),
+  }),
+  shippingAddress: addressSchema,
+  billingAddress: addressSchema.optional(),
+  shippingMethod: z.object({
+    id: z.string().min(1),
+    name: z.string().min(1),
+    price: z.number().min(0),
+  }),
+  cartItems: z.array(z.object({
+    productId: z.string().min(1),
+    variationId: z.string().optional(),
+    quantity: z.number().int().min(1).max(100),
+    name: z.string().min(1),
+    sku: z.string(),
+  })).min(1, 'Cart cannot be empty'),
+  totals: z.object({
+    subtotal: z.number().min(0),
+    shipping: z.number().min(0),
+    tax: z.number().min(0),
+    discount: z.number().min(0),
+    total: z.number().min(0.01, 'Order total must be greater than zero'),
+  }),
+  couponCode: z.string().max(100).optional(),
+  customerNote: z.string().max(2000).optional(),
+});
+
+export type CreateOrderRequest = z.infer<typeof orderRequestSchema>;
 
 export interface CreateOrderResponse {
   orderId: number;
@@ -69,7 +64,18 @@ export interface CreateOrderResponse {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateOrderRequest = await request.json();
+    const rawBody = await request.json();
+
+    // Validate request body
+    const parseResult = orderRequestSchema.safeParse(rawBody);
+    if (!parseResult.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parseResult.error.issues) {
+        const path = issue.path.join('.');
+        fieldErrors[path] = issue.message;
+      }
+      return validationError(fieldErrors);
+    }
 
     const {
       paymentIntentId,
@@ -81,7 +87,7 @@ export async function POST(request: NextRequest) {
       totals,
       couponCode,
       customerNote,
-    } = body;
+    } = parseResult.data;
 
     // Verify the payment intent
     const stripe = getStripeServer();
@@ -91,11 +97,34 @@ export async function POST(request: NextRequest) {
       return errorResponse('Payment has not been completed', 400, 'PAYMENT_INCOMPLETE');
     }
 
-    // Verify the amount matches
+    // Check for duplicate order - if this paymentIntentId already has an order, return it
+    const existingOrderId = paymentIntent.metadata?.woocommerce_order_id;
+    if (existingOrderId) {
+      try {
+        const existingOrder = await getOrder(parseInt(existingOrderId, 10));
+        if (existingOrder) {
+          return NextResponse.json({
+            orderId: existingOrder.id,
+            orderKey: existingOrder.order_key,
+            status: existingOrder.status,
+            total: existingOrder.total,
+          });
+        }
+      } catch {
+        // Order lookup failed - continue with creation
+        console.warn(`Duplicate check: order ${existingOrderId} not found, creating new order`);
+      }
+    }
+
+    // Verify the amount matches - reject mismatches to prevent incorrect charges
     const expectedAmount = Math.round(totals.total * 100);
     if (paymentIntent.amount !== expectedAmount) {
-      console.warn(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amount}`);
-      // Continue anyway - the payment was successful
+      console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amount}`);
+      return errorResponse(
+        'Order total has changed since payment was initiated. Please try again.',
+        400,
+        'AMOUNT_MISMATCH'
+      );
     }
 
     // Convert addresses to WooCommerce format

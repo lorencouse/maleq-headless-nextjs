@@ -5,10 +5,17 @@ import OrderDetails from '@/components/order/OrderDetails';
 
 interface OrderConfirmationPageProps {
   params: Promise<{ orderId: string }>;
+  searchParams: Promise<{ key?: string }>;
 }
 
-export default async function OrderConfirmationPage({ params }: OrderConfirmationPageProps) {
+export default async function OrderConfirmationPage({ params, searchParams }: OrderConfirmationPageProps) {
   const { orderId } = await params;
+  const { key } = await searchParams;
+
+  // Order key is required to prevent unauthorized access to order details
+  if (!key) {
+    notFound();
+  }
 
   // Fetch order from WooCommerce
   let order;
@@ -20,6 +27,11 @@ export default async function OrderConfirmationPage({ params }: OrderConfirmatio
   }
 
   if (!order) {
+    notFound();
+  }
+
+  // Verify the order key matches to prevent information disclosure
+  if (order.order_key !== key) {
     notFound();
   }
 

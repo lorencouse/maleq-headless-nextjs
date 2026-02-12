@@ -39,6 +39,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const tax = useCartStore((state) => state.tax);
   const total = useCartStore((state) => state.total);
   const clearCart = useCartStore((state) => state.clearCart);
+  const validateCart = useCartStore((state) => state.validateCart);
 
   // Checkout store for form data
   const contact = useCheckoutStore((state) => state.contact);
@@ -63,6 +64,15 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const createPaymentIntent = async () => {
     try {
       setError(null);
+
+      // Validate cart before creating payment intent
+      const validation = validateCart();
+      if (!validation.isValid) {
+        const errorMessages = validation.errors.map((e) => e.message).join('. ');
+        setError(errorMessages);
+        return;
+      }
+
       const response = await fetch('/api/payment/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -158,8 +168,8 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       clearCart();
       clearCheckout();
 
-      // Redirect to confirmation page
-      router.push(`/order-confirmation/${orderData.orderId}`);
+      // Redirect to confirmation page with order key for verification
+      router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
     } catch (err) {
       console.error('Error creating order:', err);
       setError(err instanceof Error ? err.message : 'Failed to complete order');
