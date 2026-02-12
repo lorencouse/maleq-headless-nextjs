@@ -167,7 +167,7 @@ export default async function Home() {
           </div>
           <div className='mt-8 text-center'>
             <Link
-              href='/blog'
+              href='/guides'
               className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
             >
               View All Articles

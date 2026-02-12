@@ -27,7 +27,7 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
                 Unsponsored reviews you can trust.
               </p>
               <Link
-                href="/blog/category/male"
+                href="/guides/category/male"
                 className="inline-flex items-center gap-2 text-blue-500 font-semibold hover:text-blue-600 transition-colors"
               >
                 View All Male Guides
@@ -72,7 +72,7 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
                 Honest reviews to help you explore confidently.
               </p>
               <Link
-                href="/blog/category/female"
+                href="/guides/category/female"
                 className="inline-flex items-center gap-2 text-pink-500 font-semibold hover:text-pink-600 transition-colors"
               >
                 View All Female Guides

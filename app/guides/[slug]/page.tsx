@@ -64,12 +64,12 @@ export async function generateMetadata({
       : `Read ${post.title} on the Male Q blog.`;
 
   return {
-    title: `${post.title} | Male Q Blog`,
+    title: `${post.title} | Male Q Guides`,
     description,
     openGraph: {
       title: post.title,
       description,
-      url: `${SITE_URL}/blog/${slug}`,
+      url: `${SITE_URL}/guides/${slug}`,
       type: 'article',
       publishedTime: post.date,
       authors: post.author?.node?.name ? [post.author.node.name] : undefined,
@@ -93,7 +93,7 @@ export async function generateMetadata({
         : [],
     },
     alternates: {
-      canonical: `${SITE_URL}/blog/${slug}`,
+      canonical: `${SITE_URL}/guides/${slug}`,
     },
   };
 }
@@ -175,7 +175,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         datePublished={post.date}
         dateModified={post.modified || undefined}
         authorName={post.author?.node?.name || 'Male Q'}
-        url={`${SITE_URL}/blog/${slug}`}
+        url={`${SITE_URL}/guides/${slug}`}
         keywords={post.tags?.nodes?.map((tag: any) => tag.name)}
         articleSection={post.categories?.nodes?.[0]?.name}
       />
@@ -186,9 +186,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Breadcrumb */}
       <Breadcrumbs
         items={[
-          { label: 'Blog', href: '/blog' },
+          { label: 'Guides', href: '/guides' },
           ...(post.categories?.nodes?.[0]
-            ? [{ label: post.categories.nodes[0].name, href: `/blog/category/${post.categories.nodes[0].slug}` }]
+            ? [{ label: post.categories.nodes[0].name, href: `/guides/category/${post.categories.nodes[0].slug}` }]
             : []),
           { label: post.title },
         ]}
@@ -271,7 +271,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             {post.tags.nodes.map((tag: any) => (
               <Link
                 key={tag.id}
-                href={`/blog/tag/${tag.slug}`}
+                href={`/guides/tag/${tag.slug}`}
                 className='inline-flex items-center px-3 py-1 bg-input text-foreground text-sm rounded-full hover:bg-border transition-colors leading-none'
               >
                 {tag.name}

@@ -19,7 +19,7 @@ export default function BlogCard({ post }: BlogCardProps) {
   return (
     <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group'>
       {/* Featured Image */}
-      <Link href={`/blog/${post.slug}`} className='blog-card-link'>
+      <Link href={`/guides/${post.slug}`} className='blog-card-link'>
         <div className='relative h-48 w-full bg-muted'>
           {post.featuredImage?.node ? (
             <Image
@@ -57,7 +57,7 @@ export default function BlogCard({ post }: BlogCardProps) {
               {post.categories.nodes.slice(0, 2).map((category) => (
                 <Link
                   key={category.id}
-                  href={`/blog/category/${category.slug}`}
+                  href={`/guides/category/${category.slug}`}
                   className='text-xs font-medium text-primary hover:text-primary-hover'
                 >
                   {category.name}
@@ -77,7 +77,7 @@ export default function BlogCard({ post }: BlogCardProps) {
         <div className='relative pb-2 mb-2'>
           <h2 className='heading-plain text-xl font-bold text-foreground line-clamp-2'>
             <Link
-              href={`/blog/${post.slug}`}
+              href={`/guides/${post.slug}`}
               className='hover:text-primary transition-colors'
             >
               {post.title}

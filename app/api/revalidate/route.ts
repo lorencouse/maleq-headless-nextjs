@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     switch (type) {
       case 'post':
         if (slug) {
-          revalidatePath(`/blog/${slug}`);
-          revalidatePath('/blog');
+          revalidatePath(`/guides/${slug}`);
+          revalidatePath('/guides');
         } else {
-          revalidatePath('/blog');
+          revalidatePath('/guides');
         }
         break;
 

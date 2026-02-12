@@ -274,7 +274,7 @@ export default function SearchAutocomplete({
       saveRecentSearch(term.trim());
       const url = searchMode === 'products'
         ? `/shop?q=${encodeURIComponent(term.trim())}`
-        : `/blog?q=${encodeURIComponent(term.trim())}`;
+        : `/guides?q=${encodeURIComponent(term.trim())}`;
       setIsOpen(false);
       setQuery('');
       onClose?.();
@@ -321,12 +321,12 @@ export default function SearchAutocomplete({
             }
           } else {
             if (selectedIndex < posts.length) {
-              router.push(`/blog/${posts[selectedIndex].slug}`);
+              router.push(`/guides/${posts[selectedIndex].slug}`);
               onClose?.();
             } else {
               const categoryIndex = selectedIndex - posts.length;
               router.push(
-                `/blog/category/${blogCategories[categoryIndex].slug}`,
+                `/guides/category/${blogCategories[categoryIndex].slug}`,
               );
               onClose?.();
             }
@@ -584,7 +584,7 @@ export default function SearchAutocomplete({
                         {blogCategories.map((category, index) => (
                           <Link
                             key={category.id}
-                            href={`/blog/category/${category.slug}`}
+                            href={`/guides/category/${category.slug}`}
                             onClick={() => {
                               setIsOpen(false);
                               onClose?.();
@@ -624,7 +624,7 @@ export default function SearchAutocomplete({
                       {posts.map((post, index) => (
                         <SearchResultRow
                           key={post.id}
-                          href={`/blog/${post.slug}`}
+                          href={`/guides/${post.slug}`}
                           title={post.title}
                           subtitle={post.category}
                           image={post.image}

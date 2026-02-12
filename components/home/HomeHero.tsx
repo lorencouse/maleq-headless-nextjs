@@ -66,7 +66,7 @@ export default function HomeHero() {
               </svg>
             </Link>
             <Link
-              href='/blog'
+              href='/guides'
               className='inline-flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-white/20 transition-colors border border-white/20'
             >
               Explore Guides

@@ -192,8 +192,8 @@ export default function DesktopNav() {
     if (href === '/shop') {
       return pathname === '/shop' || pathname.startsWith('/shop/');
     }
-    if (href === '/blog') {
-      return pathname === '/blog' || pathname.startsWith('/blog/');
+    if (href === '/guides') {
+      return pathname === '/guides' || pathname.startsWith('/guides/');
     }
     return pathname === href;
   };

@@ -11,27 +11,27 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
 
   if (searchQuery) {
     return {
-      title: `Search results for "${searchQuery}" | Blog | Male Q`,
-      description: `Browse blog search results for "${searchQuery}".`,
+      title: `Search results for "${searchQuery}" | Guides | Male Q`,
+      description: `Browse guide search results for "${searchQuery}".`,
       robots: { index: false },
     };
   }
 
   return {
-    title: 'Blog | Male Q',
+    title: 'Guides | Male Q',
     description: 'Read the latest articles, guides, and insights from Male Q. Tips, product reviews, and expert advice for your intimate wellness.',
     openGraph: {
-      title: 'Blog | Male Q',
+      title: 'Guides | Male Q',
       description: 'Read the latest articles, guides, and insights from Male Q.',
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: 'Blog | Male Q',
+      title: 'Guides | Male Q',
       description: 'Read the latest articles, guides, and insights from Male Q.',
     },
     alternates: {
-      canonical: '/blog',
+      canonical: '/guides',
     },
   };
 }
@@ -55,13 +55,13 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
-      <Breadcrumbs items={[{ label: 'Blog' }]} />
+      <Breadcrumbs items={[{ label: 'Guides' }]} />
 
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Blog</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-2">Guides</h1>
             <p className="text-lg text-muted-foreground">
               Insights, stories, and updates from our team
             </p>
@@ -73,7 +73,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
         {/* Did you mean? suggestions when no results */}
         {suggestions && searchQuery && posts.length === 0 && (
-          <DidYouMean suggestions={suggestions} basePath="/blog" />
+          <DidYouMean suggestions={suggestions} basePath="/guides" />
         )}
 
         {/* Search results indicator */}

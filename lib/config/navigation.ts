@@ -121,26 +121,26 @@ export const mainNavigation: NavSection[] = [
   },
   {
     label: 'Guides',
-    href: '/blog',
+    href: '/guides',
     columns: 2,
     children: [
       {
         label: 'Topics',
-        href: '/blog',
+        href: '/guides',
         children: [
-          { label: 'Sex & Intimacy', href: '/blog/category/sex', description: 'Tips and techniques' },
-          { label: 'Relationships', href: '/blog/category/relationship', description: 'Connection advice' },
-          { label: 'Health & Wellness', href: '/blog/category/health', description: 'Sexual health info' },
-          { label: 'Product Guides', href: '/blog/category/guides', description: 'How-to guides' },
+          { label: 'Sex & Intimacy', href: '/guides/category/sex', description: 'Tips and techniques' },
+          { label: 'Relationships', href: '/guides/category/relationship', description: 'Connection advice' },
+          { label: 'Health & Wellness', href: '/guides/category/health', description: 'Sexual health info' },
+          { label: 'Product Guides', href: '/guides/category/guides', description: 'How-to guides' },
         ],
       },
       {
         label: 'Popular Guides',
-        href: '/blog',
+        href: '/guides',
         children: [
-          { label: 'Beginner\'s Guide to Toys', href: '/blog/beginners-guide', featured: true },
-          { label: 'Lube Guide', href: '/blog/lube-guide', featured: true },
-          { label: 'Couples Play', href: '/blog/couples-guide', featured: true },
+          { label: 'Beginner\'s Guide to Toys', href: '/guides/beginners-guide', featured: true },
+          { label: 'Lube Guide', href: '/guides/lube-guide', featured: true },
+          { label: 'Couples Play', href: '/guides/couples-guide', featured: true },
         ],
       },
     ],

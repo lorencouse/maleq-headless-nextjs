@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
 
   if (!category) {
     return {
-      title: 'Category Not Found | Male Q Blog',
+      title: 'Category Not Found | Male Q Guides',
     };
   }
 
@@ -46,20 +46,20 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
     : `Browse ${category.name} articles on the Male Q blog. ${category.count} posts available.`;
 
   return {
-    title: `${category.name} | Male Q Blog`,
+    title: `${category.name} | Male Q Guides`,
     description,
     openGraph: {
-      title: `${category.name} | Male Q Blog`,
+      title: `${category.name} | Male Q Guides`,
       description,
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: `${category.name} | Male Q Blog`,
+      title: `${category.name} | Male Q Guides`,
       description,
     },
     alternates: {
-      canonical: `/blog/category/${slug}`,
+      canonical: `/guides/category/${slug}`,
     },
   };
 }
@@ -114,7 +114,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
         {/* Breadcrumb */}
         <Breadcrumbs
           items={[
-            { label: 'Blog', href: '/blog' },
+            { label: 'Blog', href: '/guides' },
             { label: category.name },
           ]}
         />
@@ -161,7 +161,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
       {/* Back to blog */}
       <div className="mt-12 pt-8 border-t border-border">
         <Link
-          href="/blog"
+          href="/guides"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
