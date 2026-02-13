@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import LoginForm from '@/components/auth/LoginForm';
@@ -22,7 +23,9 @@ export default function LoginPage() {
         </div>
 
         <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-          <LoginForm />
+          <Suspense fallback={<div className="h-64 flex items-center justify-center text-muted-foreground">Loading...</div>}>
+            <LoginForm />
+          </Suspense>
         </div>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">

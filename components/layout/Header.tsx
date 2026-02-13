@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -263,10 +263,12 @@ export default function Header() {
           />
           <div className='fixed top-0 left-0 right-0 z-50 p-4 pt-20'>
             <div className='max-w-2xl mx-auto'>
-              <SearchAutocomplete
-                autoFocus
-                onClose={() => setIsSearchOpen(false)}
-              />
+              <Suspense fallback={<div className="h-[42px] bg-muted rounded-lg animate-pulse" />}>
+                <SearchAutocomplete
+                  autoFocus
+                  onClose={() => setIsSearchOpen(false)}
+                />
+              </Suspense>
             </div>
           </div>
         </>
