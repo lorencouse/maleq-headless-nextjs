@@ -18,6 +18,13 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['graphql-request', 'zustand', 'react-hot-toast'],
   },
 
+  // Disable ESLint during builds — Next.js's internal ESLint runner passes
+  // legacy options (useEslintrc, extensions) incompatible with flat config.
+  // Run ESLint separately: npx eslint .
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   images: {
     // Disable Vercel image optimization (402 quota exceeded)
     unoptimized: true,
