@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    // Disable Vercel image optimization (402 quota exceeded)
+    unoptimized: true,
     // Enable image optimization
     formats: ['image/avif', 'image/webp'],
     // Set device sizes for responsive images
