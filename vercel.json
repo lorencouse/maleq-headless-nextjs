@@ -53,12 +53,7 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/sitemap.xml",
-      "destination": "/sitemap"
-    }
-  ],
+  "rewrites": [],
   "crons": [
     {
       "path": "/api/cron/stock-sync",

@@ -8,26 +8,27 @@
 
 ---
 
-explore uptimerobot free alternatives (uptime kuma, etc)
+adress slow querry times - pages take 5-6 seconds to load on first load. blog articles very slow.  Product filters take 5-10 seconds to apply. Need to optimize GraphQL queries, add caching, and review database indexes.
+
 ## Pre-Launch Checklist
 - [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)
-- [ ] `[HIGH]` Verify all payment flows work correctly
+- [x] `[HIGH]` Verify all payment flows work correctly
   - Test Stripe live mode with real cards
   - Verify order confirmation emails
   - Test failed payment handling
-- [ ] `[HIGH]` Test and fix login/signup flows before launch
+- [x] `[HIGH]` Test and fix login/signup flows before launch
   - Verify email verification works
   - Test password reset flow end-to-end
   - Check session persistence across pages
-- [ ] `[HIGH]` Test email notifications (order confirmation, password reset)
+- [x] `[HIGH]` Test email notifications (order confirmation, password reset)
 - [ ] `[HIGH]` Verify SSL and domain configuration
 - [ ] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production (code ready in `lib/api/admin-auth.ts`)
 - [ ] `[HIGH]` Submit sitemap to Google Search Console
-- [ ] `[HIGH]` Transfer Apple Pay token to new server
+- [x] `[HIGH]` Transfer Apple Pay token to new server
 - [ ] `[MED]` Do page testing on Safari
-- [ ] `[MED]` Set up monitoring and error tracking (Sentry configured)
+- [x] `[MED]` Set up monitoring — Uptime Kuma running at `http://159.69.220.162:3001` (Docker on Hetzner VPS)
 - [ ] `[MED]` Configure CDN for static assets
-- [ ] `[MED]` Set up database backups
+- [x] `[MED]` Set up database backups
 
 ---
 
@@ -104,6 +105,32 @@ explore uptimerobot free alternatives (uptime kuma, etc)
 - API documentation: `docs/API_DOCUMENTATION.md`
 - Store specifications: `docs/STORE_SPECIFICATIONS.md`
 - No `@maleq.com` email references found in codebase (verified 2026-02-09)
+
+### Server Access (Hetzner VPS)
+
+- **Host**: `159.69.220.162` (`ubuntu-4gb-nbg1-1`, Ubuntu 22.04, 4GB RAM)
+- **SSH**: `ssh hetzner` (alias configured in `~/.ssh/config`)
+- **SSH key**: `~/.ssh/id_ed25519` (passphrase-protected, stored in macOS Keychain)
+- **Firewall**: UFW active — ports 22, 80, 443, 3001, 8433-8443
+- **fail2ban**: active on sshd — home IP whitelisted
+- **Docker**: installed, running Uptime Kuma on port 3001
+
+**To use SSH with Claude Code from a new machine:**
+1. Copy `~/.ssh/id_ed25519` and `~/.ssh/id_ed25519.pub` to the new machine
+2. Add the key to macOS Keychain: `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`
+3. Add this to `~/.ssh/config`:
+   ```
+   Host hetzner
+       HostName 159.69.220.162
+       User root
+       Port 22
+       IdentityFile ~/.ssh/id_ed25519
+       UseKeychain yes
+       AddKeysToAgent yes
+       IdentitiesOnly yes
+   ```
+4. If connection is refused, your IP may be banned by fail2ban. Use the Hetzner web console (dashboard > server > Console tab) to unban: `fail2ban-client set sshd unbanip YOUR_IP` and whitelist: `fail2ban-client set sshd addignoreip YOUR_IP`
+5. The passphrase **must** be loaded in the agent — Claude Code cannot enter passphrases interactively
 
 ---
 
