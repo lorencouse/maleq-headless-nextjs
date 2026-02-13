@@ -12,6 +12,7 @@ import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { Post } from '@/lib/types/wordpress';
 import { stripHtml } from '@/lib/utils/text-utils';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 interface BlogTagPageProps {
   params: Promise<{ slug: string }>;
@@ -145,7 +146,7 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
         {tag.description && (
           <p
             className="text-lg text-muted-foreground max-w-2xl mb-4"
-            dangerouslySetInnerHTML={{ __html: tag.description }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(tag.description) }}
           />
         )}
 

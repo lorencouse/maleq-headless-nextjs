@@ -23,7 +23,7 @@ function maleq_stock_verify_admin_key(WP_REST_Request $request) {
     }
 
     $auth_header = $request->get_header('authorization');
-    if (!$auth_header || $auth_header !== 'Bearer ' . MALEQ_ADMIN_KEY) {
+    if (!$auth_header || !hash_equals('Bearer ' . MALEQ_ADMIN_KEY, $auth_header)) {
         return new WP_Error(
             'unauthorized',
             'Invalid or missing Authorization header',
@@ -79,9 +79,10 @@ function maleq_stock_mapping(WP_REST_Request $request) {
     ", ARRAY_A);
 
     if ($wpdb->last_error) {
+        error_log('maleq-stock-sync: stock-mapping query failed: ' . $wpdb->last_error);
         return new WP_Error(
             'db_error',
-            'Database query failed: ' . $wpdb->last_error,
+            'Database query failed',
             ['status' => 500]
         );
     }

@@ -1,52 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomer } from '@/lib/woocommerce/customers';
+import { extractAuthToken } from '@/lib/api/auth-token';
+
+const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
+    const tokenData = extractAuthToken(request);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!tokenData) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.substring(7);
+    // Validate token server-side against WordPress
+    const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/validate-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tokenData.rawToken}`,
+      },
+      body: JSON.stringify({ user_id: tokenData.userId }),
+    });
 
-    // Decode token to get customer ID
-    // Token format: base64(customerId:timestamp:random)
-    try {
-      const decoded = Buffer.from(token, 'base64').toString('utf-8');
-      const [customerIdStr] = decoded.split(':');
-      const customerId = parseInt(customerIdStr, 10);
-
-      if (isNaN(customerId)) {
-        return NextResponse.json(
-          { error: 'Invalid token' },
-          { status: 401 }
-        );
-      }
-
-      // Fetch customer from WooCommerce
-      const customer = await getCustomer(customerId);
-
-      return NextResponse.json({
-        user: {
-          id: customer.id,
-          email: customer.email,
-          firstName: customer.first_name,
-          lastName: customer.last_name,
-          displayName: `${customer.first_name} ${customer.last_name}`,
-          avatarUrl: customer.avatar_url,
-        },
-      });
-    } catch {
+    if (!response.ok) {
       return NextResponse.json(
         { error: 'Invalid token' },
         { status: 401 }
       );
     }
+
+    const customer = await response.json();
+
+    return NextResponse.json({
+      user: {
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.first_name,
+        lastName: customer.last_name,
+        displayName: `${customer.first_name} ${customer.last_name}`,
+        avatarUrl: customer.avatar_url,
+      },
+    });
   } catch (error) {
     console.error('Auth check error:', error);
 

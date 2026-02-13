@@ -86,7 +86,7 @@ export function processContentImages(html: string | undefined): string {
  * @param html - The HTML content from WordPress
  * @returns Processed HTML
  */
-export function processWordPressContent(html: string | undefined): string {
+export function rewriteWordPressUrls(html: string | undefined): string {
   if (!html) return '';
 
   const baseUrl = getImageBaseUrl();

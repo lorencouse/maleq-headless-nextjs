@@ -9,6 +9,7 @@ import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -109,7 +110,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
             {category.description && (
               <p
                 className="text-lg text-muted-foreground max-w-2xl mt-2"
-                dangerouslySetInnerHTML={{ __html: category.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(category.description) }}
               />
             )}
 

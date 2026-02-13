@@ -14,8 +14,9 @@ import { notFound } from 'next/navigation';
 import { Post } from '@/lib/types/wordpress';
 import {
   getProductionImageUrl,
-  processWordPressContent,
+  rewriteWordPressUrls,
 } from '@/lib/utils/image';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 import {
   extractProductIdsFromContent,
   fetchProductsByIds,
@@ -252,7 +253,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <div
         className='entry-content prose prose-lg max-w-none mb-12 blog-content'
         dangerouslySetInnerHTML={{
-          __html: processWordPressContent(post.content),
+          __html: sanitizeHtml(rewriteWordPressUrls(post.content)),
         }}
       />
 
@@ -356,7 +357,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         <div
                           className='text-muted-foreground'
                           dangerouslySetInnerHTML={{
-                            __html: processWordPressContent(comment.content),
+                            __html: sanitizeHtml(rewriteWordPressUrls(comment.content)),
                           }}
                         />
                       </div>
@@ -394,7 +395,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                               <div
                                 className='text-muted-foreground text-sm'
                                 dangerouslySetInnerHTML={{
-                                  __html: processWordPressContent(reply.content),
+                                  __html: sanitizeHtml(rewriteWordPressUrls(reply.content)),
                                 }}
                               />
                             </div>

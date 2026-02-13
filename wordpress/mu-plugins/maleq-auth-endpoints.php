@@ -11,63 +11,85 @@ if (!defined('ABSPATH')) {
 }
 
 /**
+ * Check that the request has a Bearer token present.
+ * Does NOT validate the token — that happens in each callback via maleq_authenticate_request().
+ */
+function maleq_check_bearer_token(WP_REST_Request $request) {
+    $auth_header = $request->get_header('Authorization');
+    if (empty($auth_header) || !str_starts_with($auth_header, 'Bearer ')) {
+        return new WP_Error(
+            'missing_token',
+            'Authentication required',
+            ['status' => 401]
+        );
+    }
+    return true;
+}
+
+/**
  * Register custom REST API endpoints for authentication
  */
 add_action('rest_api_init', function () {
-    // Password validation endpoint (login)
+    // Public endpoints (no token required)
     register_rest_route('maleq/v1', '/validate-password', [
         'methods' => 'POST',
         'callback' => 'maleq_validate_password',
         'permission_callback' => '__return_true',
     ]);
 
-    // Verify password endpoint (for password change)
-    register_rest_route('maleq/v1', '/verify-password', [
-        'methods' => 'POST',
-        'callback' => 'maleq_verify_password',
-        'permission_callback' => '__return_true',
-    ]);
-
-    // Forgot password endpoint
     register_rest_route('maleq/v1', '/forgot-password', [
         'methods' => 'POST',
         'callback' => 'maleq_forgot_password',
         'permission_callback' => '__return_true',
     ]);
 
-    // Reset password endpoint
     register_rest_route('maleq/v1', '/reset-password', [
         'methods' => 'POST',
         'callback' => 'maleq_reset_password',
         'permission_callback' => '__return_true',
     ]);
 
-    // Avatar upload endpoint
+    register_rest_route('maleq/v1', '/validate-token', [
+        'methods' => 'POST',
+        'callback' => 'maleq_validate_token_endpoint',
+        'permission_callback' => '__return_true',
+    ]);
+
+    // Protected endpoints (Bearer token required)
+    register_rest_route('maleq/v1', '/verify-password', [
+        'methods' => 'POST',
+        'callback' => 'maleq_verify_password',
+        'permission_callback' => 'maleq_check_bearer_token',
+    ]);
+
     register_rest_route('maleq/v1', '/upload-avatar', [
         'methods' => 'POST',
         'callback' => 'maleq_upload_avatar',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'maleq_check_bearer_token',
     ]);
 
-    // Delete account endpoint
     register_rest_route('maleq/v1', '/delete-account', [
         'methods' => 'POST',
         'callback' => 'maleq_delete_account',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'maleq_check_bearer_token',
     ]);
 
-    // Get customer data endpoint
     register_rest_route('maleq/v1', '/customer/(?P<id>\d+)', [
         'methods' => 'GET',
         'callback' => 'maleq_get_customer',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'maleq_check_bearer_token',
     ]);
 
-    // Update customer data endpoint
     register_rest_route('maleq/v1', '/customer/(?P<id>\d+)', [
         'methods' => 'PUT',
         'callback' => 'maleq_update_customer',
-        'permission_callback' => '__return_true',
+        'permission_callback' => 'maleq_check_bearer_token',
+    ]);
+
+    register_rest_route('maleq/v1', '/logout', [
+        'methods' => 'POST',
+        'callback' => 'maleq_logout',
+        'permission_callback' => 'maleq_check_bearer_token',
     ]);
 });
 
@@ -99,8 +121,8 @@ function maleq_validate_password(WP_REST_Request $request) {
 
     if (!$user) {
         return new WP_Error(
-            'invalid_login',
-            'No account found with this email or username',
+            'invalid_credentials',
+            'Invalid email/username or password',
             ['status' => 401]
         );
     }
@@ -108,8 +130,8 @@ function maleq_validate_password(WP_REST_Request $request) {
     // Validate password
     if (!wp_check_password($password, $user->user_pass, $user->ID)) {
         return new WP_Error(
-            'incorrect_password',
-            'Incorrect password',
+            'invalid_credentials',
+            'Invalid email/username or password',
             ['status' => 401]
         );
     }
@@ -322,11 +344,6 @@ function maleq_authenticate_request(WP_REST_Request $request, $user_id = null) {
 
     $token = substr($auth_header, 7); // Strip "Bearer "
 
-    // If no user_id provided, try to get it from the request body
-    if (!$user_id) {
-        $user_id = absint($request->get_param('user_id'));
-    }
-
     if (empty($user_id)) {
         return new WP_Error(
             'missing_user_id',
@@ -364,8 +381,49 @@ function maleq_validate_token($user_id, $token) {
         return false;
     }
 
-    // Validate token
-    return wp_hash($token) === $stored_hash;
+    // Validate token (timing-safe comparison)
+    return hash_equals($stored_hash, wp_hash($token));
+}
+
+/**
+ * Validate token endpoint — verifies a Bearer token + user_id and returns customer data.
+ * Used by the headless frontend to verify tokens on /api/auth/me.
+ */
+function maleq_validate_token_endpoint(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('user_id'));
+    $auth_result = maleq_authenticate_request($request, $user_id);
+
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
+    }
+
+    $user = get_user_by('ID', $user_id);
+    if (!$user) {
+        return new WP_Error(
+            'invalid_user',
+            'User not found',
+            ['status' => 404]
+        );
+    }
+
+    return maleq_get_customer_data($user);
+}
+
+/**
+ * Logout endpoint — invalidates the user's auth token.
+ */
+function maleq_logout(WP_REST_Request $request) {
+    $user_id = absint($request->get_param('user_id'));
+    $auth_result = maleq_authenticate_request($request, $user_id);
+
+    if (is_wp_error($auth_result)) {
+        return $auth_result;
+    }
+
+    delete_user_meta($user_id, 'maleq_auth_token');
+    delete_user_meta($user_id, 'maleq_auth_token_expires');
+
+    return ['success' => true, 'message' => 'Logged out successfully'];
 }
 
 /**

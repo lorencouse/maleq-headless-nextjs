@@ -35,7 +35,7 @@ export {
   getProductionImageUrl,
   getImagePath,
   processContentImages,
-  processWordPressContent,
+  rewriteWordPressUrls,
 } from './image';
 
 // Newsletter utilities

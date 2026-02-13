@@ -1,16 +1,17 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { invalidateAll as invalidateProductCache } from '@/lib/cache/product-cache';
+import { timingSafeEqual } from 'crypto';
 
 // Webhook endpoint for WordPress to trigger revalidation
 // Configure in WordPress: Settings > Webhooks or use a plugin like WP Webhooks
 export async function POST(request: NextRequest) {
-  // Verify the secret token (supports both header and query param)
-  const headerSecret = request.headers.get('x-revalidation-secret');
-  const querySecret = request.nextUrl.searchParams.get('secret');
-  const secret = headerSecret || querySecret;
+  // Verify the secret token (header only)
+  const secret = request.headers.get('x-revalidation-secret');
+  const expected = process.env.REVALIDATION_SECRET;
 
-  if (secret !== process.env.REVALIDATION_SECRET) {
+  if (!secret || !expected || secret.length !== expected.length ||
+      !timingSafeEqual(Buffer.from(secret), Buffer.from(expected))) {
     return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
   }
 

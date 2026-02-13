@@ -5,6 +5,10 @@
  * Version: 1.0
  */
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 /**
  * Custom email styles - injected into all WooCommerce emails
  */

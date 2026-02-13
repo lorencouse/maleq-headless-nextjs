@@ -4,7 +4,7 @@ import {
   handleApiError,
   validationError,
 } from '@/lib/api/response';
-import { validateRequired, hasErrors } from '@/lib/api/validation';
+import { encodeAuthToken } from '@/lib/api/auth-token';
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Authenticate with WooCommerce/WordPress
-    const { customer, token } = await authenticateCustomer(identifier, password);
+    const { customer, token: rawToken } = await authenticateCustomer(identifier, password);
+
+    // Create composite token: base64(userId:rawToken)
+    const compositeToken = encodeAuthToken(customer.id, rawToken);
 
     return NextResponse.json({
       success: true,
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
         displayName: `${customer.first_name} ${customer.last_name}`,
         avatarUrl: customer.avatar_url,
       },
-      token,
+      token: compositeToken,
     });
   } catch (error) {
     return handleApiError(error, 'Login failed');

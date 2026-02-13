@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAuthToken } from '@/lib/api/auth-token';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
@@ -14,6 +15,15 @@ export async function POST(
       return NextResponse.json(
         { error: 'Invalid customer ID' },
         { status: 400 }
+      );
+    }
+
+    // Extract and verify token ownership
+    const tokenData = extractAuthToken(request);
+    if (!tokenData || tokenData.userId !== customerId) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       );
     }
 
@@ -35,15 +45,12 @@ export async function POST(
       );
     }
 
-    // Forward auth token to WordPress
-    const authHeader = request.headers.get('Authorization');
-
-    // Use WordPress endpoint to verify password and delete account
+    // Forward raw token (not composite) to WordPress
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/delete-account`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        'Authorization': `Bearer ${tokenData.rawToken}`,
       },
       body: JSON.stringify({
         user_id: customerId,

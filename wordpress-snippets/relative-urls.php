@@ -98,7 +98,7 @@ function maleq_convert_to_absolute_urls($content) {
 /**
  * Strip domain from content when saving posts
  * This ensures the database stores relative URLs (including images)
- * Next.js processWordPressContent() will convert them back to absolute at runtime
+ * Next.js rewriteWordPressUrls() will convert them back to absolute at runtime
  */
 add_filter('content_save_pre', 'maleq_strip_domain_on_save', 10, 1);
 function maleq_strip_domain_on_save($content) {

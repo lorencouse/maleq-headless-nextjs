@@ -3,16 +3,13 @@
  * Shared validation functions for API routes
  */
 
-/**
- * Email validation regex
- */
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { z } from 'zod';
 
 /**
- * Validate email format
+ * Validate email format using Zod's email validation
  */
 export function isValidEmail(email: string): boolean {
-  return EMAIL_REGEX.test(email);
+  return z.string().email().safeParse(email).success;
 }
 
 /**

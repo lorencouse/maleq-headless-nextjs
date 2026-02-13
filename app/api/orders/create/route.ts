@@ -40,8 +40,8 @@ const orderRequestSchema = z.object({
     productId: z.string().min(1),
     variationId: z.string().optional(),
     quantity: z.number().int().min(1).max(100),
-    name: z.string().min(1),
-    sku: z.string(),
+    name: z.string().min(1).max(500),
+    sku: z.string().max(100),
   })).min(1, 'Cart cannot be empty'),
   totals: z.object({
     subtotal: z.number().min(0),

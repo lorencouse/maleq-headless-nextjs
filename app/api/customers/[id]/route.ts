@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAuthToken } from '@/lib/api/auth-token';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
@@ -17,15 +18,21 @@ export async function GET(
       );
     }
 
-    // Forward auth token to WordPress
-    const authHeader = request.headers.get('Authorization');
+    // Extract and verify token ownership
+    const tokenData = extractAuthToken(request);
+    if (!tokenData || tokenData.userId !== customerId) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
 
-    // Use our custom endpoint instead of WooCommerce REST API
+    // Forward raw token (not composite) to WordPress
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        'Authorization': `Bearer ${tokenData.rawToken}`,
       },
     });
 
@@ -61,15 +68,23 @@ export async function PUT(
       );
     }
 
-    const body = await request.json();
-    const authHeader = request.headers.get('Authorization');
+    // Extract and verify token ownership
+    const tokenData = extractAuthToken(request);
+    if (!tokenData || tokenData.userId !== customerId) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
 
-    // Use our custom endpoint instead of WooCommerce REST API
+    const body = await request.json();
+
+    // Forward raw token (not composite) to WordPress
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        'Authorization': `Bearer ${tokenData.rawToken}`,
       },
       body: JSON.stringify(body),
     });

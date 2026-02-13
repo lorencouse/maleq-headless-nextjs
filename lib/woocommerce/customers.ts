@@ -236,11 +236,8 @@ export async function authenticateCustomer(
 
   if (!authResponse.ok) {
     // Handle specific error codes from our endpoint
-    if (authData.code === 'invalid_login') {
-      throw new UserFacingError('No account found with this email or username', 401, 'INVALID_LOGIN');
-    }
-    if (authData.code === 'incorrect_password') {
-      throw new UserFacingError('Incorrect password', 401, 'INCORRECT_PASSWORD');
+    if (authData.code === 'invalid_credentials') {
+      throw new UserFacingError('Invalid email/username or password', 401, 'INVALID_CREDENTIALS');
     }
     throw new UserFacingError(authData.message || 'Authentication failed', 401);
   }

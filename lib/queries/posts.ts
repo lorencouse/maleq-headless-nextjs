@@ -82,7 +82,6 @@ export const GET_POST_BY_SLUG = gql`
           author {
             node {
               name
-              email
               avatar {
                 url
               }
@@ -227,7 +226,6 @@ export const CREATE_COMMENT = gql`
         author {
           node {
             name
-            email
           }
         }
       }

@@ -1,4 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
+
+/**
+ * Timing-safe string comparison to prevent timing attacks on secrets.
+ */
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 /**
  * Verify admin API key from Authorization header.
@@ -17,7 +26,7 @@ export function verifyAdminAuth(request: NextRequest): NextResponse | null {
 
   const authHeader = request.headers.get('authorization');
 
-  if (!authHeader || authHeader !== `Bearer ${adminKey}`) {
+  if (!authHeader || !safeCompare(authHeader, `Bearer ${adminKey}`)) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -37,8 +46,8 @@ export function verifyCronOrAdminAuth(request: NextRequest): NextResponse | null
   const cronSecret = process.env.CRON_SECRET;
   const adminKey = process.env.ADMIN_API_KEY;
 
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return null;
-  if (adminKey && authHeader === `Bearer ${adminKey}`) return null;
+  if (cronSecret && authHeader && safeCompare(authHeader, `Bearer ${cronSecret}`)) return null;
+  if (adminKey && authHeader && safeCompare(authHeader, `Bearer ${adminKey}`)) return null;
 
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 }

@@ -6,9 +6,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { code, cartTotal, productIds } = body;
 
-    if (!code) {
+    if (!code || typeof code !== 'string') {
       return NextResponse.json(
         { valid: false, message: 'Coupon code is required' },
+        { status: 400 }
+      );
+    }
+
+    if (code.length > 100) {
+      return NextResponse.json(
+        { valid: false, message: 'Coupon code is too long' },
         { status: 400 }
       );
     }
@@ -16,6 +23,13 @@ export async function POST(request: NextRequest) {
     if (cartTotal === undefined || cartTotal < 0) {
       return NextResponse.json(
         { valid: false, message: 'Invalid cart total' },
+        { status: 400 }
+      );
+    }
+
+    if (Array.isArray(productIds) && productIds.length > 500) {
+      return NextResponse.json(
+        { valid: false, message: 'Too many product IDs' },
         { status: 400 }
       );
     }

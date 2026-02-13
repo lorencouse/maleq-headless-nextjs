@@ -2,6 +2,7 @@
 
 import { Brand } from '@/lib/products/combined-service';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 
 interface BrandHeroProps {
   brand: Brand;
@@ -53,7 +54,7 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
               {brand.description && (
                 <p
                   className="text-white/90 text-sm sm:text-base mb-3 max-w-2xl drop-shadow-md"
-                  dangerouslySetInnerHTML={{ __html: brand.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(brand.description) }}
                 />
               )}
 

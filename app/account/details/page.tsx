@@ -161,8 +161,8 @@ export default function AccountDetailsPage() {
 
     if (!passwordData.newPassword) {
       errors.newPassword = 'New password is required';
-    } else if (passwordData.newPassword.length < 8) {
-      errors.newPassword = 'Password must be at least 8 characters';
+    } else if (passwordData.newPassword.length < 12) {
+      errors.newPassword = 'Password must be at least 12 characters';
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {

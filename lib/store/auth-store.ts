@@ -67,13 +67,22 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           error: null,
         }),
 
-      logout: () =>
+      logout: () => {
+        // Fire-and-forget server-side token invalidation
+        const token = useAuthStore.getState().token;
+        if (token) {
+          fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}` },
+          }).catch(() => {});
+        }
         set({
           user: null,
           token: null,
           isAuthenticated: false,
           error: null,
-        }),
+        });
+      },
 
       setLoading: (isLoading) => set({ isLoading }),
 

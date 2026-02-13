@@ -97,7 +97,7 @@ The `maleq-relative-urls.php` plugin makes the WordPress database portable acros
 
 **How it works:**
 - WordPress stores all URLs as relative paths (e.g., `/wp-content/uploads/...`, `/product/...`)
-- Next.js `processWordPressContent()` function converts them to absolute URLs at runtime using `NEXT_PUBLIC_IMAGE_BASE_URL`
+- Next.js `rewriteWordPressUrls()` function converts them to absolute URLs at runtime using `NEXT_PUBLIC_IMAGE_BASE_URL`
 
 **One-time migration** (if existing content has absolute URLs):
 ```bash
