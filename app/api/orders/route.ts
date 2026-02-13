@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
     const customerId = searchParams.get('customerId');
+    const email = searchParams.get('email');
 
     // Parse with bounds checking (page: min 1, perPage: 1-100)
     const page = parseIntSafe(searchParams.get('page'), 1, 1);
@@ -33,7 +34,23 @@ export async function GET(request: NextRequest) {
       return errorResponse(`Failed to fetch orders: ${response.status}`, response.status, 'WOOCOMMERCE_ERROR');
     }
 
-    const orders = await response.json();
+    let orders = await response.json();
+
+    // If no orders found by customer ID but we have an email, search by email too
+    // This catches guest orders placed before the customer_id fix
+    if (orders.length === 0 && email) {
+      const emailUrl = getWooCommerceEndpoint(`/orders?page=${page}&per_page=${perPage}&orderby=date&order=desc&search=${encodeURIComponent(email)}`);
+      const emailResponse = await fetch(emailUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+      if (emailResponse.ok) {
+        orders = await emailResponse.json();
+      }
+    }
+
     const total = response.headers.get('X-WP-Total');
     const totalPages = response.headers.get('X-WP-TotalPages');
 

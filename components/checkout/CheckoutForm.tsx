@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
+import { useAuthStore } from '@/lib/store/auth-store';
 import ContactForm from './ContactForm';
 import ShippingAddressForm from './ShippingAddressForm';
 import ShippingMethod from './ShippingMethod';
@@ -32,13 +33,15 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Auth state
+  const user = useAuthStore((state) => state.user);
+
   // Cart and checkout state
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
   const shipping = useCartStore((state) => state.shipping);
   const tax = useCartStore((state) => state.tax);
   const total = useCartStore((state) => state.total);
-  const clearCart = useCartStore((state) => state.clearCart);
   const validateCart = useCartStore((state) => state.validateCart);
 
   // Checkout store for form data
@@ -46,8 +49,6 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const shippingAddress = useCheckoutStore((state) => state.shippingAddress);
   const shippingMethod = useCheckoutStore((state) => state.shippingMethod);
   const setContact = useCheckoutStore((state) => state.setContact);
-  const setShippingAddress = useCheckoutStore((state) => state.setShippingAddress);
-  const clearCheckout = useCheckoutStore((state) => state.clearCheckout);
 
   // Notify parent of step changes for progress bar
   useEffect(() => {
@@ -130,6 +131,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           paymentIntentId,
+          ...(user?.id && { customerId: Number(user.id) }),
           contact: {
             email: contact.email,
             phone: contact.phone,
@@ -169,11 +171,8 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
       const orderData = await response.json();
 
-      // Clear cart and checkout
-      clearCart();
-      clearCheckout();
-
-      // Redirect to confirmation page with order key for verification
+      // Redirect to confirmation page - cart is cleared there to avoid
+      // race condition with checkout page's empty-cart redirect
       router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
     } catch (err) {
       console.error('Error creating order:', err);

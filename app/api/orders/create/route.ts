@@ -24,6 +24,7 @@ const addressSchema = z.object({
 
 const orderRequestSchema = z.object({
   paymentIntentId: z.string().min(1).startsWith('pi_'),
+  customerId: z.number().int().positive().optional(),
   contact: z.object({
     email: z.string().email('Valid email is required'),
     phone: z.string().max(30).optional(),
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
 
     const {
       paymentIntentId,
+      customerId,
       contact,
       shippingAddress,
       billingAddress,
@@ -174,6 +176,7 @@ export async function POST(request: NextRequest) {
       payment_method: 'stripe',
       payment_method_title: 'Credit Card (Stripe)',
       set_paid: true,
+      ...(customerId && { customer_id: customerId }),
       billing,
       shipping,
       line_items: lineItems,

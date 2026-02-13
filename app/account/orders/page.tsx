@@ -72,7 +72,9 @@ export default function OrdersPage() {
       if (!user?.id) return;
 
       try {
-        const response = await fetch(`/api/orders?customerId=${user.id}`, {
+        const params = new URLSearchParams({ customerId: String(user.id) });
+        if (user.email) params.set('email', user.email);
+        const response = await fetch(`/api/orders?${params}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

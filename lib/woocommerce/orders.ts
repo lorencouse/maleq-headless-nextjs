@@ -34,6 +34,7 @@ export interface CreateOrderData {
   payment_method: string;
   payment_method_title: string;
   set_paid: boolean;
+  customer_id?: number;
   billing: OrderAddress;
   shipping: OrderAddress;
   line_items: OrderLineItem[];
