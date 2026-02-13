@@ -22,44 +22,54 @@ interface BrandPageProps {
 }
 
 export async function generateMetadata({ params }: BrandPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  const brand = await getBrandBySlug(slug);
+  try {
+    const { slug } = await params;
+    const brand = await getBrandBySlug(slug);
 
-  if (!brand) {
+    if (!brand) {
+      return {
+        title: 'Brand Not Found | Male Q',
+      };
+    }
+
+    const description = brand.description
+      ? stripHtml(brand.description).slice(0, 160)
+      : `Shop ${brand.name} products at Male Q. ${brand.count} products available with fast, discreet shipping.`;
+
     return {
-      title: 'Brand Not Found | Male Q',
+      title: `${brand.name} | Shop by Brand | Male Q`,
+      description,
+      openGraph: {
+        title: `${brand.name} | Male Q`,
+        description,
+        type: 'website',
+      },
+      twitter: {
+        card: 'summary',
+        title: `${brand.name} | Male Q`,
+        description,
+      },
+      alternates: {
+        canonical: `/brand/${slug}`,
+      },
     };
+  } catch (error) {
+    console.error('generateMetadata error for brand:', error);
+    return { title: 'Shop by Brand | Male Q' };
   }
-
-  const description = brand.description
-    ? stripHtml(brand.description).slice(0, 160)
-    : `Shop ${brand.name} products at Male Q. ${brand.count} products available with fast, discreet shipping.`;
-
-  return {
-    title: `${brand.name} | Shop by Brand | Male Q`,
-    description,
-    openGraph: {
-      title: `${brand.name} | Male Q`,
-      description,
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary',
-      title: `${brand.name} | Male Q`,
-      description,
-    },
-    alternates: {
-      canonical: `/brand/${slug}`,
-    },
-  };
 }
 
 export async function generateStaticParams() {
-  const brands = await getBrands();
-  const params = brands.map((brand) => ({
-    slug: brand.slug,
-  }));
-  return limitStaticParams(params, DEV_LIMITS.brands);
+  try {
+    const brands = await getBrands();
+    const params = brands.map((brand) => ({
+      slug: brand.slug,
+    }));
+    return limitStaticParams(params, DEV_LIMITS.brands);
+  } catch (error) {
+    console.error('Error generating static params for brands:', error);
+    return [];
+  }
 }
 
 // ISR: Revalidate every 24 hours for fresh product/stock data

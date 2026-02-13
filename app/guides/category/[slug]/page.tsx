@@ -65,20 +65,25 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
 }
 
 export async function generateStaticParams() {
-  const { data } = await getClient().query({
-    query: GET_ALL_CATEGORIES,
-    fetchPolicy: 'no-cache',
-  });
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_CATEGORIES,
+      fetchPolicy: 'no-cache',
+    });
 
-  const categories: Category[] = data?.categories?.nodes || [];
+    const categories: Category[] = data?.categories?.nodes || [];
 
-  const params = categories
-    .filter((cat) => cat.count > 0)
-    .map((category) => ({
-      slug: category.slug,
-    }));
+    const params = categories
+      .filter((cat) => cat.count > 0)
+      .map((category) => ({
+        slug: category.slug,
+      }));
 
-  return limitStaticParams(params, DEV_LIMITS.blogCategories);
+    return limitStaticParams(params, DEV_LIMITS.blogCategories);
+  } catch (error) {
+    console.error('Error generating static params for blog categories:', error);
+    return [];
+  }
 }
 
 // ISR: Revalidate every 1 week for blog content

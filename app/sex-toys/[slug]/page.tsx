@@ -54,12 +54,17 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 }
 
 export async function generateStaticParams() {
-  const categories = await getHierarchicalCategories();
-  const allCategories = flattenCategories(categories);
-  const params = allCategories.map((category) => ({
-    slug: category.slug,
-  }));
-  return limitStaticParams(params, DEV_LIMITS.categories);
+  try {
+    const categories = await getHierarchicalCategories();
+    const allCategories = flattenCategories(categories);
+    const params = allCategories.map((category) => ({
+      slug: category.slug,
+    }));
+    return limitStaticParams(params, DEV_LIMITS.categories);
+  } catch (error) {
+    console.error('Error generating static params for categories:', error);
+    return [];
+  }
 }
 
 // ISR: Revalidate every 24 hours for fresh product/stock data

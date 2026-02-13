@@ -100,17 +100,22 @@ export async function generateMetadata({
 
 // Generate static params for all posts
 export async function generateStaticParams() {
-  const { data } = await getClient().query({
-    query: GET_ALL_POST_SLUGS,
-    fetchPolicy: 'no-cache',
-  });
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_POST_SLUGS,
+      fetchPolicy: 'no-cache',
+    });
 
-  const params =
-    data?.posts?.nodes?.map((post: { slug: string }) => ({
-      slug: post.slug,
-    })) || [];
+    const params =
+      data?.posts?.nodes?.map((post: { slug: string }) => ({
+        slug: post.slug,
+      })) || [];
 
-  return limitStaticParams(params, DEV_LIMITS.blogPosts);
+    return limitStaticParams(params, DEV_LIMITS.blogPosts);
+  } catch (error) {
+    console.error('Error generating static params for blog posts:', error);
+    return [];
+  }
 }
 
 interface BlogPostPageProps {

@@ -66,20 +66,25 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
 }
 
 export async function generateStaticParams() {
-  const { data } = await getClient().query({
-    query: GET_ALL_TAGS,
-    fetchPolicy: 'no-cache',
-  });
+  try {
+    const { data } = await getClient().query({
+      query: GET_ALL_TAGS,
+      fetchPolicy: 'no-cache',
+    });
 
-  const tags: Tag[] = data?.tags?.nodes || [];
+    const tags: Tag[] = data?.tags?.nodes || [];
 
-  const params = tags
-    .filter((tag) => tag.count > 0)
-    .map((tag) => ({
-      slug: tag.slug,
-    }));
+    const params = tags
+      .filter((tag) => tag.count > 0)
+      .map((tag) => ({
+        slug: tag.slug,
+      }));
 
-  return limitStaticParams(params, DEV_LIMITS.blogTags);
+    return limitStaticParams(params, DEV_LIMITS.blogTags);
+  } catch (error) {
+    console.error('Error generating static params for blog tags:', error);
+    return [];
+  }
 }
 
 // ISR: Revalidate every 1 week for blog content
