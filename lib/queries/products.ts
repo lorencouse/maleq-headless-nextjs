@@ -299,12 +299,16 @@ export const SEARCH_PRODUCTS_BY_TITLE = gql`
   }
 `;
 
-// Get all product slugs for static generation
+// Get all product slugs for static generation (paginated)
 export const GET_ALL_PRODUCT_SLUGS = gql`
-  query GetAllProductSlugs {
-    products(first: 10000) {
+  query GetAllProductSlugs($first: Int = 100, $after: String) {
+    products(first: $first, after: $after) {
       nodes {
         slug
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -384,15 +388,19 @@ export const GET_HIERARCHICAL_CATEGORIES = gql`
   }
 `;
 
-// Get all product brands (simple query without pagination for smaller datasets)
+// Get all product brands (paginated)
 export const GET_ALL_BRANDS = gql`
-  query GetAllBrands {
-    productBrands(first: 1000, where: { hideEmpty: true }) {
+  query GetAllBrands($first: Int = 100, $after: String) {
+    productBrands(first: $first, after: $after, where: { hideEmpty: true }) {
       nodes {
         id
         name
         slug
         count
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }

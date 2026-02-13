@@ -99,24 +99,33 @@ export async function generateMetadata({
   };
 }
 
-// Generate static params for all posts
+// Generate static params for all posts (paginated)
 export async function generateStaticParams() {
-  try {
-    const { data } = await getClient().query({
-      query: GET_ALL_POST_SLUGS,
-      fetchPolicy: 'no-cache',
-    });
+  const allParams: { slug: string }[] = [];
+  let hasNextPage = true;
+  let after: string | null = null;
 
-    const params =
-      data?.posts?.nodes?.map((post: { slug: string }) => ({
-        slug: post.slug,
-      })) || [];
+  while (hasNextPage) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: { data: Record<string, any> } = await getClient().query({
+        query: GET_ALL_POST_SLUGS,
+        variables: { first: 100, after },
+        fetchPolicy: 'no-cache',
+      });
 
-    return limitStaticParams(params, DEV_LIMITS.blogPosts);
-  } catch (error) {
-    console.error('Error generating static params for blog posts:', error);
-    return [];
+      const nodes: { slug: string }[] = result.data?.posts?.nodes || [];
+      allParams.push(...nodes.map((post) => ({ slug: post.slug })));
+
+      hasNextPage = result.data?.posts?.pageInfo?.hasNextPage ?? false;
+      after = result.data?.posts?.pageInfo?.endCursor ?? null;
+    } catch (error) {
+      console.error('Error generating static params for blog posts:', error);
+      break;
+    }
   }
+
+  return limitStaticParams(allParams, DEV_LIMITS.blogPosts);
 }
 
 interface BlogPostPageProps {

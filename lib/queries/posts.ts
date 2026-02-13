@@ -123,27 +123,35 @@ export const GET_POSTS_BY_CATEGORY = gql`
   }
 `;
 
-// Get all post slugs for static generation
+// Get all post slugs for static generation (paginated)
 export const GET_ALL_POST_SLUGS = gql`
-  query GetAllPostSlugs {
-    posts(first: 10000) {
+  query GetAllPostSlugs($first: Int = 100, $after: String) {
+    posts(first: $first, after: $after) {
       nodes {
         slug
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
 `;
 
-// Get all categories
+// Get all categories (paginated)
 export const GET_ALL_CATEGORIES = gql`
-  query GetAllCategories {
-    categories(where: { hideEmpty: true }) {
+  query GetAllCategories($first: Int = 100, $after: String) {
+    categories(where: { hideEmpty: true }, first: $first, after: $after) {
       nodes {
         id
         name
         slug
         count
         description
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }
@@ -187,15 +195,19 @@ export const GET_POSTS_BY_TAG = gql`
   }
 `;
 
-// Get all tags
+// Get all tags (paginated)
 export const GET_ALL_TAGS = gql`
-  query GetAllTags {
-    tags(where: { hideEmpty: true }, first: 100) {
+  query GetAllTags($first: Int = 100, $after: String) {
+    tags(where: { hideEmpty: true }, first: $first, after: $after) {
       nodes {
         id
         name
         slug
         count
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
       }
     }
   }

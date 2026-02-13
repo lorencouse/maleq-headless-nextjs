@@ -2,11 +2,14 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import VariationSelector from './VariationSelector';
 import ProductAddons, { SelectedAddon } from './ProductAddons';
 import { EnhancedProduct } from '@/lib/products/product-service';
 import { useCartStore } from '@/lib/store/cart-store';
+import { useMiniCartControls } from '@/lib/store/ui-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import QuantitySelector from '@/components/ui/QuantitySelector';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockAlertButton from '@/components/product/StockAlertButton';
 import SocialShare from '@/components/product/SocialShare';
@@ -38,9 +41,12 @@ export default function ProductPageClient({
   primaryCategory,
 }: ProductPageClientProps) {
   const isVariable = product.type === 'VARIABLE';
+  const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
+  const miniCartControls = useMiniCartControls();
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
+  const [justAdded, setJustAdded] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState<SelectedAddon[]>([]);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
@@ -219,6 +225,10 @@ export default function ProductPageClient({
       });
 
       showSuccess(successMessage);
+
+      // Show "View Cart" button for 5 seconds
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 5000);
 
       // Clear addon selections after adding
       setSelectedAddons([]);
@@ -439,26 +449,38 @@ export default function ProductPageClient({
               </div>
             )}
 
-            <div className='flex gap-4 mb-4'>
-              <input
-                type='number'
-                min='1'
+            <div className='flex gap-4 mb-4 items-center'>
+              <QuantitySelector
+                quantity={quantity}
+                min={1}
                 max={displayStockQuantity || 99}
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className='w-24 px-4 py-3.5 border border-border rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors'
+                size='md'
+                onQuantityChange={setQuantity}
+                showInput
               />
-              <button
-                onClick={handleAddToCart}
-                disabled={isAdding}
-                className='flex-1 bg-primary text-primary-foreground py-3.5 px-6 rounded-xl hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-lg'
-              >
-                {isAdding
-                  ? 'Adding...'
-                  : addonsTotal > 0
-                    ? 'Add All to Cart'
-                    : 'Add to Cart'}
-              </button>
+              {justAdded ? (
+                <button
+                  onClick={() => miniCartControls.open()}
+                  className='flex-1 bg-green-600 text-white py-3.5 px-6 rounded-xl hover:bg-green-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2'
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  View Cart
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAdding}
+                  className='flex-1 bg-primary text-primary-foreground py-3.5 px-6 rounded-xl hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-lg'
+                >
+                  {isAdding
+                    ? 'Adding...'
+                    : addonsTotal > 0
+                      ? 'Add All to Cart'
+                      : 'Add to Cart'}
+                </button>
+              )}
             </div>
             <WishlistButton
               productId={product.databaseId?.toString() || product.id}
@@ -543,21 +565,34 @@ export default function ProductPageClient({
                 <p className='font-semibold text-foreground text-base truncate'>{product.name}</p>
                 <p className='text-primary font-bold text-lg'>{formatPrice(displayPrice)}</p>
               </div>
-              <input
-                type='number'
-                min='1'
-                max={displayStockQuantity || 99}
-                value={quantity}
-                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                className='w-16 sm:w-20 flex-shrink-0 px-2 py-2.5 border border-border rounded-lg bg-background text-foreground text-center focus:outline-none focus:ring-2 focus:ring-primary'
-              />
-              <button
-                onClick={handleAddToCart}
-                disabled={isAdding}
-                className='flex-1 sm:flex-none bg-primary text-primary-foreground py-2.5 px-6 rounded-lg hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-sm sm:text-base whitespace-nowrap'
-              >
-                {isAdding ? 'Adding...' : 'Add to Cart'}
-              </button>
+              <div className='flex-shrink-0'>
+                <QuantitySelector
+                  quantity={quantity}
+                  min={1}
+                  max={displayStockQuantity || 99}
+                  size='sm'
+                  onQuantityChange={setQuantity}
+                />
+              </div>
+              {justAdded ? (
+                <button
+                  onClick={() => miniCartControls.open()}
+                  className='flex-1 sm:flex-none bg-green-600 text-white py-2.5 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm sm:text-base whitespace-nowrap flex items-center justify-center gap-2'
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  View Cart
+                </button>
+              ) : (
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAdding}
+                  className='flex-1 sm:flex-none bg-primary text-primary-foreground py-2.5 px-6 rounded-lg hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-sm sm:text-base whitespace-nowrap'
+                >
+                  {isAdding ? 'Adding...' : 'Add to Cart'}
+                </button>
+              )}
             </div>
           </div>
         </div>,

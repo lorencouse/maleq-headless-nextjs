@@ -6,43 +6,38 @@ interface PriceRangeFilterProps {
   minPrice: number;
   maxPrice: number;
   onPriceChange: (min: number, max: number) => void;
-  min?: number;
-  max?: number;
 }
 
 export default function PriceRangeFilter({
   minPrice,
   maxPrice,
   onPriceChange,
-  min = 0,
-  max = 500,
 }: PriceRangeFilterProps) {
-  const [localMin, setLocalMin] = useState(minPrice.toString());
-  const [localMax, setLocalMax] = useState(maxPrice.toString());
+  const [localMin, setLocalMin] = useState(minPrice > 0 ? minPrice.toString() : '');
+  const [localMax, setLocalMax] = useState(maxPrice > 0 ? maxPrice.toString() : '');
 
   useEffect(() => {
-    setLocalMin(minPrice.toString());
-    setLocalMax(maxPrice.toString());
+    setLocalMin(minPrice > 0 ? minPrice.toString() : '');
+    setLocalMax(maxPrice > 0 ? maxPrice.toString() : '');
   }, [minPrice, maxPrice]);
 
-  const handleMinChange = (value: string) => {
-    setLocalMin(value);
-  };
-
-  const handleMaxChange = (value: string) => {
-    setLocalMax(value);
-  };
-
   const handleBlur = () => {
-    const minVal = Math.max(min, parseInt(localMin) || min);
-    const maxVal = Math.min(max, parseInt(localMax) || max);
+    const minVal = Math.max(0, parseInt(localMin) || 0);
+    const maxVal = localMax === '' ? 0 : Math.max(0, parseInt(localMax) || 0);
 
-    if (minVal <= maxVal) {
+    // maxVal of 0 means "no max"
+    if (maxVal === 0 || minVal <= maxVal) {
       onPriceChange(minVal, maxVal);
     } else {
       // Reset to current values if invalid
-      setLocalMin(minPrice.toString());
-      setLocalMax(maxPrice.toString());
+      setLocalMin(minPrice > 0 ? minPrice.toString() : '');
+      setLocalMax(maxPrice > 0 ? maxPrice.toString() : '');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleBlur();
     }
   };
 
@@ -51,7 +46,9 @@ export default function PriceRangeFilter({
     { label: '$25 - $50', min: 25, max: 50 },
     { label: '$50 - $100', min: 50, max: 100 },
     { label: '$100 - $200', min: 100, max: 200 },
-    { label: 'Over $200', min: 200, max: 500 },
+    { label: '$200 - $500', min: 200, max: 500 },
+    { label: '$500 - $1000', min: 500, max: 1000 },
+    { label: 'Over $1000', min: 1000, max: 0 },
   ];
 
   return (
@@ -65,10 +62,10 @@ export default function PriceRangeFilter({
             <input
               type="number"
               value={localMin}
-              onChange={(e) => handleMinChange(e.target.value)}
+              onChange={(e) => setLocalMin(e.target.value)}
               onBlur={handleBlur}
-              min={min}
-              max={max}
+              onKeyDown={handleKeyDown}
+              min={0}
               placeholder="Min"
               className="w-full pl-6 pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
             />
@@ -78,28 +75,28 @@ export default function PriceRangeFilter({
         <div className="flex-1">
           <label className="sr-only">Maximum price</label>
           <div className="relative">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
+            <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none ${localMax === '' ? 'hidden' : ''}`}>$</span>
             <input
               type="number"
               value={localMax}
-              onChange={(e) => handleMaxChange(e.target.value)}
+              onChange={(e) => setLocalMax(e.target.value)}
               onBlur={handleBlur}
-              min={min}
-              max={max}
-              placeholder="Max"
-              className="w-full pl-6 pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
+              onKeyDown={handleKeyDown}
+              min={0}
+              placeholder="No Max"
+              className={`w-full pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60 ${localMax === '' ? 'pl-2.5' : 'pl-6'}`}
             />
           </div>
         </div>
       </div>
 
       {/* Preset Ranges */}
-      <div className="space-y-2">
+      <div className="space-y-1">
         {presetRanges.map((range) => (
           <button
             key={range.label}
             onClick={() => onPriceChange(range.min, range.max)}
-            className={`block w-full text-left px-3 py-2 text-sm rounded-lg transition-colors ${
+            className={`block w-full text-left px-3 py-1.5 text-sm rounded-lg transition-colors ${
               minPrice === range.min && maxPrice === range.max
                 ? 'bg-primary/10 text-primary font-medium'
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'

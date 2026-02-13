@@ -34,6 +34,8 @@ interface FilterPanelProps {
   onClearFilters: () => void;
   isMobile?: boolean;
   onClose?: () => void;
+  /** When on a category page, scope category filter to subcategories */
+  initialCategory?: string;
 }
 
 export default function FilterPanel({
@@ -46,6 +48,7 @@ export default function FilterPanel({
   onClearFilters,
   isMobile = false,
   onClose,
+  initialCategory,
 }: FilterPanelProps) {
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     category: true,
@@ -72,7 +75,7 @@ export default function FilterPanel({
     filters.color !== '' ||
     filters.material !== '' ||
     filters.minPrice > 0 ||
-    filters.maxPrice < 500 ||
+    filters.maxPrice > 0 ||
     filters.minLength > 0 ||
     filters.maxLength < 24 ||
     filters.minWeight > 0 ||
@@ -132,6 +135,7 @@ export default function FilterPanel({
             categories={categories}
             selectedCategory={filters.category}
             onSelect={(category) => onFilterChange({ ...filters, category })}
+            initialCategory={initialCategory}
           />
         )}
       </div>

@@ -50,10 +50,11 @@ export default function ActiveFilters({
     activeFilters.push({ key: 'category', label: `Category: ${categoryName}` });
   }
 
-  if (filters.minPrice > 0 || filters.maxPrice < 500) {
+  if (filters.minPrice > 0 || filters.maxPrice > 0) {
+    const maxLabel = filters.maxPrice > 0 ? `$${filters.maxPrice}` : 'No Max';
     activeFilters.push({
       key: 'minPrice',
-      label: `$${filters.minPrice} - $${filters.maxPrice}`,
+      label: filters.minPrice > 0 ? `$${filters.minPrice} - ${maxLabel}` : `Up to ${maxLabel}`,
     });
   }
 

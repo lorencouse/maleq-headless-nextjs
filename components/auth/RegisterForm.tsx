@@ -2,15 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 
+const REGISTER_TIMEOUT_MS = 30_000;
+
 export default function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -18,6 +22,7 @@ export default function RegisterForm() {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -29,9 +34,14 @@ export default function RegisterForm() {
     },
   });
 
+  const password = watch('password');
+
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
     setLoading(true);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REGISTER_TIMEOUT_MS);
 
     try {
       const response = await fetch('/api/auth/register', {
@@ -43,19 +53,29 @@ export default function RegisterForm() {
           email: data.email,
           password: data.password,
         }),
+        signal: controller.signal,
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Registration failed');
+        if (result.code === 'ACCOUNT_EXISTS') {
+          throw new Error('An account with this email already exists. Try signing in instead.');
+        }
+        throw new Error(result.error || 'Registration failed. Please try again.');
       }
 
       login(result.user, result.token);
       gtag.signUp('email');
-      router.push('/account');
+      router.replace(returnTo || '/account');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Registration failed');
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        setError('Registration timed out. Please check your connection and try again.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      }
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
@@ -161,6 +181,33 @@ export default function RegisterForm() {
         {errors.password && (
           <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
         )}
+        {password && !errors.password && (
+          <div className="mt-2 space-y-1">
+            <div className="flex gap-1">
+              {[12, 16, 20].map((threshold) => (
+                <div
+                  key={threshold}
+                  className={`h-1 flex-1 rounded-full transition-colors ${
+                    password.length >= threshold
+                      ? password.length >= 20
+                        ? 'bg-green-500'
+                        : password.length >= 16
+                          ? 'bg-yellow-500'
+                          : 'bg-orange-500'
+                      : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {password.length >= 20
+                ? 'Strong password'
+                : password.length >= 16
+                  ? 'Good password'
+                  : 'Acceptable — longer is stronger'}
+            </p>
+          </div>
+        )}
       </div>
 
       <div>
@@ -202,7 +249,7 @@ export default function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/login" className="text-primary hover:text-primary-hover font-medium">
+        <Link href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login'} className="text-primary hover:text-primary-hover font-medium">
           Sign in
         </Link>
       </p>

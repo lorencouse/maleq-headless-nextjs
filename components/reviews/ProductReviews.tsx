@@ -40,7 +40,7 @@ export default function ProductReviews({
           <ReviewSummary
             averageRating={averageRating || 0}
             reviewCount={reviewCount || 0}
-            onWriteReview={() => setShowWriteReview(true)}
+            onWriteReview={showWriteReview ? undefined : () => setShowWriteReview(true)}
           />
         </div>
 

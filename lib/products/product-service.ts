@@ -374,18 +374,32 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
 }
 
 /**
- * Get all product slugs for static generation
+ * Get all product slugs for static generation (paginated)
  */
 export async function getAllProductSlugs(): Promise<string[]> {
-  try {
-    const { data } = await getClient().query({
-      query: GET_ALL_PRODUCT_SLUGS,
-      fetchPolicy: 'no-cache',
-    });
+  const allSlugs: string[] = [];
+  let hasNextPage = true;
+  let after: string | null = null;
 
-    return data?.products?.nodes?.map((p: { slug: string }) => p.slug) || [];
-  } catch (error) {
-    console.error('Error fetching product slugs:', error);
-    return [];
+  while (hasNextPage) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result: { data: Record<string, any> } = await getClient().query({
+        query: GET_ALL_PRODUCT_SLUGS,
+        variables: { first: 500, after },
+        fetchPolicy: 'no-cache',
+      });
+
+      const nodes: { slug: string }[] = result.data?.products?.nodes || [];
+      allSlugs.push(...nodes.map((p) => p.slug));
+
+      hasNextPage = result.data?.products?.pageInfo?.hasNextPage ?? false;
+      after = result.data?.products?.pageInfo?.endCursor ?? null;
+    } catch (error) {
+      console.error('Error fetching product slugs:', error);
+      break;
+    }
   }
+
+  return allSlugs;
 }

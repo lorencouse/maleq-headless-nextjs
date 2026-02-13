@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { VariationImage, GalleryProductImage } from '@/lib/types/product';
 
@@ -21,6 +21,11 @@ export default function ProductImageGallery({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
+  const handleImageError = useCallback((imageUrl: string) => {
+    setFailedImages(prev => new Set(prev).add(imageUrl));
+  }, []);
 
   // When variation image changes, update the display
   useEffect(() => {
@@ -91,6 +96,10 @@ export default function ProductImageGallery({
             playsInline
             className="w-full h-full object-contain"
           />
+        ) : failedImages.has(selectedImage?.url || images[0].url) ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            Image unavailable
+          </div>
         ) : (
           <Image
             src={selectedImage?.url || images[0].url}
@@ -100,6 +109,7 @@ export default function ProductImageGallery({
             className="object-contain"
             priority
             sizes="(max-width: 768px) 100vw, 50vw"
+            onError={() => handleImageError(selectedImage?.url || images[0].url)}
           />
         )}
       </div>
@@ -142,6 +152,10 @@ export default function ProductImageGallery({
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
+                ) : failedImages.has(image.url) ? (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                    N/A
+                  </div>
                 ) : (
                   <Image
                     src={image.url}
@@ -150,6 +164,7 @@ export default function ProductImageGallery({
                     fill
                     className="object-cover"
                     sizes="80px"
+                    onError={() => handleImageError(image.url)}
                   />
                 )}
               </button>

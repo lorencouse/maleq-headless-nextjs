@@ -21,130 +21,87 @@
   - Check session persistence across pages
 - [ ] `[HIGH]` Test email notifications (order confirmation, password reset)
 - [ ] `[HIGH]` Verify SSL and domain configuration
-- [ ] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production
-- [ ] `[HIGH]` Create `/public/og-image.jpg` (1200x630px) for social sharing
+- [ ] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production (code ready in `lib/api/admin-auth.ts`)
 - [ ] `[HIGH]` Submit sitemap to Google Search Console
+- [ ] `[HIGH]` Transfer Apple Pay token to new server
+- [ ] `[MED]` Do page testing on Safari
 - [ ] `[MED]` Set up monitoring and error tracking (Sentry configured)
 - [ ] `[MED]` Configure CDN for static assets
 - [ ] `[MED]` Set up database backups
 
 ---
 
-## Content & Data
+## Cart & Checkout
 
-~~resolve missing blog post: /best-dildo-for-women~~ DONE - was a draft in old-v1-db (not published), imported as draft ID 594126. All 283 published posts were already imported correctly. 71 draft/private posts exist in old-db.sql if needed (use `bun scripts/import-draft-posts.ts --list-drafts`).
-address maleq-link-fix-applied.json broken links
-
-### Product Content
-
-- [ ] `[HIGH]` SEO optimize product descriptions - use information from product title, attributes, and reviews to create unique, keyword-rich descriptions for each product (pull info from product CSV or XML if needed). Add headers, bullet points, and formatting for readability. Insert relevant images where appropriate from product gallery.
-- [ ] `[HIGH]` Populate product reviews (content exists, needs import/display)
-- [ ] `[MED]` Migrate product photos from old DB descriptions to wp gallery
-- [ ] `[MED]` Re-import product images < 650px onto 650x650 white background (no stretch/crop)
-- [ ] `[MED]` Add additional datafeeds from STC
-- [ ] `[MED]` Manually add missing product 'kits' before deploy
-- [ ] `[MED]` Verify all blog post images are migrated
-- [ ] `[MED]` Import hotlinked blog/product images to local hosting
-- [ ] `[MED]` Update `.product-specs` blocks in blog posts to 2-column tables
-- [ ] `[LOW]` Fix product specs not showing on some products (data quality
-      issue - missing brand/attributes from STC import)
-- [x] Update STC products with stock count (stc_stock_count meta for MUFFS, \_stock for STC-only) — 37,760 updated
-- [x] Add product links to order summary on checkout page
-
-import images from reusable blocks into media library and update URLs in blocks to point to local media (currently hotlinked from old site, some missing). Do this after all short codes are updated to new product IDs, and old product images are removed.
-
-pink variation (9342851003818) images were added correctly in gallery during last failed import, but still missing green variation (9342851003801) images. Green variation images are still present in gallery after cleanup, but not attached to gallery: http://localhost:3000/product/sensuelle-luna-velvet-touch-vibe
-
-green variation (850013016006) image not imported. Purple image attached. http://localhost:3000/product/cloud-9-health-wellness-borosilicate-kegel-training-set
-
-Add a feature where admin can assign a products primary image on the product page, similar to how we have the edit product button. Idealy the button would be 'Assign Primary Image' and would assign the currently displayed image as the primary image for the product, and move the current primary to the gallery. If it is a variable product, it would assign the image to the currently selected variation.
-
-### Product Data Cleanup
-
-- [ ] `[MED]` Verify STC product variations created correctly (some show gallery images of other variations, but no variation selector)
-  - e.g. `/product/lelo-soraya-2-rabbit-massager-rechargeable`, `/product/hunkyjunk-lockdown-chastity`
-- [ ] `[MED]` Set `product_source` meta field to `'stc'` for all STC-imported products
-- [x] `[MED]` Round all product prices to .97 regular / .X7 sale endings. Update import script to do this automatically for new products.
-
-- [ ] `[MED]` Review and update reusable blocks with correct URLs
-
----
-
-## Checkout & Payments
-
-- [ ] `[MED]` Update shipping tiers (Free and express domestic, Standard and express international)
+- [ ] `[MED]` Update shipping tiers — currently has Standard/Express/Overnight (domestic only); needs international tiers
 - [ ] `[MED]` Test contact form functionality (submissions received, spam protection working)
-- [x] `[MED]` Add infinite scroll to product category pages with "Load More" button fallback
-- [x] `[MED]` Fix progress bar on checkout page (not progressing to shipping/payment steps)
-- [x] `[MED]` Add sticky "Add to Cart" on product pages for all screen sizes
 
 ---
 
-## UI & Styling
+## Auth & Account
 
-- [x] `[MED]` Update breadcrumbs/hero category link styling on blog pages to match product page breadcrumb style.
-- [x] `[MED]` Finish setting category images for all product categories - use image from a product from said category, preferably from Brand: XR Brands, with a photo with a human, or human skin tone if possible. if this is too hard to search for, simply add any image from the product gallery of a product in that category.
-- [ ] `[LOW]` Improve mobile menu animations and transitions
-- [x] `[LOW]` Add bolded black font accents for emphasis
-      create sale block on product pages and store pages with spend $100 save $10, spend $200 save $25, spend $300 save $50
-      add black underline to product page H1, similar to other header underlines
+- [ ] `[MED]` Create login modal overlay
+- [ ] `[MED]` When not logged in, clicking "Add to Wishlist" should show login/signup modal instead of adding to wishlist
 
 ---
 
-## Product Features
+## Product Pages
 
+- [ ] `[MED]` Test product review submission end-to-end
 - [ ] `[LOW]` Add product comparison feature
 - [ ] `[LOW]` Add returns/RMA request form in account area
 - [ ] `[LOW]` Add help center/FAQ integration in account area
-      add brand/manufacture product filter on product category page filter sidebar.
 
 ---
 
-## Blog & Content Pages
+## Images & Media
 
-- [ ] `[MED]` Test blog category pages (`/blog/category/[slug]`) - pagination and filtering
-- [ ] `[MED]` Test blog tag pages (`/blog/tag/[slug]`) - SEO metadata
-- [x] `[LOW]` Add Article/BlogPosting JSON-LD schema on blog post pages
+- [ ] `[MED]` Re-import product images < 650px onto 650x650 white background (no stretch/crop)
+- [ ] `[MED]` Import hotlinked blog/product images to local hosting
+- [ ] `[MED]` Migrate product photos from old DB descriptions to WP gallery
+- [ ] `[MED]` Import images from reusable blocks into media library and update URLs (currently hotlinked from old site); do this after shortcodes are updated and old product images removed
+- [ ] `[LOW]` Fix specific variation images:
+  - Green variation (9342851003801) images missing for `/product/sensuelle-luna-velvet-touch-vibe` — present in gallery but not attached
+  - Green variation (850013016006) image not imported for `/product/cloud-9-health-wellness-borosilicate-kegel-training-set` — purple image attached instead
+- [ ] `[LOW]` Add admin feature to assign primary image on product page (similar to edit product button); "Assign Primary Image" swaps displayed image with current primary; supports variable products per-variation
+
+---
+
+## Content & Data
+
+- [ ] `[HIGH]` SEO optimize product descriptions — use info from title, attributes, and reviews to create unique, keyword-rich descriptions; add headers, bullet points, and formatting; insert relevant gallery images
+- [ ] `[HIGH]` Populate product reviews (content exists, needs import/display)
+- [ ] `[MED]` Add additional datafeeds from STC
+- [ ] `[MED]` Manually add missing product "kits" before deploy
+- [ ] `[MED]` Verify all blog post images are migrated
+- [ ] `[MED]` Update `.product-specs` blocks in blog posts to 2-column tables
+- [ ] `[MED]` Address broken links in `data/maleq-link-fix-applied.json`
+- [ ] `[MED]` Review and update reusable blocks with correct URLs
+- [ ] `[LOW]` Fix product specs not showing on some products (missing brand/attributes from STC import)
+
+### Product Data Cleanup
+
+- [ ] `[MED]` Verify STC product variations created correctly (some show gallery images of other variations but no variation selector)
+  - e.g. `/product/lelo-soraya-2-rabbit-massager-rechargeable`, `/product/hunkyjunk-lockdown-chastity`
+- [ ] `[MED]` Set `product_source` meta field to `'stc'` for all STC-imported products (GraphQL field ready in mu-plugin)
 
 ---
 
 ## Technical & Performance
 
-### Security Hardening
+### Security
 
 - [ ] `[MED]` Replace base64 token generation with proper JWT (signed, expiring)
-- [x] `[MED]` Increase minimum password requirement to 12 characters
-- [ ] `[LOW]` Add rate limiting on login/password reset/forms
+- [ ] `[MED]` Add CAPTCHA to comment box and login pages
+- [ ] `[LOW]` Integrate rate limiting into API endpoints (module exists at `lib/api/rate-limit.ts` but not wired into routes)
 - [ ] `[LOW]` Move auth token to httpOnly cookies (currently localStorage)
 - [ ] `[LOW]` Add CSRF protection on state-changing operations
-- [x] `[LOW]` Add Content-Security-Policy and other security headers via next.config.ts
 
 ### Performance
 
 - [ ] `[MED]` Review and improve Core Web Vitals scores (Lighthouse audit)
-- [x] `[MED]` Add `React.memo` to ProductCard (BlogCard is a server component, memo N/A)
-- [x] `[LOW]` Add dynamic imports for QuickViewModal (ssr: false) and ProductReviews
-- [x] `[LOW]` Reviewed large components (ShopPageClient, SearchAutocomplete) - well-structured, splitting would add prop-drilling without benefit
 - [ ] `[LOW]` Add service worker for offline support
-- [ ] `[LOW]` Implement product data prefetching on hover
 - [ ] `[LOW]` Replace order tracking mu-plugin with AST Free WP plugin
-
-### WordPress
-
-- [ ] `[MED]` Auto-delete product images when product deleted in WooCommerce (including variation/gallery images)
-
----
-
-## SEO
-
-- [x] `[HIGH]` Complete full SEO audit before launch
-  - [x] All pages have meta titles and descriptions
-  - [x] Structured data: Organization, WebSite, Product, BlogPosting, BreadcrumbList, FAQ
-  - [x] Open Graph tags on all public pages
-  - [x] Twitter Card metadata on all public pages
-  - [x] Canonical URLs on all pages
-  - [ ] Create `/public/og-image.jpg` (1200x630px) - default OG image referenced but file missing
-  - [x] Search results pages set to `noindex`
 
 ---
 
@@ -160,54 +117,102 @@ Add a feature where admin can assign a products primary image on the product pag
 
 ## Completed
 
+### UX & Bug Fixes (2026-02-12)
+
+- [x] Fix sitemap pagination — now fetches all 25K+ URLs via cursor-based pagination
+- [x] Fix add-to-cart limit — clamps quantity to max stock instead of rejecting
+- [x] Add +/- quantity selector buttons on product page (replaces number input)
+- [x] Add "View Cart" button for 5 seconds after adding item to cart
+- [x] Minicart images now link to product page
+- [x] Improve create account flow — timeout, better errors, returnTo redirect, password strength indicator
+- [x] Login redirects to previously viewed page via `returnTo` param
+- [x] Add logout option to navbar account dropdown
+- [x] Fix post-logout — redirects to home page, no spinning button
+- [x] Fix wishlist back navigation — `router.replace` prevents back-button loops
+- [x] Move popup notifications below sticky navbar
+- [x] Scroll to top on filter change
+- [x] Hide "Write a Review" button when review form is visible
+- [x] Fix image cache invalidation — onError fallbacks + reduced cache TTL to 1 day
+- [x] Create WPGraphQL query limit mu-plugin (500 max per query)
+- [x] Expand price filter ranges ($200-500, $500-1000, $1000+) with "No Max" default
+- [x] Scope category filter to subcategories on category pages, "Browse all categories" link
+- [x] Add slide-in/out transitions to mobile menu and mobile filter panel
+- [x] Create auto-delete product images mu-plugin (featured, gallery, variation)
+- [x] Brand/manufacturer filter already functional on category pages (verified)
+- [x] Quick view modal already has full image gallery (verified)
+- [x] Product prefetch on hover handled by Next.js Link auto-prefetch (verified)
+- [x] Create `/public/og-image.jpg` (1200x630px) for social sharing
+- [x] Vercel image optimization workaround — `unoptimized: true` configured
+- [x] Add shipping "same as billing" selector in user dashboard (account/addresses page)
+- [x] Password reset flow — forgot-password and reset-password pages implemented
+- [x] Contact form — fully implemented with Zod validation at `/contact`
+- [x] Blog category pages (`/guides/category/[slug]`) — implemented with pagination and SEO
+- [x] Blog tag pages (`/guides/tag/[slug]`) — implemented with SEO metadata
+- [x] ISR revalidation endpoint — on-demand tag/path revalidation at `/api/revalidate`
+- [x] Rate limiting module — implemented at `lib/api/rate-limit.ts` (auth: 10/min, forms: 5/min, general: 60/min)
+- [x] Sale/discount tier banner — DiscountTierBanner component on product and shop pages
+
+### Security Remediation (2026-02-12)
+
+- [x] Remediate 22 audit findings (C1-C7, H1-H2, H6, H8-H10, M2-M3, M6, M8, M11, L5)
+
 ### SEO & Schema (2026-02-09)
 
-- [x] Add BlogPosting JSON-LD schema to blog post pages (headline, author, dates, keywords, articleSection)
+- [x] Add BlogPosting JSON-LD schema to blog post pages
 - [x] Add ArticleSchema reusable component to `components/seo/StructuredData.tsx`
-- [x] Add Twitter Card metadata to all public pages (home, shop, blog, brands, categories, tags)
-- [x] Add canonical URLs to all pages (product-category, brand, blog/category, blog/tag, shop, static pages)
+- [x] Add Twitter Card metadata to all public pages
+- [x] Add canonical URLs to all pages
 - [x] Add `noindex` to shop search results pages
-- [x] Full SEO metadata audit: all pages now have title, description, OG, Twitter, canonical
+- [x] Full SEO metadata audit: all pages have title, description, OG, Twitter, canonical
 
 ### UI & Styling (2026-02-09)
 
 - [x] Add blog breadcrumbs to blog post and listing pages
 - [x] Add product H1 black underline (6px solid, `.heading-plain` opt-out)
 - [x] Create DiscountTierBanner component (compact/full variants) on product and shop pages
-- [x] Set category thumbnail images for all 217 categories via DB script (XR Brands preferred)
-- [x] Add `image { sourceUrl }` to GraphQL category query, `getCategoryImage()` falls back to WP image
+- [x] Set category thumbnail images for all 217 categories via DB script
+- [x] Add `image { sourceUrl }` to GraphQL category query with fallback
+- [x] Update breadcrumbs/hero category link styling on blog pages
 
 ### Technical & Performance (2026-02-09)
 
-- [x] Add `React.memo` to ProductCard component for list re-render prevention
-- [x] Dynamic import QuickViewModal (`ssr: false`) - only loads when opened
-- [x] Dynamic import ProductReviews on product page (code-split below-fold content)
-- [x] Increase minimum password to 12 characters (Zod schema, reset page, API route, WP mu-plugin)
+- [x] Add `React.memo` to ProductCard component
+- [x] Dynamic import QuickViewModal (`ssr: false`)
+- [x] Dynamic import ProductReviews on product page
+- [x] Increase minimum password to 12 characters
 - [x] Add CSP, HSTS, and Permissions-Policy security headers in next.config.ts
 
 ### Code Audit (2026-02-09)
 
-- [x] Replace Apollo Client with graphql-request (~25 kB bundle savings)
+- [x] Replace Apollo Client with graphql-request (~25 kB savings)
 - [x] Add admin auth (`ADMIN_API_KEY`) to all 9 sync/admin API routes
-- [x] Add token validation to auth mu-plugin endpoints (`maleq_authenticate_request()`)
+- [x] Add token validation to auth mu-plugin endpoints
 - [x] Forward Authorization headers in Next.js API proxy routes
 - [x] Add `robots: { index: false }` to cart/checkout/account pages
 - [x] Add blog posts to sitemap via `GET_ALL_POST_SLUGS`
 - [x] Add try-catch to `getBlogPosts()` and `getBlogCategories()`
-- [x] Use `Promise.allSettled` for resilient blog and product search queries
-- [x] Support revalidation secret via header in addition to query param
-- [x] Fix related blog articles (3 columns, proper responsive grid)
-- [x] Product grids: `auto-fill` with `minmax(256px, 1fr)` across all pages
-- [x] Replace Fuse.js + simple-spellchecker with MiniSearch (~15 kB savings)
-- [x] Fix server-side XSS sanitization (dompurify -> isomorphic-dompurify)
-- [x] Create shared DB module for CLI scripts (`scripts/lib/db.ts`)
+- [x] Use `Promise.allSettled` for resilient search queries
+- [x] Support revalidation secret via header
+- [x] Fix related blog articles grid
+- [x] Product grids: `auto-fill` with `minmax(256px, 1fr)`
+- [x] Replace Fuse.js + simple-spellchecker with MiniSearch
+- [x] Fix server-side XSS sanitization (isomorphic-dompurify)
+- [x] Create shared DB module (`scripts/lib/db.ts`)
 - [x] Shared filter utility (`lib/utils/product-filter-helpers.ts`)
-- [x] Remove dead code (`lib/api/http-client.ts`, `app/blog/[slug]/post.css`)
-- [x] Move scripts-only deps to devDependencies, remove `fast-xml-parser`
-- [x] Archive 14 one-time migration scripts to `scripts/archive/`
-- [x] Fix CSS issues (border-radius, hardcoded colors -> CSS variables)
+- [x] Remove dead code, move scripts-only deps to devDependencies
+- [x] Archive 14 one-time migration scripts
+- [x] Fix CSS issues (border-radius, hardcoded colors)
 
-### Features & UI (2026-01-22 - 2026-01-27)
+### Product Data (2026-02-07)
+
+- [x] Update STC products with stock count (37,760 updated)
+- [x] Add product links to order summary on checkout page
+- [x] Round all product prices to .97/.X7 endings
+- [x] Add infinite scroll to product category pages with "Load More" fallback
+- [x] Fix progress bar on checkout page
+- [x] Add sticky "Add to Cart" on product pages
+
+### Features & UI (2026-01-22 – 2026-01-27)
 
 - [x] Core e-commerce (cart, checkout, Stripe)
 - [x] User authentication (login, register, password reset)
@@ -221,12 +226,10 @@ Add a feature where admin can assign a products primary image on the product pag
 - [x] Navigation dropdowns with mega menu
 - [x] Product page trust badges
 - [x] Home page redesign (hero, benefits, newsletter, featured categories, trending carousel)
-- [x] Product pricing with logarithmic markup formula (.97/.X7 endings)
+- [x] Product pricing with logarithmic markup formula
 - [x] Update add_to_cart shortcodes to new product IDs (171 updated)
 - [x] Auto-discount functionality (tiered spend thresholds)
-- [x] Order tracking page
-- [x] FAQs page with real content
-- [x] 404 and error page designs
+- [x] Order tracking page, FAQs page, 404/error pages
 - [x] Set in-stock variations as primary variation
 - [x] Product gallery single row carousel
 - [x] Product card bottom-aligned title/price/CTA

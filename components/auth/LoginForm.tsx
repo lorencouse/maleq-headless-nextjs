@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -11,6 +11,8 @@ import * as gtag from '@/lib/analytics/gtag';
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get('returnTo');
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
@@ -46,7 +48,8 @@ export default function LoginForm() {
 
       login(result.user, result.token);
       gtag.login('email');
-      router.push('/account');
+      // Use replace to avoid back-button loops (login → redirect → back → login)
+      router.replace(returnTo || '/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     }
@@ -153,7 +156,7 @@ export default function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
-        <Link href="/register" className="text-primary hover:text-primary-hover font-medium">
+        <Link href={returnTo ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register'} className="text-primary hover:text-primary-hover font-medium">
           Create one
         </Link>
       </p>

@@ -38,6 +38,8 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-stock-priority.php` | Orders products with in-stock items first, prioritizes WT/manual over STC sources | `wordpress/mu-plugins/maleq-stock-priority.php` |
 | `maleq-graphql-product-source.php` | Exposes `_product_source` meta as `productSource` field in WPGraphQL | `wordpress/mu-plugins/maleq-graphql-product-source.php` |
 | `maleq-cache-revalidation.php` | Triggers Next.js cache revalidation on product create/update/delete/stock changes | `wordpress/mu-plugins/maleq-cache-revalidation.php` |
+| `maleq-graphql-query-limit.php` | Increases WPGraphQL max query amount to 500 for sitemap generation | `wordpress/mu-plugins/maleq-graphql-query-limit.php` |
+| `maleq-cleanup-product-images.php` | Auto-deletes product images (featured, gallery, variation) when product is permanently deleted | `wordpress/mu-plugins/maleq-cleanup-product-images.php` |
 
 ### Installation Steps
 

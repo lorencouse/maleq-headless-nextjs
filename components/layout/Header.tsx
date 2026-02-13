@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import { useCartItemCount } from '@/lib/store/cart-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
@@ -14,9 +15,10 @@ import MobileMenu from '@/components/navigation/MobileMenu';
 import DesktopNav from '@/components/navigation/DesktopNav';
 
 export default function Header() {
+  const router = useRouter();
   const cartItemCount = useCartItemCount();
   const wishlistItemCount = useWishlistItemCount();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, logout } = useAuthStore();
   const isMiniCartOpen = useMiniCartOpen();
   const miniCartControls = useMiniCartControls();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -138,6 +140,18 @@ export default function Header() {
                           >
                             Account Details
                           </Link>
+                        </div>
+                        <div className='border-t border-border py-1'>
+                          <button
+                            onClick={() => {
+                              setIsUserMenuOpen(false);
+                              logout();
+                              router.push('/');
+                            }}
+                            className='block w-full text-left px-4 py-3 min-h-[44px] text-sm text-destructive hover:bg-muted transition-colors'
+                          >
+                            Sign Out
+                          </button>
                         </div>
                       </div>
                     </>

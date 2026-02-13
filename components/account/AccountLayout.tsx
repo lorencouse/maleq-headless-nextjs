@@ -66,9 +66,9 @@ export default function AccountLayout({ children }: AccountLayoutProps) {
   useEffect(() => {
     // Only redirect after hydration is complete
     if (hasHydrated && !isAuthenticated) {
-      router.push('/login');
+      router.push(`/login?returnTo=${encodeURIComponent(pathname)}`);
     }
-  }, [hasHydrated, isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router, pathname]);
 
   const handleLogout = () => {
     logout();

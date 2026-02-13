@@ -69,19 +69,23 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   const isActive = (href: string) => pathname === href;
 
-  if (!isOpen) return null;
-
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 z-40 md:hidden"
+        className={`fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
         onClick={onClose}
         aria-hidden="true"
       />
 
       {/* Menu Panel */}
-      <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-background z-50 md:hidden overflow-y-auto">
+      <div
+        className={`fixed inset-y-0 left-0 w-full max-w-sm bg-background z-50 md:hidden overflow-y-auto transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <h2 className="text-lg font-semibold text-foreground">Menu</h2>

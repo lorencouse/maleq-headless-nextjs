@@ -15,6 +15,8 @@ export function Toaster() {
       reverseOrder={false}
       gutter={8}
       containerStyle={{
+        // Offset below sticky navbar (h-16 = 64px + padding)
+        top: 72,
         // Prevent browser extensions (Dark Reader etc.) from adding background
         background: 'transparent',
         backgroundColor: 'transparent',

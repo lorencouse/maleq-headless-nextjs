@@ -1,282 +1,441 @@
-# Security Audit Report
+# Security Audit Report - Male Q Headless
 
-**Date**: 2026-01-19
-**Auditor**: Development Team
-**Application**: Maleq Headless E-commerce Store
+**Date:** February 12, 2026
+**Scope:** Full codebase and configuration review (Next.js frontend, WordPress mu-plugins, API routes, dependencies)
+**Supersedes:** January 19, 2026 audit
 
 ---
 
 ## Executive Summary
 
-This security audit covers the Maleq headless e-commerce application built with Next.js, WooCommerce, and Stripe. The audit reviews authentication, data handling, API security, and dependency vulnerabilities.
+The application has good foundational security practices (rate limiting, input validation, security headers, Zod schemas), but **critical authentication and authorization flaws** must be addressed before production use. The most severe issues are:
+
+1. **Forgeable authentication tokens** - tokens can be crafted without cryptographic verification
+2. **Broken access control** - users can access/modify other users' data (IDOR)
+3. **No HTML sanitization** - WordPress content rendered via `dangerouslySetInnerHTML` without DOMPurify
+4. **Timing-unsafe secret comparisons** - token/key comparisons use `===` instead of constant-time functions
+
+**Total Findings:** 7 Critical, 10 High, 12 Medium, 8 Low
 
 ---
 
-## 1. Dependency Vulnerabilities
+## CRITICAL ISSUES
 
-### npm audit Results
+### C1. Forgeable Authentication Tokens (Account Takeover)
 
-```
-1 high severity vulnerability found
+**File:** `app/api/auth/me/route.ts:17-29`
 
-next  15.5.1-canary.0 - 15.5.7
-- Next Server Actions Source Code Exposure (GHSA-w37m-7fhw-fmv9)
-- Next Vulnerable to Denial of Service with Server Components (GHSA-mwv6-3258-q52c)
-
-Fix: Update to next@15.5.9 or later
-```
-
-### Recommended Actions
-
-| Package | Current | Recommended | Severity | Action |
-|---------|---------|-------------|----------|--------|
-| next | 15.5.7 | 15.5.9+ | High | Update before launch |
-
-### Update Command
-
-```bash
-bun update next
-```
-
----
-
-## 2. Authentication Security
-
-### Implementation Review
-
-| Area | Status | Notes |
-|------|--------|-------|
-| Password hashing | ✅ Secure | Handled by WooCommerce (WordPress) |
-| Session management | ✅ Secure | JWT-style tokens with expiration |
-| Login rate limiting | ⚠️ Partial | WooCommerce handles, consider additional limits |
-| Password requirements | ✅ Secure | Minimum 8 characters enforced |
-| Secure token storage | ✅ Secure | localStorage with httpOnly considerations |
-
-### Recommendations
-
-1. **Add rate limiting** to login API endpoint (consider using middleware)
-2. **Implement account lockout** after failed attempts (WooCommerce setting)
-3. **Add CSRF protection** for form submissions
-
----
-
-## 3. API Security
-
-### Endpoint Review
-
-| Endpoint | Auth Required | Rate Limited | Input Validated |
-|----------|---------------|--------------|-----------------|
-| `/api/auth/login` | No | ⚠️ No | ✅ Yes |
-| `/api/auth/register` | No | ⚠️ No | ✅ Yes |
-| `/api/orders/create` | No* | ⚠️ No | ✅ Yes |
-| `/api/coupons/validate` | No | ⚠️ No | ✅ Yes |
-| `/api/contact` | No | ⚠️ No | ✅ Yes |
-| `/api/newsletter/subscribe` | No | ⚠️ No | ✅ Yes |
-
-*Orders require valid payment, which acts as implicit authentication.
-
-### Recommendations
-
-1. **Add rate limiting middleware** for all API routes
-2. **Implement request validation** using Zod schemas
-3. **Add API key authentication** for sensitive endpoints
-
-### Sample Rate Limiting Implementation
+The `/api/auth/me` endpoint decodes tokens as simple Base64 without any cryptographic signature:
 
 ```typescript
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+const decoded = Buffer.from(token, 'base64').toString('utf-8');
+const [customerIdStr] = decoded.split(':');
+const customerId = parseInt(customerIdStr, 10);
+```
 
-const rateLimit = new Map();
+**Attack:** An attacker can create `base64("999:1234567890:anything")` and impersonate customer ID 999. No HMAC, no JWT signature, no server-side validation against the WordPress-stored token hash.
 
-export function middleware(request: NextRequest) {
-  const ip = request.ip ?? 'anonymous';
-  const now = Date.now();
-  const windowMs = 60 * 1000; // 1 minute
-  const maxRequests = 100;
+**Fix:** Replace with signed JWT tokens (HS256/RS256) or validate the token against the WordPress `maleq_auth_token` hash on every request by calling the WordPress backend.
 
-  const requestLog = rateLimit.get(ip) || [];
-  const recentRequests = requestLog.filter((time: number) => now - time < windowMs);
+---
 
-  if (recentRequests.length >= maxRequests) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-  }
+### C2. Insecure Direct Object Reference (IDOR) on Customer Endpoints
 
-  recentRequests.push(now);
-  rateLimit.set(ip, recentRequests);
+**Files:** `app/api/customers/[id]/route.ts:5-46`, `app/api/customers/[id]/delete/route.ts`
 
-  return NextResponse.next();
+No verification that the authenticated user owns the requested customer ID:
+
+```typescript
+// GET /api/customers/[id] - Any authenticated user can read ANY customer's data
+const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/customer/${customerId}`, {
+  headers: { ...(authHeader ? { Authorization: authHeader } : {}) },
+});
+```
+
+**Impact:** Read/update/delete any customer's personal data (name, email, addresses).
+
+**Fix:** Extract authenticated user ID from token, verify it matches the `[id]` parameter. Return 403 if mismatched.
+
+---
+
+### C3. WordPress Auth Endpoints Allow Unauthenticated Access to Sensitive Operations
+
+**File:** `wordpress/mu-plugins/maleq-auth-endpoints.php:16-71`
+
+All 8 REST endpoints use `'permission_callback' => '__return_true'`:
+- `/maleq/v1/upload-avatar` (POST) - upload avatar for any user
+- `/maleq/v1/delete-account` (POST) - delete any account
+- `/maleq/v1/customer/{id}` (GET/PUT) - read/write any customer data
+
+While callbacks like `maleq_upload_avatar()`, `maleq_delete_account()`, `maleq_get_customer()`, and `maleq_update_customer()` call `maleq_authenticate_request()` internally, WordPress does not enforce authentication at the routing layer. Bots and scanners can probe these endpoints without restriction.
+
+**Fix:** Replace `__return_true` with a proper `permission_callback` that checks the Bearer token for endpoints that require auth. Keep `__return_true` only for login/register/forgot-password.
+
+---
+
+### C4. IDOR in maleq_authenticate_request() - User ID from Request Body
+
+**File:** `wordpress/mu-plugins/maleq-auth-endpoints.php:312-347`
+
+```php
+if (!$user_id) {
+    $user_id = absint($request->get_param('user_id'));
 }
-
-export const config = {
-  matcher: '/api/:path*',
-};
 ```
 
----
+The authentication function accepts `user_id` from the request body, then validates the provided token against that user's stored hash. This means: if an attacker has User A's valid token and sends `user_id=A` in a request to `/customer/B`, the token validates for User A but the endpoint operates on User B (via the URL parameter).
 
-## 4. Data Protection
-
-### Sensitive Data Handling
-
-| Data Type | Storage | Encryption | Notes |
-|-----------|---------|------------|-------|
-| Passwords | WooCommerce DB | ✅ Hashed | WordPress handles |
-| Credit Cards | Stripe | ✅ PCI DSS | Never touches our server |
-| Customer Info | WooCommerce DB | ⚠️ At rest | Consider encryption |
-| Session Tokens | localStorage | ❌ Plain | Acceptable for JWT |
-
-### Recommendations
-
-1. **Never log sensitive data** (passwords, card numbers)
-2. **Use HTTPS everywhere** (enforced in production)
-3. **Sanitize all user inputs** before display
+**Fix:** The authenticated user_id from token validation must be the ONLY user_id used. Never accept user_id from the request body for authorization decisions.
 
 ---
 
-## 5. XSS Prevention
+### C5. No HTML Sanitization on WordPress Content (Stored XSS)
 
-### Review Results
+**Files:** `app/guides/[slug]/page.tsx:254`, `components/shop/BrandHero.tsx:56`, `app/guides/category/[slug]/page.tsx:112`, `app/guides/tag/[slug]/page.tsx:148`
 
-| Component | XSS Protected | Method |
-|-----------|---------------|--------|
-| Product descriptions | ✅ Yes | React escaping, HTML stripped |
-| User inputs | ✅ Yes | React escaping |
-| Search queries | ✅ Yes | URL encoded |
-| Review content | ✅ Yes | Sanitized by WooCommerce |
+```tsx
+dangerouslySetInnerHTML={{ __html: processWordPressContent(post.content) }}
+```
 
-### Implementation
+`processWordPressContent()` only rewrites URLs and removes shortcodes - it does **NOT** sanitize HTML. `isomorphic-dompurify` is referenced in CLAUDE.md but is **not installed** in package.json and **never imported** anywhere.
 
-React automatically escapes content rendered in JSX. The codebase correctly uses:
-- `dangerouslySetInnerHTML` sparingly and only for trusted content
-- URL encoding for query parameters
-- Input sanitization for form submissions
+Blog comments are also rendered unsanitized. If WordPress moderation is bypassed or a contributor injects malicious HTML, it executes in all visitors' browsers.
 
----
-
-## 6. Environment Variables
-
-### Review
-
-| Variable | Exposed to Client | Secure |
-|----------|-------------------|--------|
-| `NEXT_PUBLIC_WORDPRESS_API_URL` | ✅ Yes | ✅ Public URL |
-| `NEXT_PUBLIC_SITE_URL` | ✅ Yes | ✅ Public URL |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | ✅ Yes | ✅ Publishable key |
-| `NEXT_PUBLIC_GA_ID` | ✅ Yes | ✅ Public ID |
-| `WOOCOMMERCE_CONSUMER_KEY` | ❌ No | ✅ Server only |
-| `WOOCOMMERCE_CONSUMER_SECRET` | ❌ No | ✅ Server only |
-| `STRIPE_SECRET_KEY` | ❌ No | ✅ Server only |
-
-### Verification
-
+**Fix:**
 ```bash
-# Ensure no secrets in client bundle
-grep -r "CONSUMER_SECRET\|SECRET_KEY" .next/static --include="*.js" || echo "No secrets found in client bundle"
+bun add isomorphic-dompurify @types/dompurify
+```
+```typescript
+import DOMPurify from 'isomorphic-dompurify';
+dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(processWordPressContent(content)) }}
 ```
 
 ---
 
-## 7. Payment Security
+### C6. Token Stored in localStorage (Vulnerable to XSS Theft)
 
-### Stripe Integration Review
+**File:** `lib/store/auth-store.ts:86-92`
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| PCI DSS Compliance | ✅ Pass | Stripe handles card data |
-| Client-side card handling | ✅ Secure | Using Stripe Elements |
-| Payment Intent server-side | ✅ Secure | Created on server |
-| Webhook verification | ⚠️ N/A | Not implemented yet |
-
-### Recommendations
-
-1. **Implement Stripe webhooks** for order status updates
-2. **Add idempotency keys** to prevent duplicate charges
-3. **Log payment events** for auditing (without sensitive data)
-
----
-
-## 8. Headers & HTTPS
-
-### Security Headers (Configured in next.config.ts)
-
-| Header | Value | Status |
-|--------|-------|--------|
-| X-DNS-Prefetch-Control | on | ✅ |
-| X-XSS-Protection | 1; mode=block | ✅ |
-| X-Frame-Options | SAMEORIGIN | ✅ |
-| X-Content-Type-Options | nosniff | ✅ |
-| Referrer-Policy | origin-when-cross-origin | ✅ |
-| Strict-Transport-Security | Not set | ⚠️ Add for production |
-| Content-Security-Policy | Not set | ⚠️ Consider adding |
-
-### Recommended Additional Headers
+Auth tokens persisted to localStorage via Zustand persist middleware:
 
 ```typescript
-// Add to next.config.ts headers
-{
-  key: 'Strict-Transport-Security',
-  value: 'max-age=31536000; includeSubDomains',
-},
-{
-  key: 'Content-Security-Policy',
-  value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.stripe.com https://www.google-analytics.com;",
-},
+partialize: (state) => ({
+  user: state.user,
+  token: state.token,  // Plaintext in localStorage
+  isAuthenticated: state.isAuthenticated,
+}),
+```
+
+Combined with C5 (XSS vectors), this means a successful XSS attack can steal auth tokens from `localStorage.getItem('auth-storage')`.
+
+**Fix:** Store tokens in `httpOnly`, `Secure`, `SameSite=Strict` cookies instead. This makes them inaccessible to JavaScript.
+
+---
+
+### C7. Timing Attack on Token/Secret Comparisons
+
+**File:** `wordpress/mu-plugins/maleq-auth-endpoints.php:368`
+
+```php
+return wp_hash($token) === $stored_hash;
+```
+
+Uses `===` (regular string comparison) instead of `hash_equals()`, making it vulnerable to timing attacks that can leak the hash byte-by-byte.
+
+**Also at:** `lib/api/admin-auth.ts:20` (ADMIN_API_KEY comparison), `wordpress/mu-plugins/maleq-stock-sync.php:26`
+
+**Fix:** Use `hash_equals()` for all secret comparisons in PHP. Use `crypto.timingSafeEqual()` in Node.js.
+
+---
+
+## HIGH SEVERITY ISSUES
+
+### H1. No Rate Limiting on WordPress Auth Endpoints
+
+**File:** `wordpress/mu-plugins/maleq-auth-endpoints.php:77-134`
+
+The login endpoint (`/maleq/v1/validate-password`) has no rate limiting and no account lockout. The Next.js middleware rate limits `/api/auth/login` at 10 req/min, but direct calls to the WordPress REST API bypass this entirely.
+
+**Fix:** Implement rate limiting at the WordPress level (transient-based counter per IP/user). Lock accounts after 5 failed attempts for 15 minutes.
+
+---
+
+### H2. User Enumeration via Distinct Error Messages
+
+**File:** `wordpress/mu-plugins/maleq-auth-endpoints.php:100-114`
+
+```php
+return new WP_Error('invalid_login', 'No account found with this email or username', ...);
+// vs.
+return new WP_Error('incorrect_password', 'Incorrect password', ...);
+```
+
+**Fix:** Use a single generic message: "Invalid email/username or password."
+
+---
+
+### H3. In-Memory Rate Limiter Ineffective in Production
+
+**File:** `lib/api/rate-limit.ts`
+
+The rate limiter uses a `Map()` in memory. On Vercel serverless, each cold start gets a fresh Map - rate limits reset constantly and don't share across instances.
+
+**Fix:** Use Upstash Redis rate limiting (`@upstash/ratelimit`) or Vercel's built-in rate limiting.
+
+---
+
+### H4. CSP Allows `unsafe-inline` for Scripts
+
+**File:** `next.config.ts:212-215`
+
+```
+script-src 'self' 'unsafe-inline' https://js.stripe.com ...
+style-src 'self' 'unsafe-inline'
+```
+
+`unsafe-inline` negates most of CSP's XSS protection. Combined with the XSS vectors in C5, inline scripts can execute freely.
+
+**Fix:** Remove `unsafe-inline` from `script-src`. Use nonce-based CSP (`'nonce-<random>'`) for necessary inline scripts (GA, Stripe). `unsafe-inline` in `style-src` is harder to remove but less risky.
+
+---
+
+### H5. Overly Permissive img-src CSP
+
+**File:** `next.config.ts:216`
+
+```
+img-src 'self' data: blob: https: http:
+```
+
+Allows loading images from ANY domain over HTTP or HTTPS.
+
+**Fix:** Restrict to specific domains:
+```
+img-src 'self' data: blob: https://www.maleq.com https://wp.maleq.com https://staging.maleq.com https://images.williams-trading.com
 ```
 
 ---
 
-## 9. SQL Injection
+### H6. Revalidation Secret Accepted via Query Parameter
 
-### Review Results
+**File:** `app/api/revalidate/route.ts:8-11`
 
-| Area | Status | Notes |
-|------|--------|-------|
-| Direct SQL queries | ✅ N/A | No raw SQL in codebase |
-| ORM usage | ✅ N/A | Using WooCommerce REST API |
-| GraphQL queries | ✅ Safe | Apollo Client with parameterized queries |
+```typescript
+const querySecret = request.nextUrl.searchParams.get('secret');
+const secret = headerSecret || querySecret;
+```
 
-The application does not execute raw SQL queries. All database operations go through:
-- WooCommerce REST API (parameterized)
-- WordPress GraphQL (parameterized)
+Query parameters are logged in server access logs, browser history, CDN caches, and Referer headers.
 
----
-
-## 10. Action Items
-
-### Critical (Before Launch)
-
-- [ ] Update Next.js to 15.5.9+
-- [ ] Add Strict-Transport-Security header
-- [ ] Verify HTTPS is enforced in production
-
-### High Priority (First Week)
-
-- [ ] Implement rate limiting middleware
-- [ ] Add Content-Security-Policy header
-- [ ] Set up Stripe webhooks
-
-### Medium Priority (First Month)
-
-- [ ] Add login attempt monitoring
-- [ ] Implement account lockout
-- [ ] Set up security monitoring alerts
+**Fix:** Accept secrets only via `Authorization` or custom headers. Remove query parameter support.
 
 ---
 
-## Sign-Off
+### H7. No CSRF Protection on State-Changing Endpoints
 
-| Role | Name | Date | Signature |
-|------|------|------|-----------|
-| Security Reviewer | | | |
-| Lead Developer | | | |
-| Project Manager | | | |
+No CSRF tokens on login, register, order creation, customer update, or account deletion endpoints.
+
+**Fix:** Implement CSRF tokens or validate `Origin`/`Referer` headers on all POST/PUT/DELETE endpoints.
+
+---
+
+### H8. Comment Author Emails Exposed in GraphQL
+
+**File:** `lib/queries/posts.ts:82-88, 227-233`
+
+```graphql
+comments { nodes { author { node { name, email } } } }
+```
+
+Email addresses of all blog commenters are fetched and potentially exposed to the client.
+
+**Fix:** Remove `email` from the comment author GraphQL query.
+
+---
+
+### H9. No Logout Token Invalidation
+
+Logout only clears client-side state (`auth-store.ts:70-76`). No `/api/auth/logout` endpoint deletes the `maleq_auth_token` user meta in WordPress. Stolen tokens remain valid until the 24-hour expiry.
+
+**Fix:** Add a logout endpoint that calls WordPress to delete the user's `maleq_auth_token` meta.
+
+---
+
+### H10. Inconsistent Password Requirements
+
+**Files:** `lib/validations/auth.ts:22-25` (registration: 12 chars), `app/account/details/page.tsx:165` (password change: 8 chars)
+
+**Fix:** Enforce consistent 12-character minimum everywhere. Add complexity requirements (uppercase, lowercase, number).
+
+---
+
+## MEDIUM SEVERITY ISSUES
+
+### M1. Hardcoded Staging URL
+`app/api/admin/sync/categories/cleanup/route.ts:40` - Uses `https://staging.maleq.com` instead of env var.
+
+### M2. Weak Email Validation
+`lib/api/validation.ts:9` - Regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` is overly permissive. Use Zod's `.email()`.
+
+### M3. Missing Input Length Limits
+`app/api/orders/create/route.ts` - SKU and product name fields in Zod schema have no max length.
+`app/api/coupons/validate/route.ts` - Coupon code and productIds array have no length limits.
+
+### M4. File Upload MIME Type Spoofing
+`app/api/upload/avatar/route.ts` - Checks `file.type` (client-controlled) but doesn't validate actual file content via magic bytes. Use `file-type` package.
+
+### M5. Stripe Webhook Silently Swallows Errors
+`app/api/stripe/webhook/route.ts:77-82` - Returns 200 even on handler failure. Failed webhook events are never retried by Stripe.
+
+### M6. Database Error Messages Exposed
+`wordpress/mu-plugins/maleq-stock-sync.php:81-86` - Raw `$wpdb->last_error` returned in API response.
+
+### M7. No Rate Limiting on Search/Blog Endpoints
+`/api/search` and `/api/blog/search` are not in the `RATE_LIMITED_ROUTES` config. Could be abused for DoS or scraping.
+
+### M8. Missing `hash_equals()` in Stock Sync Admin Auth
+`wordpress/mu-plugins/maleq-stock-sync.php:26` - String comparison for API key.
+
+### M9. Order Creation Doesn't Validate Customer Ownership
+`app/api/orders/create/route.ts` - Optional `customerId` field not verified against authenticated user.
+
+### M10. Source Maps in Build Output
+100+ `.js.map` files in `.next/` directory. Verify production builds have source maps disabled.
+
+### M11. processWordPressContent() Misleading Name
+`lib/utils/content.ts` - Function name suggests content processing/sanitization but only rewrites URLs. Rename to `rewriteWordPressUrls()` to avoid false sense of security.
+
+### M12. Sensitive Console Logging
+Multiple API routes log full error objects with `console.error()`. In development mode, error messages are returned to clients.
+
+---
+
+## LOW SEVERITY ISSUES
+
+### L1. Missing Security Headers
+- `X-Permitted-Cross-Domain-Policies: none` not set
+- `Permissions-Policy` missing `usb`, `magnetometer`, `gyroscope`, `accelerometer`
+
+### L2. Hardcoded Fallback URLs
+`wordpress/mu-plugins/maleq-auth-endpoints.php:220` - Fallback `https://www.maleq.com` for password reset emails.
+
+### L3. No SRI on External Scripts
+Google Analytics script loaded without Subresource Integrity hash.
+
+### L4. target="_blank" Links
+All instances properly use `rel="noopener noreferrer"`. No issue found.
+
+### L5. Missing ABSPATH Check
+`wordpress/mu-plugins/maleq-email-customizer.php` - No `if (!defined('ABSPATH')) exit;` guard.
+
+### L6. GraphQL Batching/Depth Not Verified
+WPGraphQL may accept batched or deeply nested queries. Verify limits are configured.
+
+### L7. Credentials in .env.local Comments
+`.env.local` has commented-out live Stripe keys and staging DB credentials. While .gitignore excludes this file, the credentials should be removed from the file entirely and rotated.
+
+### L8. Developer Username in Code
+`scripts/lib/db.ts:13` exposes `/Users/lorencouse/` in hardcoded MySQL socket path.
+
+---
+
+## Prioritized Remediation Plan
+
+### Immediate (This Week)
+
+| # | Issue | Effort | Impact |
+|---|-------|--------|--------|
+| 1 | **C1** - Sign tokens cryptographically (JWT) | Medium | Prevents account takeover |
+| 2 | **C2** - Add ownership checks on customer endpoints | Low | Prevents IDOR data theft |
+| 3 | **C4** - Never accept user_id from request body for auth | Low | Prevents auth bypass |
+| 4 | **C7** - Use `hash_equals()` / `timingSafeEqual()` everywhere | Low | Prevents timing attacks |
+| 5 | **C5** - Install DOMPurify, sanitize all HTML rendering | Low | Prevents stored XSS |
+| 6 | **H2** - Generic login error messages | Low | Prevents user enumeration |
+| 7 | **L7** - Remove commented credentials, rotate keys | Low | Prevents credential exposure |
+
+### Short-Term (This Month)
+
+| # | Issue | Effort | Impact |
+|---|-------|--------|--------|
+| 8 | **C6** - Move tokens to httpOnly cookies | Medium | XSS can't steal tokens |
+| 9 | **C3** - Proper permission_callbacks in WP | Medium | Defense in depth |
+| 10 | **H1** - WordPress-level rate limiting | Medium | Prevents brute force |
+| 11 | **H3** - Redis-based rate limiting (Upstash) | Medium | Production rate limiting |
+| 12 | **H9** - Server-side logout/token invalidation | Low | Reduces token theft window |
+| 13 | **H8** - Remove emails from comment queries | Low | Privacy compliance |
+| 14 | **H10** - Consistent password requirements | Low | Stronger passwords |
+| 15 | **M3-M4** - Input validation hardening | Low | Defense in depth |
+
+### Medium-Term (This Quarter)
+
+| # | Issue | Effort | Impact |
+|---|-------|--------|--------|
+| 16 | **H4** - Nonce-based CSP (remove unsafe-inline) | High | Full XSS prevention |
+| 17 | **H5** - Restrict img-src domains | Low | Reduces attack surface |
+| 18 | **H6-H7** - CSRF protection, header-only secrets | Medium | Prevents CSRF |
+| 19 | **M5** - Stripe webhook error handling | Low | Payment reliability |
+| 20 | **M7** - Rate limit search endpoints | Low | DoS prevention |
+| 21 | **L1** - Additional security headers | Low | Defense in depth |
+
+---
+
+## Server Hardening Recommendations
+
+### WordPress Backend
+1. **Disable XML-RPC** - `add_filter('xmlrpc_enabled', '__return_false');`
+2. **Disable REST API user enumeration** - Block `/wp-json/wp/v2/users` for unauthenticated requests
+3. **Hide WordPress version** - `remove_action('wp_head', 'wp_generator');`
+4. **Disable file editing** - `define('DISALLOW_FILE_EDIT', true);` in wp-config.php
+5. **Limit login attempts** - Install Limit Login Attempts Reloaded or implement in mu-plugin
+6. **Force HTTPS** - `define('FORCE_SSL_ADMIN', true);`
+7. **Disable directory listing** - Add `Options -Indexes` to .htaccess
+8. **Set proper file permissions** - wp-config.php should be 640, wp-content 755
+
+### Vercel/Next.js Production
+1. **Enable Vercel WAF** if available on your plan
+2. **Use Vercel Environment Variables** for all secrets (not .env files)
+3. **Enable DDoS protection** via Vercel or Cloudflare
+4. **Disable source maps** in production: `productionBrowserSourceMaps: false` in next.config.ts
+5. **Set up security monitoring** - Sentry for error tracking, alerts on auth failures
+
+### Database
+1. **Use a dedicated DB user** with minimal privileges (not root)
+2. **Enable MySQL TLS** for remote connections
+3. **Regular backups** with encryption at rest
+4. **Audit logging** on sensitive tables (users, orders, postmeta)
+
+### General
+1. **Enable 2FA** for WordPress admin accounts
+2. **Set up WAF rules** for common attack patterns (SQLi, XSS, path traversal)
+3. **Implement security logging** - log all auth events, admin actions, and failed requests
+4. **Regular dependency audits** - `bun audit` on a schedule
+5. **HSTS preload** - Submit domain to hstspreload.org (header is already set)
+6. **Implement CSP reporting** - Add `report-uri` directive to collect violation reports
+
+---
+
+## What's Working Well
+
+- Rate limiting infrastructure exists (needs Redis for production)
+- Security headers configured (CSP, HSTS, X-Frame-Options, Permissions-Policy)
+- Input validation with Zod on most API routes
+- `.env.local` properly in `.gitignore`
+- Admin endpoints protected with `ADMIN_API_KEY`
+- Error responses sanitized in production mode (`handleApiError()`)
+- TypeScript strict mode enabled
+- No `eval()`, `new Function()`, or other code injection vectors
+- All `target="_blank"` links use `rel="noopener noreferrer"`
+- Order confirmation validates order key before displaying data
+- WPGraphQL queries are parameterized (no string interpolation)
+- Stripe webhook signature verification is implemented
+- Stripe Elements used for card data (PCI compliant - card data never touches server)
+- Cart/checkout/account pages have `robots: { index: false }`
 
 ---
 
 ## Revision History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-01-19 | Dev Team | Initial audit |
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.0 | 2026-02-12 | Comprehensive re-audit with 37 findings across 6 security domains |
+| 1.0 | 2026-01-19 | Initial audit |

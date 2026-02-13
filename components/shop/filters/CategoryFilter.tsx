@@ -15,12 +15,25 @@ interface CategoryFilterProps {
   categories: HierarchicalCategory[];
   selectedCategory: string;
   onSelect: (category: string) => void;
+  /** When set, only show subcategories of this category (for category pages) */
+  initialCategory?: string;
+}
+
+// Recursively find a category by slug
+function findCategory(categories: HierarchicalCategory[], slug: string): HierarchicalCategory | null {
+  for (const cat of categories) {
+    if (cat.slug === slug) return cat;
+    const found = findCategory(cat.children, slug);
+    if (found) return found;
+  }
+  return null;
 }
 
 export default function CategoryFilter({
   categories,
   selectedCategory,
   onSelect,
+  initialCategory,
 }: CategoryFilterProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
@@ -131,26 +144,41 @@ export default function CategoryFilter({
     );
   };
 
+  // When on a category page, scope to subcategories of that category
+  const scopedCategory = initialCategory ? findCategory(categories, initialCategory) : null;
+  const displayCategories = scopedCategory?.children.length ? scopedCategory.children : categories;
+  const allLabel = scopedCategory ? `All ${scopedCategory.name}` : 'All Categories';
+
   return (
     <div className="pt-3 space-y-3">
-      {/* All Categories Option */}
+      {/* All Categories / Scoped Category Option */}
       <button
-        onClick={() => onSelect('')}
+        onClick={() => onSelect(initialCategory || '')}
         className={`flex items-center w-full px-3 py-2 text-sm rounded-lg transition-colors ${
-          selectedCategory === ''
+          selectedCategory === (initialCategory || '')
             ? 'bg-primary/10 text-primary font-medium'
             : 'text-muted-foreground hover:bg-muted hover:text-foreground'
         }`}
       >
-        <span>All Categories</span>
+        <span>{allLabel}</span>
       </button>
 
       {/* Category List */}
       <div className="max-h-80 overflow-y-auto space-y-0.5">
-        {categories.map((category) => (
+        {displayCategories.map((category) => (
           <CategoryItem key={category.id} category={category} />
         ))}
       </div>
+
+      {/* Link to browse all categories (only on category pages) */}
+      {scopedCategory && (
+        <a
+          href="/shop"
+          className="block text-center text-xs text-muted-foreground hover:text-primary transition-colors pt-2 border-t border-border"
+        >
+          Browse all categories
+        </a>
+      )}
     </div>
   );
 }

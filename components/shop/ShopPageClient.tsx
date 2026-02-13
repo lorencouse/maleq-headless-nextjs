@@ -47,7 +47,7 @@ const DEFAULT_FILTERS: FilterState = {
   color: '',
   material: '',
   minPrice: 0,
-  maxPrice: 500,
+  maxPrice: 0,
   minLength: 0,
   maxLength: 24,
   minWeight: 0,
@@ -144,7 +144,7 @@ export default function ShopPageClient({
   const colorFilter = searchParams.get('color') || '';
   const materialFilter = searchParams.get('material') || '';
   const minPriceFilter = parseInt(searchParams.get('minPrice') || '0', 10);
-  const maxPriceFilter = parseInt(searchParams.get('maxPrice') || '500', 10);
+  const maxPriceFilter = parseInt(searchParams.get('maxPrice') || '0', 10);
   const minLengthFilter = parseFloat(searchParams.get('minLength') || '0');
   const maxLengthFilter = parseFloat(searchParams.get('maxLength') || '24');
   const minWeightFilter = parseFloat(searchParams.get('minWeight') || '0');
@@ -185,7 +185,7 @@ export default function ShopPageClient({
     if (newFilters.color) params.set('color', newFilters.color);
     if (newFilters.material) params.set('material', newFilters.material);
     if (newFilters.minPrice > 0) params.set('minPrice', newFilters.minPrice.toString());
-    if (newFilters.maxPrice < 500) params.set('maxPrice', newFilters.maxPrice.toString());
+    if (newFilters.maxPrice > 0) params.set('maxPrice', newFilters.maxPrice.toString());
     if (newFilters.minLength > 0) params.set('minLength', newFilters.minLength.toString());
     if (newFilters.maxLength < 24) params.set('maxLength', newFilters.maxLength.toString());
     if (newFilters.minWeight > 0) params.set('minWeight', newFilters.minWeight.toString());
@@ -202,6 +202,9 @@ export default function ShopPageClient({
 
     const queryString = params.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
+
+    // Scroll to top of product gallery when filter changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [pathname, router, searchQuery]);
 
   // Fetch products from API
@@ -247,7 +250,7 @@ export default function ShopPageClient({
       if (filterParams.color) params.set('color', filterParams.color);
       if (filterParams.material) params.set('material', filterParams.material);
       if (filterParams.minPrice > 0) params.set('minPrice', filterParams.minPrice.toString());
-      if (filterParams.maxPrice < 500) params.set('maxPrice', filterParams.maxPrice.toString());
+      if (filterParams.maxPrice > 0) params.set('maxPrice', filterParams.maxPrice.toString());
       if (filterParams.minLength > 0) params.set('minLength', filterParams.minLength.toString());
       if (filterParams.maxLength < 24) params.set('maxLength', filterParams.maxLength.toString());
       if (filterParams.minWeight > 0) params.set('minWeight', filterParams.minWeight.toString());
@@ -356,7 +359,7 @@ export default function ShopPageClient({
     // Skip fetch if we have search results from SSR and no filters applied
     // This prevents re-fetching on hydration/Strict Mode double-render
     if (hasInitialSearchResults.current) {
-      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter < 500 || minLengthFilter > 0 || maxLengthFilter < 24 || minWeightFilter > 0 || maxWeightFilter < 10 || inStockFilter || onSaleFilter || productTypeFilter || sortBy !== 'newest';
+      const hasFilters = categoryFilter || brandFilter || colorFilter || materialFilter || minPriceFilter > 0 || maxPriceFilter > 0 || minLengthFilter > 0 || maxLengthFilter < 24 || minWeightFilter > 0 || maxWeightFilter < 10 || inStockFilter || onSaleFilter || productTypeFilter || sortBy !== 'newest';
       if (!hasFilters) {
         // Clear the flag so subsequent filter changes will fetch
         hasInitialSearchResults.current = false;
@@ -429,7 +432,7 @@ export default function ShopPageClient({
     if (filters.color) params.set('color', filters.color);
     if (filters.material) params.set('material', filters.material);
     if (filters.minPrice > 0) params.set('minPrice', filters.minPrice.toString());
-    if (filters.maxPrice < 500) params.set('maxPrice', filters.maxPrice.toString());
+    if (filters.maxPrice > 0) params.set('maxPrice', filters.maxPrice.toString());
     if (filters.minLength > 0) params.set('minLength', filters.minLength.toString());
     if (filters.maxLength < 24) params.set('maxLength', filters.maxLength.toString());
     if (filters.minWeight > 0) params.set('minWeight', filters.minWeight.toString());
@@ -453,7 +456,7 @@ export default function ShopPageClient({
     const newFilters = { ...filters };
     if (key === 'minPrice' || key === 'maxPrice') {
       newFilters.minPrice = 0;
-      newFilters.maxPrice = 500;
+      newFilters.maxPrice = 0;
     } else if (key === 'minLength' || key === 'maxLength') {
       newFilters.minLength = 0;
       newFilters.maxLength = 24;
@@ -579,6 +582,7 @@ export default function ShopPageClient({
             filters={filters}
             onFilterChange={handleFilterChange}
             onClearFilters={handleClearFilters}
+            initialCategory={initialCategory}
           />
         </div>
       </aside>
@@ -707,27 +711,30 @@ export default function ShopPageClient({
       </div>
 
       {/* Mobile Filter Overlay */}
-      {isMobileFilterOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setIsMobileFilterOpen(false)}
-          />
-          <div className="fixed inset-y-0 left-0 w-full max-w-sm bg-background z-50 lg:hidden overflow-y-auto">
-            <FilterPanel
-              categories={categories}
-              brands={availableBrands}
-              colors={availableColors}
-              materials={availableMaterials}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              onClearFilters={handleClearFilters}
-              isMobile
-              onClose={() => setIsMobileFilterOpen(false)}
-            />
-          </div>
-        </>
-      )}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${
+          isMobileFilterOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsMobileFilterOpen(false)}
+      />
+      <div
+        className={`fixed inset-y-0 left-0 w-full max-w-sm bg-background z-50 lg:hidden overflow-y-auto transition-transform duration-300 ease-out ${
+          isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <FilterPanel
+          categories={categories}
+          brands={availableBrands}
+          colors={availableColors}
+          materials={availableMaterials}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+          isMobile
+          onClose={() => setIsMobileFilterOpen(false)}
+          initialCategory={initialCategory}
+        />
+      </div>
     </div>
   );
 }

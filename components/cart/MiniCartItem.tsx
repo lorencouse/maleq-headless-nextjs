@@ -47,7 +47,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
   return (
     <div className="flex gap-2 sm:gap-3 py-3 border-b border-border last:border-0 w-full overflow-hidden">
       {/* Product Image */}
-      <div className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden">
+      <Link href={`/product/${item.slug}`} className="relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden block">
         {item.image?.url ? (
           <Image
             src={getImageUrl(item.image.url)}
@@ -61,7 +61,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
             No Image
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Product Details */}
       <div className="flex-1 min-w-0 overflow-hidden">

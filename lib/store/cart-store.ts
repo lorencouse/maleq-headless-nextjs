@@ -52,10 +52,14 @@ export const useCartStore = create<CartStore>()(
       params.inStock
     );
 
-    if (!validation.isValid) {
+    // If completely invalid (out of stock or zero quantity), reject
+    if (!validation.isValid && validation.validQuantity <= 0) {
       set({ error: validation.message });
       return;
     }
+
+    // Use the clamped valid quantity (e.g. requested 5 but only 3 in stock → use 3)
+    const effectiveQuantity = validation.validQuantity;
 
     // Check if item already in cart
     const existingItem = state.items.find((item) => item.id === itemId);
@@ -63,22 +67,21 @@ export const useCartStore = create<CartStore>()(
     let updatedItems: CartItem[];
 
     if (existingItem) {
-      // Merge with existing item
-      const newQuantity = existingItem.quantity + quantity;
-      const quantityValidation = validateQuantity(
-        newQuantity,
-        params.maxQuantity,
-        params.inStock
+      // Merge with existing item, clamping to max stock
+      const newQuantity = Math.min(
+        existingItem.quantity + effectiveQuantity,
+        params.maxQuantity
       );
 
-      if (!quantityValidation.isValid) {
-        set({ error: quantityValidation.message });
+      if (newQuantity <= existingItem.quantity) {
+        set({ error: `Maximum quantity already in cart (${params.maxQuantity} available)` });
         return;
       }
 
+      const quantityToAdd = newQuantity - existingItem.quantity;
       updatedItems = state.items.map((item) =>
         item.id === itemId
-          ? mergeCartItem(item, quantity)
+          ? mergeCartItem(item, quantityToAdd)
           : item
       );
     } else {
@@ -92,8 +95,8 @@ export const useCartStore = create<CartStore>()(
         sku: params.sku,
         price: params.price,
         regularPrice: params.regularPrice,
-        quantity: validation.validQuantity,
-        subtotal: calculateLineSubtotal(params.price, validation.validQuantity),
+        quantity: effectiveQuantity,
+        subtotal: calculateLineSubtotal(params.price, effectiveQuantity),
         image: params.image,
         attributes: params.attributes,
         stockQuantity: params.stockQuantity,

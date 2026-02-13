@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState } from 'react';
+import { memo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -32,6 +32,12 @@ export default memo(function ProductCard({
   onRemove,
 }: ProductCardProps) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Retry failed image by appending cache-bust param
+  const handleImageError = useCallback(() => {
+    setImgError(true);
+  }, []);
 
   // Get first category
   const primaryCategory = product.categories?.[0];
@@ -45,13 +51,14 @@ export default memo(function ProductCard({
         className='product-card-link block'
       >
         <div className='relative h-44 sm:h-56 lg:h-64 w-full overflow-hidden bg-background'>
-          {product.image ? (
+          {product.image && !imgError ? (
             <Image
               src={product.image.url}
               alt={product.image.altText || product.name}
               fill
               className='object-contain group-hover:scale-105 transition-transform duration-300'
               sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+              onError={handleImageError}
             />
           ) : (
             <div className='flex items-center justify-center h-full text-muted-foreground'>
