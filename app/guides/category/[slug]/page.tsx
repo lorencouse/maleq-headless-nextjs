@@ -30,7 +30,6 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
   const { data } = await getClient().query({
     query: GET_CATEGORY_BY_SLUG,
     variables: { slug },
-    fetchPolicy: 'no-cache',
   });
 
   const category: Category | null = data?.category;
@@ -75,7 +74,6 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
   const categoryResult = await getClient().query({
     query: GET_CATEGORY_BY_SLUG,
     variables: { slug },
-    fetchPolicy: 'no-cache',
   });
 
   const category: Category | null = categoryResult.data?.category;

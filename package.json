@@ -40,7 +40,6 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.0",
-    "@types/dompurify": "^3.2.0",
     "@types/jest": "^29.5.11",
     "@types/node": "^20",
     "@types/react": "^18",

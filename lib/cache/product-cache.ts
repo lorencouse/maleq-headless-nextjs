@@ -25,6 +25,10 @@ export function getCached<T>(key: string): T | null {
     return null;
   }
 
+  // LRU: move to end of Map insertion order so it's evicted last
+  cache.delete(key);
+  cache.set(key, entry);
+
   return entry.data as T;
 }
 

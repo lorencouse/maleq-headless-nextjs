@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
     const { data } = await getClient().query({
       query,
       variables,
-      fetchPolicy: 'no-cache',
     });
 
     const posts = data?.posts?.nodes || [];

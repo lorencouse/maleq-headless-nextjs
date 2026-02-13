@@ -32,7 +32,6 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
   const { data } = await getClient().query({
     query: GET_TAG_BY_SLUG,
     variables: { slug },
-    fetchPolicy: 'no-cache',
   });
 
   const tag: Tag | null = data?.tag;
@@ -70,8 +69,7 @@ export async function generateStaticParams() {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_TAGS,
-      fetchPolicy: 'no-cache',
-    });
+      });
 
     const tags: Tag[] = data?.tags?.nodes || [];
 
@@ -100,13 +98,11 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
     getClient().query({
       query: GET_TAG_BY_SLUG,
       variables: { slug },
-      fetchPolicy: 'no-cache',
-    }),
+      }),
     getClient().query({
       query: GET_POSTS_BY_TAG,
       variables: { tag: slug, first: 12 },
-      fetchPolicy: 'no-cache',
-    }),
+      }),
   ]);
 
   const tag: Tag | null = tagResult.data?.tag;

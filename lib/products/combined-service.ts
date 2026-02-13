@@ -268,7 +268,6 @@ export async function getAllProducts(params: {
     const { data } = await getClient().query({
       query,
       variables,
-      fetchPolicy: 'no-cache',
     });
 
     const products: WooProduct[] = data?.products?.nodes || [];
@@ -359,7 +358,6 @@ export async function getFilteredProducts(params: {
     const { data } = await getClient().query({
       query: FILTER_PRODUCTS,
       variables,
-      fetchPolicy: 'no-cache',
     });
 
     const products: WooProduct[] = data?.products?.nodes || [];
@@ -401,8 +399,7 @@ async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
           first: 100,
           after: afterCursor,
         },
-        fetchPolicy: 'no-cache',
-      });
+        });
 
       const nodes: ProductCategory[] = result.data?.productCategories?.nodes || [];
       const pageInfoData = result.data?.productCategories?.pageInfo;
@@ -440,7 +437,6 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
   try {
     const { data } = await getClient().query({
       query: GET_HIERARCHICAL_CATEGORIES,
-      fetchPolicy: 'no-cache',
     });
 
     const nodes: GraphQLHierarchicalCategory[] = data?.productCategories?.nodes || [];
@@ -534,18 +530,20 @@ export async function searchProducts(
 
 
     // 2. Fetch products from multiple sources in parallel
+    // Limits tuned to balance result quality vs response time:
+    // - Title: 100 (highest priority, most relevant)
+    // - Content: 50 (supplementary)
+    // - Category: 50 each (supplementary, max 3 categories)
     const fetchPromises: Promise<{ data: { products?: { nodes: WooProduct[] } } }>[] = [
       // Title search (highest priority)
       getClient().query({
         query: SEARCH_PRODUCTS_BY_TITLE,
-        variables: { titleSearch: primaryTerm, first: 200 },
-        fetchPolicy: 'no-cache',
+        variables: { titleSearch: primaryTerm, first: 100 },
       }),
       // Content search
       getClient().query({
         query: SEARCH_PRODUCTS,
-        variables: { search: searchQuery, first: 200 },
-        fetchPolicy: 'no-cache',
+        variables: { search: searchQuery, first: 50 },
       }),
     ];
 
@@ -554,8 +552,7 @@ export async function searchProducts(
       fetchPromises.push(
         getClient().query({
           query: SEARCH_PRODUCTS_BY_CATEGORY,
-          variables: { category: cat.slug, first: 200 },
-          fetchPolicy: 'no-cache',
+          variables: { category: cat.slug, first: 50 },
         })
       );
     }
@@ -682,7 +679,6 @@ async function _uncachedGetBrands(): Promise<FilterOption[]> {
     // First, try to fetch all brands with a simple query
     const { data } = await getClient().query<BrandQueryResponse>({
       query: GET_ALL_BRANDS,
-      fetchPolicy: 'network-only',
     });
 
     let allBrands: FilterOption[] = data?.productBrands?.nodes || [];
@@ -746,7 +742,6 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
           first: 100,
           after: afterCursor,
         },
-        fetchPolicy: 'network-only',
       });
 
       const nodes = result.data?.productBrands?.nodes || [];
@@ -782,7 +777,6 @@ export async function getMaterials(): Promise<FilterOption[]> {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_MATERIALS,
-      fetchPolicy: 'no-cache',
     });
 
     const nodes = data?.productMaterials?.nodes || [];
@@ -813,7 +807,7 @@ async function _uncachedGetGlobalAttributes(): Promise<{
   try {
     // Fetch colors and materials in parallel
     const [colorResult, materials] = await Promise.all([
-      getClient().query({ query: GET_GLOBAL_ATTRIBUTES, fetchPolicy: 'no-cache' }),
+      getClient().query({ query: GET_GLOBAL_ATTRIBUTES }),
       getMaterials(),
     ]);
 
@@ -859,7 +853,6 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
     const { data } = await getClient().query({
       query: GET_BRAND_BY_SLUG,
       variables: { slug },
-      fetchPolicy: 'no-cache',
     });
 
     const brand = data?.productBrand;

@@ -44,7 +44,6 @@ export {
   markAsSubscribed as markNewsletterSubscribed,
   isPopupDismissed,
   dismissPopup,
-  isValidEmail as isValidNewsletterEmail,
 } from './newsletter';
 export type { NewsletterSubscription } from './newsletter';
 
@@ -66,7 +65,6 @@ export {
   addStockAlert,
   removeStockAlert,
   clearStockAlerts,
-  isValidEmail as isValidStockAlertEmail,
 } from './stock-alerts';
 export type { StockAlert } from './stock-alerts';
 

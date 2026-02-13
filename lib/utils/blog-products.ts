@@ -124,7 +124,6 @@ export async function fetchProductsByIds(ids: number[]): Promise<Map<number, Blo
         const { data } = await getClient().query({
           query: GET_PRODUCT_BY_DATABASE_ID,
           variables: { id: idStr },
-          fetchPolicy: 'no-cache',
         });
         if (data?.product) {
           return { type: 'product' as const, data: data.product, requestedId: id };
@@ -138,7 +137,6 @@ export async function fetchProductsByIds(ids: number[]): Promise<Map<number, Blo
         const { data: varData } = await getClient().query({
           query: GET_PRODUCT_VARIATION,
           variables: { id: idStr },
-          fetchPolicy: 'no-cache',
         });
         if (varData?.productVariation) {
           return { type: 'variation' as const, data: varData.productVariation, requestedId: id };

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { isSubscribed, markAsSubscribed, isValidEmail } from '@/lib/utils/newsletter';
+import { isSubscribed, markAsSubscribed } from '@/lib/utils/newsletter';
+import { isValidEmail } from '@/lib/api/validation';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface NewsletterSignupProps {

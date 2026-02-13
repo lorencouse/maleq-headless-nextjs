@@ -8,8 +8,8 @@
 
 ---
 
+explore uptimerobot free alternatives (uptime kuma, etc)
 ## Pre-Launch Checklist
-
 - [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)
 - [ ] `[HIGH]` Verify all payment flows work correctly
   - Test Stripe live mode with real cards
@@ -57,9 +57,6 @@
 ## Images & Media
 
 - [ ] `[MED]` Re-import product images < 650px onto 650x650 white background (no stretch/crop)
-- [ ] `[MED]` Import hotlinked blog/product images to local hosting
-- [ ] `[MED]` Migrate product photos from old DB descriptions to WP gallery
-- [ ] `[MED]` Import images from reusable blocks into media library and update URLs (currently hotlinked from old site); do this after shortcodes are updated and old product images removed
 - [ ] `[LOW]` Fix specific variation images:
   - Green variation (9342851003801) images missing for `/product/sensuelle-luna-velvet-touch-vibe` — present in gallery but not attached
   - Green variation (850013016006) image not imported for `/product/cloud-9-health-wellness-borosilicate-kegel-training-set` — purple image attached instead
@@ -71,12 +68,6 @@
 
 - [ ] `[HIGH]` SEO optimize product descriptions — use info from title, attributes, and reviews to create unique, keyword-rich descriptions; add headers, bullet points, and formatting; insert relevant gallery images
 - [ ] `[HIGH]` Populate product reviews (content exists, needs import/display)
-- [ ] `[MED]` Add additional datafeeds from STC
-- [ ] `[MED]` Manually add missing product "kits" before deploy
-- [ ] `[MED]` Verify all blog post images are migrated
-- [ ] `[MED]` Update `.product-specs` blocks in blog posts to 2-column tables
-- [ ] `[MED]` Address broken links in `data/maleq-link-fix-applied.json`
-- [ ] `[MED]` Review and update reusable blocks with correct URLs
 - [ ] `[LOW]` Fix product specs not showing on some products (missing brand/attributes from STC import)
 
 ### Product Data Cleanup
@@ -100,6 +91,7 @@
 ### Performance
 
 - [ ] `[MED]` Review and improve Core Web Vitals scores (Lighthouse audit)
+- [ ] `[MED]` Integrate wsrv.nl (weserv) as free image proxy/CDN — serves WebP/AVIF, resizes on the fly, no signup needed. Wrap image URLs with `https://wsrv.nl/?url=ORIGINAL_URL&w=WIDTH&output=webp`
 - [ ] `[LOW]` Add service worker for offline support
 - [ ] `[LOW]` Replace order tracking mu-plugin with AST Free WP plugin
 

@@ -24,21 +24,30 @@ interface VocabularyItem {
 let searchIndex: MiniSearch<VocabularyItem> | null = null;
 let vocabularyTimestamp = 0;
 let vocabularyLoading: Promise<MiniSearch<VocabularyItem>> | null = null;
-const VOCABULARY_TTL = 10 * 60 * 1000; // 10 minutes
+const VOCABULARY_TTL = 60 * 60 * 1000; // 1 hour (vocabulary changes rarely)
 
-const GET_SEARCH_VOCABULARY = gql`
-  query GetSearchVocabulary {
-    products(first: 500) {
+const GET_PRODUCT_NAMES_PAGE = gql`
+  query GetProductNamesPage($first: Int = 500, $after: String) {
+    products(first: $first, after: $after) {
+      nodes {
+        name
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+const GET_TAXONOMY_VOCABULARY = gql`
+  query GetTaxonomyVocabulary {
+    productBrands(first: 500) {
       nodes {
         name
       }
     }
-    productBrands(first: 200) {
-      nodes {
-        name
-      }
-    }
-    productCategories(first: 100, where: { hideEmpty: true }) {
+    productCategories(first: 500, where: { hideEmpty: true }) {
       nodes {
         name
       }
@@ -58,6 +67,39 @@ function createSearchIndex(): MiniSearch<VocabularyItem> {
   });
 }
 
+interface ProductNamesResponse {
+  products: {
+    nodes: { name: string }[];
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+  };
+}
+
+async function fetchAllProductNames(): Promise<string[]> {
+  const names: string[] = [];
+  let afterCursor: string | null = null;
+  let hasNextPage = true;
+  let pageCount = 0;
+  const MAX_PAGES = 100; // Safety limit (~50K products max)
+
+  while (hasNextPage && pageCount < MAX_PAGES) {
+    const result: { data: ProductNamesResponse } = await getClient().query({
+      query: GET_PRODUCT_NAMES_PAGE,
+      variables: { first: 500, after: afterCursor },
+    });
+
+    const nodes = result.data?.products?.nodes || [];
+    for (const p of nodes) {
+      if (p.name) names.push(p.name);
+    }
+
+    hasNextPage = result.data?.products?.pageInfo?.hasNextPage ?? false;
+    afterCursor = result.data?.products?.pageInfo?.endCursor ?? null;
+    pageCount++;
+  }
+
+  return names;
+}
+
 async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
   const now = Date.now();
 
@@ -69,38 +111,36 @@ async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
 
   vocabularyLoading = (async () => {
     try {
-      const { data } = await getClient().query({
-        query: GET_SEARCH_VOCABULARY,
-        fetchPolicy: 'no-cache',
-      });
+      // Fetch all product names (paginated) and taxonomy terms in parallel
+      const [productNames, taxonomyResult] = await Promise.all([
+        fetchAllProductNames(),
+        getClient().query({ query: GET_TAXONOMY_VOCABULARY }),
+      ]);
 
       const index = createSearchIndex();
       const seen = new Set<string>();
       let idCounter = 0;
 
       // Extract unique words from product names
-      const products = data?.products?.nodes || [];
-      for (const p of products) {
-        if (p.name) {
-          const name = p.name.toLowerCase();
-          if (!seen.has(name)) {
-            seen.add(name);
-            index.add({ id: String(idCounter++), term: name, type: 'product' });
-          }
-          // Also add individual significant words (3+ chars)
-          const words = name.split(/[\s\-_,]+/);
-          for (const word of words) {
-            const clean = word.replace(/[^a-z]/g, '');
-            if (clean.length >= 3 && !seen.has(clean)) {
-              seen.add(clean);
-              index.add({ id: String(idCounter++), term: clean, type: 'product' });
-            }
+      for (const rawName of productNames) {
+        const name = rawName.toLowerCase();
+        if (!seen.has(name)) {
+          seen.add(name);
+          index.add({ id: String(idCounter++), term: name, type: 'product' });
+        }
+        // Also add individual significant words (3+ chars)
+        const words = name.split(/[\s\-_,]+/);
+        for (const word of words) {
+          const clean = word.replace(/[^a-z]/g, '');
+          if (clean.length >= 3 && !seen.has(clean)) {
+            seen.add(clean);
+            index.add({ id: String(idCounter++), term: clean, type: 'product' });
           }
         }
       }
 
       // Add brand names
-      const brands = data?.productBrands?.nodes || [];
+      const brands = taxonomyResult.data?.productBrands?.nodes || [];
       for (const b of brands) {
         if (b.name) {
           const name = b.name.toLowerCase();
@@ -112,7 +152,7 @@ async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
       }
 
       // Add category names
-      const categories = data?.productCategories?.nodes || [];
+      const categories = taxonomyResult.data?.productCategories?.nodes || [];
       for (const c of categories) {
         if (c.name) {
           const name = c.name.toLowerCase();
@@ -127,7 +167,7 @@ async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
       vocabularyTimestamp = now;
       vocabularyLoading = null;
 
-      console.log(`[SpellCheck] Loaded ${idCounter} vocabulary terms into MiniSearch`);
+      console.log(`[SpellCheck] Loaded ${idCounter} vocabulary terms from ${productNames.length} products into MiniSearch`);
       return index;
     } catch (error) {
       console.error('[SpellCheck] Failed to load vocabulary:', error);

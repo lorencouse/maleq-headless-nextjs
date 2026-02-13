@@ -6,8 +6,8 @@ import {
   addStockAlert,
   removeStockAlert,
   getAlertEmail,
-  isValidEmail,
 } from '@/lib/utils/stock-alerts';
+import { isValidEmail } from '@/lib/api/validation';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 interface StockAlertButtonProps {

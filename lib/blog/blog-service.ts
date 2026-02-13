@@ -90,7 +90,6 @@ export async function searchBlogPosts(
           first: first * 2,
           categoryName: categorySlug || null,
         },
-        fetchPolicy: 'no-cache',
       }),
       getClient().query({
         query: SEARCH_POSTS,
@@ -99,7 +98,6 @@ export async function searchBlogPosts(
           first: first * 3,
           categoryName: categorySlug || null,
         },
-        fetchPolicy: 'no-cache',
       }),
     ]);
 
@@ -236,7 +234,6 @@ export async function getBlogPosts(
       variables: categorySlug
         ? { categoryName: categorySlug, first, after }
         : { first, after },
-      fetchPolicy: 'no-cache',
     });
 
     return {
@@ -281,16 +278,13 @@ export async function getBlogSearchSuggestions(
     getClient().query({
       query: SEARCH_POSTS_BY_TITLE,
       variables: { titleSearch: primaryTerm, first: limit * 2 },
-      fetchPolicy: 'no-cache',
     }),
     getClient().query({
       query: SEARCH_POSTS,
       variables: { search: searchQuery, first: limit * 3 },
-      fetchPolicy: 'no-cache',
     }),
     getClient().query({
       query: GET_ALL_CATEGORIES,
-      fetchPolicy: 'no-cache',
     }),
   ]);
 
@@ -399,7 +393,6 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_CATEGORIES,
-      fetchPolicy: 'no-cache',
     });
 
     return (data?.categories?.nodes || []).map((cat: CategoryNode) => ({

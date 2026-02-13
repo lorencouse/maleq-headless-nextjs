@@ -47,7 +47,6 @@ export default async function Home() {
       getClient().query({
         query: GET_ALL_POSTS,
         variables: { first: 6 },
-        fetchPolicy: 'no-cache',
       }),
       getFilteredProducts({ limit: 8, inStock: true }),
       getHierarchicalCategories(),

@@ -46,7 +46,6 @@ export async function generateMetadata({
   const { data } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
-    fetchPolicy: 'no-cache',
   });
 
   const post: Post = data?.postBy;
@@ -111,8 +110,7 @@ export async function generateStaticParams() {
       const result: { data: Record<string, any> } = await getClient().query({
         query: GET_ALL_POST_SLUGS,
         variables: { first: 100, after },
-        fetchPolicy: 'no-cache',
-      });
+          });
 
       const nodes: { slug: string }[] = result.data?.posts?.nodes || [];
       allParams.push(...nodes.map((post) => ({ slug: post.slug })));
@@ -138,7 +136,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { data } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
-    fetchPolicy: 'no-cache',
   });
 
   const post: Post = data?.postBy;
@@ -154,8 +151,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     const { data: relatedData } = await getClient().query({
       query: GET_RELATED_POSTS,
       variables: { categorySlug, first: 10 },
-      fetchPolicy: 'no-cache',
-    });
+      });
     relatedPosts = relatedData?.posts?.nodes || [];
   }
 

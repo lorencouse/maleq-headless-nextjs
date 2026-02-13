@@ -11,7 +11,6 @@ const graphqlClient = new GraphQLClient(endpoint, {
 interface QueryOptions {
   query: RequestDocument;
   variables?: Record<string, unknown>;
-  fetchPolicy?: string;
 }
 
 interface MutateOptions {
