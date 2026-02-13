@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy | Male Q',
+  title: 'Privacy Policy',
   description: 'Learn how Male Q collects, uses, and protects your personal information.',
   alternates: {
     canonical: '/privacy',

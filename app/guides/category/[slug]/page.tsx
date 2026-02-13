@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
 
   if (!category) {
     return {
-      title: 'Category Not Found | Male Q Guides',
+      title: 'Category Not Found | Guides',
     };
   }
 
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
     : `Browse ${category.name} articles on the Male Q blog. ${category.count} posts available.`;
 
   return {
-    title: `${category.name} | Male Q Guides`,
+    title: `${category.name} | Guides`,
     description,
     openGraph: {
       title: `${category.name} | Male Q Guides`,

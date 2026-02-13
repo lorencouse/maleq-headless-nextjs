@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Shipping & Returns | Male Q',
+  title: 'Shipping & Returns',
   description: 'Learn about Male Q shipping options, delivery times, return policy, and refund process.',
   alternates: {
     canonical: '/shipping-returns',

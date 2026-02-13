@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
 
   if (!tag) {
     return {
-      title: 'Tag Not Found | Male Q Guides',
+      title: 'Tag Not Found | Guides',
     };
   }
 
@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
     : `Browse articles tagged with "${tag.name}" on the Male Q blog. ${tag.count} posts available.`;
 
   return {
-    title: `${tag.name} | Male Q Guides`,
+    title: `${tag.name} | Guides`,
     description,
     openGraph: {
       title: `${tag.name} | Male Q Guides`,

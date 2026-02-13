@@ -3,7 +3,7 @@ import Link from 'next/link';
 import LoginForm from '@/components/auth/LoginForm';
 
 export const metadata: Metadata = {
-  title: 'Sign In | Male Q',
+  title: 'Sign In',
   description: 'Sign in to your Male Q account to view orders, manage addresses, and more.',
 };
 

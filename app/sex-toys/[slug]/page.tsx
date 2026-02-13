@@ -23,14 +23,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
     if (!category) {
       return {
-        title: 'Category Not Found | Male Q',
+        title: 'Category Not Found',
       };
     }
 
     const description = `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`;
 
     return {
-      title: `${category.name} | Shop | Male Q`,
+      title: `${category.name} | Shop`,
       description,
       openGraph: {
         title: `${category.name} | Male Q`,
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     };
   } catch (error) {
     console.error('generateMetadata error:', error);
-    return { title: 'Shop | Male Q' };
+    return { title: 'Shop' };
   }
 }
 

@@ -5,7 +5,7 @@ import { getBrands } from '@/lib/products/combined-service';
 import ShopSearch from '@/components/shop/ShopSearch';
 
 export const metadata: Metadata = {
-  title: 'Shop by Brand | Male Q',
+  title: 'Shop by Brand',
   description: 'Browse our collection of top brands at Male Q. Find quality products from trusted manufacturers with fast, discreet shipping.',
   openGraph: {
     title: 'Shop by Brand | Male Q',

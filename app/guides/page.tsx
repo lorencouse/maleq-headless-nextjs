@@ -11,14 +11,14 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
 
   if (searchQuery) {
     return {
-      title: `Search results for "${searchQuery}" | Guides | Male Q`,
+      title: `Search results for "${searchQuery}" | Guides`,
       description: `Browse guide search results for "${searchQuery}".`,
       robots: { index: false },
     };
   }
 
   return {
-    title: 'Guides | Male Q',
+    title: 'Guides',
     description: 'Read the latest articles, guides, and insights from Male Q. Tips, product reviews, and expert advice for your intimate wellness.',
     openGraph: {
       title: 'Guides | Male Q',

@@ -19,7 +19,7 @@ import ProductCarousel from '@/components/product/ProductCarousel';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
 
 export const metadata: Metadata = {
-  title: 'Male Q | Premium Adult Products - Fast & Discreet Shipping',
+  title: { absolute: 'Male Q - Premium Adult Products | Fast & Discreet Shipping' },
   description:
     'Shop premium adult products with fast, discreet shipping. Expert guides, unsponsored reviews, and quality products to help you choose with confidence.',
   openGraph: {

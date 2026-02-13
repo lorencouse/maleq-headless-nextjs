@@ -3,7 +3,7 @@ import Link from 'next/link';
 import RegisterForm from '@/components/auth/RegisterForm';
 
 export const metadata: Metadata = {
-  title: 'Create Account | Male Q',
+  title: 'Create Account',
   description: 'Create a Male Q account to track orders, save addresses, and enjoy a faster checkout.',
 };
 

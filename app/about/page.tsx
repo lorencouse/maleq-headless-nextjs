@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'About Us | Male Q',
+  title: 'About Us',
   description: 'Learn about Male Q - your trusted online destination for quality products and exceptional service.',
   alternates: {
     canonical: '/about',

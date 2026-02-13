@@ -21,7 +21,7 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
 
   if (searchQuery) {
     return {
-      title: `Search results for "${searchQuery}" | Male Q`,
+      title: `Search results for "${searchQuery}"`,
       description: `Browse search results for "${searchQuery}" in our collection of quality products.`,
       robots: { index: false },
     };
@@ -30,7 +30,7 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
   const description = 'Browse our collection of quality products. Filter by category, price, and more.';
 
   return {
-    title: 'Shop | Male Q',
+    title: 'Shop',
     description,
     openGraph: {
       title: 'Shop | Male Q',

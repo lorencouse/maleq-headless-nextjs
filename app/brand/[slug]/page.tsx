@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
 
     if (!brand) {
       return {
-        title: 'Brand Not Found | Male Q',
+        title: 'Brand Not Found',
       };
     }
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
       : `Shop ${brand.name} products at Male Q. ${brand.count} products available with fast, discreet shipping.`;
 
     return {
-      title: `${brand.name} | Shop by Brand | Male Q`,
+      title: `${brand.name} | Shop by Brand`,
       description,
       openGraph: {
         title: `${brand.name} | Male Q`,
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
     };
   } catch (error) {
     console.error('generateMetadata error for brand:', error);
-    return { title: 'Shop by Brand | Male Q' };
+    return { title: 'Shop by Brand' };
   }
 }
 

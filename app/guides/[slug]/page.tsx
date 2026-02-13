@@ -52,7 +52,7 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: 'Post Not Found | Male Q',
+      title: 'Post Not Found',
     };
   }
 
@@ -64,7 +64,7 @@ export async function generateMetadata({
       : `Read ${post.title} on the Male Q blog.`;
 
   return {
-    title: `${post.title} | Male Q Guides`,
+    title: `${post.title} | Guides`,
     description,
     openGraph: {
       title: post.title,
