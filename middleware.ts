@@ -18,38 +18,6 @@ const RATE_LIMITED_ROUTES: Record<string, RateLimitConfig> = {
   '/api/payment/create-intent': RATE_LIMITS.auth,
 };
 
-/**
- * Known root-level app routes. Any single-segment path NOT in this set
- * is assumed to be an old WordPress blog post slug and gets 301-redirected
- * to /guides/:slug.
- */
-const KNOWN_ROOT_ROUTES = new Set([
-  'account',
-  'forgot-password',
-  'reset-password',
-  'search',
-  'login',
-  'register',
-  'about',
-  'contact',
-  'faq',
-  'terms',
-  'privacy',
-  'shipping-returns',
-  'brands',
-  'brand',
-  'shop',
-  'guides',
-  'cart',
-  'checkout',
-  'product',
-  'sex-toys',
-  'order-confirmation',
-  'api',
-  'graphql',
-  '_next',
-]);
-
 function getClientIp(request: NextRequest): string {
   // Vercel provides the real IP via x-forwarded-for
   const forwarded = request.headers.get('x-forwarded-for');
@@ -62,28 +30,7 @@ function getClientIp(request: NextRequest): string {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Redirect old root-level blog post URLs to /guides/:slug
-  // Old WordPress had posts at /:slug, new site uses /guides/:slug
-  if (!pathname.startsWith('/api/') && !pathname.startsWith('/_next/')) {
-    // Strip trailing slash for matching
-    const cleanPath = pathname.endsWith('/') && pathname.length > 1
-      ? pathname.slice(0, -1)
-      : pathname;
-
-    // Check if this is a single-segment path (e.g., /some-blog-post)
-    const segments = cleanPath.split('/').filter(Boolean);
-    if (segments.length === 1) {
-      const slug = segments[0];
-      // Skip known app routes and files with extensions (e.g., favicon.ico, sitemap.xml)
-      if (!KNOWN_ROOT_ROUTES.has(slug) && !slug.includes('.')) {
-        const url = request.nextUrl.clone();
-        url.pathname = `/guides/${slug}`;
-        return NextResponse.redirect(url, 301);
-      }
-    }
-  }
-
-  // Rate limiting for API routes
+  // Only rate-limit configured routes
   const config = RATE_LIMITED_ROUTES[pathname];
   if (!config) {
     return NextResponse.next();
@@ -118,6 +65,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Match both root-level paths (for blog redirects) and API routes (for rate limiting)
-  matcher: ['/((?!_next/static|_next/image|images|fonts|favicon.ico).*)', '/api/:path*'],
+  matcher: '/api/:path*',
 };

@@ -136,6 +136,15 @@ const nextConfig: NextConfig = {
         destination: '/guides/tag/:slug*',
         permanent: true,
       },
+      // Redirect old root-level blog post URLs to /guides/:slug
+      // Old WordPress had posts at /:slug, new site uses /guides/:slug
+      // Regex matches URL-safe slugs (letters, numbers, hyphens) but excludes known app routes
+      {
+        source:
+          '/:slug((?!account|forgot-password|reset-password|search|login|register|about|contact|faq|terms|privacy|shipping-returns|brands|brand|shop|guides|cart|checkout|product|sex-toys|order-confirmation|api|graphql|_next|images|fonts)[a-z0-9][a-z0-9-]*[a-z0-9])',
+        destination: '/guides/:slug',
+        permanent: true,
+      },
     ];
   },
 
