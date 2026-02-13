@@ -412,7 +412,7 @@ export function getCategoryConfig(slug: string) {
 }
 
 // Category slug to image filename mapping
-// Images are stored in public/images/product-categories/
+// Images are stored on the WP backend at /wp-content/uploads/images/product-categories/
 export const categoryImages: Record<string, string> = {
   // Anal toys
   'anal-beads': 'anal-beads.webp',
@@ -467,12 +467,13 @@ export const categoryImages: Record<string, string> = {
   'erotic-body-lotions': 'massage-lotions-and-creams.webp',
 };
 
-// Helper to get category image path
+// Helper to get category image URL
 // Checks static mapping first, then falls back to WP image URL
 export function getCategoryImage(slug: string, wpImageUrl?: string | null): string | null {
   const filename = categoryImages[slug];
   if (filename) {
-    return `/images/product-categories/${filename}`;
+    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://wp.maleq.com';
+    return `${baseUrl}/wp-content/uploads/images/product-categories/${filename}`;
   }
   return wpImageUrl || null;
 }
