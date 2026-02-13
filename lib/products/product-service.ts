@@ -97,7 +97,7 @@ function extractSpecifications(product: GraphQLProduct, isVariable: boolean): Pr
       value: brandNodes.map((brand: GraphQLBrand) => brand.name).join(', '),
       links: brandNodes.map((brand: GraphQLBrand) => ({
         text: brand.name,
-        url: `/shop?brand=${brand.slug}`,
+        url: `/brand/${brand.slug}`,
       })),
     });
   }
