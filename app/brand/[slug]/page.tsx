@@ -9,7 +9,6 @@ import {
   getFilteredProducts,
 } from '@/lib/products/combined-service';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
@@ -59,22 +58,8 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
   }
 }
 
-export async function generateStaticParams() {
-  try {
-    const brands = await getBrands();
-    const params = brands.map((brand) => ({
-      slug: brand.slug,
-    }));
-    return limitStaticParams(params, DEV_LIMITS.brands);
-  } catch (error) {
-    console.error('Error generating static params for brands:', error);
-    return [];
-  }
-}
-
 // ISR: Revalidate every 24 hours for fresh product/stock data
 export const revalidate = 86400;
-export const dynamicParams = true; // Allow runtime generation
 
 export default async function BrandPage({ params, searchParams }: BrandPageProps) {
   const { slug } = await params;

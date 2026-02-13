@@ -4,9 +4,8 @@ import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { getClient } from '@/lib/apollo/client';
-import { GET_CATEGORY_BY_SLUG, GET_ALL_CATEGORIES } from '@/lib/queries/posts';
+import { GET_CATEGORY_BY_SLUG } from '@/lib/queries/posts';
 import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
@@ -64,31 +63,8 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
   };
 }
 
-export async function generateStaticParams() {
-  try {
-    const { data } = await getClient().query({
-      query: GET_ALL_CATEGORIES,
-      fetchPolicy: 'no-cache',
-    });
-
-    const categories: Category[] = data?.categories?.nodes || [];
-
-    const params = categories
-      .filter((cat) => cat.count > 0)
-      .map((category) => ({
-        slug: category.slug,
-      }));
-
-    return limitStaticParams(params, DEV_LIMITS.blogCategories);
-  } catch (error) {
-    console.error('Error generating static params for blog categories:', error);
-    return [];
-  }
-}
-
 // ISR: Revalidate every 1 week for blog content
 export const revalidate = 604800;
-export const dynamicParams = true; // Allow runtime generation
 
 export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;

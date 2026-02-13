@@ -3,8 +3,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
-import { findCategoryBySlug, flattenCategories, findParentCategory } from '@/lib/utils/category-helpers';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
+import { findCategoryBySlug, findParentCategory } from '@/lib/utils/category-helpers';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import CategoryHero from '@/components/shop/CategoryHero';
 import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
@@ -53,23 +52,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   }
 }
 
-export async function generateStaticParams() {
-  try {
-    const categories = await getHierarchicalCategories();
-    const allCategories = flattenCategories(categories);
-    const params = allCategories.map((category) => ({
-      slug: category.slug,
-    }));
-    return limitStaticParams(params, DEV_LIMITS.categories);
-  } catch (error) {
-    console.error('Error generating static params for categories:', error);
-    return [];
-  }
-}
-
 // ISR: Revalidate every 24 hours for fresh product/stock data
 export const revalidate = 86400;
-export const dynamicParams = true; // Allow runtime generation
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;
