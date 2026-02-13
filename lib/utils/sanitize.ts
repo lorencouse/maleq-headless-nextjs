@@ -1,4 +1,4 @@
-import DOMPurify from 'isomorphic-dompurify';
+import sanitize from 'sanitize-html';
 
 /**
  * Sanitize HTML content to prevent XSS attacks.
@@ -7,15 +7,30 @@ import DOMPurify from 'isomorphic-dompurify';
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
 
-  return DOMPurify.sanitize(html, {
-    ADD_TAGS: ['iframe'],
-    ADD_ATTR: [
-      'allow',
-      'allowfullscreen',
-      'frameborder',
-      'scrolling',
-      'target',
-      'loading',
+  return sanitize(html, {
+    allowedTags: [
+      ...sanitize.defaults.allowedTags,
+      'iframe',
+      'img',
+    ],
+    allowedAttributes: {
+      ...sanitize.defaults.allowedAttributes,
+      iframe: [
+        'src',
+        'width',
+        'height',
+        'allow',
+        'allowfullscreen',
+        'frameborder',
+        'scrolling',
+        'loading',
+      ],
+      a: ['href', 'name', 'target', 'rel'],
+      img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
+    },
+    allowedIframeHostnames: [
+      'www.youtube.com',
+      'player.vimeo.com',
     ],
   });
 }

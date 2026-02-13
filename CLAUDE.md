@@ -6,6 +6,10 @@
 - Use TypeScript type checking (`npx tsc --noEmit --skipLibCheck`) for validation instead
 - Run individual file compilation checks when needed
 
+## Known Vercel Build Issues
+
+- **DO NOT use `isomorphic-dompurify`** — it depends on `jsdom` → `parse5` (ESM-only), which breaks Vercel's webpack build and serverless runtime. This has caused production outages twice (commits `3d8d6c1b`, `d3e288de`). Use `sanitize-html` or a regex-based approach instead for HTML sanitization.
+
 ## Project Context
 
 - Next.js 15 headless WooCommerce e-commerce site
@@ -144,7 +148,7 @@ Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.t
 ## Installed Packages for Common Tasks
 
 - **minisearch** - Fuzzy search, relevance ranking, and spelling suggestions (~5.8 kB)
-- **isomorphic-dompurify** - XSS protection for HTML content (works server-side and client-side)
+- **sanitize-html** - XSS protection for HTML content (replaces isomorphic-dompurify which breaks on Vercel)
 - **react-hook-form** + **@hookform/resolvers** - Form handling
 - **zod** - Schema validation
 - **@tanstack/react-query** - Data fetching and caching
