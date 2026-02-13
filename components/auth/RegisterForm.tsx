@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
+import * as gtag from '@/lib/analytics/gtag';
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -51,6 +52,7 @@ export default function RegisterForm() {
       }
 
       login(result.user, result.token);
+      gtag.signUp('email');
       router.push('/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');

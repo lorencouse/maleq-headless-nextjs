@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import * as gtag from '@/lib/analytics/gtag';
 
 type SearchMode = 'products' | 'articles';
 
@@ -272,6 +273,7 @@ export default function SearchAutocomplete({
     const term = searchTerm || query;
     if (term.trim()) {
       saveRecentSearch(term.trim());
+      gtag.search(term.trim());
       const url = searchMode === 'products'
         ? `/shop?q=${encodeURIComponent(term.trim())}`
         : `/guides?q=${encodeURIComponent(term.trim())}`;

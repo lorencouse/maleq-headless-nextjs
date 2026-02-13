@@ -7,6 +7,7 @@ import { CartItem as CartItemType } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice, calculateSavings } from '@/lib/utils/cart-helpers';
 import QuantitySelector from '@/components/ui/QuantitySelector';
+import * as gtag from '@/lib/analytics/gtag';
 
 // Build WordPress base URL for images
 const wpBaseUrl = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace('/graphql', '');
@@ -42,6 +43,12 @@ export default function CartItem({ item }: CartItemProps) {
   };
 
   const handleRemove = () => {
+    gtag.removeFromCart({
+      item_id: item.productId,
+      item_name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    });
     removeItem(item.id);
     setShowRemoveConfirm(false);
   };

@@ -1,21 +1,41 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIsCartEmpty } from '@/lib/store/cart-store';
+import { useCartStore, useIsCartEmpty, useCartSubtotal } from '@/lib/store/cart-store';
 import CheckoutLayout from '@/components/checkout/CheckoutLayout';
 import OrderSummary from '@/components/checkout/OrderSummary';
 import CheckoutProgress from '@/components/checkout/CheckoutProgress';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import ExpressCheckout from '@/components/checkout/ExpressCheckout';
+import * as gtag from '@/lib/analytics/gtag';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const isEmpty = useIsCartEmpty();
+  const items = useCartStore((state) => state.items);
+  const subtotal = useCartSubtotal();
+  const trackedRef = useRef(false);
   const [checkoutStep, setCheckoutStep] = useState<'information' | 'shipping' | 'payment'>('information');
   const handleStepChange = useCallback((step: 'information' | 'shipping' | 'payment') => {
     setCheckoutStep(step);
   }, []);
+
+  // Track begin_checkout event once
+  useEffect(() => {
+    if (!isEmpty && items.length > 0 && !trackedRef.current) {
+      trackedRef.current = true;
+      gtag.beginCheckout(
+        items.map((item) => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal,
+      );
+    }
+  }, [isEmpty, items, subtotal]);
 
   // Redirect to cart if empty
   useEffect(() => {

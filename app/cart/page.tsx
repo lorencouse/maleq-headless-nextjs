@@ -1,14 +1,32 @@
 'use client';
 
-import { useCartStore, useIsCartEmpty } from '@/lib/store/cart-store';
+import { useEffect } from 'react';
+import { useCartStore, useIsCartEmpty, useCartSubtotal } from '@/lib/store/cart-store';
 import CartItem from '@/components/cart/CartItem';
 import CartSummary from '@/components/cart/CartSummary';
 import EmptyCart from '@/components/cart/EmptyCart';
+import * as gtag from '@/lib/analytics/gtag';
 
 export default function CartPage() {
   const items = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
   const isEmpty = useIsCartEmpty();
+  const subtotal = useCartSubtotal();
+
+  // Track view_cart event
+  useEffect(() => {
+    if (items.length > 0) {
+      gtag.viewCart(
+        items.map((item) => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+        subtotal,
+      );
+    }
+  }, []);
 
   if (isEmpty) {
     return (

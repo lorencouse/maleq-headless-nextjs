@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
+import * as gtag from '@/lib/analytics/gtag';
 
 export default function LoginForm() {
   const router = useRouter();
@@ -44,6 +45,7 @@ export default function LoginForm() {
       }
 
       login(result.user, result.token);
+      gtag.login('email');
       router.push('/account');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

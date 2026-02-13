@@ -10,6 +10,7 @@ import ShippingAddressForm from './ShippingAddressForm';
 import ShippingMethod from './ShippingMethod';
 import PaymentForm from './PaymentForm';
 import StripeProvider from './StripeProvider';
+import * as gtag from '@/lib/analytics/gtag';
 
 type CheckoutStep = 'contact' | 'shipping' | 'payment';
 
@@ -116,6 +117,16 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   };
 
   const handleShippingComplete = () => {
+    // Track shipping info
+    const cartItems = items.map((item) => ({
+      item_id: item.productId,
+      item_name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+    }));
+    gtag.addShippingInfo(cartItems, total, shippingMethod?.name || 'Standard Shipping');
+    gtag.addPaymentInfo(cartItems, total, 'Credit Card');
+
     setShippingComplete(true);
     setCurrentStep('payment');
   };
@@ -170,6 +181,20 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       }
 
       const orderData = await response.json();
+
+      // Track purchase event
+      gtag.purchase({
+        transaction_id: String(orderData.orderId),
+        value: total,
+        tax: tax,
+        shipping: shipping,
+        items: items.map((item) => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
 
       // Redirect to confirmation page - cart is cleared there to avoid
       // race condition with checkout page's empty-cart redirect

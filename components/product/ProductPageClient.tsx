@@ -24,6 +24,7 @@ import {
 import { VariationImage, SelectedVariation } from '@/lib/types/product';
 import { isAddonEligibleBySlug } from '@/lib/config/product-addons';
 import { stripHtml } from '@/lib/utils/text-utils';
+import * as gtag from '@/lib/analytics/gtag';
 
 interface ProductPageClientProps {
   product: EnhancedProduct;
@@ -56,6 +57,17 @@ export default function ProductPageClient({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  // Track product view
+  useEffect(() => {
+    gtag.viewItem({
+      item_id: product.databaseId?.toString() || product.id,
+      item_name: product.name,
+      price: parsePrice(product.price || product.regularPrice),
+      item_category: primaryCategory?.name,
+      item_brand: product.brands?.[0]?.name,
+    });
+  }, [product.id]);
 
   // Check if product is eligible for addons based on its categories
   const isAddonEligible = useMemo(() => {
@@ -195,6 +207,16 @@ export default function ProductPageClient({
         addonCount > 0
           ? `${product.name} + ${addonCount} add-on${addonCount > 1 ? 's' : ''} added to cart!`
           : `${product.name} added to cart!`;
+
+      // Track add to cart
+      gtag.addToCart({
+        item_id: product.databaseId?.toString() || product.id,
+        item_name: product.name,
+        price: currentPrice,
+        quantity: quantity,
+        item_category: primaryCategory?.name,
+        item_variant: selectedVariation?.attributes?.map(a => a.value).join(' / '),
+      });
 
       showSuccess(successMessage);
 
