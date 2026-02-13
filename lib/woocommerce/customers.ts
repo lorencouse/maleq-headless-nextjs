@@ -4,6 +4,8 @@
  * Functions for creating and managing customers via the WooCommerce REST API.
  */
 
+import { UserFacingError } from '@/lib/api/response';
+
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
 const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
@@ -87,12 +89,12 @@ export async function createCustomer(data: CreateCustomerData): Promise<WooComme
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Unknown error' }));
 
-    // Handle specific WooCommerce errors
+    // Handle specific WooCommerce errors with user-facing messages
     if (error.code === 'registration-error-email-exists') {
-      throw new Error('An account with this email already exists');
+      throw new UserFacingError('An account with this email already exists', 409, 'ACCOUNT_EXISTS');
     }
     if (error.code === 'registration-error-username-exists') {
-      throw new Error('This username is already taken');
+      throw new UserFacingError('This username is already taken', 409, 'USERNAME_EXISTS');
     }
 
     throw new Error(error.message || `Failed to create customer: ${response.status}`);
@@ -235,12 +237,12 @@ export async function authenticateCustomer(
   if (!authResponse.ok) {
     // Handle specific error codes from our endpoint
     if (authData.code === 'invalid_login') {
-      throw new Error('No account found with this email or username');
+      throw new UserFacingError('No account found with this email or username', 401, 'INVALID_LOGIN');
     }
     if (authData.code === 'incorrect_password') {
-      throw new Error('Incorrect password');
+      throw new UserFacingError('Incorrect password', 401, 'INCORRECT_PASSWORD');
     }
-    throw new Error(authData.message || 'Authentication failed');
+    throw new UserFacingError(authData.message || 'Authentication failed', 401);
   }
 
   // Customer data is returned directly from the auth endpoint

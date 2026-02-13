@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateCustomer } from '@/lib/woocommerce/customers';
 import {
-  unauthorizedError,
   handleApiError,
   validationError,
 } from '@/lib/api/response';
@@ -35,13 +34,6 @@ export async function POST(request: NextRequest) {
       token,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Login failed';
-
-    // Return appropriate status codes for authentication errors
-    if (message.includes('No account found') || message.includes('Incorrect password')) {
-      return unauthorizedError(message);
-    }
-
     return handleApiError(error, 'Login failed');
   }
 }

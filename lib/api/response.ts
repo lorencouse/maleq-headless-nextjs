@@ -167,6 +167,22 @@ export function paginatedResponse<T>(
 }
 
 /**
+ * Error class for messages safe to show to end users.
+ * Use this instead of plain Error when the message should be displayed in production.
+ */
+export class UserFacingError extends Error {
+  public statusCode: number;
+  public code?: string;
+
+  constructor(message: string, statusCode = 400, code?: string) {
+    super(message);
+    this.name = 'UserFacingError';
+    this.statusCode = statusCode;
+    this.code = code;
+  }
+}
+
+/**
  * Handle API errors safely
  */
 export function handleApiError(
@@ -174,6 +190,10 @@ export function handleApiError(
   defaultMessage = 'An error occurred'
 ): NextResponse<ApiErrorResponse> {
   console.error('API Error:', error);
+
+  if (error instanceof UserFacingError) {
+    return errorResponse(error.message, error.statusCode, error.code);
+  }
 
   if (error instanceof Error) {
     // Don't expose internal error messages in production
