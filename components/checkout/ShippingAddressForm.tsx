@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useCheckoutStore } from '@/lib/store/checkout-store';
 
 // US States for dropdown
 const US_STATES = [
@@ -71,6 +72,7 @@ interface ShippingAddress {
 
 export default function ShippingAddressForm() {
   const { user, token } = useAuthStore();
+  const setCheckoutAddress = useCheckoutStore((state) => state.setShippingAddress);
   const [address, setAddress] = useState<ShippingAddress>({
     firstName: '',
     lastName: '',
@@ -119,6 +121,11 @@ export default function ShippingAddressForm() {
       })
       .catch(() => {});
   }, [user?.id, token]);
+
+  // Sync local address to checkout store whenever it changes
+  useEffect(() => {
+    setCheckoutAddress(address);
+  }, [address, setCheckoutAddress]);
 
   const handleChange = (field: keyof ShippingAddress, value: string) => {
     setAddress(prev => ({ ...prev, [field]: value }));

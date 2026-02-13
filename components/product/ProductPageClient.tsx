@@ -509,7 +509,7 @@ export default function ProductPageClient({
 
       {/* Sticky Add to Cart Bar - portaled to body to avoid parent transform issues */}
       {showStickyBar && displayStockStatus !== 'OUT_OF_STOCK' && createPortal(
-        <div className='fixed bottom-0 left-0 right-0 z-50 w-screen bg-background/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)]'>
+        <div className='fixed bottom-0 left-0 right-0 z-30 w-screen bg-background/95 backdrop-blur-sm border-t border-border shadow-[0_-4px_12px_rgba(0,0,0,0.1)]'>
           <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-3'>
             {/* Mobile: stacked layout / Desktop: single row */}
             <div className='flex items-center justify-between gap-2 mb-1.5 sm:mb-0 sm:hidden'>

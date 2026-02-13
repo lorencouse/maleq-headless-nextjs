@@ -339,9 +339,11 @@ export function estimateTax(subtotal: number, taxRate: number = 0.08): number {
 /**
  * Calculate free shipping threshold progress
  */
+export const FREE_SHIPPING_THRESHOLD = 39;
+
 export function getFreeShippingProgress(
   subtotal: number,
-  threshold: number = 100,
+  threshold: number = FREE_SHIPPING_THRESHOLD,
 ): {
   qualifies: boolean;
   remaining: number;

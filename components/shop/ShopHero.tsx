@@ -14,7 +14,7 @@ interface PromoCard {
 const promoCards: PromoCard[] = [
   {
     title: 'Free Shipping',
-    subtitle: 'On orders over $79',
+    subtitle: 'On orders over $39',
     cta: 'Shop Now',
     href: '/shop',
     bgColor: 'bg-gradient-to-br from-primary to-primary-hover',

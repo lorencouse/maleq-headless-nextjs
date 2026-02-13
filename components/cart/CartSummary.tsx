@@ -10,17 +10,15 @@ import {
   formatPrice,
   getFreeShippingProgress,
   calculateAutoDiscount,
+  FREE_SHIPPING_THRESHOLD,
 } from '@/lib/utils/cart-helpers';
 import CouponInput from './CouponInput';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
-
-const FREE_SHIPPING_THRESHOLD = 100;
 
 export default function CartSummary() {
   const subtotal = useCartSubtotal();
   const total = useCartTotal();
   const shipping = useCartStore((state) => state.shipping);
-  const tax = useCartStore((state) => state.tax);
   const discount = useCartStore((state) => state.discount);
   const couponCode = useCartStore((state) => state.couponCode);
   const itemCount = useCartStore((state) => state.itemCount);
@@ -44,8 +42,8 @@ export default function CartSummary() {
       {/* Discount Tiers */}
       <DiscountTierBanner variant='compact' className='my-4' />
 
-      {/* Free Shipping Progress */}
-      {!freeShipping.qualifies && (
+      {/* Progress Bar - Free Shipping or Next Discount Tier */}
+      {!freeShipping.qualifies ? (
         <div className='mb-4 p-3 bg-background rounded-lg'>
           <div className='flex items-center justify-between text-sm mb-2'>
             <span className='text-muted-foreground'>
@@ -62,24 +60,35 @@ export default function CartSummary() {
             />
           </div>
         </div>
-      )}
-
-      {freeShipping.qualifies && (
-        <div className='mb-4 p-3  text-success bg-success/10 rounded-lg text-sm flex items-center gap-2'>
-          <svg
-            className='w-5 h-5'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M5 13l4 4L19 7'
-            />
+      ) : autoDiscountInfo.nextTier ? (
+        <div className='mb-4 space-y-2'>
+          <div className='p-2 text-success bg-success/10 rounded-lg text-sm flex items-center gap-2'>
+            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+            </svg>
+            Free shipping applied!
+          </div>
+          <div className='p-3 bg-background rounded-lg'>
+            <div className='flex items-center justify-between text-sm mb-2'>
+              <span className='text-muted-foreground'>Next savings tier</span>
+              <span className='font-medium text-primary'>
+                {formatPrice(autoDiscountInfo.nextTier.amountNeeded)} away from {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off
+              </span>
+            </div>
+            <div className='w-full bg-muted rounded-full h-2'>
+              <div
+                className='bg-primary h-2 rounded-full transition-all duration-300'
+                style={{ width: `${Math.round(subtotal / (subtotal + autoDiscountInfo.nextTier.amountNeeded) * 100)}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className='mb-4 p-2 text-success bg-success/10 rounded-lg text-sm flex items-center gap-2'>
+          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
           </svg>
-          You qualify for free shipping!
+          Free shipping applied!
         </div>
       )}
 
@@ -100,19 +109,6 @@ export default function CartSummary() {
             />
           </svg>
           <span className='font-medium'>{autoDiscountLabel}</span>
-        </div>
-      )}
-
-      {/* Next Discount Tier Progress */}
-      {autoDiscountInfo.nextTier && (
-        <div className='mb-4 p-3 bg-background rounded-lg'>
-          <div className='flex items-center justify-between text-sm mb-2'>
-            <span className='text-muted-foreground'>Save more</span>
-            <span className='font-medium text-primary'>
-              Add {formatPrice(autoDiscountInfo.nextTier.amountNeeded)} for{' '}
-              {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off
-            </span>
-          </div>
         </div>
       )}
 
@@ -155,12 +151,6 @@ export default function CartSummary() {
           </span>
         </div>
 
-        <div className='flex justify-between text-sm'>
-          <span className='text-muted-foreground'>Tax</span>
-          <span className='text-foreground'>
-            {tax > 0 ? formatPrice(tax) : 'Calculated at checkout'}
-          </span>
-        </div>
       </div>
 
       {/* Divider */}

@@ -159,6 +159,11 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
+        // Show specific field errors if available
+        if (errorData.details && typeof errorData.details === 'object') {
+          const fieldErrors = Object.values(errorData.details).join('. ');
+          throw new Error(fieldErrors || errorData.error || 'Failed to create order');
+        }
         throw new Error(errorData.error || 'Failed to create order');
       }
 
@@ -184,10 +189,16 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
   return (
     <div className="space-y-6">
-      {/* Error Display */}
-      {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      {/* Processing Overlay */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 p-8 bg-card border border-border rounded-xl shadow-lg">
+            <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent" />
+            <div className="text-center">
+              <p className="font-semibold text-foreground">Processing your order...</p>
+              <p className="text-sm text-muted-foreground mt-1">Please don&apos;t close this page</p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -303,6 +314,13 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           </div>
         )}
       </div>
+
+      {/* Error Display - at bottom near checkout button */}
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
+          <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
     </div>
   );
 }

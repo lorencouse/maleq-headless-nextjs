@@ -16,8 +16,7 @@ import type {
 } from '@stripe/stripe-js';
 import { getStripe } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
-
-const FREE_SHIPPING_THRESHOLD = 100;
+import { FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
 
 const SHIPPING_RATES = [
   {

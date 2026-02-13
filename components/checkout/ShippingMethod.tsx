@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
-import { formatPrice, getFreeShippingProgress } from '@/lib/utils/cart-helpers';
+import { useCheckoutStore } from '@/lib/store/checkout-store';
+import { formatPrice, getFreeShippingProgress, FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
 
 interface ShippingMethodProps {
   onComplete: () => void;
 }
-
-const FREE_SHIPPING_THRESHOLD = 100;
 
 // Shipping options - these would typically come from WooCommerce
 const SHIPPING_OPTIONS = [
@@ -38,6 +37,7 @@ const SHIPPING_OPTIONS = [
 export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
   const [selectedMethod, setSelectedMethod] = useState<string>('standard');
   const updateShipping = useCartStore((state) => state.updateShipping);
+  const setCheckoutShippingMethod = useCheckoutStore((state) => state.setShippingMethod);
   const subtotal = useCartSubtotal();
 
   const freeShipping = getFreeShippingProgress(subtotal, FREE_SHIPPING_THRESHOLD);
@@ -60,7 +60,14 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
   const handleContinue = () => {
     const option = SHIPPING_OPTIONS.find(o => o.id === selectedMethod);
     if (option) {
-      updateShipping(getShippingPrice(option));
+      const price = getShippingPrice(option);
+      updateShipping(price);
+      setCheckoutShippingMethod({
+        id: option.id,
+        name: option.name,
+        price,
+        description: option.description,
+      });
       onComplete();
     }
   };
