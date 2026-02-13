@@ -1,4 +1,4 @@
-import { getClient } from '@/lib/apollo/client';
+import { getClient, REVALIDATE } from '@/lib/apollo/client';
 import MiniSearch from 'minisearch';
 import {
   SEARCH_POSTS,
@@ -87,17 +87,19 @@ export async function searchBlogPosts(
         query: SEARCH_POSTS_BY_TITLE,
         variables: {
           titleSearch: primaryTerm,
-          first: first * 2,
+          first: Math.min(first + 5, 25),
           categoryName: categorySlug || null,
         },
+        revalidate: REVALIDATE.DYNAMIC,
       }),
       getClient().query({
         query: SEARCH_POSTS,
         variables: {
           search: searchQuery,
-          first: first * 3,
+          first: Math.min(first + 10, 30),
           categoryName: categorySlug || null,
         },
+        revalidate: REVALIDATE.DYNAMIC,
       }),
     ]);
 
@@ -277,14 +279,17 @@ export async function getBlogSearchSuggestions(
   const results = await Promise.allSettled([
     getClient().query({
       query: SEARCH_POSTS_BY_TITLE,
-      variables: { titleSearch: primaryTerm, first: limit * 2 },
+      variables: { titleSearch: primaryTerm, first: limit + 3 },
+      revalidate: REVALIDATE.DYNAMIC,
     }),
     getClient().query({
       query: SEARCH_POSTS,
-      variables: { search: searchQuery, first: limit * 3 },
+      variables: { search: searchQuery, first: limit + 5 },
+      revalidate: REVALIDATE.DYNAMIC,
     }),
     getClient().query({
       query: GET_ALL_CATEGORIES,
+      revalidate: REVALIDATE.STATIC,
     }),
   ]);
 
@@ -393,6 +398,7 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_CATEGORIES,
+      revalidate: REVALIDATE.STATIC,
     });
 
     return (data?.categories?.nodes || []).map((cat: CategoryNode) => ({

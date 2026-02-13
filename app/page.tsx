@@ -37,8 +37,8 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR: Revalidate every 24 hours (home page shows products)
-export const revalidate = 86400;
+// ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
+export const revalidate = 604800;
 
 export default async function Home() {
   // Fetch data in parallel

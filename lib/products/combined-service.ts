@@ -1,6 +1,5 @@
 import { unstable_cache } from 'next/cache';
-import { getClient } from '@/lib/apollo/client';
-import { getCached, setCache, makeCacheKey } from '@/lib/cache/product-cache';
+import { getClient, REVALIDATE } from '@/lib/apollo/client';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import {
@@ -248,10 +247,6 @@ export async function getAllProducts(params: {
   search?: string;
 } = {}): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
   const { limit = 12, after, category, search } = params;
-  const cacheKey = makeCacheKey('allProducts', { limit, after, category, search });
-  type AllProductsResult = { products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
-  const cached = getCached<AllProductsResult>(cacheKey);
-  if (cached) return cached;
 
   try {
     let query = GET_ALL_PRODUCTS;
@@ -273,16 +268,13 @@ export async function getAllProducts(params: {
     const products: WooProduct[] = data?.products?.nodes || [];
     const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
 
-    const result = {
+    return {
       products: products.map(convertWooProduct),
       pageInfo: {
         hasNextPage: pageInfo.hasNextPage,
         endCursor: pageInfo.endCursor,
       },
     };
-
-    setCache(cacheKey, result);
-    return result;
   } catch (error) {
     console.error('Error fetching products:', error);
     return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
@@ -306,10 +298,6 @@ export async function getFilteredProducts(params: {
   onSale?: boolean;
 }): Promise<{ products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }> {
   const { limit = 24, after, category, brand, color, material, minPrice, maxPrice, inStock, onSale } = params;
-  const cacheKey = makeCacheKey('filteredProducts', { limit, after, category, brand, color, material, minPrice, maxPrice, inStock, onSale });
-  type FilteredResult = { products: UnifiedProduct[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
-  const cached = getCached<FilteredResult>(cacheKey);
-  if (cached) return cached;
 
   try {
     // Build variables for the filter query
@@ -363,16 +351,13 @@ export async function getFilteredProducts(params: {
     const products: WooProduct[] = data?.products?.nodes || [];
     const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
 
-    const result = {
+    return {
       products: products.map(convertWooProduct),
       pageInfo: {
         hasNextPage: pageInfo.hasNextPage,
         endCursor: pageInfo.endCursor,
       },
     };
-
-    setCache(cacheKey, result);
-    return result;
   } catch (error) {
     console.error('Error fetching filtered products:', error);
     return { products: [], pageInfo: { hasNextPage: false, endCursor: null } };
@@ -399,6 +384,7 @@ async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
           first: 100,
           after: afterCursor,
         },
+        revalidate: REVALIDATE.STATIC,
         });
 
       const nodes: ProductCategory[] = result.data?.productCategories?.nodes || [];
@@ -437,6 +423,7 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
   try {
     const { data } = await getClient().query({
       query: GET_HIERARCHICAL_CATEGORIES,
+      revalidate: REVALIDATE.STATIC,
     });
 
     const nodes: GraphQLHierarchicalCategory[] = data?.productCategories?.nodes || [];
@@ -500,10 +487,6 @@ export async function searchProducts(
   suggestions?: string[];
 }> {
   const { limit = 24, offset = 0 } = options;
-  const cacheKey = makeCacheKey('searchProducts', { searchTerm, limit, offset });
-  type SearchResult = Awaited<ReturnType<typeof searchProducts>>;
-  const cached = getCached<SearchResult>(cacheKey);
-  if (cached) return cached;
 
   // Import search helpers dynamically to avoid circular deps
   const { tokenizeQuery, calculateRelevanceScore, matchesAllTerms, matchesAnyTerm } = await import('@/lib/utils/search-helpers');
@@ -530,29 +513,30 @@ export async function searchProducts(
 
 
     // 2. Fetch products from multiple sources in parallel
-    // Limits tuned to balance result quality vs response time:
-    // - Title: 100 (highest priority, most relevant)
-    // - Content: 50 (supplementary)
-    // - Category: 50 each (supplementary, max 3 categories)
+    // Limits kept low — we only display 25 per page, so ~60-70 total
+    // before dedup is sufficient for quality results
     const fetchPromises: Promise<{ data: { products?: { nodes: WooProduct[] } } }>[] = [
       // Title search (highest priority)
       getClient().query({
         query: SEARCH_PRODUCTS_BY_TITLE,
-        variables: { titleSearch: primaryTerm, first: 100 },
+        variables: { titleSearch: primaryTerm, first: 30 },
+        revalidate: REVALIDATE.DYNAMIC,
       }),
       // Content search
       getClient().query({
         query: SEARCH_PRODUCTS,
-        variables: { search: searchQuery, first: 50 },
+        variables: { search: searchQuery, first: 20 },
+        revalidate: REVALIDATE.DYNAMIC,
       }),
     ];
 
-    // Add category searches for matching categories (limit to top 3 categories)
-    for (const cat of matchingCategories.slice(0, 3)) {
+    // Add category searches for matching categories (limit to top 2 categories)
+    for (const cat of matchingCategories.slice(0, 2)) {
       fetchPromises.push(
         getClient().query({
           query: SEARCH_PRODUCTS_BY_CATEGORY,
-          variables: { category: cat.slug, first: 50 },
+          variables: { category: cat.slug, first: 10 },
+          revalidate: REVALIDATE.DYNAMIC,
         })
       );
     }
@@ -644,7 +628,7 @@ export async function searchProducts(
       }
     }
 
-    const result = {
+    return {
       products: paginatedProducts,
       pageInfo: {
         hasNextPage: offset + limit < total,
@@ -653,9 +637,6 @@ export async function searchProducts(
       availableFilters,
       suggestions,
     };
-
-    setCache(cacheKey, result);
-    return result;
   } catch (error) {
     console.error('Error searching products:', error);
     return { products: [], pageInfo: { hasNextPage: false, total: 0 } };
@@ -679,6 +660,7 @@ async function _uncachedGetBrands(): Promise<FilterOption[]> {
     // First, try to fetch all brands with a simple query
     const { data } = await getClient().query<BrandQueryResponse>({
       query: GET_ALL_BRANDS,
+      revalidate: REVALIDATE.STATIC,
     });
 
     let allBrands: FilterOption[] = data?.productBrands?.nodes || [];
@@ -742,6 +724,7 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
           first: 100,
           after: afterCursor,
         },
+        revalidate: REVALIDATE.STATIC,
       });
 
       const nodes = result.data?.productBrands?.nodes || [];
@@ -777,6 +760,7 @@ export async function getMaterials(): Promise<FilterOption[]> {
   try {
     const { data } = await getClient().query({
       query: GET_ALL_MATERIALS,
+      revalidate: REVALIDATE.STATIC,
     });
 
     const nodes = data?.productMaterials?.nodes || [];
@@ -807,7 +791,7 @@ async function _uncachedGetGlobalAttributes(): Promise<{
   try {
     // Fetch colors and materials in parallel
     const [colorResult, materials] = await Promise.all([
-      getClient().query({ query: GET_GLOBAL_ATTRIBUTES }),
+      getClient().query({ query: GET_GLOBAL_ATTRIBUTES, revalidate: REVALIDATE.STATIC }),
       getMaterials(),
     ]);
 

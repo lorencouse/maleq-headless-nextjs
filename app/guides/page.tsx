@@ -36,8 +36,8 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
   };
 }
 
-// ISR: Revalidate every 1 week for blog content
-export const revalidate = 604800;
+// ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
+export const revalidate = 2592000;
 
 interface BlogPageProps {
   searchParams: Promise<{ q?: string }>;

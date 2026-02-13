@@ -1,6 +1,5 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
-import { invalidateAll as invalidateProductCache } from '@/lib/cache/product-cache';
 import { timingSafeEqual } from 'crypto';
 
 // Webhook endpoint for WordPress to trigger revalidation
@@ -31,7 +30,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'product':
-        invalidateProductCache();
+
         if (slug) {
           revalidatePath(`/product/${slug}`);
           revalidatePath('/shop');
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
         break;
 
       case 'all':
-        invalidateProductCache();
+
         revalidatePath('/', 'layout');
         revalidateTag('categories');
         revalidateTag('brands');

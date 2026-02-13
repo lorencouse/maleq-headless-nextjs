@@ -63,8 +63,8 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
   };
 }
 
-// ISR: Revalidate every 1 week for blog content
-export const revalidate = 604800;
+// ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
+export const revalidate = 2592000;
 
 export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;

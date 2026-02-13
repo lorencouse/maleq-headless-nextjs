@@ -18,8 +18,8 @@ import { ProductSchema } from '@/components/seo/StructuredData';
 import DevEditLink from '@/components/dev/DevEditLink';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
-// ISR: Revalidate every 24 hours for fresh stock/price data
-export const revalidate = 86400;
+// ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
+export const revalidate = 604800;
 export const dynamicParams = true; // Allow runtime generation of any product page
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';

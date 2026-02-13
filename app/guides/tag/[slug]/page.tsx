@@ -86,8 +86,8 @@ export async function generateStaticParams() {
   }
 }
 
-// ISR: Revalidate every 1 week for blog content
-export const revalidate = 604800;
+// ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
+export const revalidate = 2592000;
 export const dynamicParams = true; // Allow runtime generation
 
 export default async function BlogTagPage({ params }: BlogTagPageProps) {

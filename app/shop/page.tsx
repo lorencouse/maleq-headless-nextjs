@@ -48,8 +48,8 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
   };
 }
 
-// ISR: Revalidate every 24 hours for fresh product/stock data
-export const revalidate = 86400;
+// ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
+export const revalidate = 604800;
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
@@ -105,23 +105,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       !inStock && !onSale;
 
     if (isCategoryOnly) {
-      // Fetch more products to extract filter options (similar to search)
-      const fetchLimit = 200; // Fetch enough to get a good sample of available filters
-      const allProductsResult = await getFilteredProducts({
-        limit: fetchLimit,
+      // Fetch only the products we need for display — filter options come from global attributes
+      const categoryResult = await getFilteredProducts({
+        limit: 24,
         category,
       });
 
-      // Extract available filter options from all fetched products
-      const extractedFilters = extractFilterOptionsFromProducts(allProductsResult.products);
-
       productsResult = {
-        products: allProductsResult.products.slice(0, 24), // Return first 24 for display
-        pageInfo: {
-          hasNextPage: allProductsResult.products.length > 24 || allProductsResult.pageInfo.hasNextPage,
-          endCursor: allProductsResult.pageInfo.endCursor,
-        },
-        availableFilters: extractedFilters,
+        products: categoryResult.products,
+        pageInfo: categoryResult.pageInfo,
       };
     } else {
       // Use filtered query with all filters

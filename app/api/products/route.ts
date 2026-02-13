@@ -127,8 +127,8 @@ export async function GET(request: NextRequest) {
     if (search) {
       // Search uses advanced relevance ranking with offset-based pagination
       if (hasFilters) {
-        // With filters: fetch all results from offset 0 to filter, then paginate
-        const searchFetchLimit = Math.max(limit * 10, 500);
+        // With filters: fetch search results then filter client-side
+        const searchFetchLimit = Math.max(limit * 3, 75);
         const result = await searchProducts(search, { limit: searchFetchLimit, offset: 0 });
         products = result.products;
 
@@ -217,10 +217,8 @@ export async function GET(request: NextRequest) {
       }
     } else if (hasFilters) {
       // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
-      // Fetch more products to extract available filter options for faceted search
-      const filterFetchLimit = Math.max(fetchLimit * 4, 100);
       const result = await getFilteredProducts({
-        limit: filterFetchLimit,
+        limit: fetchLimit,
         after,
         category,
         brand,
