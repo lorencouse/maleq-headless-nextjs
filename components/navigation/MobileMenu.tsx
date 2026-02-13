@@ -117,7 +117,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
           ) : (
             <div className="flex gap-3">
               <Link
-                href="/login"
+                href={pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') ? '/login' : `/login?returnTo=${encodeURIComponent(pathname)}`}
                 onClick={onClose}
                 className="flex-1 py-2.5 text-center border border-input rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
               >

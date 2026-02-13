@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import { useCartItemCount } from '@/lib/store/cart-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
@@ -16,6 +16,7 @@ import DesktopNav from '@/components/navigation/DesktopNav';
 
 export default function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const cartItemCount = useCartItemCount();
   const wishlistItemCount = useWishlistItemCount();
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -159,7 +160,7 @@ export default function Header() {
                 </>
               ) : (
                 <Link
-                  href='/login'
+                  href={pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') ? '/login' : `/login?returnTo=${encodeURIComponent(pathname)}`}
                   className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
                   aria-label='Sign in'
                 >

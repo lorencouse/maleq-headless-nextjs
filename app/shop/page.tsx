@@ -216,7 +216,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       )}
 
       {/* Page Header */}
-      <div className="mb-6">
+      <div id="products" className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
             {searchQuery

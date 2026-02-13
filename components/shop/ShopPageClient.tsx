@@ -203,8 +203,13 @@ export default function ShopPageClient({
     const queryString = params.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, { scroll: false });
 
-    // Scroll to top of product gallery when filter changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to the products heading (not the top of the page)
+    const productsHeading = document.getElementById('products');
+    if (productsHeading) {
+      productsHeading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }, [pathname, router, searchQuery]);
 
   // Fetch products from API

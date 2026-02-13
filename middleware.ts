@@ -13,6 +13,8 @@ const RATE_LIMITED_ROUTES: Record<string, RateLimitConfig> = {
   '/api/auth/reset-password': RATE_LIMITS.form,
   '/api/contact': RATE_LIMITS.form,
   '/api/newsletter/subscribe': RATE_LIMITS.form,
+  '/api/search': RATE_LIMITS.api,
+  '/api/blog/search': RATE_LIMITS.api,
   '/api/coupons/validate': RATE_LIMITS.api,
   '/api/orders/create': RATE_LIMITS.auth,
   '/api/payment/create-intent': RATE_LIMITS.auth,

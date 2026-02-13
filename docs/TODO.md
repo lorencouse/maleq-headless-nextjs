@@ -8,7 +8,9 @@
 
 ---
 
-adress slow querry times - pages take 5-6 seconds to load on first load. blog articles very slow.  Product filters take 5-10 seconds to apply. Need to optimize GraphQL queries, add caching, and review database indexes.
+navigate to previous page after sucessful log in (user likely browsing products)
+
+on filter change, only scroll upto the All productName heading, not the top of the page (which is the category heading)
 
 ## Pre-Launch Checklist
 - [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)
@@ -83,11 +85,9 @@ adress slow querry times - pages take 5-6 seconds to load on first load. blog ar
 
 ### Security
 
-- [ ] `[MED]` Replace base64 token generation with proper JWT (signed, expiring)
-- [ ] `[MED]` Add CAPTCHA to comment box and login pages
-- [ ] `[LOW]` Integrate rate limiting into API endpoints (module exists at `lib/api/rate-limit.ts` but not wired into routes)
-- [ ] `[LOW]` Move auth token to httpOnly cookies (currently localStorage)
-- [ ] `[LOW]` Add CSRF protection on state-changing operations
+- [x] `[LOW]` ~~Integrate rate limiting into API endpoints~~ — wired into middleware for auth, form, payment, search routes (in-memory, sufficient for current scale)
+- [ ] `[LOW]` Add token expiry to existing auth system (tokens currently never expire)
+- [ ] `[LOW]` Add CAPTCHA to login/review forms (only if bot abuse observed)
 
 ### Performance
 

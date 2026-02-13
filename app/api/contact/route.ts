@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import nodemailer from 'nodemailer';
 import {
   successResponse,
   validationError,
@@ -17,6 +18,16 @@ interface ContactFormData {
   message: string;
 }
 
+const transporter = nodemailer.createTransport({
+  host: 'smtp.mail.me.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USERNAME,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
+
 export async function POST(request: NextRequest) {
   try {
     const body: ContactFormData = await request.json();
@@ -29,7 +40,6 @@ export async function POST(request: NextRequest) {
       errors.name = 'Name is required';
     }
 
-    // Validate email format
     const emailError = validateEmail(email);
     if (emailError) {
       errors.email = emailError;
@@ -52,31 +62,52 @@ export async function POST(request: NextRequest) {
       return validationError(errors);
     }
 
-    // In production, integrate with your email service:
-    // - SendGrid
-    // - Mailgun
-    // - AWS SES
-    // - WordPress admin email via REST API
+    const sanitizedName = name.trim();
+    const sanitizedEmail = email.trim();
+    const sanitizedSubject = subject.trim();
+    const sanitizedMessage = message.trim();
 
-    // For development, log the contact form submission
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Contact form submission:', {
-        name: name.trim(),
-        email: email.trim(),
-        subject: subject.trim(),
-        message: message.trim(),
-        timestamp: new Date().toISOString(),
-      });
-    }
-
-    // Simulate processing delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await transporter.sendMail({
+      from: `"Male Q Contact Form" <info@maleq.com>`,
+      to: 'info@maleq.com',
+      replyTo: `"${sanitizedName}" <${sanitizedEmail}>`,
+      subject: `Contact Form: ${sanitizedSubject}`,
+      text: [
+        `Name: ${sanitizedName}`,
+        `Email: ${sanitizedEmail}`,
+        `Subject: ${sanitizedSubject}`,
+        '',
+        'Message:',
+        sanitizedMessage,
+      ].join('\n'),
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px;">
+          <h2 style="color: #E63946; margin-bottom: 20px;">New Contact Form Submission</h2>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+              <td style="padding: 8px 12px; font-weight: bold; color: #555; width: 80px;">Name:</td>
+              <td style="padding: 8px 12px;">${sanitizedName}</td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 12px; font-weight: bold; color: #555;">Email:</td>
+              <td style="padding: 8px 12px;"><a href="mailto:${sanitizedEmail}">${sanitizedEmail}</a></td>
+            </tr>
+            <tr>
+              <td style="padding: 8px 12px; font-weight: bold; color: #555;">Subject:</td>
+              <td style="padding: 8px 12px;">${sanitizedSubject}</td>
+            </tr>
+          </table>
+          <div style="padding: 16px; background: #f5f5f5; border-radius: 8px; white-space: pre-wrap;">${sanitizedMessage}</div>
+        </div>
+      `,
+    });
 
     return successResponse(
       undefined,
       "Thank you for your message! We'll get back to you soon."
     );
   } catch (error) {
+    console.error('Contact form email error:', error);
     return handleApiError(error, 'Failed to send message. Please try again.');
   }
 }
