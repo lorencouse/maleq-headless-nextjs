@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createCustomer, getCustomerByEmail } from '@/lib/woocommerce/customers';
+import { createCustomer, getCustomerByEmail, authenticateCustomer } from '@/lib/woocommerce/customers';
 import {
   errorResponse,
   validationError,
@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
       username: email,
     });
 
-    // Generate a simple token (in production, use proper JWT)
-    const token = Buffer.from(`${customer.id}:${Date.now()}:${Math.random()}`).toString('base64');
+    // Authenticate the new user to get a valid WP token
+    // This stores the token hash in WP so subsequent API calls work
+    const { token } = await authenticateCustomer(email, password);
 
     return NextResponse.json({
       success: true,

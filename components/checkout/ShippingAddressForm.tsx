@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 // US States for dropdown
 const US_STATES = [
@@ -69,6 +70,7 @@ interface ShippingAddress {
 }
 
 export default function ShippingAddressForm() {
+  const { user, token } = useAuthStore();
   const [address, setAddress] = useState<ShippingAddress>({
     firstName: '',
     lastName: '',
@@ -81,6 +83,42 @@ export default function ShippingAddressForm() {
     country: 'US',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-populate from saved customer addresses
+  useEffect(() => {
+    if (!user?.id || !token) return;
+
+    fetch(`/api/customers/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (!data) return;
+        // Prefer shipping address, fall back to billing
+        const addr = data.shipping?.address_1 ? data.shipping : data.billing;
+        if (addr?.address_1) {
+          setAddress({
+            firstName: addr.first_name || user.firstName || '',
+            lastName: addr.last_name || user.lastName || '',
+            company: addr.company || '',
+            address1: addr.address_1 || '',
+            address2: addr.address_2 || '',
+            city: addr.city || '',
+            state: addr.state || '',
+            zipCode: addr.postcode || '',
+            country: addr.country || 'US',
+          });
+        } else if (user.firstName || user.lastName) {
+          // At minimum, fill in the name
+          setAddress((prev) => ({
+            ...prev,
+            firstName: user.firstName || '',
+            lastName: user.lastName || '',
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [user?.id, token]);
 
   const handleChange = (field: keyof ShippingAddress, value: string) => {
     setAddress(prev => ({ ...prev, [field]: value }));

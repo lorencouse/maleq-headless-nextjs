@@ -1,16 +1,36 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/lib/store/auth-store';
 
 interface ContactFormProps {
   onComplete: (data: { email: string; phone: string; newsletter: boolean }) => void;
 }
 
 export default function ContactForm({ onComplete }: ContactFormProps) {
+  const { user, token } = useAuthStore();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [newsletter, setNewsletter] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Auto-populate from logged-in user
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    }
+    // Fetch phone from customer data if logged in
+    if (user?.id && token && !phone) {
+      fetch(`/api/customers/${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.ok ? res.json() : null)
+        .then((data) => {
+          if (data?.billing?.phone) setPhone(data.billing.phone);
+        })
+        .catch(() => {});
+    }
+  }, [user?.email, user?.id, token]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

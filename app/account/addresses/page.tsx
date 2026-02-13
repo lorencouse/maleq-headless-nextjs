@@ -431,7 +431,7 @@ export default function AddressesPage() {
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h2 className="font-semibold text-foreground">Billing Address</h2>
-                {editingType !== 'billing' && customerData?.billing.address_1 && (
+                {editingType !== 'billing' && customerData?.billing?.address_1 && (
                   <button
                     onClick={() => handleEdit('billing')}
                     className="text-sm text-primary hover:text-primary-hover font-medium"
@@ -443,7 +443,7 @@ export default function AddressesPage() {
               <div className="p-4">
                 {editingType === 'billing'
                   ? renderAddressForm()
-                  : customerData && renderAddress(customerData.billing, 'billing')}
+                  : renderAddress(customerData?.billing || emptyAddress, 'billing')}
               </div>
             </div>
 
@@ -452,7 +452,7 @@ export default function AddressesPage() {
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h2 className="font-semibold text-foreground">Shipping Address</h2>
                 <div className="flex gap-3">
-                  {editingType !== 'shipping' && customerData?.billing.address_1 && (
+                  {editingType !== 'shipping' && customerData?.billing?.address_1 && (
                     <button
                       onClick={handleCopyBillingToShipping}
                       disabled={isSaving}
@@ -462,7 +462,7 @@ export default function AddressesPage() {
                       Use billing address
                     </button>
                   )}
-                  {editingType !== 'shipping' && customerData?.shipping.address_1 && (
+                  {editingType !== 'shipping' && customerData?.shipping?.address_1 && (
                     <button
                       onClick={() => handleEdit('shipping')}
                       className="text-sm text-primary hover:text-primary-hover font-medium cursor-pointer"
@@ -475,7 +475,7 @@ export default function AddressesPage() {
               <div className="p-4">
                 {editingType === 'shipping'
                   ? renderAddressForm()
-                  : customerData && renderAddress(customerData.shipping, 'shipping')}
+                  : renderAddress(customerData?.shipping || emptyAddress, 'shipping')}
               </div>
             </div>
           </div>
