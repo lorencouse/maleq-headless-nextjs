@@ -66,7 +66,7 @@ export const ADDON_PRODUCTS: AddonProduct[] = [
     bundlePrice: 11.22,
     description: 'Keep your toys hygienic and safe',
     image:
-      '/wp-content/uploads/2026/01/universal-toy-cleaner-43-oz-1-6c6e89b5.webp',
+      '/wp-content/uploads/2026/01/universal-toy-cleaner-43-oz-1.webp',
   },
   {
     id: 'addon-anal-lube',
@@ -80,7 +80,7 @@ export const ADDON_PRODUCTS: AddonProduct[] = [
     bundlePrice: 22.47,
     description: 'Premium water-based anal lubricant',
     image:
-      '/wp-content/uploads/2026/01/pjur-analyse-me-anal-water-base-100ml-34-oz--1.webp',
+      '/wp-content/uploads/2026/01/pjur-analyse-me-anal-water-base-100ml-34-oz-1.webp',
   },
   {
     id: 'addon-enema',
@@ -94,7 +94,7 @@ export const ADDON_PRODUCTS: AddonProduct[] = [
     bundlePrice: 11.22,
     description: 'For comfortable preparation',
     image:
-      '/wp-content/uploads/2026/01/cloud-9-fresh-deluxe-anal-soft-tip-enema-douche-76-1-3e54ffbd.webp',
+      '/wp-content/uploads/2026/01/cloud-9-fresh-deluxe-anal-soft-tip-enema-douche-76-1.webp',
   },
 ];
 
