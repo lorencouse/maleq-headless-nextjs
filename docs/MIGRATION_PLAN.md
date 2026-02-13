@@ -115,92 +115,25 @@ If you outgrow the current server, a Hetzner CX32 (4 vCPU, 8GB RAM, 80GB disk) i
 
 ### Phase 0: Pre-Migration Prep (on your Mac)
 
-- [ ] **0.1** Export local V2 database
-
-  ```bash
-  # Using Local by Flywheel's MySQL socket
-  mysqldump -u root -proot --socket="$HOME/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock" local > ~/v2-database-export.sql
-  ```
-
-- [ ] **0.2** Run URL conversion to make DB portable
-
-  ```bash
-  bun scripts/convert-urls-to-relative.ts --execute
-  ```
-
-  Then re-export the database after conversion.
-
-- [ ] **0.3** Compress V2 uploads for transfer
-
-  ```bash
-  cd ~/Local\ Sites/maleq-local/app/public/wp-content/
-  tar -czf ~/v2-uploads.tar.gz uploads/
-  ```
-
-- [ ] **0.4** Prepare mu-plugins bundle
-
-  ```bash
-  cd /Volumes/Mac\ Mini\ M4\ -2TB/MacMini-Data/Documents/web-dev/maleq-headless
-  tar -czf ~/v2-mu-plugins.tar.gz wordpress/mu-plugins/ wordpress-snippets/
-  ```
-
-- [ ] **0.5** Prepare wp-config.php constants list:
-
-  ```php
-  define('MALEQ_ADMIN_KEY', 'generate-random-key');
-  define('MALEQ_FRONTEND_URL', 'https://maleq.com');
-  define('MALEQ_REVALIDATION_SECRET', 'generate-random-key');
-  ```
-
-- [ ] **0.6** Push Next.js code to GitHub (if not already)
-  ```bash
-  git push origin initial-setup
-  ```
+- [x] **0.1** Export local V2 database ✅
+- [x] **0.2** Run URL conversion to make DB portable ✅
+- [x] **0.3** Compress V2 uploads for transfer ✅
+- [x] **0.4** Prepare mu-plugins bundle ✅
+- [x] **0.5** Prepare wp-config.php constants list ✅
+- [x] **0.6** Push Next.js code to GitHub ✅
 
 ### Phase 1: Prepare Hetzner Server
 
-- [ ] **1.1** Upgrade disk (if keeping images on Hetzner)
-  - Hetzner Cloud Console > Volumes > Create Volume (40GB, ~€2/mo)
-  - Mount at `/mnt/storage` and symlink uploads
-
-- [ ] **1.2** Create V2 WordPress site in CloudPanel
-  - New site: `wp.maleq.com` (or `api.maleq.com`)
-  - PHP 8.2+ (match your local version)
-  - New database: `maleq_v2`
-  - CloudPanel will create the vhost and directory structure
-
-- [ ] **1.3** Install Node.js (needed for WP-CLI and optional local tasks only - Next.js runs on Vercel)
-
-  ```bash
-  # Not strictly needed if only using Vercel for Next.js
-  # But useful for running scripts on server
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-  apt-get install -y nodejs
-  npm install -g bun
-  ```
-
-- [ ] **1.4** Install required WP plugins via WP-CLI
-  ```bash
-  cd /home/[v2-user]/htdocs/wp.maleq.com
-  wp --allow-root plugin install woocommerce --activate
-  wp --allow-root plugin install wp-graphql --activate
-  wp --allow-root plugin install wpgraphql-acf --activate
-  # Install WooGraphQL (may need manual upload)
-  ```
+- [x] **1.1** Storage volume mounted at `/mnt/storage`, V1 uploads symlinked ✅
+- [x] **1.2** V2 WordPress site created in CloudPanel (`wp.maleq.com`, PHP 8.4, DB: `maleq-wp`) ✅
+- [x] **1.3** Node.js not installed (not needed — Next.js runs on Vercel) ✅
+- [x] **1.4** WP plugins installed (WooCommerce, WPGraphQL, WooGraphQL) ✅
 
 ### Phase 2: Deploy V2 WordPress Backend
 
-- [ ] **2.1** Upload and import V2 database
+- [x] **2.1** V2 database imported ✅
 
-  ```bash
-  # From your Mac
-  scp ~/v2-database-export.sql root@159.69.220.162:/tmp/
-
-  # On server
-  mysql -u [v2-db-user] -p [v2-db-name] < /tmp/v2-database-export.sql
-  ```
-
-- [ ] **2.2** Upload V2 uploads
+- [x] **2.2** V2 uploads transferred ✅
 
   ```bash
   # From your Mac
@@ -249,32 +182,11 @@ If you outgrow the current server, a Hetzner CX32 (4 vCPU, 8GB RAM, 80GB disk) i
   mysql -u [v2-db-user] -p [v2-db-name] < /tmp/wordpress-snippets/migrate-materials.sql
   ```
 
-- [ ] **2.4** Update wp-config.php
-  - Set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`
-  - Set `WP_HOME` and `WP_SITEURL` to `https://wp.maleq.com`
-  - Add MALEQ constants (admin key, frontend URL, revalidation secret)
-  - Set `DISALLOW_FILE_EDIT` and `DISALLOW_FILE_MODS` (headless = no theme editing)
-
-- [ ] **2.5** Run search-replace for site URL
-
-  ```bash
-  wp --allow-root search-replace 'http://maleq-local.local' 'https://wp.maleq.com' --all-tables
-  ```
-
-- [ ] **2.6** Configure nginx for V2 (headless optimizations)
-  - Disable serving theme frontend (return 404 or redirect)
-  - Enable CORS headers for Vercel domain
-  - Cache GraphQL responses via Cloudflare
-  - Rate-limit wp-login.php and xmlrpc.php
-
-- [ ] **2.7** Set up SSL for wp.maleq.com
-  - CloudPanel handles Let's Encrypt automatically
-  - Or use Cloudflare origin certificates
-
-- [ ] **2.8** Test WP backend
-  - Verify `https://wp.maleq.com/graphql` returns data
-  - Verify WooCommerce REST API works
-  - Test mu-plugin endpoints
+- [x] **2.4** wp-config.php configured (DB creds, WP_HOME/SITEURL, MALEQ constants) ✅
+- [x] **2.5** Search-replace completed (`maleq-local.local` → `wp.maleq.com`) ✅
+- [x] **2.6** Nginx configured for V2 (CORS, xmlrpc blocked) ✅
+- [x] **2.7** SSL for wp.maleq.com (DNS-only, Let's Encrypt via CloudPanel) ✅
+- [x] **2.8** WP backend verified — GraphQL returns data at `https://wp.maleq.com/graphql` ✅
 
 ### Phase 3: Pre-Launch Verification (Before Deploying Frontend)
 
@@ -336,13 +248,12 @@ Reference: `docs/LAUNCH_CHECKLIST.md`, `docs/SECURITY_AUDIT.md`, `docs/TODO.md`
 
 This is the critical step. Plan for a maintenance window (low-traffic time).
 
-- [ ] **4.1** Move V1 to old.maleq.com
-  - In CloudPanel: change V1 site's domain to `old.maleq.com`
-  - Update V1 wp-config.php: `WP_HOME` and `WP_SITEURL` to `https://old.maleq.com`
-  - Run: `wp --allow-root search-replace 'https://maleq.com' 'https://old.maleq.com' --all-tables`
-  - Update V1 nginx config for `old.maleq.com`
+- [x] **4.1** V1 moved to old.maleq.com ✅
+  - Nginx config updated to `old.maleq.com`
+  - V1 wp-config.php updated: `WP_HOME` and `WP_SITEURL` to `https://old.maleq.com`
+  - Search-replace running on V1 database (large DB)
 
-- [ ] **4.2** Update Cloudflare DNS
+- [x] **4.2** Cloudflare DNS updated ✅
 
   ```
   # Remove/update existing records:
@@ -355,14 +266,13 @@ This is the critical step. Plan for a maintenance window (low-traffic time).
   A      old.maleq.com  → 159.69.220.162 (proxied or DNS-only)
   ```
 
-- [ ] **4.3** Add domain to Vercel
-  - Project Settings > Domains > Add `maleq.com` and `www.maleq.com`
-  - Vercel will verify DNS and provision SSL
+- [x] **4.3** Domains added to Vercel (`maleq.com` + `www.maleq.com`) ✅
 
-- [ ] **4.4** Verify everything works
-  - `https://maleq.com` → Vercel (Next.js V2)
-  - `https://wp.maleq.com` → Hetzner (V2 WP backend, GraphQL API)
-  - `https://old.maleq.com` → Hetzner (V1 WP, for reference/rollback)
+- [x] **4.4** Verified all domains working ✅
+  - `https://maleq.com` → Vercel (Next.js V2, 200 OK, cache HIT)
+  - `https://www.maleq.com` → 308 redirect to maleq.com
+  - `https://wp.maleq.com` → Hetzner (GraphQL API responding)
+  - `https://old.maleq.com` → Hetzner (V1 WP rollback — search-replace in progress)
 
 ### Phase 5: Post-Launch
 
@@ -374,10 +284,9 @@ This is the critical step. Plan for a maintenance window (low-traffic time).
 
 #### SEO & Redirects (First 24 Hours)
 
-- [ ] **5.4** Set up 301 redirects in `next.config.ts`
-  - `/product-category/*` → `/sex-toys/*` (already handled in codebase)
-  - Map any other V1→V2 URL changes
-  - Redirect `old.maleq.com` product URLs to `maleq.com` equivalents (via nginx on Hetzner)
+- [x] **5.4** 301 redirects configured ✅
+  - `next.config.ts`: `/product-category/*`→`/sex-toys/*`, `/my-account`→`/account`, `/returns`→`/shipping-returns`, `/category/*`→`/guides/category/*`, `/tag/*`→`/guides/tag/*`
+  - `old.maleq.com` nginx: product/category/account URLs redirect to maleq.com equivalents
 - [ ] **5.5** Submit new sitemap to Google Search Console
   ```
   https://maleq.com/sitemap.xml
@@ -396,35 +305,31 @@ This is the critical step. Plan for a maintenance window (low-traffic time).
 
 #### Infrastructure Setup (First Week)
 
-- [ ] **5.13** Set up backups
-  - V2 database: daily mysqldump cron → store on Hetzner volume or offsite
-
-  ```bash
-  # Example cron (add to root crontab)
-  0 3 * * * mysqldump -u [user] -p'[pass]' [db] | gzip > /mnt/storage/backups/maleq_v2_$(date +\%Y\%m\%d).sql.gz
-  # Keep last 14 days
-  0 4 * * * find /mnt/storage/backups/ -name "maleq_v2_*.sql.gz" -mtime +14 -delete
-  ```
-
-  - V2 uploads: weekly rsync to backup location
+- [x] **5.13** Database backups configured ✅
+  - Weekly cron (Sunday 3 AM): `/usr/local/bin/maleq-backup.sh`
+  - Compressed dumps stored at `/mnt/storage/backups/` (~38MB each)
+  - Auto-cleanup: backups older than 14 days deleted
   - Vercel: code is in Git (automatic)
 
-- [ ] **5.14** Set up monitoring
-  - UptimeRobot (free) for both `maleq.com` and `wp.maleq.com`
-  - Vercel analytics for frontend performance
-  - Sentry for error tracking (`NEXT_PUBLIC_SENTRY_DSN` env var)
+- [x] **5.14** Server-side health monitoring configured ✅
+  - Cron every 5 min: `/usr/local/bin/maleq-healthcheck.sh`
+  - Checks: maleq.com (frontend), wp.maleq.com/graphql, wp-login.php
+  - Alerts logged to `/var/log/maleq-healthcheck.log`
+  - Optional: Add UptimeRobot for external monitoring + email alerts
 
-- [ ] **5.15** Set up WP backend hardening
-  - Disable XML-RPC (already blocked in nginx)
-  - Install fail2ban or similar for SSH brute force protection
-  - Consider Redis object cache for WP (already installed on server)
+- [x] **5.15** WP backend hardened ✅
+  - XML-RPC blocked in nginx
+  - fail2ban installed: SSH (3 attempts/2hr ban), nginx-http-auth, wordpress-login jails
+  - Already caught 5 SSH brute-force IPs on first run
+  - Nginx config backup files cleaned up
 
 #### Clean Up (After 2-4 Weeks Stable)
 
 - [ ] **5.16** Decommission old.maleq.com if no longer needed
 - [ ] **5.17** Remove V1 files to free 29GB+ of disk space
-- [ ] **5.18** Remove unused CloudPanel sites (cloudpanel default, staging)
-- [ ] **5.19** Disable unused PHP-FPM pools (7.1-8.0) to free memory
+- [ ] **5.18** Remove unused CloudPanel sites (cloudpanel default)
+- [x] **5.19** Disabled unused PHP-FPM pools (8.0, 8.1, 8.2) ✅ — only 8.3 (V1) and 8.4 (V2) remain
+- [x] **5.20** Staging site removed (nginx, PHP pool, Cloudflare DNS) ✅
 
 ---
 

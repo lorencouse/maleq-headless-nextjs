@@ -103,12 +103,37 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Redirect old /product-category/ URLs to /sex-toys/
+  // Redirect old V1 WordPress URLs to V2 equivalents
   async redirects() {
     return [
       {
         source: '/product-category/:slug*',
         destination: '/sex-toys/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/my-account/:path*',
+        destination: '/account/:path*',
+        permanent: true,
+      },
+      {
+        source: '/my-account',
+        destination: '/account',
+        permanent: true,
+      },
+      {
+        source: '/returns',
+        destination: '/shipping-returns',
+        permanent: true,
+      },
+      {
+        source: '/category/:slug*',
+        destination: '/guides/category/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/tag/:slug*',
+        destination: '/guides/tag/:slug*',
         permanent: true,
       },
     ];
