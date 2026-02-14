@@ -59,6 +59,28 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
+                    <h3 className="font-medium text-foreground">Text Us</h3>
+                    <p className="text-muted-foreground">
+                      SMS:{' '}
+                      <a
+                        href="sms:+19785720012"
+                        className="text-primary hover:underline"
+                        aria-label="Text us"
+                      >
+                        +1&thinsp;(978)&thinsp;572&#8209;0012
+                      </a>
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">We&apos;ll get back to you within 24 hours</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
                     <h3 className="font-medium text-foreground">Response Time</h3>
                     <p className="text-muted-foreground">We typically respond within 24 hours</p>
                   </div>

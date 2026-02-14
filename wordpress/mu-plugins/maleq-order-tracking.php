@@ -295,6 +295,28 @@ function maleq_process_tracking_save($order_id) {
  * Register REST API endpoint for tracking
  */
 add_action('rest_api_init', function () {
+    // Public endpoint for customer order tracking (no auth required)
+    register_rest_route('maleq/v1', '/track-order', [
+        'methods'             => 'POST',
+        'callback'            => 'maleq_api_public_track_order',
+        'permission_callback' => 'maleq_track_order_rate_limit',
+        'args'                => [
+            'order_number' => [
+                'required'          => true,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'email' => [
+                'required'          => true,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_email',
+                'validate_callback' => function ($value) {
+                    return is_email($value);
+                },
+            ],
+        ],
+    ]);
+
     register_rest_route('maleq/v1', '/orders/(?P<order_id>\d+)/tracking', [
         'methods' => 'PUT',
         'callback' => 'maleq_api_update_tracking',
@@ -449,4 +471,129 @@ function maleq_api_get_tracking(WP_REST_Request $request) {
         'order_id' => $order_id,
         'tracking' => $tracking,
     ];
+}
+
+/**
+ * Rate limit for public track-order endpoint: 5 requests per minute per IP.
+ */
+function maleq_track_order_rate_limit() {
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $key = 'maleq_track_' . md5($ip);
+    $count = (int) get_transient($key);
+
+    if ($count >= 5) {
+        return new WP_Error(
+            'rate_limited',
+            'Too many requests. Please wait a minute and try again.',
+            ['status' => 429]
+        );
+    }
+
+    set_transient($key, $count + 1, 60);
+    return true;
+}
+
+/**
+ * Public endpoint for customers to track their order by order number + billing email.
+ */
+function maleq_api_public_track_order(WP_REST_Request $request) {
+    $order_number = trim($request->get_param('order_number'));
+    $email = strtolower(trim($request->get_param('email')));
+
+    if (empty($order_number) || empty($email)) {
+        return new WP_Error(
+            'missing_fields',
+            'Order number and email are required.',
+            ['status' => 400]
+        );
+    }
+
+    // Look up order by number
+    $order = wc_get_order($order_number);
+
+    if (!$order) {
+        // Try searching by custom order number meta
+        $orders = wc_get_orders([
+            'limit'      => 1,
+            'meta_key'   => '_order_number',
+            'meta_value' => $order_number,
+        ]);
+        $order = !empty($orders) ? $orders[0] : null;
+    }
+
+    if (!$order) {
+        return new WP_Error(
+            'order_not_found',
+            'No order found. Please check your order number and email.',
+            ['status' => 404]
+        );
+    }
+
+    // Verify billing email matches (same error to prevent enumeration)
+    $billing_email = strtolower($order->get_billing_email());
+    if ($billing_email !== $email) {
+        return new WP_Error(
+            'order_not_found',
+            'No order found. Please check your order number and email.',
+            ['status' => 404]
+        );
+    }
+
+    // Build items summary
+    $items = [];
+    foreach ($order->get_items() as $item) {
+        $product = $item->get_product();
+        $items[] = [
+            'name'     => $item->get_name(),
+            'quantity' => $item->get_quantity(),
+            'total'    => $item->get_total(),
+            'image'    => $product ? wp_get_attachment_url($product->get_image_id()) : null,
+        ];
+    }
+
+    // Get tracking data using existing helper
+    $tracking_items = $order->get_meta('_wc_shipment_tracking_items', true);
+    $tracking = [];
+
+    if (!empty($tracking_items) && is_array($tracking_items)) {
+        foreach ($tracking_items as $item) {
+            $tracking[] = [
+                'tracking_provider' => $item['tracking_provider'] ?? '',
+                'tracking_number'   => $item['tracking_number'] ?? '',
+                'tracking_link'     => $item['tracking_link'] ?? '',
+                'date_shipped'      => $item['date_shipped'] ?? '',
+            ];
+        }
+    }
+
+    // Map WooCommerce status to display-friendly label
+    $status_map = [
+        'pending'    => 'Pending Payment',
+        'processing' => 'Processing',
+        'on-hold'    => 'On Hold',
+        'completed'  => 'Completed',
+        'cancelled'  => 'Cancelled',
+        'refunded'   => 'Refunded',
+        'failed'     => 'Failed',
+        'shipped'    => 'Shipped',
+        'delivered'  => 'Delivered',
+    ];
+
+    $raw_status = $order->get_status();
+    $status_label = $status_map[$raw_status] ?? ucfirst($raw_status);
+
+    return rest_ensure_response([
+        'success' => true,
+        'order'   => [
+            'number'          => $order->get_order_number(),
+            'status'          => $raw_status,
+            'status_label'    => $status_label,
+            'date_created'    => $order->get_date_created()?->format('Y-m-d'),
+            'total'           => $order->get_total(),
+            'currency'        => $order->get_currency(),
+            'items'           => $items,
+            'shipping_method' => $order->get_shipping_method(),
+            'tracking'        => $tracking,
+        ],
+    ]);
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 interface FaqItem {
   question: string;
-  answer: string;
+  answer: string | React.ReactNode;
 }
 
 interface FaqAccordionProps {
@@ -60,7 +60,7 @@ export default function FaqAccordion({ items, allowMultiple = false }: FaqAccord
           </button>
           <div
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              openItems.has(index) ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+              openItems.has(index) ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
             <div className="px-6 py-5 text-foreground/80 leading-relaxed border-t border-border bg-input/30">

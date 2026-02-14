@@ -11,7 +11,19 @@ export const contactSchema = z.object({
     .string()
     .min(10, 'Message must be at least 10 characters')
     .max(5000, 'Message is too long'),
-});
+  orderNumber: z.string().max(50).optional(),
+  orderLastName: z.string().max(100).optional(),
+  orderEmail: z.string().email('Please enter a valid email').optional().or(z.literal('')),
+}).refine(
+  (data) => {
+    if (data.subject !== 'Order Status') return true;
+    return !!(data.orderNumber?.trim() || data.orderLastName?.trim() || data.orderEmail?.trim());
+  },
+  {
+    message: 'Please provide at least one: order number, last name, or order email',
+    path: ['orderNumber'],
+  }
+);
 
 export type ContactFormData = z.infer<typeof contactSchema>;
 

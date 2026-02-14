@@ -8,9 +8,11 @@
 
 ---
 
-navigate to previous page after sucessful log in (user likely browsing products)
+Table of contents on blog posts. Floating table of contents on blog post pages, on sidebar, generated from headings in the content. Highlights current section as user scrolls. Collapsible on mobile.
 
-on filter change, only scroll upto the All productName heading, not the top of the page (which is the category heading)
+Do not load spanish and chinese articles on main guides page. have links at top to just to those categories. Only render EN category articles on main guides page. 
+
+when filters are applied, and no products are found, the filter bar disappears and shows "No products found" message. Fix so that filter bar remains visible with the message.
 
 ## Pre-Launch Checklist
 - [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)

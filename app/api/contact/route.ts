@@ -16,6 +16,9 @@ interface ContactFormData {
   email: string;
   subject: string;
   message: string;
+  orderNumber?: string;
+  orderLastName?: string;
+  orderEmail?: string;
 }
 
 const transporter = nodemailer.createTransport({
@@ -66,20 +69,40 @@ export async function POST(request: NextRequest) {
     const sanitizedEmail = email.trim();
     const sanitizedSubject = subject.trim();
     const sanitizedMessage = message.trim();
+    const sanitizedOrderNumber = body.orderNumber?.trim() || '';
+    const sanitizedOrderLastName = body.orderLastName?.trim() || '';
+    const sanitizedOrderEmail = body.orderEmail?.trim() || '';
+    const hasOrderDetails = sanitizedOrderNumber || sanitizedOrderLastName || sanitizedOrderEmail;
+
+    const textLines = [
+      `Name: ${sanitizedName}`,
+      `Email: ${sanitizedEmail}`,
+      `Subject: ${sanitizedSubject}`,
+    ];
+    if (hasOrderDetails) {
+      textLines.push('', '--- Order Details ---');
+      if (sanitizedOrderNumber) textLines.push(`Order #: ${sanitizedOrderNumber}`);
+      if (sanitizedOrderLastName) textLines.push(`Last Name: ${sanitizedOrderLastName}`);
+      if (sanitizedOrderEmail) textLines.push(`Order Email: ${sanitizedOrderEmail}`);
+    }
+    textLines.push('', 'Message:', sanitizedMessage);
+
+    const orderDetailsHtml = hasOrderDetails ? `
+          <div style="padding: 12px 16px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin-bottom: 20px;">
+            <strong style="color: #856404;">Order Details</strong>
+            <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+              ${sanitizedOrderNumber ? `<tr><td style="padding: 4px 0; font-weight: bold; color: #555; width: 100px;">Order #:</td><td>${sanitizedOrderNumber}</td></tr>` : ''}
+              ${sanitizedOrderLastName ? `<tr><td style="padding: 4px 0; font-weight: bold; color: #555;">Last Name:</td><td>${sanitizedOrderLastName}</td></tr>` : ''}
+              ${sanitizedOrderEmail ? `<tr><td style="padding: 4px 0; font-weight: bold; color: #555;">Order Email:</td><td><a href="mailto:${sanitizedOrderEmail}">${sanitizedOrderEmail}</a></td></tr>` : ''}
+            </table>
+          </div>` : '';
 
     await transporter.sendMail({
       from: `"Male Q Contact Form" <info@maleq.com>`,
       to: 'info@maleq.com',
       replyTo: `"${sanitizedName}" <${sanitizedEmail}>`,
-      subject: `Contact Form: ${sanitizedSubject}`,
-      text: [
-        `Name: ${sanitizedName}`,
-        `Email: ${sanitizedEmail}`,
-        `Subject: ${sanitizedSubject}`,
-        '',
-        'Message:',
-        sanitizedMessage,
-      ].join('\n'),
+      subject: `Contact Form: ${sanitizedSubject}${sanitizedOrderNumber ? ` (#${sanitizedOrderNumber})` : ''}`,
+      text: textLines.join('\n'),
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px;">
           <h2 style="color: #E63946; margin-bottom: 20px;">New Contact Form Submission</h2>
@@ -97,6 +120,7 @@ export async function POST(request: NextRequest) {
               <td style="padding: 8px 12px;">${sanitizedSubject}</td>
             </tr>
           </table>
+          ${orderDetailsHtml}
           <div style="padding: 16px; background: #f5f5f5; border-radius: 8px; white-space: pre-wrap;">${sanitizedMessage}</div>
         </div>
       `,

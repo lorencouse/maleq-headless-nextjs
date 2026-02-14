@@ -14,6 +14,7 @@ export default function ContactForm() {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -22,8 +23,13 @@ export default function ContactForm() {
       email: '',
       subject: '',
       message: '',
+      orderNumber: '',
+      orderLastName: '',
+      orderEmail: '',
     },
   });
+
+  const selectedSubject = watch('subject');
 
   const onSubmit = async (data: ContactFormData) => {
     setIsLoading(true);
@@ -137,6 +143,55 @@ export default function ContactForm() {
           <p className="mt-1 text-sm text-destructive">{errors.subject.message}</p>
         )}
       </div>
+
+      {selectedSubject === 'Order Status' && (
+        <div className="space-y-4 p-4 bg-muted/50 border border-border rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            Please provide at least one of the following to help us locate your order:
+          </p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="orderNumber" className="block text-sm font-medium text-foreground mb-2">
+                Order Number
+              </label>
+              <input
+                type="text"
+                id="orderNumber"
+                {...register('orderNumber')}
+                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="#12345"
+              />
+            </div>
+            <div>
+              <label htmlFor="orderLastName" className="block text-sm font-medium text-foreground mb-2">
+                Last Name
+              </label>
+              <input
+                type="text"
+                id="orderLastName"
+                {...register('orderLastName')}
+                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="Last name on order"
+              />
+            </div>
+            <div>
+              <label htmlFor="orderEmail" className="block text-sm font-medium text-foreground mb-2">
+                Order Email
+              </label>
+              <input
+                type="email"
+                id="orderEmail"
+                {...register('orderEmail')}
+                className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="Email used for order"
+              />
+            </div>
+          </div>
+          {errors.orderNumber && (
+            <p className="text-sm text-destructive">{errors.orderNumber.message}</p>
+          )}
+        </div>
+      )}
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
