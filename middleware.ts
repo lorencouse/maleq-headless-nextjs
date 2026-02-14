@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { checkRateLimit, RATE_LIMITS, type RateLimitConfig } from '@/lib/api/rate-limit';
+import { productRedirectMap } from '@/lib/redirects/product-redirects';
 
 /**
  * Route-specific rate limit configurations.
@@ -53,6 +54,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 302);
   }
 
+  // --- V1 → V2 product slug redirects (SKU-matched) ---
+  if (pathname.startsWith('/product/')) {
+    const slug = pathname.replace('/product/', '').replace(/\/$/, '');
+    const newSlug = productRedirectMap[slug];
+    if (newSlug) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/product/${newSlug}`;
+      return NextResponse.redirect(url, 301);
+    }
+  }
+
   // --- Rate limiting for API routes ---
 
   // Only rate-limit configured routes
@@ -91,6 +103,8 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // V1 → V2 product slug redirects
+    '/product/:path*',
     // Rate-limit API routes
     '/api/:path*',
     // Catch old WordPress query-param URLs on the homepage
