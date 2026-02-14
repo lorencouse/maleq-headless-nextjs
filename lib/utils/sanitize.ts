@@ -15,6 +15,8 @@ export function sanitizeHtml(html: string): string {
     ],
     allowedAttributes: {
       ...sanitize.defaults.allowedAttributes,
+      '*': ['class'],
+      div: ['data-product-id'],
       iframe: [
         'src',
         'width',
