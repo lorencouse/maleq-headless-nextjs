@@ -462,7 +462,7 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
 
 export const getHierarchicalCategories = unstable_cache(
   _uncachedGetHierarchicalCategories,
-  ['hierarchical-categories'],
+  ['hierarchical-categories-v2'],
   { revalidate: 3600, tags: ['categories'] }
 );
 
