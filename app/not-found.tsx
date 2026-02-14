@@ -1,8 +1,11 @@
 import Link from 'next/link';
+import Log404 from '@/components/analytics/Log404';
+import NotFoundSuggestions from '@/components/analytics/NotFoundSuggestions';
 
 export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <Log404 />
       <div className="text-center max-w-lg">
         {/* 404 Illustration */}
         <div className="mb-8">
@@ -15,6 +18,9 @@ export default function NotFound() {
         <p className="text-lg text-muted-foreground mb-8">
           Oops! The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
+
+        {/* Smart Suggestions */}
+        <NotFoundSuggestions />
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
