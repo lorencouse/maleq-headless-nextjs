@@ -77,10 +77,20 @@ export function processContentImages(html: string | undefined): string {
   );
 }
 
+/** Known V2 app routes — links to these should NOT be prefixed with /guides/ */
+const V2_APP_ROUTES = new Set([
+  'account', 'forgot-password', 'reset-password', 'search', 'login', 'register',
+  'about', 'contact', 'faq', 'terms', 'privacy', 'shipping-returns',
+  'brands', 'brand', 'shop', 'guides', 'cart', 'checkout',
+  'product', 'sex-toys', 'order-confirmation', 'track-order', 'admin',
+  'api', 'graphql', '_next', 'images', 'fonts',
+]);
+
 /**
  * Process HTML content to fix all WordPress URLs
  * - Converts relative image URLs to absolute
  * - Handles any remaining absolute URLs from old domains
+ * - Rewrites internal WordPress page links to V2 paths
  * - Cleans up WooCommerce verbose price text
  *
  * @param html - The HTML content from WordPress
@@ -90,6 +100,7 @@ export function rewriteWordPressUrls(html: string | undefined): string {
   if (!html) return '';
 
   const baseUrl = getImageBaseUrl();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
   let processed = html;
 
   // Replace relative wp-content URLs with absolute URLs
@@ -112,6 +123,62 @@ export function rewriteWordPressUrls(html: string | undefined): string {
       baseUrl + '$1'
     );
   }
+
+  // --- Rewrite internal WordPress links to V2 paths ---
+
+  // Convert absolute links with old domains to relative paths first
+  // e.g. href="https://www.maleq.com/best-lubes/" → href="/best-lubes/"
+  const domainPatterns = [
+    'https?://(?:www\\.)?maleq\\.com',
+    'https?://staging\\.maleq\\.com',
+    'https?://maleq-local\\.local',
+    'https?://wp\\.maleq\\.com',
+  ];
+  const domainRegex = new RegExp(
+    `(href=["'])(${domainPatterns.join('|')})(\/[^"']*)(["'])`,
+    'gi'
+  );
+  processed = processed.replace(domainRegex, '$1$3$4');
+
+  // Rewrite old WordPress route patterns to V2 equivalents
+  // /product-category/slug/ → /sex-toys/slug
+  processed = processed.replace(
+    /href=(["'])\/product-category\/([^"']+?)\/?["']/gi,
+    'href=$1/sex-toys/$2$1'
+  );
+
+  // /category/slug/ → /guides/category/slug
+  processed = processed.replace(
+    /href=(["'])\/category\/([^"']+?)\/?["']/gi,
+    'href=$1/guides/category/$2$1'
+  );
+
+  // /tag/slug/ → /guides/tag/slug
+  processed = processed.replace(
+    /href=(["'])\/tag\/([^"']+?)\/?["']/gi,
+    'href=$1/guides/tag/$2$1'
+  );
+
+  // /my-account/ → /account
+  processed = processed.replace(
+    /href=(["'])\/my-account(\/[^"']*)?["']/gi,
+    (_match, q) => `href=${q}/account${q}`
+  );
+
+  // Root-level blog slugs: href="/some-slug/" → href="/guides/some-slug"
+  // Only rewrite if the first path segment is NOT a known V2 route
+  processed = processed.replace(
+    /href=(["'])\/([a-zA-Z0-9][a-zA-Z0-9-]*?)\/?["']/gi,
+    (match, quote, slug) => {
+      const firstSegment = slug.split('/')[0].toLowerCase();
+      // Skip known V2 routes, wp-content, and product paths
+      if (V2_APP_ROUTES.has(firstSegment) || firstSegment.startsWith('wp-')) {
+        // Strip trailing slash but keep as-is
+        return `href=${quote}/${slug.replace(/\/$/, '')}${quote}`;
+      }
+      return `href=${quote}/guides/${slug.replace(/\/$/, '')}${quote}`;
+    }
+  );
 
   // Replace WooCommerce add-to-cart shortcode output with custom placeholder
   // Product data is fetched via API using the product ID

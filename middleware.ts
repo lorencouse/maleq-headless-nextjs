@@ -30,7 +30,30 @@ function getClientIp(request: NextRequest): string {
 }
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, searchParams } = request.nextUrl;
+
+  // --- Redirect old WordPress query-param URLs ---
+
+  // /?s=search+term → /search?q=search+term
+  const wpSearch = searchParams.get('s');
+  if (wpSearch && pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/search';
+    url.searchParams.delete('s');
+    url.searchParams.set('q', wpSearch);
+    return NextResponse.redirect(url, 301);
+  }
+
+  // /?p=12345 → / (post by ID — no reliable mapping, send to homepage)
+  const wpPostId = searchParams.get('p');
+  if (wpPostId && pathname === '/') {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    url.searchParams.delete('p');
+    return NextResponse.redirect(url, 302);
+  }
+
+  // --- Rate limiting for API routes ---
 
   // Only rate-limit configured routes
   const config = RATE_LIMITED_ROUTES[pathname];
@@ -67,5 +90,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    // Rate-limit API routes
+    '/api/:path*',
+    // Catch old WordPress query-param URLs on the homepage
+    '/',
+  ],
 };

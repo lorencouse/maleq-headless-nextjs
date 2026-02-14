@@ -115,6 +115,7 @@ const nextConfig: NextConfig = {
   // Redirect old V1 WordPress URLs to V2 equivalents
   async redirects() {
     return [
+      // --- WooCommerce / Account routes ---
       {
         source: '/product-category/:slug*',
         destination: '/sex-toys/:slug*',
@@ -135,6 +136,8 @@ const nextConfig: NextConfig = {
         destination: '/shipping-returns',
         permanent: true,
       },
+
+      // --- Blog taxonomy routes ---
       {
         source: '/category/:slug*',
         destination: '/guides/category/:slug*',
@@ -145,12 +148,92 @@ const nextConfig: NextConfig = {
         destination: '/guides/tag/:slug*',
         permanent: true,
       },
-      // Redirect old root-level blog post URLs to /guides/:slug
+
+      // --- WordPress infrastructure routes ---
+      {
+        source: '/wp-login.php',
+        destination: '/login',
+        permanent: true,
+      },
+      {
+        source: '/wp-admin/:path*',
+        destination: '/',
+        permanent: false, // 302 — not a permanent content move
+      },
+      {
+        source: '/wp-admin',
+        destination: '/',
+        permanent: false,
+      },
+
+      // --- Author archives → guides index ---
+      {
+        source: '/author/:slug*',
+        destination: '/guides',
+        permanent: true,
+      },
+
+      // --- Feed URLs → homepage ---
+      {
+        source: '/feed/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/feed',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/comments/feed/:path*',
+        destination: '/',
+        permanent: true,
+      },
+
+      // --- WordPress pagination → homepage/guides ---
+      {
+        source: '/page/:num(\\d+)',
+        destination: '/guides',
+        permanent: true,
+      },
+
+      // --- Date-based archive URLs → /guides/:slug ---
+      // Matches /2024/01/post-slug/ style WordPress permalinks
+      {
+        source: '/:year(\\d{4})/:month(\\d{2})/:slug',
+        destination: '/guides/:slug',
+        permanent: true,
+      },
+      {
+        source: '/:year(\\d{4})/:month(\\d{2})/:day(\\d{2})/:slug',
+        destination: '/guides/:slug',
+        permanent: true,
+      },
+
+      // --- Old nested WordPress paths (from migration scripts) ---
+      {
+        source: '/stories/:slug*',
+        destination: '/guides/:slug*',
+        permanent: true,
+      },
+      {
+        source: '/manufacturer/:slug',
+        destination: '/brand/:slug',
+        permanent: true,
+      },
+      {
+        source: '/members/:path*',
+        destination: '/',
+        permanent: true,
+      },
+
+      // --- Catch-all: old root-level blog post URLs → /guides/:slug ---
       // Old WordPress had posts at /:slug, new site uses /guides/:slug
       // Regex matches URL-safe slugs (letters, numbers, hyphens) but excludes known app routes
+      // Supports single-char slugs and is case-insensitive via [a-zA-Z0-9]
       {
         source:
-          '/:slug((?!account|forgot-password|reset-password|search|login|register|about|contact|faq|terms|privacy|shipping-returns|brands|brand|shop|guides|cart|checkout|product|sex-toys|order-confirmation|api|graphql|_next|images|fonts)[a-z0-9][a-z0-9-]*[a-z0-9])',
+          '/:slug((?!account|forgot-password|reset-password|search|login|register|about|contact|faq|terms|privacy|shipping-returns|brands|brand|shop|guides|cart|checkout|product|sex-toys|order-confirmation|track-order|admin|api|graphql|_next|images|fonts|wp-)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)',
         destination: '/guides/:slug',
         permanent: true,
       },
