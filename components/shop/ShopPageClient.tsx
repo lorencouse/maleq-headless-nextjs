@@ -95,6 +95,7 @@ export default function ShopPageClient({
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
 
   const isLoadingMore = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Track if user entered page with filters/search (browse mode hides hero)
   const isInBrowseMode = useRef(
@@ -236,6 +237,16 @@ export default function ShopPageClient({
   ) => {
     const isAppending = !!(afterCursor || (filterParams.search && offset !== undefined && offset > 0));
     isLoadingMore.current = isAppending;
+
+    // Cancel previous in-flight request when filters change (not for load-more)
+    if (!isAppending && abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    if (!isAppending) {
+      abortControllerRef.current = controller;
+    }
+
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -265,7 +276,9 @@ export default function ShopPageClient({
       if (filterParams.productType) params.set('productType', filterParams.productType);
       if (filterParams.sort !== 'newest') params.set('sort', filterParams.sort);
 
-      const response = await fetch(`/api/products?${params.toString()}`);
+      const response = await fetch(`/api/products?${params.toString()}`, {
+        signal: controller.signal,
+      });
       const data = await response.json();
 
       if (data.products) {
@@ -341,9 +354,12 @@ export default function ShopPageClient({
         setCursor(data.pageInfo?.endCursor || null);
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
       console.error('Error fetching products:', error);
     } finally {
-      setIsLoading(false);
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
@@ -554,7 +570,7 @@ export default function ShopPageClient({
           handleLoadMore();
         }
       },
-      { rootMargin: '400px' }
+      { rootMargin: '1200px' }
     );
 
     observer.observe(sentinel);

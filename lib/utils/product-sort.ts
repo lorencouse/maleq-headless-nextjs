@@ -14,8 +14,7 @@ function getSourcePriority(source?: string): number {
 
 /**
  * Sort products with in-stock items first, out-of-stock last.
- * Secondary sort by source priority (WT/MUFFS > mixed > STC).
- * Preserves the existing order (date/relevance) within each group (stable sort).
+ * Secondary sort by view count (popularity), then source priority.
  *
  * Note: Primary stock+source ordering is handled at the DB level by
  * the maleq-stock-priority.php mu-plugin. This client-side sort serves
@@ -26,6 +25,11 @@ export function sortProductsByPriority(products: UnifiedProduct[]): UnifiedProdu
     const aInStock = a.stockStatus === 'IN_STOCK' ? 0 : 1;
     const bInStock = b.stockStatus === 'IN_STOCK' ? 0 : 1;
     if (aInStock !== bInStock) return aInStock - bInStock;
+
+    // Sort by popularity score (views + sales*10 + reviews*10)
+    const aPop = a.popularityScore ?? 0;
+    const bPop = b.popularityScore ?? 0;
+    if (aPop !== bPop) return bPop - aPop;
 
     const aSource = getSourcePriority(a.source);
     const bSource = getSourcePriority(b.source);

@@ -67,6 +67,31 @@ export const GET_ALL_POSTS = gql`
   }
 `;
 
+// Get posts excluding specific categories (by database ID)
+export const GET_POSTS_EXCLUDING_CATEGORIES = gql`
+  ${POST_FIELDS}
+  query GetPostsExcludingCategories($first: Int = 10, $after: String, $categoryNotIn: [ID!]) {
+    posts(
+      first: $first
+      after: $after
+      where: {
+        categoryNotIn: $categoryNotIn
+        orderby: { field: DATE, order: DESC }
+      }
+    ) {
+      nodes {
+        ...PostFields
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        startCursor
+        endCursor
+      }
+    }
+  }
+`;
+
 // Get single post by slug
 export const GET_POST_BY_SLUG = gql`
   ${POST_FIELDS}
@@ -162,6 +187,7 @@ export const GET_CATEGORY_BY_SLUG = gql`
   query GetCategoryBySlug($slug: ID!) {
     category(id: $slug, idType: SLUG) {
       id
+      databaseId
       name
       slug
       count

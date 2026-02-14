@@ -184,56 +184,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       </div>
 
       {/* Products */}
-      {products.length > 0 ? (
-        <Suspense fallback={<CategoryLoadingSkeleton />}>
-          <ShopPageClient
-            initialProducts={products}
-            categories={allCategories}
-            brands={brandsData}
-            colors={colorsData}
-            materials={materialsData}
-            hasMore={productsPageInfo.hasNextPage}
-            initialCursor={productsPageInfo.endCursor}
-            initialCategory={slug}
-          />
-        </Suspense>
-      ) : (
-        <div className="text-center py-16">
-          <svg
-            className="w-16 h-16 mx-auto mb-4 text-muted-foreground"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <h2 className="text-xl font-semibold text-foreground mb-2">No products found</h2>
-          <p className="text-muted-foreground mb-6">
-            {hasAdditionalFilters
-              ? 'Try adjusting your filters to find what you\'re looking for.'
-              : 'This category doesn\'t have any products yet.'}
-          </p>
-          <a
-            href="/shop"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
-          >
-            Browse All Products
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M14 5l7 7m0 0l-7 7m7-7H3"
-              />
-            </svg>
-          </a>
-        </div>
-      )}
+      <Suspense fallback={<CategoryLoadingSkeleton />}>
+        <ShopPageClient
+          initialProducts={products}
+          categories={allCategories}
+          brands={brandsData}
+          colors={colorsData}
+          materials={materialsData}
+          hasMore={productsPageInfo.hasNextPage}
+          initialCursor={productsPageInfo.endCursor}
+          initialCategory={slug}
+        />
+      </Suspense>
     </div>
   );
 }

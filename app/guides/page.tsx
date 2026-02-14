@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
@@ -46,10 +47,10 @@ interface BlogPageProps {
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { q: searchQuery } = await searchParams;
 
-  // Use search if provided, otherwise get all posts
+  // Use search if provided, otherwise get EN-only posts (exclude Spanish/Chinese)
   const result = searchQuery
     ? await searchBlogPosts(searchQuery, { first: 20 })
-    : await getBlogPosts({ first: 12 });
+    : await getBlogPosts({ first: 12, excludeCategorySlugs: ['espanol', 'cn'] });
 
   const { posts, pageInfo, suggestions } = result;
 
@@ -65,6 +66,24 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
             <p className="text-lg text-muted-foreground">
               Insights, stories, and updates from our team
             </p>
+            {/* Language category links */}
+            {!searchQuery && (
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-sm text-muted-foreground">Also available in:</span>
+                <Link
+                  href="/guides/category/espanol"
+                  className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                >
+                  Espa&ntilde;ol
+                </Link>
+                <Link
+                  href="/guides/category/cn"
+                  className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
+                >
+                  &#20013;&#25991;
+                </Link>
+              </div>
+            )}
           </div>
           <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
             <BlogSearch />
@@ -93,6 +112,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           hasNextPage: !searchQuery && pageInfo.hasNextPage,
           endCursor: pageInfo.endCursor,
         }}
+        excludeCategories={searchQuery ? undefined : 'espanol,cn'}
       />
     </div>
   );

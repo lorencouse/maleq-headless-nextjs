@@ -39,6 +39,16 @@ export default function TrackRecentlyViewed({
         regularPrice,
         image,
       });
+
+      // Track server-side view count (fire-and-forget)
+      const numericId = parseInt(productId, 10);
+      if (numericId > 0) {
+        fetch('/api/products/track-view', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: numericId }),
+        }).catch(() => {});
+      }
     }, 1000);
 
     return () => clearTimeout(timer);

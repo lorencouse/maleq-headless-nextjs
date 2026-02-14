@@ -14,12 +14,14 @@ interface BlogPostsGridProps {
   initialPageInfo: PageInfo;
   categorySlug?: string;
   tagSlug?: string;
+  excludeCategories?: string;
 }
 
 async function fetchMorePosts(
   cursor: string,
   categorySlug?: string,
-  tagSlug?: string
+  tagSlug?: string,
+  excludeCategories?: string
 ): Promise<{ posts: Post[]; pageInfo: PageInfo }> {
   const params = new URLSearchParams({
     after: cursor,
@@ -31,6 +33,9 @@ async function fetchMorePosts(
   }
   if (tagSlug) {
     params.set('tag', tagSlug);
+  }
+  if (excludeCategories) {
+    params.set('excludeCategories', excludeCategories);
   }
 
   const response = await fetch(`/api/posts?${params.toString()}`);
@@ -47,6 +52,7 @@ export default function BlogPostsGrid({
   initialPageInfo,
   categorySlug,
   tagSlug,
+  excludeCategories,
 }: BlogPostsGridProps) {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
@@ -60,7 +66,7 @@ export default function BlogPostsGrid({
 
     startTransition(async () => {
       try {
-        const result = await fetchMorePosts(pageInfo.endCursor!, categorySlug, tagSlug);
+        const result = await fetchMorePosts(pageInfo.endCursor!, categorySlug, tagSlug, excludeCategories);
         setPosts((prev) => [...prev, ...result.posts]);
         setPageInfo(result.pageInfo);
       } catch (err) {

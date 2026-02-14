@@ -33,7 +33,8 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
       const data = await response.json();
 
       // Transform WooCommerce review format to our Review interface
-      const transformedReviews: Review[] = data.reviews.map((r: any) => ({
+      const reviewsArray = data.data || data.reviews || [];
+      const transformedReviews: Review[] = reviewsArray.map((r: any) => ({
         id: r.id,
         reviewer: r.reviewer,
         review: r.review,

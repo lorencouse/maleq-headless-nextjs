@@ -16,6 +16,7 @@ import {
   GET_BRAND_BY_SLUG,
   GET_ALL_MATERIALS,
   GET_GLOBAL_ATTRIBUTES,
+  GET_PRODUCTS_BY_IDS,
 } from '@/lib/queries/products';
 import type {
   Product as WooProduct,
@@ -99,6 +100,8 @@ export interface UnifiedProduct {
   source?: string;
   averageRating?: number;
   reviewCount?: number;
+  viewCount?: number;
+  popularityScore?: number;
   attributes?: {
     name: string;
     options: string[];
@@ -211,6 +214,8 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
     source: undefined, // Source priority handled at DB level by maleq-stock-priority.php
     averageRating: product.averageRating,
     reviewCount: product.reviewCount,
+    viewCount: (product as any).viewCount ?? 0,
+    popularityScore: (product as any).popularityScore ?? 0,
     attributes: attributeNodes.map((attr) => ({
       name: attr.name,
       options: attr.options || [],
@@ -870,10 +875,51 @@ export async function getProductsByBrand(
 }
 
 /**
- * Get trending products (on-sale products with stock)
- * Returns products that are currently on sale and in stock
+ * Get trending products sorted by view count.
+ * Fetches top-viewed product IDs from WP REST API, then hydrates via GraphQL.
+ * Falls back to on-sale products if no view data exists yet.
  */
 export async function getTrendingProducts(limit = 12): Promise<UnifiedProduct[]> {
+  const WP_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL;
+
+  try {
+    // Fetch top-viewed product IDs from WordPress
+    const response = await fetch(`${WP_URL}/wp-json/maleq/v1/trending-products?limit=${limit}`, {
+      next: { revalidate: 3600 },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const productIds: number[] = data.product_ids || [];
+
+      if (productIds.length > 0) {
+        // Hydrate with full product data via GraphQL
+        const { data: gqlData } = await getClient().query({
+          query: GET_PRODUCTS_BY_IDS,
+          variables: { include: productIds },
+          revalidate: 3600,
+        });
+
+        const products: UnifiedProduct[] = (gqlData?.products?.nodes || []).map(convertWooProduct);
+
+        // Preserve the view-count order from the REST response
+        const orderMap = new Map(productIds.map((id, i) => [id, i]));
+        products.sort((a: UnifiedProduct, b: UnifiedProduct) => {
+          const aIdx = orderMap.get(a.databaseId ?? 0) ?? 999;
+          const bIdx = orderMap.get(b.databaseId ?? 0) ?? 999;
+          return aIdx - bIdx;
+        });
+
+        // Filter out out-of-stock products
+        const inStock = products.filter((p: UnifiedProduct) => p.stockStatus === 'IN_STOCK');
+        if (inStock.length > 0) return inStock.slice(0, limit);
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching trending products by view count:', error);
+  }
+
+  // Fallback: return on-sale products
   const result = await getFilteredProducts({
     limit,
     onSale: true,

@@ -6,6 +6,8 @@ import {
   GET_ALL_CATEGORIES,
   GET_ALL_POSTS,
   GET_POSTS_BY_CATEGORY,
+  GET_POSTS_EXCLUDING_CATEGORIES,
+  GET_CATEGORY_BY_SLUG,
 } from '@/lib/queries/posts';
 import { Post } from '@/lib/types/wordpress';
 import {
@@ -218,6 +220,27 @@ export async function searchBlogPosts(
 }
 
 /**
+ * Resolve category slugs to their WordPress database IDs
+ */
+async function resolveCategoryIds(slugs: string[]): Promise<number[]> {
+  const ids: number[] = [];
+  for (const slug of slugs) {
+    try {
+      const { data } = await getClient().query({
+        query: GET_CATEGORY_BY_SLUG,
+        variables: { slug },
+      });
+      if (data?.category?.databaseId) {
+        ids.push(data.category.databaseId);
+      }
+    } catch {
+      // Skip categories that don't exist
+    }
+  }
+  return ids;
+}
+
+/**
  * Get blog posts with pagination
  * Used by blog pages for default listing
  */
@@ -226,17 +249,28 @@ export async function getBlogPosts(
     first?: number;
     after?: string;
     categorySlug?: string;
+    excludeCategorySlugs?: string[];
   } = {}
 ): Promise<BlogSearchResult> {
-  const { first = 12, after, categorySlug } = options;
+  const { first = 12, after, categorySlug, excludeCategorySlugs } = options;
 
   try {
-    const { data } = await getClient().query({
-      query: categorySlug ? GET_POSTS_BY_CATEGORY : GET_ALL_POSTS,
-      variables: categorySlug
-        ? { categoryName: categorySlug, first, after }
-        : { first, after },
-    });
+    let query = GET_ALL_POSTS;
+    let variables: Record<string, unknown> = { first, after };
+
+    if (categorySlug) {
+      query = GET_POSTS_BY_CATEGORY;
+      variables = { categoryName: categorySlug, first, after };
+    } else if (excludeCategorySlugs && excludeCategorySlugs.length > 0) {
+      // Resolve category slugs to database IDs for exclusion
+      const categoryIds = await resolveCategoryIds(excludeCategorySlugs);
+      if (categoryIds.length > 0) {
+        query = GET_POSTS_EXCLUDING_CATEGORIES;
+        variables = { first, after, categoryNotIn: categoryIds };
+      }
+    }
+
+    const { data } = await getClient().query({ query, variables });
 
     return {
       posts: data?.posts?.nodes || [],

@@ -8,11 +8,7 @@
 
 ---
 
-Table of contents on blog posts. Floating table of contents on blog post pages, on sidebar, generated from headings in the content. Highlights current section as user scrolls. Collapsible on mobile.
 
-Do not load spanish and chinese articles on main guides page. have links at top to just to those categories. Only render EN category articles on main guides page. 
-
-when filters are applied, and no products are found, the filter bar disappears and shows "No products found" message. Fix so that filter bar remains visible with the message.
 
 ## Pre-Launch Checklist
 - [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)
@@ -137,6 +133,19 @@ when filters are applied, and no products are found, the filter bar disappears a
 ---
 
 ## Completed
+
+### UX & Blog Improvements (2026-02-13)
+
+- [x] Add floating table of contents to blog posts — sticky sidebar on desktop (xl+), collapsible accordion on mobile, highlights active section on scroll
+- [x] Filter non-EN articles from main guides page — excludes `espanol` and `cn` categories via `categoryNotIn` GraphQL filter, added language links at top of page
+- [x] Keep filter bar visible when no products found — brand and category pages now always render ShopPageClient so filters remain accessible
+- [x] Trigger infinite scroll loading earlier — increased IntersectionObserver rootMargin from 400px to 1200px
+- [x] Fix product reviews submission — API response format mismatch (`data.data` vs `data.reviews`)
+- [x] Add product view count tracking — mu-plugin tracks views, REST endpoint for trending products
+- [x] Popularity scoring — composite score: views + (purchases * 10) + (reviews * 10), used for Trending section and "Most Popular" sort
+- [x] Fix category filter race condition — added AbortController to cancel stale fetch requests
+- [x] Add "Show featured sections" button on shop page when hero/featured content is hidden
+- [x] Scope category filter to subcategories on category pages, "Browse all categories" link
 
 ### UX & Bug Fixes (2026-02-12)
 

@@ -11,6 +11,8 @@ export const PRODUCT_FIELDS = gql`
     sku
     averageRating
     reviewCount
+    viewCount
+    popularityScore
     type
     image {
       id
@@ -121,6 +123,18 @@ export const GET_ALL_PRODUCTS = gql`
         hasPreviousPage
         startCursor
         endCursor
+      }
+    }
+  }
+`;
+
+// Get products by database IDs (for trending/view-count-based queries)
+export const GET_PRODUCTS_BY_IDS = gql`
+  ${PRODUCT_FIELDS}
+  query GetProductsByIds($include: [Int]) {
+    products(where: { include: $include }, first: 50) {
+      nodes {
+        ...ProductFields
       }
     }
   }

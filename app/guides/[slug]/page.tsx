@@ -30,6 +30,7 @@ import DevEditLink from '@/components/dev/DevEditLink';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { ArticleSchema } from '@/components/seo/StructuredData';
 import { stripHtml } from '@/lib/utils/text-utils';
+import TableOfContents from '@/components/blog/TableOfContents';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -169,7 +170,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   };
 
   return (
-    <article className='single-post max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex gap-8">
+        {/* Main Content */}
+        <article className='single-post flex-1 min-w-0 max-w-4xl'>
       {/* Blog Post Structured Data */}
       <ArticleSchema
         headline={post.title}
@@ -253,6 +257,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           />
         </div>
       )}
+
+      {/* Mobile Table of Contents */}
+      <TableOfContents variant="mobile" />
 
       {/* Content */}
       <div
@@ -416,5 +423,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         })()}
       </div>
     </article>
+
+        {/* Desktop Table of Contents Sidebar */}
+        <aside className="hidden xl:block w-56 flex-shrink-0">
+          <TableOfContents />
+        </aside>
+      </div>
+    </div>
   );
 }

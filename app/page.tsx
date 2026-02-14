@@ -119,7 +119,7 @@ export default async function Home() {
             <ProductCarousel
               products={trendingProducts}
               title='Trending Now'
-              subtitle='Limited time offers on popular items'
+              subtitle='Our most popular products right now'
               badge={
                 <span className='inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full'>
                   <svg

@@ -319,7 +319,7 @@ export async function GET(request: NextRequest) {
         products = sortWithOutOfStockLast(products);
         break;
       case 'popularity':
-        products.sort((a, b) => (b.reviewCount || 0) - (a.reviewCount || 0));
+        products.sort((a, b) => (b.popularityScore || 0) - (a.popularityScore || 0));
         products = sortWithOutOfStockLast(products);
         break;
       default:

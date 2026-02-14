@@ -40,6 +40,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-cache-revalidation.php` | Triggers Next.js cache revalidation on product create/update/delete/stock changes | `wordpress/mu-plugins/maleq-cache-revalidation.php` |
 | `maleq-graphql-query-limit.php` | Increases WPGraphQL max query amount to 500 for sitemap generation | `wordpress/mu-plugins/maleq-graphql-query-limit.php` |
 | `maleq-cleanup-product-images.php` | Auto-deletes product images (featured, gallery, variation) when product is permanently deleted | `wordpress/mu-plugins/maleq-cleanup-product-images.php` |
+| `maleq-product-views.php` | Tracks product view counts via REST API and exposes `viewCount` field in WPGraphQL | `wordpress/mu-plugins/maleq-product-views.php` |
 
 ### Installation Steps
 
@@ -59,6 +60,7 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-stock-priority.php /path/to/wordpress/wp-content/mu-plugins/maleq-stock-priority.php
    cp wordpress/mu-plugins/maleq-graphql-product-source.php /path/to/wordpress/wp-content/mu-plugins/maleq-graphql-product-source.php
    cp wordpress/mu-plugins/maleq-cache-revalidation.php /path/to/wordpress/wp-content/mu-plugins/maleq-cache-revalidation.php
+   cp wordpress/mu-plugins/maleq-product-views.php /path/to/wordpress/wp-content/mu-plugins/maleq-product-views.php
    ```
 
 2. **Run material migration** (one-time setup):
