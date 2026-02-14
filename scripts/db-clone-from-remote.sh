@@ -10,13 +10,13 @@ echo "║   Clone Database from Remote Server   ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 
-# Configuration - Extracted from .env.local
+# Configuration - Production server (wp.maleq.com)
 REMOTE_HOST="159.69.220.162"
 REMOTE_USER="root"
-REMOTE_SSH_PASS="Sandcatsma2025**"
-REMOTE_DB_NAME="maleq-staging"
-REMOTE_DB_USER="maleq-staging"
-REMOTE_DB_PASS="rpN5cAEDRS782RiGbURs"
+# SSH uses key-based auth (no password needed)
+REMOTE_DB_NAME="maleq-wp"
+REMOTE_DB_USER="maleq-wp"
+REMOTE_DB_PASS="S9meeDoehU8VPiHd1ByJ"
 
 LOCAL_DB_NAME="maleq_local"
 LOCAL_DB_USER="root"
@@ -35,8 +35,8 @@ echo "  Saving to: ${BACKUP_FILE}"
 echo ""
 
 # Export database from remote server
-sshpass -p "${REMOTE_SSH_PASS}" ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
-  "mysqldump -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' ${REMOTE_DB_NAME} \
+ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
+  "mysqldump -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' -h 127.0.0.1 ${REMOTE_DB_NAME} \
   --single-transaction \
   --quick \
   --lock-tables=false" > "${BACKUP_FILE}"

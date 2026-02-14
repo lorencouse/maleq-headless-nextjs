@@ -11,13 +11,13 @@ echo "║   Push Database to Remote Server      ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 
-# Configuration - Extracted from .env.local
+# Configuration - Production server (wp.maleq.com)
 REMOTE_HOST="159.69.220.162"
 REMOTE_USER="root"
-REMOTE_SSH_PASS="Sandcatsma2025**"
-REMOTE_DB_NAME="maleq-staging"
-REMOTE_DB_USER="maleq-staging"
-REMOTE_DB_PASS="rpN5cAEDRS782RiGbURs"
+# SSH uses key-based auth (no password needed)
+REMOTE_DB_NAME="maleq-wp"
+REMOTE_DB_USER="maleq-wp"
+REMOTE_DB_PASS="S9meeDoehU8VPiHd1ByJ"
 
 LOCAL_DB_NAME="maleq_local"
 LOCAL_DB_USER="root"
@@ -45,7 +45,7 @@ echo ""
 echo "Step 1: Backing up remote database first..."
 
 # Backup remote database before overwriting
-sshpass -p "${REMOTE_SSH_PASS}" ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
+ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
   "mysqldump -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' ${REMOTE_DB_NAME} \
   --single-transaction \
   --quick \
@@ -79,15 +79,15 @@ fi
 echo "Step 3: Updating WordPress URLs for production..."
 
 # Update URLs back to production in the export file
-sed -i.bak "s|http://localhost:3000|https://staging.maleq.com|g" "${LOCAL_EXPORT}"
-echo "✓ URLs updated to https://staging.maleq.com"
+sed -i.bak "s|http://localhost:3000|https://wp.maleq.com|g" "${LOCAL_EXPORT}"
+echo "✓ URLs updated to https://wp.maleq.com"
 echo ""
 
 echo "Step 4: Uploading to remote server..."
 
 # Upload and import to remote server
-cat "${LOCAL_EXPORT}" | sshpass -p "${REMOTE_SSH_PASS}" ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
-  "mysql -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' ${REMOTE_DB_NAME}"
+cat "${LOCAL_EXPORT}" | ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
+  "mysql -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' -h 127.0.0.1 ${REMOTE_DB_NAME}"
 
 if [ $? -eq 0 ]; then
   echo "✓ Database uploaded successfully"
