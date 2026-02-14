@@ -11,8 +11,6 @@ export const PRODUCT_FIELDS = gql`
     sku
     averageRating
     reviewCount
-    viewCount
-    popularityScore
     type
     image {
       id
@@ -52,6 +50,8 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on SimpleProduct {
+      viewCount
+      popularityScore
       price
       regularPrice
       salePrice
@@ -69,6 +69,8 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on VariableProduct {
+      viewCount
+      popularityScore
       price
       regularPrice
       salePrice
@@ -86,6 +88,8 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on ExternalProduct {
+      viewCount
+      popularityScore
       price
       regularPrice
       salePrice
@@ -101,6 +105,8 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on GroupProduct {
+      viewCount
+      popularityScore
       price
     }
   }
