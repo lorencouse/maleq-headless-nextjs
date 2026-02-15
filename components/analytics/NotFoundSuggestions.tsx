@@ -21,11 +21,11 @@ const TYPE_LABELS: Record<Suggestion['type'], string> = {
 
 function SuggestionSkeleton() {
   return (
-    <div className="flex items-center gap-4 p-4 rounded-lg border border-border animate-pulse">
-      <div className="w-16 h-16 bg-muted rounded-md shrink-0" />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 bg-muted rounded w-3/4" />
-        <div className="h-3 bg-muted rounded w-1/4" />
+    <div className="flex flex-col items-center p-4 rounded-lg border border-border animate-pulse h-[200px]">
+      <div className="w-20 h-20 bg-muted rounded-md shrink-0 mb-3" />
+      <div className="w-full space-y-2">
+        <div className="h-4 bg-muted rounded w-3/4 mx-auto" />
+        <div className="h-3 bg-muted rounded w-1/3 mx-auto" />
       </div>
     </div>
   );
@@ -52,11 +52,11 @@ export default function NotFoundSuggestions() {
   if (!loading && suggestions.length === 0) return null;
 
   return (
-    <div className="w-full max-w-lg mx-auto mb-8">
+    <div className="w-full mb-8">
       <p className="text-sm text-muted-foreground mb-3">
         Were you looking for one of these?
       </p>
-      <div className="space-y-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {loading ? (
           <>
             <SuggestionSkeleton />
@@ -68,22 +68,22 @@ export default function NotFoundSuggestions() {
             <Link
               key={s.url}
               href={s.url}
-              className="flex items-center gap-4 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors"
+              className="flex flex-col items-center p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-muted/50 transition-colors h-[200px]"
             >
               {s.image ? (
-                <div className="relative w-16 h-16 shrink-0 rounded-md overflow-hidden bg-muted">
+                <div className="relative w-20 h-20 shrink-0 rounded-md overflow-hidden bg-muted mb-3">
                   <Image
                     src={s.image}
                     alt={s.name}
                     fill
-                    className="object-cover"
-                    sizes="64px"
+                    className="object-contain"
+                    sizes="80px"
                   />
                 </div>
               ) : (
-                <div className="w-16 h-16 shrink-0 rounded-md bg-muted flex items-center justify-center">
+                <div className="w-20 h-20 shrink-0 rounded-md bg-muted flex items-center justify-center mb-3">
                   <svg
-                    className="w-6 h-6 text-muted-foreground/50"
+                    className="w-8 h-8 text-muted-foreground/50"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -97,27 +97,14 @@ export default function NotFoundSuggestions() {
                   </svg>
                 </div>
               )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">
+              <div className="flex-1 min-w-0 text-center">
+                <p className="text-sm font-medium text-foreground line-clamp-2 leading-tight mb-1">
                   {s.name}
                 </p>
                 <span className="text-xs text-muted-foreground">
                   {TYPE_LABELS[s.type]}
                 </span>
               </div>
-              <svg
-                className="w-4 h-4 text-muted-foreground shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
             </Link>
           ))
         )}

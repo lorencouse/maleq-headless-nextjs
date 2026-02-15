@@ -1,23 +1,34 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import Log404 from '@/components/analytics/Log404';
 import NotFoundSuggestions from '@/components/analytics/NotFoundSuggestions';
+import SearchAutocomplete from '@/components/search/SearchAutocomplete';
 
 export default function NotFound() {
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4">
+    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
       <Log404 />
-      <div className="text-center max-w-lg">
+      <div className="text-center max-w-2xl w-full">
         {/* 404 Illustration */}
-        <div className="mb-8">
-          <div className="text-9xl font-bold text-primary/20">404</div>
+        <div className="mb-6">
+          <div className="text-8xl font-bold text-primary/20">404</div>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
           Page Not Found
         </h1>
-        <p className="text-lg text-muted-foreground mb-8">
+        <p className="text-lg text-muted-foreground mb-6">
           Oops! The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
+
+        {/* Search Bar */}
+        <div className="mb-8">
+          <Suspense fallback={
+            <div className="h-12 rounded-lg border border-border bg-muted animate-pulse" />
+          }>
+            <SearchAutocomplete autoFocus={false} />
+          </Suspense>
+        </div>
 
         {/* Smart Suggestions */}
         <NotFoundSuggestions />
@@ -45,7 +56,7 @@ export default function NotFound() {
         </div>
 
         {/* Helpful Links */}
-        <div className="border-t border-border pt-8">
+        <div className="border-t border-border pt-8 pb-8">
           <p className="text-sm text-muted-foreground mb-4">Looking for something specific?</p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <Link href="/contact" className="text-primary hover:underline">
