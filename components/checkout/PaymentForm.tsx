@@ -50,21 +50,23 @@ export default function PaymentForm({
         } else {
           setErrorMessage('An unexpected error occurred');
         }
+        setIsProcessing(false);
         onError(error.message || 'Payment failed');
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Payment succeeded
+        // Payment succeeded - keep isProcessing true so CheckoutForm's
+        // overlay stays visible during order creation
         onSuccess(paymentIntent.id);
       } else if (paymentIntent && paymentIntent.status === 'requires_action') {
         // Handle 3D Secure or other actions
         // The redirect: 'if_required' should handle this automatically
+        setIsProcessing(false);
         setErrorMessage('Additional authentication required');
       }
     } catch (err) {
       console.error('Payment error:', err);
       setErrorMessage('An unexpected error occurred');
-      onError('Payment processing failed');
-    } finally {
       setIsProcessing(false);
+      onError('Payment processing failed');
     }
   };
 
