@@ -334,6 +334,25 @@ export const GET_ALL_PRODUCT_SLUGS = gql`
   }
 `;
 
+// Lightweight query for 404 slug matching - only slug, name, image
+export const GET_PRODUCT_SLUG_SUMMARIES = gql`
+  query GetProductSlugSummaries($first: Int = 500, $after: String) {
+    products(first: $first, after: $after) {
+      nodes {
+        slug
+        name
+        image {
+          sourceUrl
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
 // Get all product categories (with pagination support)
 // Note: hideEmpty filter has a bug in WPGraphQL that limits results to 100
 // So we fetch all and filter client-side

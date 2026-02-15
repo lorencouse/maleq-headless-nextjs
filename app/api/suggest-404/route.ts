@@ -5,6 +5,8 @@ import {
   getBrands,
 } from '@/lib/products/combined-service';
 import type { HierarchicalCategory, FilterOption } from '@/lib/products/combined-service';
+import { getProductBySlug } from '@/lib/products/product-service';
+import { findSimilarProducts, computeSlugSimilarity } from '@/lib/products/slug-matcher';
 import { getBlogSearchSuggestions, getBlogCategories } from '@/lib/blog/blog-service';
 import { tokenizeQuery, isFuzzyMatch } from '@/lib/utils/search-helpers';
 import { getProductionImageUrl } from '@/lib/utils/image';
@@ -47,11 +49,24 @@ function detectContentType(path: string): { type: ContentType; slug: string } {
 }
 
 /**
- * Extract search keywords from a URL slug
+ * Extract search keywords from a URL slug.
+ * Returns all meaningful tokens (no arbitrary limit).
  */
-function extractKeywords(slug: string): string {
-  const tokens = tokenizeQuery(slug.replace(/-/g, ' '));
-  return tokens.slice(0, 5).join(' ');
+function extractKeywords(slug: string): string[] {
+  return tokenizeQuery(slug.replace(/-/g, ' '));
+}
+
+/**
+ * Pick the best primary search term from keywords.
+ * Prefers the longest token (>= 3 chars) as it's most distinctive.
+ */
+function pickPrimarySearchTerm(keywords: string[]): string {
+  const meaningful = keywords.filter((k) => k.length >= 3);
+  if (meaningful.length === 0) return keywords.join(' ');
+
+  // Sort by length descending, pick longest as primary
+  const sorted = [...meaningful].sort((a, b) => b.length - a.length);
+  return sorted[0];
 }
 
 /**
@@ -115,16 +130,74 @@ function fuzzyMatchItems<T extends { name: string; slug: string }>(
     .map((s) => s.item);
 }
 
-async function getProductSuggestions(keywords: string): Promise<Suggestion[]> {
-  if (!keywords) return [];
+/**
+ * Try to find products by progressively shorter slug prefixes.
+ * Handles cases like "wd-jock-8in-w-balls-vanilla-test" → finds "wd-jock-8in-w-balls-vanilla"
+ */
+async function getSlugPrefixMatches(slug: string): Promise<Suggestion[]> {
+  const segments = slug.split('-');
+  if (segments.length < 2) return [];
 
-  const result = await searchProducts(keywords, { limit: 3 });
-  return result.products.slice(0, 3).map((p) => ({
+  // Try removing 1, 2, then 3 segments from the end
+  const maxRemove = Math.min(3, segments.length - 2);
+  for (let remove = 1; remove <= maxRemove; remove++) {
+    const candidateSlug = segments.slice(0, segments.length - remove).join('-');
+    if (candidateSlug.length < 3) continue;
+
+    try {
+      const product = await getProductBySlug(candidateSlug);
+      if (product) {
+        return [{
+          name: product.name,
+          url: `/product/${product.slug}`,
+          type: 'product' as const,
+          image: product.image?.url
+            ? getProductionImageUrl(product.image.url)
+            : null,
+        }];
+      }
+    } catch {
+      // Slug not found, try next shorter prefix
+    }
+  }
+
+  return [];
+}
+
+async function getProductSuggestions(
+  keywords: string[],
+  failedSlug?: string,
+  limit: number = 3
+): Promise<Suggestion[]> {
+  if (keywords.length === 0) return [];
+
+  // Try primary (longest) term first, then fall back to all keywords joined
+  const primary = pickPrimarySearchTerm(keywords);
+  let result = await searchProducts(primary, { limit: 10 });
+
+  // If primary term gets no results, try joining all keywords
+  if (result.products.length === 0 && keywords.length > 1) {
+    result = await searchProducts(keywords.join(' '), { limit: 10 });
+  }
+
+  let suggestions = result.products.map((p) => ({
     name: p.name,
     url: `/product/${p.slug}`,
     type: 'product' as const,
     image: p.image?.url ? getProductionImageUrl(p.image.url) : null,
+    slug: p.slug,
   }));
+
+  // Re-rank by slug similarity if we have the failed slug
+  if (failedSlug && suggestions.length > 1) {
+    suggestions.sort((a, b) => {
+      const scoreA = computeSlugSimilarity(failedSlug, a.slug);
+      const scoreB = computeSlugSimilarity(failedSlug, b.slug);
+      return scoreB - scoreA;
+    });
+  }
+
+  return suggestions.slice(0, limit).map(({ slug: _s, ...rest }) => rest);
 }
 
 async function getCategorySuggestions(slug: string): Promise<Suggestion[]> {
@@ -192,14 +265,50 @@ export async function GET(request: NextRequest) {
     let suggestions: Suggestion[] = [];
 
     switch (type) {
-      case 'product':
-        suggestions = await getProductSuggestions(keywords);
+      case 'product': {
+        const seenUrls = new Set<string>();
+        const allMatches: Suggestion[] = [];
+
+        const addUnique = (items: Suggestion[]) => {
+          for (const item of items) {
+            if (!seenUrls.has(item.url)) {
+              seenUrls.add(item.url);
+              allMatches.push(item);
+            }
+          }
+        };
+
+        // Layer 1: Slug prefix matching (extra segments appended to real slug)
+        const prefixMatches = await getSlugPrefixMatches(slug);
+        addUnique(prefixMatches);
+
+        // Layer 2: Slug similarity matching (typos, missing segments)
+        if (allMatches.length < 3) {
+          const similarProducts = await findSimilarProducts(slug, 3);
+          addUnique(
+            similarProducts.map((p) => ({
+              name: p.name,
+              url: `/product/${p.slug}`,
+              type: 'product' as const,
+              image: p.image,
+            }))
+          );
+        }
+
+        // Layer 3: Keyword search fallback (improved)
+        if (allMatches.length < 3) {
+          const keywordResults = await getProductSuggestions(keywords, slug, 3);
+          addUnique(keywordResults);
+        }
+
+        suggestions = allMatches.slice(0, 3);
         break;
+      }
       case 'category':
         suggestions = await getCategorySuggestions(slug);
         break;
       case 'blog':
-        suggestions = await getBlogSuggestions(keywords);
+        suggestions = await getBlogSuggestions(keywords.join(' '));
         break;
       case 'brand':
         suggestions = await getBrandSuggestions(slug);
@@ -211,7 +320,7 @@ export async function GET(request: NextRequest) {
 
     // If no suggestions found for the specific type, fall back to products
     if (suggestions.length === 0 && type !== 'product') {
-      suggestions = await getProductSuggestions(keywords);
+      suggestions = await getProductSuggestions(keywords, slug);
     }
 
     return NextResponse.json({ suggestions: suggestions.slice(0, 3) });
