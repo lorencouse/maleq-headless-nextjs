@@ -10,6 +10,7 @@ import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -63,6 +64,8 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
   };
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
 // ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
 export const revalidate = 2592000;
 
@@ -91,6 +94,16 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Hero Section */}
       <div className="mb-8">
+        {/* Breadcrumb Schema */}
+        <BreadcrumbSchema
+          items={[
+            { name: 'Home', url: SITE_URL },
+            { name: 'Guides', url: `${SITE_URL}/guides` },
+            { name: 'Category', url: `${SITE_URL}/guides/category` },
+            { name: category.name, url: `${SITE_URL}/guides/category/${slug}` },
+          ]}
+        />
+
         {/* Breadcrumb */}
         <Breadcrumbs
           items={[

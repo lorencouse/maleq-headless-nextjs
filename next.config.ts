@@ -117,8 +117,21 @@ const nextConfig: NextConfig = {
     return [
       // --- WooCommerce / Account routes ---
       {
+        // Strip pagination from old category URLs before redirect
+        // /product-category/dildos/page/2/ → /sex-toys/dildos
+        source: '/product-category/:slug/page/:num(\\d+)',
+        destination: '/sex-toys/:slug',
+        permanent: true,
+      },
+      {
         source: '/product-category/:slug*',
         destination: '/sex-toys/:slug*',
+        permanent: true,
+      },
+      {
+        // Old WooCommerce product tag URLs
+        source: '/product-tag/:slug*',
+        destination: '/sex-toys',
         permanent: true,
       },
       {
@@ -190,10 +203,40 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // --- WordPress pagination → homepage/guides ---
+      // --- WordPress pagination → strip /page/N/ ---
       {
         source: '/page/:num(\\d+)',
         destination: '/guides',
+        permanent: true,
+      },
+      {
+        // Category pagination: /sex-toys/dildos/page/2 → /sex-toys/dildos
+        source: '/sex-toys/:slug/page/:num(\\d+)',
+        destination: '/sex-toys/:slug',
+        permanent: true,
+      },
+      {
+        // Blog pagination: /guides/page/2 → /guides
+        source: '/guides/page/:num(\\d+)',
+        destination: '/guides',
+        permanent: true,
+      },
+      {
+        // Blog category pagination
+        source: '/guides/category/:slug/page/:num(\\d+)',
+        destination: '/guides/category/:slug',
+        permanent: true,
+      },
+      {
+        // Blog tag pagination
+        source: '/guides/tag/:slug/page/:num(\\d+)',
+        destination: '/guides/tag/:slug',
+        permanent: true,
+      },
+      {
+        // Brand pagination
+        source: '/brand/:slug/page/:num(\\d+)',
+        destination: '/brand/:slug',
         permanent: true,
       },
 
@@ -224,6 +267,26 @@ const nextConfig: NextConfig = {
       {
         source: '/members/:path*',
         destination: '/',
+        permanent: true,
+      },
+
+      // --- WordPress artifact URLs ---
+      {
+        // Strip .html extensions from old URLs
+        source: '/:path*.html',
+        destination: '/:path*',
+        permanent: true,
+      },
+      {
+        // Old WordPress attachment pages
+        source: '/attachment/:slug*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        // /shop/page/N → /shop
+        source: '/shop/page/:num(\\d+)',
+        destination: '/shop',
         permanent: true,
       },
 

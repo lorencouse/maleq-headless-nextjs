@@ -13,6 +13,7 @@ import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { Post } from '@/lib/types/wordpress';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 interface BlogTagPageProps {
   params: Promise<{ slug: string }>;
@@ -86,6 +87,8 @@ export async function generateStaticParams() {
   }
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
 // ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
 export const revalidate = 2592000;
 export const dynamicParams = true; // Allow runtime generation
@@ -120,6 +123,16 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Hero Section */}
       <div className="mb-12">
+        {/* Breadcrumb Schema */}
+        <BreadcrumbSchema
+          items={[
+            { name: 'Home', url: SITE_URL },
+            { name: 'Guides', url: `${SITE_URL}/guides` },
+            { name: 'Tag', url: `${SITE_URL}/guides/tag` },
+            { name: tag.name, url: `${SITE_URL}/guides/tag/${slug}` },
+          ]}
+        />
+
         {/* Breadcrumb */}
         <Breadcrumbs
           items={[

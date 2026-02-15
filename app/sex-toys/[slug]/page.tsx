@@ -9,6 +9,7 @@ import CategoryHero from '@/components/shop/CategoryHero';
 import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -51,6 +52,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     return { title: 'Shop' };
   }
 }
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
 // ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
 export const revalidate = 604800;
@@ -128,6 +131,18 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
   return (
     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Sex Toys', url: `${SITE_URL}/sex-toys` },
+          ...(parentCategory
+            ? [{ name: parentCategory.name, url: `${SITE_URL}/sex-toys/${parentCategory.slug}` }]
+            : []),
+          { name: category.name, url: `${SITE_URL}/sex-toys/${slug}` },
+        ]}
+      />
+
       {/* Category Hero */}
       <CategoryHero
         category={category}

@@ -14,6 +14,7 @@ import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
+import { BreadcrumbSchema } from '@/components/seo/StructuredData';
 
 interface BrandPageProps {
   params: Promise<{ slug: string }>;
@@ -57,6 +58,8 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
     return { title: 'Shop by Brand' };
   }
 }
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
 // ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
 export const revalidate = 604800;
@@ -127,6 +130,15 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
 
   return (
     <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Brands', url: `${SITE_URL}/brand` },
+          { name: brand.name, url: `${SITE_URL}/brand/${slug}` },
+        ]}
+      />
+
       {/* Brand Hero */}
       <BrandHero
         brand={brand}

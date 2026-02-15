@@ -14,7 +14,7 @@ const ProductReviews = dynamic(
 );
 import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
-import { ProductSchema } from '@/components/seo/StructuredData';
+import { ProductSchema, BreadcrumbSchema } from '@/components/seo/StructuredData';
 import DevEditLink from '@/components/dev/DevEditLink';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
@@ -145,6 +145,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
         url={`${SITE_URL}/product/${product.slug}`}
         reviewCount={product.reviewCount || undefined}
         ratingValue={product.averageRating || undefined}
+      />
+
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Sex Toys', url: `${SITE_URL}/sex-toys` },
+          ...(primaryCategory
+            ? [{ name: primaryCategory.name, url: `${SITE_URL}/sex-toys/${primaryCategory.slug}` }]
+            : []),
+          { name: product.name, url: `${SITE_URL}/product/${product.slug}` },
+        ]}
       />
 
       {/* Breadcrumb */}

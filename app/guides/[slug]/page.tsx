@@ -28,7 +28,7 @@ import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import DevEditLink from '@/components/dev/DevEditLink';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
-import { ArticleSchema } from '@/components/seo/StructuredData';
+import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/StructuredData';
 import { stripHtml } from '@/lib/utils/text-utils';
 import TableOfContents from '@/components/blog/TableOfContents';
 import './blog-post.css';
@@ -193,6 +193,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         url={`${SITE_URL}/guides/${slug}`}
         keywords={post.tags?.nodes?.map((tag: any) => tag.name)}
         articleSection={post.categories?.nodes?.[0]?.name}
+      />
+
+      {/* Breadcrumb Schema */}
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', url: SITE_URL },
+          { name: 'Guides', url: `${SITE_URL}/guides` },
+          { name: post.title, url: `${SITE_URL}/guides/${slug}` },
+        ]}
       />
 
       {/* Dev: Edit in WordPress link */}
