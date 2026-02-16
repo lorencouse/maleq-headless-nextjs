@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+*.md
+!README.md
+.env*
+.vercel
+.DS_Store
+coverage
+data/
+backups/
+scripts/archive/
+*.sql
+*.log
+.claude/

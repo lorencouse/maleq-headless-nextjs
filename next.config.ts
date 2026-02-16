@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Standalone output for Docker/self-hosted deployment
+  // Produces a minimal .next/standalone folder with all dependencies bundled
+  output: 'standalone',
+
   // Turbopack configuration (used with `next dev --turbopack`)
   // Turbopack has better defaults for file watching - no need to configure ignored paths
   turbopack: {
@@ -26,8 +30,6 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    // Disable Vercel image optimization (402 quota exceeded)
-    unoptimized: true,
     // Enable image optimization
     formats: ['image/avif', 'image/webp'],
     // Set device sizes for responsive images

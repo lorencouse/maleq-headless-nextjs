@@ -27,16 +27,14 @@ export function isDevelopment(): boolean {
 
 /**
  * Check if we should limit static params
- * Can be overridden with GENERATE_ALL_PAGES=true
- * Defaults to skipping static generation to allow ISR at runtime
+ * In development: skips static generation for fast builds (override with GENERATE_ALL_PAGES=true)
+ * In production: generates all pages at build time to avoid ISR write costs
  */
 export function shouldLimitParams(): boolean {
-  // Only generate static pages when explicitly requested
   if (process.env.GENERATE_ALL_PAGES === 'true') {
     return false;
   }
-  // Skip static generation by default - pages will use ISR at runtime
-  return true;
+  return process.env.NODE_ENV === 'development';
 }
 
 /**
