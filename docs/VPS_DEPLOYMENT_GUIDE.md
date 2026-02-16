@@ -320,6 +320,63 @@ docker compose up -d --build
 
 ---
 
+## Background Cache Warming
+
+Since the site deploys with `GENERATE_ALL_PAGES=false` for fast builds (~5 min), all 35k+ product pages and blog posts are generated on-demand via ISR. The cache warmer gradually visits every page via `localhost:3000` to trigger ISR generation in the background.
+
+### Docker Volume for ISR Cache
+
+The `docker-compose.yml` mounts a named volume at `/app/.next/cache` so the ISR cache persists across container restarts and redeploys. Without this, all warmed pages would be lost on every deploy.
+
+### Post-Deploy Warming
+
+Trigger cache warming after each deploy. In Coolify, add a post-deploy hook:
+
+```bash
+sleep 30 && curl -s -X POST http://localhost:3000/api/admin/warm-cache \
+  -H "Authorization: Bearer $ADMIN_API_KEY"
+```
+
+The 30s delay lets the Next.js server fully start before warming begins.
+
+### Weekly Cache Refresh
+
+Product pages have a 7-day ISR revalidation window. Add a weekly cron to re-warm the cache:
+
+```
+0 3 * * 0 curl -s -X POST http://localhost:3000/api/admin/warm-cache -H "Authorization: Bearer YOUR_ADMIN_API_KEY" > /dev/null 2>&1
+```
+
+This runs Sunday at 3 AM UTC.
+
+### API Usage
+
+```bash
+# Start warming (all types, default concurrency 3)
+curl -X POST http://localhost:3000/api/admin/warm-cache \
+  -H "Authorization: Bearer $ADMIN_API_KEY"
+
+# Start warming specific types at custom concurrency
+curl -X POST http://localhost:3000/api/admin/warm-cache \
+  -H "Authorization: Bearer $ADMIN_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"types": ["product"], "concurrency": 5}'
+
+# Check progress (pages/sec, ETA, per-type breakdown, recent errors)
+curl http://localhost:3000/api/admin/warm-cache \
+  -H "Authorization: Bearer $ADMIN_API_KEY"
+
+# Stop warming
+curl -X DELETE http://localhost:3000/api/admin/warm-cache \
+  -H "Authorization: Bearer $ADMIN_API_KEY"
+```
+
+Valid types: `blog`, `blog-category`, `blog-tag`, `category`, `brand`, `product`
+
+Estimated total warming time: ~2 hours (blog ~2 min, categories/brands ~2 min, products ~1.5-2 hours at concurrency 3).
+
+---
+
 ## Migration Checklist (Vercel → VPS)
 
 - [ ] Provision VPS (Hetzner CX22 recommended)
@@ -333,6 +390,8 @@ docker compose up -d --build
 - [ ] Update WordPress `MALEQ_FRONTEND_URL` to new domain
 - [ ] Test revalidation webhook
 - [ ] Set up cron job for stock sync
+- [ ] Set up post-deploy cache warming hook
+- [ ] Set up weekly cache warming cron (Sunday 3 AM UTC)
 - [ ] Set up uptime monitoring
 - [ ] Verify Stripe webhooks point to new domain
 - [ ] Update Google Search Console with any domain changes
