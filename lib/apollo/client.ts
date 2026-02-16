@@ -59,8 +59,26 @@ function createCompatClient() {
       const client = revalidate !== undefined
         ? createClientWithRevalidate(revalidate)
         : graphqlClient;
-      const data = await client.request<T>(query, variables);
-      return { data };
+      try {
+        const data = await client.request<T>(query, variables);
+        return { data };
+      } catch (error: unknown) {
+        // graphql-request throws when the response contains errors even if data
+        // is present (e.g. WPGraphQL returns data.product: null alongside
+        // "No product ID was found" error). Return the data and let callers
+        // handle nulls instead of treating it as a failure.
+        if (
+          error &&
+          typeof error === 'object' &&
+          'response' in error
+        ) {
+          const resp = (error as { response: { data?: T } }).response;
+          if (resp?.data !== undefined) {
+            return { data: resp.data };
+          }
+        }
+        throw error;
+      }
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutate: async <T = any>({ mutation, variables }: MutateOptions): Promise<{ data: T }> => {
