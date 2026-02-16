@@ -27,13 +27,15 @@ export function isDevelopment(): boolean {
 
 /**
  * Check if we should limit static params
- * In development: skips static generation for fast builds (override with GENERATE_ALL_PAGES=true)
- * In production: generates all pages at build time to avoid ISR write costs
+ * GENERATE_ALL_PAGES=true  → generate all pages (full production build)
+ * GENERATE_ALL_PAGES=false → skip all static generation (fast deploys, ISR at runtime)
+ * Not set + development    → skip (fast dev builds)
+ * Not set + production     → generate all pages
  */
 export function shouldLimitParams(): boolean {
-  if (process.env.GENERATE_ALL_PAGES === 'true') {
-    return false;
-  }
+  const genPages = process.env.GENERATE_ALL_PAGES;
+  if (genPages === 'true') return false;
+  if (genPages === 'false') return true;
   return process.env.NODE_ENV === 'development';
 }
 
