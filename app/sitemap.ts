@@ -9,8 +9,9 @@ const PAGE_SIZE = 500;
 const PRODUCTS_PER_SEGMENT = 5000;
 const PRODUCT_SEGMENTS = 7; // Supports up to 35K products
 
-export const revalidate = 86400; // Regenerate daily
-export const maxDuration = 60; // Allow up to 60s per segment
+export const dynamic = 'force-dynamic'; // Generate on request, not at build time
+export const revalidate = 86400; // Cache for 24h after first request
+export const maxDuration = 120; // Allow up to 120s per segment
 
 /**
  * Generate sitemap segment IDs.
