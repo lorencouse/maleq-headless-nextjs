@@ -12,6 +12,8 @@ export function sanitizeHtml(html: string): string {
       ...sanitize.defaults.allowedTags,
       'iframe',
       'img',
+      'video',
+      'source',
     ],
     allowedAttributes: {
       ...sanitize.defaults.allowedAttributes,
@@ -29,6 +31,19 @@ export function sanitizeHtml(html: string): string {
       ],
       a: ['href', 'name', 'target', 'rel'],
       img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
+      video: [
+        'src',
+        'width',
+        'height',
+        'autoplay',
+        'muted',
+        'loop',
+        'playsinline',
+        'controls',
+        'preload',
+        'poster',
+      ],
+      source: ['src', 'type'],
     },
     allowedIframeHostnames: [
       'www.youtube.com',

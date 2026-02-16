@@ -320,6 +320,10 @@ figure.wp-block-video figcaption a,
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   margin-top: 0;
   font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 /* ============================================================================
