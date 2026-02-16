@@ -22,7 +22,8 @@ export async function POST(request: Request) {
 
     const { orderNumber, email } = result.data;
 
-    const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL;
+    const wpUrl = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL
+      || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || process.env.WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
     if (!wpUrl) {
       return errorResponse('Service configuration error', 500);
     }

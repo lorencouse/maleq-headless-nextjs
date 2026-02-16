@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const WP_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL;
+const WP_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL
+  || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || process.env.WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
 
 export async function POST(request: NextRequest) {
   try {
