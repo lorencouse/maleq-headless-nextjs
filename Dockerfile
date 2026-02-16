@@ -14,7 +14,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Ensure .cache/ exists (may be empty if export hasn't been run yet)
+# Ensure .cache/ exists (may be empty if export fails)
 RUN mkdir -p .cache
 
 # Build args for environment variables needed at build time
@@ -31,10 +31,37 @@ ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
 ENV NEXT_PUBLIC_IMAGE_BASE_URL=$NEXT_PUBLIC_IMAGE_BASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# --- Pre-build: Export products/posts from MySQL to .cache/ JSON ---
+# Connects directly to the WordPress MySQL database on the host.
+# In Coolify, set these as build args:
+#   MYSQL_HOST = 172.17.0.1 (Docker bridge gateway to host, or your DB container IP)
+#   MYSQL_PORT = 3306
+#   MYSQL_USER = your-db-user
+#   MYSQL_PASS = your-db-password
+#   MYSQL_DB   = your-db-name
+ARG MYSQL_HOST=172.17.0.1
+ARG MYSQL_PORT=3306
+ARG MYSQL_DB=maleq-wp
+ARG MYSQL_USER
+ARG MYSQL_PASS
+
+ENV MYSQL_REMOTE=1
+ENV MYSQL_HOST=$MYSQL_HOST
+ENV MYSQL_PORT=$MYSQL_PORT
+ENV MYSQL_DB=$MYSQL_DB
+ENV MYSQL_USER=$MYSQL_USER
+ENV MYSQL_PASS=$MYSQL_PASS
+
+# Export fails gracefully — build continues without cache, app falls back to GraphQL
+RUN bun run scripts/export-products.ts || echo "⚠️  Export failed, building without static cache"
+
+# Clear DB credentials so they don't leak into the Next.js build output
+ENV MYSQL_REMOTE="" MYSQL_HOST="" MYSQL_PORT="" MYSQL_DB="" MYSQL_USER="" MYSQL_PASS=""
+
+# --- Next.js build ---
 # GENERATE_ALL_PAGES controls static generation:
 #   "true"  = pre-render all 35k+ pages at build time (slow but zero cold starts)
 #   "false" = skip static generation, use ISR + cache warming after deploy (fast build)
-# Default to "false" for fast builds; override with --build-arg GENERATE_ALL_PAGES=true
 ARG GENERATE_ALL_PAGES=false
 ENV GENERATE_ALL_PAGES=$GENERATE_ALL_PAGES
 ENV USE_STATIC_PRODUCTS=true
@@ -59,7 +86,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Copy static JSON cache for ISR page rendering + cache warmer slug lists
-# This directory is created by `bun run export:products` before docker build
 COPY --from=builder --chown=nextjs:nodejs /app/.cache ./.cache
 
 USER nextjs
