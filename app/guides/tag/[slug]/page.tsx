@@ -80,8 +80,7 @@ export async function generateStaticParams() {
         slug: tag.slug,
       }));
 
-    // Always pre-generate tag pages (small number of tags)
-    return params;
+    return limitStaticParams(params, DEV_LIMITS.blogTags);
   } catch (error) {
     console.error('Error generating static params for blog tags:', error);
     return [];

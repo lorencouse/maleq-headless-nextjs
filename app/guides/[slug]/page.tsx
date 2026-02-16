@@ -124,8 +124,7 @@ export async function generateStaticParams() {
     }
   }
 
-  // Always pre-generate blog posts (only ~250 pages, fast to build)
-  return allParams;
+  return limitStaticParams(allParams, DEV_LIMITS.blogPosts);
 }
 
 interface BlogPostPageProps {
