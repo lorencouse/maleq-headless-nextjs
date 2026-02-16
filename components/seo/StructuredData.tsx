@@ -120,7 +120,7 @@ export function ProductSchema({
     }),
     offers: {
       '@type': 'Offer',
-      price: price.toFixed(2),
+      price: Number(price).toFixed(2),
       priceCurrency,
       availability: availabilityUrl[availability],
       url,
@@ -129,7 +129,7 @@ export function ProductSchema({
       ratingValue && {
         aggregateRating: {
           '@type': 'AggregateRating',
-          ratingValue: ratingValue.toFixed(1),
+          ratingValue: Number(ratingValue).toFixed(1),
           reviewCount,
         },
       }),

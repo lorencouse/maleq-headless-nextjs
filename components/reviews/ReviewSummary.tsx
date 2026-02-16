@@ -36,7 +36,7 @@ export default function ReviewSummary({
         {/* Overall Rating */}
         <div className="text-center md:text-left">
           <div className="text-5xl font-bold text-foreground mb-2">
-            {averageRating.toFixed(1)}
+            {Number(averageRating).toFixed(1)}
           </div>
           <StarRating rating={averageRating} size="lg" />
           <p className="text-muted-foreground mt-2">
