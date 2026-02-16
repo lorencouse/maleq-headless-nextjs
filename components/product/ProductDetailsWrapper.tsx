@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import ProductImageGallery from './ProductImageGallery';
 import ProductPageClient from './ProductPageClient';
 import { EnhancedProduct } from '@/lib/products/product-service';
@@ -39,6 +39,34 @@ export default function ProductDetailsWrapper({
   const [selectedVariationImage, setSelectedVariationImage] =
     useState<VariationImage | null>(() => getInitialVariationImage(product));
 
+  // Track externally-selected variation (from gallery thumbnail click)
+  const [externalSelectedVariationId, setExternalSelectedVariationId] =
+    useState<string | null>(null);
+
+  // Build image URL → variation ID mapping for gallery thumbnails
+  const variationImageMap = useMemo(() => {
+    if (product.type !== 'VARIABLE' || !product.variations?.length) return undefined;
+
+    const map: { url: string; variationId: string }[] = [];
+    for (const v of product.variations) {
+      if (v.image?.url) {
+        map.push({ url: v.image.url, variationId: v.id });
+      }
+    }
+    return map.length > 0 ? map : undefined;
+  }, [product.type, product.variations]);
+
+  // Handle gallery thumbnail selecting a variation
+  const handleGalleryVariationSelect = useCallback((variationId: string) => {
+    setExternalSelectedVariationId(variationId);
+
+    // Also update the variation image immediately
+    const variation = product.variations?.find(v => v.id === variationId);
+    if (variation?.image) {
+      setSelectedVariationImage(variation.image);
+    }
+  }, [product.variations]);
+
   // Prepare gallery images
   const galleryImages = product.gallery.map((img) => ({
     ...img,
@@ -53,6 +81,8 @@ export default function ProductDetailsWrapper({
           images={galleryImages}
           productName={product.name}
           selectedVariationImage={selectedVariationImage}
+          variationImageMap={variationImageMap}
+          onVariationSelectByImage={handleGalleryVariationSelect}
         />
       </div>
 
@@ -78,6 +108,7 @@ export default function ProductDetailsWrapper({
           product={product}
           onVariationImageChange={setSelectedVariationImage}
           primaryCategory={product.categories?.[0]}
+          externalSelectedVariationId={externalSelectedVariationId}
         />
       </div>
     </div>

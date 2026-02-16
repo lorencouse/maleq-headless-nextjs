@@ -34,8 +34,13 @@ Default: deny incoming, allow outgoing.
 | 80/tcp | Anywhere | HTTP |
 | 443/tcp | Anywhere | HTTPS |
 | 8000 | IP-restricted | Coolify dashboard |
+| lo (loopback) | Anywhere | Coolify internal (required) |
+| 172.16.0.0/12 | Docker bridge | Container networking (required) |
+| 10.0.0.0/8 | Docker custom bridge | Coolify network (required) |
 
-Ports 6001, 6002, 8080 (Coolify internal) are listening but blocked by UFW.
+Ports 6001, 6002, 8080 (Coolify internal) listen on 0.0.0.0 but are only reachable via loopback and Docker bridge rules above — not exposed to the internet.
+
+> **Important:** Coolify uses a custom Docker bridge network (`10.0.1.0/24`). Both UFW and Fail2ban must whitelist these ranges or Coolify will lose access to localhost.
 
 ### Managing Coolify IP access
 
@@ -60,6 +65,7 @@ Protects SSH against brute-force attacks.
 - **Ban time**: 1 hour
 - **Max retries**: 3 within 10 minutes
 - **Action**: UFW block
+- **Ignored IPs**: `127.0.0.1/8`, `10.0.0.0/8`, `172.16.0.0/12` (Docker/loopback — prevents Coolify from banning itself)
 
 ```bash
 # Check status

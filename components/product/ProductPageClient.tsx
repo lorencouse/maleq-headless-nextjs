@@ -33,12 +33,14 @@ interface ProductPageClientProps {
   product: EnhancedProduct;
   onVariationImageChange?: (image: VariationImage | null) => void;
   primaryCategory?: { name: string; slug: string } | null;
+  externalSelectedVariationId?: string | null;
 }
 
 export default function ProductPageClient({
   product,
   onVariationImageChange,
   primaryCategory,
+  externalSelectedVariationId,
 }: ProductPageClientProps) {
   const isVariable = product.type === 'VARIABLE';
   const router = useRouter();
@@ -355,6 +357,7 @@ export default function ProductPageClient({
               stockQuantity: v.stockQuantity ?? 0,
             }))}
             productId={product.databaseId}
+            externalSelectedVariationId={externalSelectedVariationId}
             onVariationChange={(variation) => {
               setSelectedVariation({
                 ...variation,

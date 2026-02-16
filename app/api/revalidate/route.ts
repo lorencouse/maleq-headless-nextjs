@@ -37,17 +37,17 @@ export async function POST(request: NextRequest) {
         } else {
           revalidatePath('/shop');
         }
-        revalidateTag('categories');
-        revalidateTag('brands');
-        revalidateTag('attributes');
+        revalidateTag('categories', 'max');
+        revalidateTag('brands', 'max');
+        revalidateTag('attributes', 'max');
         break;
 
       case 'all':
 
         revalidatePath('/', 'layout');
-        revalidateTag('categories');
-        revalidateTag('brands');
-        revalidateTag('attributes');
+        revalidateTag('categories', 'max');
+        revalidateTag('brands', 'max');
+        revalidateTag('attributes', 'max');
         break;
 
       default:

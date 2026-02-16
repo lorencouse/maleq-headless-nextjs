@@ -4,10 +4,17 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { VariationImage, GalleryProductImage } from '@/lib/types/product';
 
+interface VariationImageMapping {
+  url: string;
+  variationId: string;
+}
+
 interface ProductImageGalleryProps {
   images: GalleryProductImage[];
   productName: string;
   selectedVariationImage?: VariationImage | null;
+  variationImageMap?: VariationImageMapping[];
+  onVariationSelectByImage?: (variationId: string) => void;
 }
 
 const isVideo = (url: string) => /\.(mp4|webm|mov|avi|ogv)(\?|$)/i.test(url);
@@ -15,7 +22,9 @@ const isVideo = (url: string) => /\.(mp4|webm|mov|avi|ogv)(\?|$)/i.test(url);
 export default function ProductImageGallery({
   images,
   productName,
-  selectedVariationImage
+  selectedVariationImage,
+  variationImageMap,
+  onVariationSelectByImage,
 }: ProductImageGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(images[0] || null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -26,6 +35,22 @@ export default function ProductImageGallery({
   const handleImageError = useCallback((imageUrl: string) => {
     setFailedImages(prev => new Set(prev).add(imageUrl));
   }, []);
+
+  // When a thumbnail is clicked, also select the matching variation if one exists
+  const handleThumbnailClick = useCallback((image: GalleryProductImage) => {
+    setSelectedImage(image);
+
+    if (variationImageMap && onVariationSelectByImage) {
+      // Normalize URLs for comparison (strip protocol, trailing slashes, query params)
+      const normalize = (url: string) =>
+        url.replace(/^https?:\/\//, '').replace(/[?#].*$/, '').replace(/\/$/, '');
+      const clickedNorm = normalize(image.url);
+      const match = variationImageMap.find(m => normalize(m.url) === clickedNorm);
+      if (match) {
+        onVariationSelectByImage(match.variationId);
+      }
+    }
+  }, [variationImageMap, onVariationSelectByImage]);
 
   // When variation image changes, update the display
   useEffect(() => {
@@ -139,7 +164,7 @@ export default function ProductImageGallery({
             {images.map((image) => (
               <button
                 key={image.id}
-                onClick={() => setSelectedImage(image)}
+                onClick={() => handleThumbnailClick(image)}
                 className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-muted border-2 transition-all ${
                   selectedImage?.id === image.id
                     ? 'border-primary ring-2 ring-primary/50'

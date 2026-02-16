@@ -5,8 +5,7 @@ const nextConfig: NextConfig = {
   // Produces a minimal .next/standalone folder with all dependencies bundled
   output: 'standalone',
 
-  // Turbopack configuration (used with `next dev --turbopack`)
-  // Turbopack has better defaults for file watching - no need to configure ignored paths
+  // Turbopack configuration (default bundler in Next.js 16)
   turbopack: {
     resolveExtensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
   },
@@ -25,14 +24,9 @@ const nextConfig: NextConfig = {
   // Limit concurrent static page generation to avoid overwhelming WordPress
   staticPageGenerationTimeout: 120,
 
-  // Disable ESLint during builds — Next.js's internal ESLint runner passes
-  // legacy options (useEslintrc, extensions) incompatible with flat config.
-  // Run ESLint separately: npx eslint .
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-
   images: {
+    // Allow local IP addresses for dev WordPress images (v16 blocks by default)
+    dangerouslyAllowLocalIP: true,
     // Enable image optimization
     formats: ['image/avif', 'image/webp'],
     // Set device sizes for responsive images
@@ -383,6 +377,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https: http:",
+              "media-src 'self' https://*.maleq.com https://*.maleq.org https://www.maleq.com https://www.maleq.org",
               "font-src 'self' data:",
               "connect-src 'self' https://*.stripe.com https://www.google-analytics.com https://*.maleq.com https://*.maleq.org https://www.googletagmanager.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",

@@ -39,12 +39,14 @@ interface VariationSelectorProps {
   variations: Variation[];
   onVariationChange?: (variation: Variation) => void;
   productId?: number; // Parent product database ID (for debugging)
+  externalSelectedVariationId?: string | null;
 }
 
 export default function VariationSelector({
   variations,
   onVariationChange,
   productId,
+  externalSelectedVariationId,
 }: VariationSelectorProps) {
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
@@ -106,6 +108,24 @@ export default function VariationSelector({
     // Only run on mount - we don't want to re-trigger when onVariationChange reference changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Sync internal state when a variation is selected externally (e.g. from gallery thumbnail)
+  useEffect(() => {
+    if (!externalSelectedVariationId) return;
+
+    const externalVariation = variations.find(v => v.id === externalSelectedVariationId);
+    if (!externalVariation || externalVariation.id === selectedVariation?.id) return;
+
+    const newAttrs: Record<string, string> = {};
+    externalVariation.attributes.forEach((attr) => {
+      newAttrs[attr.name] = attr.value;
+    });
+    setSelectedAttributes(newAttrs);
+
+    if (onVariationChange) {
+      onVariationChange(externalVariation);
+    }
+  }, [externalSelectedVariationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Handle attribute selection
   const handleAttributeSelect = (attributeName: string, value: string) => {

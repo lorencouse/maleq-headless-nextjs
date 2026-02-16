@@ -30,7 +30,7 @@ function getClientIp(request: NextRequest): string {
   return request.headers.get('x-real-ip') || 'anonymous';
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
   // --- Redirect old WordPress query-param URLs ---

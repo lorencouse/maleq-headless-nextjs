@@ -144,7 +144,9 @@ async function fetchAllNodes<T>(
   return allNodes;
 }
 
-export default async function sitemap({ id }: { id: number }): Promise<MetadataRoute.Sitemap> {
+export default async function sitemap(props: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
+  const id = Number(await props.id);
+
   // Segment 0: static pages + categories + brands + blog
   if (id === 0) {
     const staticPages: MetadataRoute.Sitemap = [
