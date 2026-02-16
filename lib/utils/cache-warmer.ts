@@ -57,7 +57,35 @@ const completionTimestamps: number[] = [];
 const SLIDING_WINDOW_MS = 60_000;
 
 // ---------------------------------------------------------------------------
-// Slug fetching (reuses sitemap.ts pattern)
+// Static cache slug fetching (reads from .cache/ JSON files)
+// ---------------------------------------------------------------------------
+
+async function getStaticProductSlugs(): Promise<string[] | null> {
+  try {
+    const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
+    if (hasStaticCache()) {
+      return getAllStaticSlugs();
+    }
+  } catch {
+    // Static cache not available
+  }
+  return null;
+}
+
+async function getStaticPostSlugs(): Promise<string[] | null> {
+  try {
+    const { getAllStaticPostSlugs, hasStaticPostCache } = await import('@/lib/blog/static-post-service');
+    if (hasStaticPostCache()) {
+      return getAllStaticPostSlugs();
+    }
+  } catch {
+    // Static cache not available
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// GraphQL slug fetching (fallback when static cache unavailable)
 // ---------------------------------------------------------------------------
 
 const PAGE_SIZE = 500;
@@ -117,7 +145,7 @@ async function fetchAllNodeSlugs(
 }
 
 // ---------------------------------------------------------------------------
-// URL builders per type
+// URL builders per type (with static cache → GraphQL fallback)
 // ---------------------------------------------------------------------------
 
 const TYPE_CONFIG: Record<
@@ -128,7 +156,15 @@ const TYPE_CONFIG: Record<
   }
 > = {
   blog: {
-    fetchSlugs: () => fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts'),
+    fetchSlugs: async () => {
+      const cached = await getStaticPostSlugs();
+      if (cached) {
+        console.log(`[cache-warmer] Using static cache for blog slugs (${cached.length} slugs)`);
+        return cached;
+      }
+      console.log('[cache-warmer] Static cache unavailable for blog, falling back to GraphQL');
+      return fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
+    },
     pathPrefix: '/guides/',
   },
   'blog-category': {
@@ -148,7 +184,15 @@ const TYPE_CONFIG: Record<
     pathPrefix: '/brand/',
   },
   product: {
-    fetchSlugs: () => fetchAllSlugs(GET_ALL_PRODUCT_SLUGS, 'products'),
+    fetchSlugs: async () => {
+      const cached = await getStaticProductSlugs();
+      if (cached) {
+        console.log(`[cache-warmer] Using static cache for product slugs (${cached.length} slugs)`);
+        return cached;
+      }
+      console.log('[cache-warmer] Static cache unavailable for products, falling back to GraphQL');
+      return fetchAllSlugs(GET_ALL_PRODUCT_SLUGS, 'products');
+    },
     pathPrefix: '/product/',
   },
 };
