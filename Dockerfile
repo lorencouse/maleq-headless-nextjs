@@ -1,14 +1,14 @@
 # Stage 1: Install dependencies
-FROM node:20-alpine AS deps
+FROM oven/bun:1-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json bun.lock ./
-# Use npm ci for Docker (bun is a dev tool, npm works fine for installs)
-RUN npm ci --ignore-scripts
+RUN bun install --frozen-lockfile
 
 # Stage 2: Build the application
-FROM node:20-alpine AS builder
+FROM oven/bun:1-alpine AS builder
+RUN apk add --no-cache nodejs
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
@@ -28,9 +28,9 @@ ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
 ENV NEXT_PUBLIC_IMAGE_BASE_URL=$NEXT_PUBLIC_IMAGE_BASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN npm run build
+RUN bun run build
 
-# Stage 3: Production runner
+# Stage 3: Production runner (node only, no bun needed)
 FROM node:20-alpine AS runner
 WORKDIR /app
 
