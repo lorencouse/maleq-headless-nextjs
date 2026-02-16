@@ -1,20 +1,13 @@
 /**
  * Slug Matcher - Finds similar products by comparing URL slugs.
  *
- * Caches all product slugs (lightweight: slug + name + image) and uses
- * segment-aware Levenshtein scoring to find the closest matches.
+ * Reads product slugs from the static JSON cache (.cache/products/index.json)
+ * instead of hitting GraphQL. Falls back to GraphQL only when the cache is
+ * unavailable. Uses segment-aware Levenshtein scoring to find closest matches.
  */
 
-import { getClient, REVALIDATE } from '@/lib/apollo/client';
-import { GET_PRODUCT_SLUG_SUMMARIES } from '@/lib/queries/products';
 import { levenshteinDistance, isFuzzyMatch } from '@/lib/utils/search-helpers';
 import { getProductionImageUrl } from '@/lib/utils/image';
-
-interface SlugSummary {
-  slug: string;
-  name: string;
-  image: { sourceUrl: string } | null;
-}
 
 interface SlugMatch {
   name: string;
@@ -23,69 +16,79 @@ interface SlugMatch {
   score: number;
 }
 
-// Module-level cache (same pattern as lib/search/search-index.ts)
-let slugCache: SlugSummary[] | null = null;
+// Module-level cache
+let slugCache: string[] | null = null;
 let slugCacheTimestamp = 0;
-let slugCacheLoading: Promise<SlugSummary[]> | null = null;
 const SLUG_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
-interface SlugSummariesResponse {
-  products: {
-    nodes: SlugSummary[];
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-}
+/**
+ * Load all product slugs from static cache, falling back to GraphQL.
+ */
+async function loadAllSlugs(): Promise<string[]> {
+  try {
+    const { getAllStaticSlugs, hasStaticCache } = await import('./static-product-service');
+    if (hasStaticCache()) {
+      const slugs = getAllStaticSlugs();
+      console.log(`[SlugMatcher] Loaded ${slugs.length} product slugs from static cache`);
+      return slugs;
+    }
+  } catch {
+    // Static cache not available
+  }
 
-async function loadAllSlugs(): Promise<SlugSummary[]> {
-  const slugs: SlugSummary[] = [];
+  // Fallback: load from GraphQL (expensive, avoid if possible)
+  console.log('[SlugMatcher] Static cache unavailable, falling back to GraphQL');
+  const { getClient, REVALIDATE } = await import('@/lib/apollo/client');
+  const { GET_PRODUCT_SLUG_SUMMARIES } = await import('@/lib/queries/products');
+
+  interface SlugSummariesResponse {
+    products: {
+      nodes: Array<{ slug: string }>;
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    };
+  }
+
+  const slugs: string[] = [];
   let afterCursor: string | null = null;
   let hasNextPage = true;
   let pageCount = 0;
-  const MAX_PAGES = 50; // Safety limit (~25K products)
+  const MAX_PAGES = 50;
 
   while (hasNextPage && pageCount < MAX_PAGES) {
-    const result: { data: SlugSummariesResponse } = await getClient().query({
-      query: GET_PRODUCT_SLUG_SUMMARIES,
-      variables: { first: 500, after: afterCursor },
-      revalidate: REVALIDATE.STATIC,
-    });
+    try {
+      const result: { data: SlugSummariesResponse } = await getClient().query({
+        query: GET_PRODUCT_SLUG_SUMMARIES,
+        variables: { first: 500, after: afterCursor },
+        revalidate: REVALIDATE.STATIC,
+      });
 
-    const nodes = result.data?.products?.nodes || [];
-    slugs.push(...nodes);
+      const nodes = result.data?.products?.nodes || [];
+      slugs.push(...nodes.map((n) => n.slug));
 
-    hasNextPage = result.data?.products?.pageInfo?.hasNextPage ?? false;
-    afterCursor = result.data?.products?.pageInfo?.endCursor ?? null;
-    pageCount++;
+      hasNextPage = result.data?.products?.pageInfo?.hasNextPage ?? false;
+      afterCursor = result.data?.products?.pageInfo?.endCursor ?? null;
+      pageCount++;
+    } catch (error) {
+      console.error('[SlugMatcher] GraphQL fallback failed:', error);
+      break;
+    }
   }
 
-  console.log(`[SlugMatcher] Loaded ${slugs.length} product slugs`);
+  console.log(`[SlugMatcher] Loaded ${slugs.length} product slugs from GraphQL`);
   return slugs;
 }
 
-async function getSlugCache(): Promise<SlugSummary[]> {
+async function getSlugCache(): Promise<string[]> {
   const now = Date.now();
 
   if (slugCache && (now - slugCacheTimestamp) < SLUG_CACHE_TTL) {
     return slugCache;
   }
 
-  if (slugCacheLoading) return slugCacheLoading;
-
-  slugCacheLoading = (async () => {
-    try {
-      const result = await loadAllSlugs();
-      slugCache = result;
-      slugCacheTimestamp = Date.now();
-      slugCacheLoading = null;
-      return result;
-    } catch (error) {
-      console.error('[SlugMatcher] Failed to load slugs:', error);
-      slugCacheLoading = null;
-      return slugCache || [];
-    }
-  })();
-
-  return slugCacheLoading;
+  const result = await loadAllSlugs();
+  slugCache = result;
+  slugCacheTimestamp = Date.now();
+  return result;
 }
 
 /**
@@ -144,6 +147,8 @@ export function computeSlugSimilarity(slug1: string, slug2: string): number {
 
 /**
  * Find products with slugs most similar to the given failed slug.
+ * Scores all slugs from the index, then reads full product data only
+ * for the top matches (avoids loading all 35K products into memory).
  */
 export async function findSimilarProducts(
   failedSlug: string,
@@ -152,22 +157,31 @@ export async function findSimilarProducts(
   const allSlugs = await getSlugCache();
   if (allSlugs.length === 0) return [];
 
-  const scored: SlugMatch[] = [];
+  // Score all slugs (lightweight — just string comparisons)
+  const scored: Array<{ slug: string; score: number }> = [];
 
-  for (const product of allSlugs) {
-    const score = computeSlugSimilarity(failedSlug, product.slug);
+  for (const slug of allSlugs) {
+    const score = computeSlugSimilarity(failedSlug, slug);
     if (score > 0.3) {
-      scored.push({
-        name: product.name,
-        slug: product.slug,
-        image: product.image?.sourceUrl
-          ? getProductionImageUrl(product.image.sourceUrl)
-          : null,
-        score,
-      });
+      scored.push({ slug, score });
     }
   }
 
   scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit);
+  const topSlugs = scored.slice(0, limit);
+
+  // Load name + image only for top matches from static cache
+  const { getStaticProduct } = await import('./static-product-service');
+
+  return topSlugs.map((match) => {
+    const product = getStaticProduct(match.slug);
+    return {
+      name: product?.name || match.slug.replace(/-/g, ' '),
+      slug: match.slug,
+      image: product?.image?.url
+        ? getProductionImageUrl(product.image.url)
+        : null,
+      score: match.score,
+    };
+  });
 }

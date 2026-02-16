@@ -74,12 +74,14 @@ export interface EnhancedProduct extends UnifiedProduct {
  * When USE_STATIC_PRODUCTS=true, reads from pre-exported JSON cache first.
  */
 export async function getProductBySlug(slug: string): Promise<EnhancedProduct | null> {
-  // Build-time: use static cache if available
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+  // Try static JSON cache first (fast file read, avoids GraphQL round-trip)
+  try {
     const { getStaticProduct } = await import('./static-product-service');
     const cached = getStaticProduct(slug);
     if (cached) return cached;
     // Fall through to GraphQL if not in cache (e.g., product added after export)
+  } catch {
+    // Static cache not available, fall through to GraphQL
   }
 
   try {
@@ -267,11 +269,13 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
  * When USE_STATIC_PRODUCTS=true, reads from pre-exported index.
  */
 export async function getAllProductSlugs(): Promise<string[]> {
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+  try {
     const { getAllStaticSlugs, hasStaticCache } = await import('./static-product-service');
     if (hasStaticCache()) {
       return getAllStaticSlugs();
     }
+  } catch {
+    // Static cache not available, fall through to GraphQL
   }
 
   const allSlugs: string[] = [];
