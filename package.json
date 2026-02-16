@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:prod": "GENERATE_ALL_PAGES=true next build",
+    "build": "next build --webpack",
+    "build:prod": "GENERATE_ALL_PAGES=true next build --webpack",
     "start": "next start",
     "lint": "eslint .",
     "test": "jest",
