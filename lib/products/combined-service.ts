@@ -3,6 +3,14 @@ import { getClient, REVALIDATE } from '@/lib/apollo/client';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import {
+  getStaticProductCategories,
+  getStaticHierarchicalCategories,
+  getStaticBrands,
+  getStaticBrandBySlug,
+  getStaticMaterials,
+  getStaticColors,
+} from '@/lib/taxonomies/static-taxonomy-service';
+import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
   SEARCH_PRODUCTS,
@@ -377,6 +385,11 @@ export async function getFilteredProducts(params: {
  */
 async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
   try {
+    const cached = getStaticProductCategories();
+    if (cached) return cached;
+  } catch {}
+
+  try {
     const allCategories: ProductCategory[] = [];
     let hasNextPage = true;
     let afterCursor: string | null = null;
@@ -425,6 +438,11 @@ export const getProductCategories = unstable_cache(
  * Returns top-level categories with nested children
  */
 async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategory[]> {
+  try {
+    const cached = getStaticHierarchicalCategories();
+    if (cached) return cached;
+  } catch {}
+
   try {
     const { data } = await getClient().query({
       query: GET_HIERARCHICAL_CATEGORIES,
@@ -662,6 +680,11 @@ export async function getProductsByCategory(category: string, limit = 12): Promi
  */
 async function _uncachedGetBrands(): Promise<FilterOption[]> {
   try {
+    const cached = getStaticBrands();
+    if (cached) return cached;
+  } catch {}
+
+  try {
     // First, try to fetch all brands with a simple query
     const { data } = await getClient().query<BrandQueryResponse>({
       query: GET_ALL_BRANDS,
@@ -763,6 +786,11 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
  */
 export async function getMaterials(): Promise<FilterOption[]> {
   try {
+    const cached = getStaticMaterials();
+    if (cached) return cached;
+  } catch {}
+
+  try {
     const { data } = await getClient().query({
       query: GET_ALL_MATERIALS,
       revalidate: REVALIDATE.STATIC,
@@ -793,6 +821,14 @@ async function _uncachedGetGlobalAttributes(): Promise<{
   colors: FilterOption[];
   materials: FilterOption[];
 }> {
+  try {
+    const cachedColors = getStaticColors();
+    const cachedMaterials = getStaticMaterials();
+    if (cachedColors && cachedMaterials) {
+      return { colors: cachedColors, materials: cachedMaterials };
+    }
+  } catch {}
+
   try {
     // Fetch colors and materials in parallel
     const [colorResult, materials] = await Promise.all([
@@ -838,6 +874,11 @@ export interface Brand {
  * Get a single brand by slug
  */
 export async function getBrandBySlug(slug: string): Promise<Brand | null> {
+  try {
+    const cached = getStaticBrandBySlug(slug);
+    if (cached) return cached;
+  } catch {}
+
   try {
     const { data } = await getClient().query({
       query: GET_BRAND_BY_SLUG,

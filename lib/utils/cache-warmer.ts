@@ -60,6 +60,25 @@ const SLIDING_WINDOW_MS = 60_000;
 // Static cache slug fetching (reads from .cache/ JSON files)
 // ---------------------------------------------------------------------------
 
+async function getStaticTaxonomySlugs(
+  getter: () => { slug: string; count?: number | null }[] | null,
+  label: string,
+): Promise<string[] | null> {
+  try {
+    const items = getter();
+    if (items) {
+      const slugs = items
+        .filter((item) => (item.count ?? 1) > 0)
+        .map((item) => item.slug);
+      console.log(`[cache-warmer] Using static cache for ${label} slugs (${slugs.length} slugs)`);
+      return slugs;
+    }
+  } catch {
+    // Static cache not available
+  }
+  return null;
+}
+
 async function getStaticProductSlugs(): Promise<string[] | null> {
   try {
     const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
@@ -168,19 +187,43 @@ const TYPE_CONFIG: Record<
     pathPrefix: '/guides/',
   },
   'blog-category': {
-    fetchSlugs: () => fetchAllNodeSlugs(GET_ALL_CATEGORIES, 'categories'),
+    fetchSlugs: async () => {
+      const { getStaticBlogCategories } = await import('@/lib/taxonomies/static-taxonomy-service');
+      const cached = await getStaticTaxonomySlugs(getStaticBlogCategories, 'blog-category');
+      if (cached) return cached;
+      console.log('[cache-warmer] Static cache unavailable for blog-category, falling back to GraphQL');
+      return fetchAllNodeSlugs(GET_ALL_CATEGORIES, 'categories');
+    },
     pathPrefix: '/guides/category/',
   },
   'blog-tag': {
-    fetchSlugs: () => fetchAllNodeSlugs(GET_ALL_TAGS, 'tags'),
+    fetchSlugs: async () => {
+      const { getStaticBlogTags } = await import('@/lib/taxonomies/static-taxonomy-service');
+      const cached = await getStaticTaxonomySlugs(getStaticBlogTags, 'blog-tag');
+      if (cached) return cached;
+      console.log('[cache-warmer] Static cache unavailable for blog-tag, falling back to GraphQL');
+      return fetchAllNodeSlugs(GET_ALL_TAGS, 'tags');
+    },
     pathPrefix: '/guides/tag/',
   },
   category: {
-    fetchSlugs: () => fetchAllNodeSlugs(GET_ALL_PRODUCT_CATEGORIES, 'productCategories'),
+    fetchSlugs: async () => {
+      const { getStaticProductCategories } = await import('@/lib/taxonomies/static-taxonomy-service');
+      const cached = await getStaticTaxonomySlugs(getStaticProductCategories, 'category');
+      if (cached) return cached;
+      console.log('[cache-warmer] Static cache unavailable for category, falling back to GraphQL');
+      return fetchAllNodeSlugs(GET_ALL_PRODUCT_CATEGORIES, 'productCategories');
+    },
     pathPrefix: '/sex-toys/',
   },
   brand: {
-    fetchSlugs: () => fetchAllNodeSlugs(GET_ALL_BRANDS, 'productBrands'),
+    fetchSlugs: async () => {
+      const { getStaticBrands } = await import('@/lib/taxonomies/static-taxonomy-service');
+      const cached = await getStaticTaxonomySlugs(getStaticBrands, 'brand');
+      if (cached) return cached;
+      console.log('[cache-warmer] Static cache unavailable for brand, falling back to GraphQL');
+      return fetchAllNodeSlugs(GET_ALL_BRANDS, 'productBrands');
+    },
     pathPrefix: '/brand/',
   },
   product: {

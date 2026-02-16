@@ -110,6 +110,9 @@ const SLUG_DIR = join(CACHE_DIR, 'by-slug');
 const POSTS_CACHE_DIR = join(process.cwd(), '.cache', 'posts');
 const POSTS_SLUG_DIR = join(POSTS_CACHE_DIR, 'by-slug');
 
+const TAXONOMY_CACHE_DIR = join(process.cwd(), '.cache', 'taxonomies');
+const SEARCH_CACHE_DIR = join(process.cwd(), '.cache', 'search');
+
 const STOCK_MAP: Record<string, string> = {
   instock: 'IN_STOCK',
   outofstock: 'OUT_OF_STOCK',
@@ -403,6 +406,63 @@ async function fetchComments(db: any): Promise<Map<number, DbComment[]>> {
     map.set(row.comment_post_ID, list);
   }
   return map;
+}
+
+// ─── Taxonomy SQL Queries ───
+
+interface DbTermWithMeta {
+  term_id: number;
+  name: string;
+  slug: string;
+  description: string;
+  parent: number;
+  count: number;
+  thumbnail_id: number | null;
+}
+
+async function fetchProductCategories(db: any): Promise<DbTermWithMeta[]> {
+  const [rows] = await db.query(
+    `SELECT t.term_id, t.name, t.slug, tt.description, tt.parent, tt.count,
+            CAST(tm.meta_value AS UNSIGNED) AS thumbnail_id
+     FROM wp_term_taxonomy tt
+     JOIN wp_terms t ON tt.term_id = t.term_id
+     LEFT JOIN wp_termmeta tm ON t.term_id = tm.term_id AND tm.meta_key = 'thumbnail_id'
+     WHERE tt.taxonomy = 'product_cat' AND tt.count > 0
+     ORDER BY t.name`
+  );
+  return rows as DbTermWithMeta[];
+}
+
+interface DbSimpleTerm {
+  term_id: number;
+  name: string;
+  slug: string;
+  description: string;
+  count: number;
+}
+
+async function fetchTermsByTaxonomy(db: any, taxonomy: string): Promise<DbSimpleTerm[]> {
+  const [rows] = await db.query(
+    `SELECT t.term_id, t.name, t.slug, tt.description, tt.count
+     FROM wp_term_taxonomy tt
+     JOIN wp_terms t ON tt.term_id = t.term_id
+     WHERE tt.taxonomy = ? AND tt.count > 0
+     ORDER BY t.name`,
+    [taxonomy]
+  );
+  return rows as DbSimpleTerm[];
+}
+
+async function fetchBlogTermsByTaxonomy(db: any, taxonomy: string): Promise<DbSimpleTerm[]> {
+  const [rows] = await db.query(
+    `SELECT t.term_id, t.name, t.slug, tt.description, tt.count
+     FROM wp_term_taxonomy tt
+     JOIN wp_terms t ON tt.term_id = t.term_id
+     WHERE tt.taxonomy = ? AND tt.count > 0
+     ORDER BY t.name`,
+    [taxonomy]
+  );
+  return rows as DbSimpleTerm[];
 }
 
 // ─── Assembly ───
@@ -825,13 +885,181 @@ async function main() {
     log(`${postsWritten.toLocaleString()} posts written in ${postAssemblyTime.toFixed(1)}s`);
     console.log();
 
-    // ─── Phase 5: Summary ───
+    // ─── Phase 5: Export Taxonomies ───
+    console.log('📥 Fetching taxonomies from database...');
+    const t5 = performance.now();
+
+    const [dbCategories, dbBrands, dbMaterials, dbColors, dbBlogCategories, dbBlogTags] = await Promise.all([
+      fetchProductCategories(db),
+      fetchTermsByTaxonomy(db, 'product_brand'),
+      fetchTermsByTaxonomy(db, 'product_material'),
+      fetchTermsByTaxonomy(db, 'pa_color'),
+      fetchBlogTermsByTaxonomy(db, 'category'),
+      fetchBlogTermsByTaxonomy(db, 'post_tag'),
+    ]);
+
+    log(`Taxonomies fetched in ${((performance.now() - t5) / 1000).toFixed(1)}s`);
+    log(`Product categories: ${dbCategories.length}, Brands: ${dbBrands.length}, Materials: ${dbMaterials.length}`);
+    log(`Colors: ${dbColors.length}, Blog categories: ${dbBlogCategories.length}, Blog tags: ${dbBlogTags.length}`);
+    console.log();
+
+    // Prepare taxonomy output directory
+    mkdirSync(TAXONOMY_CACHE_DIR, { recursive: true });
+    mkdirSync(SEARCH_CACHE_DIR, { recursive: true });
+
+    console.log('🔨 Assembling taxonomy caches...');
+    const t6 = performance.now();
+
+    // 1. Flat product categories (matches ProductCategory type from GraphQL)
+    const flatCategories = dbCategories.map((cat) => ({
+      id: encodeId('term', cat.term_id),
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || undefined,
+      count: cat.count,
+      image: cat.thumbnail_id ? (() => {
+        const att = attachments.get(cat.thumbnail_id);
+        return att ? { sourceUrl: att.guid } : undefined;
+      })() : undefined,
+    }));
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'product-categories.json'), JSON.stringify(flatCategories));
+    log(`product-categories.json: ${flatCategories.length} categories`);
+
+    // 2. Hierarchical categories (tree structure)
+    interface HierarchicalCategoryExport {
+      id: string;
+      name: string;
+      slug: string;
+      count: number;
+      image?: string | null;
+      children: HierarchicalCategoryExport[];
+    }
+
+    const categoryMap = new Map<number, DbTermWithMeta & { childIds: number[] }>();
+    for (const cat of dbCategories) {
+      categoryMap.set(cat.term_id, { ...cat, childIds: [] });
+    }
+    // Build parent-child links
+    for (const cat of dbCategories) {
+      if (cat.parent > 0) {
+        const parent = categoryMap.get(cat.parent);
+        if (parent) {
+          parent.childIds.push(cat.term_id);
+        }
+      }
+    }
+
+    function buildCategoryTree(termId: number): HierarchicalCategoryExport | null {
+      const cat = categoryMap.get(termId);
+      if (!cat || cat.count <= 0) return null;
+      const imageUrl = cat.thumbnail_id ? (() => {
+        const att = attachments.get(cat.thumbnail_id);
+        return att ? att.guid : null;
+      })() : null;
+      return {
+        id: encodeId('term', cat.term_id),
+        name: cat.name,
+        slug: cat.slug,
+        count: cat.count,
+        image: imageUrl,
+        children: cat.childIds
+          .map(buildCategoryTree)
+          .filter((c): c is HierarchicalCategoryExport => c !== null)
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      };
+    }
+
+    // Top-level categories (parent = 0)
+    const hierarchicalCategories = dbCategories
+      .filter((cat) => cat.parent === 0)
+      .map((cat) => buildCategoryTree(cat.term_id))
+      .filter((c): c is HierarchicalCategoryExport => c !== null)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'hierarchical-categories.json'), JSON.stringify(hierarchicalCategories));
+    log(`hierarchical-categories.json: ${hierarchicalCategories.length} top-level categories`);
+
+    // 3. Brands (with descriptions, matches Brand type)
+    const brands = dbBrands.map((b) => ({
+      id: encodeId('term', b.term_id),
+      name: b.name,
+      slug: b.slug,
+      count: b.count,
+      description: b.description || null,
+    }));
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'brands.json'), JSON.stringify(brands));
+    log(`brands.json: ${brands.length} brands`);
+
+    // 4. Materials
+    const materials = dbMaterials.map((m) => ({
+      id: encodeId('term', m.term_id),
+      name: m.name,
+      slug: m.slug,
+      count: m.count,
+    }));
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'materials.json'), JSON.stringify(materials));
+    log(`materials.json: ${materials.length} materials`);
+
+    // 5. Colors
+    const colors = dbColors.map((c) => ({
+      id: encodeId('term', c.term_id),
+      name: c.name,
+      slug: c.slug,
+      count: c.count,
+    }));
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'colors.json'), JSON.stringify(colors));
+    log(`colors.json: ${colors.length} colors`);
+
+    // 6. Blog categories
+    const blogCategories = dbBlogCategories.map((c) => ({
+      id: encodeId('term', c.term_id),
+      name: c.name,
+      slug: c.slug,
+      count: c.count,
+      description: c.description || null,
+    }));
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'blog-categories.json'), JSON.stringify(blogCategories));
+    log(`blog-categories.json: ${blogCategories.length} blog categories`);
+
+    // 7. Blog tags
+    const blogTags = dbBlogTags.map((t) => ({
+      id: encodeId('term', t.term_id),
+      name: t.name,
+      slug: t.slug,
+      count: t.count,
+    }));
+    writeFileSync(join(TAXONOMY_CACHE_DIR, 'blog-tags.json'), JSON.stringify(blogTags));
+    log(`blog-tags.json: ${blogTags.length} blog tags`);
+
+    // 8. Search vocabulary (product names + brand names + category names)
+    // Product names are already in memory from the products loop — collect them
+    const productNames = products.map((p) => p.post_title);
+    const brandNames = dbBrands.map((b) => b.name);
+    const categoryNames = dbCategories.map((c) => c.name);
+
+    const vocabulary = {
+      exportedAt: new Date().toISOString(),
+      productNames,
+      brandNames,
+      categoryNames,
+    };
+    writeFileSync(join(SEARCH_CACHE_DIR, 'vocabulary.json'), JSON.stringify(vocabulary));
+    log(`vocabulary.json: ${productNames.length} products, ${brandNames.length} brands, ${categoryNames.length} categories`);
+
+    const taxonomyTime = (performance.now() - t6) / 1000;
+    log(`Taxonomy caches written in ${taxonomyTime.toFixed(1)}s`);
+    console.log();
+
+    // ─── Phase 6: Summary ───
     const totalTime = (performance.now() - startTime) / 1000;
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log(`✅ Export complete in ${totalTime.toFixed(1)}s`);
     console.log(`   Products: ${written.toLocaleString()}`);
     console.log(`   Posts: ${postsWritten.toLocaleString()}`);
-    console.log(`   Output: .cache/products/ + .cache/posts/`);
+    console.log(`   Taxonomies: ${flatCategories.length} categories, ${brands.length} brands, ${materials.length} materials, ${colors.length} colors`);
+    console.log(`   Blog: ${blogCategories.length} categories, ${blogTags.length} tags`);
+    console.log(`   Vocabulary: ${productNames.length.toLocaleString()} product names`);
+    console.log(`   Output: .cache/products/ + .cache/posts/ + .cache/taxonomies/ + .cache/search/`);
 
     // Validation mode
     if (process.argv.includes('--validate')) {

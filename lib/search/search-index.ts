@@ -10,6 +10,7 @@
 import MiniSearch from 'minisearch';
 import { getClient } from '@/lib/apollo/client';
 import { gql } from 'graphql-request';
+import { getStaticSearchVocabulary } from '@/lib/taxonomies/static-taxonomy-service';
 
 // ============================================================================
 // Product Vocabulary Index (MiniSearch)
@@ -100,6 +101,55 @@ async function fetchAllProductNames(): Promise<string[]> {
   return names;
 }
 
+function buildIndexFromVocabulary(
+  productNames: string[],
+  brandNames: string[],
+  categoryNames: string[],
+): MiniSearch<VocabularyItem> {
+  const index = createSearchIndex();
+  const seen = new Set<string>();
+  let idCounter = 0;
+
+  // Extract unique words from product names
+  for (const rawName of productNames) {
+    const name = rawName.toLowerCase();
+    if (!seen.has(name)) {
+      seen.add(name);
+      index.add({ id: String(idCounter++), term: name, type: 'product' });
+    }
+    // Also add individual significant words (3+ chars)
+    const words = name.split(/[\s\-_,]+/);
+    for (const word of words) {
+      const clean = word.replace(/[^a-z]/g, '');
+      if (clean.length >= 3 && !seen.has(clean)) {
+        seen.add(clean);
+        index.add({ id: String(idCounter++), term: clean, type: 'product' });
+      }
+    }
+  }
+
+  // Add brand names
+  for (const b of brandNames) {
+    const name = b.toLowerCase();
+    if (!seen.has(name)) {
+      seen.add(name);
+      index.add({ id: String(idCounter++), term: name, type: 'brand' });
+    }
+  }
+
+  // Add category names
+  for (const c of categoryNames) {
+    const name = c.toLowerCase();
+    if (!seen.has(name)) {
+      seen.add(name);
+      index.add({ id: String(idCounter++), term: name, type: 'category' });
+    }
+  }
+
+  console.log(`[SpellCheck] Loaded ${idCounter} vocabulary terms from ${productNames.length} products into MiniSearch`);
+  return index;
+}
+
 async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
   const now = Date.now();
 
@@ -111,63 +161,34 @@ async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
 
   vocabularyLoading = (async () => {
     try {
-      // Fetch all product names (paginated) and taxonomy terms in parallel
+      // Try static vocabulary cache first (eliminates 70+ GraphQL requests)
+      const cached = getStaticSearchVocabulary();
+      if (cached) {
+        const index = buildIndexFromVocabulary(cached.productNames, cached.brandNames, cached.categoryNames);
+        searchIndex = index;
+        vocabularyTimestamp = now;
+        vocabularyLoading = null;
+        console.log('[SpellCheck] Loaded vocabulary from static cache');
+        return index;
+      }
+
+      // Fallback: fetch via GraphQL (paginated)
       const [productNames, taxonomyResult] = await Promise.all([
         fetchAllProductNames(),
         getClient().query({ query: GET_TAXONOMY_VOCABULARY }),
       ]);
 
-      const index = createSearchIndex();
-      const seen = new Set<string>();
-      let idCounter = 0;
+      const brands: string[] = (taxonomyResult.data?.productBrands?.nodes || [])
+        .map((b: { name: string }) => b.name)
+        .filter(Boolean);
+      const categories: string[] = (taxonomyResult.data?.productCategories?.nodes || [])
+        .map((c: { name: string }) => c.name)
+        .filter(Boolean);
 
-      // Extract unique words from product names
-      for (const rawName of productNames) {
-        const name = rawName.toLowerCase();
-        if (!seen.has(name)) {
-          seen.add(name);
-          index.add({ id: String(idCounter++), term: name, type: 'product' });
-        }
-        // Also add individual significant words (3+ chars)
-        const words = name.split(/[\s\-_,]+/);
-        for (const word of words) {
-          const clean = word.replace(/[^a-z]/g, '');
-          if (clean.length >= 3 && !seen.has(clean)) {
-            seen.add(clean);
-            index.add({ id: String(idCounter++), term: clean, type: 'product' });
-          }
-        }
-      }
-
-      // Add brand names
-      const brands = taxonomyResult.data?.productBrands?.nodes || [];
-      for (const b of brands) {
-        if (b.name) {
-          const name = b.name.toLowerCase();
-          if (!seen.has(name)) {
-            seen.add(name);
-            index.add({ id: String(idCounter++), term: name, type: 'brand' });
-          }
-        }
-      }
-
-      // Add category names
-      const categories = taxonomyResult.data?.productCategories?.nodes || [];
-      for (const c of categories) {
-        if (c.name) {
-          const name = c.name.toLowerCase();
-          if (!seen.has(name)) {
-            seen.add(name);
-            index.add({ id: String(idCounter++), term: name, type: 'category' });
-          }
-        }
-      }
-
+      const index = buildIndexFromVocabulary(productNames, brands, categories);
       searchIndex = index;
       vocabularyTimestamp = now;
       vocabularyLoading = null;
-
-      console.log(`[SpellCheck] Loaded ${idCounter} vocabulary terms from ${productNames.length} products into MiniSearch`);
       return index;
     } catch (error) {
       console.error('[SpellCheck] Failed to load vocabulary:', error);

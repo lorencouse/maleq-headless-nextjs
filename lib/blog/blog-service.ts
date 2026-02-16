@@ -17,6 +17,7 @@ import {
   matchesAnyTerm,
 } from '@/lib/utils/search-helpers';
 import { stripHtml } from '@/lib/utils/text-utils';
+import { getStaticBlogCategories } from '@/lib/taxonomies/static-taxonomy-service';
 
 interface CategoryNode {
   id: string;
@@ -310,6 +311,9 @@ export async function getBlogSearchSuggestions(
   const searchTerms = tokenizeQuery(searchQuery);
   const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : searchQuery;
 
+  // Try static cache for categories first
+  const cachedBlogCategories = getStaticBlogCategories();
+
   const results = await Promise.allSettled([
     getClient().query({
       query: SEARCH_POSTS_BY_TITLE,
@@ -321,15 +325,19 @@ export async function getBlogSearchSuggestions(
       variables: { search: searchQuery, first: limit + 5 },
       revalidate: REVALIDATE.DYNAMIC,
     }),
-    getClient().query({
-      query: GET_ALL_CATEGORIES,
-      revalidate: REVALIDATE.STATIC,
-    }),
+    ...(cachedBlogCategories
+      ? []
+      : [getClient().query({
+          query: GET_ALL_CATEGORIES,
+          revalidate: REVALIDATE.STATIC,
+        })]),
   ]);
 
   const titlePosts: Post[] = results[0].status === 'fulfilled' ? results[0].value.data?.posts?.nodes || [] : [];
   const contentPosts: Post[] = results[1].status === 'fulfilled' ? results[1].value.data?.posts?.nodes || [] : [];
-  const allCategories: CategoryNode[] = results[2].status === 'fulfilled' ? results[2].value.data?.categories?.nodes || [] : [];
+  const allCategories: CategoryNode[] = cachedBlogCategories
+    ? cachedBlogCategories.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.count || 0 }))
+    : (results[2]?.status === 'fulfilled' ? (results[2] as PromiseFulfilledResult<any>).value.data?.categories?.nodes || [] : []);
 
   // Combine and deduplicate results
   const seenIds = new Set<string>();
@@ -429,6 +437,11 @@ export async function getBlogSearchSuggestions(
  * Get all blog categories
  */
 export async function getBlogCategories(): Promise<BlogCategory[]> {
+  try {
+    const cached = getStaticBlogCategories();
+    if (cached) return cached;
+  } catch {}
+
   try {
     const { data } = await getClient().query({
       query: GET_ALL_CATEGORIES,

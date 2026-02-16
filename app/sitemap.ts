@@ -172,12 +172,33 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       postSlugsPromise = fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
     }
 
+    // Try static taxonomy cache first, fall back to GraphQL
+    const {
+      getStaticProductCategories,
+      getStaticBrands,
+      getStaticBlogCategories,
+      getStaticBlogTags,
+    } = await import('@/lib/taxonomies/static-taxonomy-service');
+
+    const cachedCategories = getStaticProductCategories();
+    const cachedBrands = getStaticBrands();
+    const cachedBlogCategories = getStaticBlogCategories();
+    const cachedBlogTags = getStaticBlogTags();
+
     const [categoryNodes, brandNodes, postSlugs, blogCategoryNodes, blogTagNodes] = await Promise.all([
-      fetchAllNodes<{ slug: string; count: number }>(GET_ALL_PRODUCT_CATEGORIES, 'productCategories'),
-      fetchAllNodes<{ slug: string; count: number }>(GET_ALL_BRANDS, 'productBrands'),
+      cachedCategories
+        ? Promise.resolve(cachedCategories.map((c) => ({ slug: c.slug, count: (c as any).count ?? 1 })))
+        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_PRODUCT_CATEGORIES, 'productCategories'),
+      cachedBrands
+        ? Promise.resolve(cachedBrands.map((b) => ({ slug: b.slug, count: b.count ?? 1 })))
+        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_BRANDS, 'productBrands'),
       postSlugsPromise,
-      fetchAllNodes<{ slug: string; count: number }>(GET_ALL_CATEGORIES, 'categories'),
-      fetchAllNodes<{ slug: string; count: number }>(GET_ALL_TAGS, 'tags'),
+      cachedBlogCategories
+        ? Promise.resolve(cachedBlogCategories.map((c) => ({ slug: c.slug, count: c.count ?? 1 })))
+        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_CATEGORIES, 'categories'),
+      cachedBlogTags
+        ? Promise.resolve(cachedBlogTags.map((t) => ({ slug: t.slug, count: t.count ?? 1 })))
+        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_TAGS, 'tags'),
     ]);
 
     const categoryPages: MetadataRoute.Sitemap = categoryNodes
