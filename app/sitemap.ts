@@ -161,10 +161,21 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${SITE_URL}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     ];
 
+    // Use static post cache if available
+    let postSlugsPromise: Promise<string[]>;
+    if (process.env.USE_STATIC_PRODUCTS === 'true') {
+      const { getAllStaticPostSlugs, hasStaticPostCache } = await import('@/lib/blog/static-post-service');
+      postSlugsPromise = hasStaticPostCache()
+        ? Promise.resolve(getAllStaticPostSlugs())
+        : fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
+    } else {
+      postSlugsPromise = fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
+    }
+
     const [categoryNodes, brandNodes, postSlugs, blogCategoryNodes, blogTagNodes] = await Promise.all([
       fetchAllNodes<{ slug: string; count: number }>(GET_ALL_PRODUCT_CATEGORIES, 'productCategories'),
       fetchAllNodes<{ slug: string; count: number }>(GET_ALL_BRANDS, 'productBrands'),
-      fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts'),
+      postSlugsPromise,
       fetchAllNodes<{ slug: string; count: number }>(GET_ALL_CATEGORIES, 'categories'),
       fetchAllNodes<{ slug: string; count: number }>(GET_ALL_TAGS, 'tags'),
     ]);
@@ -219,7 +230,20 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
 
   // Segments 1+: products (~5K per segment)
   const skipItems = (id - 1) * PRODUCTS_PER_SEGMENT;
-  const productSlugs = await fetchProductSlugSegment(skipItems, PRODUCTS_PER_SEGMENT);
+  let productSlugs: string[];
+
+  // Use static cache if available (avoids GraphQL pagination)
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
+    if (hasStaticCache()) {
+      const allSlugs = getAllStaticSlugs();
+      productSlugs = allSlugs.slice(skipItems, skipItems + PRODUCTS_PER_SEGMENT);
+    } else {
+      productSlugs = await fetchProductSlugSegment(skipItems, PRODUCTS_PER_SEGMENT);
+    }
+  } else {
+    productSlugs = await fetchProductSlugSegment(skipItems, PRODUCTS_PER_SEGMENT);
+  }
 
   if (productSlugs.length === 0) {
     return [];

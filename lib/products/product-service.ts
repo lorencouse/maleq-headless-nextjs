@@ -1,7 +1,6 @@
 import { getClient } from '@/lib/apollo/client';
 import { GET_PRODUCT_BY_SLUG, GET_ALL_PRODUCT_SLUGS } from '@/lib/queries/products';
 import type { UnifiedProduct } from './combined-service';
-import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommerce-format';
 import type {
   GraphQLProduct,
   GraphQLImage,
@@ -12,17 +11,9 @@ import type {
   GraphQLVariation,
   GraphQLVariationAttribute,
 } from '@/lib/types/woocommerce';
+import { extractSpecifications, type ProductSpecification } from './specifications';
 
-export interface ProductSpecificationLink {
-  text: string;
-  url: string;
-}
-
-export interface ProductSpecification {
-  label: string;
-  value: string;
-  links?: ProductSpecificationLink[];
-}
+export type { ProductSpecification, ProductSpecificationLink } from './specifications';
 
 export interface ProductVariation {
   id: string;
@@ -77,135 +68,20 @@ export interface EnhancedProduct extends UnifiedProduct {
   buttonText?: string | null;
 }
 
-/**
- * Extract product specifications from WooCommerce product
- */
-function extractSpecifications(product: GraphQLProduct, isVariable: boolean): ProductSpecification[] {
-  const specs: ProductSpecification[] = [];
-
-  // Only show parent SKU for non-variable products
-  // Variable products show variation SKU in the selector
-  if (product.sku && !isVariable) {
-    specs.push({ label: 'SKU', value: product.sku });
-  }
-
-  // Brands
-  const brandNodes = product.productBrands?.nodes;
-  if (brandNodes && brandNodes.length > 0) {
-    specs.push({
-      label: 'Brand',
-      value: brandNodes.map((brand: GraphQLBrand) => brand.name).join(', '),
-      links: brandNodes.map((brand: GraphQLBrand) => ({
-        text: brand.name,
-        url: `/brand/${brand.slug}`,
-      })),
-    });
-  }
-
-  // Categories
-  const categoryNodes = product.productCategories?.nodes;
-  if (categoryNodes && categoryNodes.length > 0) {
-    specs.push({
-      label: 'Categories',
-      value: categoryNodes.map((cat: GraphQLCategory) => cat.name).join(', '),
-      links: categoryNodes.map((cat: GraphQLCategory) => ({
-        text: cat.name,
-        url: `/sex-toys/${cat.slug}`,
-      })),
-    });
-  }
-
-  // Tags
-  const tagNodes = product.productTags?.nodes;
-  if (tagNodes && tagNodes.length > 0) {
-    specs.push({
-      label: 'Tags',
-      value: tagNodes.map((tag: GraphQLTag) => tag.name).join(', ')
-    });
-  }
-
-  // Weight
-  if (product.weight) {
-    specs.push({
-      label: 'Weight',
-      value: `${product.weight} lbs`
-    });
-  }
-
-  // Product dimensions - show whatever is available
-  const dimensionParts: string[] = [];
-  if (product.length) {
-    dimensionParts.push(`Length: ${product.length}"`);
-  }
-  if (product.width) {
-    dimensionParts.push(`Width: ${product.width}"`);
-  }
-  if (product.height) {
-    dimensionParts.push(`Height: ${product.height}"`);
-  }
-  if (dimensionParts.length > 0) {
-    specs.push({
-      label: 'Dimensions',
-      value: dimensionParts.join(' | ')
-    });
-  }
-
-  // Stock availability
-  const stockStatus = product.stockStatus || 'OUT_OF_STOCK';
-  specs.push({
-    label: 'Availability',
-    value: stockStatus === 'IN_STOCK' ? 'In Stock' :
-           stockStatus === 'OUT_OF_STOCK' ? 'Out of Stock' : 'On Backorder'
-  });
-
-  if (product.stockQuantity) {
-    specs.push({ label: 'Stock Quantity', value: product.stockQuantity.toString() });
-  }
-
-  // Product attributes (non-variation attributes for display)
-  const attributeNodes = product.attributes?.nodes;
-  if (attributeNodes) {
-    for (const attr of attributeNodes) {
-      // Only show visible, non-variation attributes in specifications
-      if (attr.visible && !attr.variation && attr.options && attr.options.length > 0) {
-        const attrName = attr.name.toLowerCase();
-        const isColor = attrName === 'pa_color' || attrName === 'color';
-        const isMaterial = attrName === 'pa_material' || attrName === 'material';
-
-        // Flatten options - some may contain comma-separated values that need splitting
-        const flattenedOptions = attr.options.flatMap((opt) =>
-          opt.split(/[,\/]+/).map((o) => o.trim()).filter((o) => o.length > 0)
-        );
-
-        // Add links for color and material attributes
-        if (isColor || isMaterial) {
-          const filterParam = isColor ? 'color' : 'material';
-          specs.push({
-            label: formatAttributeName(attr.name),
-            value: flattenedOptions.map((opt) => formatAttributeValue(opt)).join(', '),
-            links: flattenedOptions.map((opt) => ({
-              text: formatAttributeValue(opt),
-              // Use lowercase slug format for the URL
-              url: `/shop?${filterParam}=${opt.toLowerCase().replace(/\s+/g, '-')}`,
-            })),
-          });
-        } else {
-          specs.push({
-            label: formatAttributeName(attr.name),
-            value: flattenedOptions.map((opt) => formatAttributeValue(opt)).join(', ')
-          });
-        }
-      }
-    }
-  }
-
-  return specs;
-}
 
 /**
- * Get product by slug from WooCommerce
+ * Get product by slug from WooCommerce.
+ * When USE_STATIC_PRODUCTS=true, reads from pre-exported JSON cache first.
  */
 export async function getProductBySlug(slug: string): Promise<EnhancedProduct | null> {
+  // Build-time: use static cache if available
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getStaticProduct } = await import('./static-product-service');
+    const cached = getStaticProduct(slug);
+    if (cached) return cached;
+    // Fall through to GraphQL if not in cache (e.g., product added after export)
+  }
+
   try {
     const { data } = await getClient().query({
       query: GET_PRODUCT_BY_SLUG,
@@ -216,10 +92,32 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
     if (!product) return null;
 
     const isVariable = product.type === 'VARIABLE';
-    const specifications = extractSpecifications(product, isVariable);
 
-    // Extract brands
+    // Extract taxonomy nodes for specifications + later use
     const brandNodes = product.productBrands?.nodes;
+    const categoryNodes = product.productCategories?.nodes;
+    const tagNodes = product.productTags?.nodes;
+    const attributeNodes = product.attributes?.nodes;
+
+    const specifications = extractSpecifications({
+      sku: product.sku,
+      weight: product.weight,
+      length: product.length,
+      width: product.width,
+      height: product.height,
+      stockStatus: product.stockStatus,
+      stockQuantity: product.stockQuantity,
+      brands: brandNodes?.map((b: GraphQLBrand) => ({ name: b.name, slug: b.slug })),
+      categories: categoryNodes?.map((c: GraphQLCategory) => ({ name: c.name, slug: c.slug })),
+      tags: tagNodes?.map((t: GraphQLTag) => ({ name: t.name })),
+      attributes: attributeNodes?.map((a: GraphQLAttribute) => ({
+        name: a.name,
+        options: a.options || [],
+        visible: a.visible ?? true,
+        variation: a.variation,
+      })),
+    }, isVariable);
+
     const brands: ProductBrand[] = brandNodes
       ? brandNodes.map((brand: GraphQLBrand) => ({
           id: brand.id,
@@ -228,7 +126,6 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         }))
       : [];
 
-    // Extract dimensions
     const dimensions: ProductDimensions = {
       weight: product.weight || null,
       length: product.length || null,
@@ -236,7 +133,6 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       height: product.height || null,
     };
 
-    // Extract gallery images
     const galleryNodes = product.galleryImages?.nodes;
     const galleryImages = galleryNodes
       ? galleryNodes.map((img: GraphQLImage) => ({
@@ -245,8 +141,6 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         }))
       : undefined;
 
-    // Extract categories
-    const categoryNodes = product.productCategories?.nodes;
     const categories = categoryNodes
       ? categoryNodes.map((cat: GraphQLCategory) => ({
           id: cat.id,
@@ -255,8 +149,6 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         }))
       : [];
 
-    // Extract tags
-    const tagNodes = product.productTags?.nodes;
     const tags = tagNodes
       ? tagNodes.map((tag: GraphQLTag) => ({
           id: tag.id,
@@ -265,8 +157,6 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         }))
       : undefined;
 
-    // Extract attributes
-    const attributeNodes = product.attributes?.nodes;
     const attributes = attributeNodes
       ? attributeNodes.map((attr: GraphQLAttribute) => ({
           name: attr.name,
@@ -373,9 +263,17 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
 }
 
 /**
- * Get all product slugs for static generation (paginated)
+ * Get all product slugs for static generation (paginated).
+ * When USE_STATIC_PRODUCTS=true, reads from pre-exported index.
  */
 export async function getAllProductSlugs(): Promise<string[]> {
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getAllStaticSlugs, hasStaticCache } = await import('./static-product-service');
+    if (hasStaticCache()) {
+      return getAllStaticSlugs();
+    }
+  }
+
   const allSlugs: string[] = [];
   let hasNextPage = true;
   let after: string | null = null;

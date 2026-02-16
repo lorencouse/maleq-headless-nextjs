@@ -44,12 +44,21 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { data } = await getClient().query({
-    query: GET_POST_BY_SLUG,
-    variables: { slug },
-  });
 
-  const post: Post = data?.postBy;
+  let post: Post | null = null;
+
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getStaticPost } = await import('@/lib/blog/static-post-service');
+    post = getStaticPost(slug);
+  }
+
+  if (!post) {
+    const { data } = await getClient().query({
+      query: GET_POST_BY_SLUG,
+      variables: { slug },
+    });
+    post = data?.postBy;
+  }
 
   if (!post) {
     return {
@@ -101,6 +110,15 @@ export async function generateMetadata({
 
 // Generate static params for all posts (paginated)
 export async function generateStaticParams() {
+  // Use static cache if available
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getAllStaticPostSlugs, hasStaticPostCache } = await import('@/lib/blog/static-post-service');
+    if (hasStaticPostCache()) {
+      const slugs = getAllStaticPostSlugs();
+      return limitStaticParams(slugs.map((slug) => ({ slug })), DEV_LIMITS.blogPosts);
+    }
+  }
+
   const allParams: { slug: string }[] = [];
   let hasNextPage = true;
   let after: string | null = null;
@@ -134,12 +152,22 @@ interface BlogPostPageProps {
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
-  const { data } = await getClient().query({
-    query: GET_POST_BY_SLUG,
-    variables: { slug },
-  });
+  let post: Post | null = null;
 
-  const post: Post = data?.postBy;
+  // Build-time: use static cache if available
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getStaticPost } = await import('@/lib/blog/static-post-service');
+    post = getStaticPost(slug);
+  }
+
+  // Fallback to GraphQL (runtime ISR or cache miss)
+  if (!post) {
+    const { data } = await getClient().query({
+      query: GET_POST_BY_SLUG,
+      variables: { slug },
+    });
+    post = data?.postBy;
+  }
 
   if (!post) {
     notFound();
