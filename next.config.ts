@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ['graphql-request', 'zustand', 'react-hot-toast'],
   },
 
+  // Limit concurrent static page generation to avoid overwhelming WordPress
+  staticPageGenerationTimeout: 120,
+
   // Disable ESLint during builds — Next.js's internal ESLint runner passes
   // legacy options (useEslintrc, extensions) incompatible with flat config.
   // Run ESLint separately: npx eslint .
