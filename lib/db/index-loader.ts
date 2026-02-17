@@ -51,6 +51,8 @@ interface RawProduct extends RowDataPacket {
   thumb_title: string | null;
   thumb_excerpt: string | null;
   view_count: string | null;
+  regular_price: string | null;
+  sale_price: string | null;
 }
 
 interface RawTaxonomy extends RowDataPacket {
@@ -93,12 +95,16 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
         att.guid AS thumb_url,
         att.post_title AS thumb_title,
         att.post_excerpt AS thumb_excerpt,
-        vc.meta_value AS view_count
+        vc.meta_value AS view_count,
+        rp.meta_value AS regular_price,
+        sp.meta_value AS sale_price
       FROM wp_posts p
       LEFT JOIN wp_wc_product_meta_lookup lk ON lk.product_id = p.ID
       LEFT JOIN wp_postmeta tm ON tm.post_id = p.ID AND tm.meta_key = '_thumbnail_id'
       LEFT JOIN wp_posts att ON att.ID = CAST(tm.meta_value AS UNSIGNED)
       LEFT JOIN wp_postmeta vc ON vc.post_id = p.ID AND vc.meta_key = 'view_count'
+      LEFT JOIN wp_postmeta rp ON rp.post_id = p.ID AND rp.meta_key = '_regular_price'
+      LEFT JOIN wp_postmeta sp ON sp.post_id = p.ID AND sp.meta_key = '_sale_price'
       WHERE p.post_type = 'product' AND p.post_status = 'publish'
     `),
     pool.query<RawTaxonomy[]>(`
@@ -173,16 +179,19 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
 
     // MySQL DECIMAL comes back as string — coerce to number
     const minPrice = p.min_price !== null ? Number(p.min_price) || null : null;
-    const maxPrice = p.max_price !== null ? Number(p.max_price) || null : null;
-    const isOnSale = Number(p.onsale) === 1;
+    const regPrice = p.regular_price ? parseFloat(p.regular_price) : null;
+    const salPrice = p.sale_price ? parseFloat(p.sale_price) : null;
+
+    // Compute onSale from actual prices (more reliable than lookup table flag)
+    const isOnSale = !!(salPrice && regPrice && salPrice < regPrice);
 
     entries[i] = {
       id: p.ID,
       slug: p.post_name,
       name: p.post_title,
       price: minPrice,
-      regularPrice: maxPrice !== minPrice ? maxPrice : minPrice,
-      salePrice: isOnSale ? minPrice : null,
+      regularPrice: regPrice !== null && !isNaN(regPrice) ? regPrice : minPrice,
+      salePrice: isOnSale ? salPrice : null,
       onSale: isOnSale,
       stockStatus: STOCK_MAP[p.stock_status || 'outofstock'] || 'OUT_OF_STOCK',
       categoryIds,

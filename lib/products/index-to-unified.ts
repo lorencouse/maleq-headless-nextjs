@@ -44,7 +44,7 @@ export function indexEntryToUnifiedProduct(entry: ProductIndexEntry): UnifiedPro
     sku: null,
     price: formatPrice(entry.price),
     regularPrice: formatPrice(entry.regularPrice),
-    salePrice: entry.onSale ? formatPrice(entry.salePrice) : null,
+    salePrice: formatPrice(entry.salePrice),
     onSale: entry.onSale,
     stockStatus: entry.stockStatus,
     stockQuantity: null,

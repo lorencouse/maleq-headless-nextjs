@@ -56,14 +56,15 @@ Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.t
 - `xml-to-json.ts` - Convert XML exports to JSON
 
 **Database Operations:**
+- `db-clone-from-remote.sh` - **Sync local DB from production** (dumps prod via SSH, imports into Local by Flywheel `local` DB). Requires Local site running.
 - `db-clone-direct.sh` - Clone database directly
-- `db-clone-from-remote.sh` - Clone from remote database
 - `db-push-direct.sh` - Push database changes
 - `db-push-to-remote.sh` - Push to remote database
 - `delete-all-products.sql` / `delete-all-categories.sql` - Cleanup SQL
 - `delete-duplicate-comments.ts` - Remove duplicate comments
 
 **Content Cleanup:**
+- `fix-html-entities.ts` - Decode HTML entity artifacts (`&amp;` → `&`) in titles, terms, descriptions
 - `cleanup-titles.ts` - Standardize product titles
 - `cleanup-tags.ts` - Clean up product tags
 - `normalize-tag-caps.ts` - Fix tag capitalization

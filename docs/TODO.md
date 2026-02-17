@@ -1,8 +1,10 @@
 # Male Q Headless - Project TODO
 
-fix/remove &AMP; artifacts in products/DB (e.g. "Dildo &amp; Vibrator Sets").
+- [ ] `[MED]` Verify &amp; entity fix visible on production after next Vercel deploy (DB fixed, likely Vercel/ISR cache — check https://maleq.com/sex-toys/bondage-fetish-kink)
 
-infinate scroll on category pages and shop not loading. infinately triggered but no new products. 
+~~fix/remove &AMP; artifacts in products/DB~~ — DONE (local + production, `scripts/fix-html-entities.ts`)
+
+~~Fix bug with N/A sale price on shop/filtered pages~~ — DONE (index-loader now reads `_regular_price`/`_sale_price` from postmeta)
 
 
 ## Priority Legend

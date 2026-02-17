@@ -164,7 +164,7 @@ export default memo(function ProductCard({
 
         {/* Price - at bottom of content section */}
         <div className='flex flex-wrap items-center gap-1 sm:gap-2'>
-          {product.onSale && product.regularPrice ? (
+          {product.onSale && product.salePrice && product.regularPrice ? (
             <>
               <span className='text-base sm:text-lg font-bold text-primary'>
                 {formatPrice(product.salePrice)}
