@@ -14,7 +14,6 @@ export default function StarRatingEnhancer() {
     const specElements = document.querySelectorAll(
       '.product-specs, .product-specs-cn, .entry-content'
     );
-
     if (specElements.length === 0) return;
 
     // Regex to match star rating patterns (filled ⭐ and empty ☆)

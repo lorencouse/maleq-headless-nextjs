@@ -25,8 +25,6 @@ const nextConfig: NextConfig = {
   staticPageGenerationTimeout: 120,
 
   images: {
-    // Allow local IP addresses for dev WordPress images (v16 blocks by default)
-    dangerouslyAllowLocalIP: true,
     // Enable image optimization
     formats: ['image/avif', 'image/webp'],
     // Set device sizes for responsive images
@@ -374,7 +372,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https: http:",
               "media-src 'self' https://*.maleq.com https://*.maleq.org",
