@@ -44,10 +44,7 @@ next-env.d.ts
 /public/products/*.webp
 
 # large data files
-data/products-filtered.json
-data/products-filtered.xml
-data/products.xml
-data/image-cache/
+/data/
 
 # database backups
 backups/

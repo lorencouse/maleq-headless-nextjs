@@ -69,10 +69,10 @@ export default function Footer() {
             <ul className='space-y-1'>
               <li>
                 <Link
-                  href='/shipping'
+                  href='/track-order'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Shipping Info
+                  Order Tracking
                 </Link>
               </li>
               <li>

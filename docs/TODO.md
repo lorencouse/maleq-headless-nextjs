@@ -8,9 +8,14 @@
 
 ---
 
+have logged in users' info auto populate contact form (name, email) when available
 
+Add product links to order summary images on checkout page
+
+Add image to add-on complete kit product
 
 ## Pre-Launch Checklist
+
 - [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)
 - [x] `[HIGH]` Verify all payment flows work correctly
   - Test Stripe live mode with real cards
@@ -114,6 +119,7 @@
 - **Docker**: installed, running Uptime Kuma on port 3001
 
 **To use SSH with Claude Code from a new machine:**
+
 1. Copy `~/.ssh/id_ed25519` and `~/.ssh/id_ed25519.pub` to the new machine
 2. Add the key to macOS Keychain: `ssh-add --apple-use-keychain ~/.ssh/id_ed25519`
 3. Add this to `~/.ssh/config`:
@@ -142,7 +148,7 @@
 - [x] Trigger infinite scroll loading earlier — increased IntersectionObserver rootMargin from 400px to 1200px
 - [x] Fix product reviews submission — API response format mismatch (`data.data` vs `data.reviews`)
 - [x] Add product view count tracking — mu-plugin tracks views, REST endpoint for trending products
-- [x] Popularity scoring — composite score: views + (purchases * 10) + (reviews * 10), used for Trending section and "Most Popular" sort
+- [x] Popularity scoring — composite score: views + (purchases _ 10) + (reviews _ 10), used for Trending section and "Most Popular" sort
 - [x] Fix category filter race condition — added AbortController to cancel stale fetch requests
 - [x] Add "Show featured sections" button on shop page when hero/featured content is hidden
 - [x] Scope category filter to subcategories on category pages, "Browse all categories" link
