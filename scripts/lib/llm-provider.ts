@@ -12,6 +12,8 @@ export interface LLMGenerateOptions {
   maxTokens?: number;
   /** System prompt prepended to the conversation */
   system?: string;
+  /** Called with each token chunk as it streams in */
+  onToken?: (token: string) => void;
 }
 
 export interface LLMProvider {
@@ -100,10 +102,12 @@ export class OllamaProvider implements LLMProvider {
   }
 
   private async _doGenerate(prompt: string, options: LLMGenerateOptions): Promise<string> {
+    const useStreaming = !!options.onToken;
+
     const body: Record<string, any> = {
       model: this.model,
       prompt,
-      stream: false,
+      stream: useStreaming,
       options: {
         temperature: options.temperature ?? 0.7,
         num_predict: options.maxTokens ?? 1024,
@@ -127,6 +131,10 @@ export class OllamaProvider implements LLMProvider {
       throw new Error(`Ollama API error ${resp.status}: ${text}`);
     }
 
+    if (useStreaming) {
+      return this._readStream(resp, options.onToken!);
+    }
+
     const data = (await resp.json()) as { response?: string };
     if (!data.response) {
       throw new Error('Ollama returned empty response');
@@ -142,5 +150,43 @@ export class OllamaProvider implements LLMProvider {
     }
 
     return result;
+  }
+
+  private async _readStream(
+    resp: Response,
+    onToken: (token: string) => void
+  ): Promise<string> {
+    const reader = resp.body?.getReader();
+    if (!reader) throw new Error('No response body for streaming');
+
+    const decoder = new TextDecoder();
+    let fullResponse = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      // Ollama streams newline-delimited JSON objects
+      const lines = chunk.split('\n').filter(Boolean);
+
+      for (const line of lines) {
+        try {
+          const data = JSON.parse(line) as { response?: string; done?: boolean };
+          if (data.response) {
+            fullResponse += data.response;
+            onToken(data.response);
+          }
+        } catch {
+          // Skip malformed lines
+        }
+      }
+    }
+
+    if (!fullResponse) {
+      throw new Error('Ollama returned empty response');
+    }
+
+    return fullResponse.trim();
   }
 }

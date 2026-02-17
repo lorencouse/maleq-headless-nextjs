@@ -299,9 +299,6 @@ async function runDryRun(
     console.log(`SEO Title: ${row.meta_title}`);
     console.log(`SEO Description: ${row.meta_description}`);
     console.log(`Excerpt: ${row.post_excerpt}`);
-    console.log(`\nGenerated HTML (${row.post_content.length} chars):`);
-    console.log(row.post_content.substring(0, 2000));
-    if (row.post_content.length > 2000) console.log('... [truncated]');
     console.log('');
   }
 }
@@ -370,6 +367,7 @@ async function runApply(
     // Process parents with concurrency control
     for (let i = 0; i < batch.length; i += opts.concurrency) {
       const chunk = batch.slice(i, i + opts.concurrency);
+
       const results = await Promise.all(
         chunk.map((product) => processProduct(llm, product))
       );

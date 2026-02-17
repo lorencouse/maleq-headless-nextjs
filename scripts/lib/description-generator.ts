@@ -8,7 +8,7 @@
  * Category-aware profiles × rotating structure variants = diverse output.
  */
 
-import type { LLMProvider } from './llm-provider';
+import type { LLMProvider, LLMGenerateOptions } from './llm-provider';
 import type { MergedProduct } from './product-data-merger';
 
 // ─── Types ───
