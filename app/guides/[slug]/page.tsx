@@ -16,7 +16,7 @@ import {
   getProductionImageUrl,
   rewriteWordPressUrls,
 } from '@/lib/utils/image';
-import { sanitizeHtml } from '@/lib/utils/sanitize';
+import { sanitizeHtml, sanitizeComment } from '@/lib/utils/sanitize';
 import {
   extractProductIdsFromContent,
   fetchProductsByIds,
@@ -406,7 +406,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         <div
                           className='text-muted-foreground'
                           dangerouslySetInnerHTML={{
-                            __html: sanitizeHtml(rewriteWordPressUrls(comment.content)),
+                            __html: sanitizeComment(comment.content),
                           }}
                         />
                       </div>
@@ -444,7 +444,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                               <div
                                 className='text-muted-foreground text-sm'
                                 dangerouslySetInnerHTML={{
-                                  __html: sanitizeHtml(rewriteWordPressUrls(reply.content)),
+                                  __html: sanitizeComment(reply.content),
                                 }}
                               />
                             </div>
