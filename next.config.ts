@@ -377,7 +377,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https: http:",
-              "media-src 'self' https://*.maleq.com https://*.maleq.org https://www.maleq.com https://www.maleq.org",
+              "media-src 'self' https://*.maleq.com https://*.maleq.org",
               "font-src 'self' data:",
               "connect-src 'self' https://*.stripe.com https://www.google-analytics.com https://*.maleq.com https://*.maleq.org https://www.googletagmanager.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",

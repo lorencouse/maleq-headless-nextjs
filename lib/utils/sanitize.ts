@@ -2,7 +2,8 @@ import sanitize from 'sanitize-html';
 
 /**
  * Sanitize HTML content to prevent XSS attacks.
- * Allows safe HTML tags including iframes for embedded videos.
+ * Allows safe HTML tags used by WordPress Gutenberg blocks,
+ * including video embeds, reusable blocks, and shortcode output.
  */
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
@@ -14,10 +15,12 @@ export function sanitizeHtml(html: string): string {
       'img',
       'video',
       'source',
+      'audio',
+      'picture',
     ],
     allowedAttributes: {
       ...sanitize.defaults.allowedAttributes,
-      '*': ['class'],
+      '*': ['class', 'id', 'style'],
       div: ['data-product-id'],
       iframe: [
         'src',
@@ -35,15 +38,16 @@ export function sanitizeHtml(html: string): string {
         'src',
         'width',
         'height',
+        'controls',
         'autoplay',
         'muted',
         'loop',
-        'playsinline',
-        'controls',
-        'preload',
         'poster',
+        'preload',
+        'playsinline',
       ],
-      source: ['src', 'type'],
+      source: ['src', 'type', 'media', 'srcset', 'sizes'],
+      audio: ['src', 'controls', 'autoplay', 'muted', 'loop', 'preload'],
     },
     allowedIframeHostnames: [
       'www.youtube.com',
