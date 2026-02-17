@@ -1,6 +1,7 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { stripHtml } from '@/lib/utils/text-utils';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { getFilteredProducts } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -36,17 +37,21 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   }
 
   const price = product.price?.replace(/[^0-9.]/g, '') || '0';
+  const brand = product.brands?.[0]?.name;
   const description = product.shortDescription
     ? stripHtml(product.shortDescription).slice(0, 160)
     : product.description
     ? stripHtml(product.description).slice(0, 160)
     : `Shop ${product.name} at Male Q. Fast, discreet shipping available.`;
 
+  // Build a richer title with brand context when available
+  const metaTitle = brand ? `${product.name} by ${brand}` : product.name;
+
   return {
-    title: product.name,
+    title: metaTitle,
     description,
     openGraph: {
-      title: product.name,
+      title: metaTitle,
       description,
       url: `${SITE_URL}/product/${slug}`,
       type: 'website',
@@ -63,7 +68,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     },
     twitter: {
       card: 'summary_large_image',
-      title: product.name,
+      title: metaTitle,
       description,
       images: product.image ? [product.image.url] : [],
     },
@@ -73,6 +78,10 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     other: {
       'product:price:amount': price,
       'product:price:currency': 'USD',
+      ...(brand && { 'product:brand': brand }),
+      ...(product.stockStatus === 'IN_STOCK'
+        ? { 'product:availability': 'instock' }
+        : { 'product:availability': 'oos' }),
     },
   };
 }
@@ -118,7 +127,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }
 
   // Prepare structured data
-  const productPrice = parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0');
+  const productPrice = parseFloat(product.regularPrice?.replace(/[^0-9.]/g, '') || product.price?.replace(/[^0-9.]/g, '') || '0');
+  const productSalePrice = product.onSale ? parseFloat(product.salePrice?.replace(/[^0-9.]/g, '') || '0') : undefined;
   const productDescription = product.shortDescription
     ? stripHtml(product.shortDescription).slice(0, 300)
     : product.description
@@ -127,6 +137,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const stockStatus = product.stockStatus === 'IN_STOCK' ? 'InStock' : 'OutOfStock';
   const productImages = product.gallery?.map(img => img.url) || (product.image ? [product.image.url] : []);
+  const productBrand = product.brands?.[0]?.name;
+  const productCategory = product.categories?.[0]?.name;
+  const productMaterial = product.materials?.[0]?.name;
+
+  // Check if SKU looks like a UPC/EAN barcode (12-13 digits)
+  const productGtin = product.sku && /^\d{12,13}$/.test(product.sku) ? product.sku : undefined;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
@@ -139,10 +155,14 @@ export default async function ProductPage({ params }: ProductPageProps) {
         description={productDescription}
         image={productImages.length > 0 ? productImages : '/placeholder.jpg'}
         sku={product.sku || undefined}
-        brand={product.brands?.[0]?.name || product.categories?.[0]?.name}
+        gtin={productGtin}
+        brand={productBrand || productCategory}
         price={productPrice}
+        salePrice={productSalePrice}
         availability={stockStatus as 'InStock' | 'OutOfStock'}
         url={`${SITE_URL}/product/${product.slug}`}
+        category={productCategory}
+        material={productMaterial}
         reviewCount={product.reviewCount || undefined}
         ratingValue={product.averageRating || undefined}
       />
@@ -177,9 +197,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {product.description && (
         <div className="mt-16 border-t border-border pt-12">
           <h2 className="text-2xl font-bold text-foreground mb-6">Product Description</h2>
-          <div className="prose prose-lg max-w-none text-foreground/80 leading-relaxed dark:prose-invert">
-            {stripHtml(product.description)}
-          </div>
+          <div
+            className="prose prose-lg max-w-none text-foreground/80 leading-relaxed dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }}
+          />
         </div>
       )}
 

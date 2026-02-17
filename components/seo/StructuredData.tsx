@@ -76,11 +76,16 @@ interface ProductSchemaProps {
   description: string;
   image: string | string[];
   sku?: string;
+  gtin?: string;
   brand?: string;
   price: number;
   priceCurrency?: string;
+  salePrice?: number;
   availability: 'InStock' | 'OutOfStock' | 'PreOrder';
   url: string;
+  category?: string;
+  material?: string;
+  color?: string;
   reviewCount?: number;
   ratingValue?: number;
 }
@@ -90,11 +95,16 @@ export function ProductSchema({
   description,
   image,
   sku,
+  gtin,
   brand,
   price,
   priceCurrency = 'USD',
+  salePrice,
   availability,
   url,
+  category,
+  material,
+  color,
   reviewCount,
   ratingValue,
 }: ProductSchemaProps) {
@@ -104,6 +114,9 @@ export function ProductSchema({
     PreOrder: 'https://schema.org/PreOrder',
   };
 
+  // Use sale price as the offer price when on sale, otherwise regular price
+  const offerPrice = salePrice && salePrice > 0 ? salePrice : price;
+
   const schema = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -112,18 +125,27 @@ export function ProductSchema({
     image,
     url,
     ...(sku && { sku }),
+    ...(gtin && { gtin }),
     ...(brand && {
       brand: {
         '@type': 'Brand',
         name: brand,
       },
     }),
+    ...(category && { category }),
+    ...(material && { material }),
+    ...(color && { color }),
     offers: {
       '@type': 'Offer',
-      price: Number(price).toFixed(2),
+      price: Number(offerPrice).toFixed(2),
       priceCurrency,
       availability: availabilityUrl[availability],
+      itemCondition: 'https://schema.org/NewCondition',
       url,
+      seller: {
+        '@type': 'Organization',
+        name: 'Male Q',
+      },
     },
     ...(reviewCount &&
       ratingValue && {
