@@ -29,8 +29,7 @@ export async function POST(request: NextRequest) {
         }
         break;
 
-      case 'product':
-
+      case 'product': {
         if (slug) {
           revalidatePath(`/product/${slug}`);
           revalidatePath('/shop');
@@ -40,15 +39,28 @@ export async function POST(request: NextRequest) {
         revalidateTag('categories', 'max');
         revalidateTag('brands', 'max');
         revalidateTag('attributes', 'max');
+
+        // Refresh in-memory product index and category cache
+        const { invalidateProductIndex } = await import('@/lib/products/product-index');
+        const { invalidateCategoryCache } = await import('@/lib/db/category-loader');
+        await invalidateProductIndex();
+        invalidateCategoryCache();
         break;
+      }
 
-      case 'all':
-
+      case 'all': {
         revalidatePath('/', 'layout');
         revalidateTag('categories', 'max');
         revalidateTag('brands', 'max');
         revalidateTag('attributes', 'max');
+
+        // Refresh in-memory product index and category cache
+        const { invalidateProductIndex: invalidateAll } = await import('@/lib/products/product-index');
+        const { invalidateCategoryCache: invalidateCatsAll } = await import('@/lib/db/category-loader');
+        await invalidateAll();
+        invalidateCatsAll();
         break;
+      }
 
       default:
         return NextResponse.json(

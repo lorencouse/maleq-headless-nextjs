@@ -7,6 +7,9 @@ import {
   getHierarchicalCategories,
   getTrendingProducts,
 } from '@/lib/products/combined-service';
+import { isMySQLConfigured } from '@/lib/db/pool';
+import { queryProductIndex } from '@/lib/products/product-index';
+import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 import ProductCard from '@/components/shop/ProductCard';
 import BlogCard from '@/components/blog/BlogCard';
 import HomeHero from '@/components/home/HomeHero';
@@ -41,16 +44,31 @@ export const metadata: Metadata = {
 export const revalidate = 604800;
 
 export default async function Home() {
-  // Fetch data in parallel
+  const useIndex = isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
+
+  // Build product promises (index or GraphQL)
+  const featuredProductsPromise = useIndex
+    ? queryProductIndex({ inStock: true, limit: 8, sort: 'popularity' })
+        .then(r => ({ products: indexEntriesToUnifiedProducts(r.products) }))
+        .catch(() => getFilteredProducts({ limit: 8, inStock: true }))
+    : getFilteredProducts({ limit: 8, inStock: true });
+
+  const trendingProductsPromise = useIndex
+    ? queryProductIndex({ onSale: true, inStock: true, limit: 12, sort: 'popularity' })
+        .then(r => indexEntriesToUnifiedProducts(r.products))
+        .catch(() => getTrendingProducts(12))
+    : getTrendingProducts(12);
+
+  // Fetch data in parallel (blog posts still need GraphQL)
   const [postsData, productsResult, categories, trendingProducts] =
     await Promise.all([
       getClient().query({
         query: GET_ALL_POSTS,
         variables: { first: 6 },
-      }),
-      getFilteredProducts({ limit: 8, inStock: true }),
-      getHierarchicalCategories(),
-      getTrendingProducts(12),
+      }).catch(() => ({ data: { posts: { nodes: [] } } })),
+      featuredProductsPromise,
+      getHierarchicalCategories().catch(() => []),
+      trendingProductsPromise,
     ]);
 
   const posts = postsData?.data?.posts?.nodes || [];

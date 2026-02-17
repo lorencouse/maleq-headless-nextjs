@@ -1,5 +1,10 @@
 # Male Q Headless - Project TODO
 
+fix/remove &AMP; artifacts in products/DB (e.g. "Dildo &amp; Vibrator Sets").
+
+infinate scroll on category pages and shop not loading. infinately triggered but no new products. 
+
+
 ## Priority Legend
 
 - `[HIGH]` - Critical for launch

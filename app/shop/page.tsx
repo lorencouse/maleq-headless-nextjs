@@ -2,7 +2,9 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, searchProducts } from '@/lib/products/combined-service';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
-import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
+import { isMySQLConfigured } from '@/lib/db/pool';
+import { queryProductIndex, type FacetOption } from '@/lib/products/product-index';
+import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import ShopHero from '@/components/shop/ShopHero';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
@@ -78,8 +80,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   // Check if search or filters are active
   const hasSearchOrFilters = searchQuery || hasFilters || browseMode;
 
-  // Fetch products based on search query or filters
-  let productsResult: {
+  // ─── Try in-memory product index (MySQL) for product data ───
+  const useIndex = isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
+
+  type ProductsResult = {
     products: Awaited<ReturnType<typeof getAllProducts>>['products'];
     pageInfo: { hasNextPage: boolean; endCursor: string | null };
     total?: number;
@@ -87,76 +91,118 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     suggestions?: string[];
   };
 
-  if (searchQuery) {
-    // Use search with relevance ranking (Fuse.js handles fuzzy matching for typo tolerance)
-    const searchResult = await searchProducts(searchQuery, { limit: 24, offset: 0 });
-    productsResult = {
-      products: searchResult.products,
-      pageInfo: { hasNextPage: searchResult.pageInfo.hasNextPage, endCursor: null },
-      total: searchResult.pageInfo.total,
-      availableFilters: searchResult.availableFilters,
-      suggestions: searchResult.suggestions,
-    };
-  } else if (hasFilters) {
-    // For category-only filtering, fetch more products to extract available filter options
-    const isCategoryOnly = category && !brand && !color && !material &&
-      !(minPrice !== undefined && minPrice > 0) &&
-      !(maxPrice !== undefined && maxPrice < 500) &&
-      !inStock && !onSale;
+  let productsResult: ProductsResult | null = null;
+  let indexFacets: { brands: FacetOption[]; materials: FacetOption[]; colors: FacetOption[]; categories: FacetOption[] } | null = null;
 
-    if (isCategoryOnly) {
-      // Fetch only the products we need for display — filter options come from global attributes
-      const categoryResult = await getFilteredProducts({
-        limit: 24,
-        category,
-      });
-
-      productsResult = {
-        products: categoryResult.products,
-        pageInfo: categoryResult.pageInfo,
-      };
-    } else {
-      // Use filtered query with all filters
-      const filteredResult = await getFilteredProducts({
-        limit: 24,
+  if (useIndex) {
+    try {
+      // Main product query
+      const result = await queryProductIndex({
         category,
         brand,
-        color,
         material,
+        color,
         minPrice,
         maxPrice,
         inStock,
         onSale,
+        search: searchQuery,
+        sort: 'newest',
+        limit: 24,
+        offset: 0,
       });
-      productsResult = filteredResult;
+
+      productsResult = {
+        products: indexEntriesToUnifiedProducts(result.products),
+        pageInfo: { hasNextPage: result.total > 24, endCursor: null },
+        total: result.total,
+      };
+      indexFacets = result.facets;
+
+      // If search returned no results, get suggestions from the existing search system
+      if (searchQuery && result.products.length === 0) {
+        try {
+          const searchResult = await searchProducts(searchQuery, { limit: 1, offset: 0 });
+          productsResult.suggestions = searchResult.suggestions;
+        } catch {
+          // Ignore suggestion errors
+        }
+      }
+    } catch (err) {
+      console.error('[shop] Index query failed, falling back to GraphQL:', err);
+      // Fall through to GraphQL below
+      productsResult = null;
     }
-  } else {
-    // No search or filters - get all products
-    productsResult = await getAllProducts({ limit: 24 });
+  }
+
+  // GraphQL fallback
+  if (!productsResult) {
+    if (searchQuery) {
+      const searchResult = await searchProducts(searchQuery, { limit: 24, offset: 0 });
+      productsResult = {
+        products: searchResult.products,
+        pageInfo: { hasNextPage: searchResult.pageInfo.hasNextPage, endCursor: null },
+        total: searchResult.pageInfo.total,
+        availableFilters: searchResult.availableFilters,
+        suggestions: searchResult.suggestions,
+      };
+    } else if (hasFilters) {
+      const isCategoryOnly = category && !brand && !color && !material &&
+        !(minPrice !== undefined && minPrice > 0) &&
+        !(maxPrice !== undefined && maxPrice < 500) &&
+        !inStock && !onSale;
+
+      if (isCategoryOnly) {
+        const categoryResult = await getFilteredProducts({ limit: 24, category });
+        productsResult = { products: categoryResult.products, pageInfo: categoryResult.pageInfo };
+      } else {
+        const filteredResult = await getFilteredProducts({
+          limit: 24, category, brand, color, material, minPrice, maxPrice, inStock, onSale,
+        });
+        productsResult = filteredResult;
+      }
+    } else {
+      productsResult = await getAllProducts({ limit: 24 });
+    }
   }
 
   const { products: rawProducts, pageInfo, total: searchTotal, availableFilters, suggestions } = productsResult;
   const products = sortProductsByPriority(rawProducts);
 
   // Also fetch sale products for featured section (only when no search/filters active)
-  const saleProductsPromise = !hasSearchOrFilters
-    ? getFilteredProducts({ limit: 8, onSale: true, inStock: true })
-    : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } });
+  let saleProductsPromise: Promise<{ products: typeof rawProducts }>;
+  if (!hasSearchOrFilters) {
+    if (useIndex) {
+      saleProductsPromise = queryProductIndex({ onSale: true, inStock: true, limit: 8, sort: 'popularity' })
+        .then(r => ({ products: indexEntriesToUnifiedProducts(r.products) }))
+        .catch(() => getFilteredProducts({ limit: 8, onSale: true, inStock: true }));
+    } else {
+      saleProductsPromise = getFilteredProducts({ limit: 8, onSale: true, inStock: true });
+    }
+  } else {
+    saleProductsPromise = Promise.resolve({ products: [] });
+  }
 
-  // Get categories, brands, and attributes from WooCommerce
-  const [{ products: rawSaleProducts }, categories, globalBrands, { colors: globalColors, materials: globalMaterials }] = await Promise.all([
+  // Get categories (always needed for nav tree), brands, and attributes
+  const [{ products: saleProducts }, categories, globalBrands, { colors: globalColors, materials: globalMaterials }] = await Promise.all([
     saleProductsPromise,
     getHierarchicalCategories(),
-    getBrands(),
-    getGlobalAttributes(),
+    // Skip GraphQL brand/attribute fetches when index provides facets
+    indexFacets ? Promise.resolve([]) : getBrands(),
+    indexFacets ? Promise.resolve({ colors: [], materials: [] }) : getGlobalAttributes(),
   ]);
 
-  const saleProducts = rawSaleProducts;
-
-  // Use search-specific filter options when available, otherwise use global options
-  const brands = availableFilters?.brands ?? globalBrands;
-  const colors = availableFilters?.colors ?? globalColors;
-  const materials = availableFilters?.materials ?? globalMaterials;
+  // Use index facets when available, then search-specific, then global
+  const facetToFilterOption = (f: FacetOption) => ({ id: f.slug, name: f.name, slug: f.slug, count: f.count });
+  const brands = indexFacets
+    ? indexFacets.brands.map(facetToFilterOption)
+    : (availableFilters?.brands ?? globalBrands);
+  const colors = indexFacets
+    ? indexFacets.colors.map(facetToFilterOption)
+    : (availableFilters?.colors ?? globalColors);
+  const materials = indexFacets
+    ? indexFacets.materials.map(facetToFilterOption)
+    : (availableFilters?.materials ?? globalMaterials);
 
   // Helper to find category count recursively
   function findCategoryCount(cats: typeof categories, slug: string): number | null {

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { searchProducts, getProductCategories } from '@/lib/products/combined-service';
+import { isMySQLConfigured } from '@/lib/db/pool';
+import { searchProductIndex } from '@/lib/products/product-index';
+import { indexEntryToUnifiedProduct } from '@/lib/products/index-to-unified';
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +17,40 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Search products and filter categories that match
+    // ─── Try in-memory product index (MySQL) ───
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      try {
+        const result = await searchProductIndex(query, { limit });
+
+        const productSuggestions = result.products.map((entry) => {
+          const unified = indexEntryToUnifiedProduct(entry);
+          return {
+            id: unified.id,
+            name: unified.name,
+            slug: unified.slug,
+            price: unified.price,
+            image: unified.image?.url || null,
+          };
+        });
+
+        const matchingCategories = result.matchingCategories.map((cat) => ({
+          id: cat.slug,
+          name: cat.name,
+          slug: cat.slug,
+        }));
+
+        return NextResponse.json({
+          products: productSuggestions,
+          categories: matchingCategories,
+          suggestions: [],
+        });
+      } catch (err) {
+        console.error('[api/search] Index search failed, falling back to GraphQL:', err);
+        // Fall through to GraphQL
+      }
+    }
+
+    // ─── GraphQL fallback ───
     const [searchResult, allCategories] = await Promise.all([
       searchProducts(query, { limit }),
       getProductCategories(),

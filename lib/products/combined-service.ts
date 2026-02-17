@@ -443,6 +443,18 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
     if (cached) return cached;
   } catch {}
 
+  // Try MySQL first
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      const { loadHierarchicalCategories } = await import('@/lib/db/category-loader');
+      const categories = await loadHierarchicalCategories();
+      if (categories.length > 0) return categories;
+    }
+  } catch (err) {
+    console.error('[categories] MySQL failed, falling back to GraphQL:', err);
+  }
+
   try {
     const { data } = await getClient().query({
       query: GET_HIERARCHICAL_CATEGORIES,

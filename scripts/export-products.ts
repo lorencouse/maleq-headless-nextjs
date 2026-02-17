@@ -12,7 +12,7 @@
  *   bun run scripts/export-products.ts --remote --validate  # export + validate vs GraphQL
  */
 import { getConnection } from './lib/db';
-import { parseProductAttributes, type ParsedAttribute } from './lib/php-unserialize';
+import { parseProductAttributes, type ParsedAttribute } from '../lib/utils/php-unserialize';
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'fs';
 import { join } from 'path';
 

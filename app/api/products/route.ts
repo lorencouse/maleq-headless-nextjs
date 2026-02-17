@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAllProducts, getFilteredProducts, searchProducts, UnifiedProduct, FilterOption } from '@/lib/products/combined-service';
 import { parseIntSafe, parseFloatSafe } from '@/lib/api/validation';
 import { sortProductsByPriority, sortWithOutOfStockLast } from '@/lib/utils/product-sort';
+import { isMySQLConfigured } from '@/lib/db/pool';
+import { queryProductIndex, type FacetOption } from '@/lib/products/product-index';
+import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 
 /**
  * Extract available filter options from a list of products
@@ -17,7 +20,6 @@ function extractFilterOptions(products: UnifiedProduct[]): {
   const colorMap = new Map<string, { name: string; slug: string; count: number }>();
 
   for (const product of products) {
-    // Extract brands from productBrands taxonomy
     if (product.brands) {
       for (const brand of product.brands) {
         const existing = brandMap.get(brand.slug);
@@ -29,7 +31,6 @@ function extractFilterOptions(products: UnifiedProduct[]): {
       }
     }
 
-    // Extract materials from productMaterials taxonomy
     if (product.materials) {
       for (const material of product.materials) {
         const existing = materialMap.get(material.slug);
@@ -41,7 +42,6 @@ function extractFilterOptions(products: UnifiedProduct[]): {
       }
     }
 
-    // Extract colors from attributes
     if (product.attributes) {
       for (const attr of product.attributes) {
         const attrNameLower = attr.name.toLowerCase();
@@ -61,7 +61,6 @@ function extractFilterOptions(products: UnifiedProduct[]): {
     }
   }
 
-  // Convert maps to arrays and sort by name
   const availableBrands = Array.from(brandMap.values())
     .map(b => ({ id: b.slug, name: b.name, slug: b.slug, count: b.count }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -75,6 +74,16 @@ function extractFilterOptions(products: UnifiedProduct[]): {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return { availableBrands, availableMaterials, availableColors };
+}
+
+/** Convert index FacetOption[] to FilterOption[] */
+function facetsToFilterOptions(facets: FacetOption[]): FilterOption[] {
+  return facets.map(f => ({ id: f.slug, name: f.name, slug: f.slug, count: f.count }));
+}
+
+/** Check if we should use the in-memory MySQL index */
+function shouldUseProductIndex(): boolean {
+  return isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
 }
 
 export async function GET(request: NextRequest) {
@@ -107,13 +116,53 @@ export async function GET(request: NextRequest) {
     const productType = searchParams.get('productType') || undefined;
     const sort = searchParams.get('sort') || 'newest';
 
-    // Check for dimension/weight filters (these are done client-side)
     const hasDimensionFilters = (minLength !== undefined && minLength > 0) ||
                                  (maxLength !== undefined && maxLength < 24) ||
                                  (minWeight !== undefined && minWeight > 0) ||
                                  (maxWeight !== undefined && maxWeight < 10);
 
-    // Determine if we need filtered query (DB-level filtering) or basic query
+    // ─── Try in-memory product index (MySQL) ───
+    if (shouldUseProductIndex()) {
+      try {
+        const result = await queryProductIndex({
+          category,
+          brand,
+          material,
+          color,
+          minPrice,
+          maxPrice,
+          inStock,
+          onSale,
+          productType,
+          search,
+          sort,
+          limit,
+          offset,
+        });
+
+        const products = indexEntriesToUnifiedProducts(result.products);
+
+        const response = NextResponse.json({
+          products,
+          pageInfo: {
+            hasNextPage: offset + limit < result.total,
+            endCursor: null,
+          },
+          total: result.total,
+          availableBrands: facetsToFilterOptions(result.facets.brands),
+          availableMaterials: facetsToFilterOptions(result.facets.materials),
+          availableColors: facetsToFilterOptions(result.facets.colors),
+        });
+
+        response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
+        return response;
+      } catch (indexError) {
+        console.error('[api/products] Index query failed, falling back to GraphQL:', indexError);
+        // Fall through to GraphQL
+      }
+    }
+
+    // ─── GraphQL fallback ───
     const hasFilters = minPrice !== undefined || maxPrice !== undefined || inStock || onSale || category || brand || color || material || productType;
 
     let products: UnifiedProduct[];
@@ -121,31 +170,22 @@ export async function GET(request: NextRequest) {
     let totalCount: number | undefined;
     let availableFilters: ReturnType<typeof extractFilterOptions> | undefined;
 
-    // For dimension filters, we need to fetch more products to filter client-side
     const fetchLimit = hasDimensionFilters ? Math.max(limit * 4, 100) : limit;
 
     if (search) {
-      // Search uses advanced relevance ranking with offset-based pagination
       if (hasFilters) {
-        // With filters: fetch search results then filter client-side
         const searchFetchLimit = Math.max(limit * 3, 75);
         const result = await searchProducts(search, { limit: searchFetchLimit, offset: 0 });
         products = result.products;
 
-        // Apply filters to search results
         products = products.filter((product) => {
-          // Category filter
           if (category && !product.categories.some(c => c.slug === category)) {
             return false;
           }
-
-          // Brand filter (check productBrands taxonomy)
           if (brand) {
             const productBrand = product.brands?.find(b => b.slug === brand);
             if (!productBrand) return false;
           }
-
-          // Price filter
           const productPrice = parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0');
           if (minPrice !== undefined && minPrice > 0 && productPrice < minPrice) {
             return false;
@@ -153,55 +193,41 @@ export async function GET(request: NextRequest) {
           if (maxPrice !== undefined && maxPrice < 10000 && productPrice > maxPrice) {
             return false;
           }
-
-          // Stock filter
           if (inStock && product.stockStatus !== 'IN_STOCK') {
             return false;
           }
-
-          // On sale filter
           if (onSale && !product.onSale) {
             return false;
           }
-
-          // Color filter (check attributes)
           if (color) {
             const colorAttr = product.attributes?.find(a => a.name.toLowerCase() === 'color');
             if (!colorAttr || !colorAttr.options.some(o => o.toLowerCase() === color.toLowerCase())) {
               return false;
             }
           }
-
-          // Material filter (check productMaterials taxonomy)
           if (material) {
             const productMaterial = product.materials?.find(m => m.slug === material);
             if (!productMaterial) return false;
           }
-
-          // Product type filter
           if (productType && product.type !== productType.toUpperCase()) {
             return false;
           }
-
           return true;
         });
 
-        // Track total count and extract available filters before pagination
         totalCount = products.length;
         availableFilters = extractFilterOptions(products);
 
-        // Apply offset-based pagination after filtering
         const startIndex = offset;
         const endIndex = offset + limit;
         const paginatedProducts = products.slice(startIndex, endIndex);
 
         pageInfo = {
           hasNextPage: endIndex < totalCount,
-          endCursor: null, // Search uses offset, not cursor
+          endCursor: null,
         };
         products = paginatedProducts;
       } else {
-        // Without filters: pass offset directly to searchProducts for efficient pagination
         const result = await searchProducts(search, { limit, offset });
         products = result.products;
         totalCount = result.pageInfo.total;
@@ -216,7 +242,6 @@ export async function GET(request: NextRequest) {
         };
       }
     } else if (hasFilters) {
-      // Use DB-level filtering for price, stock, sale, category, and taxonomy filters
       const result = await getFilteredProducts({
         limit: fetchLimit,
         after,
@@ -232,66 +257,54 @@ export async function GET(request: NextRequest) {
 
       let filteredProducts = result.products;
 
-      // Apply product type filter before pagination (not available via GraphQL)
       if (productType) {
         const upperType = productType.toUpperCase();
         filteredProducts = filteredProducts.filter(p => p.type === upperType);
       }
 
-      // Extract available filter options from filtered products
       availableFilters = extractFilterOptions(filteredProducts);
       totalCount = filteredProducts.length;
 
-      // Paginate the results
       products = filteredProducts.slice(0, limit);
       pageInfo = {
         hasNextPage: filteredProducts.length > limit || result.pageInfo.hasNextPage,
         endCursor: result.pageInfo.endCursor,
       };
     } else {
-      // No filters - use basic query
       const result = await getAllProducts({ limit: fetchLimit, after });
       products = result.products;
       pageInfo = result.pageInfo;
     }
 
-    // Apply dimension/weight filters client-side (these aren't available via GraphQL)
+    // Apply dimension/weight filters (only in GraphQL path — index doesn't have dimensions)
     if (hasDimensionFilters) {
       products = products.filter((product) => {
-        // Get product dimensions from attributes or meta
         const productLength = getProductDimension(product, 'length');
         const productWeight = getProductWeight(product);
 
-        // Apply length filter
         if (minLength !== undefined && minLength > 0) {
           if (productLength === null || productLength < minLength) return false;
         }
         if (maxLength !== undefined && maxLength < 24) {
           if (productLength === null || productLength > maxLength) return false;
         }
-
-        // Apply weight filter
         if (minWeight !== undefined && minWeight > 0) {
           if (productWeight === null || productWeight < minWeight) return false;
         }
         if (maxWeight !== undefined && maxWeight < 10) {
           if (productWeight === null || productWeight > maxWeight) return false;
         }
-
         return true;
       });
 
-      // Limit results after filtering
       products = products.slice(0, limit);
-
-      // Update pageInfo since we filtered client-side
       pageInfo = {
         hasNextPage: products.length >= limit,
         endCursor: pageInfo?.endCursor,
       };
     }
 
-    // Apply sorting (done client-side as GraphQL orderby is limited)
+    // Apply sorting
     switch (sort) {
       case 'price-asc':
         products.sort((a, b) => {
@@ -299,7 +312,6 @@ export async function GET(request: NextRequest) {
           const priceB = parseFloat(b.price?.replace(/[^0-9.]/g, '') || '0');
           return priceA - priceB;
         });
-        // Push out-of-stock to end while preserving price sort within each group
         products = sortWithOutOfStockLast(products);
         break;
       case 'price-desc':
@@ -323,7 +335,6 @@ export async function GET(request: NextRequest) {
         products = sortWithOutOfStockLast(products);
         break;
       default:
-        // 'newest' - apply full priority sort (stock + source priority)
         products = sortProductsByPriority(products);
         break;
     }
@@ -339,7 +350,6 @@ export async function GET(request: NextRequest) {
       }),
     });
 
-    // CDN/edge caching: cache for 5 min, serve stale up to 1 hour while revalidating
     response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');
     return response;
   } catch (error) {
@@ -351,27 +361,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * Extract product length from product data
- * Looks for length in various places: dimensions, attributes, description
- */
 function getProductDimension(product: UnifiedProduct, dimension: 'length' | 'width' | 'height'): number | null {
-  // Check if product has dimensions in the expected fields
   const productAny = product as any;
 
-  // Check direct dimension fields
   if (productAny[dimension]) {
     const value = parseFloat(productAny[dimension]);
     if (!isNaN(value)) return value;
   }
 
-  // Check dimensions object
   if (productAny.dimensions?.[dimension]) {
     const value = parseFloat(productAny.dimensions[dimension]);
     if (!isNaN(value)) return value;
   }
 
-  // Try to extract from description
   if (product.description) {
     const patterns: Record<string, RegExp[]> = {
       length: [
@@ -400,38 +402,29 @@ function getProductDimension(product: UnifiedProduct, dimension: 'length' | 'wid
   return null;
 }
 
-/**
- * Extract product weight from product data
- * Returns weight in lbs
- */
 function getProductWeight(product: UnifiedProduct): number | null {
   const productAny = product as any;
 
-  // Check direct weight field
   if (productAny.weight) {
     const value = parseFloat(productAny.weight);
     if (!isNaN(value)) return value;
   }
 
-  // Check dimensions object
   if (productAny.dimensions?.weight) {
     const value = parseFloat(productAny.dimensions.weight);
     if (!isNaN(value)) return value;
   }
 
-  // Try to extract from description
   if (product.description) {
-    // Weight in lbs
     const lbsMatch = product.description.match(/weight[:\s]+(\d+(?:\.\d+)?)\s*(?:pounds?|lbs?\.?)/i);
     if (lbsMatch && lbsMatch[1]) {
       const value = parseFloat(lbsMatch[1]);
       if (!isNaN(value) && value > 0 && value < 100) return value;
     }
 
-    // Weight in oz (convert to lbs)
     const ozMatch = product.description.match(/weight[:\s]+(\d+(?:\.\d+)?)\s*(?:ounces?|oz\.?)/i);
     if (ozMatch && ozMatch[1]) {
-      const value = parseFloat(ozMatch[1]) / 16; // Convert oz to lbs
+      const value = parseFloat(ozMatch[1]) / 16;
       if (!isNaN(value) && value > 0 && value < 100) return value;
     }
   }

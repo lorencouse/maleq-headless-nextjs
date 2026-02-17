@@ -235,7 +235,7 @@ export default function ShopPageClient({
     afterCursor?: string | null,
     offset?: number // For search pagination
   ) => {
-    const isAppending = !!(afterCursor || (filterParams.search && offset !== undefined && offset > 0));
+    const isAppending = !!(afterCursor || (offset !== undefined && offset > 0));
     isLoadingMore.current = isAppending;
 
     // Cancel previous in-flight request when filters change (not for load-more)
@@ -252,11 +252,11 @@ export default function ShopPageClient({
       const params = new URLSearchParams();
       params.set('limit', '24');
 
-      // For search queries, use offset-based pagination
-      if (filterParams.search && offset !== undefined && offset > 0) {
+      // Pagination: offset-based (index/search) or cursor-based (GraphQL)
+      if (offset !== undefined && offset > 0) {
         params.set('offset', offset.toString());
-      } else if (afterCursor) {
-        // For non-search queries, use cursor-based pagination
+      }
+      if (afterCursor) {
         params.set('after', afterCursor);
       }
 
@@ -282,12 +282,12 @@ export default function ShopPageClient({
       const data = await response.json();
 
       if (data.products) {
-        // For search "load more", append products and update offset
-        if (filterParams.search && offset !== undefined && offset > 0) {
+        // Append products when loading more (offset or cursor pagination)
+        if ((offset !== undefined && offset > 0) || afterCursor) {
           setProducts((prev) => [...prev, ...data.products]);
-          setSearchOffset((prev) => prev + data.products.length);
-        } else if (afterCursor) {
-          setProducts((prev) => [...prev, ...data.products]);
+          if (filterParams.search) {
+            setSearchOffset((prev) => prev + data.products.length);
+          }
         } else {
           setProducts(data.products);
           // Reset search offset when doing a fresh search
@@ -506,46 +506,35 @@ export default function ShopPageClient({
   const handleLoadMore = useCallback(() => {
     if (isLoading || !hasMore) return;
 
-    // For search queries, use offset-based pagination
+    const filterParams = {
+      category: categoryFilter,
+      brand: brandFilter,
+      color: colorFilter,
+      material: materialFilter,
+      minPrice: minPriceFilter,
+      maxPrice: maxPriceFilter,
+      minLength: minLengthFilter,
+      maxLength: maxLengthFilter,
+      minWeight: minWeightFilter,
+      maxWeight: maxWeightFilter,
+      inStock: inStockFilter,
+      onSale: onSaleFilter,
+      productType: productTypeFilter,
+      sort: sortBy,
+      search: searchQuery,
+    };
+
     if (searchQuery) {
-      fetchProducts({
-        category: categoryFilter,
-        brand: brandFilter,
-        color: colorFilter,
-        material: materialFilter,
-        minPrice: minPriceFilter,
-        maxPrice: maxPriceFilter,
-        minLength: minLengthFilter,
-        maxLength: maxLengthFilter,
-        minWeight: minWeightFilter,
-        maxWeight: maxWeightFilter,
-        inStock: inStockFilter,
-        onSale: onSaleFilter,
-        productType: productTypeFilter,
-        sort: sortBy,
-        search: searchQuery,
-      }, null, searchOffset);
+      // Search always uses offset-based pagination
+      fetchProducts(filterParams, null, searchOffset);
+    } else if (cursor) {
+      // GraphQL cursor-based pagination
+      fetchProducts(filterParams, cursor, products.length);
     } else {
-      // For non-search queries, use cursor-based pagination
-      fetchProducts({
-        category: categoryFilter,
-        brand: brandFilter,
-        color: colorFilter,
-        material: materialFilter,
-        minPrice: minPriceFilter,
-        maxPrice: maxPriceFilter,
-        minLength: minLengthFilter,
-        maxLength: maxLengthFilter,
-        minWeight: minWeightFilter,
-        maxWeight: maxWeightFilter,
-        inStock: inStockFilter,
-        onSale: onSaleFilter,
-        productType: productTypeFilter,
-        sort: sortBy,
-        search: searchQuery,
-      }, cursor);
+      // Index offset-based pagination (no cursor available)
+      fetchProducts(filterParams, null, products.length);
     }
-  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchOffset, cursor, fetchProducts]);
+  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchOffset, cursor, products.length, fetchProducts]);
 
   // Close mobile filter on resize
   useEffect(() => {

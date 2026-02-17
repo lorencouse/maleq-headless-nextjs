@@ -71,7 +71,7 @@ export interface EnhancedProduct extends UnifiedProduct {
 
 /**
  * Get product by slug from WooCommerce.
- * When USE_STATIC_PRODUCTS=true, reads from pre-exported JSON cache first.
+ * Priority: static JSON cache → direct MySQL → GraphQL
  */
 export async function getProductBySlug(slug: string): Promise<EnhancedProduct | null> {
   // Try static JSON cache first (fast file read, avoids GraphQL round-trip)
@@ -79,9 +79,22 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
     const { getStaticProduct } = await import('./static-product-service');
     const cached = getStaticProduct(slug);
     if (cached) return cached;
-    // Fall through to GraphQL if not in cache (e.g., product added after export)
   } catch {
-    // Static cache not available, fall through to GraphQL
+    // Static cache not available
+  }
+
+  // Try direct MySQL (much faster than GraphQL, no PHP overhead)
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      const { getProductBySlugFromDB } = await import('@/lib/db/product-queries');
+      const dbProduct = await getProductBySlugFromDB(slug);
+      if (dbProduct) return dbProduct;
+      // Fall through to GraphQL if not found (unlikely but safe)
+    }
+  } catch (err) {
+    console.error('[product-service] MySQL fetch failed for', slug, err);
+    // Fall through to GraphQL
   }
 
   try {

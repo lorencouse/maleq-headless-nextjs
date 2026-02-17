@@ -1,9 +1,13 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts } from '@/lib/products/combined-service';
+import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, type FilterOption } from '@/lib/products/combined-service';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import { findCategoryBySlug, findParentCategory } from '@/lib/utils/category-helpers';
+import { isMySQLConfigured } from '@/lib/db/pool';
+import { queryProductIndex, type FacetOption } from '@/lib/products/product-index';
+import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
+import { loadHierarchicalCategories } from '@/lib/db/category-loader';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import CategoryHero from '@/components/shop/CategoryHero';
 import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
@@ -16,10 +20,22 @@ interface CategoryPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+/** Try MySQL categories first, fall back to GraphQL */
+async function getCategories() {
+  if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+    try {
+      return await loadHierarchicalCategories();
+    } catch (err) {
+      console.error('[category] MySQL categories failed, falling back to GraphQL:', err);
+    }
+  }
+  return getHierarchicalCategories();
+}
+
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
-    const categories = await getHierarchicalCategories();
+    const categories = await getCategories();
     const category = findCategoryBySlug(categories, slug);
 
     if (!category) {
@@ -77,12 +93,10 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
     (maxPrice !== undefined && maxPrice < 500) ||
     inStock || onSale;
 
-  // Get hierarchical categories, brands, and attributes
-  const [allCategories, brandsData, { colors: colorsData, materials: materialsData }] = await Promise.all([
-    getHierarchicalCategories(),
-    getBrands(),
-    getGlobalAttributes(),
-  ]);
+  const useIndex = isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
+
+  // Get hierarchical categories (MySQL or GraphQL)
+  const allCategories = await getCategories();
 
   const category = findCategoryBySlug(allCategories, slug);
 
@@ -93,11 +107,21 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   // Find parent category for breadcrumbs
   const parentCategory = findParentCategory(allCategories, slug);
 
-  // Fetch products and sale products in parallel
-  const [productsResult, saleProductsResult] = await Promise.all([
-    hasAdditionalFilters
-      ? getFilteredProducts({
-          limit: 24,
+  // ─── Fetch products + filters ───
+  let products: Awaited<ReturnType<typeof getAllProducts>>['products'] = [];
+  let productsPageInfo = { hasNextPage: false, endCursor: null as string | null };
+  let saleProducts: typeof products = [];
+  let brandsData: FilterOption[] = [];
+  let colorsData: FilterOption[] = [];
+  let materialsData: FilterOption[] = [];
+
+  if (useIndex) {
+    try {
+      const facetToFilterOption = (f: FacetOption): FilterOption => ({ id: f.slug, name: f.name, slug: f.slug, count: f.count });
+
+      // Main products + sale products in parallel
+      const [mainResult, saleResult] = await Promise.all([
+        queryProductIndex({
           category: slug,
           brand,
           color,
@@ -106,22 +130,56 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           maxPrice,
           inStock,
           onSale,
-        })
-      : getAllProducts({ category: slug, limit: 24 }),
-    // Only fetch sale products if no filters are active
-    !hasAdditionalFilters
-      ? getFilteredProducts({
-          limit: 8,
-          category: slug,
-          onSale: true,
-          inStock: true,
-        })
-      : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } }),
-  ]);
+          sort: 'popularity',
+          limit: 24,
+          offset: 0,
+        }),
+        !hasAdditionalFilters
+          ? queryProductIndex({ category: slug, onSale: true, inStock: true, limit: 8, sort: 'popularity' })
+          : Promise.resolve({ products: [], total: 0, facets: { brands: [], materials: [], colors: [], categories: [] } }),
+      ]);
 
-  const products = sortProductsByPriority(productsResult.products);
-  const productsPageInfo = productsResult.pageInfo;
-  const saleProducts = saleProductsResult.products;
+      products = indexEntriesToUnifiedProducts(mainResult.products);
+      productsPageInfo = { hasNextPage: mainResult.total > 24, endCursor: null };
+      saleProducts = indexEntriesToUnifiedProducts(saleResult.products);
+
+      // Use facets from main result
+      brandsData = mainResult.facets.brands.map(facetToFilterOption);
+      colorsData = mainResult.facets.colors.map(facetToFilterOption);
+      materialsData = mainResult.facets.materials.map(facetToFilterOption);
+    } catch (err) {
+      console.error('[category] Index query failed, falling back to GraphQL:', err);
+      // Reset to trigger GraphQL fallback
+      products = [];
+    }
+  }
+
+  // GraphQL fallback
+  if (!useIndex || products.length === 0) {
+    try {
+      const [brandsResult, attrsResult, productsResult, saleProductsResult] = await Promise.all([
+        getBrands(),
+        getGlobalAttributes(),
+        hasAdditionalFilters
+          ? getFilteredProducts({ limit: 24, category: slug, brand, color, material, minPrice, maxPrice, inStock, onSale })
+          : getAllProducts({ category: slug, limit: 24 }),
+        !hasAdditionalFilters
+          ? getFilteredProducts({ limit: 8, category: slug, onSale: true, inStock: true })
+          : Promise.resolve({ products: [], pageInfo: { hasNextPage: false, endCursor: null } }),
+      ]);
+
+      brandsData = brandsResult;
+      colorsData = attrsResult.colors;
+      materialsData = attrsResult.materials;
+      products = productsResult.products;
+      productsPageInfo = productsResult.pageInfo;
+      saleProducts = saleProductsResult.products;
+    } catch (err) {
+      console.error('[category] GraphQL fallback also failed:', err);
+    }
+  }
+
+  products = sortProductsByPriority(products);
 
   // Get child categories with products
   const childCategories = category.children?.filter(c => c.count > 0) || [];
