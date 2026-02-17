@@ -8,15 +8,17 @@
  *   await db.end();
  *
  * Modes:
- *   Default (no flags): connects to local WordPress via socket (Local by Flywheel)
- *   --remote:           connects via SSH tunnel to production DB (maleq-wp)
- *   --remote --db NAME: connects via SSH tunnel to a specific DB (e.g. maleq-wp-test)
+ *   Default (no flags): connects via SSH tunnel to production DB (maleq-wp)
+ *   --local:            connects to local WordPress via socket (Local by Flywheel)
+ *   --db NAME:          override database name (e.g. maleq-wp-test)
  *
  * Requires SSH tunnel for remote: ssh -L 3307:127.0.0.1:3306 root@159.69.220.162
  */
 import mysql from 'mysql2/promise';
 
-const isRemote = process.argv.includes('--remote') || process.env.MYSQL_REMOTE === '1';
+const isLocal = process.argv.includes('--local') || process.env.MYSQL_LOCAL === '1';
+// Legacy flag support
+const isRemote = !isLocal || process.argv.includes('--remote') || process.env.MYSQL_REMOTE === '1';
 
 /** Parse --db flag value from argv */
 function getDbFlag(): string | undefined {
@@ -44,12 +46,14 @@ const remoteConfig = {
   password: process.env.MYSQL_PASS || 'S9meeDoehU8VPiHd1ByJ',
 };
 
-const config = isRemote ? remoteConfig : localConfig;
+const config = isLocal ? localConfig : remoteConfig;
 
 export async function getConnection() {
-  if (isRemote) {
+  if (!isLocal) {
     console.log(`🔗 Connecting to REMOTE database (${remoteConfig.host}:${remoteConfig.port}/${config.database})`);
     console.log('   SSH tunnel required: ssh -L 3307:127.0.0.1:3306 root@159.69.220.162\n');
+  } else {
+    console.log(`🔗 Connecting to LOCAL database (${localConfig.database})\n`);
   }
   return mysql.createConnection(config);
 }

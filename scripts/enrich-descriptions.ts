@@ -6,6 +6,10 @@
  * Merges data from DB + XML feeds + STC CSV, generates rich HTML descriptions
  * via a local Ollama LLM, and outputs a reviewable CSV for WP import.
  *
+ * Two-path architecture:
+ *   - Reformat: products with existing descriptions >= 300 chars
+ *   - Generate: products with short/no descriptions (varied templates)
+ *
  * Usage:
  *   bun scripts/enrich-descriptions.ts --analyze                    # Stats only
  *   bun scripts/enrich-descriptions.ts --dry-run [--limit 10]       # Sample outputs
@@ -13,12 +17,19 @@
  *   bun scripts/enrich-descriptions.ts --apply --batch-size 50 --concurrency 2
  *   bun scripts/enrich-descriptions.ts --apply --source xml_active  # Only WT active
  *   bun scripts/enrich-descriptions.ts --apply --model mistral      # Override model
+ *   bun scripts/enrich-descriptions.ts --dry-run --path reformat    # Only reformat path
+ *   bun scripts/enrich-descriptions.ts --dry-run --path generate    # Only generate path
  */
 
 import { join } from 'path';
 import { OllamaProvider } from './lib/llm-provider';
 import { mergeAllSources, type MergedProduct, type MergeOptions } from './lib/product-data-merger';
-import { generateDescription, type GeneratedDescription } from './lib/description-generator';
+import {
+  generateDescription,
+  classifyProduct,
+  matchCategoryProfile,
+  type GeneratedDescription,
+} from './lib/description-generator';
 import { embedImages } from './lib/image-embedder';
 import { writeCsvHeader, appendCsvRows, type CsvRow } from './lib/csv-writer';
 import {
@@ -41,6 +52,7 @@ interface CliOptions {
   model: string;
   numCtx: number;
   timeoutMs: number;
+  pathFilter?: 'reformat' | 'generate';
 }
 
 function parseArgs(): CliOptions {
@@ -51,7 +63,7 @@ function parseArgs(): CliOptions {
     batchSize: 50,
     concurrency: 1,
     source: 'all',
-    model: 'gpt-oss:20b',
+    model: 'qwen3:8b',
     numCtx: 4096,
     timeoutMs: 180_000,
   };
@@ -76,6 +88,14 @@ function parseArgs(): CliOptions {
       opts.numCtx = parseInt(args[++i], 10);
     } else if (arg === '--timeout' && i + 1 < args.length) {
       opts.timeoutMs = parseInt(args[++i], 10) * 1000;
+    } else if (arg === '--path' && i + 1 < args.length) {
+      const val = args[++i];
+      if (val === 'reformat' || val === 'generate') {
+        opts.pathFilter = val;
+      } else {
+        console.error(`Invalid --path value: ${val}. Use "reformat" or "generate".`);
+        process.exit(1);
+      }
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Product Description Enrichment Pipeline
@@ -97,6 +117,7 @@ Options:
   --model <name>           Ollama model (default: gpt-oss:20b)
   --num-ctx <n>            Context window tokens (default: 4096, lower = less RAM)
   --timeout <seconds>      Per-request timeout (default: 180)
+  --path <type>            Filter by enrichment path: reformat | generate
   --help                   Show this help
 `);
       process.exit(0);
@@ -141,6 +162,25 @@ function printAnalysis(products: MergedProduct[], stats: any): void {
   console.log(`  Has gallery images:  ${withImages.length.toLocaleString()} (${pct(withImages.length, parents.length)})`);
   console.log(`  Has brand:           ${withBrand.length.toLocaleString()} (${pct(withBrand.length, parents.length)})`);
 
+  // Enrichment path distribution
+  const reformatCount = parents.filter((p) => classifyProduct(p) === 'reformat').length;
+  const generateCount = parents.length - reformatCount;
+  console.log(`\nEnrichment path distribution:`);
+  console.log(`  Reformat (>= 300 chars): ${reformatCount.toLocaleString()} (${pct(reformatCount, parents.length)})`);
+  console.log(`  Generate (< 300 chars):  ${generateCount.toLocaleString()} (${pct(generateCount, parents.length)})`);
+
+  // Category profile distribution
+  const profileCounts = new Map<string, number>();
+  for (const p of parents) {
+    const profile = matchCategoryProfile(p);
+    profileCounts.set(profile.id, (profileCounts.get(profile.id) || 0) + 1);
+  }
+  console.log(`\nCategory profile distribution:`);
+  const profileSorted = Array.from(profileCounts.entries()).sort((a, b) => b[1] - a[1]);
+  for (const [profileId, count] of profileSorted) {
+    console.log(`  ${profileId.padEnd(20)} ${count.toLocaleString()} (${pct(count, parents.length)})`);
+  }
+
   // Source breakdown
   const sourceGroups = new Map<string, number>();
   for (const p of parents) {
@@ -182,7 +222,7 @@ async function processProduct(
   llm: OllamaProvider,
   product: MergedProduct,
   parentTitle?: string
-): Promise<{ row: CsvRow; status: string }> {
+): Promise<{ row: CsvRow; status: string; result: GeneratedDescription }> {
   const result = await generateDescription(llm, product, parentTitle);
 
   // Embed images for parent products with successful generation
@@ -195,7 +235,6 @@ async function processProduct(
     product.galleryImageUrls.length > 0
   ) {
     finalHtml = embedImages(finalHtml, product.galleryImageUrls, product.title, product.brand);
-    // Count embedded images
     imagesEmbedded = (finalHtml.match(/<img /gi) || []).length;
   }
 
@@ -215,27 +254,46 @@ async function processProduct(
     images_embedded: imagesEmbedded,
     data_sources: product.dataSources.join('|'),
     enrichment_status: result.status,
+    enrichment_path: result.path,
   };
 
-  return { row, status: result.status };
+  return { row, status: result.status, result };
 }
 
 // ─── Dry-Run Mode ───
 
-async function runDryRun(llm: OllamaProvider, products: MergedProduct[], limit: number): Promise<void> {
-  const parents = products.filter((p) => p.postType === 'product');
-  const sample = parents.slice(0, limit);
+async function runDryRun(
+  llm: OllamaProvider,
+  products: MergedProduct[],
+  limit: number,
+  pathFilter?: 'reformat' | 'generate'
+): Promise<void> {
+  let parents = products.filter((p) => p.postType === 'product');
 
-  console.log(`\n🔬 Dry run: processing ${sample.length} sample products...\n`);
+  // Apply path filter if specified
+  if (pathFilter) {
+    parents = parents.filter((p) => classifyProduct(p) === pathFilter);
+    console.log(`\nFiltered to ${pathFilter} path: ${parents.length} products available`);
+  }
+
+  const sample = parents.slice(0, limit);
+  const variantCount = 5;
+
+  console.log(`\nDry run: processing ${sample.length} sample products...\n`);
 
   for (const product of sample) {
+    const enrichPath = classifyProduct(product);
+    const profile = matchCategoryProfile(product);
+    const variantIdx = product.postId % variantCount;
+
     console.log('─'.repeat(60));
     console.log(`Product #${product.postId}: ${product.title}`);
     console.log(`Brand: ${product.brand || '(none)'} | Categories: ${product.categories.join(', ') || '(none)'}`);
     console.log(`Sources: ${product.dataSources.join(', ')}`);
     console.log(`Gallery images: ${product.galleryImageUrls.length}`);
+    console.log(`Path: ${enrichPath} | Profile: ${profile.id} | Variant: ${variantIdx}`);
 
-    const { row, status } = await processProduct(llm, product);
+    const { row, status, result } = await processProduct(llm, product);
 
     console.log(`\nStatus: ${status}`);
     console.log(`SEO Title: ${row.meta_title}`);
@@ -262,10 +320,10 @@ async function runApply(
   if (opts.resume) {
     const existing = loadCheckpoint();
     if (existing) {
-      console.log(`\n♻️  Resuming from checkpoint (${existing.processedIds.length} already processed)`);
+      console.log(`\nResuming from checkpoint (${existing.processedIds.length} already processed)`);
       checkpoint = existing;
     } else {
-      console.log('\n⚠ No checkpoint found, starting fresh');
+      console.log('\nNo checkpoint found, starting fresh');
       checkpoint = createCheckpoint(csvPath);
       writeCsvHeader(csvPath);
     }
@@ -277,8 +335,15 @@ async function runApply(
   const processedSet = new Set(checkpoint.processedIds);
 
   // Separate parents and variations, filter already-processed
-  const parents = products
+  let parents = products
     .filter((p) => p.postType === 'product' && !processedSet.has(p.postId));
+
+  // Apply path filter
+  if (opts.pathFilter) {
+    parents = parents.filter((p) => classifyProduct(p) === opts.pathFilter);
+    console.log(`Filtered to ${opts.pathFilter} path: ${parents.length} products`);
+  }
+
   const variationsByParent = new Map<number, MergedProduct[]>();
   for (const v of products.filter((p) => p.postType === 'product_variation')) {
     const list = variationsByParent.get(v.parentId!) || [];
@@ -289,7 +354,7 @@ async function runApply(
   // Apply limit
   const toProcess = opts.limit ? parents.slice(0, opts.limit) : parents;
 
-  console.log(`\n📝 Processing ${toProcess.length} parent products...`);
+  console.log(`\nProcessing ${toProcess.length} parent products...`);
   console.log(`   Output: ${checkpoint.csvPath || csvPath}`);
   console.log(`   Batch size: ${opts.batchSize}, Concurrency: ${opts.concurrency}\n`);
 
@@ -359,7 +424,7 @@ async function runApply(
     // Error budget check
     if (shouldPause(batchErrors, batch.length)) {
       console.error(
-        `\n🛑 Error rate too high (${batchErrors}/${batch.length} in last batch). Pausing.`
+        `\nError rate too high (${batchErrors}/${batch.length} in last batch). Pausing.`
       );
       console.error('   Review errors in checkpoint, fix issues, then --resume.');
       break;
@@ -396,7 +461,7 @@ function printSummary(checkpoint: CheckpointData, csvPath: string, allProducts: 
     .slice(0, 5);
 
   if (samples.length > 0) {
-    console.log(`\n📋 Random sample products (check CSV for full content):`);
+    console.log(`\nRandom sample products (check CSV for full content):`);
     for (const s of samples) {
       console.log(`  #${s.postId}: ${s.title} [${s.brand || 'no brand'}]`);
     }
@@ -408,8 +473,11 @@ function printSummary(checkpoint: CheckpointData, csvPath: string, allProducts: 
 async function main(): Promise<void> {
   const opts = parseArgs();
 
-  console.log('🔄 Product Description Enrichment Pipeline');
+  console.log('Product Description Enrichment Pipeline');
   console.log(`   Mode: ${opts.mode} | Source: ${opts.source} | Model: ${opts.model} | Context: ${opts.numCtx} tokens`);
+  if (opts.pathFilter) {
+    console.log(`   Path filter: ${opts.pathFilter}`);
+  }
 
   // Step 1: Merge all data sources
   const { products, stats } = await mergeAllSources({ source: opts.source });
@@ -430,12 +498,12 @@ async function main(): Promise<void> {
   try {
     await llm.healthCheck();
   } catch (err: any) {
-    console.error(`\n❌ ${err.message}`);
+    console.error(`\n${err.message}`);
     process.exit(1);
   }
 
   if (opts.mode === 'dry-run') {
-    await runDryRun(llm, products, opts.limit || 5);
+    await runDryRun(llm, products, opts.limit || 5, opts.pathFilter);
     return;
   }
 
@@ -446,6 +514,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error('\n❌ Fatal error:', err.message);
+  console.error('\nFatal error:', err.message);
   process.exit(1);
 });

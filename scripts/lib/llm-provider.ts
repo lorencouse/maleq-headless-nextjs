@@ -2,7 +2,7 @@
  * Pluggable LLM provider interface with Ollama implementation.
  *
  * Usage:
- *   const llm = new OllamaProvider({ model: 'gpt-oss:20b' });
+ *   const llm = new OllamaProvider({ model: 'qwen3:8b' });
  *   await llm.healthCheck();
  *   const html = await llm.generate(prompt);
  */
@@ -27,7 +27,7 @@ export interface OllamaConfig {
   /**
    * Context window size in tokens. Lower = less RAM.
    * Default 4096 is good for 16GB RAM.
-   * gpt-oss:20b is MoE (3.6B active) so 4096 fits easily in 16GB.
+   * qwen3:8b is MoE (3.6B active) so 4096 fits easily in 16GB.
    */
   numCtx?: number;
 }
@@ -41,7 +41,7 @@ export class OllamaProvider implements LLMProvider {
 
   constructor(config: OllamaConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:11434';
-    this.model = config.model || 'gpt-oss:20b';
+    this.model = config.model || 'qwen3:8b';
     this.timeoutMs = config.timeoutMs || 180_000;
     this.maxRetries = config.maxRetries || 3;
     this.numCtx = config.numCtx || 4096;
@@ -132,6 +132,15 @@ export class OllamaProvider implements LLMProvider {
       throw new Error('Ollama returned empty response');
     }
 
-    return data.response.trim();
+    let result = data.response.trim();
+
+    // Strip <think>...</think> reasoning blocks (qwen3 models output these)
+    result = result.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+
+    if (!result) {
+      throw new Error('Ollama response was empty after stripping think tags');
+    }
+
+    return result;
   }
 }

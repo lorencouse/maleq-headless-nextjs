@@ -23,6 +23,7 @@ export interface CsvRow {
   images_embedded: number;
   data_sources: string;
   enrichment_status: string;
+  enrichment_path: string;
 }
 
 const CSV_COLUMNS: (keyof CsvRow)[] = [
@@ -41,6 +42,7 @@ const CSV_COLUMNS: (keyof CsvRow)[] = [
   'images_embedded',
   'data_sources',
   'enrichment_status',
+  'enrichment_path',
 ];
 
 /**
