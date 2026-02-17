@@ -182,16 +182,25 @@ export function rewriteWordPressUrls(html: string | undefined): string {
 
   // Replace WooCommerce add-to-cart shortcode output with custom placeholder
   // Product data is fetched via API using the product ID
-  // Match <p class="product woocommerce...">...</p> blocks specifically
-  // Use [\s\S] instead of . with s flag for ES2017 compatibility
+  // WordPress wraps shortcode output in <p><p class="product woocommerce...">...</p></p>
+  // We must match the outer <p> wrapper too, otherwise we get <p><div>...</div></p>
+  // which is invalid HTML (div can't nest inside p) and breaks React hydration
+  processed = processed.replace(
+    /<p>\s*<p\s+class="product woocommerce[^"]*"[^>]*>([\s\S]+?)<\/p>\s*<\/p>/g,
+    (match, innerContent) => {
+      const productIdMatch = innerContent.match(/data-product_id="(\d+)"/);
+      if (!productIdMatch) return match;
+      const productId = productIdMatch[1];
+      return `<div class="blog-add-to-cart-placeholder" data-product-id="${productId}"></div>`;
+    }
+  );
+
+  // Fallback: match without outer <p> wrapper (in case some shortcodes aren't double-wrapped)
   processed = processed.replace(
     /<p\s+class="product woocommerce[^"]*"[^>]*>([\s\S]+?)<\/p>/g,
     (match, innerContent) => {
       const productIdMatch = innerContent.match(/data-product_id="(\d+)"/);
-
-      // If no product ID found, return original
       if (!productIdMatch) return match;
-
       const productId = productIdMatch[1];
       return `<div class="blog-add-to-cart-placeholder" data-product-id="${productId}"></div>`;
     }
