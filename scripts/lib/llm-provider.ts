@@ -2,7 +2,7 @@
  * Pluggable LLM provider interface with Ollama implementation.
  *
  * Usage:
- *   const llm = new OllamaProvider({ model: 'qwen3:8b' });
+ *   const llm = new OllamaProvider({ model: 'gpt-oss:20b' });
  *   await llm.healthCheck();
  *   const html = await llm.generate(prompt);
  */
@@ -26,8 +26,8 @@ export interface OllamaConfig {
   maxRetries?: number;
   /**
    * Context window size in tokens. Lower = less RAM.
-   * Default 4096 is good for 16GB RAM with 20B models.
-   * Set to 2048 if running tight on memory.
+   * Default 4096 is good for 16GB RAM.
+   * gpt-oss:20b is MoE (3.6B active) so 4096 fits easily in 16GB.
    */
   numCtx?: number;
 }
@@ -41,7 +41,7 @@ export class OllamaProvider implements LLMProvider {
 
   constructor(config: OllamaConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:11434';
-    this.model = config.model || 'qwen3:8b';
+    this.model = config.model || 'gpt-oss:20b';
     this.timeoutMs = config.timeoutMs || 180_000;
     this.maxRetries = config.maxRetries || 3;
     this.numCtx = config.numCtx || 4096;

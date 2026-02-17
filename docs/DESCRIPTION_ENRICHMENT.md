@@ -51,13 +51,15 @@ bun scripts/enrich-descriptions.ts --apply --batch-size 50 --concurrency 2
 | `--batch-size <n>` | 50 | Products per checkpoint save |
 | `--concurrency <n>` | 1 | Parallel LLM calls |
 | `--source <type>` | all | Filter: `xml_active`, `xml_inactive`, `stc`, `all` |
-| `--model <name>` | llama3.1 | Ollama model name |
+| `--model <name>` | gpt-oss:20b | Ollama model name |
+| `--num-ctx <n>` | 4096 | Context window tokens (lower = less RAM) |
+| `--timeout <seconds>` | 180 | Per-request timeout |
 
 ## Prerequisites
 
 - **Ollama** running locally (`ollama serve`)
-- Model pulled (`ollama pull llama3.1`)
-- **Local by Flywheel** running (for local DB access)
+- Model pulled (`ollama pull gpt-oss:20b` — 14GB download, MoE with 3.6B active params, fits 16GB RAM)
+- Database access: **Local by Flywheel** running, or SSH tunnel to production with `--remote`
 
 ## How It Works
 
