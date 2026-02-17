@@ -2,7 +2,7 @@
  * Pluggable LLM provider interface with Ollama implementation.
  *
  * Usage:
- *   const llm = new OllamaProvider({ model: 'llama3.1' });
+ *   const llm = new OllamaProvider({ model: 'qwen3:8b' });
  *   await llm.healthCheck();
  *   const html = await llm.generate(prompt);
  */
@@ -24,6 +24,12 @@ export interface OllamaConfig {
   model?: string;
   timeoutMs?: number;
   maxRetries?: number;
+  /**
+   * Context window size in tokens. Lower = less RAM.
+   * Default 4096 is good for 16GB RAM with 20B models.
+   * Set to 2048 if running tight on memory.
+   */
+  numCtx?: number;
 }
 
 export class OllamaProvider implements LLMProvider {
@@ -31,12 +37,14 @@ export class OllamaProvider implements LLMProvider {
   private model: string;
   private timeoutMs: number;
   private maxRetries: number;
+  private numCtx: number;
 
   constructor(config: OllamaConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:11434';
-    this.model = config.model || 'llama3.1';
-    this.timeoutMs = config.timeoutMs || 120_000;
+    this.model = config.model || 'qwen3:8b';
+    this.timeoutMs = config.timeoutMs || 180_000;
     this.maxRetries = config.maxRetries || 3;
+    this.numCtx = config.numCtx || 4096;
   }
 
   async healthCheck(): Promise<void> {
@@ -98,7 +106,8 @@ export class OllamaProvider implements LLMProvider {
       stream: false,
       options: {
         temperature: options.temperature ?? 0.7,
-        num_predict: options.maxTokens ?? 2048,
+        num_predict: options.maxTokens ?? 1024,
+        num_ctx: this.numCtx,
       },
     };
 

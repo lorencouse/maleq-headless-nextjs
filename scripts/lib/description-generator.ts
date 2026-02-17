@@ -209,7 +209,10 @@ export async function generateDescription(
       ? buildVariationPrompt(product, parentTitle || '')
       : buildParentPrompt(product);
 
-    let html = await llm.generate(prompt, { system: SYSTEM_PROMPT, temperature: 0.7 });
+    // Variations need fewer tokens than parents
+    const maxTokens = isVariation ? 256 : 1024;
+
+    let html = await llm.generate(prompt, { system: SYSTEM_PROMPT, temperature: 0.7, maxTokens });
     html = markdownToHtml(html);
 
     // Validate
@@ -218,7 +221,7 @@ export async function generateDescription(
     if (!valid) {
       // Retry once
       console.warn(`  ⚠ Validation failed for ${product.postId}, retrying...`);
-      html = await llm.generate(prompt, { system: SYSTEM_PROMPT, temperature: 0.5 });
+      html = await llm.generate(prompt, { system: SYSTEM_PROMPT, temperature: 0.5, maxTokens });
       html = markdownToHtml(html);
 
       const retryValid = isVariation ? validateVariationHtml(html) : validateParentHtml(html);

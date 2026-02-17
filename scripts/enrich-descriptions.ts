@@ -39,6 +39,8 @@ interface CliOptions {
   concurrency: number;
   source: MergeOptions['source'];
   model: string;
+  numCtx: number;
+  timeoutMs: number;
 }
 
 function parseArgs(): CliOptions {
@@ -49,7 +51,9 @@ function parseArgs(): CliOptions {
     batchSize: 50,
     concurrency: 1,
     source: 'all',
-    model: 'llama3.1',
+    model: 'qwen3:8b',
+    numCtx: 4096,
+    timeoutMs: 180_000,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -68,6 +72,10 @@ function parseArgs(): CliOptions {
       opts.source = args[++i] as MergeOptions['source'];
     } else if (arg === '--model' && i + 1 < args.length) {
       opts.model = args[++i];
+    } else if (arg === '--num-ctx' && i + 1 < args.length) {
+      opts.numCtx = parseInt(args[++i], 10);
+    } else if (arg === '--timeout' && i + 1 < args.length) {
+      opts.timeoutMs = parseInt(args[++i], 10) * 1000;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Product Description Enrichment Pipeline
@@ -86,7 +94,9 @@ Options:
   --batch-size <n>         Products per batch (default: 50)
   --concurrency <n>        Parallel LLM calls (default: 1)
   --source <type>          Filter: xml_active | xml_inactive | stc | all (default: all)
-  --model <name>           Ollama model (default: llama3.1)
+  --model <name>           Ollama model (default: qwen3:8b)
+  --num-ctx <n>            Context window tokens (default: 4096, lower = less RAM)
+  --timeout <seconds>      Per-request timeout (default: 180)
   --help                   Show this help
 `);
       process.exit(0);
@@ -399,7 +409,7 @@ async function main(): Promise<void> {
   const opts = parseArgs();
 
   console.log('🔄 Product Description Enrichment Pipeline');
-  console.log(`   Mode: ${opts.mode} | Source: ${opts.source} | Model: ${opts.model}`);
+  console.log(`   Mode: ${opts.mode} | Source: ${opts.source} | Model: ${opts.model} | Context: ${opts.numCtx} tokens`);
 
   // Step 1: Merge all data sources
   const { products, stats } = await mergeAllSources({ source: opts.source });
@@ -411,7 +421,11 @@ async function main(): Promise<void> {
   }
 
   // For dry-run and apply, we need the LLM
-  const llm = new OllamaProvider({ model: opts.model });
+  const llm = new OllamaProvider({
+    model: opts.model,
+    numCtx: opts.numCtx,
+    timeoutMs: opts.timeoutMs,
+  });
 
   try {
     await llm.healthCheck();
