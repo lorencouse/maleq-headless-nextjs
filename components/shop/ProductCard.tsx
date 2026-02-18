@@ -33,10 +33,14 @@ export default memo(function ProductCard({
 }: ProductCardProps) {
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
 
-  // Retry failed image by appending cache-bust param
   const handleImageError = useCallback(() => {
     setImgError(true);
+  }, []);
+
+  const handleImageLoad = useCallback(() => {
+    setImgLoaded(true);
   }, []);
 
   // Get first category
@@ -52,14 +56,20 @@ export default memo(function ProductCard({
       >
         <div className='relative h-44 sm:h-56 lg:h-64 w-full overflow-hidden bg-background'>
           {product.image && !imgError ? (
-            <Image
-              src={product.image.url}
-              alt={product.image.altText || product.name}
-              fill
-              className='object-contain group-hover:scale-105 transition-transform duration-300'
-              sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
-              onError={handleImageError}
-            />
+            <>
+              {!imgLoaded && (
+                <div className='absolute inset-0 bg-muted animate-pulse' />
+              )}
+              <Image
+                src={product.image.url}
+                alt={product.image.altText || product.name}
+                fill
+                className={`object-contain group-hover:scale-105 transition-all duration-300 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
+                onError={handleImageError}
+                onLoad={handleImageLoad}
+              />
+            </>
           ) : (
             <div className='flex items-center justify-center h-full text-muted-foreground'>
               No Image

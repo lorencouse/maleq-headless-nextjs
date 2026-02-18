@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { VariationImage, GalleryProductImage } from '@/lib/types/product';
 
@@ -15,6 +16,7 @@ interface ProductImageGalleryProps {
   selectedVariationImage?: VariationImage | null;
   variationImageMap?: VariationImageMapping[];
   onVariationSelectByImage?: (variationId: string) => void;
+  productDatabaseId?: number;
 }
 
 const isVideo = (url: string) => /\.(mp4|webm|mov|avi|ogv)(\?|$)/i.test(url);
@@ -25,12 +27,16 @@ export default function ProductImageGallery({
   selectedVariationImage,
   variationImageMap,
   onVariationSelectByImage,
+  productDatabaseId,
 }: ProductImageGalleryProps) {
+  const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(images[0] || null);
+  const [mainImageLoaded, setMainImageLoaded] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+  const [isSettingDefault, setIsSettingDefault] = useState(false);
 
   const handleImageError = useCallback((imageUrl: string) => {
     setFailedImages(prev => new Set(prev).add(imageUrl));
@@ -38,6 +44,9 @@ export default function ProductImageGallery({
 
   // When a thumbnail is clicked, also select the matching variation if one exists
   const handleThumbnailClick = useCallback((image: GalleryProductImage) => {
+    if (image.url !== selectedImage?.url) {
+      setMainImageLoaded(false);
+    }
     setSelectedImage(image);
 
     if (variationImageMap && onVariationSelectByImage) {
@@ -55,7 +64,7 @@ export default function ProductImageGallery({
   // When variation image changes, update the display
   useEffect(() => {
     if (selectedVariationImage) {
-      // Create a temporary image object for the variation
+      setMainImageLoaded(false);
       setSelectedImage({
         id: 'variation-image',
         url: selectedVariationImage.url,
@@ -100,6 +109,35 @@ export default function ProductImageGallery({
     }
   };
 
+  const isDev = process.env.NODE_ENV === 'development';
+  const showSetDefault =
+    isDev &&
+    productDatabaseId &&
+    selectedImage &&
+    !selectedImage.isPrimary &&
+    selectedImage.id !== 'variation-image';
+
+  const handleSetDefault = useCallback(async () => {
+    if (!productDatabaseId || !selectedImage) return;
+    setIsSettingDefault(true);
+    try {
+      const res = await fetch('/api/dev/set-default-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: productDatabaseId,
+          imageId: parseInt(selectedImage.id, 10),
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to set default image');
+      router.refresh();
+    } catch (err) {
+      console.error('Set default image error:', err);
+    } finally {
+      setIsSettingDefault(false);
+    }
+  }, [productDatabaseId, selectedImage, router]);
+
   if (!images || images.length === 0) {
     return (
       <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
@@ -126,16 +164,33 @@ export default function ProductImageGallery({
             Image unavailable
           </div>
         ) : (
-          <Image
-            src={selectedImage?.url || images[0].url}
-            alt={selectedImage?.altText || productName}
-            title={selectedImage?.title || productName}
-            fill
-            className="object-contain"
-            priority
-            sizes="(max-width: 768px) 100vw, 50vw"
-            onError={() => handleImageError(selectedImage?.url || images[0].url)}
-          />
+          <>
+            {!mainImageLoaded && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
+              </div>
+            )}
+            <Image
+              src={selectedImage?.url || images[0].url}
+              alt={selectedImage?.altText || productName}
+              title={selectedImage?.title || productName}
+              fill
+              className={`object-contain transition-opacity duration-200 ${mainImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              priority
+              sizes="(max-width: 768px) 100vw, 50vw"
+              onError={() => handleImageError(selectedImage?.url || images[0].url)}
+              onLoad={() => setMainImageLoaded(true)}
+            />
+          </>
+        )}
+        {showSetDefault && (
+          <button
+            onClick={handleSetDefault}
+            disabled={isSettingDefault}
+            className="absolute bottom-2 left-2 z-10 px-3 py-1.5 text-xs font-medium rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-colors disabled:opacity-50"
+          >
+            {isSettingDefault ? 'Setting…' : 'Set as Default'}
+          </button>
         )}
       </div>
 

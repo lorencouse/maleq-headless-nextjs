@@ -22,6 +22,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [mainImageLoaded, setMainImageLoaded] = useState(false);
 
   const isVariable = product.type === 'VARIABLE';
   const displayStockStatus = product.stockStatus;
@@ -129,13 +130,21 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Main Image */}
               <div className="relative aspect-square bg-muted rounded-lg overflow-hidden">
                 {gallery[selectedImageIndex] ? (
-                  <Image
-                    src={gallery[selectedImageIndex]!.url}
-                    alt={gallery[selectedImageIndex]!.altText || product.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
+                  <>
+                    {!mainImageLoaded && (
+                      <div className="absolute inset-0 z-10 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-muted-foreground/30 border-t-primary rounded-full animate-spin" />
+                      </div>
+                    )}
+                    <Image
+                      src={gallery[selectedImageIndex]!.url}
+                      alt={gallery[selectedImageIndex]!.altText || product.name}
+                      fill
+                      className={`object-cover transition-opacity duration-200 ${mainImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      onLoad={() => setMainImageLoaded(true)}
+                    />
+                  </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
                     No Image
@@ -159,7 +168,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   {gallery.map((img, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedImageIndex(index)}
+                      onClick={() => { setMainImageLoaded(false); setSelectedImageIndex(index); }}
                       className={`relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
                         selectedImageIndex === index
                           ? 'border-primary'
