@@ -1,31 +1,10 @@
 import { MetadataRoute } from 'next';
-import { getClient } from '@/lib/apollo/client';
-import { GET_ALL_PRODUCT_SLUGS, GET_ALL_PRODUCT_CATEGORIES, GET_ALL_BRANDS } from '@/lib/queries/products';
-import { GET_ALL_POST_SLUGS, GET_ALL_CATEGORIES, GET_ALL_TAGS } from '@/lib/queries/posts';
-import { RequestDocument } from 'graphql-request';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
-const PAGE_SIZE = 500;
 const PRODUCTS_PER_SEGMENT = 5000;
 
 export const revalidate = 86400; // Cache for 24h, regenerate on request
 export const maxDuration = 120; // Allow up to 120s per segment
-
-/**
- * Get the total number of product segments needed.
- * Uses static cache count when available, falls back to GraphQL.
- */
-async function getProductSegmentCount(): Promise<number> {
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
-    const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
-    if (hasStaticCache()) {
-      return Math.ceil(getAllStaticSlugs().length / PRODUCTS_PER_SEGMENT);
-    }
-  }
-  // Fallback: fetch total count via GraphQL
-  const allSlugs = await fetchAllSlugs(GET_ALL_PRODUCT_SLUGS, 'products');
-  return Math.ceil(allSlugs.length / PRODUCTS_PER_SEGMENT);
-}
 
 /**
  * Generate sitemap segment IDs.
@@ -33,7 +12,10 @@ async function getProductSegmentCount(): Promise<number> {
  * Segments 1-N: products (~5K per segment, computed from actual product count)
  */
 export async function generateSitemaps() {
-  const productSegments = await getProductSegmentCount();
+  const { getAllIndexEntries } = await import('@/lib/products/product-index');
+  const entries = await getAllIndexEntries();
+  const productSegments = Math.ceil(entries.length / PRODUCTS_PER_SEGMENT);
+
   const ids = [];
   // Segment 0: non-product content
   ids.push({ id: 0 });
@@ -42,121 +24,6 @@ export async function generateSitemaps() {
     ids.push({ id: i });
   }
   return ids;
-}
-
-/**
- * Fetch all slugs from a paginated WPGraphQL connection.
- */
-async function fetchAllSlugs(
-  query: RequestDocument,
-  rootField: string,
-  pageSize = PAGE_SIZE,
-): Promise<string[]> {
-  const client = getClient();
-  const allSlugs: string[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  while (hasNextPage) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: { data: Record<string, any> } = await client.query({
-        query,
-        variables: { first: pageSize, after },
-      });
-
-      const nodes: { slug: string }[] = result.data?.[rootField]?.nodes || [];
-      allSlugs.push(...nodes.map((n) => n.slug));
-
-      hasNextPage = result.data?.[rootField]?.pageInfo?.hasNextPage ?? false;
-      after = result.data?.[rootField]?.pageInfo?.endCursor ?? null;
-    } catch (error) {
-      console.error(`Error fetching ${rootField} slugs for sitemap (after: ${after}):`, error);
-      break;
-    }
-  }
-
-  return allSlugs;
-}
-
-/**
- * Fetch a slice of product slugs using cursor-based pagination.
- * Skips `skipItems` products, then fetches up to `maxItems`.
- */
-async function fetchProductSlugSegment(
-  skipItems: number,
-  maxItems: number,
-): Promise<string[]> {
-  const client = getClient();
-  const slugs: string[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-  let skipped = 0;
-
-  while (hasNextPage) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: { data: Record<string, any> } = await client.query({
-        query: GET_ALL_PRODUCT_SLUGS,
-        variables: { first: PAGE_SIZE, after },
-      });
-
-      const nodes: { slug: string }[] = result.data?.products?.nodes || [];
-      hasNextPage = result.data?.products?.pageInfo?.hasNextPage ?? false;
-      after = result.data?.products?.pageInfo?.endCursor ?? null;
-
-      for (const node of nodes) {
-        if (skipped < skipItems) {
-          skipped++;
-          continue;
-        }
-        slugs.push(node.slug);
-        if (slugs.length >= maxItems) {
-          return slugs;
-        }
-      }
-    } catch (error) {
-      console.error(`Error fetching product slugs segment (skip: ${skipItems}, after: ${after}):`, error);
-      break;
-    }
-  }
-
-  return slugs;
-}
-
-/**
- * Fetch all nodes from a paginated WPGraphQL connection.
- */
-async function fetchAllNodes<T>(
-  query: RequestDocument,
-  rootField: string,
-  pageSize = PAGE_SIZE,
-): Promise<T[]> {
-  const client = getClient();
-  const allNodes: T[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  while (hasNextPage) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: { data: Record<string, any> } = await client.query({
-        query,
-        variables: { first: pageSize, after },
-      });
-
-      const nodes: T[] = result.data?.[rootField]?.nodes || [];
-      allNodes.push(...nodes);
-
-      hasNextPage = result.data?.[rootField]?.pageInfo?.hasNextPage ?? false;
-      after = result.data?.[rootField]?.pageInfo?.endCursor ?? null;
-    } catch (error) {
-      console.error(`Error fetching ${rootField} for sitemap (after: ${after}):`, error);
-      break;
-    }
-  }
-
-  return allNodes;
 }
 
 export default async function sitemap(props: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
@@ -177,48 +44,21 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${SITE_URL}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     ];
 
-    // Use static post cache if available
-    let postSlugsPromise: Promise<string[]>;
-    if (process.env.USE_STATIC_PRODUCTS === 'true') {
-      const { getAllStaticPostSlugs, hasStaticPostCache } = await import('@/lib/blog/static-post-service');
-      postSlugsPromise = hasStaticPostCache()
-        ? Promise.resolve(getAllStaticPostSlugs())
-        : fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
-    } else {
-      postSlugsPromise = fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
-    }
+    const { loadFlatCategories } = await import('@/lib/db/category-loader');
+    const { loadBrands } = await import('@/lib/db/taxonomy-loader');
+    const { getAllPostSlugs } = await import('@/lib/db/post-queries');
+    const { loadBlogCategories, loadBlogTags } = await import('@/lib/db/blog-loader');
 
-    // Try static taxonomy cache first, fall back to GraphQL
-    const {
-      getStaticProductCategories,
-      getStaticBrands,
-      getStaticBlogCategories,
-      getStaticBlogTags,
-    } = await import('@/lib/taxonomies/static-taxonomy-service');
-
-    const cachedCategories = getStaticProductCategories();
-    const cachedBrands = getStaticBrands();
-    const cachedBlogCategories = getStaticBlogCategories();
-    const cachedBlogTags = getStaticBlogTags();
-
-    const [categoryNodes, brandNodes, postSlugs, blogCategoryNodes, blogTagNodes] = await Promise.all([
-      cachedCategories
-        ? Promise.resolve(cachedCategories.map((c) => ({ slug: c.slug, count: (c as any).count ?? 1 })))
-        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_PRODUCT_CATEGORIES, 'productCategories'),
-      cachedBrands
-        ? Promise.resolve(cachedBrands.map((b) => ({ slug: b.slug, count: b.count ?? 1 })))
-        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_BRANDS, 'productBrands'),
-      postSlugsPromise,
-      cachedBlogCategories
-        ? Promise.resolve(cachedBlogCategories.map((c) => ({ slug: c.slug, count: c.count ?? 1 })))
-        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_CATEGORIES, 'categories'),
-      cachedBlogTags
-        ? Promise.resolve(cachedBlogTags.map((t) => ({ slug: t.slug, count: t.count ?? 1 })))
-        : fetchAllNodes<{ slug: string; count: number }>(GET_ALL_TAGS, 'tags'),
+    const [categories, brands, postSlugs, blogCategories, blogTags] = await Promise.all([
+      loadFlatCategories(),
+      loadBrands(),
+      getAllPostSlugs(),
+      loadBlogCategories(),
+      loadBlogTags(),
     ]);
 
-    const categoryPages: MetadataRoute.Sitemap = categoryNodes
-      .filter((c) => c.count > 0)
+    const categoryPages: MetadataRoute.Sitemap = categories
+      .filter((c) => (c.count ?? 0) > 0)
       .map((c) => ({
         url: `${SITE_URL}/sex-toys/${c.slug}`,
         lastModified: new Date(),
@@ -226,7 +66,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
         priority: 0.7,
       }));
 
-    const brandPages: MetadataRoute.Sitemap = brandNodes
+    const brandPages: MetadataRoute.Sitemap = brands
       .filter((b) => b.count > 0)
       .map((b) => ({
         url: `${SITE_URL}/brand/${b.slug}`,
@@ -242,7 +82,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       priority: 0.6,
     }));
 
-    const blogCategoryPages: MetadataRoute.Sitemap = blogCategoryNodes
+    const blogCategoryPages: MetadataRoute.Sitemap = blogCategories
       .filter((c) => c.count > 0)
       .map((c) => ({
         url: `${SITE_URL}/guides/category/${c.slug}`,
@@ -251,7 +91,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
         priority: 0.5,
       }));
 
-    const blogTagPages: MetadataRoute.Sitemap = blogTagNodes
+    const blogTagPages: MetadataRoute.Sitemap = blogTags
       .filter((t) => t.count > 0)
       .map((t) => ({
         url: `${SITE_URL}/guides/tag/${t.slug}`,
@@ -261,26 +101,17 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       }));
 
     const allUrls = [...staticPages, ...categoryPages, ...brandPages, ...blogPages, ...blogCategoryPages, ...blogTagPages];
-    console.log(`Sitemap segment 0: ${allUrls.length} URLs (categories: ${categoryNodes.length}, brands: ${brandNodes.length}, posts: ${postSlugs.length})`);
+    console.log(`Sitemap segment 0: ${allUrls.length} URLs (categories: ${categories.length}, brands: ${brands.length}, posts: ${postSlugs.length})`);
     return allUrls;
   }
 
   // Segments 1+: products (~5K per segment)
+  const { getAllIndexEntries } = await import('@/lib/products/product-index');
+  const allEntries = await getAllIndexEntries();
   const skipItems = (id - 1) * PRODUCTS_PER_SEGMENT;
-  let productSlugs: string[];
-
-  // Use static cache if available (avoids GraphQL pagination)
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
-    const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
-    if (hasStaticCache()) {
-      const allSlugs = getAllStaticSlugs();
-      productSlugs = allSlugs.slice(skipItems, skipItems + PRODUCTS_PER_SEGMENT);
-    } else {
-      productSlugs = await fetchProductSlugSegment(skipItems, PRODUCTS_PER_SEGMENT);
-    }
-  } else {
-    productSlugs = await fetchProductSlugSegment(skipItems, PRODUCTS_PER_SEGMENT);
-  }
+  const productSlugs = allEntries
+    .slice(skipItems, skipItems + PRODUCTS_PER_SEGMENT)
+    .map(e => e.slug);
 
   if (productSlugs.length === 0) {
     return [];

@@ -1,16 +1,3 @@
-import { getClient } from '@/lib/apollo/client';
-import {
-  GET_ALL_PRODUCT_SLUGS,
-  GET_ALL_PRODUCT_CATEGORIES,
-  GET_ALL_BRANDS,
-} from '@/lib/queries/products';
-import {
-  GET_ALL_POST_SLUGS,
-  GET_ALL_CATEGORIES,
-  GET_ALL_TAGS,
-} from '@/lib/queries/posts';
-import { RequestDocument } from 'graphql-request';
-
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -57,114 +44,7 @@ const completionTimestamps: number[] = [];
 const SLIDING_WINDOW_MS = 60_000;
 
 // ---------------------------------------------------------------------------
-// Static cache slug fetching (reads from .cache/ JSON files)
-// ---------------------------------------------------------------------------
-
-async function getStaticTaxonomySlugs(
-  getter: () => { slug: string; count?: number | null }[] | null,
-  label: string,
-): Promise<string[] | null> {
-  try {
-    const items = getter();
-    if (items) {
-      const slugs = items
-        .filter((item) => (item.count ?? 1) > 0)
-        .map((item) => item.slug);
-      console.log(`[cache-warmer] Using static cache for ${label} slugs (${slugs.length} slugs)`);
-      return slugs;
-    }
-  } catch {
-    // Static cache not available
-  }
-  return null;
-}
-
-async function getStaticProductSlugs(): Promise<string[] | null> {
-  try {
-    const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
-    if (hasStaticCache()) {
-      return getAllStaticSlugs();
-    }
-  } catch {
-    // Static cache not available
-  }
-  return null;
-}
-
-async function getStaticPostSlugs(): Promise<string[] | null> {
-  try {
-    const { getAllStaticPostSlugs, hasStaticPostCache } = await import('@/lib/blog/static-post-service');
-    if (hasStaticPostCache()) {
-      return getAllStaticPostSlugs();
-    }
-  } catch {
-    // Static cache not available
-  }
-  return null;
-}
-
-// ---------------------------------------------------------------------------
-// GraphQL slug fetching (fallback when static cache unavailable)
-// ---------------------------------------------------------------------------
-
-const PAGE_SIZE = 500;
-
-async function fetchAllSlugs(
-  query: RequestDocument,
-  rootField: string,
-): Promise<string[]> {
-  const client = getClient();
-  const allSlugs: string[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  while (hasNextPage) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: { data: Record<string, any> } = await client.query({
-      query,
-      variables: { first: PAGE_SIZE, after },
-    });
-
-    const nodes: { slug: string }[] = result.data?.[rootField]?.nodes || [];
-    allSlugs.push(...nodes.map((n) => n.slug));
-
-    hasNextPage = result.data?.[rootField]?.pageInfo?.hasNextPage ?? false;
-    after = result.data?.[rootField]?.pageInfo?.endCursor ?? null;
-  }
-
-  return allSlugs;
-}
-
-async function fetchAllNodeSlugs(
-  query: RequestDocument,
-  rootField: string,
-): Promise<string[]> {
-  const client = getClient();
-  const allSlugs: string[] = [];
-  let hasNextPage = true;
-  let after: string | null = null;
-
-  while (hasNextPage) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: { data: Record<string, any> } = await client.query({
-      query,
-      variables: { first: PAGE_SIZE, after },
-    });
-
-    const nodes: { slug: string; count?: number }[] =
-      result.data?.[rootField]?.nodes || [];
-    // Only include non-empty taxonomy terms
-    allSlugs.push(...nodes.filter((n) => (n.count ?? 1) > 0).map((n) => n.slug));
-
-    hasNextPage = result.data?.[rootField]?.pageInfo?.hasNextPage ?? false;
-    after = result.data?.[rootField]?.pageInfo?.endCursor ?? null;
-  }
-
-  return allSlugs;
-}
-
-// ---------------------------------------------------------------------------
-// URL builders per type (with static cache → GraphQL fallback)
+// URL builders per type (all using SQL / product-index)
 // ---------------------------------------------------------------------------
 
 const TYPE_CONFIG: Record<
@@ -176,65 +56,48 @@ const TYPE_CONFIG: Record<
 > = {
   blog: {
     fetchSlugs: async () => {
-      const cached = await getStaticPostSlugs();
-      if (cached) {
-        console.log(`[cache-warmer] Using static cache for blog slugs (${cached.length} slugs)`);
-        return cached;
-      }
-      console.log('[cache-warmer] Static cache unavailable for blog, falling back to GraphQL');
-      return fetchAllSlugs(GET_ALL_POST_SLUGS, 'posts');
+      const { getAllPostSlugs } = await import('@/lib/db/post-queries');
+      return getAllPostSlugs();
     },
     pathPrefix: '/guides/',
   },
   'blog-category': {
     fetchSlugs: async () => {
-      const { getStaticBlogCategories } = await import('@/lib/taxonomies/static-taxonomy-service');
-      const cached = await getStaticTaxonomySlugs(getStaticBlogCategories, 'blog-category');
-      if (cached) return cached;
-      console.log('[cache-warmer] Static cache unavailable for blog-category, falling back to GraphQL');
-      return fetchAllNodeSlugs(GET_ALL_CATEGORIES, 'categories');
+      const { loadBlogCategories } = await import('@/lib/db/blog-loader');
+      const cats = await loadBlogCategories();
+      return cats.filter(c => (c.count ?? 1) > 0).map(c => c.slug);
     },
     pathPrefix: '/guides/category/',
   },
   'blog-tag': {
     fetchSlugs: async () => {
-      const { getStaticBlogTags } = await import('@/lib/taxonomies/static-taxonomy-service');
-      const cached = await getStaticTaxonomySlugs(getStaticBlogTags, 'blog-tag');
-      if (cached) return cached;
-      console.log('[cache-warmer] Static cache unavailable for blog-tag, falling back to GraphQL');
-      return fetchAllNodeSlugs(GET_ALL_TAGS, 'tags');
+      const { loadBlogTags } = await import('@/lib/db/blog-loader');
+      const tags = await loadBlogTags();
+      return tags.filter(t => (t.count ?? 1) > 0).map(t => t.slug);
     },
     pathPrefix: '/guides/tag/',
   },
   category: {
     fetchSlugs: async () => {
-      const { getStaticProductCategories } = await import('@/lib/taxonomies/static-taxonomy-service');
-      const cached = await getStaticTaxonomySlugs(getStaticProductCategories, 'category');
-      if (cached) return cached;
-      console.log('[cache-warmer] Static cache unavailable for category, falling back to GraphQL');
-      return fetchAllNodeSlugs(GET_ALL_PRODUCT_CATEGORIES, 'productCategories');
+      const { loadFlatCategories } = await import('@/lib/db/category-loader');
+      const cats = await loadFlatCategories();
+      return cats.filter(c => (c.count ?? 0) > 0).map(c => c.slug);
     },
     pathPrefix: '/sex-toys/',
   },
   brand: {
     fetchSlugs: async () => {
-      const { getStaticBrands } = await import('@/lib/taxonomies/static-taxonomy-service');
-      const cached = await getStaticTaxonomySlugs(getStaticBrands, 'brand');
-      if (cached) return cached;
-      console.log('[cache-warmer] Static cache unavailable for brand, falling back to GraphQL');
-      return fetchAllNodeSlugs(GET_ALL_BRANDS, 'productBrands');
+      const { loadBrands } = await import('@/lib/db/taxonomy-loader');
+      const brands = await loadBrands();
+      return brands.filter(b => b.count > 0).map(b => b.slug);
     },
     pathPrefix: '/brand/',
   },
   product: {
     fetchSlugs: async () => {
-      const cached = await getStaticProductSlugs();
-      if (cached) {
-        console.log(`[cache-warmer] Using static cache for product slugs (${cached.length} slugs)`);
-        return cached;
-      }
-      console.log('[cache-warmer] Static cache unavailable for products, falling back to GraphQL');
-      return fetchAllSlugs(GET_ALL_PRODUCT_SLUGS, 'products');
+      const { getAllIndexEntries } = await import('@/lib/products/product-index');
+      const entries = await getAllIndexEntries();
+      return entries.map(e => e.slug);
     },
     pathPrefix: '/product/',
   },

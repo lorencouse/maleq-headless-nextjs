@@ -1,16 +1,11 @@
 /**
  * Search Index - Fuzzy suggestions using MiniSearch
  *
- * Replaces Fuse.js + simple-spellchecker with MiniSearch for:
- * - Smaller bundle (~5.8 kB vs ~23 kB)
- * - Faster search on large datasets (inverted index vs linear scan)
- * - Built-in fuzzy matching, prefix search, and typo tolerance
+ * Builds vocabulary from the in-memory product index (SQL-backed).
+ * No GraphQL or static JSON cache needed.
  */
 
 import MiniSearch from 'minisearch';
-import { getClient } from '@/lib/apollo/client';
-import { gql } from 'graphql-request';
-import { getStaticSearchVocabulary } from '@/lib/taxonomies/static-taxonomy-service';
 
 // ============================================================================
 // Product Vocabulary Index (MiniSearch)
@@ -27,35 +22,6 @@ let vocabularyTimestamp = 0;
 let vocabularyLoading: Promise<MiniSearch<VocabularyItem>> | null = null;
 const VOCABULARY_TTL = 60 * 60 * 1000; // 1 hour (vocabulary changes rarely)
 
-const GET_PRODUCT_NAMES_PAGE = gql`
-  query GetProductNamesPage($first: Int = 500, $after: String) {
-    products(first: $first, after: $after) {
-      nodes {
-        name
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-    }
-  }
-`;
-
-const GET_TAXONOMY_VOCABULARY = gql`
-  query GetTaxonomyVocabulary {
-    productBrands(first: 500) {
-      nodes {
-        name
-      }
-    }
-    productCategories(first: 500, where: { hideEmpty: true }) {
-      nodes {
-        name
-      }
-    }
-  }
-`;
-
 function createSearchIndex(): MiniSearch<VocabularyItem> {
   return new MiniSearch<VocabularyItem>({
     fields: ['term'],
@@ -66,39 +32,6 @@ function createSearchIndex(): MiniSearch<VocabularyItem> {
       boost: { term: 1 },
     },
   });
-}
-
-interface ProductNamesResponse {
-  products: {
-    nodes: { name: string }[];
-    pageInfo: { hasNextPage: boolean; endCursor: string | null };
-  };
-}
-
-async function fetchAllProductNames(): Promise<string[]> {
-  const names: string[] = [];
-  let afterCursor: string | null = null;
-  let hasNextPage = true;
-  let pageCount = 0;
-  const MAX_PAGES = 100; // Safety limit (~50K products max)
-
-  while (hasNextPage && pageCount < MAX_PAGES) {
-    const result: { data: ProductNamesResponse } = await getClient().query({
-      query: GET_PRODUCT_NAMES_PAGE,
-      variables: { first: 500, after: afterCursor },
-    });
-
-    const nodes = result.data?.products?.nodes || [];
-    for (const p of nodes) {
-      if (p.name) names.push(p.name);
-    }
-
-    hasNextPage = result.data?.products?.pageInfo?.hasNextPage ?? false;
-    afterCursor = result.data?.products?.pageInfo?.endCursor ?? null;
-    pageCount++;
-  }
-
-  return names;
 }
 
 function buildIndexFromVocabulary(
@@ -161,34 +94,30 @@ async function getSearchIndex(): Promise<MiniSearch<VocabularyItem>> {
 
   vocabularyLoading = (async () => {
     try {
-      // Try static vocabulary cache first (eliminates 70+ GraphQL requests)
-      const cached = getStaticSearchVocabulary();
-      if (cached) {
-        const index = buildIndexFromVocabulary(cached.productNames, cached.brandNames, cached.categoryNames);
-        searchIndex = index;
-        vocabularyTimestamp = now;
-        vocabularyLoading = null;
-        console.log('[SpellCheck] Loaded vocabulary from static cache');
-        return index;
+      // Build vocabulary from the in-memory product index (SQL-backed)
+      const { getAllIndexEntries } = await import('@/lib/products/product-index');
+      const entries = await getAllIndexEntries();
+
+      const productNames = entries.map(e => e.name);
+      const brandSet = new Set<string>();
+      const categorySet = new Set<string>();
+
+      for (const entry of entries) {
+        if (entry.brandName) brandSet.add(entry.brandName);
+        for (const catName of entry.categoryNames) {
+          categorySet.add(catName);
+        }
       }
 
-      // Fallback: fetch via GraphQL (paginated)
-      const [productNames, taxonomyResult] = await Promise.all([
-        fetchAllProductNames(),
-        getClient().query({ query: GET_TAXONOMY_VOCABULARY }),
-      ]);
-
-      const brands: string[] = (taxonomyResult.data?.productBrands?.nodes || [])
-        .map((b: { name: string }) => b.name)
-        .filter(Boolean);
-      const categories: string[] = (taxonomyResult.data?.productCategories?.nodes || [])
-        .map((c: { name: string }) => c.name)
-        .filter(Boolean);
-
-      const index = buildIndexFromVocabulary(productNames, brands, categories);
+      const index = buildIndexFromVocabulary(
+        productNames,
+        Array.from(brandSet),
+        Array.from(categorySet),
+      );
       searchIndex = index;
       vocabularyTimestamp = now;
       vocabularyLoading = null;
+      console.log('[SpellCheck] Built vocabulary from product index');
       return index;
     } catch (error) {
       console.error('[SpellCheck] Failed to load vocabulary:', error);

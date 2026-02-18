@@ -18,7 +18,6 @@ import {
   matchesAnyTerm,
 } from '@/lib/utils/search-helpers';
 import { stripHtml } from '@/lib/utils/text-utils';
-import { getStaticBlogCategories } from '@/lib/taxonomies/static-taxonomy-service';
 
 interface CategoryNode {
   id: string;
@@ -394,15 +393,10 @@ export async function getBlogSearchSuggestions(
   const searchTerms = tokenizeQuery(searchQuery);
   const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : searchQuery;
 
-  // Get categories (try SQL → static cache → GraphQL)
+  // Get categories (try SQL → GraphQL)
   let allCategories: CategoryNode[] = [];
-  const cachedBlogCategories = getStaticBlogCategories();
 
-  if (cachedBlogCategories) {
-    allCategories = cachedBlogCategories.map(c => ({
-      id: c.id, name: c.name, slug: c.slug, count: c.count || 0,
-    }));
-  } else if (await isMySQLAvailable()) {
+  if (await isMySQLAvailable()) {
     try {
       const { loadBlogCategories } = await import('@/lib/db/blog-loader');
       const cats = await loadBlogCategories();
@@ -537,11 +531,6 @@ export async function getBlogSearchSuggestions(
  * Get all blog categories
  */
 export async function getBlogCategories(): Promise<BlogCategory[]> {
-  try {
-    const cached = getStaticBlogCategories();
-    if (cached) return cached;
-  } catch {}
-
   // Try MySQL first
   if (await isMySQLAvailable()) {
     try {

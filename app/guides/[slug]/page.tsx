@@ -48,18 +48,11 @@ export async function generateMetadata({
 
   let post: Post | null = null;
 
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
-    const { getStaticPost } = await import('@/lib/blog/static-post-service');
-    post = getStaticPost(slug);
-  }
-
-  if (!post) {
-    const { data } = await getClient().query({
-      query: GET_POST_BY_SLUG,
-      variables: { slug },
-    });
-    post = data?.postBy;
-  }
+  const { data } = await getClient().query({
+    query: GET_POST_BY_SLUG,
+    variables: { slug },
+  });
+  post = data?.postBy;
 
   if (!post) {
     return {
@@ -111,15 +104,6 @@ export async function generateMetadata({
 
 // Generate static params for all posts (paginated)
 export async function generateStaticParams() {
-  // Use static cache if available
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
-    const { getAllStaticPostSlugs, hasStaticPostCache } = await import('@/lib/blog/static-post-service');
-    if (hasStaticPostCache()) {
-      const slugs = getAllStaticPostSlugs();
-      return limitStaticParams(slugs.map((slug) => ({ slug })), DEV_LIMITS.blogPosts);
-    }
-  }
-
   // Try MySQL first (single query, no pagination loop)
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -168,20 +152,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   let post: Post | null = null;
 
-  // Build-time: use static cache if available
-  if (process.env.USE_STATIC_PRODUCTS === 'true') {
-    const { getStaticPost } = await import('@/lib/blog/static-post-service');
-    post = getStaticPost(slug);
-  }
-
-  // Fallback to GraphQL (runtime ISR or cache miss)
-  if (!post) {
-    const { data } = await getClient().query({
-      query: GET_POST_BY_SLUG,
-      variables: { slug },
-    });
-    post = data?.postBy;
-  }
+  // Fetch from GraphQL (runtime ISR)
+  const { data: postData } = await getClient().query({
+    query: GET_POST_BY_SLUG,
+    variables: { slug },
+  });
+  post = postData?.postBy;
 
   if (!post) {
     notFound();

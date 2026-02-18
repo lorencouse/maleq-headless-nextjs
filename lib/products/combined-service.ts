@@ -3,14 +3,6 @@ import { getClient, REVALIDATE } from '@/lib/apollo/client';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
 import {
-  getStaticProductCategories,
-  getStaticHierarchicalCategories,
-  getStaticBrands,
-  getStaticBrandBySlug,
-  getStaticMaterials,
-  getStaticColors,
-} from '@/lib/taxonomies/static-taxonomy-service';
-import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
   SEARCH_PRODUCTS,
@@ -362,11 +354,6 @@ export async function getFilteredProducts(params: {
  * that incorrectly limits results to 100
  */
 async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
-  try {
-    const cached = getStaticProductCategories();
-    if (cached) return cached;
-  } catch {}
-
   // Try MySQL first
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -428,11 +415,6 @@ export const getProductCategories = unstable_cache(
  * Returns top-level categories with nested children
  */
 async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategory[]> {
-  try {
-    const cached = getStaticHierarchicalCategories();
-    if (cached) return cached;
-  } catch {}
-
   // Try MySQL first
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -681,11 +663,6 @@ export async function getProductsByCategory(category: string, limit = 12): Promi
  * First tries simple query, falls back to paginated query if needed
  */
 async function _uncachedGetBrands(): Promise<FilterOption[]> {
-  try {
-    const cached = getStaticBrands();
-    if (cached) return cached;
-  } catch {}
-
   // Try MySQL first (single query, no pagination needed)
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -789,11 +766,6 @@ async function fetchBrandsWithPagination(): Promise<FilterOption[]> {
  * Materials are stored as a custom taxonomy (product_material)
  */
 export async function getMaterials(): Promise<FilterOption[]> {
-  try {
-    const cached = getStaticMaterials();
-    if (cached) return cached;
-  } catch {}
-
   // Try MySQL first
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -837,14 +809,6 @@ async function _uncachedGetGlobalAttributes(): Promise<{
   colors: FilterOption[];
   materials: FilterOption[];
 }> {
-  try {
-    const cachedColors = getStaticColors();
-    const cachedMaterials = getStaticMaterials();
-    if (cachedColors && cachedMaterials) {
-      return { colors: cachedColors, materials: cachedMaterials };
-    }
-  } catch {}
-
   // Try MySQL first for colors
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -905,11 +869,6 @@ export interface Brand {
  * Get a single brand by slug
  */
 export async function getBrandBySlug(slug: string): Promise<Brand | null> {
-  try {
-    const cached = getStaticBrandBySlug(slug);
-    if (cached) return cached;
-  } catch {}
-
   // Try MySQL first
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');

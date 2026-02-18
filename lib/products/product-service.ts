@@ -80,18 +80,9 @@ export interface EnhancedProduct extends UnifiedProduct {
  * React cache() deduplicates calls within the same server render,
  * so generateMetadata and the page component share a single fetch.
  *
- * Priority: static JSON cache → direct MySQL → GraphQL
+ * Priority: direct MySQL → GraphQL
  */
 export const getProductBySlug = cache(async function getProductBySlug(slug: string): Promise<EnhancedProduct | null> {
-  // Try static JSON cache first (fast file read, avoids GraphQL round-trip)
-  try {
-    const { getStaticProduct } = await import('./static-product-service');
-    const cached = getStaticProduct(slug);
-    if (cached) return cached;
-  } catch {
-    // Static cache not available
-  }
-
   // Try direct MySQL (much faster than GraphQL, no PHP overhead)
   try {
     const { isMySQLConfigured } = await import('@/lib/db/pool');
@@ -298,18 +289,21 @@ export const getProductBySlug = cache(async function getProductBySlug(slug: stri
 
 /**
  * Get all product slugs for static generation (paginated).
- * When USE_STATIC_PRODUCTS=true, reads from pre-exported index.
+ * Prefers the in-memory product index (SQL), falls back to GraphQL.
  */
 export async function getAllProductSlugs(): Promise<string[]> {
+  // Use the in-memory product index (SQL-backed, always available at runtime)
   try {
-    const { getAllStaticSlugs, hasStaticCache } = await import('./static-product-service');
-    if (hasStaticCache()) {
-      return getAllStaticSlugs();
+    const { getAllIndexEntries } = await import('./product-index');
+    const entries = await getAllIndexEntries();
+    if (entries.length > 0) {
+      return entries.map(e => e.slug);
     }
-  } catch {
-    // Static cache not available, fall through to GraphQL
+  } catch (err) {
+    console.error('[product-service] Product index unavailable for slugs:', err);
   }
 
+  // Fallback: GraphQL pagination
   const allSlugs: string[] = [];
   let hasNextPage = true;
   let after: string | null = null;
