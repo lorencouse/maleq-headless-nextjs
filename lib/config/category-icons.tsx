@@ -396,8 +396,6 @@ export const categoryConfig: Record<string, { icon: React.ReactNode; gradient: s
   'eco-friendly-sex-toys': { gradient: 'from-green-500 to-emerald-600', icon: CategoryIcons.eco },
   'condoms': { gradient: 'from-blue-500 to-cyan-600', icon: CategoryIcons.condom },
   'candles': { gradient: 'from-orange-500 to-amber-600', icon: CategoryIcons.candle },
-  'sex-pills': { gradient: 'from-blue-500 to-indigo-600', icon: CategoryIcons.pills },
-  'meds-supplements': { gradient: 'from-green-500 to-teal-600', icon: CategoryIcons.pills },
 };
 
 // Default config for categories not in the list

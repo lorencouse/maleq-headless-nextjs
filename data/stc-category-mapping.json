@@ -191,10 +191,8 @@
       "status": "mapped"
     },
     "Sex Enhancers": {
-      "wcCategory": "Meds & Supplements",
-      "wcId": 1553,
-      "status": "REVIEW",
-      "notes": "May be excluded if pills/supplements"
+      "status": "excluded",
+      "notes": "Category removed - Meds & Supplements deleted"
     },
     "Porn Star Masturbators": {
       "wcCategory": "Sextoys for Men > Masturbators > Masturbators Porn Star",
@@ -305,6 +303,11 @@
     "Christmas",
     "Display",
     "Samples",
-    "Promotional"
+    "Promotional",
+    "Meds & Supplements",
+    "Sex Pills",
+    "Sex Drinks",
+    "Supplements",
+    "Enhancers"
   ]
 }

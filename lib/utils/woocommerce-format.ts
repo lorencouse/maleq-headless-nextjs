@@ -31,8 +31,12 @@ export function formatAttributeName(name: string): string {
 export function formatAttributeValue(value: string): string {
   if (!value) return '';
 
-  // Replace hyphens with spaces
-  let formatted = value.replace(/-/g, ' ');
+  // Restore decimals: "4-4-oz" → "4.4-oz", "16-5-ml" → "16.5-ml"
+  // Pattern: digit(s) hyphen digit(s) followed by hyphen+letter or end
+  let formatted = value.replace(/(\d+)-(\d+)(?=-[a-zA-Z]|$)/g, '$1.$2');
+
+  // Replace remaining hyphens with spaces
+  formatted = formatted.replace(/-/g, ' ');
 
   // Check if it starts with a number (like "100 ml", "2 oz")
   const startsWithNumber = /^\d/.test(formatted);

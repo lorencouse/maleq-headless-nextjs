@@ -5,6 +5,7 @@ import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { getFilteredProducts } from '@/lib/products/combined-service';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
@@ -191,7 +192,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       />
 
       {/* Product Details with Image Gallery */}
-      <ProductDetailsWrapper product={product} />
+      <Suspense>
+        <ProductDetailsWrapper product={product} />
+      </Suspense>
 
       {/* Product Description */}
       {product.description && (

@@ -16,10 +16,8 @@ export default function DevEditLink({ type, databaseId }: DevEditLinkProps) {
     return null;
   }
 
-  // Derive WordPress admin URL from GraphQL endpoint
-  const graphqlUrl = process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '';
-  const wpBaseUrl = graphqlUrl.replace('/graphql', '');
-  const editUrl = `${wpBaseUrl}/wp-admin/post.php?post=${databaseId}&action=edit`;
+  // Always link to production WordPress admin
+  const editUrl = `https://wp.maleq.com/wp-admin/post.php?post=${databaseId}&action=edit`;
 
   const typeLabels = {
     post: 'Post',

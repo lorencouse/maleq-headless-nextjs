@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   formatAttributeName,
   formatAttributeValue,
@@ -48,6 +49,10 @@ export default function VariationSelector({
   productId,
   externalSelectedVariationId,
 }: VariationSelectorProps) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
     const options = new Map<string, Set<string>>();
@@ -78,7 +83,46 @@ export default function VariationSelector({
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string>
   >(() => {
-    // Initialize with first in-stock variation's attributes, or first variation if none in stock
+    // Try to initialize from URL params first (e.g., ?attribute_size=Large)
+    const fromUrl: Record<string, string> = {};
+    let hasUrlParams = false;
+
+    for (const [key, value] of searchParams.entries()) {
+      if (key.startsWith('attribute_')) {
+        const attrName = key.replace('attribute_', '');
+        // Find the actual attribute name (case-insensitive match)
+        const matchingAttr = variations[0]?.attributes.find(
+          (a) => a.name.toLowerCase().replace(/\s+/g, '-') === attrName.toLowerCase()
+            || a.name.toLowerCase() === attrName.toLowerCase()
+        );
+        if (matchingAttr) {
+          // Find matching value (case-insensitive)
+          const allValues = new Set<string>();
+          variations.forEach((v) =>
+            v.attributes.forEach((a) => {
+              if (a.name === matchingAttr.name) allValues.add(a.value);
+            })
+          );
+          const matchedValue = Array.from(allValues).find(
+            (v) => v.toLowerCase() === decodeURIComponent(value).toLowerCase()
+          );
+          if (matchedValue) {
+            fromUrl[matchingAttr.name] = matchedValue;
+            hasUrlParams = true;
+          }
+        }
+      }
+    }
+
+    // If URL params matched a valid variation, use those
+    if (hasUrlParams) {
+      const urlVariation = variations.find((v) =>
+        v.attributes.every((attr) => fromUrl[attr.name] === attr.value)
+      );
+      if (urlVariation) return fromUrl;
+    }
+
+    // Fallback: first in-stock variation, or first variation
     const initialVariation = variations.find(
       v => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK'
     ) || variations[0];
@@ -121,11 +165,27 @@ export default function VariationSelector({
       newAttrs[attr.name] = attr.value;
     });
     setSelectedAttributes(newAttrs);
+    updateUrlParams(newAttrs);
 
     if (onVariationChange) {
       onVariationChange(externalVariation);
     }
   }, [externalSelectedVariationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update URL params to reflect current selection
+  const updateUrlParams = (attrs: Record<string, string>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    // Remove old attribute_ params
+    for (const key of Array.from(params.keys())) {
+      if (key.startsWith('attribute_')) params.delete(key);
+    }
+    // Add current selection
+    for (const [name, value] of Object.entries(attrs)) {
+      const paramKey = `attribute_${name.toLowerCase().replace(/\s+/g, '-')}`;
+      params.set(paramKey, value);
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   // Handle attribute selection
   const handleAttributeSelect = (attributeName: string, value: string) => {
@@ -134,6 +194,7 @@ export default function VariationSelector({
       [attributeName]: value,
     };
     setSelectedAttributes(newSelection);
+    updateUrlParams(newSelection);
 
     // Find and notify about the new variation
     const newVariation = variations.find((variation) =>
