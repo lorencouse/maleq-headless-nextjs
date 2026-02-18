@@ -31,7 +31,7 @@ export default function ProductImageGallery({
 }: ProductImageGalleryProps) {
   const router = useRouter();
   const [selectedImage, setSelectedImage] = useState(images[0] || null);
-  const [mainImageLoaded, setMainImageLoaded] = useState(false);
+  const [mainImageLoaded, setMainImageLoaded] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
