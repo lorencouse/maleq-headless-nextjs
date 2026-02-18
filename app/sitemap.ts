@@ -10,20 +10,28 @@ export const maxDuration = 120; // Allow up to 120s per segment
  * Generate sitemap segment IDs.
  * Segment 0: static pages, categories, brands, blog
  * Segments 1-N: products (~5K per segment, computed from actual product count)
+ *
+ * At build time MySQL may not be available — returns a minimal set (segment 0 only).
+ * At runtime (ISR revalidation), MySQL is available and the full set is computed.
  */
 export async function generateSitemaps() {
-  const { getAllIndexEntries } = await import('@/lib/products/product-index');
-  const entries = await getAllIndexEntries();
-  const productSegments = Math.ceil(entries.length / PRODUCTS_PER_SEGMENT);
+  try {
+    const { getAllIndexEntries } = await import('@/lib/products/product-index');
+    const entries = await getAllIndexEntries();
+    const productSegments = Math.ceil(entries.length / PRODUCTS_PER_SEGMENT);
 
-  const ids = [];
-  // Segment 0: non-product content
-  ids.push({ id: 0 });
-  // Segments 1-N: product segments
-  for (let i = 1; i <= productSegments; i++) {
-    ids.push({ id: i });
+    const ids = [];
+    ids.push({ id: 0 });
+    for (let i = 1; i <= productSegments; i++) {
+      ids.push({ id: i });
+    }
+    return ids;
+  } catch (err) {
+    // Build time: MySQL not available, return minimal set.
+    // Full sitemap will be generated on first ISR revalidation.
+    console.warn('[sitemap] MySQL unavailable at build time, returning minimal sitemap segments:', err instanceof Error ? err.message : err);
+    return [{ id: 0 }];
   }
-  return ids;
 }
 
 export default async function sitemap(props: { id: Promise<string> }): Promise<MetadataRoute.Sitemap> {
@@ -44,86 +52,97 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: `${SITE_URL}/terms`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     ];
 
-    const { loadFlatCategories } = await import('@/lib/db/category-loader');
-    const { loadBrands } = await import('@/lib/db/taxonomy-loader');
-    const { getAllPostSlugs } = await import('@/lib/db/post-queries');
-    const { loadBlogCategories, loadBlogTags } = await import('@/lib/db/blog-loader');
+    // At build time MySQL may not be available — return just static pages
+    try {
+      const { loadFlatCategories } = await import('@/lib/db/category-loader');
+      const { loadBrands } = await import('@/lib/db/taxonomy-loader');
+      const { getAllPostSlugs } = await import('@/lib/db/post-queries');
+      const { loadBlogCategories, loadBlogTags } = await import('@/lib/db/blog-loader');
 
-    const [categories, brands, postSlugs, blogCategories, blogTags] = await Promise.all([
-      loadFlatCategories(),
-      loadBrands(),
-      getAllPostSlugs(),
-      loadBlogCategories(),
-      loadBlogTags(),
-    ]);
+      const [categories, brands, postSlugs, blogCategories, blogTags] = await Promise.all([
+        loadFlatCategories(),
+        loadBrands(),
+        getAllPostSlugs(),
+        loadBlogCategories(),
+        loadBlogTags(),
+      ]);
 
-    const categoryPages: MetadataRoute.Sitemap = categories
-      .filter((c) => (c.count ?? 0) > 0)
-      .map((c) => ({
-        url: `${SITE_URL}/sex-toys/${c.slug}`,
+      const categoryPages: MetadataRoute.Sitemap = categories
+        .filter((c) => (c.count ?? 0) > 0)
+        .map((c) => ({
+          url: `${SITE_URL}/sex-toys/${c.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        }));
+
+      const brandPages: MetadataRoute.Sitemap = brands
+        .filter((b) => b.count > 0)
+        .map((b) => ({
+          url: `${SITE_URL}/brand/${b.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.6,
+        }));
+
+      const blogPages: MetadataRoute.Sitemap = postSlugs.map((slug) => ({
+        url: `${SITE_URL}/guides/${slug}`,
         lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.7,
-      }));
-
-    const brandPages: MetadataRoute.Sitemap = brands
-      .filter((b) => b.count > 0)
-      .map((b) => ({
-        url: `${SITE_URL}/brand/${b.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
+        changeFrequency: 'monthly',
         priority: 0.6,
       }));
 
-    const blogPages: MetadataRoute.Sitemap = postSlugs.map((slug) => ({
-      url: `${SITE_URL}/guides/${slug}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.6,
-    }));
+      const blogCategoryPages: MetadataRoute.Sitemap = blogCategories
+        .filter((c) => c.count > 0)
+        .map((c) => ({
+          url: `${SITE_URL}/guides/category/${c.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.5,
+        }));
 
-    const blogCategoryPages: MetadataRoute.Sitemap = blogCategories
-      .filter((c) => c.count > 0)
-      .map((c) => ({
-        url: `${SITE_URL}/guides/category/${c.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.5,
-      }));
+      const blogTagPages: MetadataRoute.Sitemap = blogTags
+        .filter((t) => t.count > 0)
+        .map((t) => ({
+          url: `${SITE_URL}/guides/tag/${t.slug}`,
+          lastModified: new Date(),
+          changeFrequency: 'monthly',
+          priority: 0.4,
+        }));
 
-    const blogTagPages: MetadataRoute.Sitemap = blogTags
-      .filter((t) => t.count > 0)
-      .map((t) => ({
-        url: `${SITE_URL}/guides/tag/${t.slug}`,
-        lastModified: new Date(),
-        changeFrequency: 'monthly',
-        priority: 0.4,
-      }));
-
-    const allUrls = [...staticPages, ...categoryPages, ...brandPages, ...blogPages, ...blogCategoryPages, ...blogTagPages];
-    console.log(`Sitemap segment 0: ${allUrls.length} URLs (categories: ${categories.length}, brands: ${brands.length}, posts: ${postSlugs.length})`);
-    return allUrls;
+      const allUrls = [...staticPages, ...categoryPages, ...brandPages, ...blogPages, ...blogCategoryPages, ...blogTagPages];
+      console.log(`Sitemap segment 0: ${allUrls.length} URLs (categories: ${categories.length}, brands: ${brands.length}, posts: ${postSlugs.length})`);
+      return allUrls;
+    } catch (err) {
+      console.warn('[sitemap] MySQL unavailable, returning static pages only:', err instanceof Error ? err.message : err);
+      return staticPages;
+    }
   }
 
   // Segments 1+: products (~5K per segment)
-  const { getAllIndexEntries } = await import('@/lib/products/product-index');
-  const allEntries = await getAllIndexEntries();
-  const skipItems = (id - 1) * PRODUCTS_PER_SEGMENT;
-  const productSlugs = allEntries
-    .slice(skipItems, skipItems + PRODUCTS_PER_SEGMENT)
-    .map(e => e.slug);
+  try {
+    const { getAllIndexEntries } = await import('@/lib/products/product-index');
+    const allEntries = await getAllIndexEntries();
+    const skipItems = (id - 1) * PRODUCTS_PER_SEGMENT;
+    const productSlugs = allEntries
+      .slice(skipItems, skipItems + PRODUCTS_PER_SEGMENT)
+      .map(e => e.slug);
 
-  if (productSlugs.length === 0) {
+    if (productSlugs.length === 0) {
+      return [];
+    }
+
+    const productPages: MetadataRoute.Sitemap = productSlugs.map((slug) => ({
+      url: `${SITE_URL}/product/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
+    }));
+
+    console.log(`Sitemap segment ${id}: ${productPages.length} product URLs (skip: ${skipItems})`);
+    return productPages;
+  } catch (err) {
+    console.warn(`[sitemap] MySQL unavailable for segment ${id}:`, err instanceof Error ? err.message : err);
     return [];
   }
-
-  const productPages: MetadataRoute.Sitemap = productSlugs.map((slug) => ({
-    url: `${SITE_URL}/product/${slug}`,
-    lastModified: new Date(),
-    changeFrequency: 'weekly',
-    priority: 0.8,
-  }));
-
-  console.log(`Sitemap segment ${id}: ${productPages.length} product URLs (skip: ${skipItems})`);
-  return productPages;
 }
