@@ -81,6 +81,8 @@ export type { TaxCalculationResult } from './tax-calculator';
 // Toast notifications
 export {
   showSuccess,
+  showSuccessLink,
+  showAddedToCart,
   showError,
   showLoading,
   showInfo,

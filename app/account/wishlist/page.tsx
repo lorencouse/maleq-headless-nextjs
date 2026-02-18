@@ -6,7 +6,7 @@ import AccountLayout from '@/components/account/AccountLayout';
 import ProductCard from '@/components/shop/ProductCard';
 import { useWishlistStore, WishlistItem } from '@/lib/store/wishlist-store';
 import { useCartStore } from '@/lib/store/cart-store';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showSuccess, showAddedToCart, showError } from '@/lib/utils/toast';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 
 /**
@@ -74,7 +74,7 @@ export default function WishlistPage() {
       });
     });
 
-    showSuccess(`${inStockItems.length} items added to cart!`);
+    showAddedToCart(`${inStockItems.length} items added to cart`);
   };
 
   if (!mounted) {

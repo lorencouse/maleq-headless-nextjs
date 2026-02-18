@@ -9,7 +9,7 @@ import type { EnhancedProduct } from '@/lib/products/product-service';
 import { findDefaultVariation } from '@/lib/products/variation-utils';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useMiniCartControls } from '@/lib/store/ui-store';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showAddedToCart, showError } from '@/lib/utils/toast';
 import QuantitySelector from '@/components/ui/QuantitySelector';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockAlertButton from '@/components/product/StockAlertButton';
@@ -220,7 +220,7 @@ export default function ProductPageClient({
         item_variant: selectedVariation?.attributes?.map(a => a.value).join(' / '),
       });
 
-      showSuccess(successMessage);
+      showAddedToCart(successMessage);
 
       // Show "View Cart" button for 5 seconds
       setJustAdded(true);

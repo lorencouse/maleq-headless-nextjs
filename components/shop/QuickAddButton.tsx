@@ -52,7 +52,7 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
         type: product.type,
       });
 
-      showAddedToCart(product.name);
+      showAddedToCart(`${product.name} added to cart!`);
     } catch (error) {
       console.error('Error adding to cart:', error);
       showError('Failed to add to cart');

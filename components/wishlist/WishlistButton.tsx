@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
-import { showSuccess, showInfo } from '@/lib/utils/toast';
+import { showSuccessLink, showInfo } from '@/lib/utils/toast';
 
 interface WishlistButtonProps {
   productId: string;
@@ -64,7 +64,7 @@ export default function WishlistButton({
     setIsWishlisted(wasAdded);
 
     if (wasAdded) {
-      showSuccess('Added to wishlist');
+      showSuccessLink('Added to wishlist', 'View wishlist', '/account/wishlist');
     } else {
       showInfo('Removed from wishlist');
     }

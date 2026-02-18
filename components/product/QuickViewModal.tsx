@@ -76,7 +76,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         type: product.type,
       });
 
-      showAddedToCart(product.name);
+      showAddedToCart(`${product.name} added to cart!`);
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);

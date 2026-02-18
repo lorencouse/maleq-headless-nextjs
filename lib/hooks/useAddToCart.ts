@@ -161,7 +161,7 @@ export function useAddToCart(options: UseAddToCartOptions = {}): UseAddToCartRet
           type: product.type,
         });
 
-        showAddedToCart(product.name);
+        showAddedToCart(`${product.name} added to cart!`);
         onSuccess?.();
         return true;
       } catch (error) {

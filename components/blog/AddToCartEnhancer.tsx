@@ -43,7 +43,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
         maxQuantity: 99,
       });
 
-      showAddedToCart(product.name);
+      showAddedToCart(`${product.name} added to cart!`);
       setIsAdded(true);
 
       setTimeout(() => {
