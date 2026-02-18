@@ -401,6 +401,7 @@ figure.wp-block-video figcaption a,
 .cons-list {
   list-style: none;
   margin: 0;
+  padding: 1.25rem;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   background: var(--card);
@@ -874,7 +875,8 @@ p.product-specs-cn::before,
 /* Rounded Blocks - Card Component */
 .rounded-block,
 .schema-faq-section,
-.schema-how-to-step {
+.schema-how-to-step,
+.howto-step {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   background: var(--card);
@@ -889,7 +891,8 @@ p.product-specs-cn::before,
 
 .rounded-block:hover,
 .schema-faq-section:hover,
-.schema-how-to-step:hover {
+.schema-how-to-step:hover,
+.howto-step:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
   border-color: var(--primary-light);
@@ -908,13 +911,53 @@ p.product-specs-cn::before,
    SCHEMA MARKUP SECTIONS - Structured Content
    ============================================================================ */
 
-.rank-math-step-content {
+.schema-how-to-steps,
+.howto-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  counter-reset: howto-step;
+}
+
+.schema-how-to-step,
+.howto-step {
+  counter-increment: howto-step;
+}
+
+.schema-how-to-step-name::before,
+.howto-step-title::before {
+  content: counter(howto-step);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.rank-math-step-content,
+.schema-how-to-step-text,
+.howto-step-content {
   padding-top: 1rem;
   color: var(--foreground);
 }
 
+.schema-how-to-step-text img,
+.howto-step-content img {
+  margin-top: 1rem;
+  border-radius: var(--radius-md);
+  max-width: 100%;
+  height: auto;
+}
+
 .schema-faq-question,
-.schema-how-to-step-name {
+.schema-how-to-step-name,
+.howto-step-title {
   font-size: 1.25rem;
   font-weight: 600;
   padding: 1rem 0;
@@ -927,7 +970,8 @@ p.product-specs-cn::before,
 }
 
 .dark .schema-faq-question,
-.dark .schema-how-to-step-name {
+.dark .schema-how-to-step-name,
+.dark .howto-step-title {
   border-bottom-color: white;
 }
 
@@ -1126,7 +1170,8 @@ figure.wp-block-video.aligncenter {
   .blog-card:hover,
   .rounded-block:hover,
   .schema-faq-section:hover,
-  .schema-how-to-step:hover {
+  .schema-how-to-step:hover,
+  .howto-step:hover {
     box-shadow: var(--shadow-lg);
   }
 }
@@ -1156,6 +1201,7 @@ figure.wp-block-video.aligncenter {
 .dark .rounded-block,
 .dark .schema-faq-section,
 .dark .schema-how-to-step,
+.dark .howto-step,
 .dark .product-specs,
 .dark .product-specs-cn,
 .dark .product-table {
@@ -1204,7 +1250,8 @@ figure.wp-block-video.aligncenter {
   .product-rating,
   .rounded-block,
   .schema-faq-section,
-  .schema-how-to-step {
+  .schema-how-to-step,
+  .howto-step {
     box-shadow: none;
     border: 1px solid #000;
   }

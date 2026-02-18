@@ -95,6 +95,18 @@ function removeReviewLabels(content: string): { newContent: string; replacements
     }
   }
 
+  // Clean up leftover leading whitespace inside .review elements
+  // e.g., <p class="review">   Some text → <p class="review">Some text
+  newContent = newContent.replace(
+    /(<[^>]*class="[^"]*review[^"]*"[^>]*>)\s+/g,
+    '$1'
+  );
+  // Also for nested tags: <p class="review"><em>   text → <p class="review"><em>text
+  newContent = newContent.replace(
+    /(<[^>]*class="[^"]*review[^"]*"[^>]*>\s*<[^>]+>)\s+/g,
+    '$1'
+  );
+
   return { newContent, replacements };
 }
 
