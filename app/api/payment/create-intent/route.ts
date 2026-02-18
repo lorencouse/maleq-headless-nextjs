@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeServer, formatAmountForStripe } from '@/lib/stripe/server';
+import { sendAdminAlert } from '@/lib/email/alert';
 
 /**
  * Create Payment Intent API Route
@@ -32,10 +33,11 @@ export interface CreatePaymentIntentResponse {
 }
 
 export async function POST(request: NextRequest) {
+  let body: CreatePaymentIntentRequest | undefined;
   try {
-    const body: CreatePaymentIntentRequest = await request.json();
+    body = await request.json();
 
-    const { amount, currency = 'usd', metadata, customerEmail, shippingAddress } = body;
+    const { amount, currency = 'usd', metadata, customerEmail, shippingAddress } = body!;
 
     // Validate amount
     if (!amount || amount <= 0) {
@@ -73,6 +75,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error creating payment intent:', error);
+    sendAdminAlert('PaymentIntent Creation Failed', {
+      'Amount': `$${body?.amount || 'N/A'}`,
+      'Customer Email': body?.customerEmail || 'N/A',
+      'Error': error instanceof Error ? error.message : String(error),
+    });
 
     if (error instanceof Error) {
       return NextResponse.json(

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getStripeServer } from '@/lib/stripe/server';
 import { updateOrder } from '@/lib/woocommerce/orders';
+import { sendAdminAlert } from '@/lib/email/alert';
 
 /**
  * Stripe Webhook Handler
@@ -77,6 +78,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error(`Error handling Stripe event ${event.type}:`, error);
+    const pi = event.data.object as { id?: string };
+    sendAdminAlert('Webhook Handler Failed', {
+      'Event Type': event.type,
+      'Event ID': event.id,
+      'PaymentIntent': pi.id || 'N/A',
+      'Error': error instanceof Error ? error.message : String(error),
+    });
     // Return 200 to prevent Stripe from retrying — log the error for investigation
     return NextResponse.json({ received: true, error: 'Handler failed' });
   }
@@ -93,6 +101,11 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     console.warn(
       `payment_intent.succeeded: No WooCommerce order ID found for ${paymentIntent.id}`
     );
+    sendAdminAlert('Payment Succeeded — No WooCommerce Order', {
+      'PaymentIntent': paymentIntent.id,
+      'Amount': `$${(paymentIntent.amount / 100).toFixed(2)}`,
+      'Customer Email': paymentIntent.receipt_email || 'N/A',
+    });
     return;
   }
 
@@ -125,6 +138,14 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
   console.log(
     `payment_intent.payment_failed: Marking order #${orderId} as failed (${paymentIntent.id}): ${failureMessage}`
   );
+
+  sendAdminAlert('Payment Failed', {
+    'Order ID': orderId,
+    'PaymentIntent': paymentIntent.id,
+    'Failure Reason': failureMessage,
+    'Customer Email': paymentIntent.receipt_email || 'N/A',
+    'Amount': `$${(paymentIntent.amount / 100).toFixed(2)}`,
+  });
 
   await updateOrder(orderId, {
     status: 'failed',
@@ -209,6 +230,14 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
   console.log(
     `charge.dispute.created: Putting order #${orderId} on hold — reason: ${dispute.reason} (${dispute.id})`
   );
+
+  sendAdminAlert('Dispute Created', {
+    'Order ID': orderId,
+    'Dispute ID': dispute.id,
+    'Reason': dispute.reason,
+    'Amount': `$${(dispute.amount / 100).toFixed(2)}`,
+    'PaymentIntent': paymentIntentId,
+  });
 
   await updateOrder(orderId, {
     status: 'on-hold',

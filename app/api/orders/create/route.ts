@@ -3,6 +3,7 @@ import { createOrder, getOrder, CreateOrderData, OrderLineItem, OrderAddress } f
 import { getStripeServer } from '@/lib/stripe/server';
 import { errorResponse, handleApiError, validationError } from '@/lib/api/response';
 import { z } from 'zod';
+import { sendAdminAlert } from '@/lib/email/alert';
 
 /**
  * Create Order API Route
@@ -64,8 +65,9 @@ export interface CreateOrderResponse {
 }
 
 export async function POST(request: NextRequest) {
+  let rawBody: Record<string, unknown> | undefined;
   try {
-    const rawBody = await request.json();
+    rawBody = await request.json();
 
     // Validate request body
     const parseResult = orderRequestSchema.safeParse(rawBody);
@@ -122,6 +124,12 @@ export async function POST(request: NextRequest) {
     const expectedAmount = Math.round(totals.total * 100);
     if (paymentIntent.amount !== expectedAmount) {
       console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amount}`);
+      sendAdminAlert('Amount Mismatch on Order Creation', {
+        'PaymentIntent': paymentIntentId,
+        'Expected (cents)': expectedAmount,
+        'Actual (cents)': paymentIntent.amount,
+        'Customer Email': contact.email,
+      });
       return errorResponse(
         'Order total has changed since payment was initiated. Please try again.',
         400,
@@ -217,6 +225,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    sendAdminAlert('Order Creation Failed', {
+      'PaymentIntent': (rawBody?.paymentIntentId as string) || 'N/A',
+      'Customer Email': (rawBody?.contact as Record<string, string>)?.email || 'N/A',
+      'Error': error instanceof Error ? error.message : String(error),
+    });
     return handleApiError(error, 'Failed to create order');
   }
 }
