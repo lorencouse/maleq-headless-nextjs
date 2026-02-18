@@ -39,11 +39,11 @@ const localConfig = {
 };
 
 const remoteConfig = {
-  host: process.env.REMOTE_MYSQL_HOST || '127.0.0.1',
-  port: parseInt(process.env.REMOTE_MYSQL_PORT || '3307', 10),
-  database: dbOverride || process.env.REMOTE_MYSQL_DB || 'maleq-wp',
-  user: process.env.REMOTE_MYSQL_USER || 'maleq-wp',
-  password: process.env.REMOTE_MYSQL_PASS || 'S9meeDoehU8VPiHd1ByJ',
+  host: process.env.REMOTE_MYSQL_HOST || process.env.MYSQL_HOST || '127.0.0.1',
+  port: parseInt(process.env.REMOTE_MYSQL_PORT || process.env.MYSQL_PORT || '3307', 10),
+  database: dbOverride || process.env.REMOTE_MYSQL_DB || process.env.MYSQL_DB || 'maleq-wp',
+  user: process.env.REMOTE_MYSQL_USER || process.env.MYSQL_USER || 'maleq-wp',
+  password: process.env.REMOTE_MYSQL_PASS || process.env.MYSQL_PASS || 'S9meeDoehU8VPiHd1ByJ',
 };
 
 const config = isLocal ? localConfig : remoteConfig;
@@ -51,7 +51,11 @@ const config = isLocal ? localConfig : remoteConfig;
 export async function getConnection() {
   if (!isLocal) {
     console.log(`🔗 Connecting to REMOTE database (${remoteConfig.host}:${remoteConfig.port}/${config.database})`);
-    console.log('   SSH tunnel required: ssh -L 3307:127.0.0.1:3306 root@159.69.220.162\n');
+    if (remoteConfig.host === '127.0.0.1' && remoteConfig.port === 3307) {
+      console.log('   SSH tunnel required: ssh -L 3307:127.0.0.1:3306 root@159.69.220.162\n');
+    } else {
+      console.log('   Direct connection (no SSH tunnel)\n');
+    }
   } else {
     console.log(`🔗 Connecting to LOCAL database (${localConfig.database})\n`);
   }

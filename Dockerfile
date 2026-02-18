@@ -55,9 +55,6 @@ ENV MYSQL_PASS=$MYSQL_PASS
 # Export fails gracefully — build continues without cache, app falls back to GraphQL
 RUN bun run scripts/export-products.ts || echo "⚠️  Export failed, building without static cache"
 
-# Clear DB credentials so they don't leak into the Next.js build output
-ENV MYSQL_REMOTE="" MYSQL_HOST="" MYSQL_PORT="" MYSQL_DB="" MYSQL_USER="" MYSQL_PASS=""
-
 # --- Next.js build ---
 # GENERATE_ALL_PAGES controls static generation:
 #   "true"  = pre-render all 35k+ pages at build time (slow but zero cold starts)
@@ -66,6 +63,8 @@ ARG GENERATE_ALL_PAGES=false
 ENV GENERATE_ALL_PAGES=$GENERATE_ALL_PAGES
 ENV USE_STATIC_PRODUCTS=true
 
+# DB credentials remain available so static page generation can query MySQL.
+# They don't leak — the runner stage starts from a clean node:20-alpine base.
 RUN bun run build
 
 # Stage 3: Production runner (node only, no bun needed)
