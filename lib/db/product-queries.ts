@@ -9,6 +9,7 @@ import type { RowDataPacket } from 'mysql2';
 import { parseProductAttributes, phpUnserialize } from '@/lib/utils/php-unserialize';
 import { extractSpecifications } from '@/lib/products/specifications';
 import { formatAttributeName } from '@/lib/utils/woocommerce-format';
+import { getProductionImageUrl } from '@/lib/utils/image';
 import type { EnhancedProduct, ProductVariation } from '@/lib/products/product-service';
 
 // ─── DB Row Types ───
@@ -296,12 +297,12 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     .filter(t => t.taxonomy === 'product_material')
     .map(t => ({ id: encodeId('term', t.term_id), name: t.name, slug: t.slug }));
 
-  // Resolve images
+  // Resolve images — rewrite URLs through getProductionImageUrl to handle local/staging domains
   function resolveImage(thumbId: string | null | undefined) {
     if (!thumbId) return null;
     const att = attachments.get(parseInt(thumbId, 10));
     if (!att) return null;
-    return { id: encodeId('post', att.ID), url: att.guid, altText: att.post_excerpt || att.post_title || product.post_title };
+    return { id: encodeId('post', att.ID), url: getProductionImageUrl(att.guid), altText: att.post_excerpt || att.post_title || product.post_title };
   }
 
   const primaryImage = resolveImage(meta.thumbnail_id);
@@ -310,7 +311,7 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     .map(gid => {
       const att = attachments.get(parseInt(gid, 10));
       if (!att) return null;
-      return { url: att.guid, altText: att.post_excerpt || att.post_title || product.post_title };
+      return { url: getProductionImageUrl(att.guid), altText: att.post_excerpt || att.post_title || product.post_title };
     })
     .filter((img): img is NonNullable<typeof img> => img !== null);
 
@@ -320,7 +321,7 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
       .map(gid => {
         const att = attachments.get(parseInt(gid, 10));
         if (!att) return null;
-        return { id: encodeId('post', att.ID), url: att.guid, altText: att.post_excerpt || att.post_title || product.post_title, isPrimary: false };
+        return { id: encodeId('post', att.ID), url: getProductionImageUrl(att.guid), altText: att.post_excerpt || att.post_title || product.post_title, isPrimary: false };
       })
       .filter((img): img is NonNullable<typeof img> => img !== null),
   ];
