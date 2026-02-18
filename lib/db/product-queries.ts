@@ -120,22 +120,18 @@ function encodeId(prefix: string, id: number): string {
 export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProduct | null> {
   const pool = getPool();
 
-  // 1. Fetch the product post
-  const [productRows] = await pool.query<DbProduct[]>(
-    `SELECT ID, post_title, post_name, post_content, post_excerpt
-     FROM wp_posts
-     WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ?
-     LIMIT 1`,
-    [slug]
-  );
-
-  if (!productRows.length) return null;
-  const product = productRows[0];
-  const productId = product.ID;
-
-  // 2. Fetch everything else in parallel
-  const [metaRows, taxRows, variationRows, reviewRows] = await Promise.all([
-    // Product meta (pivoted)
+  // Round 1: Fetch product post + meta + taxonomies + variations + reviews in parallel
+  // We use a subquery to get the product ID once, then fan out all related queries
+  const [productRows, metaRows, taxRows, variationRows, reviewRows] = await Promise.all([
+    // Product post
+    pool.query<DbProduct[]>(
+      `SELECT ID, post_title, post_name, post_content, post_excerpt
+       FROM wp_posts
+       WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ?
+       LIMIT 1`,
+      [slug]
+    ),
+    // Product meta (pivoted) — uses subquery to avoid sequential round-trip
     pool.query<DbMeta[]>(
       `SELECT
         MAX(CASE WHEN meta_key = '_sku' THEN meta_value END) AS sku,
@@ -157,12 +153,12 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
         MAX(CASE WHEN meta_key = '_button_text' THEN meta_value END) AS button_text,
         MAX(CASE WHEN meta_key = '_default_attributes' THEN meta_value END) AS default_attributes_ser
        FROM wp_postmeta
-       WHERE post_id = ?
+       WHERE post_id = (SELECT ID FROM wp_posts WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ? LIMIT 1)
          AND meta_key IN ('_sku','_price','_regular_price','_sale_price','_stock_status','_stock',
            '_weight','_length','_width','_height','_thumbnail_id','_product_image_gallery',
            '_product_attributes','_purchase_note','_featured','_product_url','_button_text',
            '_default_attributes')`,
-      [productId]
+      [slug]
     ),
     // Taxonomies
     pool.query<DbTaxonomy[]>(
@@ -170,32 +166,47 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
        FROM wp_term_relationships tr
        JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
        JOIN wp_terms t ON tt.term_id = t.term_id
-       WHERE tr.object_id = ?
+       WHERE tr.object_id = (SELECT ID FROM wp_posts WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ? LIMIT 1)
          AND tt.taxonomy IN ('product_cat','product_tag','product_brand','product_material','product_type','product_visibility','pa_color')`,
-      [productId]
+      [slug]
     ),
     // Variations
     pool.query<DbVariation[]>(
       `SELECT ID, post_title, post_name, post_content
        FROM wp_posts
-       WHERE post_type = 'product_variation' AND post_status = 'publish' AND post_parent = ?`,
-      [productId]
+       WHERE post_type = 'product_variation' AND post_status = 'publish'
+         AND post_parent = (SELECT ID FROM wp_posts WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ? LIMIT 1)`,
+      [slug]
     ),
     // Reviews (from WooCommerce lookup table)
     pool.query<DbReview[]>(
       `SELECT average_rating, rating_count
        FROM wp_wc_product_meta_lookup
-       WHERE product_id = ?`,
-      [productId]
+       WHERE product_id = (SELECT ID FROM wp_posts WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ? LIMIT 1)`,
+      [slug]
     ),
   ]);
+
+  if (!productRows[0].length) return null;
+  const product = productRows[0][0];
+  const productId = product.ID;
 
   const meta = metaRows[0]?.[0] || {} as DbMeta;
   const taxes = taxRows[0] as DbTaxonomy[];
   const variations = variationRows[0] as DbVariation[];
   const review = reviewRows[0]?.[0] as DbReview | undefined;
 
-  // 3. If there are variations, fetch their meta and attributes in parallel
+  // Collect parent product attachment IDs (known from meta already)
+  const attachmentIds = new Set<number>();
+  if (meta.thumbnail_id) attachmentIds.add(parseInt(meta.thumbnail_id, 10));
+  if (meta.gallery_ids) {
+    meta.gallery_ids.split(',').forEach(id => {
+      const n = parseInt(id.trim(), 10);
+      if (n) attachmentIds.add(n);
+    });
+  }
+
+  // Round 2: Fetch variation meta/attrs AND parent attachments in parallel
   const varMetaMap = new Map<number, DbVariationMeta>();
   const varAttrMap = new Map<number, DbVariationAttr[]>();
 
@@ -241,21 +252,14 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
       list.push(row);
       varAttrMap.set(row.post_id, list);
     }
+
+    // Add variation thumbnail IDs to attachment set
+    for (const [, vMeta] of varMetaMap) {
+      if (vMeta.thumbnail_id) attachmentIds.add(parseInt(vMeta.thumbnail_id, 10));
+    }
   }
 
-  // 4. Fetch attachment images (thumbnail + gallery + variation thumbnails)
-  const attachmentIds = new Set<number>();
-  if (meta.thumbnail_id) attachmentIds.add(parseInt(meta.thumbnail_id, 10));
-  if (meta.gallery_ids) {
-    meta.gallery_ids.split(',').forEach(id => {
-      const n = parseInt(id.trim(), 10);
-      if (n) attachmentIds.add(n);
-    });
-  }
-  for (const [, vMeta] of varMetaMap) {
-    if (vMeta.thumbnail_id) attachmentIds.add(parseInt(vMeta.thumbnail_id, 10));
-  }
-
+  // Round 3 (only if needed): Fetch all attachment images
   const attachments = new Map<number, DbAttachment>();
   if (attachmentIds.size > 0) {
     const attIds = Array.from(attachmentIds);
@@ -270,7 +274,7 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     }
   }
 
-  // 5. Assembly
+  // Assembly
   const typeTax = taxes.find(t => t.taxonomy === 'product_type');
   const productType = TYPE_MAP[typeTax?.slug || 'simple'] || 'SIMPLE';
   const isVariable = productType === 'VARIABLE';

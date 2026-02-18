@@ -27,20 +27,29 @@ interface DBConfig {
   password: string;
 }
 
+let localConfigCache: DBConfig | null | undefined;
+
 function getLocalConfig(): DBConfig | null {
+  if (localConfigCache !== undefined) return localConfigCache;
+
   const socket = process.env.MYSQL_LOCAL_SOCKET;
   const db = process.env.MYSQL_LOCAL_DB;
   const user = process.env.MYSQL_LOCAL_USER;
   const pass = process.env.MYSQL_LOCAL_PASS;
-  if (!socket || !db || !user || !pass) return null;
+  if (!socket || !db || !user || !pass) {
+    localConfigCache = null;
+    return null;
+  }
   // Only use local if the socket file actually exists (i.e. Local by Flywheel is running)
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('fs').accessSync(socket);
   } catch {
+    localConfigCache = null;
     return null;
   }
-  return { mode: 'local', socketPath: socket, database: db, user, password: pass };
+  localConfigCache = { mode: 'local', socketPath: socket, database: db, user, password: pass };
+  return localConfigCache;
 }
 
 function getProdConfig(): DBConfig | null {

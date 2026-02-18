@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { getClient } from '@/lib/apollo/client';
 import { GET_PRODUCT_BY_SLUG, GET_ALL_PRODUCT_SLUGS } from '@/lib/queries/products';
 import type { UnifiedProduct } from './combined-service';
@@ -75,10 +76,13 @@ export interface EnhancedProduct extends UnifiedProduct {
 
 
 /**
- * Get product by slug from WooCommerce.
+ * Get product by slug from WooCommerce (cached per request).
+ * React cache() deduplicates calls within the same server render,
+ * so generateMetadata and the page component share a single fetch.
+ *
  * Priority: static JSON cache → direct MySQL → GraphQL
  */
-export async function getProductBySlug(slug: string): Promise<EnhancedProduct | null> {
+export const getProductBySlug = cache(async function getProductBySlug(slug: string): Promise<EnhancedProduct | null> {
   // Try static JSON cache first (fast file read, avoids GraphQL round-trip)
   try {
     const { getStaticProduct } = await import('./static-product-service');
@@ -290,7 +294,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
     console.error('Error fetching product by slug:', error);
     return null;
   }
-}
+});
 
 /**
  * Get all product slugs for static generation (paginated).
