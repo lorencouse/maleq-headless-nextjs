@@ -3,8 +3,6 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
-import { getClient } from '@/lib/apollo/client';
-import { GET_CATEGORY_BY_SLUG } from '@/lib/queries/posts';
 import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
@@ -25,15 +23,30 @@ interface Category {
   description?: string | null;
 }
 
-export async function generateMetadata({ params }: BlogCategoryPageProps): Promise<Metadata> {
-  const { slug } = await params;
+async function fetchCategory(slug: string): Promise<Category | null> {
+  // Try MySQL first
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable()) {
+      const { loadBlogCategoryBySlug } = await import('@/lib/db/blog-loader');
+      const cat = await loadBlogCategoryBySlug(slug);
+      if (cat) return cat;
+    }
+  } catch {}
 
+  // GraphQL fallback
+  const { getClient } = await import('@/lib/apollo/client');
+  const { GET_CATEGORY_BY_SLUG } = await import('@/lib/queries/posts');
   const { data } = await getClient().query({
     query: GET_CATEGORY_BY_SLUG,
     variables: { slug },
   });
+  return data?.category || null;
+}
 
-  const category: Category | null = data?.category;
+export async function generateMetadata({ params }: BlogCategoryPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await fetchCategory(slug);
 
   if (!category) {
     return {
@@ -73,13 +86,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
   const { slug } = await params;
   const { q: searchQuery } = await searchParams;
 
-  // Fetch category first
-  const categoryResult = await getClient().query({
-    query: GET_CATEGORY_BY_SLUG,
-    variables: { slug },
-  });
-
-  const category: Category | null = categoryResult.data?.category;
+  const category = await fetchCategory(slug);
 
   if (!category) {
     notFound();

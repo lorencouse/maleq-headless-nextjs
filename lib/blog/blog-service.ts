@@ -1,4 +1,5 @@
 import { getClient, REVALIDATE } from '@/lib/apollo/client';
+import { getProductionImageUrl } from '@/lib/utils/image';
 import MiniSearch from 'minisearch';
 import {
   SEARCH_POSTS,
@@ -53,10 +54,50 @@ export interface BlogSearchSuggestion {
   category: string | null;
 }
 
+// ─── Helpers ───
+
+async function isMySQLAvailable(): Promise<boolean> {
+  if (process.env.DATA_SOURCE === 'graphql') return false;
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    return await isMySQLReachable();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve category slugs to their WordPress database IDs
+ */
+async function resolveCategoryIds(slugs: string[]): Promise<number[]> {
+  // Try MySQL first
+  if (await isMySQLAvailable()) {
+    try {
+      const { resolveBlogCategoryIds } = await import('@/lib/db/blog-loader');
+      return await resolveBlogCategoryIds(slugs);
+    } catch {}
+  }
+
+  const ids: number[] = [];
+  for (const slug of slugs) {
+    try {
+      const { data } = await getClient().query({
+        query: GET_CATEGORY_BY_SLUG,
+        variables: { slug },
+      });
+      if (data?.category?.databaseId) {
+        ids.push(data.category.databaseId);
+      }
+    } catch {
+      // Skip categories that don't exist
+    }
+  }
+  return ids;
+}
+
 /**
  * Search blog posts with relevance ranking
- * Uses Fuse.js for typo-tolerant spell checking BEFORE database queries
- * Returns posts sorted by: all terms in title > any term in title > relevance score
+ * Uses MySQL for fetching, MiniSearch for fuzzy re-ranking
  */
 export async function searchBlogPosts(
   query: string,
@@ -67,8 +108,7 @@ export async function searchBlogPosts(
 ): Promise<BlogSearchResult> {
   const { first = 20, categorySlug } = options;
 
-  // Tokenize the search query for multi-word and stemming support
-  let searchTerms = tokenizeQuery(query);
+  const searchTerms = tokenizeQuery(query);
   if (searchTerms.length === 0) {
     return {
       posts: [],
@@ -77,46 +117,74 @@ export async function searchBlogPosts(
   }
 
   try {
-    // Use the query directly - browser handles spell checking visually,
-    // and Fuse.js handles fuzzy matching for typo tolerance
-    const searchQuery = query;
-
-    // Use the primary term for database search (most significant word)
     const primaryTerm = searchTerms[0] || query;
+    let allPosts: Post[] = [];
 
-    // Fetch both title matches and content matches in parallel
-    const [titleResult, contentResult] = await Promise.all([
-      getClient().query({
-        query: SEARCH_POSTS_BY_TITLE,
-        variables: {
-          titleSearch: primaryTerm,
-          first: Math.min(first + 5, 25),
-          categoryName: categorySlug || null,
-        },
-        revalidate: REVALIDATE.DYNAMIC,
-      }),
-      getClient().query({
-        query: SEARCH_POSTS,
-        variables: {
-          search: searchQuery,
-          first: Math.min(first + 10, 30),
-          categoryName: categorySlug || null,
-        },
-        revalidate: REVALIDATE.DYNAMIC,
-      }),
-    ]);
+    // Try MySQL first
+    if (await isMySQLAvailable()) {
+      try {
+        const { loadBlogPosts } = await import('@/lib/db/blog-loader');
 
-    const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
-    const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+        // Fetch both title matches and content matches in parallel
+        const [titleResult, contentResult] = await Promise.all([
+          loadBlogPosts({
+            titleSearch: primaryTerm,
+            first: Math.min(first + 5, 25),
+            categorySlug: categorySlug || undefined,
+          }),
+          loadBlogPosts({
+            search: query,
+            first: Math.min(first + 10, 30),
+            categorySlug: categorySlug || undefined,
+          }),
+        ]);
 
-    // Combine and deduplicate results
-    const seenIds = new Set<string>();
-    const allPosts: Post[] = [];
+        // Combine and deduplicate
+        const seenIds = new Set<string>();
+        for (const post of [...titleResult.posts, ...contentResult.posts]) {
+          if (!seenIds.has(post.id)) {
+            seenIds.add(post.id);
+            allPosts.push(post);
+          }
+        }
+      } catch (e) {
+        console.warn('searchBlogPosts: MySQL failed, falling back to GraphQL', e);
+        allPosts = [];
+      }
+    }
 
-    for (const post of [...titlePosts, ...contentPosts]) {
-      if (!seenIds.has(post.id)) {
-        seenIds.add(post.id);
-        allPosts.push(post);
+    // Fall back to GraphQL if MySQL returned nothing
+    if (allPosts.length === 0) {
+      const [titleResult, contentResult] = await Promise.all([
+        getClient().query({
+          query: SEARCH_POSTS_BY_TITLE,
+          variables: {
+            titleSearch: primaryTerm,
+            first: Math.min(first + 5, 25),
+            categoryName: categorySlug || null,
+          },
+          revalidate: REVALIDATE.DYNAMIC,
+        }),
+        getClient().query({
+          query: SEARCH_POSTS,
+          variables: {
+            search: query,
+            first: Math.min(first + 10, 30),
+            categoryName: categorySlug || null,
+          },
+          revalidate: REVALIDATE.DYNAMIC,
+        }),
+      ]);
+
+      const titlePosts: Post[] = titleResult.data?.posts?.nodes || [];
+      const contentPosts: Post[] = contentResult.data?.posts?.nodes || [];
+
+      const seenIds = new Set<string>();
+      for (const post of [...titlePosts, ...contentPosts]) {
+        if (!seenIds.has(post.id)) {
+          seenIds.add(post.id);
+          allPosts.push(post);
+        }
       }
     }
 
@@ -140,10 +208,8 @@ export async function searchBlogPosts(
       const searchResults = miniSearch.search(query);
 
       if (searchResults.length > 0) {
-        // Map results back to original posts
         const resultIds = new Set(searchResults.slice(0, first).map(r => r.id));
         const relevantPosts = allPosts.filter(p => resultIds.has(p.id));
-        // Sort by MiniSearch result order
         relevantPosts.sort((a, b) => {
           const aIdx = searchResults.findIndex(r => r.id === a.id);
           const bIdx = searchResults.findIndex(r => r.id === b.id);
@@ -154,7 +220,7 @@ export async function searchBlogPosts(
           posts: relevantPosts,
           pageInfo: {
             hasNextPage: searchResults.length > first,
-            endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
+            endCursor: null,
           },
         };
       }
@@ -178,7 +244,6 @@ export async function searchBlogPosts(
       };
     });
 
-    // Sort by: all terms in title > any term in title > relevance score
     scoredPosts.sort((a, b) => {
       if (a.allTermsInTitle && !b.allTermsInTitle) return -1;
       if (!a.allTermsInTitle && b.allTermsInTitle) return 1;
@@ -187,7 +252,6 @@ export async function searchBlogPosts(
       return b.relevanceScore - a.relevanceScore;
     });
 
-    // Filter out posts with zero relevance
     const relevantPosts = scoredPosts
       .filter(s => s.relevanceScore > 0 || s.anyTermInTitle)
       .slice(0, first)
@@ -207,7 +271,7 @@ export async function searchBlogPosts(
       posts: relevantPosts,
       pageInfo: {
         hasNextPage: relevantPosts.length >= first,
-        endCursor: titleResult.data?.posts?.pageInfo?.endCursor || null,
+        endCursor: null,
       },
       suggestions,
     };
@@ -221,40 +285,66 @@ export async function searchBlogPosts(
 }
 
 /**
- * Resolve category slugs to their WordPress database IDs
- */
-async function resolveCategoryIds(slugs: string[]): Promise<number[]> {
-  const ids: number[] = [];
-  for (const slug of slugs) {
-    try {
-      const { data } = await getClient().query({
-        query: GET_CATEGORY_BY_SLUG,
-        variables: { slug },
-      });
-      if (data?.category?.databaseId) {
-        ids.push(data.category.databaseId);
-      }
-    } catch {
-      // Skip categories that don't exist
-    }
-  }
-  return ids;
-}
-
-/**
  * Get blog posts with pagination
- * Used by blog pages for default listing
+ * Uses MySQL for listing (no reusable block content needed for grid cards)
  */
 export async function getBlogPosts(
   options: {
     first?: number;
     after?: string;
     categorySlug?: string;
+    tagSlug?: string;
     excludeCategorySlugs?: string[];
   } = {}
 ): Promise<BlogSearchResult> {
-  const { first = 12, after, categorySlug, excludeCategorySlugs } = options;
+  const { first = 12, after, categorySlug, tagSlug, excludeCategorySlugs } = options;
 
+  // Try MySQL first
+  if (await isMySQLAvailable()) {
+    try {
+      const { loadBlogPosts, resolveBlogCategoryIds } = await import('@/lib/db/blog-loader');
+
+      let excludeCategoryIds: number[] | undefined;
+      if (excludeCategorySlugs && excludeCategorySlugs.length > 0) {
+        excludeCategoryIds = await resolveBlogCategoryIds(excludeCategorySlugs);
+      }
+
+      // Convert cursor-based 'after' to offset (cursor is base64-encoded offset)
+      let offset = 0;
+      if (after) {
+        try {
+          const decoded = Buffer.from(after, 'base64').toString();
+          offset = parseInt(decoded.replace('offset:', ''), 10) || 0;
+        } catch {}
+      }
+
+      const result = await loadBlogPosts({
+        first,
+        offset,
+        categorySlug,
+        tagSlug,
+        excludeCategoryIds: excludeCategoryIds?.length ? excludeCategoryIds : undefined,
+      });
+
+      // Generate cursor for next page
+      const nextOffset = offset + first;
+      const endCursor = result.hasNextPage
+        ? Buffer.from(`offset:${nextOffset}`).toString('base64')
+        : null;
+
+      return {
+        posts: result.posts,
+        pageInfo: {
+          hasNextPage: result.hasNextPage,
+          endCursor,
+        },
+      };
+    } catch (e) {
+      console.warn('getBlogPosts: MySQL failed, falling back to GraphQL', e);
+    }
+  }
+
+  // GraphQL fallback
   try {
     let query = GET_ALL_POSTS;
     let variables: Record<string, unknown> = { first, after };
@@ -263,7 +353,6 @@ export async function getBlogPosts(
       query = GET_POSTS_BY_CATEGORY;
       variables = { categoryName: categorySlug, first, after };
     } else if (excludeCategorySlugs && excludeCategorySlugs.length > 0) {
-      // Resolve category slugs to database IDs for exclusion
       const categoryIds = await resolveCategoryIds(excludeCategorySlugs);
       if (categoryIds.length > 0) {
         query = GET_POSTS_EXCLUDING_CATEGORIES;
@@ -288,8 +377,6 @@ export async function getBlogPosts(
 
 /**
  * Get blog search suggestions for autocomplete
- * Uses Fuse.js for fuzzy matching and relevance scoring
- * Returns title matches first, then content matches sorted by relevance
  */
 export async function getBlogSearchSuggestions(
   query: string,
@@ -303,50 +390,82 @@ export async function getBlogSearchSuggestions(
     return { posts: [], categories: [] };
   }
 
-  // Use the query directly - browser handles spell checking visually,
-  // and Fuse.js handles fuzzy matching for typo tolerance
   const searchQuery = query;
-
-  // Tokenize the search query
   const searchTerms = tokenizeQuery(searchQuery);
   const primaryTerm = searchTerms.length > 0 ? searchTerms[0] : searchQuery;
 
-  // Try static cache for categories first
+  // Get categories (try SQL → static cache → GraphQL)
+  let allCategories: CategoryNode[] = [];
   const cachedBlogCategories = getStaticBlogCategories();
 
-  const results = await Promise.allSettled([
-    getClient().query({
-      query: SEARCH_POSTS_BY_TITLE,
-      variables: { titleSearch: primaryTerm, first: limit + 3 },
-      revalidate: REVALIDATE.DYNAMIC,
-    }),
-    getClient().query({
-      query: SEARCH_POSTS,
-      variables: { search: searchQuery, first: limit + 5 },
-      revalidate: REVALIDATE.DYNAMIC,
-    }),
-    ...(cachedBlogCategories
-      ? []
-      : [getClient().query({
-          query: GET_ALL_CATEGORIES,
-          revalidate: REVALIDATE.STATIC,
-        })]),
-  ]);
+  if (cachedBlogCategories) {
+    allCategories = cachedBlogCategories.map(c => ({
+      id: c.id, name: c.name, slug: c.slug, count: c.count || 0,
+    }));
+  } else if (await isMySQLAvailable()) {
+    try {
+      const { loadBlogCategories } = await import('@/lib/db/blog-loader');
+      const cats = await loadBlogCategories();
+      allCategories = cats.map(c => ({
+        id: c.id, name: c.name, slug: c.slug, count: c.count,
+      }));
+    } catch {}
+  }
 
-  const titlePosts: Post[] = results[0].status === 'fulfilled' ? results[0].value.data?.posts?.nodes || [] : [];
-  const contentPosts: Post[] = results[1].status === 'fulfilled' ? results[1].value.data?.posts?.nodes || [] : [];
-  const allCategories: CategoryNode[] = cachedBlogCategories
-    ? cachedBlogCategories.map((c) => ({ id: c.id, name: c.name, slug: c.slug, count: c.count || 0 }))
-    : (results[2]?.status === 'fulfilled' ? (results[2] as PromiseFulfilledResult<any>).value.data?.categories?.nodes || [] : []);
+  // Fetch posts (try SQL first)
+  let allPosts: Post[] = [];
 
-  // Combine and deduplicate results
-  const seenIds = new Set<string>();
-  const allPosts: Post[] = [];
+  if (await isMySQLAvailable()) {
+    try {
+      const { loadBlogPosts } = await import('@/lib/db/blog-loader');
+      const [titleResult, contentResult] = await Promise.all([
+        loadBlogPosts({ titleSearch: primaryTerm, first: limit + 3 }),
+        loadBlogPosts({ search: searchQuery, first: limit + 5 }),
+      ]);
+      const seenIds = new Set<string>();
+      for (const post of [...titleResult.posts, ...contentResult.posts]) {
+        if (!seenIds.has(post.id)) {
+          seenIds.add(post.id);
+          allPosts.push(post);
+        }
+      }
+    } catch (e) {
+      console.warn('getBlogSearchSuggestions: MySQL failed, falling back to GraphQL', e);
+    }
+  }
 
-  for (const post of [...titlePosts, ...contentPosts]) {
-    if (!seenIds.has(post.id)) {
-      seenIds.add(post.id);
-      allPosts.push(post);
+  // GraphQL fallback for posts
+  if (allPosts.length === 0) {
+    const results = await Promise.allSettled([
+      getClient().query({
+        query: SEARCH_POSTS_BY_TITLE,
+        variables: { titleSearch: primaryTerm, first: limit + 3 },
+        revalidate: REVALIDATE.DYNAMIC,
+      }),
+      getClient().query({
+        query: SEARCH_POSTS,
+        variables: { search: searchQuery, first: limit + 5 },
+        revalidate: REVALIDATE.DYNAMIC,
+      }),
+      // Also fetch categories via GraphQL if we don't have them yet
+      ...(allCategories.length === 0
+        ? [getClient().query({ query: GET_ALL_CATEGORIES, revalidate: REVALIDATE.STATIC })]
+        : []),
+    ]);
+
+    const titlePosts: Post[] = results[0].status === 'fulfilled' ? results[0].value.data?.posts?.nodes || [] : [];
+    const contentPosts: Post[] = results[1].status === 'fulfilled' ? results[1].value.data?.posts?.nodes || [] : [];
+
+    if (allCategories.length === 0 && results[2]?.status === 'fulfilled') {
+      allCategories = (results[2] as PromiseFulfilledResult<any>).value.data?.categories?.nodes || [];
+    }
+
+    const seenIds = new Set<string>();
+    for (const post of [...titlePosts, ...contentPosts]) {
+      if (!seenIds.has(post.id)) {
+        seenIds.add(post.id);
+        allPosts.push(post);
+      }
     }
   }
 
@@ -360,15 +479,9 @@ export async function getBlogSearchSuggestions(
       searchTerms
     );
 
-    return {
-      post,
-      allTermsInTitle,
-      anyTermInTitle,
-      relevanceScore,
-    };
+    return { post, allTermsInTitle, anyTermInTitle, relevanceScore };
   });
 
-  // Sort by: all terms in title > any term in title > relevance score
   scoredPosts.sort((a, b) => {
     if (a.allTermsInTitle && !b.allTermsInTitle) return -1;
     if (!a.allTermsInTitle && b.allTermsInTitle) return 1;
@@ -377,46 +490,37 @@ export async function getBlogSearchSuggestions(
     return b.relevanceScore - a.relevanceScore;
   });
 
-  // Get top results
   const topPosts = scoredPosts
     .filter(s => s.relevanceScore > 0 || s.anyTermInTitle)
     .slice(0, limit)
     .map(s => s.post);
 
-  // Filter categories that match the search term (with stemming support)
+  // Filter matching categories
   const queryLower = query.toLowerCase();
   const matchingCategories = allCategories
     .filter((cat) => {
       const catLower = cat.name.toLowerCase();
-      // Direct match or any search term matches
       return (catLower.includes(queryLower) ||
               searchTerms.some(term => catLower.includes(term))) &&
              cat.count > 0;
     })
     .slice(0, 3)
-    .map((cat) => ({
-      id: cat.id,
-      name: cat.name,
-      slug: cat.slug,
-    }));
+    .map((cat) => ({ id: cat.id, name: cat.name, slug: cat.slug }));
 
   // Format posts for suggestions
   const postSuggestions = topPosts.map((post) => {
-    const cleanExcerpt = post.excerpt
-      ? stripHtml(post.excerpt).slice(0, 100)
-      : '';
-
+    const cleanExcerpt = post.excerpt ? stripHtml(post.excerpt).slice(0, 100) : '';
     return {
       id: post.id,
       title: post.title,
       slug: post.slug,
       excerpt: cleanExcerpt,
-      image: post.featuredImage?.node?.sourceUrl || null,
+      image: post.featuredImage?.node?.sourceUrl ? getProductionImageUrl(post.featuredImage.node.sourceUrl) : null,
       category: post.categories?.nodes?.[0]?.name || null,
     };
   });
 
-  // If no results found, check for spelling suggestions
+  // Spelling suggestions when no results
   let suggestions: string[] | undefined;
   if (postSuggestions.length === 0 && matchingCategories.length === 0) {
     const { correctBlogSearchTerm } = await import('@/lib/search/search-index');
@@ -426,11 +530,7 @@ export async function getBlogSearchSuggestions(
     }
   }
 
-  return {
-    posts: postSuggestions,
-    categories: matchingCategories,
-    suggestions,
-  };
+  return { posts: postSuggestions, categories: matchingCategories, suggestions };
 }
 
 /**
@@ -441,6 +541,24 @@ export async function getBlogCategories(): Promise<BlogCategory[]> {
     const cached = getStaticBlogCategories();
     if (cached) return cached;
   } catch {}
+
+  // Try MySQL first
+  if (await isMySQLAvailable()) {
+    try {
+      const { loadBlogCategories } = await import('@/lib/db/blog-loader');
+      const cats = await loadBlogCategories();
+      if (cats.length > 0) {
+        return cats.map(c => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          count: c.count,
+        }));
+      }
+    } catch (e) {
+      console.warn('getBlogCategories: MySQL failed, falling back to GraphQL', e);
+    }
+  }
 
   try {
     const { data } = await getClient().query({

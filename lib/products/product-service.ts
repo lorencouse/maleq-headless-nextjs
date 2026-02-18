@@ -12,6 +12,7 @@ import type {
   GraphQLVariationAttribute,
 } from '@/lib/types/woocommerce';
 import { extractSpecifications, type ProductSpecification } from './specifications';
+import { getProductionImageUrl } from '@/lib/utils/image';
 
 export type { ProductSpecification, ProductSpecificationLink } from './specifications';
 
@@ -151,7 +152,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
     const galleryNodes = product.galleryImages?.nodes;
     const galleryImages = galleryNodes
       ? galleryNodes.map((img: GraphQLImage) => ({
-          url: img.sourceUrl,
+          url: getProductionImageUrl(img.sourceUrl),
           altText: img.altText || product.name,
         }))
       : undefined;
@@ -207,7 +208,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
                 }))
               : [],
             image: v.image ? {
-              url: v.image.sourceUrl,
+              url: getProductionImageUrl(v.image.sourceUrl),
               altText: v.image.altText || v.name,
             } : null,
           };
@@ -219,7 +220,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       // Primary image first
       ...(product.image ? [{
         id: product.image.id || '0',
-        url: product.image.sourceUrl,
+        url: getProductionImageUrl(product.image.sourceUrl),
         altText: product.image.altText || product.name,
         isPrimary: true,
       }] : []),
@@ -227,7 +228,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       ...(galleryNodes
         ? galleryNodes.map((img: GraphQLImage, index: number) => ({
             id: img.id || String(index + 1),
-            url: img.sourceUrl,
+            url: getProductionImageUrl(img.sourceUrl),
             altText: img.altText || product.name,
             isPrimary: false,
           }))

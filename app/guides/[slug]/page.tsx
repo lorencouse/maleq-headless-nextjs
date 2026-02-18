@@ -119,6 +119,19 @@ export async function generateStaticParams() {
     }
   }
 
+  // Try MySQL first (single query, no pagination loop)
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable()) {
+      const { loadAllPostSlugs } = await import('@/lib/db/blog-loader');
+      const slugs = await loadAllPostSlugs();
+      if (slugs.length > 0) {
+        return limitStaticParams(slugs.map((slug) => ({ slug })), DEV_LIMITS.blogPosts);
+      }
+    }
+  } catch {}
+
+  // GraphQL fallback with pagination
   const allParams: { slug: string }[] = [];
   let hasNextPage = true;
   let after: string | null = null;
@@ -177,11 +190,25 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   let relatedPosts: Post[] = [];
   if (post.categories?.nodes && post.categories.nodes.length > 0) {
     const categorySlug = post.categories.nodes[0].slug;
-    const { data: relatedData } = await getClient().query({
-      query: GET_RELATED_POSTS,
-      variables: { categorySlug, first: 10 },
+    // Try MySQL first
+    let usedSQL = false;
+    try {
+      const { isMySQLConfigured } = await import('@/lib/db/pool');
+      if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+        const { loadBlogPosts } = await import('@/lib/db/blog-loader');
+        const result = await loadBlogPosts({ categorySlug, first: 10 });
+        relatedPosts = result.posts;
+        usedSQL = true;
+      }
+    } catch {}
+
+    if (!usedSQL) {
+      const { data: relatedData } = await getClient().query({
+        query: GET_RELATED_POSTS,
+        variables: { categorySlug, first: 10 },
       });
-    relatedPosts = relatedData?.posts?.nodes || [];
+      relatedPosts = relatedData?.posts?.nodes || [];
+    }
   }
 
   // Extract and batch fetch products from WooCommerce shortcodes in content

@@ -169,12 +169,12 @@ export default memo(function ProductCard({
               <span className='text-base sm:text-lg font-bold text-primary'>
                 {formatPrice(product.salePrice)}
               </span>
-              <span className='text-xs sm:text-sm text-muted-foreground line-through'>
+              <span className='text-xs sm:text-sm text-foreground line-through'>
                 {formatPrice(product.regularPrice)}
               </span>
             </>
           ) : (
-            <span className='text-base sm:text-lg font-bold text-foreground'>
+            <span className='text-base sm:text-lg font-bold text-primary'>
               {formatPrice(product.price || product.regularPrice)}
             </span>
           )}

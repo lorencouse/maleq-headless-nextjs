@@ -24,6 +24,35 @@ export function isMySQLConfigured(): boolean {
   );
 }
 
+/**
+ * Check if MySQL is configured AND reachable.
+ * Caches the result for 60s so we don't spam connection attempts
+ * when the database is down (e.g. Local by Flywheel not running).
+ */
+let reachableResult: boolean | null = null;
+let reachableCheckedAt = 0;
+const REACHABLE_TTL = 60_000; // 60 seconds
+
+export async function isMySQLReachable(): Promise<boolean> {
+  if (!isMySQLConfigured()) return false;
+
+  const now = Date.now();
+  if (reachableResult !== null && now - reachableCheckedAt < REACHABLE_TTL) {
+    return reachableResult;
+  }
+
+  try {
+    const p = getPool();
+    const conn = await p.getConnection();
+    conn.release();
+    reachableResult = true;
+  } catch {
+    reachableResult = false;
+  }
+  reachableCheckedAt = now;
+  return reachableResult;
+}
+
 export function getPool(): Pool {
   if (pool) return pool;
 

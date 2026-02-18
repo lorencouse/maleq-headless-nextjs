@@ -1,16 +1,10 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getClient } from '@/lib/apollo/client';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
-import {
-  GET_POSTS_BY_TAG,
-  GET_TAG_BY_SLUG,
-  GET_ALL_TAGS,
-} from '@/lib/queries/posts';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
+import { getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
-import { Post } from '@/lib/types/wordpress';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { BreadcrumbSchema } from '@/components/seo/StructuredData';
@@ -27,15 +21,30 @@ interface Tag {
   description?: string | null;
 }
 
-export async function generateMetadata({ params }: BlogTagPageProps): Promise<Metadata> {
-  const { slug } = await params;
+async function fetchTag(slug: string): Promise<Tag | null> {
+  // Try MySQL first
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable()) {
+      const { loadBlogTagBySlug } = await import('@/lib/db/blog-loader');
+      const tag = await loadBlogTagBySlug(slug);
+      if (tag) return tag;
+    }
+  } catch {}
 
+  // GraphQL fallback
+  const { getClient } = await import('@/lib/apollo/client');
+  const { GET_TAG_BY_SLUG } = await import('@/lib/queries/posts');
   const { data } = await getClient().query({
     query: GET_TAG_BY_SLUG,
     variables: { slug },
   });
+  return data?.tag || null;
+}
 
-  const tag: Tag | null = data?.tag;
+export async function generateMetadata({ params }: BlogTagPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const tag = await fetchTag(slug);
 
   if (!tag) {
     return {
@@ -67,19 +76,28 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
 }
 
 export async function generateStaticParams() {
+  // Try MySQL first
   try {
-    const { data } = await getClient().query({
-      query: GET_ALL_TAGS,
-      });
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable()) {
+      const { loadBlogTags } = await import('@/lib/db/blog-loader');
+      const tags = await loadBlogTags();
+      const params = tags
+        .filter(tag => tag.count > 0)
+        .map(tag => ({ slug: tag.slug }));
+      return limitStaticParams(params, DEV_LIMITS.blogTags);
+    }
+  } catch {}
 
+  // GraphQL fallback
+  try {
+    const { getClient } = await import('@/lib/apollo/client');
+    const { GET_ALL_TAGS } = await import('@/lib/queries/posts');
+    const { data } = await getClient().query({ query: GET_ALL_TAGS });
     const tags: Tag[] = data?.tags?.nodes || [];
-
     const params = tags
-      .filter((tag) => tag.count > 0)
-      .map((tag) => ({
-        slug: tag.slug,
-      }));
-
+      .filter(tag => tag.count > 0)
+      .map(tag => ({ slug: tag.slug }));
     return limitStaticParams(params, DEV_LIMITS.blogTags);
   } catch (error) {
     console.error('Error generating static params for blog tags:', error);
@@ -97,23 +115,13 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
   const { slug } = await params;
 
   // Fetch tag and posts in parallel
-  const [tagResult, postsResult] = await Promise.all([
-    getClient().query({
-      query: GET_TAG_BY_SLUG,
-      variables: { slug },
-      }),
-    getClient().query({
-      query: GET_POSTS_BY_TAG,
-      variables: { tag: slug, first: 12 },
-      }),
+  const [tag, postsResult] = await Promise.all([
+    fetchTag(slug),
+    getBlogPosts({ first: 12, tagSlug: slug }),
   ]);
 
-  const tag: Tag | null = tagResult.data?.tag;
-  const posts: Post[] = postsResult.data?.posts?.nodes || [];
-  const pageInfo = postsResult.data?.posts?.pageInfo || {
-    hasNextPage: false,
-    endCursor: null,
-  };
+  const posts = postsResult.posts;
+  const pageInfo = postsResult.pageInfo;
 
   if (!tag) {
     notFound();

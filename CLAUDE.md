@@ -35,8 +35,9 @@
 
 ## API Preferences
 
-- **Always prefer WPGraphQL over WooCommerce REST API** - GraphQL is more reliable and doesn't have the same authentication issues as the REST API
-- For authenticated operations not available via GraphQL, use custom REST endpoints in `wordpress/mu-plugins/` that return data directly
+- **Always prefer direct SQL queries over GraphQL** - SQL via the MySQL connection pool (`lib/db/pool.ts`) is faster and avoids WPGraphQL overhead. Use GraphQL only when absolutely necessary (e.g., reusable block rendering in blog post content which requires WordPress's `do_blocks()` pipeline).
+- For authenticated operations, use custom REST endpoints in `wordpress/mu-plugins/` that return data directly
+- The in-memory product index (`lib/products/product-index.ts`) backed by SQL should be the primary data source for product listings, filtering, and search
 
 ## Plugin Documentation
 

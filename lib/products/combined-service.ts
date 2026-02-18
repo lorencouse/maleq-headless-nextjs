@@ -17,7 +17,6 @@ import {
   SEARCH_PRODUCTS_BY_TITLE,
   SEARCH_PRODUCTS_BY_CATEGORY,
   GET_ALL_PRODUCT_CATEGORIES,
-  FILTER_PRODUCTS,
   GET_HIERARCHICAL_CATEGORIES,
   GET_ALL_BRANDS,
   GET_BRANDS_PAGE,
@@ -190,12 +189,12 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
     height: gqlProduct.height || null,
     image: product.image
       ? {
-          url: product.image.sourceUrl,
+          url: getProductionImageUrl(product.image.sourceUrl),
           altText: product.image.altText || product.name,
         }
       : null,
     galleryImages: galleryNodes.map((img) => ({
-      url: img.sourceUrl,
+      url: getProductionImageUrl(img.sourceUrl),
       altText: img.altText || product.name,
     })),
     categories: categoryNodes.map((cat) => ({
@@ -296,7 +295,7 @@ export async function getAllProducts(params: {
 
 /**
  * Get filtered products with DB-level filtering
- * Uses the FILTER_PRODUCTS query for price, stock, sale, and taxonomy filters
+ * Uses the in-memory SQL index for price, stock, sale, and taxonomy filters
  */
 export async function getFilteredProducts(params: {
   limit?: number;
@@ -313,63 +312,42 @@ export async function getFilteredProducts(params: {
   const { limit = 24, after, category, brand, color, material, minPrice, maxPrice, inStock, onSale } = params;
 
   try {
-    // Build variables for the filter query
-    const variables: Record<string, unknown> = {
-      first: limit,
-      after: after || null,
-    };
-
-    // Only add filters if they have meaningful values
-    if (category) {
-      variables.category = category;
-    }
-    if (minPrice !== undefined && minPrice > 0) {
-      variables.minPrice = minPrice;
-    }
-    if (maxPrice !== undefined && maxPrice < 10000) {
-      variables.maxPrice = maxPrice;
-    }
-    if (onSale === true) {
-      variables.onSale = true;
-    }
-    if (inStock === true) {
-      variables.stockStatus = ['IN_STOCK'];
+    // Decode cursor-based offset
+    let offset = 0;
+    if (after) {
+      try {
+        const decoded = Buffer.from(after, 'base64').toString('utf-8');
+        const match = decoded.match(/^offset:(\d+)$/);
+        if (match) offset = parseInt(match[1], 10);
+      } catch {}
     }
 
-    // Build taxonomy filter for brand, color, and material
-    const taxonomyFilters: { taxonomy: string; terms: string[] }[] = [];
+    const { queryProductIndex } = await import('@/lib/products/product-index');
+    const { indexEntriesToUnifiedProducts } = await import('@/lib/products/index-to-unified');
 
-    if (brand) {
-      taxonomyFilters.push({ taxonomy: 'PRODUCT_BRAND', terms: [brand] });
-    }
-    if (color) {
-      taxonomyFilters.push({ taxonomy: 'PA_COLOR', terms: [color] });
-    }
-    if (material) {
-      taxonomyFilters.push({ taxonomy: 'PRODUCT_MATERIAL', terms: [material] });
-    }
-
-    if (taxonomyFilters.length > 0) {
-      variables.taxonomyFilter = {
-        relation: 'AND',
-        filters: taxonomyFilters,
-      };
-    }
-
-    const { data } = await getClient().query({
-      query: FILTER_PRODUCTS,
-      variables,
+    const result = await queryProductIndex({
+      category,
+      brand,
+      color,
+      material,
+      minPrice,
+      maxPrice,
+      inStock,
+      onSale,
+      limit,
+      offset,
     });
 
-    const products: WooProduct[] = data?.products?.nodes || [];
-    const pageInfo = data?.products?.pageInfo || { hasNextPage: false, endCursor: null };
+    const products = indexEntriesToUnifiedProducts(result.products);
+    const nextOffset = offset + limit;
+    const hasNextPage = nextOffset < result.total;
+    const endCursor = hasNextPage
+      ? Buffer.from(`offset:${nextOffset}`).toString('base64')
+      : null;
 
     return {
-      products: products.map(convertWooProduct),
-      pageInfo: {
-        hasNextPage: pageInfo.hasNextPage,
-        endCursor: pageInfo.endCursor,
-      },
+      products,
+      pageInfo: { hasNextPage, endCursor },
     };
   } catch (error) {
     console.error('Error fetching filtered products:', error);
@@ -391,8 +369,8 @@ async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
 
   // Try MySQL first
   try {
-    const { isMySQLConfigured } = await import('@/lib/db/pool');
-    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable() && process.env.DATA_SOURCE !== 'graphql') {
       const { loadFlatCategories } = await import('@/lib/db/category-loader');
       const categories = await loadFlatCategories();
       if (categories.length > 0) return categories;
@@ -457,8 +435,8 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
 
   // Try MySQL first
   try {
-    const { isMySQLConfigured } = await import('@/lib/db/pool');
-    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable() && process.env.DATA_SOURCE !== 'graphql') {
       const { loadHierarchicalCategories } = await import('@/lib/db/category-loader');
       const categories = await loadHierarchicalCategories();
       if (categories.length > 0) return categories;
@@ -708,6 +686,18 @@ async function _uncachedGetBrands(): Promise<FilterOption[]> {
     if (cached) return cached;
   } catch {}
 
+  // Try MySQL first (single query, no pagination needed)
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable() && process.env.DATA_SOURCE !== 'graphql') {
+      const { loadBrands } = await import('@/lib/db/taxonomy-loader');
+      const brands = await loadBrands();
+      if (brands.length > 0) return brands;
+    }
+  } catch (e) {
+    console.warn('getBrands: MySQL failed, falling back to GraphQL', e);
+  }
+
   try {
     // First, try to fetch all brands with a simple query
     const { data } = await getClient().query<BrandQueryResponse>({
@@ -716,20 +706,10 @@ async function _uncachedGetBrands(): Promise<FilterOption[]> {
     });
 
     let allBrands: FilterOption[] = data?.productBrands?.nodes || [];
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`getBrands: Simple query returned ${allBrands.length} brands`);
-    }
 
     // If we got exactly 100 brands (WPGraphQL default limit), pagination might be needed
     if (allBrands.length === 100) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('getBrands: Hit limit, using pagination to fetch all brands...');
-      }
       allBrands = await fetchBrandsWithPagination();
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`getBrands: Total ${allBrands.length} brands fetched`);
     }
 
     return allBrands
@@ -814,6 +794,18 @@ export async function getMaterials(): Promise<FilterOption[]> {
     if (cached) return cached;
   } catch {}
 
+  // Try MySQL first
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable() && process.env.DATA_SOURCE !== 'graphql') {
+      const { loadMaterials } = await import('@/lib/db/taxonomy-loader');
+      const materials = await loadMaterials();
+      if (materials.length > 0) return materials;
+    }
+  } catch (e) {
+    console.warn('getMaterials: MySQL failed, falling back to GraphQL', e);
+  }
+
   try {
     const { data } = await getClient().query({
       query: GET_ALL_MATERIALS,
@@ -852,6 +844,21 @@ async function _uncachedGetGlobalAttributes(): Promise<{
       return { colors: cachedColors, materials: cachedMaterials };
     }
   } catch {}
+
+  // Try MySQL first for colors
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable() && process.env.DATA_SOURCE !== 'graphql') {
+      const { loadColors } = await import('@/lib/db/taxonomy-loader');
+      const [colors, materials] = await Promise.all([
+        loadColors(),
+        getMaterials(),
+      ]);
+      if (colors.length > 0) return { colors, materials };
+    }
+  } catch (e) {
+    console.warn('getGlobalAttributes: MySQL failed, falling back to GraphQL', e);
+  }
 
   try {
     // Fetch colors and materials in parallel
@@ -902,6 +909,18 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
     const cached = getStaticBrandBySlug(slug);
     if (cached) return cached;
   } catch {}
+
+  // Try MySQL first
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable() && process.env.DATA_SOURCE !== 'graphql') {
+      const { loadBrandBySlug } = await import('@/lib/db/taxonomy-loader');
+      const brand = await loadBrandBySlug(slug);
+      if (brand) return brand;
+    }
+  } catch (e) {
+    console.warn('getBrandBySlug: MySQL failed, falling back to GraphQL', e);
+  }
 
   try {
     const { data } = await getClient().query({

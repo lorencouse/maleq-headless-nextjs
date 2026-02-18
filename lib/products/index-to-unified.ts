@@ -19,6 +19,14 @@ function encodeId(prefix: string, id: number): string {
   return Buffer.from(`${prefix}:${id}`).toString('base64');
 }
 
+function formatPriceRange(min: number | null, max: number | null): string | null {
+  if (min === null) return null;
+  if (max !== null && max > min) {
+    return `$${min.toFixed(2)} - $${max.toFixed(2)}`;
+  }
+  return `$${min.toFixed(2)}`;
+}
+
 export function indexEntryToUnifiedProduct(entry: ProductIndexEntry): UnifiedProduct {
   const categories = entry.categorySlugs.map((slug, i) => ({
     id: slug,
@@ -34,6 +42,11 @@ export function indexEntryToUnifiedProduct(entry: ProductIndexEntry): UnifiedPro
     ? [{ id: entry.materialSlug, name: entry.materialName, slug: entry.materialSlug }]
     : undefined;
 
+  const isVariable = entry.type === 'VARIABLE';
+  const displayPrice = isVariable
+    ? formatPriceRange(entry.price, entry.maxPrice)
+    : formatPrice(entry.price);
+
   return {
     id: encodeId('post', entry.id),
     databaseId: entry.id,
@@ -42,9 +55,9 @@ export function indexEntryToUnifiedProduct(entry: ProductIndexEntry): UnifiedPro
     description: null,
     shortDescription: null,
     sku: null,
-    price: formatPrice(entry.price),
-    regularPrice: formatPrice(entry.regularPrice),
-    salePrice: formatPrice(entry.salePrice),
+    price: displayPrice,
+    regularPrice: isVariable ? displayPrice : formatPrice(entry.regularPrice),
+    salePrice: isVariable ? null : formatPrice(entry.salePrice),
     onSale: entry.onSale,
     stockStatus: entry.stockStatus,
     stockQuantity: null,

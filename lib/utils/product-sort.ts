@@ -26,7 +26,7 @@ export function sortProductsByPriority(products: UnifiedProduct[]): UnifiedProdu
     const bInStock = b.stockStatus === 'IN_STOCK' ? 0 : 1;
     if (aInStock !== bInStock) return aInStock - bInStock;
 
-    // Sort by popularity score (views + sales*10 + reviews*10)
+    // Sort by popularity score (views + totalSales*10 + reviewCount*10)
     const aPop = a.popularityScore ?? 0;
     const bPop = b.popularityScore ?? 0;
     if (aPop !== bPop) return bPop - aPop;
