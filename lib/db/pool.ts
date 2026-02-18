@@ -1,37 +1,100 @@
 /**
  * MySQL connection pool singleton for runtime product queries.
  *
- * Reads connection config from environment variables:
- *   MYSQL_SOCKET  - Unix socket path (for Local by Flywheel, etc.)
- *   MYSQL_HOST, MYSQL_PORT - TCP connection (for SSH tunnel to production)
- *   MYSQL_DB, MYSQL_USER, MYSQL_PASS - credentials
+ * Supports automatic fallback: tries local socket first (Local by Flywheel),
+ * and if that's not available, falls back to production via SSH tunnel.
  *
- * If MYSQL_SOCKET is set, it takes priority over host/port.
- * Returns null (not configured) when required vars are missing,
- * allowing callers to fall back to GraphQL.
+ * Environment variables (dual-config):
+ *   Local:  MYSQL_LOCAL_SOCKET, MYSQL_LOCAL_DB, MYSQL_LOCAL_USER, MYSQL_LOCAL_PASS
+ *   Prod:   MYSQL_PROD_HOST, MYSQL_PROD_PORT, MYSQL_PROD_DB, MYSQL_PROD_USER, MYSQL_PROD_PASS
+ *
+ * Legacy single-config also supported:
+ *   MYSQL_SOCKET / MYSQL_HOST, MYSQL_PORT, MYSQL_DB, MYSQL_USER, MYSQL_PASS
  */
 import mysql from 'mysql2/promise';
 import type { Pool } from 'mysql2/promise';
 
 let pool: Pool | null = null;
+let activeMode: 'local' | 'prod' | 'legacy' | null = null;
+
+interface DBConfig {
+  mode: 'local' | 'prod' | 'legacy';
+  socketPath?: string;
+  host?: string;
+  port?: number;
+  database: string;
+  user: string;
+  password: string;
+}
+
+function getLocalConfig(): DBConfig | null {
+  const socket = process.env.MYSQL_LOCAL_SOCKET;
+  const db = process.env.MYSQL_LOCAL_DB;
+  const user = process.env.MYSQL_LOCAL_USER;
+  const pass = process.env.MYSQL_LOCAL_PASS;
+  if (!socket || !db || !user || !pass) return null;
+  // Only use local if the socket file actually exists (i.e. Local by Flywheel is running)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('fs').accessSync(socket);
+  } catch {
+    return null;
+  }
+  return { mode: 'local', socketPath: socket, database: db, user, password: pass };
+}
+
+function getProdConfig(): DBConfig | null {
+  const host = process.env.MYSQL_PROD_HOST;
+  const db = process.env.MYSQL_PROD_DB;
+  const user = process.env.MYSQL_PROD_USER;
+  const pass = process.env.MYSQL_PROD_PASS;
+  if (!host || !db || !user || !pass) return null;
+  return {
+    mode: 'prod',
+    host,
+    port: parseInt(process.env.MYSQL_PROD_PORT || '3306', 10),
+    database: db,
+    user,
+    password: pass,
+  };
+}
+
+/** Legacy single-config (backwards compatible) */
+function getLegacyConfig(): DBConfig | null {
+  const db = process.env.MYSQL_DB;
+  const user = process.env.MYSQL_USER;
+  const pass = process.env.MYSQL_PASS;
+  if (!db || !user || !pass) return null;
+
+  const socket = process.env.MYSQL_SOCKET;
+  if (socket) {
+    return { mode: 'legacy', socketPath: socket, database: db, user, password: pass };
+  }
+  const host = process.env.MYSQL_HOST;
+  if (host) {
+    return {
+      mode: 'legacy',
+      host,
+      port: parseInt(process.env.MYSQL_PORT || '3306', 10),
+      database: db,
+      user,
+      password: pass,
+    };
+  }
+  return null;
+}
 
 export function isMySQLConfigured(): boolean {
-  return !!(
-    (process.env.MYSQL_SOCKET || process.env.MYSQL_HOST) &&
-    process.env.MYSQL_DB &&
-    process.env.MYSQL_USER &&
-    process.env.MYSQL_PASS
-  );
+  return !!(getLocalConfig() || getProdConfig() || getLegacyConfig());
 }
 
 /**
  * Check if MySQL is configured AND reachable.
- * Caches the result for 60s so we don't spam connection attempts
- * when the database is down (e.g. Local by Flywheel not running).
+ * Caches the result for 60s so we don't spam connection attempts.
  */
 let reachableResult: boolean | null = null;
 let reachableCheckedAt = 0;
-const REACHABLE_TTL = 60_000; // 60 seconds
+const REACHABLE_TTL = 60_000;
 
 export async function isMySQLReachable(): Promise<boolean> {
   if (!isMySQLConfigured()) return false;
@@ -56,25 +119,44 @@ export async function isMySQLReachable(): Promise<boolean> {
 export function getPool(): Pool {
   if (pool) return pool;
 
-  if (!isMySQLConfigured()) {
-    throw new Error('MySQL is not configured — set MYSQL_SOCKET (or MYSQL_HOST), MYSQL_DB, MYSQL_USER, MYSQL_PASS');
+  // Priority: local socket (if file exists) → production (SSH tunnel) → legacy
+  const config = getLocalConfig() || getProdConfig() || getLegacyConfig();
+
+  if (!config) {
+    throw new Error(
+      'MySQL is not configured — set MYSQL_LOCAL_* or MYSQL_PROD_* (or legacy MYSQL_*) env vars',
+    );
   }
 
-  const socketPath = process.env.MYSQL_SOCKET;
+  const isRemote = !config.socketPath;
 
   pool = mysql.createPool({
-    ...(socketPath
-      ? { socketPath }
-      : { host: process.env.MYSQL_HOST, port: parseInt(process.env.MYSQL_PORT || '3306', 10) }),
-    database: process.env.MYSQL_DB,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASS,
-    connectionLimit: 10,
-    maxIdle: 5,
-    idleTimeout: 60_000,
+    ...(config.socketPath
+      ? { socketPath: config.socketPath }
+      : { host: config.host, port: config.port }),
+    database: config.database,
+    user: config.user,
+    password: config.password,
+    // Remote (SSH tunnel) connections are less reliable — keep fewer idle and recycle faster
+    connectionLimit: isRemote ? 5 : 10,
+    maxIdle: isRemote ? 1 : 5,
+    idleTimeout: isRemote ? 10_000 : 60_000,
     enableKeepAlive: true,
-    keepAliveInitialDelay: 10_000,
+    keepAliveInitialDelay: isRemote ? 5_000 : 10_000,
   });
 
+  activeMode = config.mode;
+  if (config.mode === 'local') {
+    console.log('\n🟢 Using Local DB (Local by Flywheel)\n');
+  } else if (config.mode === 'prod') {
+    console.log('\n🟠 Using Production DB (wp.maleq.com via SSH tunnel)\n');
+  } else {
+    console.log('\n⚪ Using MySQL (legacy config)\n');
+  }
   return pool;
+}
+
+/** Returns which database is currently active */
+export function getActiveMode(): string | null {
+  return activeMode;
 }

@@ -18,6 +18,7 @@ import RecentlyViewed from '@/components/product/RecentlyViewed';
 import TrackRecentlyViewed from '@/components/product/TrackRecentlyViewed';
 import { ProductSchema, BreadcrumbSchema } from '@/components/seo/StructuredData';
 import DevEditLink from '@/components/dev/DevEditLink';
+import { getWpBaseUrl } from '@/lib/db/wp-url';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 // ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
@@ -148,7 +149,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Dev: Edit in WordPress link */}
-      <DevEditLink type="product" databaseId={product.databaseId} />
+      <DevEditLink type="product" databaseId={product.databaseId} wpBaseUrl={getWpBaseUrl()} />
 
       {/* Product Structured Data */}
       <ProductSchema

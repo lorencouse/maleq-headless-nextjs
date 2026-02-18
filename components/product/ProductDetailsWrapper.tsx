@@ -3,7 +3,8 @@
 import { useState, useMemo, useCallback } from 'react';
 import ProductImageGallery from './ProductImageGallery';
 import ProductPageClient from './ProductPageClient';
-import { EnhancedProduct } from '@/lib/products/product-service';
+import type { EnhancedProduct } from '@/lib/products/product-service';
+import { findDefaultVariation } from '@/lib/products/variation-utils';
 import { VariationImage } from '@/lib/types/product';
 
 interface ProductDetailsWrapperProps {
@@ -23,11 +24,10 @@ function getInitialVariationImage(
     return null;
   }
 
-  // Find the first in-stock variation (matching VariationSelector's logic)
-  const initialVariation =
-    product.variations.find(
-      (v) => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK',
-    ) || product.variations[0];
+  const initialVariation = findDefaultVariation(
+    product.variations,
+    product.defaultAttributes,
+  );
 
   return initialVariation?.image || null;
 }

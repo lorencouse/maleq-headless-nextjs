@@ -18,7 +18,10 @@
     "export:products": "bun run scripts/export-products.ts",
     "export:products:remote": "bun run scripts/export-products.ts --remote",
     "build:fast": "bun run export:products:remote && GENERATE_ALL_PAGES=false USE_STATIC_PRODUCTS=true next build --webpack",
-    "build:static": "bun run export:products:remote && GENERATE_ALL_PAGES=true USE_STATIC_PRODUCTS=true next build --webpack"
+    "build:static": "bun run export:products:remote && GENERATE_ALL_PAGES=true USE_STATIC_PRODUCTS=true next build --webpack",
+    "db:status": "bash scripts/db-toggle.sh",
+    "db:tunnel": "bash scripts/db-toggle.sh tunnel",
+    "db:tunnel:kill": "bash scripts/db-toggle.sh kill"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

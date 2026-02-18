@@ -148,6 +148,7 @@ export interface GraphQLProduct {
   productSource?: string | null;
   attributes?: GraphQLNodeConnection<GraphQLAttribute>;
   variations?: GraphQLNodeConnection<GraphQLVariation>;
+  defaultAttributes?: GraphQLNodeConnection<{ name: string; value: string }>;
 }
 
 export interface GraphQLImage {

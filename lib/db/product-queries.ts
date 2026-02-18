@@ -6,7 +6,7 @@
  */
 import { getPool } from './pool';
 import type { RowDataPacket } from 'mysql2';
-import { parseProductAttributes } from '@/lib/utils/php-unserialize';
+import { parseProductAttributes, phpUnserialize } from '@/lib/utils/php-unserialize';
 import { extractSpecifications } from '@/lib/products/specifications';
 import { formatAttributeName } from '@/lib/utils/woocommerce-format';
 import type { EnhancedProduct, ProductVariation } from '@/lib/products/product-service';
@@ -39,6 +39,7 @@ interface DbMeta extends RowDataPacket {
   featured: string | null;
   external_url: string | null;
   button_text: string | null;
+  default_attributes_ser: string | null;
 }
 
 interface DbTaxonomy extends RowDataPacket {
@@ -153,12 +154,14 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
         MAX(CASE WHEN meta_key = '_purchase_note' THEN meta_value END) AS purchase_note,
         MAX(CASE WHEN meta_key = '_featured' THEN meta_value END) AS featured,
         MAX(CASE WHEN meta_key = '_product_url' THEN meta_value END) AS external_url,
-        MAX(CASE WHEN meta_key = '_button_text' THEN meta_value END) AS button_text
+        MAX(CASE WHEN meta_key = '_button_text' THEN meta_value END) AS button_text,
+        MAX(CASE WHEN meta_key = '_default_attributes' THEN meta_value END) AS default_attributes_ser
        FROM wp_postmeta
        WHERE post_id = ?
          AND meta_key IN ('_sku','_price','_regular_price','_sale_price','_stock_status','_stock',
            '_weight','_length','_width','_height','_thumbnail_id','_product_image_gallery',
-           '_product_attributes','_purchase_note','_featured','_product_url','_button_text')`,
+           '_product_attributes','_purchase_note','_featured','_product_url','_button_text',
+           '_default_attributes')`,
       [productId]
     ),
     // Taxonomies
@@ -409,6 +412,20 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     isVariable
   );
 
+  // Parse default attributes (serialized PHP: a:1:{s:7:"pa_size";s:4:"4-oz";})
+  let defaultAttributes: { name: string; value: string }[] | undefined;
+  if (meta.default_attributes_ser) {
+    const parsed = phpUnserialize(meta.default_attributes_ser);
+    if (parsed && typeof parsed === 'object') {
+      defaultAttributes = Object.entries(parsed as Record<string, string>)
+        .filter(([, v]) => typeof v === 'string' && v.length > 0)
+        .map(([key, value]) => ({
+          name: formatAttributeName(key),
+          value: value as string,
+        }));
+    }
+  }
+
   return {
     id: encodeId('post', product.ID),
     databaseId: product.ID,
@@ -452,5 +469,6 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     purchaseNote: meta.purchase_note || null,
     externalUrl: meta.external_url || null,
     buttonText: meta.button_text || null,
+    defaultAttributes,
   };
 }

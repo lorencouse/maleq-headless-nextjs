@@ -27,6 +27,7 @@ import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import DevEditLink from '@/components/dev/DevEditLink';
+import { getWpBaseUrl } from '@/lib/db/wp-url';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { ArticleSchema, BreadcrumbSchema } from '@/components/seo/StructuredData';
 import { stripHtml } from '@/lib/utils/text-utils';
@@ -260,7 +261,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       />
 
       {/* Dev: Edit in WordPress link */}
-      <DevEditLink type="post" databaseId={post.databaseId} />
+      <DevEditLink type="post" databaseId={post.databaseId} wpBaseUrl={getWpBaseUrl()} />
 
       {/* Breadcrumb */}
       <Breadcrumbs

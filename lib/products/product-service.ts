@@ -40,6 +40,9 @@ export interface ProductVariation {
   } | null;
 }
 
+// Re-export for server-side callers
+export { findDefaultVariation } from './variation-utils';
+
 export interface ProductBrand {
   id: string;
   name: string;
@@ -67,6 +70,7 @@ export interface EnhancedProduct extends UnifiedProduct {
   purchaseNote: string | null;
   externalUrl?: string | null;
   buttonText?: string | null;
+  defaultAttributes?: { name: string; value: string }[];
 }
 
 
@@ -215,6 +219,15 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
         })
       : undefined;
 
+    // Extract default attributes for variable products
+    const defaultAttributeNodes = product.defaultAttributes?.nodes;
+    const defaultAttributes = defaultAttributeNodes && defaultAttributeNodes.length > 0
+      ? defaultAttributeNodes.map((a: { name: string; value: string }) => ({
+          name: a.name,
+          value: a.value,
+        }))
+      : undefined;
+
     // Build gallery array
     const gallery = [
       // Primary image first
@@ -250,7 +263,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       stockStatus: product.stockStatus || 'OUT_OF_STOCK',
       stockQuantity: product.stockQuantity || null,
       image: product.image ? {
-        url: product.image.sourceUrl,
+        url: getProductionImageUrl(product.image.sourceUrl),
         altText: product.image.altText || product.name,
       } : null,
       galleryImages,
@@ -269,6 +282,7 @@ export async function getProductBySlug(slug: string): Promise<EnhancedProduct | 
       purchaseNote: product.purchaseNote || null,
       externalUrl: product.externalUrl || null,
       buttonText: product.buttonText || null,
+      defaultAttributes,
     };
 
     return enhancedProduct;

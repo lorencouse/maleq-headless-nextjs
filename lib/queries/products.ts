@@ -50,8 +50,6 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on SimpleProduct {
-      viewCount
-      popularityScore
       price
       regularPrice
       salePrice
@@ -69,8 +67,6 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on VariableProduct {
-      viewCount
-      popularityScore
       price
       regularPrice
       salePrice
@@ -88,8 +84,6 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on ExternalProduct {
-      viewCount
-      popularityScore
       price
       regularPrice
       salePrice
@@ -105,8 +99,6 @@ export const PRODUCT_FIELDS = gql`
       }
     }
     ... on GroupProduct {
-      viewCount
-      popularityScore
       price
     }
   }
@@ -193,6 +185,12 @@ export const GET_PRODUCT_BY_SLUG = gql`
         length
         width
         height
+        defaultAttributes {
+          nodes {
+            name
+            value
+          }
+        }
         attributes {
           nodes {
             id

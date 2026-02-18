@@ -5,7 +5,8 @@ import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import VariationSelector from './VariationSelector';
 import ProductAddons, { SelectedAddon } from './ProductAddons';
-import { EnhancedProduct } from '@/lib/products/product-service';
+import type { EnhancedProduct } from '@/lib/products/product-service';
+import { findDefaultVariation } from '@/lib/products/variation-utils';
 import { useCartStore } from '@/lib/store/cart-store';
 import { useMiniCartControls } from '@/lib/store/ui-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
@@ -89,19 +90,12 @@ export default function ProductPageClient({
     0,
   );
 
-  // Get initial variation - prefer first in-stock variation
-  // This logic must match VariationSelector's initialization
+  // Get initial variation using shared default logic
   const getInitialVariation = (): SelectedVariation | null => {
     if (!isVariable || !product.variations || product.variations.length === 0) {
       return null;
     }
-
-    // Find first in-stock or low-stock variation
-    const inStockVariation = product.variations.find(
-      (v) => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK',
-    );
-
-    return inStockVariation || product.variations[0];
+    return findDefaultVariation(product.variations, product.defaultAttributes) || null;
   };
 
   const [selectedVariation, setSelectedVariation] =
@@ -358,6 +352,7 @@ export default function ProductPageClient({
             }))}
             productId={product.databaseId}
             externalSelectedVariationId={externalSelectedVariationId}
+            defaultAttributes={product.defaultAttributes}
             onVariationChange={(variation) => {
               setSelectedVariation({
                 ...variation,

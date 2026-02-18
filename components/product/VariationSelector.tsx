@@ -7,6 +7,7 @@ import {
   formatAttributeValue,
   formatPrice,
 } from '@/lib/utils/woocommerce-format';
+import { findDefaultVariation } from '@/lib/products/variation-utils';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
 
 interface VariationAttribute {
@@ -41,6 +42,7 @@ interface VariationSelectorProps {
   onVariationChange?: (variation: Variation) => void;
   productId?: number; // Parent product database ID (for debugging)
   externalSelectedVariationId?: string | null;
+  defaultAttributes?: { name: string; value: string }[];
 }
 
 export default function VariationSelector({
@@ -48,6 +50,7 @@ export default function VariationSelector({
   onVariationChange,
   productId,
   externalSelectedVariationId,
+  defaultAttributes,
 }: VariationSelectorProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -122,10 +125,8 @@ export default function VariationSelector({
       if (urlVariation) return fromUrl;
     }
 
-    // Fallback: first in-stock variation, or first variation
-    const initialVariation = variations.find(
-      v => v.stockStatus === 'IN_STOCK' || v.stockStatus === 'LOW_STOCK'
-    ) || variations[0];
+    // Use shared default variation logic: default attrs → first in-stock → default OOS → first
+    const initialVariation = findDefaultVariation(variations, defaultAttributes);
 
     const initial: Record<string, string> = {};
     initialVariation?.attributes.forEach((attr) => {
