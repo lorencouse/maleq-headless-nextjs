@@ -83,6 +83,7 @@ export default function ProductDetailsWrapper({
           selectedVariationImage={selectedVariationImage}
           variationImageMap={variationImageMap}
           onVariationSelectByImage={handleGalleryVariationSelect}
+          productDatabaseId={product.databaseId}
         />
       </div>
 

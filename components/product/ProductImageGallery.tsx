@@ -126,10 +126,13 @@ export default function ProductImageGallery({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           productId: productDatabaseId,
-          imageId: parseInt(selectedImage.id, 10),
+          imageUrl: selectedImage.url,
         }),
       });
-      if (!res.ok) throw new Error('Failed to set default image');
+      if (!res.ok) {
+        const body = await res.text();
+        throw new Error(`Failed (${res.status}): ${body}`);
+      }
       router.refresh();
     } catch (err) {
       console.error('Set default image error:', err);
