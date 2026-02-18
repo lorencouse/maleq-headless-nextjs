@@ -46,6 +46,7 @@ export interface IndexQueryResult {
 
 let indexEntries: ProductIndexEntry[] | null = null;
 let bySlug: Map<string, ProductIndexEntry> | null = null;
+let byId: Map<number, ProductIndexEntry> | null = null;
 let byCategorySlug: Map<string, ProductIndexEntry[]> | null = null;
 let byBrandSlug: Map<string, ProductIndexEntry[]> | null = null;
 /** Pre-computed lowercased searchable text and stemmed words per product */
@@ -91,12 +92,14 @@ async function ensureLoaded(): Promise<void> {
 function buildLookups(entries: ProductIndexEntry[]): void {
   indexEntries = entries;
   bySlug = new Map();
+  byId = new Map();
   byCategorySlug = new Map();
   byBrandSlug = new Map();
   searchText = new Map();
 
   for (const entry of entries) {
     bySlug.set(entry.slug, entry);
+    byId.set(entry.id, entry);
 
     for (const catSlug of entry.categorySlugs) {
       const list = byCategorySlug.get(catSlug);
@@ -141,6 +144,12 @@ export async function invalidateProductIndex(): Promise<void> {
 export async function getIndexEntryBySlug(slug: string): Promise<ProductIndexEntry | null> {
   await ensureLoaded();
   return bySlug?.get(slug) ?? null;
+}
+
+/** Get a single product by database ID from the index. */
+export async function getIndexEntryById(id: number): Promise<ProductIndexEntry | null> {
+  await ensureLoaded();
+  return byId?.get(id) ?? null;
 }
 
 /** Get all entries (for search indexing etc). */

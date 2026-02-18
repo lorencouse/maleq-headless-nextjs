@@ -389,6 +389,18 @@ async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
     if (cached) return cached;
   } catch {}
 
+  // Try MySQL first
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      const { loadFlatCategories } = await import('@/lib/db/category-loader');
+      const categories = await loadFlatCategories();
+      if (categories.length > 0) return categories;
+    }
+  } catch (err) {
+    console.error('[categories] MySQL flat load failed, falling back to GraphQL:', err);
+  }
+
   try {
     const allCategories: ProductCategory[] = [];
     let hasNextPage = true;
@@ -947,14 +959,34 @@ export async function getTrendingProducts(limit = 12): Promise<UnifiedProduct[]>
       const productIds: number[] = data.product_ids || [];
 
       if (productIds.length > 0) {
-        // Hydrate with full product data via GraphQL
-        const { data: gqlData } = await getClient().query({
-          query: GET_PRODUCTS_BY_IDS,
-          variables: { include: productIds },
-          revalidate: 3600,
-        });
+        // Try MySQL index first for hydration
+        let products: UnifiedProduct[] = [];
+        let usedIndex = false;
 
-        const products: UnifiedProduct[] = (gqlData?.products?.nodes || []).map(convertWooProduct);
+        try {
+          const { isMySQLConfigured } = await import('@/lib/db/pool');
+          if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+            const { getIndexEntryById } = await import('@/lib/products/product-index');
+            const { indexEntryToUnifiedProduct } = await import('@/lib/products/index-to-unified');
+            const entries = await Promise.all(productIds.map(id => getIndexEntryById(id)));
+            const valid = entries.filter((e): e is NonNullable<typeof e> => e !== null);
+            if (valid.length > 0) {
+              products = valid.map(indexEntryToUnifiedProduct);
+              usedIndex = true;
+            }
+          }
+        } catch {
+          // fall through to GraphQL
+        }
+
+        if (!usedIndex) {
+          const { data: gqlData } = await getClient().query({
+            query: GET_PRODUCTS_BY_IDS,
+            variables: { include: productIds },
+            revalidate: 3600,
+          });
+          products = (gqlData?.products?.nodes || []).map(convertWooProduct);
+        }
 
         // Preserve the view-count order from the REST response
         const orderMap = new Map(productIds.map((id, i) => [id, i]));
