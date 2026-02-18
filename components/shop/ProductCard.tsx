@@ -51,17 +51,14 @@ export default memo(function ProductCard({
       >
         <div className='relative h-44 sm:h-56 lg:h-64 w-full overflow-hidden bg-background'>
           {product.image && !imgError ? (
-            <>
-              <div className='absolute inset-0 bg-muted animate-pulse' />
-              <Image
-                src={product.image.url}
-                alt={product.image.altText || product.name}
-                fill
-                className='object-contain group-hover:scale-105 transition-transform duration-300 relative z-[1]'
-                sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
-                onError={handleImageError}
-              />
-            </>
+            <Image
+              src={product.image.url}
+              alt={product.image.altText || product.name}
+              fill
+              className='object-contain group-hover:scale-105 transition-transform duration-300'
+              sizes='(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw'
+              onError={handleImageError}
+            />
           ) : (
             <div className='flex items-center justify-center h-full text-muted-foreground'>
               No Image
