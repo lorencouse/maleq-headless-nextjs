@@ -7,22 +7,38 @@ import { RequestDocument } from 'graphql-request';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 const PAGE_SIZE = 500;
 const PRODUCTS_PER_SEGMENT = 5000;
-const PRODUCT_SEGMENTS = 7; // Supports up to 35K products
 
 export const revalidate = 86400; // Cache for 24h, regenerate on request
 export const maxDuration = 120; // Allow up to 120s per segment
 
 /**
+ * Get the total number of product segments needed.
+ * Uses static cache count when available, falls back to GraphQL.
+ */
+async function getProductSegmentCount(): Promise<number> {
+  if (process.env.USE_STATIC_PRODUCTS === 'true') {
+    const { getAllStaticSlugs, hasStaticCache } = await import('@/lib/products/static-product-service');
+    if (hasStaticCache()) {
+      return Math.ceil(getAllStaticSlugs().length / PRODUCTS_PER_SEGMENT);
+    }
+  }
+  // Fallback: fetch total count via GraphQL
+  const allSlugs = await fetchAllSlugs(GET_ALL_PRODUCT_SLUGS, 'products');
+  return Math.ceil(allSlugs.length / PRODUCTS_PER_SEGMENT);
+}
+
+/**
  * Generate sitemap segment IDs.
  * Segment 0: static pages, categories, brands, blog
- * Segments 1-N: products (~5K per segment)
+ * Segments 1-N: products (~5K per segment, computed from actual product count)
  */
 export async function generateSitemaps() {
+  const productSegments = await getProductSegmentCount();
   const ids = [];
   // Segment 0: non-product content
   ids.push({ id: 0 });
   // Segments 1-N: product segments
-  for (let i = 1; i <= PRODUCT_SEGMENTS; i++) {
+  for (let i = 1; i <= productSegments; i++) {
     ids.push({ id: i });
   }
   return ids;
