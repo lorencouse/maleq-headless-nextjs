@@ -1,12 +1,15 @@
 #!/usr/bin/env bun
 
 /**
- * Split Variable Products with Mixed Product Lines
+ * Split Variable Products with Mixed Product Lines (V2.2 — SKU + Price)
  *
- * Some variable products have variations representing fundamentally different
- * product lines merged under one parent (e.g., "Gun Oil Lubricant" has both
- * silicone-based and H2O water-based variations). This script splits them by
- * creating new parent products and reassigning variations.
+ * Uses warehouse SKU prefix grouping (`_wt_sku`) as the primary method to
+ * identify distinct product lines merged under one WooCommerce variable parent.
+ * Refines with price-based grouping: same price = same product line (color variants),
+ * different price = different size/volume (separate products).
+ * Falls back to keyword-based splitting for non-Williams products.
+ *
+ * Supports N-way splits (a parent with 7 SKU prefix groups → 7 products).
  *
  * Usage:
  *   bun scripts/split-variation-products.ts [mode] [options]
@@ -25,7 +28,7 @@
  *   --help, -h        Show help
  */
 
-import { createReadStream, writeFileSync, existsSync, mkdirSync, readFileSync } from 'fs';
+import { createReadStream, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { createInterface } from 'readline';
 import { parse } from 'csv-parse';
 import type { Connection, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
@@ -35,6 +38,7 @@ import { getConnection } from './lib/db';
 
 interface FeedProduct {
   sku: string;
+  barcode: string;
   name: string;
   color: string;
   material: string;
@@ -44,7 +48,7 @@ interface FeedProduct {
   diameter: string;
   weight: string;
   description: string;
-  source: 'williams' | 'stc';
+  source: 'williams-active' | 'williams-inactive' | 'stc';
 }
 
 interface ScriptOptions {
@@ -62,25 +66,29 @@ interface VariationData {
   slug: string;
   excerpt: string;
   status: string;
-  sku: string;
-  feedName: string; // from feed lookup
+  sku: string;          // _sku (barcode/UPC)
+  warehouseSku: string; // _wt_sku (Williams warehouse SKU)
+  feedName: string;     // from feed lookup by warehouseSku
+  regularPrice: number; // _regular_price for price-based grouping
 }
 
-interface SplitSignalResult {
-  keyword: string;
-  label: string;         // Human-readable label for the new product
-  withIds: number[];     // Variation IDs that match the keyword
-  withoutIds: number[];  // Variation IDs that don't match
-  ratio: number;         // Closeness to 50/50 (0 = perfect split, 1 = all on one side)
+/** A group of variations sharing the same SKU prefix or keyword match */
+interface SplitGroup {
+  label: string;         // Human-readable label for this group
+  variationIds: number[];
+  skuPrefix?: string;    // SKU prefix if SKU-based
+  keyword?: string;      // Keyword if keyword-based
 }
+
+type SplitMethod = 'sku-prefix' | 'sku-prefix+price' | 'price' | 'keyword';
 
 interface SplitCandidate {
   parentId: number;
   parentTitle: string;
   parentSlug: string;
   totalVariations: number;
-  primarySplit: SplitSignalResult;
-  alternativeSplits: SplitSignalResult[];
+  method: SplitMethod;
+  groups: SplitGroup[];          // All groups (first = stays on original parent)
   variations: VariationData[];
 }
 
@@ -88,15 +96,23 @@ interface SplitAction {
   parentId: number;
   parentTitle: string;
   parentSlug: string;
-  keyword: string;
-  newParentTitle: string;
-  newParentSlug: string;
-  splitGroupIds: number[];     // Variations moving to new parent
-  remainingGroupIds: number[]; // Variations staying with original
-  splitGroupSkus: string[];
-  remainingGroupSkus: string[];
-  splitGroupHasDuplicateAttrs: boolean;    // Warning: split group has duplicate attribute values
-  remainingGroupHasDuplicateAttrs: boolean; // Warning: remaining group has duplicate attribute values
+  method: SplitMethod;
+  /** The group that stays on the original parent (largest group) */
+  keepGroup: {
+    label: string;
+    variationIds: number[];
+    skuPrefix?: string;
+  };
+  /** Groups that each get a new parent product */
+  newGroups: Array<{
+    label: string;
+    variationIds: number[];
+    skuPrefix?: string;
+    newParentTitle: string;
+    newParentSlug: string;
+    hasDuplicateAttrs: boolean;
+  }>;
+  keepGroupHasDuplicateAttrs: boolean;
 }
 
 interface SplitReport {
@@ -107,7 +123,7 @@ interface SplitReport {
     totalVariationsAffected: number;
     totalNewParentsToCreate: number;
     totalWithDuplicateAttrs: number;
-    splitsByKeyword: Record<string, number>;
+    splitsByMethod: Record<string, number>;
   };
   actions: SplitAction[];
   skipped: Array<{
@@ -120,6 +136,7 @@ interface SplitReport {
 interface SnapshotVariation {
   id: number;
   sku: string;
+  warehouseSku: string;
   price: string;
   sizeAttr: string;
   feedName: string;
@@ -130,18 +147,26 @@ interface SnapshotEntry {
   parentId: number;
   parentTitle: string;
   parentSlug: string;
-  newParentId?: number;
-  newParentTitle: string;
-  newParentSlug: string;
-  keyword: string;
+  method: SplitMethod;
+  newParents: Array<{
+    id: number;
+    title: string;
+    slug: string;
+    variationCount: number;
+    minPrice: string;
+    maxPrice: string;
+    movedVariations: SnapshotVariation[];
+  }>;
+  originalParentAfter: {
+    id: number;
+    title: string;
+    variationCount: number;
+    minPrice: string;
+    maxPrice: string;
+    remainingVariations: SnapshotVariation[];
+  } | null;
   before: {
     variations: SnapshotVariation[];
-  };
-  after?: {
-    originalParent: { id: number; title: string; variationCount: number; minPrice: string; maxPrice: string };
-    newParent: { id: number; title: string; variationCount: number; minPrice: string; maxPrice: string };
-    movedVariations: SnapshotVariation[];
-    remainingVariations: SnapshotVariation[];
   };
   success: boolean;
   error?: string;
@@ -204,11 +229,13 @@ function parseArgs(): ScriptOptions {
 
 function printHelp() {
   console.log(`
-Split Variable Products with Mixed Product Lines
-=================================================
-Finds variable products where variations represent different product lines
-(e.g., silicone vs water-based lubricant) and splits them into separate
-parent products, each with their own variations.
+Split Variable Products (V2 — SKU-First Approach)
+===================================================
+Uses warehouse SKU prefix grouping as the primary method to split variable
+products that contain multiple product lines. Falls back to keyword-based
+splitting for non-Williams products.
+
+Supports N-way splits (one parent can become 2, 3, or 7+ products).
 
 Usage: bun scripts/split-variation-products.ts [mode] [options]
 
@@ -227,8 +254,7 @@ Options:
 `);
 }
 
-// ==================== FEED PARSING ====================
-// Reused from fix-duplicate-variations.ts
+// ==================== FEED PARSING (LAZY) ====================
 
 const BASE_DIR = '/Volumes/Mac Mini M4 -2TB/MacMini-Data/Documents/web-dev/maleq-headless';
 
@@ -239,7 +265,36 @@ const WILLIAMS_XML_FILES = [
 
 const STC_CSV_FILE = `${BASE_DIR}/data/product-feeds/stc-product-feed.csv`;
 
-async function parseWilliamsXml(filePath: string, skuMap: Map<string, FeedProduct>): Promise<number> {
+let _skuLookupCache: Map<string, FeedProduct> | null = null;
+/** Maps barcode (UPC) → warehouse SKU for resolving DB _sku → _wt_sku */
+let _barcodeToWtSkuCache: Map<string, string> | null = null;
+/** Set of all STC barcodes/UPCs — used for discontinued product detection */
+let _stcBarcodeSetCache: Set<string> | null = null;
+
+async function getSkuLookup(): Promise<Map<string, FeedProduct>> {
+  if (_skuLookupCache) return _skuLookupCache;
+  await buildSkuLookup();
+  return _skuLookupCache!;
+}
+
+async function getBarcodeToWtSku(): Promise<Map<string, string>> {
+  if (_barcodeToWtSkuCache) return _barcodeToWtSkuCache;
+  await buildSkuLookup();
+  return _barcodeToWtSkuCache!;
+}
+
+async function getStcBarcodeSet(): Promise<Set<string>> {
+  if (_stcBarcodeSetCache) return _stcBarcodeSetCache;
+  await buildSkuLookup();
+  return _stcBarcodeSetCache!;
+}
+
+async function parseWilliamsXml(
+  filePath: string,
+  skuMap: Map<string, FeedProduct>,
+  barcodeMap: Map<string, string>,
+  sourceTag: 'williams-active' | 'williams-inactive' = 'williams-active'
+): Promise<number> {
   if (!existsSync(filePath)) {
     console.log(`  [skip] File not found: ${filePath}`);
     return 0;
@@ -264,7 +319,7 @@ async function parseWilliamsXml(filePath: string, skuMap: Map<string, FeedProduc
 
       if (line.includes('<product ') || line.trim() === '<product>') {
         inProduct = true;
-        currentProduct = { source: 'williams' };
+        currentProduct = { source: sourceTag };
         buffer = line + '\n';
       }
 
@@ -272,7 +327,9 @@ async function parseWilliamsXml(filePath: string, skuMap: Map<string, FeedProduc
         const block = buffer;
         const sku = extractXmlField(block, 'sku');
         if (sku) {
+          const barcode = extractXmlField(block, 'barcode');
           currentProduct.sku = sku;
+          currentProduct.barcode = barcode;
           currentProduct.name = extractXmlCdata(block, 'name') || extractXmlField(block, 'name') || '';
           currentProduct.color = extractXmlField(block, 'color') || '';
           currentProduct.material = extractXmlField(block, 'material') || '';
@@ -286,6 +343,11 @@ async function parseWilliamsXml(filePath: string, skuMap: Map<string, FeedProduc
           if (!skuMap.has(sku)) {
             skuMap.set(sku, currentProduct as FeedProduct);
             count++;
+          }
+
+          // Build barcode → warehouse SKU mapping
+          if (barcode && !barcodeMap.has(barcode)) {
+            barcodeMap.set(barcode, sku);
           }
         }
 
@@ -311,7 +373,11 @@ function extractXmlCdata(block: string, tag: string): string {
   return match ? match[1].trim() : '';
 }
 
-async function parseStcCsv(filePath: string, skuMap: Map<string, FeedProduct>): Promise<number> {
+async function parseStcCsv(
+  filePath: string,
+  skuMap: Map<string, FeedProduct>,
+  barcodeMap: Map<string, string>
+): Promise<number> {
   if (!existsSync(filePath)) {
     console.log(`  [skip] File not found: ${filePath}`);
     return 0;
@@ -341,6 +407,7 @@ async function parseStcCsv(filePath: string, skuMap: Map<string, FeedProduct>): 
 
       const product: FeedProduct = {
         sku: handle,
+        barcode: upc,
         name,
         color: (row['Color'] || '').trim(),
         material: (row['Material'] || '').trim(),
@@ -360,6 +427,10 @@ async function parseStcCsv(filePath: string, skuMap: Map<string, FeedProduct>): 
       if (upc && !skuMap.has(upc)) {
         skuMap.set(upc, { ...product, sku: upc });
       }
+      // STC: UPC → handle mapping (handle is used as SKU in DB for STC products)
+      if (upc && handle && !barcodeMap.has(upc)) {
+        barcodeMap.set(upc, handle);
+      }
     });
 
     parser.on('end', () => resolve(count));
@@ -368,31 +439,42 @@ async function parseStcCsv(filePath: string, skuMap: Map<string, FeedProduct>): 
 }
 
 async function buildSkuLookup(): Promise<Map<string, FeedProduct>> {
-  console.log('\n--- Step 1: Building SKU lookup from product feeds ---');
+  console.log('\n--- Building SKU lookup from product feeds (lazy) ---');
   const skuMap = new Map<string, FeedProduct>();
+  const barcodeMap = new Map<string, string>();
+  const stcBarcodes = new Set<string>();
 
-  for (const xmlFile of WILLIAMS_XML_FILES) {
-    const count = await parseWilliamsXml(xmlFile, skuMap);
-    console.log(`    -> Added ${count.toLocaleString()} products`);
+  // Parse active Williams XML first (takes priority)
+  const activeCount = await parseWilliamsXml(WILLIAMS_XML_FILES[0], skuMap, barcodeMap, 'williams-active');
+  console.log(`    -> Added ${activeCount.toLocaleString()} active Williams products`);
+
+  // Parse inactive Williams XML
+  if (WILLIAMS_XML_FILES.length > 1) {
+    const inactiveCount = await parseWilliamsXml(WILLIAMS_XML_FILES[1], skuMap, barcodeMap, 'williams-inactive');
+    console.log(`    -> Added ${inactiveCount.toLocaleString()} inactive Williams products`);
   }
 
-  const stcCount = await parseStcCsv(STC_CSV_FILE, skuMap);
+  const stcCount = await parseStcCsv(STC_CSV_FILE, skuMap, barcodeMap);
   console.log(`    -> Added ${stcCount.toLocaleString()} STC products`);
 
+  // Build STC barcode set for discontinued detection
+  for (const [key, product] of skuMap) {
+    if (product.source === 'stc' && product.barcode) {
+      stcBarcodes.add(product.barcode);
+    }
+  }
+  console.log(`  STC barcodes for discontinued detection: ${stcBarcodes.size.toLocaleString()}`);
+
   console.log(`  Total SKU lookup entries: ${skuMap.size.toLocaleString()}`);
+  console.log(`  Total barcode→warehouseSku mappings: ${barcodeMap.size.toLocaleString()}`);
+
+  _skuLookupCache = skuMap;
+  _barcodeToWtSkuCache = barcodeMap;
+  _stcBarcodeSetCache = stcBarcodes;
   return skuMap;
 }
 
 // ==================== PHP SERIALIZATION ====================
-
-interface ProductAttribute {
-  name: string;
-  value: string;
-  position: number;
-  is_visible: number;
-  is_variation: number;
-  is_taxonomy: number;
-}
 
 function deserializePhpArray(str: string): Record<string, any> {
   try {
@@ -436,7 +518,6 @@ function deserializePhpArray(str: string): Record<string, any> {
         return null;
       }
       if (str[pos] === 'd') {
-        // double/float
         pos++; pos++;
         let numStr = '';
         while (str[pos] !== ';') { numStr += str[pos]; pos++; }
@@ -503,8 +584,67 @@ function toSlug(value: string): string {
     .substring(0, 200);
 }
 
-// ==================== SPLIT SIGNALS ====================
-// Reused from scan-split-candidates.ts
+// ==================== SKU PREFIX EXTRACTION ====================
+
+/**
+ * Extract the prefix from a warehouse SKU for grouping product lines.
+ *
+ * Strategy: find the non-numeric prefix (letters + separators), then keep
+ * a fixed portion of the numeric suffix to distinguish product lines while
+ * stripping the variant digits (color/size codes).
+ *
+ * SKUs follow patterns like:
+ *   SNSL1, SNSL16, SNSL32       → prefix "SNSL"  (all Swiss Navy Silicone Lube sizes)
+ *   BN12050, BN12051, BN12052   → prefix "BN120"  (Sweet N Hard 6 in Pink/Purple/Blue)
+ *   BN16420, BN16421, BN16422   → prefix "BN164"  (Sweet N Hard 1 in colors)
+ *   CNVEF-4390, CNVEF-4391      → prefix "CNVEF-43" (same line, color variants)
+ *
+ * Algorithm:
+ * 1. Split SKU into alpha-prefix (with separators) and numeric-suffix.
+ * 2. If numeric suffix is 1-2 digits → prefix = alpha part only (size/color code).
+ * 3. If numeric suffix is 3+ digits → prefix = alpha part + all but last 2 digits.
+ *    This keeps the product-line digits while stripping the variant digits.
+ */
+function extractSkuPrefix(sku: string): string {
+  if (!sku || sku.length < 3) return sku;
+
+  // Find where the trailing numeric portion starts
+  // Walk backwards past digits to find the boundary
+  let numStart = sku.length;
+  for (let i = sku.length - 1; i >= 0; i--) {
+    if (/\d/.test(sku[i])) {
+      numStart = i;
+    } else {
+      break;
+    }
+  }
+
+  // No trailing digits → return as-is
+  if (numStart === sku.length) return sku;
+
+  const alphaPart = sku.substring(0, numStart); // e.g., "SNSL", "BN", "CNVEF-"
+  const numPart = sku.substring(numStart);       // e.g., "1", "16", "12050"
+
+  // If alpha part is empty (pure numeric SKU), fall back to stripping last 2
+  if (!alphaPart) {
+    return numPart.length > 2 ? sku.substring(0, sku.length - 2) : sku;
+  }
+
+  // Short numeric suffix (1-2 digits): these ARE the variant (size/color).
+  // The product line is fully identified by the alpha prefix.
+  // e.g., SNSL1, SNSL16, SNSL32 → all "SNSL"
+  if (numPart.length <= 2) {
+    return alphaPart;
+  }
+
+  // Longer numeric suffix (3+ digits): keep all but last 2 digits as product-line ID.
+  // e.g., BN12050 → "BN" + "120" = "BN120"
+  //        CNVEF-4390 → "CNVEF-" + "43" = "CNVEF-43"
+  const keepDigits = numPart.substring(0, numPart.length - 2);
+  return alphaPart + keepDigits;
+}
+
+// ==================== KEYWORD-BASED SPLIT SIGNALS (FALLBACK) ====================
 
 const SPLIT_SIGNALS: Record<string, { patterns: RegExp[]; label: string }> = {
   'vibrating':        { patterns: [/\bvibrating\b/i],                                    label: 'Vibrating' },
@@ -519,25 +659,15 @@ const SPLIT_SIGNALS: Record<string, { patterns: RegExp[]; label: string }> = {
   'double':           { patterns: [/\bdouble\b/i],                                       label: 'Double' },
 };
 
-// Trailing product nouns - label is inserted before these in the title
 const PRODUCT_NOUNS = /\b(lubricant|lube|dildo|dong|vibrator|plug|vibe|massager|ring|sleeve|stroker|pump|cock|penis|strap-on|harness|stimulator|wand|bullet|egg|beads|probe|kit|set|cream|gel|oil|spray|wash|cleanser|enhancer)\b/i;
 
-// ==================== TITLE GENERATION ====================
-
-/**
- * Generate a new product title by inserting a label before the trailing product noun.
- * "Gun Oil Lubricant" + "H2O" -> "Gun Oil H2O Lubricant"
- * "King Cock Cock" + "Vibrating" -> "King Cock Vibrating Cock"
- */
-function generateSplitTitle(parentTitle: string, label: string): string {
-  // Check if the label is already in the title
+function generateKeywordSplitTitle(parentTitle: string, label: string): string {
   if (new RegExp(`\\b${escapeRegex(label)}\\b`, 'i').test(parentTitle)) {
     return parentTitle;
   }
 
-  // Find the last product noun in the title
   const words = parentTitle.split(/\s+/);
-  let insertIndex = words.length; // default: append at end
+  let insertIndex = words.length;
 
   for (let i = words.length - 1; i >= 0; i--) {
     if (PRODUCT_NOUNS.test(words[i].replace(/[^a-zA-Z-]/g, ''))) {
@@ -546,7 +676,6 @@ function generateSplitTitle(parentTitle: string, label: string): string {
     }
   }
 
-  // If we'd insert at position 0, just append instead
   if (insertIndex === 0) {
     insertIndex = words.length;
   }
@@ -565,8 +694,6 @@ async function loadVariableParents(
   db: Connection,
   opts: ScriptOptions
 ): Promise<Array<{ id: number; title: string; slug: string; varCount: number }>> {
-  console.log('\n--- Step 2: Loading variable products with 3+ variations ---');
-
   let query = `
     SELECT p.ID as id, p.post_title as title, p.post_name as slug, COUNT(v.ID) as var_count
     FROM wp_posts p
@@ -588,14 +715,15 @@ async function loadVariableParents(
   }
 
   const [rows] = await db.query<RowDataPacket[]>(query, params);
-  console.log(`  Found ${rows.length} variable products with 3+ variations`);
   return rows as any[];
 }
 
-async function loadVariationsForParents(
+/**
+ * Load variations with both _sku and _wt_sku for all given parent IDs.
+ */
+async function loadVariationsWithSkus(
   db: Connection,
-  parentIds: number[],
-  skuMap: Map<string, FeedProduct>
+  parentIds: number[]
 ): Promise<Map<number, VariationData[]>> {
   if (parentIds.length === 0) return new Map();
 
@@ -609,22 +737,48 @@ async function loadVariationsForParents(
     ORDER BY v.post_parent, v.ID
   `);
 
-  // Get SKUs
   const varIds = varRows.map(v => v.id);
   if (varIds.length === 0) return new Map();
 
-  const [skuRows] = await db.query<RowDataPacket[]>(`
-    SELECT post_id, meta_value as sku
+  // Batch-load _sku and _wt_sku
+  const [metaRows] = await db.query<RowDataPacket[]>(`
+    SELECT post_id, meta_key, meta_value
     FROM wp_postmeta
-    WHERE post_id IN (${varIds.join(',')}) AND meta_key = '_sku' AND meta_value != ''
+    WHERE post_id IN (${varIds.join(',')})
+      AND meta_key IN ('_sku', '_wt_sku', '_regular_price')
+      AND meta_value IS NOT NULL AND meta_value != ''
   `);
+
   const skuById = new Map<number, string>();
-  for (const r of skuRows) skuById.set(r.post_id, r.sku);
+  const wtSkuById = new Map<number, string>();
+  const priceById = new Map<number, number>();
+  for (const r of metaRows) {
+    if (r.meta_key === '_sku') skuById.set(r.post_id, r.meta_value);
+    if (r.meta_key === '_wt_sku') wtSkuById.set(r.post_id, r.meta_value);
+    if (r.meta_key === '_regular_price') {
+      const p = parseFloat(r.meta_value);
+      if (p > 0 && isFinite(p)) priceById.set(r.post_id, p);
+    }
+  }
+
+  // Fallback: resolve missing _wt_sku from barcode via feed (for the ~47 unresolvable variations)
+  let barcodeMap: Map<string, string> | null = null;
+  const missingWtSku = varRows.filter(v => !wtSkuById.has(v.id) && skuById.has(v.id));
+  if (missingWtSku.length > 0) {
+    barcodeMap = await getBarcodeToWtSku();
+  }
 
   const result = new Map<number, VariationData[]>();
   for (const v of varRows) {
-    const sku = skuById.get(v.id) || '';
-    const feedProduct = sku ? skuMap.get(sku) : undefined;
+    let warehouseSku = wtSkuById.get(v.id) || '';
+
+    // Fallback: resolve from barcode for variations without _wt_sku in DB
+    if (!warehouseSku && barcodeMap) {
+      const barcode = skuById.get(v.id) || '';
+      if (barcode) {
+        warehouseSku = barcodeMap.get(barcode) || '';
+      }
+    }
 
     const varData: VariationData = {
       id: v.id,
@@ -633,8 +787,10 @@ async function loadVariationsForParents(
       slug: v.slug,
       excerpt: v.excerpt || '',
       status: v.status,
-      sku,
-      feedName: feedProduct?.name || '',
+      sku: skuById.get(v.id) || '',
+      warehouseSku,
+      feedName: '', // populated lazily
+      regularPrice: priceById.get(v.id) || 0,
     };
 
     if (!result.has(v.parentId)) result.set(v.parentId, []);
@@ -644,30 +800,576 @@ async function loadVariationsForParents(
   return result;
 }
 
-// ==================== SPLIT DETECTION ====================
+// ==================== ADAPTIVE SKU SUB-SPLITTING ====================
 
-function detectSplits(
-  parentTitle: string,
+/**
+ * For groups with mixed prices (multiple price tiers with 2+ items each),
+ * try progressively longer SKU prefixes (strip fewer trailing digits) to find
+ * sub-groups where each sub-group has uniform prices.
+ *
+ * E.g., NSN096110, NSN096111 ($10) and NSN096120, NSN096121 ($15):
+ * - Default extractSkuPrefix strips 2 digits: NSN0961 (all grouped together, mixed prices)
+ * - Strip 1 digit: NSN09611 ($10) vs NSN09612 ($15) → uniform price sub-groups!
+ */
+function adaptiveSkuSubSplit(
+  groups: Map<string, VariationData[]>,
+  opts: ScriptOptions
+): void {
+  const toReplace = new Map<string, Map<string, VariationData[]>>();
+
+  for (const [prefix, members] of groups) {
+    // Check if this group has mixed prices with multiple price tiers of 2+ items
+    const priceGroups = new Map<number, number>();
+    for (const v of members) {
+      if (v.regularPrice > 0) {
+        priceGroups.set(v.regularPrice, (priceGroups.get(v.regularPrice) || 0) + 1);
+      }
+    }
+    const multiItemTiers = [...priceGroups.values()].filter(c => c >= 2).length;
+    if (multiItemTiers < 2) continue; // Not mixed enough to sub-split
+
+    // Get the original warehouse SKUs and figure out the current strip length
+    const skus = members.map(v => v.warehouseSku);
+    const originalPrefix = prefix.replace(/~$/, '');
+
+    // Try progressively longer prefixes (strip fewer digits)
+    let bestSubGroups: Map<string, VariationData[]> | null = null;
+    let bestScore = 0;
+
+    for (let extraChars = 1; extraChars <= 3; extraChars++) {
+      const tryLen = originalPrefix.length + extraChars;
+      const subGroups = new Map<string, VariationData[]>();
+
+      for (const v of members) {
+        const subPrefix = v.warehouseSku.substring(0, Math.min(tryLen, v.warehouseSku.length));
+        if (!subGroups.has(subPrefix)) subGroups.set(subPrefix, []);
+        subGroups.get(subPrefix)!.push(v);
+      }
+
+      // Score: count sub-groups with 2+ members that have uniform price
+      let uniformCount = 0;
+      let totalInUniform = 0;
+      for (const subMembers of subGroups.values()) {
+        if (subMembers.length < 2) continue;
+        const prices = new Set(subMembers.filter(v => v.regularPrice > 0).map(v => v.regularPrice));
+        if (prices.size === 1) {
+          uniformCount++;
+          totalInUniform += subMembers.length;
+        }
+      }
+
+      // We want at least 2 uniform sub-groups to justify splitting
+      if (uniformCount >= 2 && totalInUniform > bestScore) {
+        bestScore = totalInUniform;
+        bestSubGroups = subGroups;
+      }
+    }
+
+    if (bestSubGroups && bestSubGroups.size >= 2) {
+      toReplace.set(prefix, bestSubGroups);
+      if (opts.verbose) {
+        const subInfo = [...bestSubGroups.entries()]
+          .map(([p, vs]) => {
+            const prices = [...new Set(vs.map(v => v.regularPrice))];
+            return `${p}(${vs.length}@$${prices.join('/$')})`;
+          }).join(', ');
+        console.log(`    Adaptive sub-split ${prefix}(${members.length}) → ${subInfo}`);
+      }
+    }
+  }
+
+  // Apply replacements
+  for (const [oldPrefix, subGroups] of toReplace) {
+    groups.delete(oldPrefix);
+    for (const [newPrefix, members] of subGroups) {
+      if (members.length >= 2) {
+        groups.set(newPrefix, members);
+      } else {
+        // Absorb singletons into largest remaining group
+        let largest = '';
+        let largestSize = 0;
+        for (const [k, v] of groups) {
+          if (v.length > largestSize) { largestSize = v.length; largest = k; }
+        }
+        if (largest) groups.get(largest)!.push(...members);
+      }
+    }
+  }
+}
+
+// ==================== SKU PREFIX GROUPING (PRIMARY METHOD) ====================
+
+/**
+ * Group variations by warehouse SKU prefix.
+ * Returns null if no meaningful split is found.
+ */
+function groupBySkuPrefix(
   variations: VariationData[],
   opts: ScriptOptions
-): SplitSignalResult[] {
-  const results: SplitSignalResult[] = [];
+): Map<string, VariationData[]> | null {
+  const withSku = variations.filter(v => v.warehouseSku);
+
+  // Need at least 60% of variations to have _wt_sku for this method to apply
+  if (withSku.length < variations.length * 0.6) return null;
+  if (withSku.length < 3) return null;
+
+  // Group by prefix
+  const groups = new Map<string, VariationData[]>();
+  for (const v of withSku) {
+    const prefix = extractSkuPrefix(v.warehouseSku);
+    if (!groups.has(prefix)) groups.set(prefix, []);
+    groups.get(prefix)!.push(v);
+  }
+
+  if (opts.verbose) {
+    console.log(`    SKU prefixes: ${[...groups.entries()].map(([p, vs]) => `${p}(${vs.length})`).join(', ')}`);
+  }
+
+  // Filter: only keep groups with 2+ members
+  const validGroups = new Map<string, VariationData[]>();
+  const singletons: VariationData[] = [];
+
+  for (const [prefix, members] of groups) {
+    if (members.length >= 2) {
+      validGroups.set(prefix, members);
+    } else {
+      singletons.push(...members);
+    }
+  }
+
+  // Try to re-group singletons using progressively shorter prefixes.
+  // e.g., PD5401, PD5402, PD5403 → all share "PD54" at a shorter level.
+  // Find the truncation length that maximizes the number of clustered vars.
+  if (singletons.length >= 2) {
+    const singletonPrefixes = singletons.map(v => extractSkuPrefix(v.warehouseSku));
+    const maxLen = Math.max(...singletonPrefixes.map(p => p.length));
+
+    // Evaluate all lengths, pick the best (most vars in clusters of 2+)
+    let bestLen = -1;
+    let bestClusterVars = 0;
+    let bestSingletonCount = singletons.length;
+
+    for (let tryLen = maxLen - 1; tryLen >= 2; tryLen--) {
+      const shortGroups = new Map<string, number>(); // prefix → count
+      for (let i = 0; i < singletons.length; i++) {
+        const shortPrefix = singletonPrefixes[i].substring(0, tryLen);
+        shortGroups.set(shortPrefix, (shortGroups.get(shortPrefix) || 0) + 1);
+      }
+
+      let clusterVars = 0;
+      let singletonCount = 0;
+      for (const cnt of shortGroups.values()) {
+        if (cnt >= 2) clusterVars += cnt;
+        else singletonCount += cnt;
+      }
+
+      if (clusterVars > bestClusterVars ||
+          (clusterVars === bestClusterVars && singletonCount < bestSingletonCount)) {
+        bestClusterVars = clusterVars;
+        bestSingletonCount = singletonCount;
+        bestLen = tryLen;
+      }
+    }
+
+    if (bestLen > 0 && bestClusterVars >= 2) {
+      // Apply the best length
+      const shortGroups = new Map<string, VariationData[]>();
+      for (let i = 0; i < singletons.length; i++) {
+        const shortPrefix = singletonPrefixes[i].substring(0, bestLen);
+        if (!shortGroups.has(shortPrefix)) shortGroups.set(shortPrefix, []);
+        shortGroups.get(shortPrefix)!.push(singletons[i]);
+      }
+
+      const remainingSingletons: VariationData[] = [];
+      for (const [shortPrefix, members] of shortGroups) {
+        if (members.length >= 2) {
+          const groupKey = `${shortPrefix}~`;
+          validGroups.set(groupKey, members);
+        } else {
+          remainingSingletons.push(...members);
+        }
+      }
+      singletons.length = 0;
+      singletons.push(...remainingSingletons);
+
+      if (opts.verbose) {
+        const newKeys = [...validGroups.keys()].filter(k => k.endsWith('~'));
+        if (newKeys.length > 0) {
+          console.log(`    Re-grouped singletons (len=${bestLen}): ${newKeys.map(k => `${k}(${validGroups.get(k)!.length})`).join(', ')}`);
+        }
+      }
+    }
+  }
+
+  // Any remaining true singletons stay on the largest valid group
+  if (singletons.length > 0 && validGroups.size > 0) {
+    let largestPrefix = '';
+    let largestSize = 0;
+    for (const [prefix, members] of validGroups) {
+      if (members.length > largestSize) {
+        largestSize = members.length;
+        largestPrefix = prefix;
+      }
+    }
+    if (largestPrefix) {
+      validGroups.get(largestPrefix)!.push(...singletons);
+    }
+  }
+
+  // Adaptive sub-splitting: for groups with mixed prices, try longer prefixes
+  // to produce sub-groups with uniform prices (different sizes → separate groups)
+  adaptiveSkuSubSplit(validGroups, opts);
+
+  // If only 1 valid group after regrouping, no split needed
+  if (validGroups.size <= 1) return null;
+
+  // Handle variations without _wt_sku — keep them on the largest group
+  const withoutSku = variations.filter(v => !v.warehouseSku);
+  if (withoutSku.length > 0) {
+    let largestPrefix = '';
+    let largestSize = 0;
+    for (const [prefix, members] of validGroups) {
+      if (members.length > largestSize) {
+        largestSize = members.length;
+        largestPrefix = prefix;
+      }
+    }
+    if (largestPrefix) {
+      validGroups.get(largestPrefix)!.push(...withoutSku);
+    }
+  }
+
+  return validGroups;
+}
+
+// ==================== PRICE-BASED REFINEMENT ====================
+
+/**
+ * Refine SKU prefix groups using price as a signal.
+ *
+ * Rule: "Same price = same product line (color variants). Different price = different size/volume."
+ *
+ * Two cases:
+ * 1. Groups have mixed prices internally → same product in different colors was
+ *    grouped by color (SKU prefix). Re-group by price to get size-based products.
+ *    Only do this if all groups share the same product name prefix (i.e., they're
+ *    actually the same product, not different scents/styles).
+ * 2. Uniform-price groups share the same price → merge (e.g., "7in clear" + "7in regular"
+ *    at same price are one product with color selector).
+ */
+function refineGroupsByPrice(
+  groups: Map<string, VariationData[]>,
+  opts: ScriptOptions
+): Map<string, VariationData[]> {
+  // Step 1: Check for mixed prices within groups
+  let anyMixed = false;
+  for (const vars of groups.values()) {
+    const prices = new Set(vars.filter(v => v.regularPrice > 0).map(v => v.regularPrice));
+    if (prices.size > 1) { anyMixed = true; break; }
+  }
+
+  if (!anyMixed) {
+    // No mixed prices within groups → try merging uniform-price groups
+    return mergeUniformPriceGroups(groups, opts);
+  }
+
+  // Step 2: Check if groups represent the same product line
+  // by comparing common prefix of feed names across groups.
+  // If groups have DIFFERENT product name prefixes (e.g., different scents),
+  // don't re-group by price — the mixed prices are just size variations within each scent.
+  const groupCommonPrefixes: string[] = [];
+  for (const vars of groups.values()) {
+    const feedNames = vars.map(v => v.feedName).filter(Boolean);
+    if (feedNames.length >= 2) {
+      const cp = longestCommonPrefix(feedNames).replace(/[\s,\-–]+$/, '').trim();
+      if (cp.length >= 5) groupCommonPrefixes.push(cp.toLowerCase());
+    }
+  }
+
+  if (groupCommonPrefixes.length >= 2) {
+    const uniquePrefixes = new Set(groupCommonPrefixes);
+    if (uniquePrefixes.size > 1) {
+      // Different product lines → don't re-group everything by price.
+      // But still try to redistribute the keep group's mixed-price variations
+      // to matching new groups (e.g., beige 6" → "KING COCK 6 IN" group).
+      if (opts.verbose) {
+        console.log(`    Price: groups have different product names → trying redistribution`);
+      }
+      return redistributeKeepByPrice(groups, opts);
+    }
+  }
+
+  // Step 3: Same product line (or can't determine) → re-group all variations by price
+  const allVars: VariationData[] = [];
+  for (const vars of groups.values()) allVars.push(...vars);
+
+  const byPrice = new Map<number, VariationData[]>();
+  const unknownPrice: VariationData[] = [];
+
+  for (const v of allVars) {
+    if (v.regularPrice > 0) {
+      if (!byPrice.has(v.regularPrice)) byPrice.set(v.regularPrice, []);
+      byPrice.get(v.regularPrice)!.push(v);
+    } else {
+      unknownPrice.push(v);
+    }
+  }
+
+  const validGroups = [...byPrice.entries()].filter(([_, vars]) => vars.length >= 2);
+  if (validGroups.length < 2) return groups; // Price grouping doesn't produce a meaningful split
+
+  const result = new Map<string, VariationData[]>();
+  const singletons: VariationData[] = [...unknownPrice];
+
+  for (const [price, vars] of byPrice) {
+    if (vars.length >= 2) {
+      result.set(`price-${price}`, vars);
+    } else {
+      singletons.push(...vars);
+    }
+  }
+
+  // Absorb singletons into largest group
+  if (singletons.length > 0 && result.size > 0) {
+    let largest = '';
+    let largestSize = 0;
+    for (const [key, vars] of result) {
+      if (vars.length > largestSize) { largestSize = vars.length; largest = key; }
+    }
+    if (largest) result.get(largest)!.push(...singletons);
+  }
+
+  if (opts.verbose) {
+    console.log(`    Price refinement: ${groups.size} SKU groups → ${result.size} price groups`);
+  }
+
+  return result;
+}
+
+/**
+ * Merge uniform-price SKU prefix groups that share the same price.
+ * Only merges if the combined variations have a meaningful shared product name prefix
+ * (>= 3 words), to avoid merging different product types that happen to cost the same.
+ */
+function mergeUniformPriceGroups(
+  groups: Map<string, VariationData[]>,
+  opts: ScriptOptions
+): Map<string, VariationData[]> {
+  // Build price → group keys mapping
+  const priceToKeys = new Map<number, string[]>();
+  for (const [key, vars] of groups) {
+    const prices = [...new Set(vars.filter(v => v.regularPrice > 0).map(v => v.regularPrice))];
+    if (prices.length === 1) {
+      const p = prices[0];
+      if (!priceToKeys.has(p)) priceToKeys.set(p, []);
+      priceToKeys.get(p)!.push(key);
+    }
+  }
+
+  // Check if any price has multiple groups
+  let anyMergeable = false;
+  for (const keys of priceToKeys.values()) {
+    if (keys.length >= 2) { anyMergeable = true; break; }
+  }
+  if (!anyMergeable) return groups;
+
+  const result = new Map<string, VariationData[]>();
+  const consumed = new Set<string>();
+
+  for (const [price, keys] of priceToKeys) {
+    if (keys.length < 2) continue;
+
+    // Validate merge: merged variations must share a meaningful common product name
+    const allVars: VariationData[] = [];
+    for (const key of keys) allVars.push(...groups.get(key)!);
+
+    const feedNames = allVars.map(v => v.feedName).filter(Boolean);
+    if (feedNames.length < 2) continue;
+
+    const cp = longestCommonPrefix(feedNames).replace(/[\s,\-–]+$/, '').trim();
+    const wordCount = cp.split(/\s+/).length;
+
+    if (wordCount < 3) continue; // Common prefix too short → probably different products
+
+    // Merge!
+    result.set(`price-${price}`, allVars);
+    for (const key of keys) consumed.add(key);
+
+    if (opts.verbose) {
+      console.log(`    Price merge ${keys.length} groups at $${price}: "${cp}" (${allVars.length} vars)`);
+    }
+  }
+
+  // Keep non-merged groups
+  for (const [key, vars] of groups) {
+    if (!consumed.has(key)) result.set(key, vars);
+  }
+
+  return result;
+}
+
+/**
+ * Redistribute variations from the keep group (largest group) to matching
+ * new groups based on price. Useful when the keep group accumulated mixed
+ * variations (e.g., different sizes in one color) that belong with existing
+ * size-specific groups.
+ *
+ * For each keep-group variation, if a non-keep group has the same price,
+ * move the variation there. Variations that don't match any group's price
+ * stay in the keep group.
+ */
+function redistributeKeepByPrice(
+  groups: Map<string, VariationData[]>,
+  opts: ScriptOptions
+): Map<string, VariationData[]> {
+  // Find the largest group (would-be keep group)
+  let keepKey = '';
+  let keepSize = 0;
+  for (const [key, vars] of groups) {
+    if (vars.length > keepSize) { keepSize = vars.length; keepKey = key; }
+  }
+
+  const keepVars = groups.get(keepKey)!;
+
+  // Check if keep group has mixed prices
+  const keepPrices = new Set(keepVars.filter(v => v.regularPrice > 0).map(v => v.regularPrice));
+  if (keepPrices.size <= 1) return groups; // Uniform → no redistribution needed
+
+  // Build price → target group key mapping from non-keep groups
+  // For each non-keep group, determine its "representative" price (most common price in the group)
+  const priceToGroupKey = new Map<number, string>();
+  for (const [key, vars] of groups) {
+    if (key === keepKey) continue;
+    const priceFreq = new Map<number, number>();
+    for (const v of vars) {
+      if (v.regularPrice > 0) priceFreq.set(v.regularPrice, (priceFreq.get(v.regularPrice) || 0) + 1);
+    }
+    // Use most common price as representative
+    let bestPrice = 0;
+    let bestCount = 0;
+    for (const [p, cnt] of priceFreq) {
+      if (cnt > bestCount) { bestCount = cnt; bestPrice = p; }
+    }
+    if (bestPrice > 0 && !priceToGroupKey.has(bestPrice)) {
+      priceToGroupKey.set(bestPrice, key);
+    }
+  }
+
+  if (priceToGroupKey.size === 0) return groups;
+
+  // Redistribute
+  const result = new Map<string, VariationData[]>();
+  for (const [key, vars] of groups) {
+    result.set(key, key === keepKey ? [] : [...vars]);
+  }
+
+  const remaining: VariationData[] = [];
+  let moved = 0;
+
+  for (const v of keepVars) {
+    const targetKey = priceToGroupKey.get(v.regularPrice);
+    if (targetKey && result.has(targetKey)) {
+      result.get(targetKey)!.push(v);
+      moved++;
+    } else {
+      remaining.push(v);
+    }
+  }
+
+  if (moved === 0) return groups; // Nothing redistributed
+
+  // Put remaining variations back in keep group
+  if (remaining.length > 0) {
+    result.set(keepKey, remaining);
+  } else {
+    result.delete(keepKey);
+  }
+
+  // If redistribution left us with < 2 groups, revert
+  if (result.size < 2) return groups;
+
+  if (opts.verbose) {
+    console.log(`    Price redistribution: moved ${moved} vars from keep → matching groups (${remaining.length} remaining in keep)`);
+  }
+
+  return result;
+}
+
+/**
+ * Standalone price-based grouping for products without SKU data.
+ * Groups variations by regularPrice — each price tier = one product.
+ */
+function groupByPrice(
+  variations: VariationData[],
+  opts: ScriptOptions
+): Map<string, VariationData[]> | null {
+  const byPrice = new Map<number, VariationData[]>();
+  const unknownPrice: VariationData[] = [];
+
+  for (const v of variations) {
+    if (v.regularPrice > 0) {
+      if (!byPrice.has(v.regularPrice)) byPrice.set(v.regularPrice, []);
+      byPrice.get(v.regularPrice)!.push(v);
+    } else {
+      unknownPrice.push(v);
+    }
+  }
+
+  const validGroups = [...byPrice.entries()].filter(([_, vars]) => vars.length >= 2);
+  if (validGroups.length < 2) return null;
+
+  const result = new Map<string, VariationData[]>();
+  const singletons: VariationData[] = [...unknownPrice];
+
+  for (const [price, vars] of byPrice) {
+    if (vars.length >= 2) {
+      result.set(`price-${price}`, vars);
+    } else {
+      singletons.push(...vars);
+    }
+  }
+
+  // Absorb singletons into largest group
+  if (singletons.length > 0 && result.size > 0) {
+    let largest = '';
+    let largestSize = 0;
+    for (const [key, vars] of result) {
+      if (vars.length > largestSize) { largestSize = vars.length; largest = key; }
+    }
+    if (largest) result.get(largest)!.push(...singletons);
+  }
+
+  if (opts.verbose) {
+    console.log(`    Price-only grouping: ${result.size} price groups`);
+  }
+
+  return result;
+}
+
+// ==================== KEYWORD-BASED SPLIT (FALLBACK) ====================
+
+interface KeywordSplitResult {
+  keyword: string;
+  label: string;
+  withIds: number[];
+  withoutIds: number[];
+}
+
+function detectKeywordSplit(
+  parentTitle: string,
+  variations: VariationData[]
+): KeywordSplitResult | null {
+  let bestResult: KeywordSplitResult | null = null;
+  let bestRatio = Infinity;
 
   for (const [keyword, { patterns, label }] of Object.entries(SPLIT_SIGNALS)) {
-    // Skip if keyword is in parent title (means ALL variations are that type)
     const inParentTitle = patterns.some(pat => pat.test(parentTitle));
-    if (inParentTitle) {
-      if (opts.verbose) {
-        console.log(`    [${keyword}] skipped - in parent title`);
-      }
-      continue;
-    }
+    if (inParentTitle) continue;
 
     const withIds: number[] = [];
     const withoutIds: number[] = [];
 
     for (const v of variations) {
-      // Check feed name first, fallback to title + excerpt
       const searchText = v.feedName || `${v.title} ${v.excerpt}`;
       if (patterns.some(pat => pat.test(searchText))) {
         withIds.push(v.id);
@@ -676,180 +1378,303 @@ function detectSplits(
       }
     }
 
-    // True split: keyword in 2+ variations AND absent from 2+ others
     if (withIds.length >= 2 && withoutIds.length >= 2) {
-      const total = variations.length;
-      const ratio = Math.abs(withIds.length - withoutIds.length) / total;
-      results.push({ keyword, label, withIds, withoutIds, ratio });
+      const ratio = Math.abs(withIds.length - withoutIds.length) / variations.length;
+      if (ratio < bestRatio) {
+        bestRatio = ratio;
+        bestResult = { keyword, label, withIds, withoutIds };
+      }
     }
   }
 
-  // Sort by ratio (closest to 50/50 first)
-  results.sort((a, b) => a.ratio - b.ratio);
-  return results;
+  return bestResult;
 }
 
-function pickPrimarySplit(
-  splits: SplitSignalResult[],
-  variations: VariationData[],
+// ==================== TITLE GENERATION ====================
+
+/**
+ * Derive a title for a SKU-prefix group using feed product names.
+ * Finds the longest common prefix among feed names in the group.
+ */
+async function deriveGroupTitle(
+  group: VariationData[],
+  skuPrefix: string,
+  parentTitle: string
+): Promise<string> {
+  const skuLookup = await getSkuLookup();
+
+  // Collect feed names for variations in this group
+  const feedNames: string[] = [];
+  for (const v of group) {
+    if (v.warehouseSku) {
+      const feed = skuLookup.get(v.warehouseSku);
+      if (feed?.name) feedNames.push(feed.name);
+    }
+  }
+
+  if (feedNames.length >= 2) {
+    const commonPrefix = longestCommonPrefix(feedNames);
+    // Clean up: remove trailing whitespace, hyphens, commas
+    const cleaned = commonPrefix.replace(/[\s,\-–]+$/, '').trim();
+    if (cleaned.length >= 5) {
+      return cleaned;
+    }
+  }
+
+  // Fallback: try variation titles
+  const titles = group.map(v => v.title).filter(Boolean);
+  if (titles.length >= 2) {
+    const commonPrefix = longestCommonPrefix(titles);
+    const cleaned = commonPrefix.replace(/[\s,\-–]+$/, '').trim();
+    if (cleaned.length >= 5 && cleaned !== parentTitle) {
+      return cleaned;
+    }
+  }
+
+  // Last fallback: parent title + prefix/price identifier
+  if (skuPrefix.startsWith('price-')) {
+    const priceVal = skuPrefix.replace('price-', '$');
+    return `${parentTitle} (${priceVal})`;
+  }
+  return `${parentTitle} (${skuPrefix})`;
+}
+
+function longestCommonPrefix(strings: string[]): string {
+  if (strings.length === 0) return '';
+  if (strings.length === 1) return strings[0];
+
+  // Word-level common prefix to avoid cutting mid-word
+  const wordArrays = strings.map(s => s.split(/\s+/));
+  const minLen = Math.min(...wordArrays.map(w => w.length));
+  const commonWords: string[] = [];
+
+  for (let i = 0; i < minLen; i++) {
+    const word = wordArrays[0][i];
+    if (wordArrays.every(wa => wa[i].toLowerCase() === word.toLowerCase())) {
+      commonWords.push(word);
+    } else {
+      break;
+    }
+  }
+
+  return commonWords.join(' ');
+}
+
+// ==================== DISCONTINUED DETECTION ====================
+
+/**
+ * Mark variations as discontinued (post_status = 'private') if their source
+ * product is ONLY in inactive_products.xml and their barcode is NOT in the STC feed.
+ * This means the item was discontinued by Williams and not available from STC either.
+ */
+async function markDiscontinuedVariations(
+  db: Connection,
+  action: SplitAction,
   opts: ScriptOptions
-): { primary: SplitSignalResult; alternatives: SplitSignalResult[] } | null {
-  if (splits.length === 0) return null;
+): Promise<number> {
+  const skuLookup = await getSkuLookup();
+  const stcBarcodes = await getStcBarcodeSet();
+  // Collect all variation IDs in this split
+  const allVarIds = [...action.keepGroup.variationIds];
+  for (const ng of action.newGroups) allVarIds.push(...ng.variationIds);
 
-  // Filter: each group must have 2+ variations
-  const valid = splits.filter(s => s.withIds.length >= 2 && s.withoutIds.length >= 2);
-  if (valid.length === 0) return null;
+  if (allVarIds.length === 0) return 0;
 
-  const primary = valid[0]; // best ratio (already sorted)
-  const alternatives = valid.slice(1);
+  // Load _sku (barcode) and _wt_sku (warehouse SKU) for all variations
+  const [metaRows] = await db.query<RowDataPacket[]>(`
+    SELECT post_id, meta_key, meta_value FROM wp_postmeta
+    WHERE post_id IN (${allVarIds.join(',')})
+      AND meta_key IN ('_sku', '_wt_sku')
+      AND meta_value IS NOT NULL AND meta_value != ''
+  `);
 
-  return { primary, alternatives };
+  const barcodeById = new Map<number, string>();
+  const wtSkuById = new Map<number, string>();
+  for (const r of metaRows) {
+    if (r.meta_key === '_sku') barcodeById.set(r.post_id, r.meta_value);
+    if (r.meta_key === '_wt_sku') wtSkuById.set(r.post_id, r.meta_value);
+  }
+
+  let discontinuedCount = 0;
+
+  for (const varId of allVarIds) {
+    const warehouseSku = wtSkuById.get(varId) || '';
+    const barcode = barcodeById.get(varId) || '';
+    if (!warehouseSku) continue;
+
+    const feedProduct = skuLookup.get(warehouseSku);
+    if (!feedProduct) continue;
+
+    // Only mark as discontinued if source is williams-inactive AND barcode not in STC
+    if (feedProduct.source === 'williams-inactive' && !stcBarcodes.has(barcode)) {
+      await db.query(
+        `UPDATE wp_posts SET post_status = 'private' WHERE ID = ? AND post_status = 'publish'`,
+        [varId]
+      );
+      discontinuedCount++;
+
+      if (opts.verbose) {
+        console.log(`    Discontinued variation ${varId} (SKU: ${warehouseSku}, barcode: ${barcode})`);
+      }
+    }
+  }
+
+  if (discontinuedCount > 0) {
+    console.log(`    Marked ${discontinuedCount} variation(s) as discontinued (private)`);
+  }
+
+  return discontinuedCount;
 }
 
 // ==================== SPLIT EXECUTION ====================
 
+/**
+ * Execute an N-way split for one parent product.
+ * keepGroup stays on the original parent; each newGroup gets a new parent post.
+ */
 async function executeSplit(
   db: Connection,
   action: SplitAction,
   opts: ScriptOptions
-): Promise<{ success: boolean; newParentId?: number; error?: string }> {
+): Promise<{ success: boolean; newParentIds: number[]; error?: string }> {
   await db.beginTransaction();
 
   try {
-    const { parentId, newParentTitle, newParentSlug, splitGroupIds, remainingGroupIds } = action;
+    const { parentId, keepGroup } = action;
+    const newParentIds: number[] = [];
 
-    // Step 1: Load original parent post data
+    // Load original parent post data
     const [parentRows] = await db.query<RowDataPacket[]>(
       `SELECT * FROM wp_posts WHERE ID = ?`, [parentId]
     );
     if (parentRows.length === 0) throw new Error(`Parent post ${parentId} not found`);
     const parent = parentRows[0];
 
-    // Step 2: Generate unique slug
-    const baseSlug = toSlug(newParentTitle);
-    const finalSlug = await ensureUniqueSlug(db, baseSlug, parentId);
-
-    // Step 3: Create new parent post (clone of original with new title/slug)
-    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const [insertResult] = await db.query<ResultSetHeader>(
-      `INSERT INTO wp_posts (
-        post_author, post_date, post_date_gmt, post_content, post_title,
-        post_excerpt, post_status, comment_status, ping_status, post_password,
-        post_name, to_ping, pinged, post_modified, post_modified_gmt,
-        post_content_filtered, post_parent, guid, menu_order, post_type,
-        post_mime_type, comment_count
-      ) VALUES (
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
-        ?, ?, ?, ?, ?,
-        ?, 0, '', 0, 'product',
-        '', 0
-      )`,
-      [
-        parent.post_author, parent.post_date, parent.post_date_gmt,
-        parent.post_content, newParentTitle,
-        parent.post_excerpt, parent.post_status, parent.comment_status,
-        parent.ping_status, parent.post_password,
-        finalSlug, parent.to_ping || '', parent.pinged || '',
-        now, now,
-        parent.post_content_filtered || '',
-      ]
-    );
-    const newParentId = insertResult.insertId;
-
-    // Update GUID
-    await db.query(
-      `UPDATE wp_posts SET guid = CONCAT('https://wp.maleq.com/?post_type=product&p=', ID) WHERE ID = ?`,
-      [newParentId]
+    // Load parent meta once
+    const [metaRows] = await db.query<RowDataPacket[]>(
+      `SELECT meta_key, meta_value FROM wp_postmeta WHERE post_id = ?`, [parentId]
     );
 
-    if (opts.verbose) {
-      console.log(`    Created new parent post ID: ${newParentId} ("${newParentTitle}")`);
-    }
+    // Load taxonomy relationships once
+    const [termRels] = await db.query<RowDataPacket[]>(
+      `SELECT term_taxonomy_id, term_order FROM wp_term_relationships WHERE object_id = ?`,
+      [parentId]
+    );
 
-    // Step 4: Copy parent meta (except fields we'll set from variation data)
     const SKIP_META_KEYS = new Set([
       '_sku', '_price', '_regular_price', '_sale_price',
       '_default_attributes', '_children',
       '_thumbnail_id', '_product_image_gallery',
     ]);
 
-    const [metaRows] = await db.query<RowDataPacket[]>(
-      `SELECT meta_key, meta_value FROM wp_postmeta WHERE post_id = ?`, [parentId]
-    );
+    const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
-    for (const meta of metaRows) {
-      if (SKIP_META_KEYS.has(meta.meta_key)) continue;
-      await db.query(
-        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, ?, ?)`,
-        [newParentId, meta.meta_key, meta.meta_value]
-      );
-    }
+    // Process each new group
+    for (const newGroup of action.newGroups) {
+      // Create new parent post
+      const finalSlug = await ensureUniqueSlug(db, toSlug(newGroup.newParentTitle), parentId);
 
-    // Step 4b: Set images from split group's variation thumbnails
-    const [varThumbRows] = await db.query<RowDataPacket[]>(
-      `SELECT post_id, meta_value FROM wp_postmeta
-       WHERE post_id IN (${splitGroupIds.join(',')}) AND meta_key = '_thumbnail_id'
-         AND meta_value IS NOT NULL AND meta_value != '' AND meta_value != '0'
-       ORDER BY post_id`
-    );
-    const varThumbs = varThumbRows.map(r => r.meta_value).filter(Boolean);
-    if (varThumbs.length > 0) {
-      // First variation's thumbnail becomes the parent thumbnail
-      await db.query(
-        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_thumbnail_id', ?)`,
-        [newParentId, varThumbs[0]]
+      const [insertResult] = await db.query<ResultSetHeader>(
+        `INSERT INTO wp_posts (
+          post_author, post_date, post_date_gmt, post_content, post_title,
+          post_excerpt, post_status, comment_status, ping_status, post_password,
+          post_name, to_ping, pinged, post_modified, post_modified_gmt,
+          post_content_filtered, post_parent, guid, menu_order, post_type,
+          post_mime_type, comment_count
+        ) VALUES (
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, ?, ?, ?, ?,
+          ?, 0, '', 0, 'product',
+          '', 0
+        )`,
+        [
+          parent.post_author, parent.post_date, parent.post_date_gmt,
+          parent.post_content, newGroup.newParentTitle,
+          parent.post_excerpt, parent.post_status, parent.comment_status,
+          parent.ping_status, parent.post_password,
+          finalSlug, parent.to_ping || '', parent.pinged || '',
+          now, now,
+          parent.post_content_filtered || '',
+        ]
       );
-      // Remaining unique thumbnails become the gallery
-      const uniqueThumbs = [...new Set(varThumbs)];
-      if (uniqueThumbs.length > 1) {
+      const newParentId = insertResult.insertId;
+      newParentIds.push(newParentId);
+
+      // Update GUID
+      await db.query(
+        `UPDATE wp_posts SET guid = CONCAT('https://wp.maleq.com/?post_type=product&p=', ID) WHERE ID = ?`,
+        [newParentId]
+      );
+
+      if (opts.verbose) {
+        console.log(`    Created new parent ${newParentId} ("${newGroup.newParentTitle}") for ${newGroup.variationIds.length} variations`);
+      }
+
+      // Copy parent meta (skip keys we'll set ourselves)
+      for (const meta of metaRows) {
+        if (SKIP_META_KEYS.has(meta.meta_key)) continue;
         await db.query(
-          `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_product_image_gallery', ?)`,
-          [newParentId, uniqueThumbs.slice(1).join(',')]
+          `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, ?, ?)`,
+          [newParentId, meta.meta_key, meta.meta_value]
         );
       }
-    } else {
-      // Fallback: copy original parent's images if no variation thumbnails
-      const origThumb = metaRows.find((m: any) => m.meta_key === '_thumbnail_id');
-      const origGallery = metaRows.find((m: any) => m.meta_key === '_product_image_gallery');
-      if (origThumb) {
+
+      // Set images from this group's variation thumbnails
+      const [varThumbRows] = await db.query<RowDataPacket[]>(
+        `SELECT post_id, meta_value FROM wp_postmeta
+         WHERE post_id IN (${newGroup.variationIds.join(',')}) AND meta_key = '_thumbnail_id'
+           AND meta_value IS NOT NULL AND meta_value != '' AND meta_value != '0'
+         ORDER BY post_id`
+      );
+      const varThumbs = varThumbRows.map(r => r.meta_value).filter(Boolean);
+      if (varThumbs.length > 0) {
         await db.query(
           `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_thumbnail_id', ?)`,
-          [newParentId, origThumb.meta_value]
+          [newParentId, varThumbs[0]]
         );
+        const uniqueThumbs = [...new Set(varThumbs)];
+        if (uniqueThumbs.length > 1) {
+          await db.query(
+            `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_product_image_gallery', ?)`,
+            [newParentId, uniqueThumbs.slice(1).join(',')]
+          );
+        }
+      } else {
+        // Fallback: copy original parent's images
+        const origThumb = metaRows.find((m: any) => m.meta_key === '_thumbnail_id');
+        const origGallery = metaRows.find((m: any) => m.meta_key === '_product_image_gallery');
+        if (origThumb) {
+          await db.query(
+            `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_thumbnail_id', ?)`,
+            [newParentId, origThumb.meta_value]
+          );
+        }
+        if (origGallery) {
+          await db.query(
+            `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_product_image_gallery', ?)`,
+            [newParentId, origGallery.meta_value]
+          );
+        }
       }
-      if (origGallery) {
-        await db.query(
-          `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_product_image_gallery', ?)`,
-          [newParentId, origGallery.meta_value]
-        );
-      }
-    }
 
-    // Step 5: Calculate prices for split group
-    const splitPrices = await getVariationPrices(db, splitGroupIds);
-    const splitMinPrice = splitPrices.length > 0 ? Math.min(...splitPrices) : 0;
-    const splitMaxPrice = splitPrices.length > 0 ? Math.max(...splitPrices) : 0;
+      // Calculate prices for this group
+      const groupPrices = await getVariationPrices(db, newGroup.variationIds);
+      const minPrice = groupPrices.length > 0 ? Math.min(...groupPrices) : 0;
+      const maxPrice = groupPrices.length > 0 ? Math.max(...groupPrices) : 0;
 
-    // Generate SKU for new parent
-    const newSku = `SPLIT-${newParentId}`;
-    await db.query(
-      `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_sku', ?)`,
-      [newParentId, newSku]
-    );
-    await db.query(
-      `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_price', ?)`,
-      [newParentId, String(splitMinPrice)]
-    );
+      const newSku = `SPLIT-${newParentId}`;
+      await db.query(
+        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_sku', ?)`,
+        [newParentId, newSku]
+      );
+      await db.query(
+        `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_price', ?)`,
+        [newParentId, String(minPrice)]
+      );
 
-    // Set _default_attributes from existing parent (both parents keep same attribute structure)
-    const [defaultAttrRows] = await db.query<RowDataPacket[]>(
-      `SELECT meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key = '_default_attributes'`,
-      [parentId]
-    );
-    if (defaultAttrRows.length > 0 && defaultAttrRows[0].meta_value) {
-      // Recalculate default attributes based on first variation in split group
-      const firstVarId = splitGroupIds[0];
+      // Set default attributes from first variation in this group
+      const firstVarId = newGroup.variationIds[0];
       const [firstVarAttrs] = await db.query<RowDataPacket[]>(
         `SELECT meta_key, meta_value FROM wp_postmeta
          WHERE post_id = ? AND meta_key LIKE 'attribute_%'`,
@@ -858,116 +1683,110 @@ async function executeSplit(
       if (firstVarAttrs.length > 0) {
         const defaults: Record<string, string> = {};
         for (const attr of firstVarAttrs) {
-          const taxName = attr.meta_key.replace('attribute_', '');
-          defaults[taxName] = attr.meta_value || '';
+          defaults[attr.meta_key.replace('attribute_', '')] = attr.meta_value || '';
         }
-        const serialized = serializePhpArray(defaults);
         await db.query(
           `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, '_default_attributes', ?)`,
-          [newParentId, serialized]
+          [newParentId, serializePhpArray(defaults)]
         );
       }
-    }
 
-    // Step 6: Copy taxonomy relationships (categories, brands, tags, product_type, visibility)
-    const [termRels] = await db.query<RowDataPacket[]>(
-      `SELECT term_taxonomy_id, term_order FROM wp_term_relationships WHERE object_id = ?`,
-      [parentId]
-    );
-    for (const rel of termRels) {
-      await db.query(
-        `INSERT IGNORE INTO wp_term_relationships (object_id, term_taxonomy_id, term_order) VALUES (?, ?, ?)`,
-        [newParentId, rel.term_taxonomy_id, rel.term_order]
+      // Copy taxonomy relationships
+      for (const rel of termRels) {
+        await db.query(
+          `INSERT IGNORE INTO wp_term_relationships (object_id, term_taxonomy_id, term_order) VALUES (?, ?, ?)`,
+          [newParentId, rel.term_taxonomy_id, rel.term_order]
+        );
+        await db.query(
+          `UPDATE wp_term_taxonomy SET count = count + 1 WHERE term_taxonomy_id = ?`,
+          [rel.term_taxonomy_id]
+        );
+      }
+
+      // Move variations to new parent
+      for (const varId of newGroup.variationIds) {
+        await db.query(
+          `UPDATE wp_posts SET post_parent = ? WHERE ID = ?`,
+          [newParentId, varId]
+        );
+      }
+
+      // Create wp_wc_product_meta_lookup for new parent
+      const [onsaleRows] = await db.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as cnt FROM wp_postmeta
+         WHERE post_id IN (${newGroup.variationIds.join(',')})
+           AND meta_key = '_sale_price' AND meta_value != '' AND meta_value != '0'`
       );
-      // Update taxonomy count
+      const onsale = (onsaleRows[0]?.cnt || 0) > 0 ? 1 : 0;
+
       await db.query(
-        `UPDATE wp_term_taxonomy SET count = count + 1 WHERE term_taxonomy_id = ?`,
-        [rel.term_taxonomy_id]
+        `INSERT INTO wp_wc_product_meta_lookup (
+          product_id, sku, \`virtual\`, downloadable, min_price, max_price,
+          onsale, stock_quantity, stock_status, rating_count, average_rating, total_sales, tax_status, tax_class
+        ) VALUES (?, ?, 0, 0, ?, ?, ?, 0, 'instock', 0, 0, 0, 'taxable', '')`,
+        [newParentId, newSku, minPrice, maxPrice, onsale]
       );
     }
 
-    // Step 7: Move variations to new parent
-    for (const varId of splitGroupIds) {
+    // Mark discontinued variations: items only in inactive_products.xml
+    // whose barcode is NOT present in the STC feed
+    await markDiscontinuedVariations(db, action, opts);
+
+    // Update original parent from remaining (keepGroup) variations
+    const keepIds = keepGroup.variationIds;
+    if (keepIds.length > 0) {
+      const remainPrices = await getVariationPrices(db, keepIds);
+      const remainMin = remainPrices.length > 0 ? Math.min(...remainPrices) : 0;
+      const remainMax = remainPrices.length > 0 ? Math.max(...remainPrices) : 0;
+
       await db.query(
-        `UPDATE wp_posts SET post_parent = ? WHERE ID = ?`,
-        [newParentId, varId]
+        `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_price'`,
+        [String(remainMin), parentId]
       );
-    }
 
-    if (opts.verbose) {
-      console.log(`    Moved ${splitGroupIds.length} variations to new parent ${newParentId}`);
-    }
-
-    // Step 8: Update original parent pricing from remaining variations
-    const remainingPrices = await getVariationPrices(db, remainingGroupIds);
-    const remainMinPrice = remainingPrices.length > 0 ? Math.min(...remainingPrices) : 0;
-    const remainMaxPrice = remainingPrices.length > 0 ? Math.max(...remainingPrices) : 0;
-
-    await db.query(
-      `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_price'`,
-      [String(remainMinPrice), parentId]
-    );
-
-    // Update original parent's default_attributes based on first remaining variation
-    if (remainingGroupIds.length > 0) {
-      const firstRemainVarId = remainingGroupIds[0];
-      const [firstRemainAttrs] = await db.query<RowDataPacket[]>(
+      // Update default attributes
+      const firstKeepVarId = keepIds[0];
+      const [firstKeepAttrs] = await db.query<RowDataPacket[]>(
         `SELECT meta_key, meta_value FROM wp_postmeta
          WHERE post_id = ? AND meta_key LIKE 'attribute_%'`,
-        [firstRemainVarId]
+        [firstKeepVarId]
       );
-      if (firstRemainAttrs.length > 0) {
+      if (firstKeepAttrs.length > 0) {
         const defaults: Record<string, string> = {};
-        for (const attr of firstRemainAttrs) {
-          const taxName = attr.meta_key.replace('attribute_', '');
-          defaults[taxName] = attr.meta_value || '';
+        for (const attr of firstKeepAttrs) {
+          defaults[attr.meta_key.replace('attribute_', '')] = attr.meta_value || '';
         }
-        const serialized = serializePhpArray(defaults);
         await db.query(
           `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_default_attributes'`,
-          [serialized, parentId]
+          [serializePhpArray(defaults), parentId]
         );
       }
+
+      // Update lookup table
+      const [origOnsaleRows] = await db.query<RowDataPacket[]>(
+        `SELECT COUNT(*) as cnt FROM wp_postmeta
+         WHERE post_id IN (${keepIds.join(',')})
+           AND meta_key = '_sale_price' AND meta_value != '' AND meta_value != '0'`
+      );
+      const origOnsale = (origOnsaleRows[0]?.cnt || 0) > 0 ? 1 : 0;
+
+      await db.query(
+        `UPDATE wp_wc_product_meta_lookup
+         SET min_price = ?, max_price = ?, onsale = ?
+         WHERE product_id = ?`,
+        [remainMin, remainMax, origOnsale, parentId]
+      );
+    } else {
+      // Original parent left with 0 variations — convert to simple or log warning
+      console.log(`    WARNING: Parent ${parentId} left with 0 variations after split`);
     }
 
-    // Step 9: Create wp_wc_product_meta_lookup row for new parent
-    // Get onsale status from split variations
-    const [onsaleRows] = await db.query<RowDataPacket[]>(
-      `SELECT COUNT(*) as cnt FROM wp_postmeta
-       WHERE post_id IN (${splitGroupIds.join(',')})
-         AND meta_key = '_sale_price' AND meta_value != '' AND meta_value != '0'`
-    );
-    const onsale = (onsaleRows[0]?.cnt || 0) > 0 ? 1 : 0;
-
-    await db.query(
-      `INSERT INTO wp_wc_product_meta_lookup (
-        product_id, sku, \`virtual\`, downloadable, min_price, max_price,
-        onsale, stock_quantity, stock_status, rating_count, average_rating, total_sales, tax_status, tax_class
-      ) VALUES (?, ?, 0, 0, ?, ?, ?, 0, 'instock', 0, 0, 0, 'taxable', '')`,
-      [newParentId, newSku, splitMinPrice, splitMaxPrice, onsale]
-    );
-
-    // Update original parent's lookup table
-    const [origOnsaleRows] = await db.query<RowDataPacket[]>(
-      `SELECT COUNT(*) as cnt FROM wp_postmeta
-       WHERE post_id IN (${remainingGroupIds.join(',')})
-         AND meta_key = '_sale_price' AND meta_value != '' AND meta_value != '0'`
-    );
-    const origOnsale = (origOnsaleRows[0]?.cnt || 0) > 0 ? 1 : 0;
-
-    await db.query(
-      `UPDATE wp_wc_product_meta_lookup
-       SET min_price = ?, max_price = ?, onsale = ?
-       WHERE product_id = ?`,
-      [remainMinPrice, remainMaxPrice, origOnsale, parentId]
-    );
-
     await db.commit();
-    return { success: true, newParentId };
+    return { success: true, newParentIds };
 
   } catch (err: any) {
     await db.rollback();
-    return { success: false, error: err.message };
+    return { success: false, newParentIds: [], error: err.message };
   }
 }
 
@@ -1018,6 +1837,7 @@ async function snapshotVariations(db: Connection, varIds: number[], feedNameMap:
   const [rows] = await db.query<RowDataPacket[]>(`
     SELECT v.ID as id, v.post_status as status,
       MAX(CASE WHEN pm.meta_key = '_sku' THEN pm.meta_value END) as sku,
+      MAX(CASE WHEN pm.meta_key = '_wt_sku' THEN pm.meta_value END) as warehouse_sku,
       MAX(CASE WHEN pm.meta_key = '_price' THEN pm.meta_value END) as price,
       MAX(CASE WHEN pm.meta_key = 'attribute_pa_size' THEN pm.meta_value END) as size_attr
     FROM wp_posts v
@@ -1029,6 +1849,7 @@ async function snapshotVariations(db: Connection, varIds: number[], feedNameMap:
   return rows.map(r => ({
     id: r.id,
     sku: r.sku || '',
+    warehouseSku: r.warehouse_sku || '',
     price: r.price || '',
     sizeAttr: r.size_attr || '',
     feedName: feedNameMap.get(r.id) || '',
@@ -1037,10 +1858,10 @@ async function snapshotVariations(db: Connection, varIds: number[], feedNameMap:
 }
 
 async function snapshotParentSummary(db: Connection, parentId: number): Promise<{
-  id: number; title: string; variationCount: number; minPrice: string; maxPrice: string;
+  id: number; title: string; slug: string; variationCount: number; minPrice: string; maxPrice: string;
 }> {
   const [pRows] = await db.query<RowDataPacket[]>(
-    `SELECT post_title as title FROM wp_posts WHERE ID = ?`, [parentId]
+    `SELECT post_title as title, post_name as slug FROM wp_posts WHERE ID = ?`, [parentId]
   );
   const [lookup] = await db.query<RowDataPacket[]>(
     `SELECT min_price, max_price FROM wp_wc_product_meta_lookup WHERE product_id = ?`, [parentId]
@@ -1051,28 +1872,42 @@ async function snapshotParentSummary(db: Connection, parentId: number): Promise<
   return {
     id: parentId,
     title: pRows[0]?.title || '',
+    slug: pRows[0]?.slug || '',
     variationCount: varCount[0]?.cnt || 0,
     minPrice: lookup[0]?.min_price?.toString() || '',
     maxPrice: lookup[0]?.max_price?.toString() || '',
   };
 }
 
-// ==================== ANALYSIS & REPORTING ====================
+// ==================== ANALYSIS ====================
 
 async function analyzeAll(
   db: Connection,
-  skuMap: Map<string, FeedProduct>,
   opts: ScriptOptions
 ): Promise<SplitReport> {
+  console.log('\n--- Step 1: Loading variable products with 3+ variations ---');
   const parents = await loadVariableParents(db, opts);
+  console.log(`  Found ${parents.length} variable products with 3+ variations`);
 
-  if (parents.length === 0) {
-    return emptyReport();
-  }
+  if (parents.length === 0) return emptyReport();
 
   const parentIds = parents.map(p => p.id);
-  console.log(`\n--- Step 3: Loading variations and detecting splits ---`);
-  const varsByParent = await loadVariationsForParents(db, parentIds, skuMap);
+  console.log('\n--- Step 2: Loading variations with warehouse SKUs ---');
+  const varsByParent = await loadVariationsWithSkus(db, parentIds);
+
+  const totalVars = [...varsByParent.values()].reduce((sum, vs) => sum + vs.length, 0);
+  console.log(`  Loaded ${totalVars} variations across ${varsByParent.size} parents`);
+
+  // Count how many have _wt_sku
+  let withWtSku = 0;
+  for (const vars of varsByParent.values()) {
+    for (const v of vars) {
+      if (v.warehouseSku) withWtSku++;
+    }
+  }
+  console.log(`  Variations with _wt_sku: ${withWtSku} / ${totalVars}`);
+
+  console.log('\n--- Step 3: Detecting splits ---');
 
   const report: SplitReport = {
     timestamp: new Date().toISOString(),
@@ -1082,94 +1917,212 @@ async function analyzeAll(
       totalVariationsAffected: 0,
       totalNewParentsToCreate: 0,
       totalWithDuplicateAttrs: 0,
-      splitsByKeyword: {},
+      splitsByMethod: {},
     },
     actions: [],
     skipped: [],
   };
 
+  let skuSplitCount = 0;
+  let kwSplitCount = 0;
+
+  let priceSplitCount = 0;
+
   for (const parent of parents) {
     const variations = varsByParent.get(parent.id) || [];
     if (variations.length < 3) continue;
 
-    const splits = detectSplits(parent.title, variations, opts);
+    // Populate feed names early (needed for price refinement title checks and keyword detection)
+    await populateFeedNames(variations);
 
-    if (splits.length === 0) continue;
+    // === Method 1: SKU prefix grouping (primary) ===
+    let skuGroups = groupBySkuPrefix(variations, opts);
+    let usedMethod: SplitMethod = 'sku-prefix';
 
-    const picked = pickPrimarySplit(splits, variations, opts);
-    if (!picked) continue;
+    if (skuGroups && skuGroups.size >= 2) {
+      // Refine with price: sub-split mixed-price groups, merge same-price groups
+      const refined = refineGroupsByPrice(skuGroups, opts);
+      const priceRefined = [...refined.keys()].some(k => k.startsWith('price-'));
+      if (priceRefined) usedMethod = 'sku-prefix+price';
 
-    const { primary, alternatives } = picked;
+      if (refined.size >= 2) {
+        const action = await buildSkuSplitAction(db, parent, variations, refined, opts);
+        if (action) {
+          action.method = usedMethod;
+          report.actions.push(action);
+          report.summary.totalSplitCandidates++;
+          const movedCount = action.newGroups.reduce((s, g) => s + g.variationIds.length, 0);
+          report.summary.totalVariationsAffected += movedCount;
+          report.summary.totalNewParentsToCreate += action.newGroups.length;
+          report.summary.splitsByMethod[usedMethod] = (report.summary.splitsByMethod[usedMethod] || 0) + 1;
+          if (action.keepGroupHasDuplicateAttrs || action.newGroups.some(g => g.hasDuplicateAttrs)) {
+            report.summary.totalWithDuplicateAttrs++;
+          }
+          if (priceRefined) priceSplitCount++; else skuSplitCount++;
 
-    // Validate: lone variations (1 in a group) get absorbed into the other group
-    let splitGroupIds = primary.withIds;
-    let remainingGroupIds = primary.withoutIds;
-
-    // If split group has only 1 member, try alternatives
-    if (splitGroupIds.length < 2) {
-      report.skipped.push({
-        parentId: parent.id,
-        parentTitle: parent.title,
-        reason: `Split group for "${primary.keyword}" has only ${splitGroupIds.length} variation(s)`,
-      });
-      continue;
+          if (opts.verbose) {
+            console.log(`\n  [${parent.id}] "${parent.title}" (${variations.length} vars) — ${usedMethod} split into ${refined.size} groups`);
+            for (const ng of action.newGroups) {
+              console.log(`    → "${ng.newParentTitle}" (${ng.variationIds.length} vars, prefix: ${ng.skuPrefix || '?'})`);
+            }
+            console.log(`    → KEEP "${parent.title}" (${action.keepGroup.variationIds.length} vars)`);
+          }
+          continue;
+        }
+      }
     }
-    if (remainingGroupIds.length < 2) {
-      report.skipped.push({
-        parentId: parent.id,
-        parentTitle: parent.title,
-        reason: `Remaining group after "${primary.keyword}" split has only ${remainingGroupIds.length} variation(s)`,
-      });
-      continue;
+
+    // === Method 2: Price-only grouping (for products without SKU data or where SKU gave 1 group) ===
+    const priceGroups = groupByPrice(variations, opts);
+    if (priceGroups && priceGroups.size >= 2) {
+      const action = await buildSkuSplitAction(db, parent, variations, priceGroups, opts);
+      if (action) {
+        action.method = 'price';
+        report.actions.push(action);
+        report.summary.totalSplitCandidates++;
+        const movedCount = action.newGroups.reduce((s, g) => s + g.variationIds.length, 0);
+        report.summary.totalVariationsAffected += movedCount;
+        report.summary.totalNewParentsToCreate += action.newGroups.length;
+        report.summary.splitsByMethod['price'] = (report.summary.splitsByMethod['price'] || 0) + 1;
+        if (action.keepGroupHasDuplicateAttrs || action.newGroups.some(g => g.hasDuplicateAttrs)) {
+          report.summary.totalWithDuplicateAttrs++;
+        }
+        priceSplitCount++;
+
+        if (opts.verbose) {
+          console.log(`\n  [${parent.id}] "${parent.title}" (${variations.length} vars) — price split into ${priceGroups.size} groups`);
+        }
+        continue;
+      }
     }
 
-    // Build the action
-    const newTitle = generateSplitTitle(parent.title, primary.label);
-    const newSlug = toSlug(newTitle);
+    // === Method 3: Keyword-based split (fallback) ===
+    const kwResult = detectKeywordSplit(parent.title, variations);
+    if (kwResult) {
+      const action = await buildKeywordSplitAction(db, parent, variations, kwResult, opts);
+      if (action) {
+        report.actions.push(action);
+        report.summary.totalSplitCandidates++;
+        report.summary.totalVariationsAffected += kwResult.withIds.length;
+        report.summary.totalNewParentsToCreate++;
+        report.summary.splitsByMethod['keyword'] = (report.summary.splitsByMethod['keyword'] || 0) + 1;
+        if (action.keepGroupHasDuplicateAttrs || action.newGroups.some(g => g.hasDuplicateAttrs)) {
+          report.summary.totalWithDuplicateAttrs++;
+        }
+        kwSplitCount++;
 
-    const varMap = new Map<number, VariationData>();
-    for (const v of variations) varMap.set(v.id, v);
-
-    // Check for duplicate attributes in each group
-    const splitHasDupes = await checkGroupHasDuplicateAttrs(db, splitGroupIds);
-    const remainHasDupes = await checkGroupHasDuplicateAttrs(db, remainingGroupIds);
-
-    const action: SplitAction = {
-      parentId: parent.id,
-      parentTitle: parent.title,
-      parentSlug: parent.slug,
-      keyword: primary.keyword,
-      newParentTitle: newTitle,
-      newParentSlug: newSlug,
-      splitGroupIds,
-      remainingGroupIds,
-      splitGroupSkus: splitGroupIds.map(id => varMap.get(id)?.sku || ''),
-      remainingGroupSkus: remainingGroupIds.map(id => varMap.get(id)?.sku || ''),
-      splitGroupHasDuplicateAttrs: splitHasDupes,
-      remainingGroupHasDuplicateAttrs: remainHasDupes,
-    };
-
-    report.actions.push(action);
-    report.summary.totalSplitCandidates++;
-    report.summary.totalVariationsAffected += splitGroupIds.length;
-    report.summary.totalNewParentsToCreate++;
-    if (splitHasDupes || remainHasDupes) {
-      report.summary.totalWithDuplicateAttrs++;
-    }
-    report.summary.splitsByKeyword[primary.keyword] =
-      (report.summary.splitsByKeyword[primary.keyword] || 0) + 1;
-
-    if (opts.verbose) {
-      console.log(`\n  [${parent.id}] "${parent.title}" (${variations.length} vars)`);
-      console.log(`    Split on "${primary.keyword}": ${splitGroupIds.length} move / ${remainingGroupIds.length} stay`);
-      console.log(`    New title: "${newTitle}"`);
-      if (alternatives.length > 0) {
-        console.log(`    Alternatives: ${alternatives.map(a => `${a.keyword}(${a.withIds.length}/${a.withoutIds.length})`).join(', ')}`);
+        if (opts.verbose) {
+          console.log(`\n  [${parent.id}] "${parent.title}" (${variations.length} vars) — keyword split on "${kwResult.keyword}"`);
+          console.log(`    → Move ${kwResult.withIds.length}, Keep ${kwResult.withoutIds.length}`);
+        }
+        continue;
       }
     }
   }
 
+  console.log(`\n  SKU-prefix splits: ${skuSplitCount}`);
+  console.log(`  SKU+price splits: ${priceSplitCount}`);
+  console.log(`  Keyword splits:   ${kwSplitCount}`);
+
   return report;
+}
+
+/**
+ * Populate feedName on variations from the SKU lookup (lazy).
+ */
+async function populateFeedNames(variations: VariationData[]): Promise<void> {
+  const skuLookup = await getSkuLookup();
+  for (const v of variations) {
+    if (!v.feedName) {
+      // Try warehouse SKU first, then regular SKU
+      const feed = (v.warehouseSku && skuLookup.get(v.warehouseSku)) || (v.sku && skuLookup.get(v.sku));
+      if (feed) v.feedName = feed.name;
+    }
+  }
+}
+
+async function buildSkuSplitAction(
+  db: Connection,
+  parent: { id: number; title: string; slug: string },
+  variations: VariationData[],
+  skuGroups: Map<string, VariationData[]>,
+  opts: ScriptOptions
+): Promise<SplitAction | null> {
+  // Sort groups by size descending — largest stays on original parent
+  const sorted = [...skuGroups.entries()].sort((a, b) => b[1].length - a[1].length);
+
+  const [keepPrefix, keepVars] = sorted[0];
+  const keepIds = keepVars.map(v => v.id);
+  const keepHasDupes = await checkGroupHasDuplicateAttrs(db, keepIds);
+
+  const newGroups: SplitAction['newGroups'] = [];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const [rawPrefix, groupVars] = sorted[i];
+    const prefix = rawPrefix.replace(/~$/, ''); // Strip re-group marker
+    const groupIds = groupVars.map(v => v.id);
+
+    // Derive title for this group
+    const title = await deriveGroupTitle(groupVars, prefix, parent.title);
+    const hasDupes = await checkGroupHasDuplicateAttrs(db, groupIds);
+
+    newGroups.push({
+      label: title,
+      variationIds: groupIds,
+      skuPrefix: prefix,
+      newParentTitle: title,
+      newParentSlug: toSlug(title),
+      hasDuplicateAttrs: hasDupes,
+    });
+  }
+
+  if (newGroups.length === 0) return null;
+
+  const cleanKeepPrefix = keepPrefix.replace(/~$/, '');
+  return {
+    parentId: parent.id,
+    parentTitle: parent.title,
+    parentSlug: parent.slug,
+    method: 'sku-prefix',
+    keepGroup: {
+      label: parent.title,
+      variationIds: keepIds,
+      skuPrefix: cleanKeepPrefix,
+    },
+    newGroups,
+    keepGroupHasDuplicateAttrs: keepHasDupes,
+  };
+}
+
+async function buildKeywordSplitAction(
+  db: Connection,
+  parent: { id: number; title: string; slug: string },
+  variations: VariationData[],
+  kwResult: KeywordSplitResult,
+  opts: ScriptOptions
+): Promise<SplitAction | null> {
+  const newTitle = generateKeywordSplitTitle(parent.title, kwResult.label);
+  const splitHasDupes = await checkGroupHasDuplicateAttrs(db, kwResult.withIds);
+  const keepHasDupes = await checkGroupHasDuplicateAttrs(db, kwResult.withoutIds);
+
+  return {
+    parentId: parent.id,
+    parentTitle: parent.title,
+    parentSlug: parent.slug,
+    method: 'keyword',
+    keepGroup: {
+      label: parent.title,
+      variationIds: kwResult.withoutIds,
+    },
+    newGroups: [{
+      label: kwResult.label,
+      variationIds: kwResult.withIds,
+      newParentTitle: newTitle,
+      newParentSlug: toSlug(newTitle),
+      hasDuplicateAttrs: splitHasDupes,
+    }],
+    keepGroupHasDuplicateAttrs: keepHasDupes,
+  };
 }
 
 function emptyReport(): SplitReport {
@@ -1181,14 +2134,14 @@ function emptyReport(): SplitReport {
       totalVariationsAffected: 0,
       totalNewParentsToCreate: 0,
       totalWithDuplicateAttrs: 0,
-      splitsByKeyword: {},
+      splitsByMethod: {},
     },
     actions: [],
     skipped: [],
   };
 }
 
-// ==================== SQL GENERATION (dry-run) ====================
+// ==================== DRY-RUN SQL ====================
 
 function generateDryRunSql(report: SplitReport): string[] {
   const stmts: string[] = [];
@@ -1196,37 +2149,27 @@ function generateDryRunSql(report: SplitReport): string[] {
   for (const action of report.actions) {
     stmts.push(`-- ================================================================`);
     stmts.push(`-- Split: "${action.parentTitle}" (ID: ${action.parentId})`);
-    stmts.push(`-- Keyword: ${action.keyword}`);
-    stmts.push(`-- New product: "${action.newParentTitle}" (slug: ${action.newParentSlug})`);
-    stmts.push(`-- Moving ${action.splitGroupIds.length} variations, keeping ${action.remainingGroupIds.length}`);
+    stmts.push(`-- Method: ${action.method}`);
+    stmts.push(`-- Keep group: ${action.keepGroup.variationIds.length} variations (prefix: ${action.keepGroup.skuPrefix || 'n/a'})`);
+    stmts.push(`-- New groups: ${action.newGroups.length}`);
     stmts.push(`-- ================================================================`);
-    stmts.push('');
 
-    stmts.push(`-- 1. Create new parent post (clone of ${action.parentId})`);
-    stmts.push(`INSERT INTO wp_posts (...) SELECT ... FROM wp_posts WHERE ID = ${action.parentId};`);
-    stmts.push(`-- SET post_title = '${action.newParentTitle}', post_name = '${action.newParentSlug}'`);
-    stmts.push('');
-
-    stmts.push(`-- 2. Copy postmeta from parent ${action.parentId} to NEW_ID`);
-    stmts.push(`INSERT INTO wp_postmeta (post_id, meta_key, meta_value) SELECT NEW_ID, meta_key, meta_value FROM wp_postmeta WHERE post_id = ${action.parentId};`);
-    stmts.push('');
-
-    stmts.push(`-- 3. Copy taxonomy relationships`);
-    stmts.push(`INSERT IGNORE INTO wp_term_relationships SELECT NEW_ID, term_taxonomy_id, term_order FROM wp_term_relationships WHERE object_id = ${action.parentId};`);
-    stmts.push('');
-
-    stmts.push(`-- 4. Move variations to new parent`);
-    for (const varId of action.splitGroupIds) {
-      stmts.push(`UPDATE wp_posts SET post_parent = NEW_ID WHERE ID = ${varId};`);
+    for (const ng of action.newGroups) {
+      stmts.push('');
+      stmts.push(`-- New product: "${ng.newParentTitle}" (${ng.variationIds.length} variations, prefix: ${ng.skuPrefix || 'n/a'})`);
+      stmts.push(`-- 1. Clone parent ${action.parentId} with new title/slug`);
+      stmts.push(`INSERT INTO wp_posts (...) SELECT ... FROM wp_posts WHERE ID = ${action.parentId};`);
+      stmts.push(`-- SET post_title = '${ng.newParentTitle}', post_name = '${ng.newParentSlug}'`);
+      stmts.push(`-- 2. Copy postmeta, taxonomy, set images/prices`);
+      stmts.push(`-- 3. Move variations: ${ng.variationIds.join(', ')}`);
+      for (const varId of ng.variationIds) {
+        stmts.push(`UPDATE wp_posts SET post_parent = NEW_ID WHERE ID = ${varId};`);
+      }
+      stmts.push(`-- 4. Create wp_wc_product_meta_lookup for NEW_ID`);
     }
-    stmts.push('');
 
-    stmts.push(`-- 5. Update prices for both parents`);
-    stmts.push(`-- (calculated at runtime from variation prices)`);
     stmts.push('');
-
-    stmts.push(`-- 6. Create wp_wc_product_meta_lookup for NEW_ID`);
-    stmts.push(`INSERT INTO wp_wc_product_meta_lookup (...) VALUES (NEW_ID, ...);`);
+    stmts.push(`-- Update original parent pricing from remaining ${action.keepGroup.variationIds.length} variations`);
     stmts.push('');
   }
 
@@ -1250,11 +2193,10 @@ function printSummary(report: SplitReport) {
     console.log(`  Run fix-duplicate-variations.ts AFTER splitting to fix these.`);
   }
 
-  if (Object.keys(s.splitsByKeyword).length > 0) {
-    console.log(`\n  Splits by keyword:`);
-    const sorted = Object.entries(s.splitsByKeyword).sort((a, b) => b[1] - a[1]);
-    for (const [kw, count] of sorted) {
-      console.log(`    ${kw}: ${count}`);
+  if (Object.keys(s.splitsByMethod).length > 0) {
+    console.log(`\n  Splits by method:`);
+    for (const [method, count] of Object.entries(s.splitsByMethod)) {
+      console.log(`    ${method}: ${count}`);
     }
   }
 
@@ -1269,23 +2211,25 @@ function printSummary(report: SplitReport) {
   }
 }
 
-function printSampleActions(report: SplitReport, maxSamples: number = 20) {
+function printSampleActions(report: SplitReport, maxSamples: number = 30) {
   console.log(`\n${'='.repeat(70)}`);
-  console.log(`SPLIT ACTIONS (first ${Math.min(maxSamples, report.actions.length)})`);
+  console.log(`SPLIT ACTIONS (first ${Math.min(maxSamples, report.actions.length)} of ${report.actions.length})`);
   console.log('='.repeat(70));
 
   for (let i = 0; i < Math.min(maxSamples, report.actions.length); i++) {
     const action = report.actions[i];
-    console.log(`\n  [${action.parentId}] "${action.parentTitle}"`);
-    console.log(`    Keyword: ${action.keyword}`);
-    console.log(`    New product: "${action.newParentTitle}"`);
-    console.log(`    Moving: ${action.splitGroupIds.length} variations (${action.splitGroupSkus.filter(Boolean).join(', ') || 'no SKUs'})`);
-    console.log(`    Keeping: ${action.remainingGroupIds.length} variations (${action.remainingGroupSkus.filter(Boolean).join(', ') || 'no SKUs'})`);
-    if (action.splitGroupHasDuplicateAttrs) {
-      console.log(`    !! WARN: Split group has duplicate attribute values - needs fix-duplicate-variations`);
+    const totalNew = action.newGroups.reduce((s, g) => s + g.variationIds.length, 0);
+    console.log(`\n  [${action.parentId}] "${action.parentTitle}" (${action.method})`);
+    console.log(`    Keep: ${action.keepGroup.variationIds.length} vars${action.keepGroup.skuPrefix ? ` (prefix: ${action.keepGroup.skuPrefix})` : ''}`);
+
+    for (const ng of action.newGroups) {
+      console.log(`    → "${ng.newParentTitle}" — ${ng.variationIds.length} vars${ng.skuPrefix ? ` (prefix: ${ng.skuPrefix})` : ''}`);
+      if (ng.hasDuplicateAttrs) {
+        console.log(`      !! WARN: duplicate attribute values`);
+      }
     }
-    if (action.remainingGroupHasDuplicateAttrs) {
-      console.log(`    !! WARN: Remaining group has duplicate attribute values - needs fix-duplicate-variations`);
+    if (action.keepGroupHasDuplicateAttrs) {
+      console.log(`    !! WARN: keep group has duplicate attribute values`);
     }
   }
 }
@@ -1304,34 +2248,27 @@ function saveReport(report: SplitReport, outputPath: string) {
 async function main() {
   const opts = parseArgs();
 
-  console.log(`\nSplit Variable Products - Mode: ${opts.mode.toUpperCase()}`);
+  console.log(`\nSplit Variable Products V2 (SKU-First) - Mode: ${opts.mode.toUpperCase()}`);
   console.log('='.repeat(70));
 
-  // Step 1: Build SKU lookup from feeds
-  const skuMap = await buildSkuLookup();
-
-  // Step 2-3: Connect and analyze
   const db = await getConnection();
 
   try {
-    const report = await analyzeAll(db, skuMap, opts);
+    const report = await analyzeAll(db, opts);
 
     if (report.actions.length === 0) {
       console.log('\nNo split candidates found. Nothing to do.');
       return;
     }
 
-    // Print summary and samples
     printSummary(report);
     printSampleActions(report);
 
-    // Save report
     const outputPath = opts.output.startsWith('/')
       ? opts.output
       : `${BASE_DIR}/${opts.output}`;
     saveReport(report, outputPath);
 
-    // Mode-specific actions
     if (opts.mode === 'dry-run') {
       console.log(`\n${'='.repeat(70)}`);
       console.log('DRY RUN - SQL STATEMENTS');
@@ -1349,14 +2286,25 @@ async function main() {
 
       // Build feed name lookup for snapshots
       const feedNameMap = new Map<number, string>();
+      const skuLookup = await getSkuLookup();
       for (const action of report.actions) {
-        const allIds = [...action.splitGroupIds, ...action.remainingGroupIds];
-        const allSkus = [...action.splitGroupSkus, ...action.remainingGroupSkus];
-        for (let i = 0; i < allIds.length; i++) {
-          const sku = allSkus[i];
-          if (sku) {
-            const feed = skuMap.get(sku);
-            if (feed) feedNameMap.set(allIds[i], feed.name);
+        const allVarIds = [...action.keepGroup.variationIds];
+        for (const ng of action.newGroups) {
+          allVarIds.push(...ng.variationIds);
+        }
+        // We need to look up _wt_sku for each variation to get feed names
+        if (allVarIds.length > 0) {
+          const [metaRows] = await db.query<RowDataPacket[]>(`
+            SELECT post_id, meta_key, meta_value FROM wp_postmeta
+            WHERE post_id IN (${allVarIds.join(',')})
+              AND meta_key IN ('_sku', '_wt_sku')
+              AND meta_value IS NOT NULL AND meta_value != ''
+          `);
+          for (const r of metaRows) {
+            const feed = skuLookup.get(r.meta_value);
+            if (feed && !feedNameMap.has(r.post_id)) {
+              feedNameMap.set(r.post_id, feed.name);
+            }
           }
         }
       }
@@ -1371,21 +2319,23 @@ async function main() {
       let failures = 0;
 
       for (const action of report.actions) {
+        const totalNew = action.newGroups.reduce((s, g) => s + g.variationIds.length, 0);
         process.stdout.write(
-          `  Splitting [${action.parentId}] "${action.parentTitle}" on "${action.keyword}"... `
+          `  Splitting [${action.parentId}] "${action.parentTitle}" (${action.method}, ${action.newGroups.length} new parents)... `
         );
 
         // Snapshot BEFORE
-        const allVarIds = [...action.splitGroupIds, ...action.remainingGroupIds];
+        const allVarIds = [...action.keepGroup.variationIds];
+        for (const ng of action.newGroups) allVarIds.push(...ng.variationIds);
         const beforeVars = await snapshotVariations(db, allVarIds, feedNameMap);
 
         const entry: SnapshotEntry = {
           parentId: action.parentId,
           parentTitle: action.parentTitle,
           parentSlug: action.parentSlug,
-          newParentTitle: action.newParentTitle,
-          newParentSlug: action.newParentSlug,
-          keyword: action.keyword,
+          method: action.method,
+          newParents: [],
+          originalParentAfter: null,
           before: { variations: beforeVars },
           success: false,
         };
@@ -1393,22 +2343,37 @@ async function main() {
         const result = await executeSplit(db, action, opts);
 
         if (result.success) {
-          console.log(`OK (new parent: ${result.newParentId})`);
+          console.log(`OK (new IDs: ${result.newParentIds.join(', ')})`);
           successes++;
           entry.success = true;
-          entry.newParentId = result.newParentId;
 
-          // Snapshot AFTER
-          const movedVars = await snapshotVariations(db, action.splitGroupIds, feedNameMap);
-          const remainingVars = await snapshotVariations(db, action.remainingGroupIds, feedNameMap);
+          // Snapshot AFTER — each new parent
+          for (let j = 0; j < action.newGroups.length; j++) {
+            const ng = action.newGroups[j];
+            const newId = result.newParentIds[j];
+            const summary = await snapshotParentSummary(db, newId);
+            const movedVars = await snapshotVariations(db, ng.variationIds, feedNameMap);
+            entry.newParents.push({
+              id: newId,
+              title: summary.title,
+              slug: summary.slug,
+              variationCount: summary.variationCount,
+              minPrice: summary.minPrice,
+              maxPrice: summary.maxPrice,
+              movedVariations: movedVars,
+            });
+          }
+
+          // Snapshot original parent after
           const origSummary = await snapshotParentSummary(db, action.parentId);
-          const newSummary = await snapshotParentSummary(db, result.newParentId!);
-
-          entry.after = {
-            originalParent: origSummary,
-            newParent: newSummary,
-            movedVariations: movedVars,
-            remainingVariations: remainingVars,
+          const remainVars = await snapshotVariations(db, action.keepGroup.variationIds, feedNameMap);
+          entry.originalParentAfter = {
+            id: action.parentId,
+            title: origSummary.title,
+            variationCount: origSummary.variationCount,
+            minPrice: origSummary.minPrice,
+            maxPrice: origSummary.maxPrice,
+            remainingVariations: remainVars,
           };
         } else {
           console.log(`FAILED: ${result.error}`);
@@ -1419,7 +2384,7 @@ async function main() {
         splitLog.entries.push(entry);
       }
 
-      // Save the before/after log
+      // Save log
       const logPath = outputPath.replace(/\.json$/, '-log.json');
       writeFileSync(logPath, JSON.stringify(splitLog, null, 2));
       console.log(`\n  Before/after log: ${logPath}`);
