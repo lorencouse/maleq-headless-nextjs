@@ -225,6 +225,9 @@ async function executeSplit(
     // Post-split cleanup: fix duplicates, strip parent names, link terms
     await postSplitCleanup(db, newParentId, group.newParentTitle, feedIndex);
 
+    // Clean up gallery to only show images for this group's variations
+    await cleanupGalleryAfterSplit(db, newParentId);
+
     // Update meta lookup
     await updateMetaLookup(db, newParentId);
 
@@ -244,6 +247,7 @@ async function executeSplit(
   const keepGroup = action.splitGroups.find(g => g.isKeepGroup);
   if (keepGroup) {
     await postSplitCleanup(db, action.parentId, action.parentTitle, feedIndex);
+    await cleanupGalleryAfterSplit(db, action.parentId);
     await updateMetaLookup(db, action.parentId);
   }
 
@@ -489,6 +493,52 @@ async function postSplitCleanup(
   // Step 4: Link all attribute terms to parent and rebuild
   await linkAllTermsToParent(db, parentId);
   await rebuildParentAttributes(db, parentId);
+}
+
+/**
+ * After splitting, filter a parent's gallery to only include images
+ * used by its current variations. Sets the parent thumbnail to the
+ * first variation's image.
+ */
+async function cleanupGalleryAfterSplit(db: Connection, parentId: number): Promise<void> {
+  // Get all variation thumbnail IDs for this parent
+  const [varImages] = await db.query<RowDataPacket[]>(`
+    SELECT DISTINCT pm.meta_value as image_id
+    FROM wp_posts v
+    JOIN wp_postmeta pm ON pm.post_id = v.ID AND pm.meta_key = '_thumbnail_id'
+    WHERE v.post_parent = ? AND v.post_type = 'product_variation'
+      AND pm.meta_value IS NOT NULL AND pm.meta_value != '' AND pm.meta_value != '0'
+  `, [parentId]);
+
+  const variationImageIds = new Set(varImages.map(r => String(r.image_id)));
+  if (variationImageIds.size === 0) return;
+
+  // Get current parent gallery
+  const [galleryRow] = await db.query<RowDataPacket[]>(
+    `SELECT meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key = '_product_image_gallery'`,
+    [parentId]
+  );
+
+  const currentGallery = galleryRow[0]?.meta_value || '';
+  if (!currentGallery) return;
+
+  // Filter gallery to only include images belonging to this group's variations
+  const galleryIds = currentGallery.split(',').map((id: string) => id.trim()).filter(Boolean);
+  const filteredGallery = galleryIds.filter((id: string) => variationImageIds.has(id));
+
+  // Update gallery
+  const newGalleryStr = filteredGallery.join(',');
+  await db.query(
+    `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_product_image_gallery'`,
+    [newGalleryStr, parentId]
+  );
+
+  // Set parent thumbnail to first variation's image
+  const firstImageId = [...variationImageIds][0];
+  await db.query(
+    `UPDATE wp_postmeta SET meta_value = ? WHERE post_id = ? AND meta_key = '_thumbnail_id'`,
+    [firstImageId, parentId]
+  );
 }
 
 /**
