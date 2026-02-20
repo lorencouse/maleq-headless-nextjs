@@ -227,6 +227,7 @@ export function stripParentNameFromValue(attrValue: string, parentTitle: string)
  * Returns the most meaningful dimension(s) found.
  */
 export function buildSizeFromFeed(feed: {
+  name?: string;
   size?: string;
   length?: string;
   height?: string;
@@ -236,6 +237,14 @@ export function buildSizeFromFeed(feed: {
   // Prefer explicit size field
   if (feed.size && feed.size.trim()) {
     return feed.size.trim();
+  }
+
+  // Extract size from product name (e.g., "GUN OIL LUBRICANT H2O 2 OZ" → "2 OZ")
+  if (feed.name) {
+    const sizeMatch = feed.name.match(SIZE_UNIT_RE);
+    if (sizeMatch) {
+      return sizeMatch[0].trim();
+    }
   }
 
   // Build from dimensions

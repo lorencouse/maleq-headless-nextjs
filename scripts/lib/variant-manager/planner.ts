@@ -216,16 +216,9 @@ function planSplit(
     flags.push(`${singletonCount} singleton groups`);
   }
 
-  // Check for uniform prices within groups
-  let mixedPriceGroups = 0;
-  for (const [, members] of sortedGroups) {
-    const prices = new Set(members.filter(v => v.regularPrice > 0).map(v => v.regularPrice));
-    if (prices.size > 1) mixedPriceGroups++;
-  }
-  if (mixedPriceGroups > 0) {
-    confidence -= 0.1;
-    flags.push(`${mixedPriceGroups} groups with mixed prices`);
-  }
+  // Note: mixed prices within groups are normal for size variants (2oz, 4oz, etc.)
+  // and should not lower confidence. The auditor's same-price anti-split check
+  // already handles the important case (all variations identical price = don't split).
 
   // Check for duplicate feed names across groups
   const allFeedNames = new Set<string>();
