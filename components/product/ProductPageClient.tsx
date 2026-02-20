@@ -515,7 +515,7 @@ export default function ProductPageClient({
           </div>
         )}
         <div className='flex justify-between'>
-          <span className='text-muted-foreground'>Product ID:</span>
+          <span className='text-muted-foreground'>{isVariable ? 'Parent ID:' : 'Product ID:'}</span>
           <span className='font-medium text-foreground'>
             {product.databaseId}
           </span>

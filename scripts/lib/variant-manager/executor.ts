@@ -500,7 +500,7 @@ async function postSplitCleanup(
  * used by its current variations. Sets the parent thumbnail to the
  * first variation's image.
  */
-async function cleanupGalleryAfterSplit(db: Connection, parentId: number): Promise<void> {
+export async function cleanupGalleryAfterSplit(db: Connection, parentId: number): Promise<void> {
   // Get all variation thumbnail IDs for this parent
   const [varImages] = await db.query<RowDataPacket[]>(`
     SELECT DISTINCT pm.meta_value as image_id
@@ -615,7 +615,7 @@ async function reduceToSingleAttribute(
  * Ensure all attribute term slugs used by a parent's variations
  * are linked to the parent via wp_term_relationships.
  */
-async function linkAllTermsToParent(db: Connection, parentId: number): Promise<void> {
+export async function linkAllTermsToParent(db: Connection, parentId: number): Promise<void> {
   // Get all distinct attribute values from variations
   const [rows] = await db.query<RowDataPacket[]>(`
     SELECT DISTINCT pm.meta_key, pm.meta_value
@@ -641,7 +641,7 @@ async function linkAllTermsToParent(db: Connection, parentId: number): Promise<v
 /**
  * Rebuild _product_attributes for a parent from its current variation meta.
  */
-async function rebuildParentAttributes(db: Connection, parentId: number): Promise<void> {
+export async function rebuildParentAttributes(db: Connection, parentId: number): Promise<void> {
   const [rows] = await db.query<RowDataPacket[]>(`
     SELECT DISTINCT pm.meta_key, pm.meta_value
     FROM wp_postmeta pm
