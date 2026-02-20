@@ -119,6 +119,34 @@ export interface ParsedAttribute {
   isTaxonomy: boolean;
 }
 
+/**
+ * Serialize a JavaScript object into PHP serialized format.
+ * Handles: strings, integers, booleans, null, nested objects.
+ */
+export function phpSerialize(val: PHPValue): string {
+  if (val === null || val === undefined) return 'N;';
+  if (typeof val === 'boolean') return `b:${val ? 1 : 0};`;
+  if (typeof val === 'number' && Number.isInteger(val)) return `i:${val};`;
+  if (typeof val === 'number') return `d:${val};`;
+  if (typeof val === 'string') return `s:${val.length}:"${val}";`;
+  if (typeof val === 'object' && !Array.isArray(val)) {
+    const entries = Object.entries(val);
+    let inner = '';
+    for (const [k, v] of entries) {
+      // Use integer keys for numeric string keys
+      if (/^\d+$/.test(k)) {
+        inner += `i:${parseInt(k, 10)};`;
+      } else {
+        inner += `s:${k.length}:"${k}";`;
+      }
+      inner += phpSerialize(v as PHPValue);
+    }
+    return `a:${entries.length}:{${inner}}`;
+  }
+  const s = String(val);
+  return `s:${s.length}:"${s}";`;
+}
+
 export function parseProductAttributes(serialized: string): ParsedAttribute[] {
   const parsed = phpUnserialize(serialized);
   if (!parsed || typeof parsed !== 'object') return [];

@@ -32,7 +32,7 @@ function getDbFlag(): string | undefined {
 const dbOverride = getDbFlag();
 
 const localConfig = {
-  socketPath: process.env.MYSQL_SOCKET || process.env.DEV_MYSQL_SOCKET || '/Users/lorenpersonal/Library/Application Support/Local/run/L1EaxAYeb/mysql/mysqld.sock',
+  socketPath: process.env.MYSQL_SOCKET || process.env.DEV_MYSQL_SOCKET || '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
   database: dbOverride || process.env.MYSQL_DB || 'local',
   user: process.env.MYSQL_USER || 'root',
   password: process.env.MYSQL_PASS || 'root',
