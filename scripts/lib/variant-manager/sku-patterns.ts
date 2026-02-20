@@ -11,24 +11,43 @@ import type { ParsedSku, SkuPattern } from './types';
  * Parse a Williams Trading warehouse SKU into its structural components.
  *
  * Per VARIANT-RULES.md:
- * - Pattern A (last 3 contain letter): parent = up to & including last letter, variant = trailing digits
+ * - Pattern A: parent = up to & including last letter, variant = trailing digits
  *   SNSL32 → parent SNSL, variant 32
- * - Pattern B (last 3 all digits): last digit = variant, 2nd-to-last = sibling, rest = family
+ *   EPGOH2032 → parent EPGOH, variant 2032  (H2O product with 32oz size)
+ * - Pattern B (5+ trailing digits after last letter): structured encoding
+ *   last digit = variant, 2nd-to-last = sibling, rest = family
  *   NSN096111 → family NSN0961, sibling 1, variant 1
+ *
+ * The pattern is chosen by counting trailing digits after the last letter:
+ * ≤ 4 digits → Pattern A (direct variant ID, e.g., size in oz)
+ * ≥ 5 digits → Pattern B (structured family/sibling/variant encoding)
  */
 export function parseWtSku(sku: string): ParsedSku {
   if (!sku || sku.length < 2) {
     return { parentSku: sku, variantId: '', pattern: 'none' };
   }
 
-  const last3 = sku.slice(-3);
-  const last3AllDigits = last3.length >= 3 && /^\d{3}$/.test(last3);
+  // Find the last letter in the entire SKU
+  let lastLetterIdx = -1;
+  for (let i = sku.length - 1; i >= 0; i--) {
+    if (/[a-zA-Z]/.test(sku[i])) {
+      lastLetterIdx = i;
+      break;
+    }
+  }
 
-  if (!last3AllDigits) {
-    // Pattern A: last 3 contain a letter → split at last letter
+  if (lastLetterIdx === -1) {
+    // All digits — no pattern
+    return { parentSku: sku, variantId: '', pattern: 'none' };
+  }
+
+  const trailingDigitCount = sku.length - lastLetterIdx - 1;
+
+  // Short trailing runs (≤4) → Pattern A (variant ID is a direct identifier)
+  // Long trailing runs (≥5) → Pattern B (structured sibling+variant encoding)
+  if (trailingDigitCount <= 4) {
     return parsePatternA(sku);
   } else {
-    // Pattern B: last 3 all digits
     return parsePatternB(sku);
   }
 }

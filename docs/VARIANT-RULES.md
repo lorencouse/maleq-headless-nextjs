@@ -46,29 +46,39 @@ All variable products must have exactly **one** variation attribute. No product 
 
 The Williams Trading SKU (`_wt_sku` meta field) is the **primary identifier** for grouping variants into families.
 
-### Pattern A: Last 3 Characters Contain a Letter
+### Choosing Pattern A vs B
 
-The letters form part of the parent product ID. The trailing digits after the last letter are the variant ID.
+The pattern is determined by counting **trailing digits after the last letter** in the entire SKU:
 
-**Rule**: Split at the last letter boundary. Everything up to and including the last letter = parent SKU. Trailing digits = variant ID.
+- **≤ 4 trailing digits** → **Pattern A** (direct variant ID, typically a size like oz)
+- **≥ 5 trailing digits** → **Pattern B** (structured family/sibling/variant encoding)
+
+This handles SKUs where numbers appear in the product code (e.g., "H2O" → "H20") without incorrectly triggering Pattern B.
+
+### Pattern A: ≤ 4 Trailing Digits After Last Letter
+
+Split at the last letter boundary. Everything up to and including the last letter = parent SKU. Trailing digits = variant ID.
 
 ```
-SNSL1   -> Parent: SNSL,  Variant: 1   (1 oz)
-SNSL2   -> Parent: SNSL,  Variant: 2   (2 oz)
-SNSL16  -> Parent: SNSL,  Variant: 16  (16 oz)
-SNSL32  -> Parent: SNSL,  Variant: 32  (32 oz)
+SNSL1      -> Parent: SNSL,  Variant: 1     (1 oz)
+SNSL32     -> Parent: SNSL,  Variant: 32    (32 oz)
+EPG02      -> Parent: EPG,   Variant: 02    (Gun Oil Silicone 2 oz)
+EPG032     -> Parent: EPG,   Variant: 032   (Gun Oil Silicone 32 oz)
+EPGOH202   -> Parent: EPGOH, Variant: 202   (Gun Oil H2O 2 oz)
+EPGOH2032  -> Parent: EPGOH, Variant: 2032  (Gun Oil H2O 32 oz)
+ZDSGZL001  -> Parent: ZDSGZL, Variant: 001  (Zodiac Mini Vibe #1)
 ```
 
-All four share parent `SNSL` = Swiss Navy Silicone Lube, variants are sizes.
+All `EPG*` SKUs share parent `EPG` (Gun Oil Silicone). All `EPGOH*` share parent `EPGOH` (Gun Oil H2O). The "H20" in the product code doesn't break the grouping.
 
-### Pattern B: Last 3 Characters Are All Digits
+### Pattern B: ≥ 5 Trailing Digits After Last Letter
 
 The **last digit** is the variant ID within a sibling group. The **second-to-last digit** identifies the sibling product group. Everything before that is the product family.
 
 ```
-NSN096111 -> Family: NSN0961, Sibling: 1, Variant: 1
+NSN096111 -> Family: NSN0961, Sibling: 1, Variant: 1  (5 trailing digits after 'N')
 NSN096114 -> Family: NSN0961, Sibling: 1, Variant: 4
-NSN096119 -> Family: NSN0961, Sibling: 1, Variant: 9
+NSN096121 -> Family: NSN0961, Sibling: 2, Variant: 1  (different sibling = different product)
 ```
 
 All three share family `NSN0961` + sibling group `1` = Rear Assets Rose Gold Small.
