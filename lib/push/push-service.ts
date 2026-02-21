@@ -149,7 +149,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   const payload: PushPayload = {
     title: request.title,
     body: request.body,
-    icon: '/favicon/android-chrome-192x192.png',
+    icon: '/favicon/android/android-launchericon-192-192.png',
     badge: '/favicon/favicon-32x32.png',
     tag: request.type,
     url: request.url || '/',
@@ -266,7 +266,7 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
     const status = await sendToSubscription(sub, {
       title: 'Back in Stock!',
       body: `${alert.product_name} is available again.`,
-      icon: '/favicon/android-chrome-192x192.png',
+      icon: '/favicon/android/android-launchericon-192-192.png',
       badge: '/favicon/favicon-32x32.png',
       tag: `stock-${alert.product_id}`,
       url: `/product/${alert.product_slug}`,

@@ -99,9 +99,19 @@ export const metadata: Metadata = {
     canonical: SITE_URL,
   },
   icons: {
-    icon: '/favicon/favicon.ico',
-    shortcut: '/favicon/favicon-16x16.png',
-    apple: '/favicon/apple-touch-icon.png',
+    icon: [
+      { url: '/favicon/favicon.ico', sizes: 'any' },
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon/android/android-launchericon-192-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon/android/android-launchericon-512-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/favicon/favicon-32x32.png',
+    apple: [
+      { url: '/favicon/apple-touch-icon.png', sizes: '180x180' },
+      { url: '/favicon/ios/152.png', sizes: '152x152' },
+      { url: '/favicon/ios/120.png', sizes: '120x120' },
+    ],
   },
   manifest: '/favicon/site.webmanifest',
 };
