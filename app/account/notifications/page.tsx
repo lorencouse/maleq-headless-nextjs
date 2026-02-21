@@ -1,5 +1,6 @@
 'use client';
 
+import AccountLayout from '@/components/account/AccountLayout';
 import { usePushSubscription } from '@/lib/hooks/usePushSubscription';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
@@ -37,16 +38,19 @@ export default function NotificationsPage() {
 
   if (!isSupported) {
     return (
-      <div className="bg-card border border-border rounded-xl p-6">
-        <h1 className="text-2xl font-bold text-foreground mb-4">Notifications</h1>
-        <p className="text-muted-foreground">
-          Push notifications are not supported in your browser. Try using Chrome, Firefox, or Edge for notification support.
-        </p>
-      </div>
+      <AccountLayout>
+        <div className="bg-card border border-border rounded-xl p-6">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Notifications</h1>
+          <p className="text-muted-foreground">
+            Push notifications are not supported in your browser. Try using Chrome, Firefox, or Edge for notification support.
+          </p>
+        </div>
+      </AccountLayout>
     );
   }
 
   return (
+    <AccountLayout>
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
 
@@ -139,5 +143,6 @@ export default function NotificationsPage() {
         </div>
       )}
     </div>
+    </AccountLayout>
   );
 }

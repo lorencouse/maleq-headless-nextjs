@@ -268,7 +268,7 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: payload.body || '',
-    icon: payload.icon || '/favicon/android-chrome-192x192.png',
+    icon: payload.icon || '/favicon/android/android-launchericon-192-192.png',
     badge: payload.badge || '/favicon/favicon-32x32.png',
     tag: payload.tag || 'maleq-notification',
     data: { url: payload.url || '/' },
@@ -281,6 +281,21 @@ self.addEventListener('push', (event) => {
 
   event.waitUntil(
     self.registration.showNotification(payload.title || 'Male Q', options)
+      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
+      .then((clients) => {
+        const message = {
+          type: 'PUSH_RECEIVED',
+          payload: {
+            title: payload.title || 'Male Q',
+            body: payload.body || '',
+            url: payload.url || '/',
+            tag: payload.tag || 'maleq-notification',
+          },
+        };
+        for (const client of clients) {
+          client.postMessage(message);
+        }
+      })
   );
 });
 

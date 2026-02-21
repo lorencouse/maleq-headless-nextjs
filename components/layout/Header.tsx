@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
@@ -13,6 +13,13 @@ import MiniCart from '@/components/cart/MiniCart';
 import SearchAutocomplete from '@/components/search/SearchAutocomplete';
 import MobileMenu from '@/components/navigation/MobileMenu';
 import DesktopNav from '@/components/navigation/DesktopNav';
+import NotificationDropdown from '@/components/pwa/NotificationDropdown';
+import {
+  getNotifications,
+  getUnreadCount,
+  addNotification,
+  type StoredNotification,
+} from '@/lib/pwa/notification-store';
 
 export default function Header() {
   const router = useRouter();
@@ -25,6 +32,32 @@ export default function Header() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<StoredNotification[]>([]);
+
+  const refreshNotifications = useCallback(() => {
+    setNotifications(getNotifications());
+    setUnreadCount(getUnreadCount());
+  }, []);
+
+  // Load notifications on mount + listen for SW push broadcasts
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    refreshNotifications();
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_RECEIVED') {
+        addNotification(event.data.payload);
+        refreshNotifications();
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+    };
+  }, [isAuthenticated, refreshNotifications]);
 
   // Close search on escape
   useEffect(() => {
@@ -178,6 +211,39 @@ export default function Header() {
                 </Link>
               )}
             </div>
+
+            {/* Desktop only: Notifications bell */}
+            {isAuthenticated && (
+              <div className='relative hidden md:block'>
+                <button
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                  className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
+                  aria-label='Notifications'
+                >
+                  <svg
+                    className='h-5 w-5'
+                    fill='none'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'
+                  >
+                    <path d='M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9' />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className='absolute -top-1 -right-1 bg-destructive rounded-full h-2.5 w-2.5' />
+                  )}
+                </button>
+                {isNotificationsOpen && (
+                  <NotificationDropdown
+                    onClose={() => setIsNotificationsOpen(false)}
+                    notifications={notifications}
+                    onUpdate={refreshNotifications}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Desktop only: Wishlist */}
             <Link
