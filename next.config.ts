@@ -393,6 +393,7 @@ const nextConfig: NextConfig = {
               "connect-src 'self' https://*.stripe.com https://www.google-analytics.com https://*.maleq.com https://*.maleq.org https://www.googletagmanager.com",
               "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
               "object-src 'none'",
+              "worker-src 'self'",
               "base-uri 'self'",
               "form-action 'self'",
             ].join('; '),

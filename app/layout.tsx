@@ -10,6 +10,7 @@ import NewsletterPopup from "@/components/newsletter/NewsletterPopup";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import QueryProvider from "@/components/providers/QueryProvider";
+import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -111,6 +112,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${poppins.variable} antialiased flex flex-col min-h-screen`}>
+        <ServiceWorkerRegistration />
         <GoogleAnalytics />
         <OrganizationSchema
           name={SITE_NAME}

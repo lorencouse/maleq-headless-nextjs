@@ -1,6 +1,13 @@
 {
-  "name": "Male Q",
+  "name": "Male Q - Premium Adult Products",
   "short_name": "Male Q",
+  "description": "Discover premium adult products at Male Q. Shop our curated collection with fast, discreet shipping.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
   "icons": [
     {
       "src": "/favicon/android-chrome-192x192.png",
@@ -11,9 +18,13 @@
       "src": "/favicon/android-chrome-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
+    },
+    {
+      "src": "/favicon/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "categories": ["shopping"]
 }
