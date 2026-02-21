@@ -27,10 +27,11 @@ export async function generateSitemaps() {
     }
     return ids;
   } catch (err) {
-    // Build time: MySQL not available, return minimal set.
-    // Full sitemap will be generated on first ISR revalidation.
-    console.warn('[sitemap] MySQL unavailable at build time, returning minimal sitemap segments:', err instanceof Error ? err.message : err);
-    return [{ id: 0 }];
+    // Build time: MySQL not available — return estimated segments (~35k products / 5k per segment).
+    // This ensures Next.js generates all sitemap routes at build time.
+    // At runtime, ISR will regenerate each segment with real data.
+    console.warn('[sitemap] MySQL unavailable at build time, using estimated segments:', err instanceof Error ? err.message : err);
+    return Array.from({ length: 9 }, (_, i) => ({ id: i }));
   }
 }
 

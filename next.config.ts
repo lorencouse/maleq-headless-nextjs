@@ -300,14 +300,27 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Rewrite GraphQL endpoint if needed
+  // Rewrites
   async rewrites() {
-    return [
-      {
-        source: '/graphql',
-        destination: `${process.env.NEXT_PUBLIC_WORDPRESS_API_URL}`,
-      },
-    ];
+    return {
+      // beforeFiles rewrites run before filesystem routes (pages, metadata files)
+      beforeFiles: [
+        {
+          // Sitemap index: Next.js metadata convention doesn't reliably generate
+          // the index when generateSitemaps() returns fewer segments at build time
+          // than at runtime. This rewrite ensures /sitemap.xml always works.
+          source: '/sitemap.xml',
+          destination: '/api/sitemap-index',
+        },
+      ],
+      afterFiles: [],
+      fallback: [
+        {
+          source: '/graphql',
+          destination: `${process.env.NEXT_PUBLIC_WORDPRESS_API_URL}`,
+        },
+      ],
+    };
   },
 
   // Enable React strict mode for better development experience
