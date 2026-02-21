@@ -1,7 +1,7 @@
 /**
  * Blog post SQL queries for sitemaps and cache warming.
  */
-import { getPool } from './pool';
+import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 
 interface PostSlugRow extends RowDataPacket {
@@ -17,7 +17,7 @@ export async function getAllPostSlugs(): Promise<string[]> {
     return cachedSlugs;
   }
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
   const [rows] = await pool.query<PostSlugRow[]>(`
     SELECT post_name
     FROM wp_posts

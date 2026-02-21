@@ -228,12 +228,12 @@ export class ImageProcessor {
       }
 
       // Upload to WordPress
-      const response = await fetch(`${process.env.WOOCOMMERCE_URL}/wp-json/wp/v2/media`, {
+      const { getWordPressUrl } = await import('@/lib/config/wp-env');
+      const { getAuthHeader } = await import('@/lib/woocommerce/auth');
+      const response = await fetch(`${getWordPressUrl()}/wp-json/wp/v2/media`, {
         method: 'POST',
         headers: {
-          'Authorization': `Basic ${Buffer.from(
-            `${process.env.WOOCOMMERCE_CONSUMER_KEY}:${process.env.WOOCOMMERCE_CONSUMER_SECRET}`
-          ).toString('base64')}`,
+          'Authorization': getAuthHeader(),
           'Content-Type': 'image/webp',
           'Content-Disposition': `attachment; filename="${processedImage.filename}"`,
         },
@@ -249,12 +249,10 @@ export class ImageProcessor {
 
       // Update alt text and title
       if (media.id) {
-        await fetch(`${process.env.WOOCOMMERCE_URL}/wp-json/wp/v2/media/${media.id}`, {
+        await fetch(`${getWordPressUrl()}/wp-json/wp/v2/media/${media.id}`, {
           method: 'POST',
           headers: {
-            'Authorization': `Basic ${Buffer.from(
-              `${process.env.WOOCOMMERCE_CONSUMER_KEY}:${process.env.WOOCOMMERCE_CONSUMER_SECRET}`
-            ).toString('base64')}`,
+            'Authorization': getAuthHeader(),
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

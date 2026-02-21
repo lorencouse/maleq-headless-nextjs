@@ -923,8 +923,8 @@ export async function getProductsByBrand(
  * Falls back to on-sale products if no view data exists yet.
  */
 export async function getTrendingProducts(limit = 12): Promise<UnifiedProduct[]> {
-  const WP_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL
-    || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || process.env.WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
+  const { getWordPressUrl } = await import('@/lib/config/wp-env');
+  const WP_URL = getWordPressUrl();
 
   try {
     // Fetch top-viewed product IDs from WordPress

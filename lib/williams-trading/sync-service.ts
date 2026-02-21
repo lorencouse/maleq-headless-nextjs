@@ -80,8 +80,8 @@ export class WilliamsTradingSyncService {
   private async buildSkuMap(): Promise<void> {
     this.skuToWooIdMap.clear();
 
-    const wpBaseUrl = process.env.WOOCOMMERCE_URL
-      || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
+    const { getWordPressUrl } = await import('@/lib/config/wp-env');
+    const wpBaseUrl = getWordPressUrl();
     const adminKey = process.env.ADMIN_API_KEY;
 
     if (wpBaseUrl && adminKey) {
@@ -756,12 +756,12 @@ export class WilliamsTradingSyncService {
     this.logSync('WT_STOCK_META', { status: 'started' });
 
     try {
-      const wpBaseUrl = process.env.WOOCOMMERCE_URL
-        || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
+      const { getWordPressUrl } = await import('@/lib/config/wp-env');
+      const wpBaseUrl = getWordPressUrl();
       const adminKey = process.env.ADMIN_API_KEY;
 
-      if (!wpBaseUrl || !adminKey) {
-        throw new Error('WOOCOMMERCE_URL and ADMIN_API_KEY must be set');
+      if (!adminKey) {
+        throw new Error('ADMIN_API_KEY must be set');
       }
 
       // 1. Get product mapping from WP (to find WT products by barcode/SKU)

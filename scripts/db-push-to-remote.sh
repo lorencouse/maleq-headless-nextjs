@@ -3,6 +3,13 @@
 # Database Push Script - Upload to Remote
 # This script uploads your local database back to the remote server
 # ⚠️  WARNING: This will OVERWRITE the remote database!
+#
+# Prerequisites:
+#   - Local by Flywheel site must be running (MySQL via socket)
+#   - SSH key auth to production server (ssh hetzner)
+#
+# Usage:
+#   bash scripts/db-push-to-remote.sh
 
 set -e
 
@@ -14,22 +21,40 @@ echo ""
 # Configuration - Production server (wp.maleq.com)
 REMOTE_HOST="159.69.220.162"
 REMOTE_USER="root"
-# SSH uses key-based auth (no password needed)
 REMOTE_DB_NAME="maleq-wp"
 REMOTE_DB_USER="maleq-wp"
 REMOTE_DB_PASS="S9meeDoehU8VPiHd1ByJ"
 
-LOCAL_DB_NAME="maleq_local"
+# Local by Flywheel database
+LOCAL_SOCKET="${MYSQL_SOCKET:-$HOME/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock}"
+LOCAL_DB_NAME="local"
 LOCAL_DB_USER="root"
-LOCAL_DB_PASS=""
+LOCAL_DB_PASS="root"
 
-BACKUP_DIR="./backups"
+# Local by Flywheel's mysqldump (system mysqldump can't connect to the socket)
+LOCAL_MYSQLDUMP="/Applications/Local.app/Contents/Resources/extraResources/lightning-services/mysql-8.0.35+4/bin/darwin-arm64/bin/mysqldump"
+
+BACKUP_DIR="$(cd "$(dirname "$0")/.." && pwd)/backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 LOCAL_EXPORT="${BACKUP_DIR}/local-export-${TIMESTAMP}.sql"
 REMOTE_BACKUP="${BACKUP_DIR}/remote-backup-before-upload-${TIMESTAMP}.sql"
 
 # Create backup directory if it doesn't exist
 mkdir -p "$BACKUP_DIR"
+
+# Verify local MySQL is reachable
+MYSQL_CMD="mysql --socket=\"${LOCAL_SOCKET}\" -u ${LOCAL_DB_USER} -p${LOCAL_DB_PASS}"
+if ! eval "$MYSQL_CMD ${LOCAL_DB_NAME} -e 'SELECT 1'" &>/dev/null; then
+  echo "✗ Cannot connect to local MySQL. Is Local by Flywheel running?"
+  exit 1
+fi
+
+# Verify mysqldump exists
+if [ ! -x "$LOCAL_MYSQLDUMP" ]; then
+  echo "✗ Local mysqldump not found at: $LOCAL_MYSQLDUMP"
+  echo "  Update the LOCAL_MYSQLDUMP path if your Local version differs."
+  exit 1
+fi
 
 echo "⚠️  WARNING: This will OVERWRITE your remote database!"
 echo "   Remote database: ${REMOTE_DB_NAME} on ${REMOTE_HOST}"
@@ -49,37 +74,34 @@ ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
   "mysqldump -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' ${REMOTE_DB_NAME} \
   --single-transaction \
   --quick \
-  --lock-tables=false" > "${REMOTE_BACKUP}"
+  --lock-tables=false 2>/dev/null" > "${REMOTE_BACKUP}"
 
-if [ $? -eq 0 ]; then
-  echo "✓ Remote database backed up to: ${REMOTE_BACKUP}"
-  echo ""
-else
-  echo "✗ Failed to backup remote database. Aborting upload."
-  exit 1
-fi
+REMOTE_SIZE=$(du -h "$REMOTE_BACKUP" | cut -f1)
+echo "✓ Remote database backed up to: ${REMOTE_BACKUP} (${REMOTE_SIZE})"
+echo ""
 
 echo "Step 2: Exporting local database..."
 
-# Export local database
-mysqldump -u "${LOCAL_DB_USER}" ${LOCAL_DB_PASS:+-p"${LOCAL_DB_PASS}"} "${LOCAL_DB_NAME}" \
+# Export local database using Local's mysqldump
+"$LOCAL_MYSQLDUMP" --socket="${LOCAL_SOCKET}" \
+  -u "${LOCAL_DB_USER}" -p"${LOCAL_DB_PASS}" \
+  "${LOCAL_DB_NAME}" \
   --single-transaction \
   --quick \
-  --lock-tables=false > "${LOCAL_EXPORT}"
+  --lock-tables=false 2>/dev/null > "${LOCAL_EXPORT}"
 
-if [ $? -eq 0 ]; then
-  FILE_SIZE=$(du -h "$LOCAL_EXPORT" | cut -f1)
-  echo "✓ Local database exported (${FILE_SIZE})"
-  echo ""
-else
-  echo "✗ Failed to export local database"
-  exit 1
-fi
+FILE_SIZE=$(du -h "$LOCAL_EXPORT" | cut -f1)
+echo "✓ Local database exported (${FILE_SIZE})"
+echo ""
 
 echo "Step 3: Updating WordPress URLs for production..."
 
-# Update URLs back to production in the export file
-sed -i.bak "s|http://localhost:3000|https://wp.maleq.com|g" "${LOCAL_EXPORT}"
+# Update local URLs to production
+sed -i.bak \
+  -e "s|http://maleq-local.local|https://wp.maleq.com|g" \
+  -e "s|maleq-local.local|wp.maleq.com|g" \
+  "${LOCAL_EXPORT}"
+rm -f "${LOCAL_EXPORT}.bak"
 echo "✓ URLs updated to https://wp.maleq.com"
 echo ""
 
@@ -106,6 +128,6 @@ echo "  Remote backup: ${REMOTE_BACKUP}"
 echo "  Local export:  ${LOCAL_EXPORT}"
 echo ""
 echo "If you need to restore the remote backup:"
-echo "  ssh ${REMOTE_USER}@${REMOTE_HOST}"
-echo "  mysql -u ${REMOTE_DB_USER} -p ${REMOTE_DB_NAME} < [upload backup file]"
+echo "  cat ${REMOTE_BACKUP} | ssh ${REMOTE_USER}@${REMOTE_HOST} \\"
+echo "    \"mysql -u ${REMOTE_DB_USER} -p'...' -h 127.0.0.1 ${REMOTE_DB_NAME}\""
 echo "════════════════════════════════════════"

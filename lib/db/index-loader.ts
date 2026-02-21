@@ -7,7 +7,7 @@
  *
  * Returns ~31K ProductIndexEntry items (~15-20 MB in memory).
  */
-import { getPool } from './pool';
+import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 
 export interface ProductIndexEntry {
@@ -78,7 +78,7 @@ const TYPE_MAP: Record<string, string> = {
 };
 
 export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
-  const pool = getPool();
+  const pool = await getPoolAsync();
 
   const [productsResult, taxonomiesResult] = await Promise.all([
     pool.query<RawProduct[]>(`

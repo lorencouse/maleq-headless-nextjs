@@ -1,6 +1,5 @@
 import { GraphQLClient, type RequestDocument } from 'graphql-request';
-
-const endpoint = process.env.NEXT_PUBLIC_WORDPRESS_API_URL!;
+import { getGraphqlUrl } from '@/lib/config/wp-env';
 
 /**
  * Revalidation tiers for different query types.
@@ -17,15 +16,9 @@ export const REVALIDATE = {
   DYNAMIC: 60,
 } as const;
 
-// Default client uses PRODUCTS tier (5 min)
-const graphqlClient = new GraphQLClient(endpoint, {
-  fetch: (input: URL | RequestInfo, init?: RequestInit) =>
-    fetch(input, { ...init, next: { revalidate: REVALIDATE.PRODUCTS } } as RequestInit),
-});
-
-/** Create a client with a specific revalidation time */
+/** Create a client with a specific revalidation time (resolved lazily) */
 function createClientWithRevalidate(revalidate: number) {
-  return new GraphQLClient(endpoint, {
+  return new GraphQLClient(getGraphqlUrl(), {
     fetch: (input: URL | RequestInfo, init?: RequestInit) =>
       fetch(input, { ...init, next: { revalidate } } as RequestInit),
   });
@@ -56,9 +49,7 @@ function createCompatClient() {
   return {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     query: async <T = any>({ query, variables, revalidate }: QueryOptions): Promise<{ data: T }> => {
-      const client = revalidate !== undefined
-        ? createClientWithRevalidate(revalidate)
-        : graphqlClient;
+      const client = createClientWithRevalidate(revalidate ?? REVALIDATE.PRODUCTS);
       try {
         const data = await client.request<T>(query, variables);
         return { data };
@@ -82,7 +73,8 @@ function createCompatClient() {
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutate: async <T = any>({ mutation, variables }: MutateOptions): Promise<{ data: T }> => {
-      const data = await graphqlClient.request<T>(mutation, variables);
+      const client = createClientWithRevalidate(REVALIDATE.PRODUCTS);
+      const data = await client.request<T>(mutation, variables);
       return { data };
     },
   };

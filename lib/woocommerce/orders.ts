@@ -4,9 +4,7 @@
  * Functions for creating and managing orders via the WooCommerce REST API.
  */
 
-const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
-const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
-const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
+import { getWooCommerceUrl, getAuthHeader, isWooCommerceConfigured } from './auth';
 
 export interface OrderLineItem {
   product_id: number;
@@ -106,18 +104,18 @@ export interface WooCommerceOrder {
  * Create an order in WooCommerce
  */
 export async function createOrder(orderData: CreateOrderData): Promise<WooCommerceOrder> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/orders`;
-  const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/orders`;
+  const auth = getAuthHeader();
 
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Basic ${auth}`,
+      'Authorization': auth,
     },
     body: JSON.stringify(orderData),
   });
@@ -135,17 +133,17 @@ export async function createOrder(orderData: CreateOrderData): Promise<WooCommer
  * Get an order by ID
  */
 export async function getOrder(orderId: number): Promise<WooCommerceOrder> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/orders/${orderId}`;
-  const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/orders/${orderId}`;
+  const auth = getAuthHeader();
 
   const response = await fetch(url, {
     method: 'GET',
     headers: {
-      'Authorization': `Basic ${auth}`,
+      'Authorization': auth,
     },
   });
 
@@ -164,18 +162,18 @@ export async function updateOrder(
   orderId: number,
   updateData: Partial<CreateOrderData> & { status?: string }
 ): Promise<WooCommerceOrder> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/orders/${orderId}`;
-  const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/orders/${orderId}`;
+  const auth = getAuthHeader();
 
   const response = await fetch(url, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Basic ${auth}`,
+      'Authorization': auth,
     },
     body: JSON.stringify(updateData),
   });
@@ -195,7 +193,7 @@ export async function getCustomerOrders(
   email: string,
   options: { per_page?: number; page?: number } = {}
 ): Promise<WooCommerceOrder[]> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
@@ -205,13 +203,13 @@ export async function getCustomerOrders(
     page: String(options.page || 1),
   });
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/orders?${params}`;
-  const auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/orders?${params}`;
+  const auth = getAuthHeader();
 
   const response = await fetch(url, {
     method: 'GET',
     headers: {
-      'Authorization': `Basic ${auth}`,
+      'Authorization': auth,
     },
   });
 

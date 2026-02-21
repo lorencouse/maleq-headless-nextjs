@@ -4,7 +4,7 @@
  * Single-query fetches with in-process caching (5-minute TTL).
  * Replaces paginated GraphQL queries that required multiple round-trips.
  */
-import { getPool } from './pool';
+import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 
 interface DbTaxonomyTerm extends RowDataPacket {
@@ -44,7 +44,7 @@ async function loadTaxonomy(taxonomy: string): Promise<TaxonomyTerm[]> {
     return cached.data;
   }
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
 
   const [rows] = await pool.query<DbTaxonomyTerm[]>(`
     SELECT

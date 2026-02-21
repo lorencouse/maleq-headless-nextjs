@@ -3,6 +3,7 @@
  *
  * Supports automatic fallback: tries local socket first (Local by Flywheel),
  * and if that's not available, falls back to production via SSH tunnel.
+ * Actually tests each connection before committing to it.
  *
  * Environment variables (dual-config):
  *   Local:  MYSQL_LOCAL_SOCKET, MYSQL_LOCAL_DB, MYSQL_LOCAL_USER, MYSQL_LOCAL_PASS
@@ -13,9 +14,11 @@
  */
 import mysql from 'mysql2/promise';
 import type { Pool } from 'mysql2/promise';
+import { existsSync } from 'fs';
 
 let pool: Pool | null = null;
 let activeMode: 'local' | 'prod' | 'legacy' | null = null;
+let initPromise: Promise<Pool> | null = null;
 
 interface DBConfig {
   mode: 'local' | 'prod' | 'legacy';
@@ -27,29 +30,14 @@ interface DBConfig {
   password: string;
 }
 
-let localConfigCache: DBConfig | null | undefined;
-
 function getLocalConfig(): DBConfig | null {
-  if (localConfigCache !== undefined) return localConfigCache;
-
   const socket = process.env.MYSQL_LOCAL_SOCKET;
   const db = process.env.MYSQL_LOCAL_DB;
   const user = process.env.MYSQL_LOCAL_USER;
   const pass = process.env.MYSQL_LOCAL_PASS;
-  if (!socket || !db || !user || !pass) {
-    localConfigCache = null;
-    return null;
-  }
-  // Only use local if the socket file actually exists (i.e. Local by Flywheel is running)
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('fs').accessSync(socket);
-  } catch {
-    localConfigCache = null;
-    return null;
-  }
-  localConfigCache = { mode: 'local', socketPath: socket, database: db, user, password: pass };
-  return localConfigCache;
+  if (!socket || !db || !user || !pass) return null;
+  if (!existsSync(socket)) return null;
+  return { mode: 'local', socketPath: socket, database: db, user, password: pass };
 }
 
 function getProdConfig(): DBConfig | null {
@@ -68,7 +56,6 @@ function getProdConfig(): DBConfig | null {
   };
 }
 
-/** Legacy single-config (backwards compatible) */
 function getLegacyConfig(): DBConfig | null {
   const db = process.env.MYSQL_DB;
   const user = process.env.MYSQL_USER;
@@ -93,8 +80,84 @@ function getLegacyConfig(): DBConfig | null {
   return null;
 }
 
+function getAllConfigs(): DBConfig[] {
+  const configs: DBConfig[] = [];
+  const local = getLocalConfig();
+  if (local) configs.push(local);
+  const prod = getProdConfig();
+  if (prod) configs.push(prod);
+  const legacy = getLegacyConfig();
+  if (legacy) configs.push(legacy);
+  return configs;
+}
+
+function createPoolFromConfig(config: DBConfig): Pool {
+  const isRemote = !config.socketPath;
+  return mysql.createPool({
+    ...(config.socketPath
+      ? { socketPath: config.socketPath }
+      : { host: config.host, port: config.port }),
+    database: config.database,
+    user: config.user,
+    password: config.password,
+    connectionLimit: isRemote ? 5 : 10,
+    maxIdle: isRemote ? 1 : 5,
+    idleTimeout: isRemote ? 10_000 : 60_000,
+    enableKeepAlive: true,
+    keepAliveInitialDelay: isRemote ? 5_000 : 10_000,
+  });
+}
+
+function logMode(config: DBConfig) {
+  activeMode = config.mode;
+  if (config.mode === 'local') {
+    console.log('\n🟢 Using Local DB (Local by Flywheel)\n');
+  } else if (config.mode === 'prod') {
+    console.log('\n🟠 Using Production DB (wp.maleq.com via SSH tunnel)\n');
+  } else {
+    console.log('\n⚪ Using MySQL (legacy config)\n');
+  }
+}
+
+/**
+ * Initialize pool with connection testing and automatic fallback.
+ * Tries local → prod → legacy, verifying each can actually connect.
+ */
+async function initPool(): Promise<Pool> {
+  const configs = getAllConfigs();
+
+  if (configs.length === 0) {
+    throw new Error(
+      'MySQL is not configured — set MYSQL_LOCAL_* or MYSQL_PROD_* (or legacy MYSQL_*) env vars',
+    );
+  }
+
+  for (const config of configs) {
+    const candidate = createPoolFromConfig(config);
+    try {
+      const conn = await candidate.getConnection();
+      conn.release();
+      pool = candidate;
+      logMode(config);
+      return pool;
+    } catch {
+      await candidate.end().catch(() => {});
+      if (config.mode === 'local') {
+        console.log('⚠️  Local MySQL socket exists but is not responding — falling back…');
+      }
+    }
+  }
+
+  // All configs failed — use first config so callers get proper errors
+  const fallback = configs[0];
+  pool = createPoolFromConfig(fallback);
+  logMode(fallback);
+  console.warn('⚠️  Warning: MySQL connection test failed for all configurations');
+  return pool;
+}
+
 export function isMySQLConfigured(): boolean {
-  return !!(getLocalConfig() || getProdConfig() || getLegacyConfig());
+  return getAllConfigs().length > 0;
 }
 
 /**
@@ -114,7 +177,7 @@ export async function isMySQLReachable(): Promise<boolean> {
   }
 
   try {
-    const p = getPool();
+    const p = await getPoolAsync();
     const conn = await p.getConnection();
     conn.release();
     reachableResult = true;
@@ -125,43 +188,57 @@ export async function isMySQLReachable(): Promise<boolean> {
   return reachableResult;
 }
 
+/**
+ * Get the connection pool (async, with connection testing & fallback).
+ * Preferred — ensures the returned pool is actually connected.
+ */
+export async function getPoolAsync(): Promise<Pool> {
+  if (pool) return pool;
+  if (!initPromise) {
+    initPromise = initPool();
+  }
+  return initPromise;
+}
+
+/**
+ * Get the connection pool (sync).
+ *
+ * Returns the pool immediately if already initialized (via getPoolAsync or
+ * a prior getPool call). Otherwise kicks off async init in background and
+ * returns a temporary pool — which may point at a dead local socket.
+ *
+ * **Prefer getPoolAsync() in async contexts** to guarantee fallback works.
+ */
 export function getPool(): Pool {
   if (pool) return pool;
 
-  // Priority: local socket (if file exists) → production (SSH tunnel) → legacy
-  const config = getLocalConfig() || getProdConfig() || getLegacyConfig();
+  // Start async init (will test & fallback properly)
+  if (!initPromise) {
+    initPromise = initPool();
+  }
 
-  if (!config) {
+  // Return a temporary pool from the best-guess config.
+  // Once initPool resolves, the global `pool` will be set to the tested one.
+  const configs = getAllConfigs();
+  if (configs.length === 0) {
     throw new Error(
       'MySQL is not configured — set MYSQL_LOCAL_* or MYSQL_PROD_* (or legacy MYSQL_*) env vars',
     );
   }
 
-  const isRemote = !config.socketPath;
+  // Skip local if we know it might be stale — prefer prod for sync fallback
+  const safeFallback = configs.find(c => c.mode !== 'local') || configs[0];
+  const tempPool = createPoolFromConfig(safeFallback);
+  logMode(safeFallback);
+  pool = tempPool;
 
-  pool = mysql.createPool({
-    ...(config.socketPath
-      ? { socketPath: config.socketPath }
-      : { host: config.host, port: config.port }),
-    database: config.database,
-    user: config.user,
-    password: config.password,
-    // Remote (SSH tunnel) connections are less reliable — keep fewer idle and recycle faster
-    connectionLimit: isRemote ? 5 : 10,
-    maxIdle: isRemote ? 1 : 5,
-    idleTimeout: isRemote ? 10_000 : 60_000,
-    enableKeepAlive: true,
-    keepAliveInitialDelay: isRemote ? 5_000 : 10_000,
-  });
+  // Let async init replace this pool once it has a tested connection
+  initPromise.then(testedPool => {
+    if (pool === tempPool) {
+      pool = testedPool;
+    }
+  }).catch(() => {});
 
-  activeMode = config.mode;
-  if (config.mode === 'local') {
-    console.log('\n🟢 Using Local DB (Local by Flywheel)\n');
-  } else if (config.mode === 'prod') {
-    console.log('\n🟠 Using Production DB (wp.maleq.com via SSH tunnel)\n');
-  } else {
-    console.log('\n⚪ Using MySQL (legacy config)\n');
-  }
   return pool;
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPool } from '@/lib/db/pool';
+import { getPoolAsync } from '@/lib/db/pool';
 import { revalidatePath } from 'next/cache';
 import type { RowDataPacket } from 'mysql2';
 
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const pool = getPool();
+    const pool = await getPoolAsync();
 
     // Resolve attachment ID from URL (strip to just the filename path for matching)
     const urlPath = new URL(imageUrl).pathname;

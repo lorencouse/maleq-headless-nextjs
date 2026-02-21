@@ -4,7 +4,7 @@
  * Single query fetching all product categories with parent relationships,
  * then builds the tree in memory. Cached in-process with 5-minute TTL.
  */
-import { getPool } from './pool';
+import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 import type { HierarchicalCategory } from '@/lib/products/combined-service';
 import type { ProductCategory } from '@/lib/types/woocommerce';
@@ -31,7 +31,7 @@ export async function loadHierarchicalCategories(): Promise<HierarchicalCategory
     return cachedCategories;
   }
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
 
   const [rows] = await pool.query<DbCategory[]>(`
     SELECT
@@ -119,7 +119,7 @@ export async function loadFlatCategories(): Promise<ProductCategory[]> {
     return cachedFlatCategories;
   }
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
 
   const [rows] = await pool.query<DbFlatCategory[]>(`
     SELECT

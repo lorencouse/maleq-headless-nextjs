@@ -4,7 +4,7 @@
  * Returns an EnhancedProduct with all fields needed for the product detail page,
  * including variations, gallery, specifications, etc.
  */
-import { getPool } from './pool';
+import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 import { parseProductAttributes, phpUnserialize } from '@/lib/utils/php-unserialize';
 import { extractSpecifications } from '@/lib/products/specifications';
@@ -119,7 +119,7 @@ function encodeId(prefix: string, id: number): string {
 // ─── Main Query ───
 
 export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProduct | null> {
-  const pool = getPool();
+  const pool = await getPoolAsync();
 
   // Round 1: Fetch product post + meta + taxonomies + variations + reviews in parallel
   // We use a subquery to get the product ID once, then fan out all related queries

@@ -5,7 +5,7 @@
  * Single post content (which needs reusable block rendering) stays on GraphQL
  * since WordPress's do_blocks() pipeline can't run from raw SQL.
  */
-import { getPool } from './pool';
+import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 import type { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
@@ -105,7 +105,7 @@ const POST_SELECT = `
 const POST_BASE_WHERE = `p.post_type = 'post' AND p.post_status = 'publish'`;
 
 async function attachTermsToPost(
-  pool: ReturnType<typeof getPool>,
+  pool: Awaited<ReturnType<typeof getPoolAsync>>,
   postId: number
 ): Promise<{ categories: { id: string; name: string; slug: string }[]; tags: { id: string; name: string; slug: string }[] }> {
   const [terms] = await pool.query<DbTerm[]>(`
@@ -127,7 +127,7 @@ async function attachTermsToPost(
 }
 
 async function attachTermsToPosts(
-  pool: ReturnType<typeof getPool>,
+  pool: Awaited<ReturnType<typeof getPoolAsync>>,
   postIds: number[]
 ): Promise<Map<number, { categories: { id: string; name: string; slug: string }[]; tags: { id: string; name: string; slug: string }[] }>> {
   if (postIds.length === 0) return new Map();
@@ -204,7 +204,7 @@ export async function loadBlogCategories(): Promise<BlogCategoryRow[]> {
   const cached = getCached<BlogCategoryRow[]>(cacheKey);
   if (cached) return cached;
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
   const [rows] = await pool.query<DbTerm[]>(`
     SELECT t.term_id, t.name, t.slug, tt.description, tt.count
     FROM wp_term_taxonomy tt
@@ -238,7 +238,7 @@ export async function loadBlogTags(): Promise<BlogCategoryRow[]> {
   const cached = getCached<BlogCategoryRow[]>(cacheKey);
   if (cached) return cached;
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
   const [rows] = await pool.query<DbTerm[]>(`
     SELECT t.term_id, t.name, t.slug, tt.description, tt.count
     FROM wp_term_taxonomy tt
@@ -292,7 +292,7 @@ export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
     titleSearch,
   } = options;
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
   const params: unknown[] = [];
   const joins: string[] = [];
   const wheres: string[] = [POST_BASE_WHERE];
@@ -382,7 +382,7 @@ export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
 // ─── Single post by slug (with comments, for detail pages) ───
 
 export async function loadPostBySlug(slug: string): Promise<Post | null> {
-  const pool = getPool();
+  const pool = await getPoolAsync();
 
   const [rows] = await pool.query<DbPost[]>(
     `${POST_SELECT} WHERE ${POST_BASE_WHERE} AND p.post_name = ? LIMIT 1`,
@@ -431,7 +431,7 @@ export async function loadAllPostSlugs(): Promise<string[]> {
   const cached = getCached<string[]>(cacheKey);
   if (cached) return cached;
 
-  const pool = getPool();
+  const pool = await getPoolAsync();
   const [rows] = await pool.query<(RowDataPacket & { post_name: string })[]>(
     `SELECT post_name FROM wp_posts WHERE ${POST_BASE_WHERE} ORDER BY post_date DESC`
   );

@@ -6,9 +6,7 @@
 
 import { UserFacingError } from '@/lib/api/response';
 
-const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
-const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
-const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
+import { getWooCommerceUrl, getAuthHeader, isWooCommerceConfigured } from './auth';
 
 export interface CustomerAddress {
   first_name: string;
@@ -63,19 +61,15 @@ export interface UpdateCustomerData {
   password?: string;
 }
 
-function getAuthHeader(): string {
-  return `Basic ${Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64')}`;
-}
-
 /**
  * Create a new customer
  */
 export async function createCustomer(data: CreateCustomerData): Promise<WooCommerceCustomer> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/customers`;
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/customers`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -107,11 +101,11 @@ export async function createCustomer(data: CreateCustomerData): Promise<WooComme
  * Get customer by ID
  */
 export async function getCustomer(customerId: number): Promise<WooCommerceCustomer> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/customers/${customerId}`;
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/customers/${customerId}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -132,11 +126,11 @@ export async function getCustomer(customerId: number): Promise<WooCommerceCustom
  * Get customer by email
  */
 export async function getCustomerByEmail(email: string): Promise<WooCommerceCustomer | null> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/customers?email=${encodeURIComponent(email)}`;
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/customers?email=${encodeURIComponent(email)}`;
 
   const response = await fetch(url, {
     method: 'GET',
@@ -161,11 +155,11 @@ export async function updateCustomer(
   customerId: number,
   data: UpdateCustomerData
 ): Promise<WooCommerceCustomer> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/customers/${customerId}`;
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/customers/${customerId}`;
 
   const response = await fetch(url, {
     method: 'PUT',
@@ -188,11 +182,11 @@ export async function updateCustomer(
  * Delete customer
  */
 export async function deleteCustomer(customerId: number): Promise<void> {
-  if (!WOOCOMMERCE_URL || !CONSUMER_KEY || !CONSUMER_SECRET) {
+  if (!isWooCommerceConfigured()) {
     throw new Error('WooCommerce API credentials not configured');
   }
 
-  const url = `${WOOCOMMERCE_URL}/wp-json/wc/v3/customers/${customerId}?force=true`;
+  const url = `${getWooCommerceUrl()}/wp-json/wc/v3/customers/${customerId}?force=true`;
 
   const response = await fetch(url, {
     method: 'DELETE',
@@ -217,12 +211,8 @@ export async function authenticateCustomer(
   login: string,
   password: string
 ): Promise<{ customer: WooCommerceCustomer; token: string }> {
-  if (!WOOCOMMERCE_URL) {
-    throw new Error('WooCommerce URL not configured');
-  }
-
   // Use our custom auth endpoint for secure password validation
-  const authUrl = `${WOOCOMMERCE_URL}/wp-json/maleq/v1/validate-password`;
+  const authUrl = `${getWooCommerceUrl()}/wp-json/maleq/v1/validate-password`;
 
   const authResponse = await fetch(authUrl, {
     method: 'POST',

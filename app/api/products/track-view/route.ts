@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const WP_URL = process.env.NEXT_PUBLIC_WORDPRESS_URL || process.env.WORDPRESS_URL
-  || (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || process.env.WORDPRESS_API_URL || '').replace(/\/graphql$/, '');
+import { getWordPressUrl } from '@/lib/config/wp-env';
+const WP_URL = getWordPressUrl();
 
 async function incrementViewViaSQL(productId: number): Promise<boolean> {
   try {
-    const { isMySQLReachable, getPool } = await import('@/lib/db/pool');
+    const { isMySQLReachable, getPoolAsync } = await import('@/lib/db/pool');
     if (!(await isMySQLReachable())) return false;
 
-    const pool = getPool();
+    const pool = await getPoolAsync();
     // Try to update existing row first
     const [result] = await pool.query<import('mysql2').ResultSetHeader>(
       `UPDATE wp_postmeta SET meta_value = CAST(meta_value AS UNSIGNED) + 1

@@ -39,12 +39,10 @@ function normalizeUpc(upc: string): string {
   return upc.trim().replace(/^0+/, '');
 }
 
+import { getWordPressUrl } from '@/lib/config/wp-env';
+
 function getWpBaseUrl(): string {
-  // Use WOOCOMMERCE_URL as the WP base (same host, just different path)
-  const url = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL;
-  if (!url) throw new Error('WOOCOMMERCE_URL or NEXT_PUBLIC_WORDPRESS_API_URL must be set');
-  // Strip /graphql suffix if present
-  return url.replace(/\/graphql$/, '');
+  return getWordPressUrl();
 }
 
 function getAdminKey(): string {

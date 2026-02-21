@@ -1,21 +1,20 @@
 /**
  * WooCommerce Authentication Utilities
  *
- * Shared authentication helpers for WooCommerce REST API requests
+ * Shared authentication helpers for WooCommerce REST API requests.
+ * Uses auto-switching WordPress URL from lib/config/wp-env.ts.
  */
 
-const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
+import { getWooCommerceUrl as getWpEnvWooUrl } from '@/lib/config/wp-env';
+
 const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
 const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
 
 /**
- * Get WooCommerce API base URL
+ * Get WooCommerce API base URL (auto-switches local/prod)
  */
 export function getWooCommerceUrl(): string {
-  if (!WOOCOMMERCE_URL) {
-    throw new Error('WooCommerce URL not configured. Set WOOCOMMERCE_URL or NEXT_PUBLIC_WORDPRESS_API_URL environment variable.');
-  }
-  return WOOCOMMERCE_URL;
+  return getWpEnvWooUrl();
 }
 
 /**
@@ -32,7 +31,7 @@ export function getAuthHeader(): string {
  * Check if WooCommerce API credentials are configured
  */
 export function isWooCommerceConfigured(): boolean {
-  return !!(WOOCOMMERCE_URL && CONSUMER_KEY && CONSUMER_SECRET);
+  return !!(CONSUMER_KEY && CONSUMER_SECRET);
 }
 
 /**

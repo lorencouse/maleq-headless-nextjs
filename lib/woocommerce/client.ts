@@ -11,22 +11,15 @@ import type {
   WooCoupon,
 } from './types';
 
-const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
-const CONSUMER_KEY = process.env.WOOCOMMERCE_CONSUMER_KEY;
-const CONSUMER_SECRET = process.env.WOOCOMMERCE_CONSUMER_SECRET;
-
-if (!WOOCOMMERCE_URL) {
-  console.warn('WooCommerce URL not configured');
-}
+import { getWooCommerceUrl, getAuthHeader } from './auth';
 
 class WooCommerceClient {
-  private baseUrl: string;
-  private auth: string;
+  private get baseUrl(): string {
+    return getWooCommerceUrl();
+  }
 
-  constructor() {
-    // Extract base URL without /graphql if present
-    this.baseUrl = WOOCOMMERCE_URL?.replace('/graphql', '') || '';
-    this.auth = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString('base64');
+  private get auth(): string {
+    return getAuthHeader().replace('Basic ', '');
   }
 
   private async request<T>(
