@@ -407,6 +407,7 @@ export default function ProductPageClient({
             <StockAlertButton
               productId={product.databaseId?.toString() || product.id}
               productName={product.name}
+              productSlug={product.slug}
               variant='button'
               className='mb-4'
             />

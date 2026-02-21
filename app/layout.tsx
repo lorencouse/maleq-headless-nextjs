@@ -12,6 +12,7 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
+import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -140,6 +141,9 @@ export default function RootLayout({
               </main>
               <Footer />
               <NewsletterPopup delay={45000} showOnExitIntent />
+              <div className="fixed bottom-4 right-4 z-40 max-w-sm">
+                <PushNotificationPrompt minVisits={3} />
+              </div>
             </CartProvider>
           </ThemeProvider>
         </QueryProvider>

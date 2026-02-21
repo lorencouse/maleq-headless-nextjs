@@ -23,14 +23,14 @@
 - [ ] **Offline category browsing** — Cache category listings so users can browse while offline
 - [x] **Sync indicator** — Toast notification when user goes offline/online via `OfflineIndicator`
 
-## Phase 4: Push Notifications
+## Phase 4: Push Notifications ✅
 
-- [ ] **Push notification opt-in** — Prompt users to subscribe (post-purchase or after N visits)
-- [ ] **Order status updates** — Notify when order ships, out for delivery, delivered
-- [ ] **Back-in-stock alerts** — Notify when a wishlisted/out-of-stock product is available
-- [ ] **Sale/promotion alerts** — Notify subscribed users of new sales
-- [ ] **Server-side push** — WordPress mu-plugin to send push notifications via Web Push API
-- [ ] **Notification preferences** — Let users control which notification types they receive
+- [x] **Push notification opt-in** — Prompt users to subscribe (post-purchase or after N visits)
+- [x] **Order status updates** — Notify when order ships, out for delivery, delivered
+- [x] **Back-in-stock alerts** — Notify when a wishlisted/out-of-stock product is available
+- [x] **Sale/promotion alerts** — Notify subscribed users of new sales
+- [x] **Server-side push** — WordPress mu-plugin to send push notifications via Web Push API
+- [x] **Notification preferences** — Let users control which notification types they receive
 
 ## Phase 5: Background Sync & Offline Cart
 

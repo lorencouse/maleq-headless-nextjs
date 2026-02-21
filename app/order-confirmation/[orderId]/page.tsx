@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getOrder } from '@/lib/woocommerce/orders';
 import OrderDetails from '@/components/order/OrderDetails';
 import ClearCartOnMount from '@/components/checkout/ClearCartOnMount';
+import PushNotificationPrompt from '@/components/pwa/PushNotificationPrompt';
 
 interface OrderConfirmationPageProps {
   params: Promise<{ orderId: string }>;
@@ -94,6 +95,11 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
             Contact us
           </Link>
         </p>
+      </div>
+
+      {/* Push Notification Prompt */}
+      <div className="mt-8">
+        <PushNotificationPrompt email={order.billing.email} />
       </div>
     </div>
   );

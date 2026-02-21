@@ -116,6 +116,7 @@ const SKIP_CACHE_PATTERNS = [
   /\/api\/log-404/,
   /\/api\/suggest-404/,
   /\/api\/stock-alerts/,
+  /\/api\/push\//,
 ];
 
 // API routes safe to cache (read-only data)
@@ -140,7 +141,10 @@ function isCacheableApi(url) {
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHES.precache).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHES.precache).then((cache) =>
+      // Use individual add() calls so one failure doesn't block install
+      Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
+    )
   );
   self.skipWaiting();
 });
@@ -248,4 +252,53 @@ self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') {
     self.skipWaiting();
   }
+});
+
+// ─── Push Notifications ─────────────────────────────────────────────
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload;
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: 'Male Q', body: event.data.text() };
+  }
+
+  const options = {
+    body: payload.body || '',
+    icon: payload.icon || '/favicon/android-chrome-192x192.png',
+    badge: payload.badge || '/favicon/favicon-32x32.png',
+    tag: payload.tag || 'maleq-notification',
+    data: { url: payload.url || '/' },
+    renotify: !!payload.tag,
+  };
+
+  if (payload.image) {
+    options.image = payload.image;
+  }
+
+  event.waitUntil(
+    self.registration.showNotification(payload.title || 'Male Q', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Focus an existing tab if one is open at the target URL
+      for (const client of clients) {
+        if (new URL(client.url).pathname === url && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open a new tab
+      return self.clients.openWindow(url);
+    })
+  );
 });
