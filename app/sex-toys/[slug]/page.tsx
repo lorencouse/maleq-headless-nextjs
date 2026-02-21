@@ -4,10 +4,11 @@ import { notFound } from 'next/navigation';
 import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, type FilterOption } from '@/lib/products/combined-service';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import { findCategoryBySlug, findParentCategory } from '@/lib/utils/category-helpers';
-import { isMySQLConfigured } from '@/lib/db/pool';
+import { isMySQLConfigured, isMySQLReachable } from '@/lib/db/pool';
 import { queryProductIndex, type FacetOption } from '@/lib/products/product-index';
 import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 import { loadHierarchicalCategories } from '@/lib/db/category-loader';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import CategoryHero from '@/components/shop/CategoryHero';
 import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
@@ -73,6 +74,42 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
 // ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
 export const revalidate = 604800;
+export const dynamicParams = true; // Allow runtime generation of any category page
+
+export async function generateStaticParams() {
+  try {
+    if (await isMySQLReachable()) {
+      const categories = await loadHierarchicalCategories();
+      // Flatten hierarchical categories to get all slugs
+      const params: { slug: string }[] = [];
+      function collectSlugs(cats: typeof categories) {
+        for (const cat of cats) {
+          params.push({ slug: cat.slug });
+          if (cat.children) collectSlugs(cat.children);
+        }
+      }
+      collectSlugs(categories);
+      return limitStaticParams(params, DEV_LIMITS.categories);
+    }
+  } catch {}
+
+  // GraphQL fallback
+  try {
+    const categories = await getHierarchicalCategories();
+    const params: { slug: string }[] = [];
+    function collectSlugs(cats: typeof categories) {
+      for (const cat of cats) {
+        params.push({ slug: cat.slug });
+        if (cat.children) collectSlugs(cat.children);
+      }
+    }
+    collectSlugs(categories);
+    return limitStaticParams(params, DEV_LIMITS.categories);
+  } catch (error) {
+    console.error('Error generating static params for categories:', error);
+    return [];
+  }
+}
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;

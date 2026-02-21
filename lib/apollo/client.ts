@@ -14,6 +14,9 @@ export const REVALIDATE = {
   PRODUCTS: 300,
   /** Search queries, dynamic content */
   DYNAMIC: 60,
+  /** No Data Cache — use for by-slug lookups in ISR pages where the page cache
+   *  already handles caching. Prevents stale null responses from being cached. */
+  NONE: 0,
 } as const;
 
 /** Create a client with a specific revalidation time (resolved lazily) */

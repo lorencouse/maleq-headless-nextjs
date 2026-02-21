@@ -9,6 +9,7 @@ import BlogSearch from '@/components/blog/BlogSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { BreadcrumbSchema } from '@/components/seo/StructuredData';
+import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -35,11 +36,12 @@ async function fetchCategory(slug: string): Promise<Category | null> {
   } catch {}
 
   // GraphQL fallback
-  const { getClient } = await import('@/lib/apollo/client');
+  const { getClient, REVALIDATE } = await import('@/lib/apollo/client');
   const { GET_CATEGORY_BY_SLUG } = await import('@/lib/queries/posts');
   const { data } = await getClient().query({
     query: GET_CATEGORY_BY_SLUG,
     variables: { slug },
+    revalidate: REVALIDATE.NONE,
   });
   return data?.category || null;
 }
@@ -81,6 +83,37 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
 // ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
 export const revalidate = 2592000;
+export const dynamicParams = true; // Allow runtime generation of any blog category page
+
+export async function generateStaticParams() {
+  // Try MySQL first
+  try {
+    const { isMySQLReachable } = await import('@/lib/db/pool');
+    if (await isMySQLReachable()) {
+      const { loadBlogCategories } = await import('@/lib/db/blog-loader');
+      const cats = await loadBlogCategories();
+      const params = cats
+        .filter(cat => cat.count > 0)
+        .map(cat => ({ slug: cat.slug }));
+      return limitStaticParams(params, DEV_LIMITS.blogCategories);
+    }
+  } catch {}
+
+  // GraphQL fallback
+  try {
+    const { getClient } = await import('@/lib/apollo/client');
+    const { GET_ALL_CATEGORIES } = await import('@/lib/queries/posts');
+    const { data } = await getClient().query({ query: GET_ALL_CATEGORIES });
+    const cats: Array<{ slug: string; count: number }> = data?.categories?.nodes || [];
+    const params = cats
+      .filter(cat => cat.count > 0)
+      .map(cat => ({ slug: cat.slug }));
+    return limitStaticParams(params, DEV_LIMITS.blogCategories);
+  } catch (error) {
+    console.error('Error generating static params for blog categories:', error);
+    return [];
+  }
+}
 
 export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;

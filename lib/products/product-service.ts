@@ -98,9 +98,11 @@ export const getProductBySlug = cache(async function getProductBySlug(slug: stri
   }
 
   try {
+    const { REVALIDATE } = await import('@/lib/apollo/client');
     const { data } = await getClient().query({
       query: GET_PRODUCT_BY_SLUG,
       variables: { slug },
+      revalidate: REVALIDATE.NONE,
     });
 
     const product = data?.product as GraphQLProduct | null;

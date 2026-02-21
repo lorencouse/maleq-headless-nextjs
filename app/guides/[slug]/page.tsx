@@ -48,9 +48,11 @@ export async function generateMetadata({
 
   let post: Post | null = null;
 
+  const { REVALIDATE } = await import('@/lib/apollo/client');
   const { data } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
+    revalidate: REVALIDATE.NONE,
   });
   post = data?.postBy;
 
@@ -152,10 +154,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   let post: Post | null = null;
 
-  // Fetch from GraphQL (runtime ISR)
+  // Fetch from GraphQL — use REVALIDATE.NONE to avoid Data Cache caching
+  // null responses. The ISR page cache (revalidate = 2592000) handles caching.
+  const { REVALIDATE } = await import('@/lib/apollo/client');
   const { data: postData } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
+    revalidate: REVALIDATE.NONE,
   });
   post = postData?.postBy;
 

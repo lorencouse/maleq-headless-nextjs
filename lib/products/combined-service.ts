@@ -885,6 +885,7 @@ export async function getBrandBySlug(slug: string): Promise<Brand | null> {
     const { data } = await getClient().query({
       query: GET_BRAND_BY_SLUG,
       variables: { slug },
+      revalidate: REVALIDATE.NONE,
     });
 
     const brand = data?.productBrand;
