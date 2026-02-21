@@ -2,6 +2,7 @@
   "name": "Male Q - Premium Adult Products",
   "short_name": "Male Q",
   "description": "Discover premium adult products at Male Q. Shop our curated collection with fast, discreet shipping.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

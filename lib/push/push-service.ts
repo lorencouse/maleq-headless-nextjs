@@ -39,7 +39,7 @@ export async function deleteSubscription(endpoint: string): Promise<void> {
 export async function getSubscriptionByEndpoint(endpoint: string): Promise<DBSubscription | null> {
   const pool = await getPoolAsync();
   const [rows] = await pool.execute<RowDataPacket[]>(
-    'SELECT * FROM maleq_push_subscriptions WHERE endpoint = ? LIMIT 1',
+    'SELECT id, endpoint, p256dh, auth, customer_id, email, pref_order_updates, pref_back_in_stock, pref_promotions FROM maleq_push_subscriptions WHERE endpoint = ? LIMIT 1',
     [endpoint]
   );
   return (rows[0] as DBSubscription) ?? null;
@@ -60,7 +60,7 @@ export async function getPreferences(endpoint: string): Promise<NotificationPref
 export async function updatePreferences(
   endpoint: string,
   prefs: Partial<NotificationPreferences>
-): Promise<void> {
+): Promise<boolean> {
   const pool = await getPoolAsync();
   const sets: string[] = [];
   const values: (number | string)[] = [];
@@ -78,19 +78,21 @@ export async function updatePreferences(
     values.push(prefs.promotions ? 1 : 0);
   }
 
-  if (sets.length === 0) return;
+  if (sets.length === 0) return true;
   values.push(endpoint);
 
-  await pool.execute(
+  const [result] = await pool.execute<ResultSetHeader>(
     `UPDATE maleq_push_subscriptions SET ${sets.join(', ')} WHERE endpoint = ?`,
     values
   );
+
+  return result.affectedRows > 0;
 }
 
 // ── Sending ─────────────────────────────────────────────────────────
 
 async function sendToSubscription(
-  sub: DBSubscription,
+  sub: Pick<DBSubscription, 'id' | 'endpoint' | 'p256dh' | 'auth'>,
   payload: PushPayload
 ): Promise<'ok' | 'expired' | 'error'> {
   const wp = getWebPush();
@@ -121,7 +123,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   const result: SendResult = { sent: 0, failed: 0, expired: 0 };
 
   const prefColumn = getPrefColumn(request.type);
-  let query = `SELECT * FROM maleq_push_subscriptions WHERE ${prefColumn} = 1`;
+  let query = `SELECT id, endpoint, p256dh, auth FROM maleq_push_subscriptions WHERE ${prefColumn} = 1`;
   const params: (number | string)[] = [];
 
   // Target specific customer for order updates
@@ -133,7 +135,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   // For back_in_stock with specific product, join stock alerts table
   if (request.type === 'back_in_stock' && request.productId) {
     query = `
-      SELECT s.* FROM maleq_push_subscriptions s
+      SELECT s.id, s.endpoint, s.p256dh, s.auth FROM maleq_push_subscriptions s
       INNER JOIN maleq_stock_alert_products a ON a.subscription_id = s.id
       WHERE s.pref_back_in_stock = 1
         AND a.product_id = ?
@@ -144,7 +146,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(query, params);
-  const subs = rows as DBSubscription[];
+  const subs = rows as Pick<DBSubscription, 'id' | 'endpoint' | 'p256dh' | 'auth'>[];
 
   const payload: PushPayload = {
     title: request.title,
@@ -157,7 +159,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   };
 
   // Send in parallel with concurrency limit
-  const BATCH_SIZE = 20;
+  const BATCH_SIZE = 50;
   for (let i = 0; i < subs.length; i += BATCH_SIZE) {
     const batch = subs.slice(i, i + BATCH_SIZE);
     const results = await Promise.all(
@@ -227,17 +229,36 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
   const pool = await getPoolAsync();
   const result: SendResult = { sent: 0, failed: 0, expired: 0 };
 
-  // Find products that are now in stock and have un-notified alerts
+  // Atomically claim un-notified alerts for products now in stock
+  // This prevents duplicate sends if two cron invocations run concurrently
+  const claimId = `claim-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  await pool.execute<ResultSetHeader>(`
+    UPDATE maleq_stock_alert_products a
+    INNER JOIN wp_postmeta pm ON pm.post_id = a.product_id AND pm.meta_key = '_stock_status'
+    SET a.notified_at = CURRENT_TIMESTAMP, a.product_slug = CONCAT(a.product_slug, '|', ?)
+    WHERE a.notified_at IS NULL
+      AND pm.meta_value = 'instock'
+  `, [claimId]);
+
+  // Now fetch the alerts we just claimed
   const [rows] = await pool.execute<RowDataPacket[]>(`
-    SELECT a.id AS alert_id, a.product_id, a.product_name, a.product_slug,
+    SELECT a.id AS alert_id, a.product_id, a.product_name,
+           SUBSTRING_INDEX(a.product_slug, '|', 1) AS product_slug,
            s.id AS sub_id, s.endpoint, s.p256dh, s.auth
     FROM maleq_stock_alert_products a
     INNER JOIN maleq_push_subscriptions s ON s.id = a.subscription_id
-    INNER JOIN wp_postmeta pm ON pm.post_id = a.product_id AND pm.meta_key = '_stock_status'
-    WHERE a.notified_at IS NULL
+    WHERE a.product_slug LIKE CONCAT('%|', ?)
       AND s.pref_back_in_stock = 1
-      AND pm.meta_value = 'instock'
-  `);
+  `, [claimId]);
+
+  // Clean up the claim marker from product_slug
+  if (rows.length > 0) {
+    await pool.execute(`
+      UPDATE maleq_stock_alert_products
+      SET product_slug = SUBSTRING_INDEX(product_slug, '|', 1)
+      WHERE product_slug LIKE CONCAT('%|', ?)
+    `, [claimId]);
+  }
 
   const alerts = rows as Array<{
     alert_id: number;
@@ -250,38 +271,41 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
     auth: string;
   }>;
 
-  for (const alert of alerts) {
-    const sub: DBSubscription = {
-      id: alert.sub_id,
-      endpoint: alert.endpoint,
-      p256dh: alert.p256dh,
-      auth: alert.auth,
-      customer_id: null,
-      email: null,
-      pref_order_updates: 0,
-      pref_back_in_stock: 1,
-      pref_promotions: 0,
-    };
+  // Send in batches
+  const BATCH_SIZE = 50;
+  for (let i = 0; i < alerts.length; i += BATCH_SIZE) {
+    const batch = alerts.slice(i, i + BATCH_SIZE);
+    const results = await Promise.all(
+      batch.map((alert) =>
+        sendToSubscription(
+          { id: alert.sub_id, endpoint: alert.endpoint, p256dh: alert.p256dh, auth: alert.auth },
+          {
+            title: 'Back in Stock!',
+            body: `${alert.product_name} is available again.`,
+            icon: '/favicon/android/android-launchericon-192-192.png',
+            badge: '/favicon/favicon-32x32.png',
+            tag: `stock-${alert.product_id}`,
+            url: `/product/${alert.product_slug}`,
+          }
+        )
+      )
+    );
 
-    const status = await sendToSubscription(sub, {
-      title: 'Back in Stock!',
-      body: `${alert.product_name} is available again.`,
-      icon: '/favicon/android/android-launchericon-192-192.png',
-      badge: '/favicon/favicon-32x32.png',
-      tag: `stock-${alert.product_id}`,
-      url: `/product/${alert.product_slug}`,
-    });
-
-    if (status === 'ok') {
-      result.sent++;
-      await pool.execute(
-        'UPDATE maleq_stock_alert_products SET notified_at = CURRENT_TIMESTAMP WHERE id = ?',
-        [alert.alert_id]
-      );
-    } else if (status === 'expired') {
-      result.expired++;
-    } else {
-      result.failed++;
+    for (let j = 0; j < results.length; j++) {
+      const r = results[j];
+      if (r === 'ok') {
+        result.sent++;
+      } else if (r === 'expired') {
+        result.expired++;
+        // Clear notified_at so if they re-subscribe, they can get notified again
+      } else {
+        result.failed++;
+        // Send failed — reset notified_at so it can be retried
+        await pool.execute(
+          'UPDATE maleq_stock_alert_products SET notified_at = NULL WHERE id = ?',
+          [batch[j].alert_id]
+        );
+      }
     }
   }
 

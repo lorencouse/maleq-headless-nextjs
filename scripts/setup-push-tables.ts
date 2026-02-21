@@ -14,7 +14,7 @@ async function main() {
   await db.execute(`
     CREATE TABLE IF NOT EXISTS maleq_push_subscriptions (
       id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-      endpoint VARCHAR(500) NOT NULL,
+      endpoint VARCHAR(1000) NOT NULL,
       p256dh VARCHAR(200) NOT NULL,
       auth VARCHAR(100) NOT NULL,
       customer_id BIGINT UNSIGNED DEFAULT NULL,
@@ -25,7 +25,8 @@ async function main() {
       user_agent VARCHAR(500) DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      UNIQUE KEY uq_endpoint (endpoint)
+      UNIQUE KEY uq_endpoint (endpoint),
+      KEY idx_customer_id (customer_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
   console.log('  ✅ maleq_push_subscriptions created');

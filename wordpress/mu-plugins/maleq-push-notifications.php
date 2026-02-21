@@ -62,13 +62,21 @@ add_action('woocommerce_order_status_changed', 'maleq_push_on_order_status_chang
 
 /**
  * Hook: Product stock status changed to instock — trigger back-in-stock push.
+ * Uses woocommerce_product_set_stock_status with 3 params to check old status,
+ * preventing duplicate notifications when a product is re-saved while already instock.
  */
-function maleq_push_on_stock_status_change($product_id, $stock_status) {
+function maleq_push_on_stock_status_change($product_id, $stock_status, $product_obj = null) {
     if ($stock_status !== 'instock') {
         return;
     }
 
-    $product = wc_get_product($product_id);
+    // Check the previous stock status to avoid firing when already instock
+    $previous_status = get_post_meta($product_id, '_stock_status', true);
+    if ($previous_status === 'instock') {
+        return;
+    }
+
+    $product = $product_obj ? $product_obj : wc_get_product($product_id);
     if (!$product) return;
 
     // For variations, use the parent product
@@ -85,4 +93,4 @@ function maleq_push_on_stock_status_change($product_id, $stock_status) {
         'productId' => $product->get_id(),
     ));
 }
-add_action('woocommerce_product_set_stock_status', 'maleq_push_on_stock_status_change', 10, 2);
+add_action('woocommerce_product_set_stock_status', 'maleq_push_on_stock_status_change', 10, 3);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '@/lib/store/auth-store';
 import type { NotificationPreferences } from '@/lib/push/types';
 
 const PUSH_SUBSCRIBED_KEY = 'maleq-push-subscribed';
@@ -24,6 +25,7 @@ export function usePushSubscription() {
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const { user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -53,11 +55,15 @@ export function usePushSubscription() {
     }
   }, []);
 
-  // Load preferences when we have an endpoint
+  // Load preferences when we have an endpoint (use POST to avoid endpoint in query params)
   useEffect(() => {
     if (!endpoint) return;
 
-    fetch(`/api/push/preferences?endpoint=${encodeURIComponent(endpoint)}`)
+    fetch('/api/push/preferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint }),
+    })
       .then((r) => r.json())
       .then((data) => {
         if (data.success && data.data) {
@@ -66,6 +72,31 @@ export function usePushSubscription() {
       })
       .catch(() => {});
   }, [endpoint]);
+
+  // When a user logs in and already has a subscription, link it to their customer ID
+  useEffect(() => {
+    if (!endpoint || !isAuthenticated || !user?.id) return;
+
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => {
+        if (!sub) return;
+        const subJson = sub.toJSON();
+        fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: subJson.endpoint,
+            keys: {
+              p256dh: subJson.keys?.p256dh,
+              auth: subJson.keys?.auth,
+            },
+            customerId: user.id,
+            email: user.email,
+          }),
+        }).catch(() => {});
+      })
+    );
+  }, [isAuthenticated, user?.id, endpoint]);
 
   const subscribe = useCallback(async (customerId?: number, email?: string) => {
     if (!isSupported) return false;
@@ -95,6 +126,10 @@ export function usePushSubscription() {
       const subJson = subscription.toJSON();
       const ep = subJson.endpoint!;
 
+      // Use auth store data if customerId/email not explicitly provided
+      const cid = customerId ?? (user?.id || undefined);
+      const em = email ?? (user?.email || undefined);
+
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -104,8 +139,8 @@ export function usePushSubscription() {
             p256dh: subJson.keys!.p256dh,
             auth: subJson.keys!.auth,
           },
-          customerId,
-          email,
+          customerId: cid,
+          email: em,
         }),
       });
       const data = await res.json();
@@ -119,7 +154,24 @@ export function usePushSubscription() {
       localStorage.setItem(PUSH_ENDPOINT_KEY, ep);
       setIsSubscribed(true);
       setEndpoint(ep);
-      setPreferences({ orderUpdates: true, backInStock: true, promotions: true });
+
+      // Fetch actual preferences from server rather than assuming defaults
+      try {
+        const prefRes = await fetch('/api/push/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: ep }),
+        });
+        const prefData = await prefRes.json();
+        if (prefData.success && prefData.data) {
+          setPreferences(prefData.data);
+        } else {
+          setPreferences({ orderUpdates: true, backInStock: true, promotions: true });
+        }
+      } catch {
+        setPreferences({ orderUpdates: true, backInStock: true, promotions: true });
+      }
+
       setIsLoading(false);
       return true;
     } catch (err) {
@@ -127,7 +179,7 @@ export function usePushSubscription() {
       setIsLoading(false);
       return false;
     }
-  }, [isSupported]);
+  }, [isSupported, user?.id, user?.email]);
 
   const unsubscribe = useCallback(async () => {
     setIsLoading(true);
@@ -137,12 +189,16 @@ export function usePushSubscription() {
       const subscription = await registration.pushManager.getSubscription();
 
       if (subscription) {
-        await subscription.unsubscribe();
-        await fetch('/api/push/subscribe', {
+        // Delete server-side first, then browser-side
+        const res = await fetch('/api/push/subscribe', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint: subscription.endpoint }),
         });
+
+        if (res.ok) {
+          await subscription.unsubscribe();
+        }
       }
 
       localStorage.removeItem(PUSH_SUBSCRIBED_KEY);
@@ -158,21 +214,28 @@ export function usePushSubscription() {
   }, []);
 
   const updatePreferences = useCallback(
-    async (prefs: Partial<NotificationPreferences>) => {
-      if (!endpoint) return;
+    async (prefs: Partial<NotificationPreferences>): Promise<boolean> => {
+      if (!endpoint) return false;
 
       try {
-        await fetch('/api/push/preferences', {
+        const res = await fetch('/api/push/preferences', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ endpoint, ...prefs }),
         });
+        const data = await res.json();
 
-        setPreferences((prev) =>
-          prev ? { ...prev, ...prefs } : null
-        );
+        if (data.success) {
+          setPreferences((prev) =>
+            prev ? { ...prev, ...prefs } : null
+          );
+          return true;
+        }
+
+        return false;
       } catch (err) {
         console.error('Failed to update preferences:', err);
+        return false;
       }
     },
     [endpoint]

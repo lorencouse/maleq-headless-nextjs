@@ -1,5 +1,5 @@
 // ─── Cache Configuration ────────────────────────────────────────────
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_PREFIX = 'maleq';
 
 const CACHES = {
@@ -12,12 +12,11 @@ const CACHES = {
 
 const ALL_CACHE_NAMES = Object.values(CACHES);
 
-// Pages to precache at install time
-const PRECACHE_URLS = [
-  '/offline.html',
-  '/',
-  '/shop',
-];
+// Critical resources that MUST be precached — install fails if these fail
+const CRITICAL_PRECACHE = ['/offline.html'];
+
+// Nice-to-have precache — install succeeds even if these fail
+const OPTIONAL_PRECACHE = ['/', '/shop'];
 
 // Cache size limits
 const LIMITS = {
@@ -47,17 +46,27 @@ async function trimCache(cacheName, maxEntries) {
   }
 }
 
+// Check if a cached response has expired based on its Date header
+function isExpired(response, maxAgeMs) {
+  const dateHeader = response.headers.get('date');
+  if (!dateHeader) return false;
+  const age = Date.now() - new Date(dateHeader).getTime();
+  return age > maxAgeMs;
+}
+
 // Stale-while-revalidate: return cached immediately, update in background
 function staleWhileRevalidate(event, cacheName) {
   event.respondWith(
     caches.open(cacheName).then((cache) =>
       cache.match(event.request).then((cached) => {
-        const fetched = fetch(event.request).then((response) => {
-          if (response.ok) {
-            cache.put(event.request, response.clone());
-          }
-          return response;
-        });
+        const fetched = fetch(event.request)
+          .then((response) => {
+            if (response.ok) {
+              cache.put(event.request, response.clone());
+            }
+            return response;
+          })
+          .catch(() => cached || new Response('Service Unavailable', { status: 503 }));
 
         return cached || fetched;
       })
@@ -65,8 +74,8 @@ function staleWhileRevalidate(event, cacheName) {
   );
 }
 
-// Network-first: try network, fall back to cache
-function networkFirst(event, cacheName) {
+// Network-first: try network, fall back to cache (with age check)
+function networkFirst(event, cacheName, maxAgeMs) {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -76,7 +85,15 @@ function networkFirst(event, cacheName) {
         }
         return response;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() =>
+        caches.match(event.request).then((cached) => {
+          // If cached response exists but is expired, don't serve stale data
+          if (cached && maxAgeMs && isExpired(cached, maxAgeMs)) {
+            return new Response('Service Unavailable', { status: 503 });
+          }
+          return cached || new Response('Service Unavailable', { status: 503 });
+        })
+      )
   );
 }
 
@@ -117,16 +134,16 @@ const SKIP_CACHE_PATTERNS = [
   /\/api\/suggest-404/,
   /\/api\/stock-alerts/,
   /\/api\/push\//,
+  /\/api\/customers/,
 ];
 
-// API routes safe to cache (read-only data)
+// API routes safe to cache (read-only, non-personalized data)
 const CACHEABLE_API_PATTERNS = [
   /\/api\/products/,
   /\/api\/search/,
   /\/api\/blog/,
   /\/api\/posts/,
-  /\/api\/coupons$/,  // coupon list (not validate)
-  /\/api\/customers/,
+  /\/api\/coupons$/,
 ];
 
 function shouldSkipCache(url) {
@@ -141,12 +158,14 @@ function isCacheableApi(url) {
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHES.precache).then((cache) =>
-      // Use individual add() calls so one failure doesn't block install
-      Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
-    )
+    caches.open(CACHES.precache).then(async (cache) => {
+      // Critical resources must succeed
+      await cache.addAll(CRITICAL_PRECACHE);
+      // Optional resources can fail without blocking install
+      await Promise.allSettled(OPTIONAL_PRECACHE.map((url) => cache.add(url)));
+    })
   );
-  self.skipWaiting();
+  // Don't call skipWaiting() here — let the client control via SKIP_WAITING message
 });
 
 // ─── Activate ───────────────────────────────────────────────────────
@@ -185,7 +204,6 @@ self.addEventListener('fetch', (event) => {
             const clone = response.clone();
             caches.open(CACHES.pages).then((cache) => {
               cache.put(request, clone);
-              trimCache(CACHES.pages, LIMITS.pages);
             });
           }
           return response;
@@ -203,7 +221,7 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/')) {
     if (shouldSkipCache(url.pathname)) return;
     if (isCacheableApi(url.pathname)) {
-      networkFirst(event, CACHES.api);
+      networkFirst(event, CACHES.api, MAX_AGE.api);
       return;
     }
     return;
@@ -229,12 +247,6 @@ self.addEventListener('fetch', (event) => {
   // ── Fonts ──
   if (request.destination === 'font') {
     cacheFirst(event, CACHES.static);
-    return;
-  }
-
-  // ── Next.js data requests (_next/data/) ──
-  if (url.pathname.startsWith('/_next/data/')) {
-    staleWhileRevalidate(event, CACHES.pages);
     return;
   }
 });
@@ -296,24 +308,64 @@ self.addEventListener('push', (event) => {
           client.postMessage(message);
         }
       })
+      .catch((err) => {
+        // showNotification failed (e.g., permission revoked) — log but don't crash
+        console.error('Push notification display failed:', err);
+      })
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || '/';
+  const rawUrl = event.notification.data?.url || '/';
+
+  // Validate URL is same-origin to prevent open-redirect attacks
+  let targetPath;
+  try {
+    const parsed = new URL(rawUrl, self.location.origin);
+    targetPath = parsed.origin === self.location.origin ? parsed.pathname : '/';
+  } catch {
+    targetPath = '/';
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       // Focus an existing tab if one is open at the target URL
       for (const client of clients) {
-        if (new URL(client.url).pathname === url && 'focus' in client) {
+        if (new URL(client.url).pathname === targetPath && 'focus' in client) {
           return client.focus();
         }
       }
       // Otherwise open a new tab
-      return self.clients.openWindow(url);
+      return self.clients.openWindow(targetPath);
     })
+  );
+});
+
+// ─── Push Subscription Change ───────────────────────────────────────
+
+self.addEventListener('pushsubscriptionchange', (event) => {
+  // When the browser renews the push subscription, re-register with server
+  event.waitUntil(
+    self.registration.pushManager
+      .subscribe(event.oldSubscription?.options || { userVisibleOnly: true })
+      .then((newSubscription) => {
+        const sub = newSubscription.toJSON();
+        return fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.keys?.p256dh,
+              auth: sub.keys?.auth,
+            },
+          }),
+        });
+      })
+      .catch((err) => {
+        console.error('Failed to re-subscribe after pushsubscriptionchange:', err);
+      })
   );
 });

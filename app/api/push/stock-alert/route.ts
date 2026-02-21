@@ -1,23 +1,46 @@
 import { NextRequest } from 'next/server';
 import { saveStockAlert, deleteStockAlert } from '@/lib/push/push-service';
-import { successResponse, validationError, handleApiError } from '@/lib/api/response';
+import { successResponse, validationError, handleApiError, errorResponse } from '@/lib/api/response';
+
+function parseIntSafe(value: unknown): number | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { endpoint, productId, productName, productSlug } = body;
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return errorResponse('Invalid JSON body', 400);
+    }
 
-    if (!endpoint) {
+    const { endpoint, productId, productName, productSlug } = body as {
+      endpoint?: string;
+      productId?: unknown;
+      productName?: string;
+      productSlug?: string;
+    };
+
+    if (!endpoint || typeof endpoint !== 'string') {
       return validationError({ endpoint: 'Push endpoint is required' });
     }
-    if (!productId || !productName || !productSlug) {
-      return validationError({
-        product: 'productId, productName, and productSlug are required',
-      });
+
+    const parsedProductId = parseIntSafe(productId);
+    if (!parsedProductId) {
+      return validationError({ productId: 'Valid numeric productId is required' });
+    }
+    if (!productName || typeof productName !== 'string' || productName.length > 500) {
+      return validationError({ productName: 'Valid productName is required' });
+    }
+    if (!productSlug || typeof productSlug !== 'string' || !/^[a-z0-9-]+$/.test(productSlug)) {
+      return validationError({ productSlug: 'Valid productSlug is required (lowercase alphanumeric and hyphens only)' });
     }
 
     await saveStockAlert(endpoint, {
-      productId: Number(productId),
+      productId: parsedProductId,
       productName,
       productSlug,
     });
@@ -30,16 +53,25 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { endpoint, productId } = body;
-
-    if (!endpoint || !productId) {
-      return validationError({
-        params: 'endpoint and productId are required',
-      });
+    let body: Record<string, unknown>;
+    try {
+      body = await request.json();
+    } catch {
+      return errorResponse('Invalid JSON body', 400);
     }
 
-    await deleteStockAlert(endpoint, Number(productId));
+    const { endpoint, productId } = body as { endpoint?: string; productId?: unknown };
+
+    if (!endpoint || typeof endpoint !== 'string') {
+      return validationError({ endpoint: 'Endpoint is required' });
+    }
+
+    const parsedProductId = parseIntSafe(productId);
+    if (!parsedProductId) {
+      return validationError({ productId: 'Valid numeric productId is required' });
+    }
+
+    await deleteStockAlert(endpoint, parsedProductId);
     return successResponse(null, 'Stock alert removed');
   } catch (error) {
     return handleApiError(error, 'Failed to remove stock alert');

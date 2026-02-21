@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'maleq-notifications';
+export const STORAGE_KEY = 'maleq-notifications';
 const MAX_NOTIFICATIONS = 50;
 
 export interface StoredNotification {
@@ -31,6 +31,13 @@ function writeStore(notifications: StoredNotification[]) {
 
 export function getNotifications(): StoredNotification[] {
   return readStore();
+}
+
+/** Returns both notifications and unread count in a single localStorage read */
+export function getNotificationsWithCount(): { notifications: StoredNotification[]; unreadCount: number } {
+  const notifications = readStore();
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  return { notifications, unreadCount };
 }
 
 export function addNotification(payload: {

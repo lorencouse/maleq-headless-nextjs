@@ -33,7 +33,10 @@ export default function NotificationsPage() {
   const handleTogglePref = async (key: 'orderUpdates' | 'backInStock' | 'promotions') => {
     if (!preferences) return;
     const newValue = !preferences[key];
-    await updatePreferences({ [key]: newValue });
+    const success = await updatePreferences({ [key]: newValue });
+    if (!success) {
+      showError('Failed to update preference. Please try again.');
+    }
   };
 
   if (!isSupported) {

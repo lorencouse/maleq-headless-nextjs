@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
-import { getUnreadCount } from '@/lib/pwa/notification-store';
+import { getUnreadCount, addNotification, STORAGE_KEY as NOTIFICATIONS_STORAGE_KEY } from '@/lib/pwa/notification-store';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import { mainNavigation, simpleNavLinks, accountNavigation } from '@/lib/config/navigation';
 import { CategoryIcons } from '@/lib/config/category-icons';
@@ -27,7 +27,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
   const wishlistItemCount = useWishlistItemCount();
-  const notificationUnreadCount = isAuthenticated ? getUnreadCount() : 0;
+  const [notificationUnreadCount, setNotificationUnreadCount] = useState(0);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const prevPathname = useRef(pathname);
@@ -51,6 +51,31 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  // Keep notification count in sync with SW broadcasts and cross-tab changes
+  useEffect(() => {
+    setNotificationUnreadCount(getUnreadCount());
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'PUSH_RECEIVED') {
+        addNotification(event.data.payload);
+        setNotificationUnreadCount(getUnreadCount());
+      }
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === NOTIFICATIONS_STORAGE_KEY) {
+        setNotificationUnreadCount(getUnreadCount());
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   const toggleSection = (label: string) => {
     setExpandedSections((prev) =>
@@ -330,7 +355,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 )}
               </Link>
             </li>
-            {isAuthenticated && (
+            {(isAuthenticated || notificationUnreadCount > 0) && (
               <li>
                 <Link
                   href="/account/notifications"

@@ -15,9 +15,9 @@ import MobileMenu from '@/components/navigation/MobileMenu';
 import DesktopNav from '@/components/navigation/DesktopNav';
 import NotificationDropdown from '@/components/pwa/NotificationDropdown';
 import {
-  getNotifications,
-  getUnreadCount,
+  getNotificationsWithCount,
   addNotification,
+  STORAGE_KEY as NOTIFICATIONS_STORAGE_KEY,
   type StoredNotification,
 } from '@/lib/pwa/notification-store';
 
@@ -37,13 +37,13 @@ export default function Header() {
   const [notifications, setNotifications] = useState<StoredNotification[]>([]);
 
   const refreshNotifications = useCallback(() => {
-    setNotifications(getNotifications());
-    setUnreadCount(getUnreadCount());
+    const { notifications: list, unreadCount: count } = getNotificationsWithCount();
+    setNotifications(list);
+    setUnreadCount(count);
   }, []);
 
-  // Load notifications on mount + listen for SW push broadcasts
+  // Load notifications on mount + listen for SW push broadcasts + cross-tab sync
   useEffect(() => {
-    if (!isAuthenticated) return;
     refreshNotifications();
 
     const handleMessage = (event: MessageEvent) => {
@@ -53,11 +53,20 @@ export default function Header() {
       }
     };
 
+    // Cross-tab sync: update badge when another tab modifies notifications
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === NOTIFICATIONS_STORAGE_KEY) {
+        refreshNotifications();
+      }
+    };
+
     navigator.serviceWorker?.addEventListener('message', handleMessage);
+    window.addEventListener('storage', handleStorage);
     return () => {
       navigator.serviceWorker?.removeEventListener('message', handleMessage);
+      window.removeEventListener('storage', handleStorage);
     };
-  }, [isAuthenticated, refreshNotifications]);
+  }, [refreshNotifications]);
 
   // Close search on escape
   useEffect(() => {
@@ -212,8 +221,8 @@ export default function Header() {
               )}
             </div>
 
-            {/* Desktop only: Notifications bell */}
-            {isAuthenticated && (
+            {/* Desktop only: Notifications bell — visible when there are any stored notifications or user is subscribed */}
+            {(unreadCount > 0 || notifications.length > 0 || isAuthenticated) && (
               <div className='relative hidden md:block'>
                 <button
                   onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
