@@ -8,20 +8,20 @@
 - [x] CSP updated with `worker-src 'self'`
 - [x] Service worker registration in app layout
 
-## Phase 2: Enhanced Caching
+## Phase 2: Enhanced Caching ✅
 
-- [ ] **Runtime caching strategies** — Cache product pages, category pages, and blog posts on first visit using stale-while-revalidate
-- [ ] **API response caching** — Cache product data and search results for offline browsing
-- [ ] **Precache critical routes** — Home, shop, and top category pages precached at install time
-- [ ] **Cache versioning** — Automated cache busting on deployments (tie cache version to build ID)
-- [ ] **Cache size limits** — Set max entries/age for runtime caches to prevent unbounded storage growth
+- [x] **Runtime caching strategies** — Network-first for navigations (cache visited pages), stale-while-revalidate for Next.js data, cache-first for static assets
+- [x] **API response caching** — Network-first caching for `/api/products`, `/api/search`, `/api/blog` (skips auth/payment/admin routes)
+- [x] **Precache critical routes** — Home and shop pages precached at install time
+- [x] **Cache versioning** — Versioned cache names (`maleq-{type}-v2`), old caches cleaned on activate
+- [x] **Cache size limits** — Max entries per cache (pages: 50, images: 200, API: 100, static: 100) with periodic trimming
 
-## Phase 3: Offline Product Browsing
+## Phase 3: Offline Product Browsing (Partial) ✅
 
-- [ ] **Offline product catalog** — Store recently viewed products in IndexedDB for full offline access
+- [x] **Offline product catalog** — Store viewed products in IndexedDB (up to 100) via `lib/pwa/offline-products.ts`
 - [ ] **Offline search** — Enable MiniSearch to work against locally cached product data
 - [ ] **Offline category browsing** — Cache category listings so users can browse while offline
-- [ ] **Sync indicator** — Show a banner/toast when user is offline with cached content
+- [x] **Sync indicator** — Toast notification when user goes offline/online via `OfflineIndicator`
 
 ## Phase 4: Push Notifications
 

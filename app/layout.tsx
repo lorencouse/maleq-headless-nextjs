@@ -11,6 +11,7 @@ import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredDa
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
+import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -113,6 +114,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} ${poppins.variable} antialiased flex flex-col min-h-screen`}>
         <ServiceWorkerRegistration />
+        <OfflineIndicator />
         <GoogleAnalytics />
         <OrganizationSchema
           name={SITE_NAME}

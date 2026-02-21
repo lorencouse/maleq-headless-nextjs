@@ -241,6 +241,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
         price={parseFloat(product.price?.replace(/[^0-9.]/g, '') || '0')}
         regularPrice={parseFloat(product.regularPrice?.replace(/[^0-9.]/g, '') || '0')}
         image={product.image || undefined}
+        salePrice={product.salePrice}
+        shortDescription={product.shortDescription}
+        categories={product.categories?.map(c => c.name) || []}
+        brand={product.brands?.[0]?.name || null}
       />
     </div>
   );
