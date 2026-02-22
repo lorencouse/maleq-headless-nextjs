@@ -63,7 +63,7 @@ function parseArgs(): CliOptions {
     batchSize: 50,
     concurrency: 1,
     source: 'all',
-    model: 'qwen3:8b',
+    model: 'qwen3:14b',
     numCtx: 4096,
     timeoutMs: 180_000,
   };
@@ -114,7 +114,7 @@ Options:
   --batch-size <n>         Products per batch (default: 50)
   --concurrency <n>        Parallel LLM calls (default: 1)
   --source <type>          Filter: xml_active | xml_inactive | stc | all (default: all)
-  --model <name>           Ollama model (default: gpt-oss:20b)
+  --model <name>           Ollama model (default: qwen3:14b)
   --num-ctx <n>            Context window tokens (default: 4096, lower = less RAM)
   --timeout <seconds>      Per-request timeout (default: 180)
   --path <type>            Filter by enrichment path: reformat | generate

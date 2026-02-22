@@ -2,7 +2,7 @@
  * Pluggable LLM provider interface with Ollama implementation.
  *
  * Usage:
- *   const llm = new OllamaProvider({ model: 'qwen3:8b' });
+ *   const llm = new OllamaProvider({ model: 'qwen3:14b' });
  *   await llm.healthCheck();
  *   const html = await llm.generate(prompt);
  */
@@ -28,8 +28,8 @@ export interface OllamaConfig {
   maxRetries?: number;
   /**
    * Context window size in tokens. Lower = less RAM.
-   * Default 4096 is good for 16GB RAM.
-   * qwen3:8b is MoE (3.6B active) so 4096 fits easily in 16GB.
+   * Default 4096 is conservative. With qwen3:14b on 32GB M1, you can safely
+   * increase to 8192 or higher if needed for batch product context.
    */
   numCtx?: number;
 }
@@ -43,7 +43,7 @@ export class OllamaProvider implements LLMProvider {
 
   constructor(config: OllamaConfig = {}) {
     this.baseUrl = config.baseUrl || 'http://localhost:11434';
-    this.model = config.model || 'qwen3:8b';
+    this.model = config.model || 'qwen3:14b';
     this.timeoutMs = config.timeoutMs || 180_000;
     this.maxRetries = config.maxRetries || 3;
     this.numCtx = config.numCtx || 4096;

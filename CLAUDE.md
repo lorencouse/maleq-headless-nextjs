@@ -14,7 +14,7 @@
 
 - Next.js 15 headless WooCommerce e-commerce site
 - **Uses Bun as package manager** - always use `bun add`, `bun remove`, `bun install`
-- Main branch: `initial-setup`
+- Main branch: `main`
 - WordPress backend with WPGraphQL
 
 ## Key Directories

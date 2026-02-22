@@ -51,15 +51,48 @@ bun scripts/enrich-descriptions.ts --apply --batch-size 50 --concurrency 2
 | `--batch-size <n>` | 50 | Products per checkpoint save |
 | `--concurrency <n>` | 1 | Parallel LLM calls |
 | `--source <type>` | all | Filter: `xml_active`, `xml_inactive`, `stc`, `all` |
-| `--model <name>` | gpt-oss:20b | Ollama model name |
+| `--model <name>` | qwen3:14b | Ollama model name |
 | `--num-ctx <n>` | 4096 | Context window tokens (lower = less RAM) |
 | `--timeout <seconds>` | 180 | Per-request timeout |
 
 ## Prerequisites
 
 - **Ollama** running locally (`ollama serve`)
-- Model pulled (`ollama pull gpt-oss:20b` — 14GB download, MoE with 3.6B active params, fits 16GB RAM)
+- Model pulled (see recommendations below)
 - Database access: **Local by Flywheel** running, or SSH tunnel to production with `--remote`
+
+## Recommended Models (MacBook Pro M1, 32GB RAM)
+
+The default model is `qwen3:14b`. Override with `--model <name>`.
+
+| Model | Ollama Tag | Download | RAM Used | Speed | Best For |
+|-------|-----------|----------|----------|-------|----------|
+| **Qwen3 14B** | `qwen3:14b` | 9.3GB | ~12-14GB | Fast (~15-25 tok/s) | Daily driver — all-around product copy |
+| **Qwen3 30B-A3B** (MoE) | `qwen3:30b` | 19GB | ~19-21GB | Fast (MoE) | Highest quality, varied output |
+| **Gemma 3 27B** | `gemma3:27b` | 17GB | ~15-17GB | Moderate (~8-15 tok/s) | Lifestyle/emotional copy |
+| **Mistral Small 3.2** | `mistral-small3.2` | 14GB | ~15-17GB | Moderate (~10-18 tok/s) | SEO/structured descriptions |
+| **Phi-4 14B** | `phi4:14b` | 8.4GB | ~10-12GB | Fast (~20-30 tok/s) | Lightweight bulk generation |
+
+### Which to use
+
+- **Qwen3 14B** (recommended default): Best balance of speed, quality, and instruction following. Fits comfortably alongside the dev environment. Has toggleable chain-of-thought reasoning. The `<think>` tag stripping in `llm-provider.ts` already handles its reasoning output.
+- **Qwen3 30B-A3B**: MoE architecture (only 3.3B params active per token) so it's fast despite the size. Produces more varied copy across thousands of products (less repetitive). Tight on 32GB — close other apps.
+- **Gemma 3 27B**: Best creative/emotional tone. Use for featured products, landing pages, category descriptions. Google's QAT version preserves quality at Q4 quantization.
+- **Mistral Small 3.2**: Strictest instruction adherence. Best when you need exact formatting compliance (bullet structure, character counts, JSON SEO output).
+- **Phi-4 14B**: Fastest option, leaves the most RAM headroom. Good for initial bulk runs where speed matters more than creative flair.
+
+### Too large for 32GB
+
+Llama 4 Scout (109B, ~55GB), DeepSeek V3 (671B), Qwen3 235B, and Qwen3 32B dense (borderline, no context headroom) do not fit.
+
+### Install
+
+```bash
+# Pull your preferred model(s)
+ollama pull qwen3:14b          # recommended default
+ollama pull gemma3:27b         # premium creative copy
+ollama pull mistral-small3.2   # structured/SEO copy
+```
 
 ## How It Works
 
@@ -119,14 +152,14 @@ Alongside the pipeline, the product page (`app/product/[slug]/page.tsx`) and str
 
 ### Before First Run
 - [ ] Install and start Ollama (`brew install ollama && ollama serve`)
-- [ ] Pull the model (`ollama pull llama3.1` or whichever model you prefer)
+- [ ] Pull the model (`ollama pull qwen3:14b` — see Recommended Models section)
 - [ ] Ensure Local by Flywheel is running with the maleq-local site
 - [ ] Run `--analyze` to verify data coverage numbers look right
 
 ### After First Batch
 - [ ] Review CSV output in a spreadsheet — check quality of generated descriptions
 - [ ] Tune prompts in `description-generator.ts` if output style needs adjustment
-- [ ] Decide on model (llama3.1 8B is fast; larger models produce better copy)
+- [ ] Decide on model (see Recommended Models section above — `qwen3:14b` is the default)
 
 ### WordPress Import
 - [ ] Build or configure a WP import script for the CSV (WP All Import or custom)

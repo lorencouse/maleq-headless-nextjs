@@ -18,8 +18,8 @@ ssh deploy@46.224.227.119
 Settings applied:
 - `PermitRootLogin no`
 - `PasswordAuthentication no`
-- `MaxAuthTries 3`
-- `AllowUsers deploy`
+- `MaxAuthTries 6`
+- `AllowUsers deploy root`
 - `X11Forwarding no`
 
 ---
@@ -40,7 +40,7 @@ Default: deny incoming, allow outgoing.
 
 Ports 6001, 6002, 8080 (Coolify internal) listen on 0.0.0.0 but are only reachable via loopback and Docker bridge rules above — not exposed to the internet.
 
-> **Important:** Coolify uses a custom Docker bridge network (`10.0.1.0/24`). Both UFW and Fail2ban must whitelist these ranges or Coolify will lose access to localhost.
+> **Important:** Coolify uses a custom Docker bridge network (`10.0.1.0/24`). UFW must whitelist these ranges or Coolify will lose access to localhost.
 
 ### Managing Coolify IP access
 
@@ -59,20 +59,14 @@ sudo ufw status numbered
 
 ## Fail2ban
 
-Protects SSH against brute-force attacks.
+**SSH jail is disabled.** With key-only authentication, brute-force protection is unnecessary and was causing repeated lockouts. fail2ban remains installed but inactive — it can be re-enabled for future password-based services if needed.
 
 - **Config**: `/etc/fail2ban/jail.local`
-- **Ban time**: 1 hour
-- **Max retries**: 3 within 10 minutes
-- **Action**: UFW block
-- **Ignored IPs**: `127.0.0.1/8`, `10.0.0.0/8`, `172.16.0.0/12` (Docker/loopback — prevents Coolify from banning itself)
+- **SSH jail**: `enabled = false`
 
 ```bash
 # Check status
-sudo fail2ban-client status sshd
-
-# Unban an IP
-sudo fail2ban-client set sshd unbanip <IP>
+sudo fail2ban-client status
 ```
 
 ---
@@ -95,8 +89,8 @@ ss -tlnp
 # Check firewall
 sudo ufw status verbose
 
-# Check fail2ban bans
-sudo fail2ban-client status sshd
+# Check fail2ban
+sudo fail2ban-client status
 
 # Check Docker containers
 docker compose ps
