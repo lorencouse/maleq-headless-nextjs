@@ -986,3 +986,27 @@ a:focus-visible {
     min-width: unset;
   }
 }
+
+/* ── PWA standalone safe area insets (iOS notch/Dynamic Island) ────── */
+@media (display-mode: standalone) {
+  /* Push header content below the status bar */
+  header[role="banner"] {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  /* Full-height slide-out panels: add top/bottom safe areas */
+  [role="dialog"][aria-modal="true"] {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Sticky bottom bar (product add-to-cart) */
+  .fixed.bottom-0 {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Fixed bottom prompts (install/push) */
+  .fixed.bottom-4 {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}

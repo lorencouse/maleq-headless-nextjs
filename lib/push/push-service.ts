@@ -96,6 +96,22 @@ async function sendToSubscription(
   payload: PushPayload
 ): Promise<'ok' | 'expired' | 'error'> {
   const wp = getWebPush();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
+  // Build payload that includes both our custom fields (for SW handler)
+  // and the Declarative Web Push format (for iOS 18.4+ / Safari 18.4+).
+  // The "web_push" + "notification" fields let the browser display the
+  // notification natively without requiring SW JavaScript.
+  const fullPayload = {
+    ...payload,
+    web_push: 8030,
+    notification: {
+      title: payload.title,
+      body: payload.body,
+      navigate: `${siteUrl}${payload.url || '/'}`,
+      silent: false,
+    },
+  };
 
   try {
     await wp.sendNotification(
@@ -103,7 +119,7 @@ async function sendToSubscription(
         endpoint: sub.endpoint,
         keys: { p256dh: sub.p256dh, auth: sub.auth },
       },
-      JSON.stringify(payload)
+      JSON.stringify(fullPayload)
     );
     return 'ok';
   } catch (err: unknown) {

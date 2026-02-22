@@ -28,6 +28,38 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ]);
 }
 
+/**
+ * Check if Declarative Web Push is available (Safari 18.4+ / iOS 18.4+).
+ * window.pushManager is exposed when the browser supports subscribing
+ * without a service worker.
+ */
+function hasDeclarativePush(): boolean {
+  return typeof window !== 'undefined' && 'pushManager' in window;
+}
+
+/**
+ * Get a PushManager — prefers window.pushManager (Declarative Web Push,
+ * iOS 18.4+/Safari 18.4+) over the traditional SW-based pushManager.
+ */
+async function getPushManager(): Promise<PushManager> {
+  // Declarative Web Push: window.pushManager (iOS 18.4+, Safari 18.4+)
+  if (hasDeclarativePush()) {
+    return (window as unknown as { pushManager: PushManager }).pushManager;
+  }
+
+  // Traditional: service worker registration pushManager
+  if ('serviceWorker' in navigator) {
+    const registration = await withTimeout(
+      navigator.serviceWorker.ready,
+      10_000,
+      'Service worker ready'
+    );
+    return registration.pushManager;
+  }
+
+  throw new Error('No push manager available');
+}
+
 export function usePushSubscription() {
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -38,30 +70,37 @@ export function usePushSubscription() {
   const { user, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
-    const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    // Supported if we have Notification API and either Declarative or SW-based push
+    const supported =
+      'Notification' in window &&
+      (hasDeclarativePush() || ('serviceWorker' in navigator && 'PushManager' in window));
     setIsSupported(supported);
 
     if (supported) {
       setPermission(Notification.permission);
-      const savedEndpoint = localStorage.getItem(PUSH_ENDPOINT_KEY);
-      const savedSubscribed = localStorage.getItem(PUSH_SUBSCRIBED_KEY) === 'true';
-      setIsSubscribed(savedSubscribed);
-      setEndpoint(savedEndpoint);
+      try {
+        const savedEndpoint = localStorage.getItem(PUSH_ENDPOINT_KEY);
+        const savedSubscribed = localStorage.getItem(PUSH_SUBSCRIBED_KEY) === 'true';
+        setIsSubscribed(savedSubscribed);
+        setEndpoint(savedEndpoint);
+      } catch {
+        // localStorage unavailable
+      }
 
       // Verify the subscription is still active
-      if (savedSubscribed) {
-        navigator.serviceWorker.ready.then((reg) => {
-          reg.pushManager.getSubscription().then((sub) => {
-            if (!sub) {
-              // Subscription was revoked
+      getPushManager()
+        .then((pm) => pm.getSubscription())
+        .then((sub) => {
+          if (!sub) {
+            try {
               localStorage.removeItem(PUSH_SUBSCRIBED_KEY);
               localStorage.removeItem(PUSH_ENDPOINT_KEY);
-              setIsSubscribed(false);
-              setEndpoint(null);
-            }
-          });
-        });
-      }
+            } catch { /* ignore */ }
+            setIsSubscribed(false);
+            setEndpoint(null);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -87,8 +126,9 @@ export function usePushSubscription() {
   useEffect(() => {
     if (!endpoint || !isAuthenticated || !user?.id) return;
 
-    navigator.serviceWorker.ready.then((reg) =>
-      reg.pushManager.getSubscription().then((sub) => {
+    getPushManager()
+      .then((pm) => pm.getSubscription())
+      .then((sub) => {
         if (!sub) return;
         const subJson = sub.toJSON();
         fetch('/api/push/subscribe', {
@@ -105,8 +145,8 @@ export function usePushSubscription() {
           }),
         }).catch(() => {});
       })
-    );
-  }, [isAuthenticated, user?.id, endpoint]);
+      .catch(() => {});
+  }, [isAuthenticated, user?.id, user?.email, endpoint]);
 
   const subscribe = useCallback(async (customerId?: number, email?: string) => {
     if (!isSupported) return false;
@@ -120,27 +160,29 @@ export function usePushSubscription() {
         return false;
       }
 
-      // Wait for SW with a timeout — iOS Safari can hang here if SW failed to activate
-      const registration = await withTimeout(
-        navigator.serviceWorker.ready,
-        10_000,
-        'Service worker ready'
-      );
-
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) {
-        console.error('VAPID public key not configured');
+        console.error('[Push] VAPID public key not configured');
         setIsLoading(false);
         return false;
       }
 
-      // Pass Uint8Array directly — iOS Safari is more reliable with this than ArrayBuffer
       const applicationServerKey = urlBase64ToUint8Array(vapidKey) as BufferSource;
+
+      // Get the push manager (Declarative or SW-based)
+      let pushManager: PushManager;
+      try {
+        pushManager = await getPushManager();
+      } catch (pmErr) {
+        console.error('[Push] Failed to get push manager:', pmErr);
+        setIsLoading(false);
+        return false;
+      }
 
       let subscription: PushSubscription;
       try {
         subscription = await withTimeout(
-          registration.pushManager.subscribe({
+          pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey,
           }),
@@ -189,8 +231,10 @@ export function usePushSubscription() {
         return false;
       }
 
-      localStorage.setItem(PUSH_SUBSCRIBED_KEY, 'true');
-      localStorage.setItem(PUSH_ENDPOINT_KEY, ep);
+      try {
+        localStorage.setItem(PUSH_SUBSCRIBED_KEY, 'true');
+        localStorage.setItem(PUSH_ENDPOINT_KEY, ep);
+      } catch { /* ignore */ }
       setIsSubscribed(true);
       setEndpoint(ep);
 
@@ -224,8 +268,8 @@ export function usePushSubscription() {
     setIsLoading(true);
 
     try {
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const pushManager = await getPushManager();
+      const subscription = await pushManager.getSubscription();
 
       if (subscription) {
         // Delete server-side first, then browser-side
@@ -240,8 +284,10 @@ export function usePushSubscription() {
         }
       }
 
-      localStorage.removeItem(PUSH_SUBSCRIBED_KEY);
-      localStorage.removeItem(PUSH_ENDPOINT_KEY);
+      try {
+        localStorage.removeItem(PUSH_SUBSCRIBED_KEY);
+        localStorage.removeItem(PUSH_ENDPOINT_KEY);
+      } catch { /* ignore */ }
       setIsSubscribed(false);
       setEndpoint(null);
       setPreferences(null);
