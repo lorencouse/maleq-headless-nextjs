@@ -18,6 +18,16 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
+/** Wrap a promise with a timeout so it doesn't hang forever (iOS Safari issue) */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
 export function usePushSubscription() {
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
@@ -110,7 +120,13 @@ export function usePushSubscription() {
         return false;
       }
 
-      const registration = await navigator.serviceWorker.ready;
+      // Wait for SW with a timeout — iOS Safari can hang here if SW failed to activate
+      const registration = await withTimeout(
+        navigator.serviceWorker.ready,
+        10_000,
+        'Service worker ready'
+      );
+
       const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidKey) {
         console.error('VAPID public key not configured');
@@ -118,10 +134,17 @@ export function usePushSubscription() {
         return false;
       }
 
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer,
-      });
+      // Pass the ArrayBuffer (not .buffer on a view) — iOS Safari is more reliable with this
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer;
+
+      const subscription = await withTimeout(
+        registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey,
+        }),
+        15_000,
+        'Push subscription'
+      );
 
       const subJson = subscription.toJSON();
       const ep = subJson.endpoint!;

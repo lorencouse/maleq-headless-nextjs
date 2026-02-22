@@ -53,6 +53,8 @@ export default function PushNotificationPrompt({
     } else if (Notification.permission === 'denied') {
       setVisible(false);
       showError('Notifications blocked. You can enable them in your browser settings.');
+    } else {
+      showError('Could not enable notifications. Please try again.');
     }
   };
 

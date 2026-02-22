@@ -26,6 +26,8 @@ export default function NotificationsPage() {
         showSuccess('Push notifications enabled');
       } else if (Notification.permission === 'denied') {
         showError('Notifications blocked by your browser. Check your browser settings to allow notifications.');
+      } else {
+        showError('Could not enable notifications. Please try again.');
       }
     }
   };
