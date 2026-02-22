@@ -134,17 +134,24 @@ export function usePushSubscription() {
         return false;
       }
 
-      // Pass the ArrayBuffer (not .buffer on a view) — iOS Safari is more reliable with this
-      const applicationServerKey = urlBase64ToUint8Array(vapidKey).buffer as ArrayBuffer;
+      // Pass Uint8Array directly — iOS Safari is more reliable with this than ArrayBuffer
+      const applicationServerKey = urlBase64ToUint8Array(vapidKey) as BufferSource;
 
-      const subscription = await withTimeout(
-        registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey,
-        }),
-        15_000,
-        'Push subscription'
-      );
+      let subscription: PushSubscription;
+      try {
+        subscription = await withTimeout(
+          registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey,
+          }),
+          15_000,
+          'Push subscription'
+        );
+      } catch (subErr) {
+        console.error('[Push] pushManager.subscribe() failed:', subErr);
+        setIsLoading(false);
+        return false;
+      }
 
       const subJson = subscription.toJSON();
       const ep = subJson.endpoint!;
@@ -153,22 +160,31 @@ export function usePushSubscription() {
       const cid = customerId ?? (user?.id || undefined);
       const em = email ?? (user?.email || undefined);
 
-      const res = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          endpoint: ep,
-          keys: {
-            p256dh: subJson.keys!.p256dh,
-            auth: subJson.keys!.auth,
-          },
-          customerId: cid,
-          email: em,
-        }),
-      });
+      let res: Response;
+      try {
+        res = await fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            endpoint: ep,
+            keys: {
+              p256dh: subJson.keys!.p256dh,
+              auth: subJson.keys!.auth,
+            },
+            customerId: cid,
+            email: em,
+          }),
+        });
+      } catch (fetchErr) {
+        console.error('[Push] API fetch failed:', fetchErr);
+        setIsLoading(false);
+        return false;
+      }
+
       const data = await res.json();
 
       if (!data.success) {
+        console.error('[Push] API returned error:', res.status, data);
         setIsLoading(false);
         return false;
       }
