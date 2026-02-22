@@ -17,6 +17,7 @@ import InstallPrompt from "@/components/pwa/InstallPrompt";
 import AppBadge from "@/components/pwa/AppBadge";
 import PwaAnalytics from "@/components/pwa/PwaAnalytics";
 import BackgroundSyncReplay from "@/components/pwa/BackgroundSyncReplay";
+import CartStockRevalidation from "@/components/pwa/CartStockRevalidation";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -157,6 +158,7 @@ export default function RootLayout({
           <ThemeProvider>
             <CartProvider>
               <AppBadge />
+              <CartStockRevalidation />
               <Toaster />
               <Header />
               <main id="main-content" className="flex-grow" role="main">
