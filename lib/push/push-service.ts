@@ -102,14 +102,19 @@ async function sendToSubscription(
   // and the Declarative Web Push format (for iOS 18.4+ / Safari 18.4+).
   // The "web_push" + "notification" fields let the browser display the
   // notification natively without requiring SW JavaScript.
+  const navigateUrl = (payload.url || '/').startsWith('http')
+    ? payload.url!
+    : `${siteUrl}${payload.url || '/'}`;
+
   const fullPayload = {
     ...payload,
     web_push: 8030,
     notification: {
       title: payload.title,
       body: payload.body,
-      navigate: `${siteUrl}${payload.url || '/'}`,
+      navigate: navigateUrl,
       silent: false,
+      app_badge: '1',
     },
   };
 

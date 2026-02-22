@@ -350,12 +350,15 @@ self.addEventListener('push', (event) => {
     payload = { title: 'Male Q', body: event.data.text() };
   }
 
+  // Support both our custom payload.url and Declarative Web Push notification.navigate
+  const notificationUrl = payload.url || payload.notification?.navigate || '/';
+
   const options = {
     body: payload.body || '',
     icon: payload.icon || '/favicon/android/android-launchericon-192-192.png',
     badge: payload.badge || '/favicon/favicon-32x32.png',
     tag: payload.tag || 'maleq-notification',
-    data: { url: payload.url || '/' },
+    data: { url: notificationUrl },
     renotify: !!payload.tag,
   };
 
@@ -372,7 +375,7 @@ self.addEventListener('push', (event) => {
           payload: {
             title: payload.title || 'Male Q',
             body: payload.body || '',
-            url: payload.url || '/',
+            url: notificationUrl,
             tag: payload.tag || 'maleq-notification',
           },
         };
