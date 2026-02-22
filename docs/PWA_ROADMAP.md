@@ -1,6 +1,6 @@
 # PWA Roadmap — Male Q
 
-## Phase 1: Basic PWA (Current) ✅
+## Phase 1: Basic PWA ✅
 
 - [x] Web app manifest with icons, start_url, display: standalone
 - [x] Service worker with offline fallback page
@@ -15,12 +15,13 @@
 - [x] **Precache critical routes** — Home and shop pages precached at install time
 - [x] **Cache versioning** — Versioned cache names (`maleq-{type}-v2`), old caches cleaned on activate
 - [x] **Cache size limits** — Max entries per cache (pages: 50, images: 200, API: 100, static: 100) with periodic trimming
+- [x] **Network timeouts** — 8s timeout for navigation, 5s for API requests with cache fallback (`fetchWithTimeout` in SW)
 
-## Phase 3: Offline Product Browsing (Partial) ✅
+## Phase 3: Offline Product Browsing ✅
 
 - [x] **Offline product catalog** — Store viewed products in IndexedDB (up to 100) via `lib/pwa/offline-products.ts`
-- [ ] **Offline search** — Enable MiniSearch to work against locally cached product data
-- [ ] **Offline category browsing** — Cache category listings so users can browse while offline
+- [x] **Offline search** — MiniSearch index built from IndexedDB products, fallback in `useProductSearch` and `SearchAutocomplete` (`lib/pwa/offline-search.ts`)
+- [x] **Offline category browsing** — `getOfflineCategories()` and `getOfflineProductsByCategory()` derive categories from cached products
 - [x] **Sync indicator** — Toast notification when user goes offline/online via `OfflineIndicator`
 
 ## Phase 4: Push Notifications ✅
@@ -32,24 +33,25 @@
 - [x] **Server-side push** — WordPress mu-plugin to send push notifications via Web Push API
 - [x] **Notification preferences** — Let users control which notification types they receive
 
-## Phase 5: Background Sync & Offline Cart
+## Phase 5: Background Sync & Offline Cart ✅
 
-- [ ] **Offline cart** — Allow adding items to cart while offline, sync when back online
-- [ ] **Background sync** — Queue form submissions (contact, reviews) and sync when connectivity returns
-- [ ] **Wishlist sync** — Offline wishlist management with background sync
+- [x] **Offline cart** — Cart already works offline (Zustand + localStorage). Added `CartStockRevalidation` to check stock when back online.
+- [x] **Background sync** — `submitWithSync()` queues POST requests in IndexedDB when offline; SW `sync` event + client-side `online` listener replay the queue (`lib/pwa/background-sync.ts`)
+- [x] **Wishlist sync** — Wishlist is localStorage-based (Zustand), works offline natively. No server-side sync needed.
 
-## Phase 6: Install Experience & App-Like Features
+## Phase 6: Install Experience & App-Like Features ✅
 
-- [ ] **Custom install prompt** — Show an in-app banner encouraging PWA installation (defer the native prompt)
-- [ ] **App shortcuts** — Add manifest shortcuts for Shop, Cart, Account, Search
-- [ ] **Share target** — Register as a share target so users can share products from other apps
-- [ ] **Badge API** — Show cart item count as app badge on the home screen icon
+- [x] **Custom install prompt** — `InstallPrompt` component listens for `beforeinstallprompt`, shows banner after 2 visits
+- [x] **App shortcuts** — Manifest shortcuts for Shop, Account, Search
+- [x] **Share target** — Manifest `share_target` + `/share` handler page routes shared URLs/text to shop search
+- [x] **Badge API** — `AppBadge` component syncs cart item count to home screen icon via `navigator.setAppBadge()`
+- [x] **iOS polish** — `appleWebApp` metadata (capable, black-translucent status bar), `viewport-fit: cover` for notched iPhones
 - [ ] **Periodic background sync** — Check for price drops or new arrivals in the background
 
-## Phase 7: Performance & Analytics
+## Phase 7: Performance & Analytics (Partial)
 
 - [ ] **Lighthouse CI** — Automated PWA audit in CI pipeline, fail on regression
-- [ ] **Install analytics** — Track PWA install rates, standalone usage vs browser
+- [x] **Install analytics** — GA events for prompt shown/clicked/accepted/dismissed, `appinstalled`, standalone vs browser mode (`PwaAnalytics`)
 - [ ] **Offline usage analytics** — Queue analytics events offline, flush when connected
 - [ ] **Web Vitals from standalone** — Compare Core Web Vitals between browser and installed PWA
 
@@ -59,3 +61,4 @@
 - If caching needs grow significantly, consider migrating to [Serwist](https://serwist.pages.dev/) (Workbox successor for Next.js) for precache manifests and routing
 - Push notifications require a VAPID key pair and a server-side push service — plan for a `push-service` mu-plugin or standalone microservice
 - Test installability with Chrome DevTools > Application > Manifest and Lighthouse PWA audit
+- Background sync requires `SyncManager` API (Chrome/Edge only); client-side `online` listener is the fallback for Safari/Firefox
