@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import * as gtag from '@/lib/analytics/gtag';
+import { searchOfflineProducts } from '@/lib/pwa/offline-search';
 
 type SearchMode = 'products' | 'articles';
 
@@ -210,10 +211,27 @@ export default function SearchAutocomplete({
       setIsLoading(true);
       try {
         if (searchMode === 'products') {
-          const response = await fetch(
-            `/api/search?q=${encodeURIComponent(query)}&limit=5`,
-          );
-          const data = await response.json();
+          let data;
+          try {
+            const response = await fetch(
+              `/api/search?q=${encodeURIComponent(query)}&limit=5`,
+            );
+            data = await response.json();
+          } catch {
+            // Network error — fall back to offline search
+            const offlineResults = await searchOfflineProducts(query, 5);
+            data = {
+              products: offlineResults.map((r) => ({
+                id: r.slug,
+                name: r.name,
+                slug: r.slug,
+                price: r.price,
+                image: r.image?.url || null,
+              })),
+              categories: [],
+              suggestions: [],
+            };
+          }
           setProducts(data.products || []);
           setCategories(data.categories || []);
           setSuggestions(data.suggestions || []);
