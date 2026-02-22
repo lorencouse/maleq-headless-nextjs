@@ -272,6 +272,52 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+// ─── Background Sync — replay queued requests ───────────────────────
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'replay-queue') {
+    event.waitUntil(replayQueueFromIDB());
+  }
+});
+
+async function replayQueueFromIDB() {
+  const DB_NAME = 'maleq-sync';
+  const STORE_NAME = 'pending-requests';
+
+  const db = await new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  const store = tx.objectStore(STORE_NAME);
+
+  const items = await new Promise((resolve, reject) => {
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+
+  for (const item of items) {
+    try {
+      const response = await fetch(item.url, {
+        method: item.method,
+        headers: item.headers,
+        body: item.body,
+      });
+      if (response.ok) {
+        store.delete(item.id);
+      }
+    } catch {
+      // Still offline — SyncManager will retry later
+      break;
+    }
+  }
+
+  db.close();
+}
+
 // ─── Periodic cache cleanup (on message from client) ────────────────
 
 self.addEventListener('message', (event) => {

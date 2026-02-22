@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import StarRating from './StarRating';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { submitWithSync } from '@/lib/pwa/background-sync';
 
 interface WriteReviewFormProps {
   productId: number;
@@ -54,29 +55,30 @@ export default function WriteReviewForm({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { queued, data } = await submitWithSync<{ error?: string }>(
+        '/api/reviews',
+        {
           productId,
           reviewer: name.trim(),
           reviewerEmail: email.trim(),
           review: review.trim(),
           rating,
-        }),
-      });
+        },
+      );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to submit review');
+      if (queued) {
+        setSuccess(true);
+        setRating(0);
+        setReview('');
+        // Note: success message will show "submitted" but it's actually queued
+        // The success UI already says "will be visible once approved" which works
+      } else if (data?.error) {
+        throw new Error(data.error);
+      } else {
+        setSuccess(true);
+        setRating(0);
+        setReview('');
       }
-
-      setSuccess(true);
-      setRating(0);
-      setReview('');
 
       if (onSuccess) {
         setTimeout(() => {

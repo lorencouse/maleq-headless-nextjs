@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { showSuccess, showError } from '@/lib/utils/toast';
+import { showSuccess, showError, showInfo } from '@/lib/utils/toast';
 import { contactSchema, type ContactFormData } from '@/lib/validations/contact';
+import { submitWithSync } from '@/lib/pwa/background-sync';
 
 export default function ContactForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,20 +36,21 @@ export default function ContactForm() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+      const { queued, data: result } = await submitWithSync<{ success: boolean; message: string }>(
+        '/api/contact',
+        data,
+      );
 
-      const result = await response.json();
-
-      if (result.success) {
+      if (queued) {
+        setSubmitted(true);
+        showInfo('You appear to be offline. Your message has been queued and will be sent when you reconnect.');
+        reset();
+      } else if (result?.success) {
         setSubmitted(true);
         showSuccess(result.message);
         reset();
       } else {
-        showError(result.message);
+        showError(result?.message || 'Failed to send message.');
       }
     } catch {
       showError('Failed to send message. Please try again.');

@@ -16,6 +16,7 @@ import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import AppBadge from "@/components/pwa/AppBadge";
 import PwaAnalytics from "@/components/pwa/PwaAnalytics";
+import BackgroundSyncReplay from "@/components/pwa/BackgroundSyncReplay";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -137,6 +138,7 @@ export default function RootLayout({
         <OfflineIndicator />
         <GoogleAnalytics />
         <PwaAnalytics />
+        <BackgroundSyncReplay />
         <OrganizationSchema
           name={SITE_NAME}
           url={SITE_URL}
