@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/Toaster";
 import NewsletterPopup from "@/components/newsletter/NewsletterPopup";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
+import WebVitals from "@/components/analytics/WebVitals";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
@@ -138,6 +139,7 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <OfflineIndicator />
         <GoogleAnalytics />
+        <WebVitals />
         <PwaAnalytics />
         <BackgroundSyncReplay />
         <OrganizationSchema

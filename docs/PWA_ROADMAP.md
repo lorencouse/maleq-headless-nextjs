@@ -48,12 +48,12 @@
 - [x] **iOS polish** — `appleWebApp` metadata (capable, black-translucent status bar), `viewport-fit: cover` for notched iPhones
 - [ ] **Periodic background sync** — Check for price drops or new arrivals in the background
 
-## Phase 7: Performance & Analytics (Partial)
+## Phase 7: Performance & Analytics ✅
 
-- [ ] **Lighthouse CI** — Automated PWA audit in CI pipeline, fail on regression
+- [x] **Lighthouse CI** — GitHub Actions workflow runs Lighthouse on PRs, asserts PWA score >= 90 (`lighthouserc.js`, `.github/workflows/lighthouse.yml`)
 - [x] **Install analytics** — GA events for prompt shown/clicked/accepted/dismissed, `appinstalled`, standalone vs browser mode (`PwaAnalytics`)
-- [ ] **Offline usage analytics** — Queue analytics events offline, flush when connected
-- [ ] **Web Vitals from standalone** — Compare Core Web Vitals between browser and installed PWA
+- [x] **Offline usage analytics** — All gtag calls queue in localStorage when offline, flush on reconnect (`lib/analytics/offline-queue.ts`)
+- [x] **Web Vitals from standalone** — CLS, INP, LCP, FCP, TTFB reported to GA with `pwa_display_mode` dimension (`components/analytics/WebVitals.tsx`)
 
 ## Notes
 

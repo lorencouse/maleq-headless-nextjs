@@ -1,5 +1,7 @@
 // Google Analytics 4 tracking utilities
 
+import { queueGtagCall } from './offline-queue';
+
 export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || '';
 
 // Check if GA is available
@@ -15,11 +17,24 @@ declare global {
   }
 }
 
+// Helper: call gtag or queue if offline
+function gtagOrQueue(type: 'event' | 'config', ...args: unknown[]) {
+  if (navigator.onLine && window.gtag) {
+    if (type === 'event') {
+      window.gtag('event', ...args);
+    } else {
+      window.gtag('config', ...args);
+    }
+  } else {
+    queueGtagCall(type, ...args);
+  }
+}
+
 // Page view tracking
 export const pageview = (url: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('config', GA_TRACKING_ID, {
+  gtagOrQueue('config', GA_TRACKING_ID, {
     page_path: url,
   });
 };
@@ -38,7 +53,7 @@ export const event = ({
 }): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', action, {
+  gtagOrQueue('event', action, {
     event_category: category,
     event_label: label,
     value: value,
@@ -56,7 +71,7 @@ export const viewItem = (item: {
 }): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'view_item', {
+  gtagOrQueue('event', 'view_item', {
     currency: item.currency || 'USD',
     value: item.price,
     items: [
@@ -84,7 +99,7 @@ export const addToCart = (item: {
 }): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'add_to_cart', {
+  gtagOrQueue('event', 'add_to_cart', {
     currency: item.currency || 'USD',
     value: item.price * item.quantity,
     items: [
@@ -111,7 +126,7 @@ export const removeFromCart = (item: {
 }): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'remove_from_cart', {
+  gtagOrQueue('event', 'remove_from_cart', {
     currency: item.currency || 'USD',
     value: item.price * item.quantity,
     items: [
@@ -135,7 +150,7 @@ export const viewCart = (items: {
 }[], totalValue: number): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'view_cart', {
+  gtagOrQueue('event', 'view_cart', {
     currency: 'USD',
     value: totalValue,
     items: items.map((item) => ({
@@ -157,7 +172,7 @@ export const beginCheckout = (items: {
 }[], totalValue: number, coupon?: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'begin_checkout', {
+  gtagOrQueue('event', 'begin_checkout', {
     currency: 'USD',
     value: totalValue,
     coupon: coupon,
@@ -180,7 +195,7 @@ export const addShippingInfo = (items: {
 }[], totalValue: number, shippingTier: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'add_shipping_info', {
+  gtagOrQueue('event', 'add_shipping_info', {
     currency: 'USD',
     value: totalValue,
     shipping_tier: shippingTier,
@@ -203,7 +218,7 @@ export const addPaymentInfo = (items: {
 }[], totalValue: number, paymentType: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'add_payment_info', {
+  gtagOrQueue('event', 'add_payment_info', {
     currency: 'USD',
     value: totalValue,
     payment_type: paymentType,
@@ -235,7 +250,7 @@ export const purchase = (transaction: {
 }): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'purchase', {
+  gtagOrQueue('event', 'purchase', {
     transaction_id: transaction.transaction_id,
     currency: 'USD',
     value: transaction.value,
@@ -258,7 +273,7 @@ export const purchase = (transaction: {
 export const search = (searchTerm: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'search', {
+  gtagOrQueue('event', 'search', {
     search_term: searchTerm,
   });
 };
@@ -267,7 +282,7 @@ export const search = (searchTerm: string): void => {
 export const signUp = (method: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'sign_up', {
+  gtagOrQueue('event', 'sign_up', {
     method: method,
   });
 };
@@ -276,7 +291,7 @@ export const signUp = (method: string): void => {
 export const login = (method: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'login', {
+  gtagOrQueue('event', 'login', {
     method: method,
   });
 };
@@ -290,7 +305,7 @@ export const addToWishlist = (item: {
 }): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'add_to_wishlist', {
+  gtagOrQueue('event', 'add_to_wishlist', {
     currency: item.currency || 'USD',
     value: item.price,
     items: [
@@ -308,7 +323,7 @@ export const addToWishlist = (item: {
 export const share = (method: string, contentType: string, itemId: string): void => {
   if (!isGAAvailable()) return;
 
-  window.gtag('event', 'share', {
+  gtagOrQueue('event', 'share', {
     method: method,
     content_type: contentType,
     item_id: itemId,
