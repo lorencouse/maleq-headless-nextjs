@@ -77,7 +77,7 @@ function staleWhileRevalidate(event, cacheName) {
 // Network-first: try network, fall back to cache (with age check)
 function networkFirst(event, cacheName, maxAgeMs) {
   event.respondWith(
-    fetch(event.request)
+    fetchWithTimeout(event.request, 5000)
       .then((response) => {
         if (response.ok) {
           const clone = response.clone();
@@ -111,6 +111,27 @@ function cacheFirst(event, cacheName) {
       });
     })
   );
+}
+
+// Fetch with timeout — races fetch() against a timer, rejects on timeout
+function fetchWithTimeout(request, ms) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error('Network timeout'));
+    }, ms);
+
+    fetch(request, { signal: controller.signal })
+      .then((response) => {
+        clearTimeout(timer);
+        resolve(response);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
 }
 
 // ─── URL Matchers ───────────────────────────────────────────────────
@@ -198,7 +219,7 @@ self.addEventListener('fetch', (event) => {
   // ── Navigation requests (HTML pages) ──
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
+      fetchWithTimeout(request, 8000)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();

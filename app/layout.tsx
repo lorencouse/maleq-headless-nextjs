@@ -13,6 +13,7 @@ import QueryProvider from "@/components/providers/QueryProvider";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
+import InstallPrompt from "@/components/pwa/InstallPrompt";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
+  viewportFit: 'cover',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
@@ -95,6 +97,11 @@ export const metadata: Metadata = {
     // yandex: 'verification_token',
     // bing: 'verification_token',
   },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Male Q',
+  },
   alternates: {
     canonical: SITE_URL,
   },
@@ -151,7 +158,8 @@ export default function RootLayout({
               </main>
               <Footer />
               <NewsletterPopup delay={45000} showOnExitIntent />
-              <div className="fixed bottom-4 right-4 z-40 max-w-sm">
+              <div className="fixed bottom-4 right-4 z-40 max-w-sm space-y-3">
+                <InstallPrompt minVisits={2} />
                 <PushNotificationPrompt minVisits={3} />
               </div>
             </CartProvider>

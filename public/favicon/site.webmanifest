@@ -52,5 +52,25 @@
       "type": "image/png"
     }
   ],
-  "categories": ["shopping"]
+  "categories": ["shopping"],
+  "shortcuts": [
+    {
+      "name": "Shop All Products",
+      "short_name": "Shop",
+      "url": "/shop",
+      "icons": [{ "src": "/favicon/android/android-launchericon-96-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Account",
+      "short_name": "Account",
+      "url": "/account",
+      "icons": [{ "src": "/favicon/android/android-launchericon-96-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "url": "/search",
+      "icons": [{ "src": "/favicon/android/android-launchericon-96-96.png", "sizes": "96x96" }]
+    }
+  ]
 }
