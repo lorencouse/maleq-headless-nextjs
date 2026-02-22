@@ -65,7 +65,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
 // Dynamic page: uses searchParams for filtering (color, material, price, etc.)
 // Data fetching uses unstable_cache and in-memory product index, so no perf penalty.
-export const dynamicParams = true; // Allow runtime generation of any brand page
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   try {

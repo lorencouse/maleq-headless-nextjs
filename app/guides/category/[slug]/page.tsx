@@ -83,7 +83,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
 // Dynamic page: uses searchParams for pagination.
 // Data fetching uses unstable_cache, so no perf penalty.
-export const dynamicParams = true; // Allow runtime generation of any blog category page
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   // Try MySQL first
