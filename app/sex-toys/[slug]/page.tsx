@@ -72,8 +72,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
-// ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
-export const revalidate = 604800;
+// Dynamic page: uses searchParams for filtering (brand, color, material, price, etc.)
+// Data fetching uses unstable_cache and in-memory product index, so no perf penalty.
 export const dynamicParams = true; // Allow runtime generation of any category page
 
 export async function generateStaticParams() {

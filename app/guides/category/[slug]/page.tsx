@@ -81,8 +81,8 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
-// ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
-export const revalidate = 2592000;
+// Dynamic page: uses searchParams for pagination.
+// Data fetching uses unstable_cache, so no perf penalty.
 export const dynamicParams = true; // Allow runtime generation of any blog category page
 
 export async function generateStaticParams() {

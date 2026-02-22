@@ -37,8 +37,8 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
   };
 }
 
-// ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
-export const revalidate = 2592000;
+// Dynamic page: uses searchParams for blog search.
+// Data fetching uses unstable_cache, so no perf penalty.
 
 interface BlogPageProps {
   searchParams: Promise<{ q?: string }>;

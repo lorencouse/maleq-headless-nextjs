@@ -50,8 +50,8 @@ export async function generateMetadata({ searchParams }: ShopPageProps): Promise
   };
 }
 
-// ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
-export const revalidate = 604800;
+// Dynamic page: uses searchParams for filtering/search.
+// Data fetching uses unstable_cache and in-memory product index, so no perf penalty.
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
