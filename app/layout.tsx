@@ -14,6 +14,8 @@ import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistratio
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
+import AppBadge from "@/components/pwa/AppBadge";
+import PwaAnalytics from "@/components/pwa/PwaAnalytics";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -134,6 +136,7 @@ export default function RootLayout({
         <ServiceWorkerRegistration />
         <OfflineIndicator />
         <GoogleAnalytics />
+        <PwaAnalytics />
         <OrganizationSchema
           name={SITE_NAME}
           url={SITE_URL}
@@ -151,6 +154,7 @@ export default function RootLayout({
         <QueryProvider>
           <ThemeProvider>
             <CartProvider>
+              <AppBadge />
               <Toaster />
               <Header />
               <main id="main-content" className="flex-grow" role="main">

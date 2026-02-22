@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { event as gaEvent } from '@/lib/analytics/gtag';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -31,19 +32,35 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
       deferredPrompt.current = e as BeforeInstallPromptEvent;
       if (hasEnoughVisits) {
         setVisible(true);
+        gaEvent({ action: 'pwa_install_prompt_shown', category: 'PWA' });
       }
     };
 
     window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+
+    // Track actual install (fires after user installs from any source)
+    const installHandler = () => {
+      gaEvent({ action: 'pwa_app_installed', category: 'PWA' });
+    };
+    window.addEventListener('appinstalled', installHandler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installHandler);
+    };
   }, [minVisits]);
 
   if (!visible) return null;
 
   const handleInstall = async () => {
     if (!deferredPrompt.current) return;
+    gaEvent({ action: 'pwa_install_prompt_clicked', category: 'PWA' });
     await deferredPrompt.current.prompt();
     const { outcome } = await deferredPrompt.current.userChoice;
+    gaEvent({
+      action: outcome === 'accepted' ? 'pwa_install_accepted' : 'pwa_install_dismissed',
+      category: 'PWA',
+    });
     if (outcome === 'accepted') {
       setVisible(false);
     }
@@ -52,6 +69,7 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
 
   const handleDismiss = () => {
     localStorage.setItem(DISMISS_KEY, '1');
+    gaEvent({ action: 'pwa_install_prompt_dismissed', category: 'PWA' });
     setVisible(false);
   };
 
