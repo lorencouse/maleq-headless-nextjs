@@ -54,9 +54,12 @@ export default function ServiceWorkerRegistration() {
 
   const handleUpdate = () => {
     if (waitingWorker) {
+      // Listen for the new SW to take control before reloading
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      }, { once: true });
       waitingWorker.postMessage('SKIP_WAITING');
       setShowUpdateBanner(false);
-      window.location.reload();
     }
   };
 

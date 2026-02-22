@@ -29,11 +29,13 @@ export default function PwaAnalytics() {
 
   // Flush offline analytics queue when coming back online
   useEffect(() => {
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+
     const handleOnline = () => {
       const size = getQueueSize();
       if (size > 0) {
         // Small delay to let gtag script initialize
-        setTimeout(() => flushQueue(), 1000);
+        flushTimer = setTimeout(() => flushQueue(), 1000);
       }
     };
 
@@ -44,7 +46,10 @@ export default function PwaAnalytics() {
       handleOnline();
     }
 
-    return () => window.removeEventListener('online', handleOnline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      if (flushTimer) clearTimeout(flushTimer);
+    };
   }, []);
 
   return null;

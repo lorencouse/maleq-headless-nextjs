@@ -91,33 +91,56 @@ export async function removeRequest(id: number): Promise<void> {
   db.close();
 }
 
+const REPLAY_LOCK_KEY = 'maleq-sync-replay-lock';
+const LOCK_TTL_MS = 30_000; // 30s max lock duration
+
 /**
  * Replay all pending requests. Called when back online.
+ * Uses a localStorage mutex to prevent duplicate replays across tabs.
  * Returns the number of successfully replayed requests.
  */
 export async function replayQueue(): Promise<number> {
-  const pending = await getPendingRequests();
-  let replayed = 0;
-
-  for (const req of pending) {
-    try {
-      const response = await fetch(req.url, {
-        method: req.method,
-        headers: req.headers,
-        body: req.body,
-      });
-
-      if (response.ok && req.id !== undefined) {
-        await removeRequest(req.id);
-        replayed++;
-      }
-    } catch {
-      // Still offline or server error — leave in queue for next attempt
-      break;
+  // Acquire lock — prevent concurrent replay across tabs
+  try {
+    const existing = localStorage.getItem(REPLAY_LOCK_KEY);
+    if (existing && Date.now() - Number(existing) < LOCK_TTL_MS) {
+      return 0; // Another tab is replaying
     }
+    localStorage.setItem(REPLAY_LOCK_KEY, String(Date.now()));
+  } catch {
+    // localStorage unavailable — proceed without lock
   }
 
-  return replayed;
+  try {
+    const pending = await getPendingRequests();
+    let replayed = 0;
+
+    for (const req of pending) {
+      try {
+        const response = await fetch(req.url, {
+          method: req.method,
+          headers: req.headers,
+          body: req.body,
+        });
+
+        if (response.ok && req.id !== undefined) {
+          await removeRequest(req.id);
+          replayed++;
+        }
+      } catch {
+        // Still offline or server error — leave in queue for next attempt
+        break;
+      }
+    }
+
+    return replayed;
+  } finally {
+    try {
+      localStorage.removeItem(REPLAY_LOCK_KEY);
+    } catch {
+      // Ignore
+    }
+  }
 }
 
 /**
@@ -139,8 +162,16 @@ export async function submitWithSync<T = unknown>(
         const responseData = await response.json();
         return { queued: false, data: responseData as T };
       }
-      // Server error — queue for retry
-    } catch {
+      // Don't queue client errors (4xx) — they won't succeed on retry
+      if (response.status >= 400 && response.status < 500) {
+        throw new Error(`Client error ${response.status}`);
+      }
+      // Server error (5xx) — fall through to queue for retry
+    } catch (err) {
+      // Re-throw client errors so the caller can handle them
+      if (err instanceof Error && err.message.startsWith('Client error')) {
+        throw err;
+      }
       // Network error — fall through to queue
     }
   }

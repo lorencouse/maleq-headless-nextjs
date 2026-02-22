@@ -75,9 +75,10 @@ export async function searchOfflineProducts(
     const results = index.search(query);
     const productMap = new Map(products.map((p) => [p.slug, p]));
 
-    return results.slice(0, limit).map((result) => {
-      const product = productMap.get(result.id as string)!;
-      return {
+    return results.slice(0, limit).reduce<OfflineSearchResult[]>((acc, result) => {
+      const product = productMap.get(result.id as string);
+      if (!product) return acc;
+      acc.push({
         slug: product.slug,
         name: product.name,
         price: product.price,
@@ -88,8 +89,9 @@ export async function searchOfflineProducts(
         brand: product.brand,
         categories: product.categories,
         score: result.score,
-      };
-    });
+      });
+      return acc;
+    }, []);
   } catch {
     return [];
   }

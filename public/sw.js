@@ -290,15 +290,15 @@ async function replayQueueFromIDB() {
     req.onerror = () => reject(req.error);
   });
 
-  const tx = db.transaction(STORE_NAME, 'readwrite');
-  const store = tx.objectStore(STORE_NAME);
-
+  // Read all items in a readonly transaction (completes before async work)
   const items = await new Promise((resolve, reject) => {
-    const req = store.getAll();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).getAll();
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
 
+  // Replay each item and delete successes in individual transactions
   for (const item of items) {
     try {
       const response = await fetch(item.url, {
@@ -307,7 +307,12 @@ async function replayQueueFromIDB() {
         body: item.body,
       });
       if (response.ok) {
-        store.delete(item.id);
+        const deleteTx = db.transaction(STORE_NAME, 'readwrite');
+        deleteTx.objectStore(STORE_NAME).delete(item.id);
+        await new Promise((resolve, reject) => {
+          deleteTx.oncomplete = resolve;
+          deleteTx.onerror = () => reject(deleteTx.error);
+        });
       }
     } catch {
       // Still offline — SyncManager will retry later

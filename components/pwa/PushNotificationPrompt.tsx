@@ -31,13 +31,21 @@ export default function PushNotificationPrompt({
     if (!isSupported || isSubscribed || permission === 'denied') return;
 
     // Don't show if dismissed
-    if (localStorage.getItem(DISMISS_KEY)) return;
+    try {
+      if (localStorage.getItem(DISMISS_KEY)) return;
+    } catch {
+      return;
+    }
 
     // Check visit count
     if (minVisits > 0) {
-      const visits = parseInt(localStorage.getItem(VISITS_KEY) || '0', 10) + 1;
-      localStorage.setItem(VISITS_KEY, String(visits));
-      if (visits < minVisits) return;
+      try {
+        const visits = parseInt(localStorage.getItem(VISITS_KEY) || '0', 10) + 1;
+        localStorage.setItem(VISITS_KEY, String(visits));
+        if (visits < minVisits) return;
+      } catch {
+        // localStorage unavailable — show prompt anyway
+      }
     }
 
     setVisible(true);
@@ -59,7 +67,7 @@ export default function PushNotificationPrompt({
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, '1');
+    try { localStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
     setVisible(false);
   };
 

@@ -20,12 +20,21 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
     if (window.matchMedia('(display-mode: standalone)').matches) return;
 
     // Hide if dismissed
-    if (localStorage.getItem(DISMISS_KEY)) return;
+    try {
+      if (localStorage.getItem(DISMISS_KEY)) return;
+    } catch {
+      return; // localStorage unavailable — don't show prompt
+    }
 
     // Track visits
-    const visits = parseInt(localStorage.getItem(INSTALL_VISITS_KEY) || '0', 10) + 1;
-    localStorage.setItem(INSTALL_VISITS_KEY, String(visits));
-    const hasEnoughVisits = visits >= minVisits;
+    let hasEnoughVisits = true;
+    try {
+      const visits = parseInt(localStorage.getItem(INSTALL_VISITS_KEY) || '0', 10) + 1;
+      localStorage.setItem(INSTALL_VISITS_KEY, String(visits));
+      hasEnoughVisits = visits >= minVisits;
+    } catch {
+      // localStorage unavailable — show prompt anyway
+    }
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -68,7 +77,7 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, '1');
+    try { localStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
     gaEvent({ action: 'pwa_install_prompt_dismissed', category: 'PWA' });
     setVisible(false);
   };

@@ -52,6 +52,9 @@ export function flushQueue(): number {
   const queue = getQueue();
   if (queue.length === 0) return 0;
 
+  const failed: QueuedEvent[] = [];
+  let flushed = 0;
+
   for (const entry of queue) {
     try {
       if (entry.type === 'event') {
@@ -59,14 +62,20 @@ export function flushQueue(): number {
       } else {
         window.gtag('config', ...(entry.args as [string, ...unknown[]]));
       }
+      flushed++;
     } catch {
-      // Skip malformed entries
+      failed.push(entry);
     }
   }
 
-  const count = queue.length;
-  localStorage.removeItem(QUEUE_KEY);
-  return count;
+  // Keep only failed events in the queue
+  if (failed.length > 0) {
+    saveQueue(failed);
+  } else {
+    try { localStorage.removeItem(QUEUE_KEY); } catch { /* ignore */ }
+  }
+
+  return flushed;
 }
 
 /**

@@ -19,11 +19,14 @@ export default async function SharePage({ searchParams }: SharePageProps) {
 
   // If a URL from our own site was shared, redirect directly to it
   const siteHost = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
-  if (sharedUrl.startsWith(siteHost) || sharedUrl.startsWith('/')) {
-    const path = sharedUrl.startsWith(siteHost)
-      ? sharedUrl.slice(siteHost.length)
-      : sharedUrl;
-    redirect(path || '/');
+  try {
+    const parsed = new URL(sharedUrl, siteHost);
+    const siteOrigin = new URL(siteHost).origin;
+    if (parsed.origin === siteOrigin) {
+      redirect(parsed.pathname + parsed.search + parsed.hash || '/');
+    }
+  } catch {
+    // Invalid URL — fall through to search
   }
 
   // Extract a search term from the shared content
