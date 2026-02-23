@@ -62,8 +62,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, source: 'sql' });
     }
 
-    return NextResponse.json({ error: 'Failed to track view' }, { status: 500 });
+    // View tracking is non-critical; avoid surfacing 5xx for analytics-only failures.
+    return NextResponse.json({ success: false, source: 'none' });
   } catch {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, source: 'none' });
   }
 }
