@@ -56,10 +56,8 @@ export async function GET(request: NextRequest) {
       params.push(severity);
     }
 
-    params.push(limit);
-
     const pool = await getPoolAsync();
-    const [rows] = await pool.execute<EventRow[]>(
+    const [rows] = await pool.query<EventRow[]>(
       `SELECT
         id,
         event_type,
@@ -78,7 +76,7 @@ export async function GET(request: NextRequest) {
       FROM maleq_event_log
       WHERE ${whereClauses.join(' AND ')}
       ORDER BY id DESC
-      LIMIT ?`,
+      LIMIT ${limit}`,
       params
     );
 
