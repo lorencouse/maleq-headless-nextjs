@@ -28,28 +28,43 @@ async function ensureEventLogTable(): Promise<void> {
 
   ensureTablePromise = (async () => {
     const pool = await getPoolAsync();
-    await pool.execute(`
-      CREATE TABLE IF NOT EXISTS maleq_event_log (
-        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-        event_type VARCHAR(64) NOT NULL,
-        event_source VARCHAR(32) NOT NULL DEFAULT 'nextjs',
-        severity ENUM('info', 'warning', 'error') NOT NULL DEFAULT 'info',
-        message TEXT NOT NULL,
-        event_id VARCHAR(128) NULL,
-        payment_intent_id VARCHAR(128) NULL,
-        order_id BIGINT NULL,
-        request_path VARCHAR(255) NULL,
-        ip VARCHAR(64) NULL,
-        user_agent VARCHAR(512) NULL,
-        referrer VARCHAR(1024) NULL,
-        payload_json LONGTEXT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (id),
-        KEY idx_event_type_created (event_type, created_at),
-        KEY idx_payment_intent (payment_intent_id),
-        KEY idx_event_id (event_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-    `);
+    try {
+      await pool.execute(`
+        CREATE TABLE IF NOT EXISTS maleq_event_log (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          event_type VARCHAR(64) NOT NULL,
+          event_source VARCHAR(32) NOT NULL DEFAULT 'nextjs',
+          severity ENUM('info', 'warning', 'error') NOT NULL DEFAULT 'info',
+          message TEXT NOT NULL,
+          event_id VARCHAR(128) NULL,
+          payment_intent_id VARCHAR(128) NULL,
+          order_id BIGINT NULL,
+          request_path VARCHAR(255) NULL,
+          ip VARCHAR(64) NULL,
+          user_agent VARCHAR(512) NULL,
+          referrer VARCHAR(1024) NULL,
+          payload_json LONGTEXT NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          KEY idx_event_type_created (event_type, created_at),
+          KEY idx_payment_intent (payment_intent_id),
+          KEY idx_event_id (event_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+      `);
+    } catch (error) {
+      const code = (error as { code?: string }).code;
+      const createDenied =
+        code === 'ER_TABLEACCESS_DENIED_ERROR' ||
+        code === 'ER_DBACCESS_DENIED_ERROR' ||
+        code === 'ER_ACCESS_DENIED_ERROR';
+
+      if (!createDenied) {
+        throw error;
+      }
+
+      // Read-only app users cannot CREATE; if table already exists, proceed.
+      await pool.query('SELECT 1 FROM maleq_event_log LIMIT 1');
+    }
   })();
 
   try {
