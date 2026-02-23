@@ -57,10 +57,10 @@ function getRemoteSslConfig(prefix: 'MYSQL_PROD' | 'MYSQL'): SslOptions | undefi
   const key = process.env[`${prefix}_SSL_KEY`] || decodeBase64Pem(process.env[`${prefix}_SSL_KEY_BASE64`]);
   const rejectUnauthorized = parseBoolean(process.env[`${prefix}_SSL_REJECT_UNAUTHORIZED`]) ?? Boolean(ca);
 
-  // Backward-compatible default: TLS is only enabled when explicitly turned on
-  // or when cert material is provided.
-  const shouldEnableSsl = sslEnabled === true || Boolean(ca || cert || key);
-  if (!shouldEnableSsl || sslEnabled === false) return undefined;
+  // Secure-by-default for remote TCP DB connections.
+  // Opt out only with *_SSL=0/false/off.
+  const shouldEnableSsl = sslEnabled !== false;
+  if (!shouldEnableSsl) return undefined;
 
   return {
     ...(ca ? { ca } : {}),
@@ -160,13 +160,15 @@ function logMode(config: DBConfig) {
     console.log('\n🟢 Using Local DB (Local by Flywheel)\n');
   } else if (config.mode === 'prod') {
     console.log('\n🟠 Using Production DB (wp.maleq.com via SSH tunnel)\n');
-    if (!config.ssl) {
-      console.warn('⚠️  Remote MySQL TLS is disabled. Set MYSQL_PROD_SSL=1 and cert vars before enabling require_secure_transport.');
-    }
+    console.log(config.ssl
+      ? '🔐 Remote MySQL TLS enabled'
+      : '⚠️  Remote MySQL TLS disabled via MYSQL_PROD_SSL=0');
   } else {
     console.log('\n⚪ Using MySQL (legacy config)\n');
-    if (!config.socketPath && !config.ssl) {
-      console.warn('⚠️  Remote MySQL TLS is disabled. Set MYSQL_SSL=1 and cert vars before enabling require_secure_transport.');
+    if (!config.socketPath) {
+      console.log(config.ssl
+        ? '🔐 Remote MySQL TLS enabled'
+        : '⚠️  Remote MySQL TLS disabled via MYSQL_SSL=0');
     }
   }
 }
