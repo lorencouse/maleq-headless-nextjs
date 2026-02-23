@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logDurableEvent } from '@/lib/monitoring/durable-events';
 
 /**
  * POST /api/log-404
@@ -19,6 +20,17 @@ export async function POST(request: NextRequest) {
 
     // Log to stdout — visible in Vercel function logs and server console
     console.log('[404]', JSON.stringify(logEntry));
+
+    await logDurableEvent({
+      eventType: 'not_found_page_view',
+      severity: 'info',
+      message: '404 page rendered',
+      requestPath: logEntry.path,
+      ip: logEntry.ip,
+      userAgent: logEntry.userAgent,
+      referrer: logEntry.referrer,
+      payload: logEntry,
+    });
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch {

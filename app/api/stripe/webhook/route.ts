@@ -4,6 +4,7 @@ import { getStripeServer } from '@/lib/stripe/server';
 import { updateOrder } from '@/lib/woocommerce/orders';
 import { getWooCommerceEndpoint, getAuthHeader, isWooCommerceConfigured } from '@/lib/woocommerce/auth';
 import { sendAdminAlert } from '@/lib/email/alert';
+import { logDurableEvent } from '@/lib/monitoring/durable-events';
 
 /**
  * Stripe Webhook Handler
@@ -23,6 +24,12 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 export async function POST(request: NextRequest) {
   if (!WEBHOOK_SECRET) {
     console.error('Stripe webhook secret not configured');
+    await logDurableEvent({
+      eventType: 'stripe_webhook_config_error',
+      severity: 'error',
+      message: 'Stripe webhook secret not configured',
+      requestPath: request.nextUrl.pathname,
+    });
     return NextResponse.json(
       { error: 'Webhook not configured' },
       { status: 500 }
@@ -33,6 +40,12 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('stripe-signature');
 
   if (!signature) {
+    await logDurableEvent({
+      eventType: 'stripe_webhook_missing_signature',
+      severity: 'warning',
+      message: 'Missing stripe-signature header',
+      requestPath: request.nextUrl.pathname,
+    });
     return NextResponse.json(
       { error: 'Missing stripe-signature header' },
       { status: 400 }
@@ -47,6 +60,13 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     console.error('Webhook signature verification failed:', message);
+    await logDurableEvent({
+      eventType: 'stripe_webhook_invalid_signature',
+      severity: 'warning',
+      message: 'Webhook signature verification failed',
+      requestPath: request.nextUrl.pathname,
+      payload: { error: message },
+    });
     return NextResponse.json(
       { error: 'Invalid signature' },
       { status: 400 }
@@ -86,6 +106,18 @@ export async function POST(request: NextRequest) {
       'PaymentIntent': pi.id || 'N/A',
       'Error': error instanceof Error ? error.message : String(error),
     });
+    await logDurableEvent({
+      eventType: 'stripe_webhook_handler_failed',
+      severity: 'error',
+      message: `Webhook handler failed for ${event.type}`,
+      eventId: event.id,
+      paymentIntentId: pi.id || null,
+      requestPath: request.nextUrl.pathname,
+      payload: {
+        eventType: event.type,
+        error: error instanceof Error ? error.message : String(error),
+      },
+    });
     // Return 500 so Stripe retries transient failures.
     return NextResponse.json({ received: false, error: 'Handler failed' }, { status: 500 });
   }
@@ -102,6 +134,16 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     console.warn(
       `payment_intent.succeeded: No WooCommerce order ID found for ${paymentIntent.id}`
     );
+    await logDurableEvent({
+      eventType: 'stripe_payment_succeeded_unmatched',
+      severity: 'warning',
+      message: 'payment_intent.succeeded with no matching WooCommerce order',
+      paymentIntentId: paymentIntent.id,
+      payload: {
+        amount: paymentIntent.amount,
+        receiptEmail: paymentIntent.receipt_email || null,
+      },
+    });
     sendAdminAlert('Payment Succeeded — No WooCommerce Order', {
       'PaymentIntent': paymentIntent.id,
       'Amount': `$${(paymentIntent.amount / 100).toFixed(2)}`,
@@ -130,6 +172,16 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     console.warn(
       `payment_intent.payment_failed: No WooCommerce order ID found for ${paymentIntent.id}`
     );
+    await logDurableEvent({
+      eventType: 'stripe_payment_failed_unmatched',
+      severity: 'warning',
+      message: 'payment_intent.payment_failed with no matching WooCommerce order',
+      paymentIntentId: paymentIntent.id,
+      payload: {
+        amount: paymentIntent.amount,
+        failureMessage: paymentIntent.last_payment_error?.message || null,
+      },
+    });
     return;
   }
 
