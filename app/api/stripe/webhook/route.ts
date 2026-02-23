@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getStripeServer } from '@/lib/stripe/server';
 import { updateOrder } from '@/lib/woocommerce/orders';
+import { getWooCommerceEndpoint, getAuthHeader, isWooCommerceConfigured } from '@/lib/woocommerce/auth';
 import { sendAdminAlert } from '@/lib/email/alert';
 
 /**
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
  * but the status update didn't, or for async payment methods (bank transfers, etc.)
  */
 async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  const orderId = findWooCommerceOrderId(paymentIntent);
+  const orderId = await findWooCommerceOrderId(paymentIntent);
   if (!orderId) {
     console.warn(
       `payment_intent.succeeded: No WooCommerce order ID found for ${paymentIntent.id}`
@@ -124,7 +125,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
  * Payment failed — mark the WooCommerce order as failed.
  */
 async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
-  const orderId = findWooCommerceOrderId(paymentIntent);
+  const orderId = await findWooCommerceOrderId(paymentIntent);
   if (!orderId) {
     console.warn(
       `payment_intent.payment_failed: No WooCommerce order ID found for ${paymentIntent.id}`
@@ -172,7 +173,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
   // Retrieve the full PaymentIntent to get metadata
   const stripe = getStripeServer();
   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-  const orderId = findWooCommerceOrderId(paymentIntent);
+  const orderId = await findWooCommerceOrderId(paymentIntent);
 
   if (!orderId) {
     console.warn(
@@ -218,7 +219,7 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
 
   const stripe = getStripeServer();
   const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-  const orderId = findWooCommerceOrderId(paymentIntent);
+  const orderId = await findWooCommerceOrderId(paymentIntent);
 
   if (!orderId) {
     console.warn(
@@ -258,12 +259,65 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
  * The order ID gets stored in metadata when the frontend creates the order.
  * Falls back to searching by transaction_id if metadata is missing.
  */
-function findWooCommerceOrderId(paymentIntent: Stripe.PaymentIntent): number | null {
+async function findWooCommerceOrderId(
+  paymentIntent: Stripe.PaymentIntent
+): Promise<number | null> {
   // Check metadata first (fastest)
   const metaOrderId = paymentIntent.metadata?.woocommerce_order_id;
   if (metaOrderId) {
     const parsed = parseInt(metaOrderId, 10);
     if (!isNaN(parsed)) return parsed;
   }
+
+  // Fallback: look up order by PaymentIntent ID in transaction_id/meta_data.
+  if (!isWooCommerceConfigured()) {
+    return null;
+  }
+
+  try {
+    const piId = paymentIntent.id;
+    const url = getWooCommerceEndpoint(
+      `/orders?search=${encodeURIComponent(piId)}&per_page=20&orderby=date&order=desc`
+    );
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: getAuthHeader(),
+      },
+    });
+
+    if (!response.ok) {
+      console.warn(
+        `findWooCommerceOrderId: fallback order lookup failed for ${piId} (${response.status})`
+      );
+      return null;
+    }
+
+    const orders = (await response.json()) as Array<{
+      id: number;
+      transaction_id?: string;
+      meta_data?: Array<{ key: string; value: unknown }>;
+    }>;
+
+    const matchedOrder = orders.find((order) => {
+      if (order.transaction_id === piId) return true;
+      const meta = order.meta_data || [];
+      return meta.some(
+        (entry) =>
+          entry.key === '_stripe_payment_intent_id' &&
+          String(entry.value || '') === piId
+      );
+    });
+
+    return matchedOrder?.id ?? null;
+  } catch (error) {
+    console.warn(
+      `findWooCommerceOrderId: fallback lookup exception for ${paymentIntent.id}`,
+      error
+    );
+    return null;
+  }
+
   return null;
 }
