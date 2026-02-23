@@ -17,6 +17,10 @@ interface ShopPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Cache the rendered shop route for short intervals to reduce repeated SSR cost
+// on high-traffic listing pages while keeping filters/search fresh enough.
+export const revalidate = 300;
+
 export async function generateMetadata({ searchParams }: ShopPageProps): Promise<Metadata> {
   const params = await searchParams;
   const searchQuery = typeof params.q === 'string' ? params.q : undefined;
