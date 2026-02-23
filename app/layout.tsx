@@ -107,9 +107,6 @@ export const metadata: Metadata = {
     statusBarStyle: 'black-translucent',
     title: 'Male Q',
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
   icons: {
     icon: [
       { url: '/favicon/favicon.ico', sizes: 'any' },

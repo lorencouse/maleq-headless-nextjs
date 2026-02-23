@@ -1,10 +1,15 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Checkout | Male Q',
-  description: 'Complete your order securely. Discreet billing and fast shipping available.',
+  title: 'Checkout',
   robots: { index: false, follow: false },
+  alternates: {
+    canonical: '/checkout',
+  },
 };
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default function CheckoutLayout({
   children,
