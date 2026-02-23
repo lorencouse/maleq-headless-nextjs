@@ -85,8 +85,8 @@ export async function POST(request: NextRequest) {
       'PaymentIntent': pi.id || 'N/A',
       'Error': error instanceof Error ? error.message : String(error),
     });
-    // Return 200 to prevent Stripe from retrying — log the error for investigation
-    return NextResponse.json({ received: true, error: 'Handler failed' });
+    // Return 500 so Stripe retries transient failures.
+    return NextResponse.json({ received: false, error: 'Handler failed' }, { status: 500 });
   }
 }
 

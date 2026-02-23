@@ -94,7 +94,7 @@ export default function OrdersPage() {
     }
 
     fetchOrders();
-  }, [user?.id, token]);
+  }, [user?.id, user?.email, token]);
 
   return (
     <AccountLayout>
@@ -132,7 +132,7 @@ export default function OrdersPage() {
               You haven&apos;t placed any orders. Start shopping to see your order history here.
             </p>
             <Link
-              href="/products"
+              href="/shop"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
             >
               Browse Products

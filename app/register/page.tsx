@@ -6,6 +6,10 @@ import RegisterForm from '@/components/auth/RegisterForm';
 export const metadata: Metadata = {
   title: 'Create Account',
   description: 'Create a Male Q account to track orders, save addresses, and enjoy a faster checkout.',
+  robots: { index: false, follow: false },
+  alternates: {
+    canonical: '/register',
+  },
 };
 
 export default function RegisterPage() {

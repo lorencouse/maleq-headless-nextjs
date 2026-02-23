@@ -1,15 +1,15 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Forgot Password | Male Q',
-  description: 'Request a password reset link for your Male Q account.',
+  title: 'Reset Password | Male Q',
+  description: 'Reset your Male Q account password securely.',
   robots: { index: false, follow: false },
   alternates: {
-    canonical: '/forgot-password',
+    canonical: '/reset-password',
   },
 };
 
-export default function ForgotPasswordLayout({
+export default function ResetPasswordLayout({
   children,
 }: {
   children: React.ReactNode;

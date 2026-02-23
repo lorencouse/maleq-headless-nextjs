@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse, handleApiError } from '@/lib/api/response';
+import { extractAuthToken } from '@/lib/api/auth-token';
 import { getWooCommerceEndpoint, getAuthHeader, isWooCommerceConfigured } from '@/lib/woocommerce/auth';
 
 export async function GET(
@@ -12,6 +13,12 @@ export async function GET(
 
     if (isNaN(orderId)) {
       return errorResponse('Invalid order ID', 400, 'INVALID_ID');
+    }
+
+    // Require auth for order access
+    const tokenData = extractAuthToken(request);
+    if (!tokenData) {
+      return errorResponse('Unauthorized', 401, 'UNAUTHORIZED');
     }
 
     if (!isWooCommerceConfigured()) {
@@ -35,6 +42,12 @@ export async function GET(
     }
 
     const order = await response.json();
+
+    // Enforce ownership: account-only route should only return caller's orders
+    const orderCustomerId = Number(order.customer_id || 0);
+    if (!orderCustomerId || orderCustomerId !== tokenData.userId) {
+      return errorResponse('Forbidden', 403, 'FORBIDDEN');
+    }
 
     // Extract tracking info from meta_data if available
     const trackingMeta = order.meta_data?.find(

@@ -287,16 +287,6 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // --- Catch-all: old root-level blog post URLs → /guides/:slug ---
-      // Old WordPress had posts at /:slug, new site uses /guides/:slug
-      // Regex matches URL-safe slugs (letters, numbers, hyphens) but excludes known app routes
-      // Supports single-char slugs and is case-insensitive via [a-zA-Z0-9]
-      {
-        source:
-          '/:slug((?!account|forgot-password|reset-password|search|login|register|about|contact|faq|terms|privacy|shipping-returns|brands|brand|shop|guides|cart|checkout|product|sex-toys|order-confirmation|track-order|admin|api|graphql|_next|images|fonts|wp-)[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)',
-        destination: '/guides/:slug',
-        permanent: true,
-      },
     ];
   },
 

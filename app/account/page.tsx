@@ -205,7 +205,7 @@ export default function AccountDashboard() {
                 </svg>
                 <p className="mb-4">You haven&apos;t placed any orders yet.</p>
                 <Link
-                  href="/products"
+                  href="/shop"
                   className="inline-flex items-center gap-2 text-primary hover:text-primary-hover font-medium"
                 >
                   Start shopping

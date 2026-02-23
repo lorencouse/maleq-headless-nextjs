@@ -145,7 +145,7 @@ export default function RootLayout({
         <OrganizationSchema
           name={SITE_NAME}
           url={SITE_URL}
-          logo={`${SITE_URL}/logo.png`}
+          logo={`${SITE_URL}/favicon/android/android-launchericon-512-512.png`}
           contactPoint={{
             url: `${SITE_URL}/contact`,
             contactType: 'customer service',
