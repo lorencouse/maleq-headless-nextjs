@@ -26,6 +26,10 @@ function parsePositiveInt(value: string | null, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
+function toMySqlDateTime(date: Date): string {
+  return date.toISOString().slice(0, 19).replace('T', ' ');
+}
+
 export async function GET(request: NextRequest) {
   const authError = verifyAdminAuth(request);
   if (authError) return authError;
@@ -38,8 +42,9 @@ export async function GET(request: NextRequest) {
     const severity = search.get('severity');
     const includePayload = search.get('includePayload') === '1';
 
-    const whereClauses: string[] = ['created_at >= (NOW() - INTERVAL ? HOUR)'];
-    const params: Array<string | number> = [sinceHours];
+    const cutoff = new Date(Date.now() - sinceHours * 60 * 60 * 1000);
+    const whereClauses: string[] = ['created_at >= ?'];
+    const params: Array<string | number> = [toMySqlDateTime(cutoff)];
 
     if (eventType) {
       whereClauses.push('event_type = ?');
