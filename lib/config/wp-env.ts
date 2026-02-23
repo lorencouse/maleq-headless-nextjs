@@ -17,6 +17,32 @@ import { existsSync } from 'fs';
 let detected: 'local' | 'prod' | null = null;
 let detecting: Promise<'local' | 'prod'> | null = null;
 
+function stripGraphqlSuffix(url?: string): string | undefined {
+  if (!url) return undefined;
+  return url.replace(/\/graphql$/, '');
+}
+
+function getProdWordPressBaseUrl(): string {
+  return (
+    process.env.WP_PROD_URL ||
+    process.env.WOOCOMMERCE_URL ||
+    stripGraphqlSuffix(process.env.WP_PROD_GRAPHQL) ||
+    stripGraphqlSuffix(process.env.NEXT_PUBLIC_WORDPRESS_API_URL) ||
+    stripGraphqlSuffix(process.env.WORDPRESS_API_URL) ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'https://wp.maleq.com'
+  );
+}
+
+function getProdGraphqlUrl(): string {
+  return (
+    process.env.WP_PROD_GRAPHQL ||
+    process.env.NEXT_PUBLIC_WORDPRESS_API_URL ||
+    process.env.WORDPRESS_API_URL ||
+    `${getProdWordPressBaseUrl().replace(/\/$/, '')}/graphql`
+  );
+}
+
 function hasLocalConfig(): boolean {
   return !!(process.env.WP_LOCAL_URL && process.env.WP_LOCAL_GRAPHQL);
 }
@@ -54,8 +80,7 @@ async function detectMode(): Promise<'local' | 'prod'> {
     console.log(`🟢 Local WordPress (${process.env.WP_LOCAL_URL})`);
   } else {
     detected = 'prod';
-    const url = process.env.WP_PROD_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://wp.maleq.com';
-    console.log(`🟠 Production WordPress (${url})`);
+    console.log(`🟠 Production WordPress (${getProdWordPressBaseUrl()})`);
   }
   return detected;
 }
@@ -91,7 +116,7 @@ export function getWordPressUrl(): string {
   const mode = getModeSyncFallback();
   return mode === 'local'
     ? process.env.WP_LOCAL_URL!
-    : (process.env.WP_PROD_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://wp.maleq.com');
+    : getProdWordPressBaseUrl();
 }
 
 /** WPGraphQL endpoint */
@@ -99,7 +124,7 @@ export function getGraphqlUrl(): string {
   const mode = getModeSyncFallback();
   return mode === 'local'
     ? process.env.WP_LOCAL_GRAPHQL!
-    : (process.env.WP_PROD_GRAPHQL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL || 'https://wp.maleq.com/graphql');
+    : getProdGraphqlUrl();
 }
 
 /** WooCommerce base URL (same as WordPress base) */

@@ -5,8 +5,7 @@ const WP_URL = getWordPressUrl();
 
 async function incrementViewViaSQL(productId: number): Promise<boolean> {
   try {
-    const { isMySQLReachable, getPoolAsync } = await import('@/lib/db/pool');
-    if (!(await isMySQLReachable())) return false;
+    const { getPoolAsync } = await import('@/lib/db/pool');
 
     const pool = await getPoolAsync();
     // Try to update existing row first
