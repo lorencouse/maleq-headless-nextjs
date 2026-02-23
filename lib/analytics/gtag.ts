@@ -2,7 +2,10 @@
 
 import { queueGtagCall } from './offline-queue';
 
-export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || '';
+export const GA_TRACKING_ID =
+  process.env.NEXT_PUBLIC_GA_ID ||
+  process.env.NEXT_PUBLIC_GA_TRACKING_ID ||
+  '';
 
 // Check if GA is available
 export const isGAAvailable = (): boolean => {
