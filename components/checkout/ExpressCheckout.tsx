@@ -17,6 +17,7 @@ import type {
 import { getStripe } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
+import * as gtag from '@/lib/analytics/gtag';
 
 const SHIPPING_RATES = [
   {
@@ -230,6 +231,21 @@ function ExpressCheckoutForm() {
         }
 
         const orderData = await orderResponse.json();
+
+        // Track purchase for express checkout path as well.
+        gtag.purchase({
+          transaction_id: String(orderData.orderId),
+          value: totalAmount,
+          tax: 0,
+          shipping: shippingDollars,
+          items: items.map((item) => ({
+            item_id: item.productId,
+            item_name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        });
+
         clearCart();
         router.push(`/order-confirmation/${orderData.orderId}`);
       } catch (err) {
