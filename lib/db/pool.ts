@@ -14,6 +14,7 @@
  */
 import mysql from 'mysql2/promise';
 import type { Pool } from 'mysql2/promise';
+import type { SslOptions } from 'mysql2';
 import { existsSync } from 'fs';
 
 let pool: Pool | null = null;
@@ -25,9 +26,48 @@ interface DBConfig {
   socketPath?: string;
   host?: string;
   port?: number;
+  ssl?: SslOptions;
   database: string;
   user: string;
   password: string;
+}
+
+function parseBoolean(value: string | undefined): boolean | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  return undefined;
+}
+
+function decodeBase64Pem(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    return Buffer.from(value, 'base64').toString('utf8');
+  } catch {
+    return undefined;
+  }
+}
+
+function getRemoteSslConfig(prefix: 'MYSQL_PROD' | 'MYSQL'): SslOptions | undefined {
+  const sslToggle = process.env[`${prefix}_SSL`];
+  const sslEnabled = parseBoolean(sslToggle);
+  const ca = process.env[`${prefix}_SSL_CA`] || decodeBase64Pem(process.env[`${prefix}_SSL_CA_BASE64`]);
+  const cert = process.env[`${prefix}_SSL_CERT`] || decodeBase64Pem(process.env[`${prefix}_SSL_CERT_BASE64`]);
+  const key = process.env[`${prefix}_SSL_KEY`] || decodeBase64Pem(process.env[`${prefix}_SSL_KEY_BASE64`]);
+  const rejectUnauthorized = parseBoolean(process.env[`${prefix}_SSL_REJECT_UNAUTHORIZED`]) ?? Boolean(ca);
+
+  // Backward-compatible default: TLS is only enabled when explicitly turned on
+  // or when cert material is provided.
+  const shouldEnableSsl = sslEnabled === true || Boolean(ca || cert || key);
+  if (!shouldEnableSsl || sslEnabled === false) return undefined;
+
+  return {
+    ...(ca ? { ca } : {}),
+    ...(cert ? { cert } : {}),
+    ...(key ? { key } : {}),
+    rejectUnauthorized,
+  };
 }
 
 function getLocalConfig(): DBConfig | null {
@@ -50,6 +90,7 @@ function getProdConfig(): DBConfig | null {
     mode: 'prod',
     host,
     port: parseInt(process.env.MYSQL_PROD_PORT || '3306', 10),
+    ssl: getRemoteSslConfig('MYSQL_PROD'),
     database: db,
     user,
     password: pass,
@@ -72,6 +113,7 @@ function getLegacyConfig(): DBConfig | null {
       mode: 'legacy',
       host,
       port: parseInt(process.env.MYSQL_PORT || '3306', 10),
+      ssl: getRemoteSslConfig('MYSQL'),
       database: db,
       user,
       password: pass,
@@ -96,7 +138,11 @@ function createPoolFromConfig(config: DBConfig): Pool {
   return mysql.createPool({
     ...(config.socketPath
       ? { socketPath: config.socketPath }
-      : { host: config.host, port: config.port }),
+      : {
+          host: config.host,
+          port: config.port,
+          ...(config.ssl ? { ssl: config.ssl } : {}),
+        }),
     database: config.database,
     user: config.user,
     password: config.password,
@@ -114,8 +160,14 @@ function logMode(config: DBConfig) {
     console.log('\n🟢 Using Local DB (Local by Flywheel)\n');
   } else if (config.mode === 'prod') {
     console.log('\n🟠 Using Production DB (wp.maleq.com via SSH tunnel)\n');
+    if (!config.ssl) {
+      console.warn('⚠️  Remote MySQL TLS is disabled. Set MYSQL_PROD_SSL=1 and cert vars before enabling require_secure_transport.');
+    }
   } else {
     console.log('\n⚪ Using MySQL (legacy config)\n');
+    if (!config.socketPath && !config.ssl) {
+      console.warn('⚠️  Remote MySQL TLS is disabled. Set MYSQL_SSL=1 and cert vars before enabling require_secure_transport.');
+    }
   }
 }
 
