@@ -161,6 +161,16 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     set_paid: true,
     transaction_id: paymentIntent.id,
   });
+  await logDurableEvent({
+    eventType: 'stripe_payment_succeeded',
+    message: 'Marked WooCommerce order as paid from webhook',
+    paymentIntentId: paymentIntent.id,
+    orderId,
+    payload: {
+      amount: paymentIntent.amount,
+      receiptEmail: paymentIntent.receipt_email || null,
+    },
+  });
 }
 
 /**
@@ -205,6 +215,18 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     meta_data: [
       { key: '_stripe_payment_failure', value: failureMessage },
     ],
+  });
+  await logDurableEvent({
+    eventType: 'stripe_payment_failed',
+    severity: 'warning',
+    message: 'Marked WooCommerce order as failed from webhook',
+    paymentIntentId: paymentIntent.id,
+    orderId,
+    payload: {
+      amount: paymentIntent.amount,
+      failureMessage,
+      receiptEmail: paymentIntent.receipt_email || null,
+    },
   });
 }
 

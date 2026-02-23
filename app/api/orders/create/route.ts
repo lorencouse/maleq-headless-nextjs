@@ -4,6 +4,7 @@ import { getStripeServer } from '@/lib/stripe/server';
 import { errorResponse, handleApiError, validationError } from '@/lib/api/response';
 import { z } from 'zod';
 import { sendAdminAlert } from '@/lib/email/alert';
+import { logDurableEvent } from '@/lib/monitoring/durable-events';
 
 /**
  * Create Order API Route
@@ -65,6 +66,8 @@ export interface CreateOrderResponse {
 }
 
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now();
+  const requestMeta = getRequestMeta(request);
   let rawBody: Record<string, unknown> | undefined;
   try {
     rawBody = await request.json();
@@ -77,6 +80,16 @@ export async function POST(request: NextRequest) {
         const path = issue.path.join('.');
         fieldErrors[path] = issue.message;
       }
+      await logDurableEvent({
+        eventType: 'checkout_order_validation_failed',
+        severity: 'warning',
+        message: 'Order creation request failed validation',
+        ...requestMeta,
+        payload: {
+          issueCount: parseResult.error.issues.length,
+          fields: Object.keys(fieldErrors).slice(0, 20),
+        },
+      });
       return validationError(fieldErrors);
     }
 
@@ -98,6 +111,17 @@ export async function POST(request: NextRequest) {
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status !== 'succeeded') {
+      await logDurableEvent({
+        eventType: 'checkout_order_payment_incomplete',
+        severity: 'warning',
+        message: `Rejected order creation: payment intent ${paymentIntentId} not succeeded`,
+        paymentIntentId,
+        ...requestMeta,
+        payload: {
+          paymentStatus: paymentIntent.status,
+          durationMs: Date.now() - startedAt,
+        },
+      });
       return errorResponse('Payment has not been completed', 400, 'PAYMENT_INCOMPLETE');
     }
 
@@ -107,6 +131,14 @@ export async function POST(request: NextRequest) {
       try {
         const existingOrder = await getOrder(parseInt(existingOrderId, 10));
         if (existingOrder) {
+          await logDurableEvent({
+            eventType: 'checkout_order_duplicate_payment_intent',
+            message: `Reused existing order ${existingOrder.id} for payment intent`,
+            paymentIntentId,
+            orderId: existingOrder.id,
+            ...requestMeta,
+            payload: { durationMs: Date.now() - startedAt },
+          });
           return NextResponse.json({
             orderId: existingOrder.id,
             orderKey: existingOrder.order_key,
@@ -129,6 +161,18 @@ export async function POST(request: NextRequest) {
         'Expected (cents)': expectedAmount,
         'Actual (cents)': paymentIntent.amount,
         'Customer Email': contact.email,
+      });
+      await logDurableEvent({
+        eventType: 'checkout_order_amount_mismatch',
+        severity: 'warning',
+        message: 'Payment amount mismatch during order creation',
+        paymentIntentId,
+        ...requestMeta,
+        payload: {
+          expectedAmountCents: expectedAmount,
+          actualAmountCents: paymentIntent.amount,
+          durationMs: Date.now() - startedAt,
+        },
       });
       return errorResponse(
         'Order total has changed since payment was initiated. Please try again.',
@@ -223,8 +267,36 @@ export async function POST(request: NextRequest) {
       total: order.total,
     };
 
+    await logDurableEvent({
+      eventType: 'checkout_order_created',
+      message: `Created WooCommerce order ${order.id}`,
+      paymentIntentId,
+      orderId: order.id,
+      ...requestMeta,
+      payload: {
+        itemCount: cartItems.length,
+        total: totals.total,
+        couponApplied: Boolean(couponCode),
+        customerId: customerId ?? null,
+        durationMs: Date.now() - startedAt,
+      },
+    });
+
     return NextResponse.json(response);
   } catch (error) {
+    const paymentIntentId =
+      typeof rawBody?.paymentIntentId === 'string' ? rawBody.paymentIntentId : null;
+    await logDurableEvent({
+      eventType: 'checkout_order_create_failed',
+      severity: 'error',
+      message: 'Order creation failed',
+      paymentIntentId,
+      ...requestMeta,
+      payload: {
+        error: error instanceof Error ? error.message : String(error),
+        durationMs: Date.now() - startedAt,
+      },
+    });
     sendAdminAlert('Order Creation Failed', {
       'PaymentIntent': (rawBody?.paymentIntentId as string) || 'N/A',
       'Customer Email': (rawBody?.contact as Record<string, string>)?.email || 'N/A',
@@ -232,4 +304,20 @@ export async function POST(request: NextRequest) {
     });
     return handleApiError(error, 'Failed to create order');
   }
+}
+
+function getRequestMeta(request: NextRequest): {
+  requestPath: string;
+  ip: string | null;
+  userAgent: string | null;
+  referrer: string | null;
+} {
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const ip = forwardedFor?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || null;
+  return {
+    requestPath: request.nextUrl.pathname,
+    ip,
+    userAgent: request.headers.get('user-agent'),
+    referrer: request.headers.get('referer'),
+  };
 }

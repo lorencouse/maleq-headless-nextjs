@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getStripeServer, formatAmountForStripe } from '@/lib/stripe/server';
 import { sendAdminAlert } from '@/lib/email/alert';
+import { logDurableEvent } from '@/lib/monitoring/durable-events';
 
 /**
  * Create Payment Intent API Route
@@ -33,6 +34,8 @@ export interface CreatePaymentIntentResponse {
 }
 
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now();
+  const requestMeta = getRequestMeta(request);
   let body: CreatePaymentIntentRequest | undefined;
   try {
     body = await request.json();
@@ -41,6 +44,13 @@ export async function POST(request: NextRequest) {
 
     // Validate amount
     if (!amount || amount <= 0) {
+      await logDurableEvent({
+        eventType: 'checkout_intent_invalid_amount',
+        severity: 'warning',
+        message: 'Rejected create-intent request with invalid amount',
+        ...requestMeta,
+        payload: { amount: amount ?? null, currency },
+      });
       return NextResponse.json(
         { error: 'Invalid amount' },
         { status: 400 }
@@ -72,6 +82,20 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
     };
 
+    await logDurableEvent({
+      eventType: 'checkout_intent_created',
+      message: `Created payment intent ${paymentIntent.id}`,
+      paymentIntentId: paymentIntent.id,
+      ...requestMeta,
+      payload: {
+        amount,
+        currency,
+        hasCustomerEmail: Boolean(customerEmail),
+        hasShippingAddress: Boolean(shippingAddress),
+        durationMs: Date.now() - startedAt,
+      },
+    });
+
     return NextResponse.json(response);
   } catch (error) {
     console.error('Error creating payment intent:', error);
@@ -79,6 +103,18 @@ export async function POST(request: NextRequest) {
       'Amount': `$${body?.amount || 'N/A'}`,
       'Customer Email': body?.customerEmail || 'N/A',
       'Error': error instanceof Error ? error.message : String(error),
+    });
+    await logDurableEvent({
+      eventType: 'checkout_intent_failed',
+      severity: 'error',
+      message: 'Failed to create payment intent',
+      ...requestMeta,
+      payload: {
+        amount: body?.amount ?? null,
+        currency: body?.currency ?? 'usd',
+        error: error instanceof Error ? error.message : String(error),
+        durationMs: Date.now() - startedAt,
+      },
     });
 
     if (error instanceof Error) {
@@ -93,4 +129,20 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function getRequestMeta(request: NextRequest): {
+  requestPath: string;
+  ip: string | null;
+  userAgent: string | null;
+  referrer: string | null;
+} {
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const ip = forwardedFor?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || null;
+  return {
+    requestPath: request.nextUrl.pathname,
+    ip,
+    userAgent: request.headers.get('user-agent'),
+    referrer: request.headers.get('referer'),
+  };
 }
