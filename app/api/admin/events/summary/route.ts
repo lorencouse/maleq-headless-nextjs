@@ -27,6 +27,16 @@ interface ErrorRow extends RowDataPacket {
   created_at: string;
 }
 
+interface TopPathRow extends RowDataPacket {
+  request_path: string | null;
+  hits: number;
+}
+
+interface EventCountRow extends RowDataPacket {
+  event_type: string;
+  hits: number;
+}
+
 function parsePositiveInt(value: string | null, fallback: number): number {
   if (!value) return fallback;
   const n = parseInt(value, 10);
@@ -106,6 +116,40 @@ export async function GET(request: NextRequest) {
       [cutoff]
     );
 
+    const [top404Rows] = await pool.query<TopPathRow[]>(
+      `SELECT
+         request_path,
+         COUNT(*) AS hits
+       FROM maleq_event_log
+       WHERE created_at >= ?
+         AND event_type = 'not_found_page_view'
+       GROUP BY request_path
+       ORDER BY hits DESC
+       LIMIT 20`,
+      [cutoff]
+    );
+
+    const [checkoutErrorRows] = await pool.query<EventCountRow[]>(
+      `SELECT
+         event_type,
+         COUNT(*) AS hits
+       FROM maleq_event_log
+       WHERE created_at >= ?
+         AND event_type IN (
+           'checkout_intent_failed',
+           'checkout_order_create_failed',
+           'checkout_order_validation_failed',
+           'checkout_order_amount_mismatch',
+           'checkout_order_payment_incomplete',
+           'stripe_payment_failed',
+           'stripe_payment_failed_unmatched',
+           'stripe_webhook_handler_failed'
+         )
+       GROUP BY event_type
+       ORDER BY hits DESC`,
+      [cutoff]
+    );
+
     const intentCreated = Number(summary.checkout_intent_created || 0);
     const orderCreated = Number(summary.checkout_order_created || 0);
     const paid = Number(summary.stripe_payment_succeeded || 0);
@@ -131,6 +175,18 @@ export async function GET(request: NextRequest) {
         orderToPaidWebhookPct: pct(paid, orderCreated),
         intentToPaidWebhookPct: pct(paid, intentCreated),
       },
+      seo: {
+        top404Paths: top404Rows
+          .filter((row) => row.request_path)
+          .map((row) => ({
+            path: row.request_path,
+            hits: Number(row.hits || 0),
+          })),
+      },
+      checkoutErrors: checkoutErrorRows.map((row) => ({
+        eventType: row.event_type,
+        hits: Number(row.hits || 0),
+      })),
       recentIssues: errorRows.map((row) => ({
         id: row.id,
         eventType: row.event_type,
