@@ -97,6 +97,9 @@ This document preserves operational context and the current prioritized audit fi
   - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
   - `permissions-policy` header now includes Stripe wallet origins in production.
   - `POST /api/newsletter/subscribe` returns `200` and now persists rows in `maleq_newsletter_subscribers` (verified).
+- Launch readiness checks completed:
+  - SSL/domain validated for `maleq.com`, `wp.maleq.com`, `panel.maleq.com`, `status.maleq.com` (valid certificates + expected HTTPS status codes).
+  - `ADMIN_API_KEY` verified as configured in production (`/api/admin/events` returns `401 Unauthorized` for invalid key instead of config error).
 - Checkout conversion UX update:
   - `components/checkout/OrderSummary.tsx` now links product images to product pages (name links already existed).
 

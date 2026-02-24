@@ -52,8 +52,8 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
   - Test password reset flow end-to-end
   - Check session persistence across pages
 - [x] `[HIGH]` Test email notifications (order confirmation, password reset)
-- [ ] `[HIGH]` Verify SSL and domain configuration
-- [ ] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production (code ready in `lib/api/admin-auth.ts`)
+- [x] `[HIGH]` Verify SSL and domain configuration (validated cert + HTTPS responses for `maleq.com`, `wp.maleq.com`, `panel.maleq.com`, `status.maleq.com` on 2026-02-24)
+- [x] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production (verified via `/api/admin/events` unauthorized response path)
 - [ ] `[HIGH]` Submit sitemap to Google Search Console
 - [x] `[HIGH]` Transfer Apple Pay token to new server
 - [ ] `[MED]` Do page testing on Safari
