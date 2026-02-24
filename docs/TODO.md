@@ -79,7 +79,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 ## Product Pages
 
-- [ ] `[MED]` Test product review submission end-to-end
+- [x] `[MED]` Test product review submission end-to-end (validated live via `POST /api/reviews` on 2026-02-24, received `201` with review `id=2424`, then deleted via WooCommerce API cleanup)
 - [ ] `[LOW]` Add product comparison feature
 - [ ] `[LOW]` Add returns/RMA request form in account area
 - [ ] `[LOW]` Add help center/FAQ integration in account area
