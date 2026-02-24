@@ -129,6 +129,9 @@ From GSC UI/API:
 - Daily cron/job to snapshot:
   - `/api/admin/events/summary?sinceHours=24`
   - export to sheet/db with date stamp
+- Repo automation script:
+  - `scripts/ops/snapshot-kpi.ts`
+  - `bun run kpi:snapshot`
 - Weekly review for:
   - top checkout errors
   - top 404 paths
@@ -154,4 +157,17 @@ curl -H "Authorization: Bearer <ADMIN_API_KEY>" \
 # raw recent events
 curl -H "Authorization: Bearer <ADMIN_API_KEY>" \
   "https://maleq.com/api/admin/events?limit=100&sinceHours=24&includePayload=1"
+```
+
+```bash
+# Save local snapshot JSON (summary only)
+ADMIN_API_KEY='<ADMIN_API_KEY>' bun run kpi:snapshot
+
+# Save summary + raw events
+ADMIN_API_KEY='<ADMIN_API_KEY>' KPI_INCLUDE_EVENTS=1 bun run kpi:snapshot
+```
+
+```bash
+# Example daily cron at 09:05 UTC
+5 9 * * * cd /path/to/maleq-headless-nextjs && ADMIN_API_KEY='<ADMIN_API_KEY>' bun run kpi:snapshot >> /var/log/maleq-kpi-snapshot.log 2>&1
 ```

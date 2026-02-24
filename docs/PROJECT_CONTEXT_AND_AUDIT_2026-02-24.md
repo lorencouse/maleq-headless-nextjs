@@ -109,6 +109,9 @@ This document preserves operational context and the current prioritized audit fi
   - `CloudPanel - panel.maleq.com (Expected 401)` now treats `401` as UP.
   - `Status - status.maleq.com (Expected 401)` created and treats `401` as UP.
   - `WPGraphQL API (POST assert __typename)` uses POST body assertion and validates as UP.
+- KPI ops automation added:
+  - New script `scripts/ops/snapshot-kpi.ts` captures `/api/admin/events/summary` (and optional raw events) to timestamped JSON files for daily baseline tracking.
+  - `package.json` script alias: `bun run kpi:snapshot`.
 - Checkout conversion UX update:
   - `components/checkout/OrderSummary.tsx` now links product images to product pages (name links already existed).
 - Contact form hardening + validation:
