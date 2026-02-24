@@ -86,6 +86,12 @@ This document preserves operational context and the current prioritized audit fi
   - `app/api/payment/create-intent/route.ts` now enforces trusted origin/referrer and stricter amount/currency validation.
 - Improved product-by-id API caching behavior:
   - `app/api/products/[id]/route.ts` now sets cache headers for success and 404 responses.
+- Integrated newsletter subscribe endpoint with persistence + provider sync:
+  - `app/api/newsletter/subscribe/route.ts` now validates JSON/email, applies rate limiting, persists subscribers, and logs durable events.
+  - `lib/newsletter/subscription-service.ts` adds `maleq_newsletter_subscribers` upsert flow plus optional Mailchimp/webhook sync.
+- Production spot-check:
+  - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
+  - `permissions-policy` header still observed as `payment=(self)` on current live response (needs post-deploy recheck).
 
 ## Quick Verification Commands
 
@@ -110,6 +116,10 @@ ssh deploy@46.224.227.119 "for id in 193481 550240 551884 189933 201835; do echo
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - WP/API: `NEXT_PUBLIC_WORDPRESS_API_URL`, `WOOCOMMERCE_URL`
 - Optional cron/admin: `CRON_SECRET`
+- Newsletter (optional provider sync):
+  - Mailchimp: `MAILCHIMP_API_KEY`, `MAILCHIMP_AUDIENCE_ID`, `MAILCHIMP_SERVER_PREFIX` (or API key suffix autodetect)
+  - Generic webhook: `NEWSLETTER_WEBHOOK_URL`, `NEWSLETTER_WEBHOOK_BEARER_TOKEN`
+  - Provider selection (optional): `NEWSLETTER_PROVIDER` = `mailchimp` | `webhook` | `none`
 
 ## Working Rule for Future Sessions
 
