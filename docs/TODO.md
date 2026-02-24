@@ -66,7 +66,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 ## Cart & Checkout
 
 - [ ] `[MED]` Update shipping tiers — currently has Standard/Express/Overnight (domestic only); needs international tiers
-- [ ] `[MED]` Test contact form functionality (submissions received, spam protection working)
+- [x] `[MED]` Test contact form functionality (submissions return success; burst probe confirms `429` rate-limit responses)
 
 ---
 

@@ -102,6 +102,9 @@ This document preserves operational context and the current prioritized audit fi
   - `ADMIN_API_KEY` verified as configured in production (`/api/admin/events` returns `401 Unauthorized` for invalid key instead of config error).
 - Checkout conversion UX update:
   - `components/checkout/OrderSummary.tsx` now links product images to product pages (name links already existed).
+- Contact form hardening + validation:
+  - `app/api/contact/route.ts` now enforces route-level rate limiting.
+  - Production check: valid submission returns `200`; burst invalid probes produce `429` throttles in addition to validation `400`s.
 
 ## Quick Verification Commands
 
