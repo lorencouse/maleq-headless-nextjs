@@ -122,7 +122,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 - [ ] `[MED]` Review and improve Core Web Vitals scores (Lighthouse audit)
 - [ ] `[MED]` Integrate wsrv.nl (weserv) as free image proxy/CDN — serves WebP/AVIF, resizes on the fly, no signup needed. Wrap image URLs with `https://wsrv.nl/?url=ORIGINAL_URL&w=WIDTH&output=webp`
-- [ ] `[LOW]` Add service worker for offline support
+- [x] `[LOW]` Add service worker for offline support (already present; install precache hardened to avoid `Cache.addAll` failure)
 - [ ] `[LOW]` Replace order tracking mu-plugin with AST Free WP plugin
 
 ---

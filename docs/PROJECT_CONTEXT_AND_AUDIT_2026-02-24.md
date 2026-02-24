@@ -118,6 +118,9 @@ This document preserves operational context and the current prioritized audit fi
 - Category entity rendering fix (pending production verification after deploy):
   - `lib/db/category-loader.ts` now decodes HTML entities for category names from MySQL loaders.
   - `lib/products/combined-service.ts` now decodes category names in GraphQL paths and bumped category cache keys (`product-categories-v2`, `hierarchical-categories-v3`) to flush stale encoded names.
+- PWA/service-worker reliability hardening:
+  - `public/sw.js` install precache now uses resilient per-resource caching with an inline offline fallback instead of failing `cache.addAll()` on a single request error.
+  - `public/favicon/site.webmanifest` now explicitly sets `share_target.enctype` to remove browser manifest warnings.
 
 ## Quick Verification Commands
 

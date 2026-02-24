@@ -18,6 +18,27 @@ const CRITICAL_PRECACHE = ['/offline.html'];
 // Nice-to-have precache — install succeeds even if these fail
 const OPTIONAL_PRECACHE = ['/', '/shop'];
 
+const OFFLINE_FALLBACK_HTML = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline | Male Q</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 2rem; color: #111; background: #fff; }
+    main { max-width: 560px; margin: 10vh auto 0; }
+    h1 { margin-bottom: .5rem; }
+    p { color: #444; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>You're offline</h1>
+    <p>We couldn't load this page right now. Reconnect and try again.</p>
+  </main>
+</body>
+</html>`;
+
 // Cache size limits
 const LIMITS = {
   pages: 50,
@@ -175,16 +196,53 @@ function isCacheableApi(url) {
   return CACHEABLE_API_PATTERNS.some((pattern) => pattern.test(url));
 }
 
+async function cacheUrl(cache, url) {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Failed to cache ${url} (${response.status})`);
+  }
+  await cache.put(url, response);
+}
+
+async function cacheCriticalResources(cache) {
+  for (const url of CRITICAL_PRECACHE) {
+    try {
+      await cacheUrl(cache, url);
+    } catch {
+      if (url === '/offline.html') {
+        await cache.put(
+          '/offline.html',
+          new Response(OFFLINE_FALLBACK_HTML, {
+            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          })
+        );
+      } else {
+        throw new Error(`Critical precache failed for ${url}`);
+      }
+    }
+  }
+}
+
+async function cacheOptionalResources(cache) {
+  await Promise.allSettled(
+    OPTIONAL_PRECACHE.map(async (url) => {
+      try {
+        await cacheUrl(cache, url);
+      } catch {
+        // Optional resource; ignore failures.
+      }
+    })
+  );
+}
+
 // ─── Install ────────────────────────────────────────────────────────
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHES.precache).then(async (cache) => {
-      // Critical resources must succeed
-      await cache.addAll(CRITICAL_PRECACHE);
-      // Optional resources can fail without blocking install
-      await Promise.allSettled(OPTIONAL_PRECACHE.map((url) => cache.add(url)));
-    })
+      await cacheCriticalResources(cache);
+      await cacheOptionalResources(cache);
+    }),
   );
   // Don't call skipWaiting() here — let the client control via SKIP_WAITING message
 });
