@@ -146,3 +146,4 @@ ssh deploy@46.224.227.119 "for id in 193481 550240 551884 189933 201835; do echo
 - Always prefer `docs/TODO.md` "Audit-Driven Execution Board (2026-02-24)" as the active execution queue.
 - Update that checklist immediately after each production-impacting fix.
 - KPI baseline/instrumentation reference: `docs/KPI_BASELINE_PLAN.md`.
+- Uptime monitor configuration reference: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md`.

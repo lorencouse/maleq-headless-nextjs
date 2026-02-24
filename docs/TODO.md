@@ -29,6 +29,7 @@ Source: production architecture + code review for performance, SEO, conversion, 
 - [ ] `[MED]` Update Uptime Kuma checks:
   - `panel.maleq.com` and `status.maleq.com`: authenticated check or expected-401 check
   - `wp.maleq.com/graphql`: POST monitor with GraphQL body assertion
+  - Runbook prepared: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md` (apply in Kuma UI)
 - [x] `[MED]` Implement KPI baseline instrumentation plan (GA4 funnel + server-side durable event metrics) — see `docs/KPI_BASELINE_PLAN.md`
 
 Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT_2026-02-24.md`
