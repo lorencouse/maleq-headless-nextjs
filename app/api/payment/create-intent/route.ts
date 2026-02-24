@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getStripeServer, formatAmountForStripe } from '@/lib/stripe/server';
 import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
+import { checkRateLimit } from '@/lib/api/rate-limit';
+import { validateEmail } from '@/lib/api/validation';
 
 /**
  * Create Payment Intent API Route
@@ -34,12 +36,31 @@ export interface CreatePaymentIntentResponse {
 }
 
 const MAX_PAYMENT_INTENT_AMOUNT_USD = Number(process.env.MAX_PAYMENT_INTENT_AMOUNT_USD || 5000);
+const CREATE_INTENT_RATE_LIMIT = {
+  limit: Number(process.env.PAYMENT_INTENT_RATE_LIMIT_PER_MINUTE || 15),
+  windowSeconds: 60,
+};
 
 export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   const requestMeta = getRequestMeta(request);
   let body: CreatePaymentIntentRequest | undefined;
   try {
+    const limiterKey = `checkout-intent:${requestMeta.ip || 'unknown'}:${(requestMeta.userAgent || 'na').slice(0, 64)}`;
+    const rateResult = checkRateLimit(limiterKey, CREATE_INTENT_RATE_LIMIT);
+    if (!rateResult.allowed) {
+      await logDurableEvent({
+        eventType: 'checkout_intent_rate_limited',
+        severity: 'warning',
+        message: 'Rejected create-intent request due to rate limit',
+        ...requestMeta,
+      });
+      return NextResponse.json(
+        { error: 'Too many requests' },
+        { status: 429 }
+      );
+    }
+
     if (!isTrustedCheckoutSource(request)) {
       await logDurableEvent({
         eventType: 'checkout_intent_untrusted_source',
@@ -86,6 +107,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (customerEmail) {
+      const emailError = validateEmail(customerEmail);
+      if (emailError) {
+        await logDurableEvent({
+          eventType: 'checkout_intent_invalid_email',
+          severity: 'warning',
+          message: 'Rejected create-intent request with invalid customer email',
+          ...requestMeta,
+          payload: { customerEmail },
+        });
+        return NextResponse.json(
+          { error: 'Invalid customer email' },
+          { status: 400 }
+        );
+      }
+    }
+
+    const safeMetadata = sanitizeMetadata(metadata);
+
     // Create the PaymentIntent
     const stripe = getStripeServer();
     const paymentIntent = await stripe.paymentIntents.create({
@@ -95,7 +135,7 @@ export async function POST(request: NextRequest) {
         enabled: true,
       },
       metadata: {
-        ...metadata,
+        ...safeMetadata,
         source: 'maleq-headless-checkout',
       },
       ...(customerEmail && { receipt_email: customerEmail }),
@@ -119,6 +159,7 @@ export async function POST(request: NextRequest) {
       payload: {
         amount,
         currency,
+        metadataKeys: Object.keys(safeMetadata).length,
         hasCustomerEmail: Boolean(customerEmail),
         hasShippingAddress: Boolean(shippingAddress),
         durationMs: Date.now() - startedAt,
@@ -141,6 +182,7 @@ export async function POST(request: NextRequest) {
       payload: {
         amount: body?.amount ?? null,
         currency: body?.currency ?? 'usd',
+        hasMetadata: Boolean(body?.metadata),
         error: error instanceof Error ? error.message : String(error),
         durationMs: Date.now() - startedAt,
       },
@@ -158,6 +200,26 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function sanitizeMetadata(
+  metadata: Record<string, string> | undefined
+): Record<string, string> {
+  if (!metadata || typeof metadata !== 'object') {
+    return {};
+  }
+
+  const result: Record<string, string> = {};
+  const entries = Object.entries(metadata).slice(0, 20);
+
+  for (const [rawKey, rawValue] of entries) {
+    const key = rawKey.trim().slice(0, 40);
+    if (!key) continue;
+    if (typeof rawValue !== 'string') continue;
+    result[key] = rawValue.slice(0, 200);
+  }
+
+  return result;
 }
 
 function getRequestMeta(request: NextRequest): {

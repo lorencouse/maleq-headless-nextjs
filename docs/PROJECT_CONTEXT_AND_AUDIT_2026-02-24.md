@@ -99,6 +99,7 @@ This document preserves operational context and the current prioritized audit fi
   - `next.config.ts` payment policy now allows Stripe origins.
 - Added baseline anti-abuse guard for payment intent creation:
   - `app/api/payment/create-intent/route.ts` now enforces trusted origin/referrer and stricter amount/currency validation.
+  - Additional hardening added: per-IP/user-agent rate limiting, customer email validation, and metadata sanitization before Stripe API call.
 - Improved product-by-id API caching behavior:
   - `app/api/products/[id]/route.ts` now sets cache headers for success and 404 responses.
 - Integrated newsletter subscribe endpoint with persistence + provider sync:
