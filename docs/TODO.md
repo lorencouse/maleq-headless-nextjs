@@ -42,7 +42,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 ## Pre-Launch Checklist
 
-- [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`; Chromium production smoke is green locally `15/15`; complete after first successful CI WebKit run from `.github/workflows/uat-smoke.yml`)
+- [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`; Chromium production smoke is green locally `15/15`; complete after first successful CI WebKit run from `.github/workflows/uat-smoke.yml`, which now auto-runs on `main` pushes)
 - [x] `[HIGH]` Verify all payment flows work correctly
   - Test Stripe live mode with real cards
   - Verify order confirmation emails
@@ -115,7 +115,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 ### Security
 
 - [x] `[LOW]` ~~Integrate rate limiting into API endpoints~~ — wired into middleware for auth, form, payment, search routes (in-memory, sufficient for current scale)
-- [ ] `[LOW]` Add token expiry to existing auth system (tokens currently never expire)
+- [x] `[LOW]` Add token expiry to existing auth system (already enforced server-side in `wordpress/mu-plugins/maleq-auth-endpoints.php` via `maleq_auth_token_expires` with 24h TTL and expiry cleanup in `maleq_validate_token()`)
 - [ ] `[LOW]` Add CAPTCHA to login/review forms (only if bot abuse observed)
 
 ### Performance

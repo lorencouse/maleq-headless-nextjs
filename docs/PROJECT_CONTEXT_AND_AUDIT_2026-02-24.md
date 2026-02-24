@@ -118,10 +118,12 @@ This document preserves operational context and the current prioritized audit fi
 - UAT smoke test stabilization:
   - Hardened selector strategy in `e2e/home.spec.ts`, `e2e/cart.spec.ts`, and `e2e/shop.spec.ts` to avoid strict-mode collisions and nav ambiguity.
   - Production Chromium smoke against `https://maleq.com` now passes locally (`15/15`).
-  - Local WebKit execution remains host-dependent; Safari parity is enforced through CI WebKit in `.github/workflows/uat-smoke.yml`.
+  - Local WebKit execution remains host-dependent; Safari parity is enforced through CI WebKit in `.github/workflows/uat-smoke.yml` (manual/scheduled + push on `main`).
 - Review submission E2E verification:
   - Live `POST https://maleq.com/api/reviews` test returned `201` (review `id=2424` on product `550240`).
   - Cleanup verified by deleting the same review through WooCommerce REST (`DELETE .../products/reviews/2424?force=true`, `200`).
+- Auth token expiry status verification:
+  - Confirmed auth tokens already expire in 24 hours in `wordpress/mu-plugins/maleq-auth-endpoints.php` (`maleq_auth_token_expires` is set at login and enforced in `maleq_validate_token()` with cleanup on expiry).
 - Category entity rendering fix (pending production verification after deploy):
   - `lib/db/category-loader.ts` now decodes HTML entities for category names from MySQL loaders.
   - `lib/products/combined-service.ts` now decodes category names in GraphQL paths and bumped category cache keys (`product-categories-v2`, `hierarchical-categories-v3`) to flush stale encoded names.
