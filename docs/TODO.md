@@ -42,7 +42,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 ## Pre-Launch Checklist
 
-- [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`)
+- [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`; Chromium production smoke is green locally `15/15`; complete after first successful CI WebKit run from `.github/workflows/uat-smoke.yml`)
 - [x] `[HIGH]` Verify all payment flows work correctly
   - Test Stripe live mode with real cards
   - Verify order confirmation emails
@@ -56,7 +56,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 - [x] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production (verified via `/api/admin/events` unauthorized response path)
 - [x] `[HIGH]` Submit sitemap to Google Search Console (submitted to GSC and Bing)
 - [x] `[HIGH]` Transfer Apple Pay token to new server
-- [ ] `[MED]` Do page testing on Safari
+- [ ] `[MED]` Do page testing on Safari (run via CI WebKit in `uat-smoke.yml`; local WebKit launch is unstable on current host environment)
 - [x] `[MED]` Set up monitoring — Uptime Kuma running at `http://159.69.220.162:3001` (Docker on Hetzner VPS)
 - [x] `[MED]` Configure CDN for static assets (Cloudflare serving `/_next/static/*` with `cache-control: public,max-age=31536000,immutable` and `cf-cache-status: HIT`)
 - [x] `[MED]` Set up database backups

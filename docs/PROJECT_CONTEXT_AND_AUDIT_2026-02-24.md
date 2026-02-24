@@ -115,6 +115,10 @@ This document preserves operational context and the current prioritized audit fi
 - UAT harness updates:
   - `playwright.config.ts` supports `PLAYWRIGHT_SKIP_WEBSERVER=1` for running tests against deployed environments.
   - `e2e/shop.spec.ts` product URL assertion updated to match `/product/*` route structure.
+- UAT smoke test stabilization:
+  - Hardened selector strategy in `e2e/home.spec.ts`, `e2e/cart.spec.ts`, and `e2e/shop.spec.ts` to avoid strict-mode collisions and nav ambiguity.
+  - Production Chromium smoke against `https://maleq.com` now passes locally (`15/15`).
+  - Local WebKit execution remains host-dependent; Safari parity is enforced through CI WebKit in `.github/workflows/uat-smoke.yml`.
 - Category entity rendering fix (pending production verification after deploy):
   - `lib/db/category-loader.ts` now decodes HTML entities for category names from MySQL loaders.
   - `lib/products/combined-service.ts` now decodes category names in GraphQL paths and bumped category cache keys (`product-categories-v2`, `hierarchical-categories-v3`) to flush stale encoded names.

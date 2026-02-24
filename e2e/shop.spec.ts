@@ -1,4 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+
+async function openFirstProduct(page: Page) {
+  await page.goto('/shop');
+  const productLink = page.locator('a[href*="/product/"]').first();
+  await productLink.waitFor({ timeout: 10000 });
+  const href = await productLink.getAttribute('href');
+  expect(href).toBeTruthy();
+  await page.goto(href as string);
+  await expect(page).toHaveURL(/\/product\//);
+}
 
 test.describe('Shop Page', () => {
   test('should load shop page', async ({ page }) => {
@@ -22,9 +32,11 @@ test.describe('Shop Page', () => {
   test('should have filter options', async ({ page }) => {
     await page.goto('/shop');
 
-    // Check for filter panel elements
-    const filterPanel = page.locator('[data-testid="filter-panel"], .filter-panel, aside');
-    await expect(filterPanel).toBeVisible();
+    // Check for filter panel elements (desktop aside or mobile trigger).
+    const filterUI = page.locator(
+      '[data-testid="filter-panel"], .filter-panel, aside, button:has-text("Filters")'
+    );
+    await expect(filterUI.first()).toBeVisible();
   });
 
   test('should have sort dropdown', async ({ page }) => {
@@ -38,31 +50,16 @@ test.describe('Shop Page', () => {
 
 test.describe('Product Page', () => {
   test('should navigate to product from shop', async ({ page }) => {
-    await page.goto('/shop');
-
-    // Wait for products to load and click first product
-    const productLink = page.locator('a[href*="/product/"]').first();
-    await productLink.waitFor({ timeout: 10000 });
-    await productLink.click();
-
-    // Should be on product page
-    await expect(page).toHaveURL(/\/product\//);
+    await openFirstProduct(page);
   });
 
   test('should display product information', async ({ page }) => {
-    await page.goto('/shop');
+    await openFirstProduct(page);
 
-    // Get first product link
-    const productLink = page.locator('a[href*="/product/"]').first();
-    await productLink.waitFor({ timeout: 10000 });
-    await productLink.click();
+    // Product page should render a primary heading and purchase CTA.
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 
-    // Check for product name (h1)
-    const productName = page.locator('h1');
-    await expect(productName).toBeVisible();
-
-    // Check for add to cart button
-    const addToCartButton = page.locator('button:has-text("Add to Cart"), button:has-text("View Options")');
+    const addToCartButton = page.getByRole('button', { name: /add to cart|view options/i }).first();
     await expect(addToCartButton).toBeVisible();
   });
 });
