@@ -119,6 +119,15 @@ export const ADDON_BUNDLE: AddonBundle = {
 };
 
 /**
+ * Returns a stable image for the bundle so cart/checkout UIs always render a thumbnail.
+ * If the bundle does not have an explicit image yet, use the first configured addon image.
+ */
+export function getAddonBundleImage(): string | undefined {
+  if (ADDON_BUNDLE.image) return ADDON_BUNDLE.image;
+  return ADDON_PRODUCTS.find((addon) => addon.image)?.image;
+}
+
+/**
  * Category slugs that should show addon options
  * Includes parent categories - products in subcategories will also show addons
  */

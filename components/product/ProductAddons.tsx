@@ -5,6 +5,7 @@ import {
   ADDON_PRODUCTS,
   ADDON_BUNDLE,
   AddonProduct,
+  getAddonBundleImage,
 } from '@/lib/config/product-addons';
 
 interface ProductAddonsProps {
@@ -25,6 +26,8 @@ export interface SelectedAddon {
 export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
   const [bundleSelected, setBundleSelected] = useState(false);
+  const bundleImage = getAddonBundleImage();
+  const bundleImageUrl = resolveAddonImageUrl(bundleImage);
 
   // Calculate individual addons total (sale prices)
   const individualTotal = ADDON_PRODUCTS.reduce(
@@ -52,7 +55,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
             name: ADDON_BUNDLE.name,
             price: ADDON_BUNDLE.price,
             regularPrice: ADDON_BUNDLE.regularPrice,
-            image: ADDON_BUNDLE.image,
+            image: bundleImage,
           },
         ]);
       } else if (addons.size > 0) {
@@ -209,6 +212,16 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
             </div>
           </div>
 
+          {bundleImageUrl && (
+            <div className='flex-shrink-0 w-[50px] h-[50px] rounded overflow-hidden bg-muted'>
+              <img
+                src={bundleImageUrl}
+                alt={ADDON_BUNDLE.shortName}
+                className='w-full h-full object-cover'
+              />
+            </div>
+          )}
+
           <div className='flex-1 min-w-0 flex justify-between gap-2'>
             <div className='flex flex-col'>
               <span className='text-sm font-semibold text-foreground'>
@@ -268,16 +281,7 @@ function AddonCheckbox({
   disabled,
   onChange,
 }: AddonCheckboxProps) {
-  // Build full image URL from relative path
-  const wpBaseUrl = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace(
-    '/graphql',
-    '',
-  );
-  const imageUrl = addon.image
-    ? addon.image.startsWith('http')
-      ? addon.image
-      : `${wpBaseUrl}${addon.image}`
-    : null;
+  const imageUrl = resolveAddonImageUrl(addon.image);
 
   return (
     <label
@@ -358,4 +362,16 @@ function AddonCheckbox({
       </div>
     </label>
   );
+}
+
+function resolveAddonImageUrl(image?: string): string | null {
+  if (!image) return null;
+  if (image.startsWith('http')) return image;
+
+  const wpBaseUrl = (process.env.NEXT_PUBLIC_WORDPRESS_API_URL || '').replace(
+    '/graphql',
+    '',
+  );
+
+  return `${wpBaseUrl}${image}`;
 }
