@@ -107,16 +107,34 @@ export async function GET(
       );
     }
 
-    let graphQlNotFound = false;
-    let graphQlAttempted = false;
-    let graphQlFailed = false;
-    let indexAttempted = false;
+    let indexMiss = false;
     let indexFailed = false;
+    let graphQlNotFound = false;
 
-    // Try GraphQL first (WPGraphQL has richer per-product fields).
-    if (GRAPHQL_URL) {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    const useMySqlFirst = isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
+
+    // MySQL/index-first for performance; GraphQL is fallback-only.
+    if (useMySqlFirst) {
       try {
-        graphQlAttempted = true;
+        const { getIndexEntryById } = await import('@/lib/products/product-index');
+        const indexEntry = await getIndexEntryById(productId);
+        if (indexEntry) {
+          return jsonWithCache(mapIndexEntryToApiProduct(indexEntry));
+        }
+        indexMiss = true;
+      } catch (indexError) {
+        indexFailed = true;
+        console.error('Error fetching product from index:', indexError);
+      }
+    }
+
+    const shouldTryGraphQl =
+      Boolean(GRAPHQL_URL) &&
+      (!useMySqlFirst || indexMiss || indexFailed);
+
+    if (shouldTryGraphQl && GRAPHQL_URL) {
+      try {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 6000);
 
@@ -170,32 +188,11 @@ export async function GET(
 
         graphQlNotFound = true;
       } catch (graphQlError) {
-        graphQlFailed = true;
         console.error('Error fetching product from GraphQL:', graphQlError);
       }
     }
 
-    // Fallback to in-memory MySQL-backed index when GraphQL is unavailable.
-    try {
-      indexAttempted = true;
-      const { isMySQLConfigured } = await import('@/lib/db/pool');
-      if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
-        const { getIndexEntryById } = await import('@/lib/products/product-index');
-        const indexEntry = await getIndexEntryById(productId);
-        if (indexEntry) {
-          return jsonWithCache(mapIndexEntryToApiProduct(indexEntry));
-        }
-      }
-    } catch (indexError) {
-      indexFailed = true;
-      console.error('Error fetching product from index fallback:', indexError);
-    }
-
-    if (
-      graphQlNotFound ||
-      (!graphQlAttempted && indexAttempted && !indexFailed) ||
-      (graphQlAttempted && !graphQlFailed && indexAttempted && !indexFailed)
-    ) {
+    if (indexMiss || graphQlNotFound) {
       return jsonWithCache({ error: 'Product not found' }, 404, NOT_FOUND_CACHE_CONTROL);
     }
 
