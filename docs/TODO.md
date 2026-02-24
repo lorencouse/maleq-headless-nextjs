@@ -26,10 +26,10 @@ Source: production architecture + code review for performance, SEO, conversion, 
 - [x] `[HIGH]` Integrate newsletter subscribe endpoint with ESP (Klaviyo/Mailchimp/etc.) + persistence (DB-backed `maleq_newsletter_subscribers` + provider sync support for Mailchimp/webhook, durable-event logging, route rate limit, graceful fallback if DB writes unavailable)
 - [x] `[HIGH]` Grant least-privilege DB write access for app-owned tables to frontend DB user (`maleq_readonly`) so newsletter/push/event logs persist in production (granted on `maleq_newsletter_subscribers`, `maleq_push_subscriptions`, `maleq_stock_alert_products`; verified newsletter row insert)
 - [x] `[MED]` Harden `/api/products/[id]` fallback/caching behavior for cart reliability — response cache headers added and GraphQL/product-miss fallback normalized to 404 (reduces cart-related 500s)
-- [ ] `[MED]` Update Uptime Kuma checks:
-  - `panel.maleq.com` and `status.maleq.com`: authenticated check or expected-401 check
-  - `wp.maleq.com/graphql`: POST monitor with GraphQL body assertion
-  - Runbook prepared: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md` (apply in Kuma UI)
+- [x] `[MED]` Update Uptime Kuma checks:
+  - `panel.maleq.com` and `status.maleq.com`: expected-401 checks configured and validating as UP
+  - `wp.maleq.com/graphql`: POST monitor with GraphQL body assertion configured and validating as UP
+  - Runbook: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md`
 - [x] `[MED]` Implement KPI baseline instrumentation plan (GA4 funnel + server-side durable event metrics) — see `docs/KPI_BASELINE_PLAN.md`
 
 Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT_2026-02-24.md`
@@ -54,7 +54,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 - [x] `[HIGH]` Test email notifications (order confirmation, password reset)
 - [x] `[HIGH]` Verify SSL and domain configuration (validated cert + HTTPS responses for `maleq.com`, `wp.maleq.com`, `panel.maleq.com`, `status.maleq.com` on 2026-02-24)
 - [x] `[HIGH]` Set `ADMIN_API_KEY` environment variable in production (verified via `/api/admin/events` unauthorized response path)
-- [ ] `[HIGH]` Submit sitemap to Google Search Console
+- [x] `[HIGH]` Submit sitemap to Google Search Console (submitted to GSC and Bing)
 - [x] `[HIGH]` Transfer Apple Pay token to new server
 - [ ] `[MED]` Do page testing on Safari
 - [x] `[MED]` Set up monitoring — Uptime Kuma running at `http://159.69.220.162:3001` (Docker on Hetzner VPS)

@@ -50,12 +50,7 @@ This document preserves operational context and the current prioritized audit fi
 
 ## Highest-Impact Findings (Open)
 
-1. Finalize Uptime Kuma monitor configuration in UI:
-   - `panel.maleq.com` and `status.maleq.com` should use authenticated probe or expected-401 probe.
-   - `wp.maleq.com/graphql` should use POST body (`{"query":"{__typename}"}`) with content assertion.
-   - Runbook: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md`.
-
-2. Complete KPI baseline capture window:
+1. Complete KPI baseline capture window:
    - Confirm GA4 receives full funnel events in live mode (`view_item` through `purchase`).
    - Confirm admin durable event stream is monitored (`/api/admin/events`).
    - Plan: `docs/KPI_BASELINE_PLAN.md`.
@@ -67,10 +62,9 @@ This document preserves operational context and the current prioritized audit fi
 
 ## Execution Order (Business Impact First)
 
-1. Apply Uptime Kuma monitor updates from runbook.
-2. Capture KPI baseline and verify GA4 funnel continuity.
-3. Validate admin event stream and alert thresholds.
-4. Add targeted regression tests for analytics + cart stock contract.
+1. Capture KPI baseline and verify GA4 funnel continuity.
+2. Validate admin event stream and alert thresholds.
+3. Add targeted regression tests for analytics + cart stock contract.
 
 ## Progress Completed In This Session (2026-02-24)
 
@@ -101,6 +95,10 @@ This document preserves operational context and the current prioritized audit fi
   - SSL/domain validated for `maleq.com`, `wp.maleq.com`, `panel.maleq.com`, `status.maleq.com` (valid certificates + expected HTTPS status codes).
   - `ADMIN_API_KEY` verified as configured in production (`/api/admin/events` returns `401 Unauthorized` for invalid key instead of config error).
   - Static asset CDN behavior verified (`/_next/static/*` served via Cloudflare with `cf-cache-status: HIT` and one-year immutable cache headers).
+- Uptime Kuma monitor configuration finalized:
+  - `CloudPanel - panel.maleq.com (Expected 401)` now treats `401` as UP.
+  - `Status - status.maleq.com (Expected 401)` created and treats `401` as UP.
+  - `WPGraphQL API (POST assert __typename)` uses POST body assertion and validates as UP.
 - Checkout conversion UX update:
   - `components/checkout/OrderSummary.tsx` now links product images to product pages (name links already existed).
 - Contact form hardening + validation:
