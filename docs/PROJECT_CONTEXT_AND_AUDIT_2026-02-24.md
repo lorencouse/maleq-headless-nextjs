@@ -104,6 +104,17 @@ This document preserves operational context and the current prioritized audit fi
 - Contact form hardening + validation:
   - `app/api/contact/route.ts` now enforces route-level rate limiting.
   - Production check: valid submission returns `200`; burst invalid probes produce `429` throttles in addition to validation `400`s.
+- Checkout shipping tiers expanded to international:
+  - Added shared shipping config at `lib/checkout/shipping-rates.ts`.
+  - `components/checkout/ShippingMethod.tsx` now switches between domestic and international methods based on selected country.
+  - `components/checkout/ExpressCheckout.tsx` now offers country-aware Stripe shipping rates and supports international shipping countries.
+  - `components/checkout/ShippingAddressForm.tsx` now supports international country selection and province/region inputs.
+- Auth-gated wishlist UX:
+  - Added `components/auth/AuthRequiredModal.tsx`.
+  - `components/wishlist/WishlistButton.tsx` now blocks guest wishlist actions and opens a login/signup modal overlay instead.
+- UAT harness updates:
+  - `playwright.config.ts` supports `PLAYWRIGHT_SKIP_WEBSERVER=1` for running tests against deployed environments.
+  - `e2e/shop.spec.ts` product URL assertion updated to match `/product/*` route structure.
 
 ## Quick Verification Commands
 

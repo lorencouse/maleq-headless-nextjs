@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
+import { useAuthStore } from '@/lib/store/auth-store';
 import { showSuccessLink, showInfo } from '@/lib/utils/toast';
+import AuthRequiredModal from '@/components/auth/AuthRequiredModal';
 
 interface WishlistButtonProps {
   productId: string;
@@ -31,13 +34,17 @@ export default function WishlistButton({
   className = '',
 }: WishlistButtonProps) {
   const { toggleItem, isInWishlist, hydrate } = useWishlistStore();
+  const pathname = usePathname();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydratedAuth = useAuthStore((state) => state.hasHydrated);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Hydrate on mount and sync state
   useEffect(() => {
     hydrate();
-  }, []);
+  }, [hydrate]);
 
   // Keep local state in sync with store
   useEffect(() => {
@@ -47,6 +54,15 @@ export default function WishlistButton({
   const handleToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!hasHydratedAuth) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
 
     setIsAnimating(true);
     setTimeout(() => setIsAnimating(false), 300);
@@ -88,35 +104,49 @@ export default function WishlistButton({
 
   if (variant === 'button') {
     return (
-      <button
-        onClick={handleToggle}
-        className={`w-full flex items-center justify-center gap-2 py-3 px-6 border-2 rounded-lg font-semibold transition-colors ${
-          isWishlisted
-            ? 'border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-            : 'border-border text-foreground hover:bg-muted'
-        } ${className}`}
-        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-      >
-        <HeartIcon filled={isWishlisted} />
-        {isWishlisted ? 'In Wishlist' : 'Add to Wishlist'}
-      </button>
+      <>
+        <button
+          onClick={handleToggle}
+          className={`w-full flex items-center justify-center gap-2 py-3 px-6 border-2 rounded-lg font-semibold transition-colors ${
+            isWishlisted
+              ? 'border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+              : 'border-border text-foreground hover:bg-muted'
+          } ${className}`}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <HeartIcon filled={isWishlisted} />
+          {isWishlisted ? 'In Wishlist' : 'Add to Wishlist'}
+        </button>
+        <AuthRequiredModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          returnTo={pathname || '/'}
+        />
+      </>
     );
   }
 
   if (variant === 'icon-text') {
     return (
-      <button
-        onClick={handleToggle}
-        className={`flex items-center gap-2 text-sm transition-colors ${
-          isWishlisted
-            ? 'text-red-500 hover:text-red-600'
-            : 'text-muted-foreground hover:text-foreground'
-        } ${className}`}
-        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-      >
-        <HeartIcon filled={isWishlisted} />
-        <span>{isWishlisted ? 'Saved' : 'Save'}</span>
-      </button>
+      <>
+        <button
+          onClick={handleToggle}
+          className={`flex items-center gap-2 text-sm transition-colors ${
+            isWishlisted
+              ? 'text-red-500 hover:text-red-600'
+              : 'text-muted-foreground hover:text-foreground'
+          } ${className}`}
+          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        >
+          <HeartIcon filled={isWishlisted} />
+          <span>{isWishlisted ? 'Saved' : 'Save'}</span>
+        </button>
+        <AuthRequiredModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          returnTo={pathname || '/'}
+        />
+      </>
     );
   }
 
@@ -125,16 +155,23 @@ export default function WishlistButton({
   const hasExplicitSize = className.includes('w-') || className.includes('h-');
 
   return (
-    <button
-      onClick={handleToggle}
-      className={`${hasExplicitSize ? 'flex items-center justify-center' : 'p-2'} rounded-full transition-colors ${
-        isWishlisted
-          ? 'text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50'
-          : 'text-muted-foreground hover:text-foreground bg-background/80 hover:bg-muted'
-      } ${className}`}
-      aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-    >
-      <HeartIcon filled={isWishlisted} />
-    </button>
+    <>
+      <button
+        onClick={handleToggle}
+        className={`${hasExplicitSize ? 'flex items-center justify-center' : 'p-2'} rounded-full transition-colors ${
+          isWishlisted
+            ? 'text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50'
+            : 'text-muted-foreground hover:text-foreground bg-background/80 hover:bg-muted'
+        } ${className}`}
+        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+      >
+        <HeartIcon filled={isWishlisted} />
+      </button>
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        returnTo={pathname || '/'}
+      />
+    </>
   );
 }

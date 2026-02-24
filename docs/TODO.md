@@ -65,15 +65,15 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 ## Cart & Checkout
 
-- [ ] `[MED]` Update shipping tiers — currently has Standard/Express/Overnight (domestic only); needs international tiers
+- [x] `[MED]` Update shipping tiers — domestic + international shipping methods now supported in checkout and Stripe Express flows
 - [x] `[MED]` Test contact form functionality (submissions return success; burst probe confirms `429` rate-limit responses)
 
 ---
 
 ## Auth & Account
 
-- [ ] `[MED]` Create login modal overlay
-- [ ] `[MED]` When not logged in, clicking "Add to Wishlist" should show login/signup modal instead of adding to wishlist
+- [x] `[MED]` Create login modal overlay
+- [x] `[MED]` When not logged in, clicking "Add to Wishlist" shows login/signup modal instead of adding to wishlist
 
 ---
 

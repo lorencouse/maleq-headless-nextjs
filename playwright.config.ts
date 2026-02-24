@@ -42,11 +42,15 @@ export default defineConfig({
     },
   ],
 
-  // Start local dev server before running tests
-  webServer: {
-    command: 'bun run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
-  },
+  // Allow running smoke/UAT directly against deployed envs.
+  ...(process.env.PLAYWRIGHT_SKIP_WEBSERVER === '1'
+    ? {}
+    : {
+        webServer: {
+          command: 'bun run dev',
+          url: 'http://localhost:3000',
+          reuseExistingServer: !process.env.CI,
+          timeout: 120 * 1000,
+        },
+      }),
 });

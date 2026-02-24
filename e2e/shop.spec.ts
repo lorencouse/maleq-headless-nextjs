@@ -46,7 +46,7 @@ test.describe('Product Page', () => {
     await productLink.click();
 
     // Should be on product page
-    await expect(page).toHaveURL(/\/shop\/product\//);
+    await expect(page).toHaveURL(/\/product\//);
   });
 
   test('should display product information', async ({ page }) => {

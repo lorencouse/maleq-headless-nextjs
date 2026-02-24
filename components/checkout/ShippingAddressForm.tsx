@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
+import { SHIPPING_COUNTRY_OPTIONS } from '@/lib/checkout/shipping-rates';
 
 // US States for dropdown
 const US_STATES = [
@@ -85,6 +86,7 @@ export default function ShippingAddressForm() {
     country: 'US',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const isUSAddress = address.country === 'US';
 
   // Auto-populate from saved customer addresses
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function ShippingAddressForm() {
         }
       })
       .catch(() => {});
-  }, [user?.id, token]);
+  }, [user?.firstName, user?.id, user?.lastName, token]);
 
   // Sync local address to checkout store whenever it changes
   useEffect(() => {
@@ -224,7 +226,7 @@ export default function ShippingAddressForm() {
         />
       </div>
 
-      {/* City, State, Zip Row */}
+      {/* City, State/Region, ZIP/Postal Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-foreground mb-1">
@@ -243,35 +245,46 @@ export default function ShippingAddressForm() {
         </div>
         <div>
           <label htmlFor="state" className="block text-sm font-medium text-foreground mb-1">
-            State <span className="text-red-500">*</span>
+            {isUSAddress ? 'State' : 'Province / Region'} <span className="text-red-500">*</span>
           </label>
-          <select
-            id="state"
-            value={address.state}
-            onChange={(e) => handleChange('state', e.target.value)}
-            className={inputClassName('state')}
-          >
-            <option value="">Select state</option>
-            {US_STATES.map((state) => (
-              <option key={state.code} value={state.code}>
-                {state.name}
-              </option>
-            ))}
-          </select>
+          {isUSAddress ? (
+            <select
+              id="state"
+              value={address.state}
+              onChange={(e) => handleChange('state', e.target.value)}
+              className={inputClassName('state')}
+            >
+              <option value="">Select state</option>
+              {US_STATES.map((state) => (
+                <option key={state.code} value={state.code}>
+                  {state.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              id="state"
+              value={address.state}
+              onChange={(e) => handleChange('state', e.target.value)}
+              placeholder="Province / Region"
+              className={inputClassName('state')}
+            />
+          )}
           {errors.state && (
             <p className="mt-1 text-sm text-red-500">{errors.state}</p>
           )}
         </div>
         <div>
           <label htmlFor="zipCode" className="block text-sm font-medium text-foreground mb-1">
-            ZIP Code <span className="text-red-500">*</span>
+            {isUSAddress ? 'ZIP Code' : 'Postal Code'} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="zipCode"
             value={address.zipCode}
             onChange={(e) => handleChange('zipCode', e.target.value)}
-            placeholder="12345"
+            placeholder={isUSAddress ? '12345' : 'Postal code'}
             className={inputClassName('zipCode')}
           />
           {errors.zipCode && (
@@ -291,10 +304,14 @@ export default function ShippingAddressForm() {
           onChange={(e) => handleChange('country', e.target.value)}
           className={inputClassName('country')}
         >
-          <option value="US">United States</option>
+          {SHIPPING_COUNTRY_OPTIONS.map((country) => (
+            <option key={country.code} value={country.code}>
+              {country.name}
+            </option>
+          ))}
         </select>
         <p className="mt-1 text-xs text-muted-foreground">
-          Currently shipping to US addresses only
+          Domestic and international shipping options are available.
         </p>
       </div>
     </div>

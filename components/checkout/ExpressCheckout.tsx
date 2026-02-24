@@ -16,48 +16,14 @@ import type {
 } from '@stripe/stripe-js';
 import { getStripe } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
-import { FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
+import {
+  getShippingOptions,
+  getShippingPrice,
+  getStripeShippingRates,
+  SUPPORTED_SHIPPING_COUNTRIES,
+  normalizeCountryCode,
+} from '@/lib/checkout/shipping-rates';
 import * as gtag from '@/lib/analytics/gtag';
-
-const SHIPPING_RATES = [
-  {
-    id: 'standard',
-    displayName: 'Standard Shipping',
-    amount: 799,
-    deliveryEstimate: {
-      minimum: { unit: 'business_day' as const, value: 5 },
-      maximum: { unit: 'business_day' as const, value: 7 },
-    },
-  },
-  {
-    id: 'express',
-    displayName: 'Express Shipping',
-    amount: 1499,
-    deliveryEstimate: {
-      minimum: { unit: 'business_day' as const, value: 2 },
-      maximum: { unit: 'business_day' as const, value: 3 },
-    },
-  },
-  {
-    id: 'overnight',
-    displayName: 'Overnight Shipping',
-    amount: 2499,
-    deliveryEstimate: {
-      minimum: { unit: 'business_day' as const, value: 1 },
-      maximum: { unit: 'business_day' as const, value: 1 },
-    },
-  },
-];
-
-function getShippingRates(subtotal: number) {
-  return SHIPPING_RATES.map((rate) => {
-    // Free standard shipping over threshold
-    if (rate.id === 'standard' && subtotal >= FREE_SHIPPING_THRESHOLD) {
-      return { ...rate, amount: 0 };
-    }
-    return rate;
-  });
-}
 
 /**
  * Inner component that uses Stripe hooks (must be inside Elements provider)
@@ -78,8 +44,8 @@ function ExpressCheckoutForm() {
         emailRequired: true,
         phoneNumberRequired: true,
         shippingAddressRequired: true,
-        allowedShippingCountries: ['US'],
-        shippingRates: getShippingRates(subtotal),
+        allowedShippingCountries: SUPPORTED_SHIPPING_COUNTRIES,
+        shippingRates: getStripeShippingRates(subtotal, 'US'),
       });
     },
     [subtotal]
@@ -87,9 +53,10 @@ function ExpressCheckoutForm() {
 
   const onShippingAddressChange = useCallback(
     (event: StripeExpressCheckoutElementShippingAddressChangeEvent) => {
-      // Update shipping rates based on address (all US rates are the same for now)
+      const countryCode = normalizeCountryCode(event.address.country);
+
       event.resolve({
-        shippingRates: getShippingRates(subtotal),
+        shippingRates: getStripeShippingRates(subtotal, countryCode),
       });
     },
     [subtotal]
@@ -112,15 +79,17 @@ function ExpressCheckoutForm() {
         const { expressPaymentType, billingDetails, shippingAddress, shippingRate } =
           event;
 
-        // Determine shipping cost
+        const countryCode = normalizeCountryCode(shippingAddress?.address.country);
+        const shippingOptions = getShippingOptions(countryCode);
+
+        // Determine shipping cost from the selected rate for the selected country.
         const selectedRate = shippingRate
-          ? SHIPPING_RATES.find((r) => r.id === shippingRate.id)
-          : SHIPPING_RATES[0];
-        let shippingCost = selectedRate?.amount ?? 799;
-        if (selectedRate?.id === 'standard' && subtotal >= FREE_SHIPPING_THRESHOLD) {
-          shippingCost = 0;
-        }
-        const shippingDollars = shippingCost / 100;
+          ? shippingOptions.find((option) => option.id === shippingRate.id)
+          : shippingOptions[0];
+
+        const shippingDollars = selectedRate
+          ? getShippingPrice(selectedRate, subtotal)
+          : 0;
         const totalAmount = subtotal + shippingDollars;
 
         // Create PaymentIntent server-side
@@ -189,7 +158,7 @@ function ExpressCheckoutForm() {
         };
 
         // Determine shipping method name
-        const shippingMethodName = selectedRate?.displayName || 'Standard Shipping';
+        const shippingMethodName = selectedRate?.name || 'Standard Shipping';
         const shippingMethodId = selectedRate?.id || 'standard';
 
         // Create order in WooCommerce
@@ -297,7 +266,7 @@ export default function ExpressCheckout() {
   const shipping = useCartStore((state) => state.shipping);
 
   // Convert dollars to cents for Stripe Elements
-  const totalCents = Math.round((subtotal + (shipping || 7.99)) * 100);
+  const totalCents = Math.round((subtotal + (shipping || getShippingOptions('US')[0].price)) * 100);
 
   if (totalCents <= 0) return null;
 

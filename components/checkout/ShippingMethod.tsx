@@ -4,63 +4,48 @@ import { useState } from 'react';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import { formatPrice, getFreeShippingProgress, FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
+import {
+  getShippingOptions,
+  getShippingPrice,
+  isDomesticShippingCountry,
+  normalizeCountryCode,
+  type ShippingOption,
+} from '@/lib/checkout/shipping-rates';
 
 interface ShippingMethodProps {
   onComplete: () => void;
 }
 
-// Shipping options - these would typically come from WooCommerce
-const SHIPPING_OPTIONS = [
-  {
-    id: 'standard',
-    name: 'Standard Shipping',
-    description: '5-7 business days',
-    price: 7.99,
-    freeThreshold: FREE_SHIPPING_THRESHOLD,
-  },
-  {
-    id: 'express',
-    name: 'Express Shipping',
-    description: '2-3 business days',
-    price: 14.99,
-    freeThreshold: null, // Never free
-  },
-  {
-    id: 'overnight',
-    name: 'Overnight Shipping',
-    description: 'Next business day',
-    price: 24.99,
-    freeThreshold: null,
-  },
-];
-
 export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
-  const [selectedMethod, setSelectedMethod] = useState<string>('standard');
+  const shippingCountry = useCheckoutStore((state) => state.shippingAddress.country);
+  const countryCode = normalizeCountryCode(shippingCountry);
+  const shippingOptions = getShippingOptions(countryCode);
+
+  const [selectedMethod, setSelectedMethod] = useState<string>(
+    shippingOptions[0]?.id || ''
+  );
   const updateShipping = useCartStore((state) => state.updateShipping);
   const setCheckoutShippingMethod = useCheckoutStore((state) => state.setShippingMethod);
   const subtotal = useCartSubtotal();
 
+  const effectiveSelectedMethod = shippingOptions.some(
+    (option) => option.id === selectedMethod
+  )
+    ? selectedMethod
+    : (shippingOptions[0]?.id || '');
+
   const freeShipping = getFreeShippingProgress(subtotal, FREE_SHIPPING_THRESHOLD);
+  const supportsFreeShipping = isDomesticShippingCountry(countryCode);
 
-  const getShippingPrice = (option: typeof SHIPPING_OPTIONS[0]) => {
-    if (option.freeThreshold && subtotal >= option.freeThreshold) {
-      return 0;
-    }
-    return option.price;
-  };
-
-  const handleMethodChange = (methodId: string) => {
+  const handleMethodChange = (methodId: string, option: ShippingOption) => {
     setSelectedMethod(methodId);
-    const option = SHIPPING_OPTIONS.find(o => o.id === methodId);
-    if (option) {
-      updateShipping(getShippingPrice(option));
-    }
+    updateShipping(getShippingPrice(option, subtotal));
   };
 
   const handleContinue = () => {
-    const option = SHIPPING_OPTIONS.find(o => o.id === selectedMethod);
+    const option = shippingOptions.find((o) => o.id === effectiveSelectedMethod);
     if (option) {
-      const price = getShippingPrice(option);
+      const price = getShippingPrice(option, subtotal);
       updateShipping(price);
       setCheckoutShippingMethod({
         id: option.id,
@@ -77,10 +62,10 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
       <h4 className="font-medium text-foreground">Shipping Method</h4>
 
       <div className="space-y-3">
-        {SHIPPING_OPTIONS.map((option) => {
-          const price = getShippingPrice(option);
+        {shippingOptions.map((option) => {
+          const price = getShippingPrice(option, subtotal);
           const isFree = price === 0;
-          const isSelected = selectedMethod === option.id;
+          const isSelected = effectiveSelectedMethod === option.id;
 
           return (
             <label
@@ -97,7 +82,7 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
                   name="shippingMethod"
                   value={option.id}
                   checked={isSelected}
-                  onChange={() => handleMethodChange(option.id)}
+                  onChange={() => handleMethodChange(option.id, option)}
                   className="h-4 w-4 text-primary focus:ring-primary border-input"
                 />
                 <div>
@@ -123,7 +108,7 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
       </div>
 
       {/* Free Shipping Notice */}
-      {!freeShipping.qualifies && (
+      {supportsFreeShipping && !freeShipping.qualifies && (
         <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
           <p>
             Add {formatPrice(freeShipping.remaining)} more to qualify for free standard shipping!
