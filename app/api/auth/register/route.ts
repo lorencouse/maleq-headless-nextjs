@@ -2,24 +2,90 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createCustomer, getCustomerByEmail, authenticateCustomer } from '@/lib/woocommerce/customers';
 import {
   errorResponse,
-  validationError,
   handleApiError,
+  UserFacingError,
+  validationError,
 } from '@/lib/api/response';
 import {
-  validateRequired,
+  combineValidationErrors,
+  hasErrors,
   validateEmail,
   validateLength,
-  hasErrors,
-  combineValidationErrors,
+  validateRequired,
 } from '@/lib/api/validation';
+import { encodeAuthToken } from '@/lib/api/auth-token';
+import {
+  clearAuthFailureState,
+  recordAuthFailure,
+  runAuthGuard,
+} from '@/lib/security/auth-guard';
+import { z } from 'zod';
+
+const registerRequestSchema = z.object({
+  email: z.string().optional(),
+  password: z.string().optional(),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  honeypot: z.string().optional(),
+  formStartTime: z.union([z.string(), z.number()]).optional(),
+  captchaToken: z.string().optional(),
+});
 
 export async function POST(request: NextRequest) {
+  let normalizedIdentifier = '';
+  let guardMeta:
+    | {
+        requestPath: string;
+        ip: string;
+        userAgent: string | null;
+        referrer: string | null;
+      }
+    | undefined;
+
   try {
     const body = await request.json();
-    const { email, password, firstName, lastName } = body;
+    const parsedBody = registerRequestSchema.safeParse(body);
+    if (!parsedBody.success) {
+      return validationError({
+        email: 'Email is required',
+        password: 'Password is required',
+        firstName: 'First name is required',
+        lastName: 'Last name is required',
+      });
+    }
+
+    const { email, password, firstName, lastName, honeypot, formStartTime, captchaToken } = parsedBody.data;
+    const safeEmail = email || '';
+    const safePassword = password || '';
+    const safeFirstName = firstName || '';
+    const safeLastName = lastName || '';
+
+    const guardResult = await runAuthGuard({
+      request,
+      route: 'register',
+      identifier: safeEmail,
+      honeypot,
+      formStartTime,
+      captchaToken,
+    });
+
+    normalizedIdentifier = guardResult.normalizedIdentifier;
+    guardMeta = guardResult.meta;
+
+    if (!guardResult.ok) {
+      const response = errorResponse(
+        guardResult.error || 'Request blocked.',
+        guardResult.status || 403,
+        guardResult.code || 'AUTH_BLOCKED'
+      );
+      if (guardResult.retryAfterSeconds) {
+        response.headers.set('Retry-After', String(guardResult.retryAfterSeconds));
+      }
+      return response;
+    }
 
     // Validate required fields
-    const requiredErrors = validateRequired(body, [
+    const requiredErrors = validateRequired(parsedBody.data as Record<string, unknown>, [
       'email',
       'password',
       'firstName',
@@ -27,25 +93,27 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Validate email format
-    const emailError = validateEmail(email);
+    const emailError = validateEmail(safeEmail);
     if (emailError && !requiredErrors.email) {
       requiredErrors.email = emailError;
     }
 
     // Validate password strength
-    const passwordError = validateLength(password, 'password', 8);
+    const passwordError = validateLength(safePassword, 'password', 8);
     if (passwordError && !requiredErrors.password) {
       requiredErrors.password = passwordError;
     }
 
     const errors = combineValidationErrors(requiredErrors);
     if (hasErrors(errors)) {
+      await recordAuthFailure('register', guardResult.meta, normalizedIdentifier, 'validation_failed');
       return validationError(errors);
     }
 
     // Check if customer already exists
-    const existingCustomer = await getCustomerByEmail(email);
+    const existingCustomer = await getCustomerByEmail(safeEmail);
     if (existingCustomer) {
+      await recordAuthFailure('register', guardResult.meta, normalizedIdentifier, 'account_exists');
       return errorResponse(
         'An account with this email already exists',
         409,
@@ -55,16 +123,18 @@ export async function POST(request: NextRequest) {
 
     // Create customer in WooCommerce
     const customer = await createCustomer({
-      email,
-      password,
-      first_name: firstName,
-      last_name: lastName,
-      username: email,
+      email: safeEmail,
+      password: safePassword,
+      first_name: safeFirstName,
+      last_name: safeLastName,
+      username: safeEmail,
     });
 
     // Authenticate the new user to get a valid WP token
     // This stores the token hash in WP so subsequent API calls work
-    const { token } = await authenticateCustomer(email, password);
+    const { token: rawToken } = await authenticateCustomer(safeEmail, safePassword);
+    const compositeToken = encodeAuthToken(customer.id, rawToken);
+    clearAuthFailureState('register', guardResult.meta, normalizedIdentifier);
 
     return NextResponse.json({
       success: true,
@@ -76,9 +146,17 @@ export async function POST(request: NextRequest) {
         displayName: `${customer.first_name} ${customer.last_name}`,
         avatarUrl: customer.avatar_url,
       },
-      token,
+      token: compositeToken,
     });
   } catch (error) {
+    if (guardMeta) {
+      await recordAuthFailure(
+        'register',
+        guardMeta,
+        normalizedIdentifier,
+        error instanceof UserFacingError && error.code ? error.code : 'register_exception'
+      );
+    }
     return handleApiError(error, 'Registration failed');
   }
 }

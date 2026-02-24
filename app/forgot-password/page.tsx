@@ -1,25 +1,41 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { Metadata } from 'next';
+import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
+  const formStartTimeRef = useRef<number>(Date.now());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
+    let captchaToken: string | undefined;
+    try {
+      captchaToken = await getRecaptchaToken('forgot_password');
+    } catch {
+      setError('Security check failed. Please refresh and try again.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          honeypot,
+          formStartTime: formStartTimeRef.current,
+          captchaToken,
+        }),
       });
 
       const data = await response.json();
@@ -56,7 +72,12 @@ export default function ForgotPasswordPage() {
             </p>
             <div className="space-y-3">
               <button
-                onClick={() => setIsSubmitted(false)}
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setError(null);
+                  setHoneypot('');
+                  formStartTimeRef.current = Date.now();
+                }}
                 className="w-full py-3 px-4 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground"
               >
                 Try another email
@@ -108,6 +129,19 @@ export default function ForgotPasswordPage() {
                 autoComplete="email"
                 className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 placeholder="your@email.com"
+              />
+            </div>
+
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="website">Website</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(event) => setHoneypot(event.target.value)}
               />
             </div>
 

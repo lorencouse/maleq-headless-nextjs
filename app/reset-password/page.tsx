@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useRef, useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
 export default function ResetPasswordPage() {
   return (
@@ -24,6 +25,8 @@ function ResetPasswordContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [honeypot, setHoneypot] = useState('');
+  const formStartTimeRef = useRef<number>(Date.now());
 
   const email = searchParams.get('email');
   const key = searchParams.get('key');
@@ -49,11 +52,27 @@ function ResetPasswordContent() {
 
     setIsLoading(true);
 
+    let captchaToken: string | undefined;
+    try {
+      captchaToken = await getRecaptchaToken('reset_password');
+    } catch {
+      setError('Security check failed. Please refresh and try again.');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, key, password }),
+        body: JSON.stringify({
+          email,
+          key,
+          password,
+          honeypot,
+          formStartTime: formStartTimeRef.current,
+          captchaToken,
+        }),
       });
 
       const data = await response.json();
@@ -197,6 +216,19 @@ function ResetPasswordContent() {
                 autoComplete="new-password"
                 className="w-full px-4 py-3 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
                 placeholder="Confirm new password"
+              />
+            </div>
+
+            <div className="hidden" aria-hidden="true">
+              <label htmlFor="website">Website</label>
+              <input
+                id="website"
+                name="website"
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                value={honeypot}
+                onChange={(event) => setHoneypot(event.target.value)}
               />
             </div>
 

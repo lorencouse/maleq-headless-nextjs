@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
+import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
 const REGISTER_TIMEOUT_MS = 30_000;
 
@@ -17,6 +18,8 @@ export default function RegisterForm() {
   const returnTo = searchParams.get('returnTo');
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
+  const formStartTimeRef = useRef<number>(Date.now());
 
   const {
     register,
@@ -40,6 +43,14 @@ export default function RegisterForm() {
     clearError();
     setLoading(true);
 
+    let tokenToSubmit: string | undefined;
+    try {
+      tokenToSubmit = await getRecaptchaToken('register');
+    } catch {
+      setError('Security check failed. Please refresh and try again.');
+      return;
+    }
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REGISTER_TIMEOUT_MS);
 
@@ -52,6 +63,9 @@ export default function RegisterForm() {
           lastName: data.lastName,
           email: data.email,
           password: data.password,
+          honeypot,
+          formStartTime: formStartTimeRef.current,
+          captchaToken: tokenToSubmit,
         }),
         signal: controller.signal,
       });
@@ -144,6 +158,19 @@ export default function RegisterForm() {
         {errors.email && (
           <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
         )}
+      </div>
+
+      <div className="hidden" aria-hidden="true">
+        <label htmlFor="website">Website</label>
+        <input
+          id="website"
+          name="website"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(event) => setHoneypot(event.target.value)}
+        />
       </div>
 
       <div>
