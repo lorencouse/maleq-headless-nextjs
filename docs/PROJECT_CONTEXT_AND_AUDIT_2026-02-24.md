@@ -102,6 +102,7 @@ This document preserves operational context and the current prioritized audit fi
   - Additional hardening added: per-IP/user-agent rate limiting, customer email validation, and metadata sanitization before Stripe API call.
 - Improved product-by-id API caching behavior:
   - `app/api/products/[id]/route.ts` now sets cache headers for success and 404 responses.
+  - Product miss handling hardened: known GraphQL "no product exists" cases now return 404 instead of 500 when index fallback also misses.
 - Integrated newsletter subscribe endpoint with persistence + provider sync:
   - `app/api/newsletter/subscribe/route.ts` now validates JSON/email, applies rate limiting, persists subscribers, and logs durable events.
   - `lib/newsletter/subscription-service.ts` adds `maleq_newsletter_subscribers` upsert flow plus optional Mailchimp/webhook sync.

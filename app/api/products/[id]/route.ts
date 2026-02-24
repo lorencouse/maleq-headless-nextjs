@@ -48,6 +48,17 @@ function jsonWithCache(data: unknown, status = 200, cacheControl = PRODUCT_RESPO
   return response;
 }
 
+function isGraphQlNotFoundError(errors: Array<{ message?: string }> | undefined): boolean {
+  if (!errors || errors.length === 0) return false;
+  return errors.every((error) => {
+    const message = (error.message || '').toLowerCase();
+    return (
+      message.includes('no product exists') ||
+      message.includes('could not resolve to a product')
+    );
+  });
+}
+
 function mapIndexEntryToApiProduct(entry: {
   id: number;
   name: string;
@@ -97,10 +108,15 @@ export async function GET(
     }
 
     let graphQlNotFound = false;
+    let graphQlAttempted = false;
+    let graphQlFailed = false;
+    let indexAttempted = false;
+    let indexFailed = false;
 
     // Try GraphQL first (WPGraphQL has richer per-product fields).
     if (GRAPHQL_URL) {
       try {
+        graphQlAttempted = true;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 6000);
 
@@ -122,8 +138,12 @@ export async function GET(
 
         const result = await response.json();
         if (result.errors) {
-          console.error('GraphQL errors:', result.errors);
-          throw new Error('GraphQL query failed');
+          if (isGraphQlNotFoundError(result.errors)) {
+            graphQlNotFound = true;
+          } else {
+            console.error('GraphQL errors:', result.errors);
+            throw new Error('GraphQL query failed');
+          }
         }
 
         const product = result.data?.product;
@@ -150,12 +170,14 @@ export async function GET(
 
         graphQlNotFound = true;
       } catch (graphQlError) {
+        graphQlFailed = true;
         console.error('Error fetching product from GraphQL:', graphQlError);
       }
     }
 
     // Fallback to in-memory MySQL-backed index when GraphQL is unavailable.
     try {
+      indexAttempted = true;
       const { isMySQLConfigured } = await import('@/lib/db/pool');
       if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
         const { getIndexEntryById } = await import('@/lib/products/product-index');
@@ -165,10 +187,15 @@ export async function GET(
         }
       }
     } catch (indexError) {
+      indexFailed = true;
       console.error('Error fetching product from index fallback:', indexError);
     }
 
-    if (graphQlNotFound) {
+    if (
+      graphQlNotFound ||
+      (!graphQlAttempted && indexAttempted && !indexFailed) ||
+      (graphQlAttempted && !graphQlFailed && indexAttempted && !indexFailed)
+    ) {
       return jsonWithCache({ error: 'Product not found' }, 404, NOT_FOUND_CACHE_CONTROL);
     }
 

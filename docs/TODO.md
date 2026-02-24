@@ -25,7 +25,7 @@ Source: production architecture + code review for performance, SEO, conversion, 
 - [x] `[HIGH]` Add auth/anti-abuse guard on `POST /api/payment/create-intent` — trusted origin/referrer validation, amount/currency checks, customerEmail validation, metadata sanitization, and IP/user-agent rate limiting
 - [x] `[HIGH]` Integrate newsletter subscribe endpoint with ESP (Klaviyo/Mailchimp/etc.) + persistence (DB-backed `maleq_newsletter_subscribers` + provider sync support for Mailchimp/webhook, durable-event logging, route rate limit, graceful fallback if DB writes unavailable)
 - [x] `[HIGH]` Grant least-privilege DB write access for app-owned tables to frontend DB user (`maleq_readonly`) so newsletter/push/event logs persist in production (granted on `maleq_newsletter_subscribers`, `maleq_push_subscriptions`, `maleq_stock_alert_products`; verified newsletter row insert)
-- [ ] `[MED]` Harden `/api/products/[id]` fallback/caching behavior for cart reliability — response cache headers added, remaining work: reduce upstream-failure 5xx pathways
+- [x] `[MED]` Harden `/api/products/[id]` fallback/caching behavior for cart reliability — response cache headers added and GraphQL/product-miss fallback normalized to 404 (reduces cart-related 500s)
 - [ ] `[MED]` Update Uptime Kuma checks:
   - `panel.maleq.com` and `status.maleq.com`: authenticated check or expected-401 check
   - `wp.maleq.com/graphql`: POST monitor with GraphQL body assertion
