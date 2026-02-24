@@ -2,6 +2,7 @@ import { unstable_cache } from 'next/cache';
 import { getClient, REVALIDATE } from '@/lib/apollo/client';
 import { getProductionImageUrl } from '@/lib/utils/image';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
+import { decodeHtmlEntities } from '@/lib/utils/text-utils';
 import {
   GET_ALL_PRODUCTS,
   GET_PRODUCTS_BY_CATEGORY,
@@ -397,6 +398,10 @@ async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
     // Filter out empty categories (count = 0 or null) and sort alphabetically
     return allCategories
       .filter((cat) => cat.count && cat.count > 0)
+      .map((cat) => ({
+        ...cat,
+        name: decodeHtmlEntities(cat.name),
+      }))
       .sort((a, b) => a.name.localeCompare(b.name));
   } catch (error) {
     console.error('Error fetching product categories:', error);
@@ -406,7 +411,7 @@ async function _uncachedGetProductCategories(): Promise<ProductCategory[]> {
 
 export const getProductCategories = unstable_cache(
   _uncachedGetProductCategories,
-  ['product-categories'],
+  ['product-categories-v2'],
   { revalidate: 3600, tags: ['categories'] }
 );
 
@@ -440,7 +445,7 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
       const children = cat.children?.nodes || [];
       return {
         id: cat.id,
-        name: cat.name,
+        name: decodeHtmlEntities(cat.name),
         slug: cat.slug,
         count: cat.count || 0,
         image: cat.image?.sourceUrl ? getProductionImageUrl(cat.image.sourceUrl) : null,
@@ -464,7 +469,7 @@ async function _uncachedGetHierarchicalCategories(): Promise<HierarchicalCategor
 
 export const getHierarchicalCategories = unstable_cache(
   _uncachedGetHierarchicalCategories,
-  ['hierarchical-categories-v2'],
+  ['hierarchical-categories-v3'],
   { revalidate: 3600, tags: ['categories'] }
 );
 

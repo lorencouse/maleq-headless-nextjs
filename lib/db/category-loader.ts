@@ -8,6 +8,7 @@ import { getPoolAsync } from './pool';
 import type { RowDataPacket } from 'mysql2';
 import type { HierarchicalCategory } from '@/lib/products/combined-service';
 import type { ProductCategory } from '@/lib/types/woocommerce';
+import { decodeHtmlEntities } from '@/lib/utils/text-utils';
 
 interface DbCategory extends RowDataPacket {
   term_id: number;
@@ -71,7 +72,7 @@ export async function loadHierarchicalCategories(): Promise<HierarchicalCategory
     if (!cat || cat.count <= 0) return null;
     return {
       id: encodeId('term', cat.term_id),
-      name: cat.name,
+      name: decodeHtmlEntities(cat.name),
       slug: cat.slug,
       count: cat.count,
       image: cat.thumb_url || null,
@@ -139,7 +140,7 @@ export async function loadFlatCategories(): Promise<ProductCategory[]> {
 
   const result: ProductCategory[] = rows.map(row => ({
     id: encodeId('term', row.term_id),
-    name: row.name,
+    name: decodeHtmlEntities(row.name),
     slug: row.slug,
     description: row.description || undefined,
     count: row.count,
