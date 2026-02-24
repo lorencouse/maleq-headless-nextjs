@@ -16,6 +16,20 @@ This document preserves operational context and the current prioritized audit fi
 - Frontend host: Coolify VPS (`deploy@46.224.227.119`)
 - WordPress/CloudPanel host: WP VPS (`root@159.69.220.162`)
 
+## Data Source Guardrail (Performance-Critical)
+
+- Primary rule: product/catalog data must stay **MySQL-direct first**; GraphQL is fallback only.
+- Production expectation: `DATA_SOURCE=auto` (not `graphql`).
+- GraphQL-only mode is incident fallback, not normal operation.
+- Current production caveat: app container MySQL user is read-only (`maleq_readonly`), so write-oriented API features must not assume direct DB write permissions from Next.js.
+- Code paths enforcing this:
+  - `app/page.tsx` (home product grid source selection)
+  - `app/shop/page.tsx` (shop listing source selection)
+  - `app/api/products/route.ts` (API MySQL-first path)
+  - `lib/products/product-service.ts` (slug fetch MySQL-first, GraphQL fallback)
+  - `lib/products/combined-service.ts` (category/brand/filter loaders prefer MySQL when reachable)
+  - `app/sex-toys/[slug]/page.tsx` (category page MySQL-first with GraphQL fallback)
+
 ## Domain/Service Routing (Current)
 
 - `maleq.com` -> Next.js frontend (Coolify/Traefik)
