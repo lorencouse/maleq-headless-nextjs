@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
@@ -11,6 +11,7 @@ import ShippingMethod from './ShippingMethod';
 import PaymentForm from './PaymentForm';
 import StripeProvider from './StripeProvider';
 import * as gtag from '@/lib/analytics/gtag';
+import { clearPendingCheckout, savePendingCheckout } from '@/lib/checkout/pending-order';
 
 type CheckoutStep = 'contact' | 'shipping' | 'payment';
 
@@ -31,11 +32,14 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const [contactComplete, setContactComplete] = useState(false);
   const [shippingComplete, setShippingComplete] = useState(false);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Auth state
   const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const authenticatedCustomerId = user?.id && token ? Number(user.id) : undefined;
 
   // Cart and checkout state
   const items = useCartStore((state) => state.items);
@@ -57,13 +61,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   }, [currentStep, onStepChange]);
 
   // Create payment intent when entering payment step
-  useEffect(() => {
-    if (currentStep === 'payment' && !clientSecret && total > 0) {
-      createPaymentIntent();
-    }
-  }, [currentStep, total]);
-
-  const createPaymentIntent = async () => {
+  const createPaymentIntent = useCallback(async () => {
     try {
       setError(null);
 
@@ -80,6 +78,14 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: total,
+          cartItems: items.map((item) => ({
+            productId: item.productId,
+            variationId: item.variationId,
+            quantity: item.quantity,
+          })),
+          shippingMethod: {
+            id: shippingMethod?.id || 'standard',
+          },
           customerEmail: contact.email,
           metadata: {
             customer_email: contact.email,
@@ -104,11 +110,18 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
       const data = await response.json();
       setClientSecret(data.clientSecret);
+      setPaymentIntentId(data.paymentIntentId);
     } catch (err) {
       console.error('Error creating payment intent:', err);
       setError('Failed to initialize payment. Please try again.');
     }
-  };
+  }, [contact.email, items, shippingAddress, shippingMethod?.id, total, validateCart]);
+
+  useEffect(() => {
+    if (currentStep === 'payment' && !clientSecret && total > 0) {
+      void createPaymentIntent();
+    }
+  }, [clientSecret, createPaymentIntent, currentStep, total]);
 
   const handleContactComplete = (data: { email: string; phone: string; newsletter: boolean }) => {
     setContact(data);
@@ -136,38 +149,57 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       setIsProcessing(true);
       setError(null);
 
+      const orderRequest = {
+        paymentIntentId,
+        ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
+        contact: {
+          email: contact.email,
+          phone: contact.phone,
+        },
+        shippingAddress,
+        shippingMethod: shippingMethod || {
+          id: 'standard',
+          name: 'Standard Shipping',
+          price: shipping,
+        },
+        cartItems: items.map((item) => ({
+          productId: item.productId,
+          variationId: item.variationId,
+          quantity: item.quantity,
+          name: item.name,
+          sku: item.sku,
+          price: item.price,
+        })),
+        totals: {
+          subtotal,
+          shipping,
+          tax,
+          discount: 0,
+          total,
+        },
+      };
+
+      if (paymentIntentId) {
+        savePendingCheckout(paymentIntentId, {
+          ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
+          contact: orderRequest.contact,
+          shippingAddress: orderRequest.shippingAddress,
+          shippingMethod: orderRequest.shippingMethod,
+          cartItems: orderRequest.cartItems,
+          totals: orderRequest.totals,
+          authToken: token || undefined,
+          flow: 'standard',
+        });
+      }
+
       // Create order in WooCommerce
       const response = await fetch('/api/orders/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentIntentId,
-          ...(user?.id && { customerId: Number(user.id) }),
-          contact: {
-            email: contact.email,
-            phone: contact.phone,
-          },
-          shippingAddress,
-          shippingMethod: shippingMethod || {
-            id: 'standard',
-            name: 'Standard Shipping',
-            price: shipping,
-          },
-          cartItems: items.map((item) => ({
-            productId: item.productId,
-            variationId: item.variationId,
-            quantity: item.quantity,
-            name: item.name,
-            sku: item.sku,
-          })),
-          totals: {
-            subtotal,
-            shipping,
-            tax,
-            discount: 0,
-            total,
-          },
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(orderRequest),
       });
 
       if (!response.ok) {
@@ -198,6 +230,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
       // Redirect to confirmation page - cart is cleared there to avoid
       // race condition with checkout page's empty-cart redirect
+      clearPendingCheckout(paymentIntentId);
       router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
     } catch (err) {
       console.error('Error creating order:', err);
@@ -324,6 +357,37 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
             {clientSecret ? (
               <StripeProvider clientSecret={clientSecret}>
                 <PaymentForm
+                  paymentIntentId={paymentIntentId}
+                  pendingOrderPayload={{
+                    ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
+                    contact: {
+                      email: contact.email,
+                      phone: contact.phone,
+                    },
+                    shippingAddress,
+                    shippingMethod: shippingMethod || {
+                      id: 'standard',
+                      name: 'Standard Shipping',
+                      price: shipping,
+                    },
+                    cartItems: items.map((item) => ({
+                      productId: item.productId,
+                      variationId: item.variationId,
+                      quantity: item.quantity,
+                      name: item.name,
+                      sku: item.sku,
+                      price: item.price,
+                    })),
+                    totals: {
+                      subtotal,
+                      shipping,
+                      tax,
+                      discount: 0,
+                      total,
+                    },
+                    authToken: token || undefined,
+                    flow: 'standard',
+                  }}
                   onSuccess={handlePaymentSuccess}
                   onError={handlePaymentError}
                   isProcessing={isProcessing}

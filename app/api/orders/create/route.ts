@@ -5,6 +5,11 @@ import { errorResponse, handleApiError, validationError } from '@/lib/api/respon
 import { z } from 'zod';
 import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
+import { extractAuthToken } from '@/lib/api/auth-token';
+import {
+  CheckoutPricingError,
+  computeAuthoritativeCheckoutPricing,
+} from '@/lib/checkout/server-pricing';
 
 /**
  * Create Order API Route
@@ -36,7 +41,7 @@ const orderRequestSchema = z.object({
   shippingMethod: z.object({
     id: z.string().min(1),
     name: z.string().min(1),
-    price: z.number().min(0),
+    price: z.number().min(0).optional(),
   }),
   cartItems: z.array(z.object({
     productId: z.string().min(1),
@@ -106,6 +111,40 @@ export async function POST(request: NextRequest) {
       customerNote,
     } = parseResult.data;
 
+    // If a customerId is provided, require a bearer token and enforce ownership.
+    if (customerId) {
+      const tokenData = extractAuthToken(request);
+      if (!tokenData) {
+        return errorResponse('Unauthorized', 401, 'UNAUTHORIZED');
+      }
+      if (tokenData.userId !== customerId) {
+        return errorResponse('Forbidden', 403, 'FORBIDDEN');
+      }
+    }
+
+    const pricing = await computeAuthoritativeCheckoutPricing({
+      cartItems,
+      shippingMethodId: shippingMethod.id,
+      shippingCountry: shippingAddress.country,
+      enforceStockChecks: false,
+    });
+
+    const totalsDelta = Math.abs(totals.total - pricing.total);
+    if (totalsDelta > 0.01) {
+      await logDurableEvent({
+        eventType: 'checkout_order_total_mismatch',
+        severity: 'warning',
+        message: 'Order creation proceeding with authoritative server total',
+        ...requestMeta,
+        payload: {
+          clientTotal: totals.total,
+          authoritativeTotal: pricing.total,
+          delta: Number(totalsDelta.toFixed(2)),
+          paymentIntentId,
+        },
+      });
+    }
+
     // Verify the payment intent
     const stripe = getStripeServer();
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
@@ -153,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify the amount matches - reject mismatches to prevent incorrect charges
-    const expectedAmount = Math.round(totals.total * 100);
+    const expectedAmount = Math.round(pricing.total * 100);
     if (paymentIntent.amount !== expectedAmount) {
       console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amount}`);
       sendAdminAlert('Amount Mismatch on Order Creation', {
@@ -171,6 +210,7 @@ export async function POST(request: NextRequest) {
         payload: {
           expectedAmountCents: expectedAmount,
           actualAmountCents: paymentIntent.amount,
+          authoritativeTotal: pricing.total,
           durationMs: Date.now() - startedAt,
         },
       });
@@ -234,15 +274,19 @@ export async function POST(request: NextRequest) {
       line_items: lineItems,
       shipping_lines: [
         {
-          method_id: shippingMethod.id,
-          method_title: shippingMethod.name,
-          total: shippingMethod.price.toFixed(2),
+          method_id: pricing.shippingMethod.id,
+          method_title: pricing.shippingMethod.name,
+          total: pricing.shipping.toFixed(2),
         },
       ],
       transaction_id: paymentIntentId,
       meta_data: [
         { key: '_stripe_payment_intent_id', value: paymentIntentId },
         { key: '_order_source', value: 'maleq-headless' },
+        { key: '_checkout_subtotal', value: pricing.subtotal.toFixed(2) },
+        { key: '_checkout_shipping', value: pricing.shipping.toFixed(2) },
+        { key: '_checkout_discount', value: pricing.discount.toFixed(2) },
+        { key: '_checkout_total', value: pricing.total.toFixed(2) },
       ],
       ...(customerNote && { customer_note: customerNote }),
     };
@@ -275,7 +319,10 @@ export async function POST(request: NextRequest) {
       ...requestMeta,
       payload: {
         itemCount: cartItems.length,
-        total: totals.total,
+        total: pricing.total,
+        subtotal: pricing.subtotal,
+        shipping: pricing.shipping,
+        discount: pricing.discount,
         couponApplied: Boolean(couponCode),
         customerId: customerId ?? null,
         durationMs: Date.now() - startedAt,
@@ -284,6 +331,20 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof CheckoutPricingError) {
+      await logDurableEvent({
+        eventType: 'checkout_order_pricing_error',
+        severity: 'warning',
+        message: error.message,
+        ...requestMeta,
+        payload: {
+          code: error.code,
+          durationMs: Date.now() - startedAt,
+        },
+      });
+      return errorResponse(error.message, error.status, error.code);
+    }
+
     const paymentIntentId =
       typeof rawBody?.paymentIntentId === 'string' ? rawBody.paymentIntentId : null;
     await logDurableEvent({

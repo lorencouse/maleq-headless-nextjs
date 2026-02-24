@@ -4,6 +4,11 @@ import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
 import { checkRateLimit } from '@/lib/api/rate-limit';
 import { validateEmail } from '@/lib/api/validation';
+import { z } from 'zod';
+import {
+  CheckoutPricingError,
+  computeAuthoritativeCheckoutPricing,
+} from '@/lib/checkout/server-pricing';
 
 /**
  * Create Payment Intent API Route
@@ -13,7 +18,15 @@ import { validateEmail } from '@/lib/api/validation';
  */
 
 export interface CreatePaymentIntentRequest {
-  amount: number; // Amount in dollars
+  amount?: number; // Optional client-computed total (server computes authoritative total)
+  cartItems: Array<{
+    productId: string;
+    variationId?: string;
+    quantity: number;
+  }>;
+  shippingMethod: {
+    id: string;
+  };
   currency?: string;
   metadata?: Record<string, string>;
   customerEmail?: string;
@@ -23,7 +36,7 @@ export interface CreatePaymentIntentRequest {
       line1: string;
       line2?: string;
       city: string;
-      state: string;
+      state?: string;
       postal_code: string;
       country: string;
     };
@@ -33,6 +46,17 @@ export interface CreatePaymentIntentRequest {
 export interface CreatePaymentIntentResponse {
   clientSecret: string;
   paymentIntentId: string;
+  amount: number;
+  pricing: {
+    subtotal: number;
+    shipping: number;
+    discount: number;
+    tax: number;
+    total: number;
+    shippingMethodId: string;
+    shippingMethodName: string;
+    shippingCountry: string;
+  };
 }
 
 const MAX_PAYMENT_INTENT_AMOUNT_USD = Number(process.env.MAX_PAYMENT_INTENT_AMOUNT_USD || 5000);
@@ -40,6 +64,32 @@ const CREATE_INTENT_RATE_LIMIT = {
   limit: Number(process.env.PAYMENT_INTENT_RATE_LIMIT_PER_MINUTE || 15),
   windowSeconds: 60,
 };
+
+const createIntentSchema = z.object({
+  amount: z.number().positive().optional(),
+  cartItems: z.array(z.object({
+    productId: z.string().min(1),
+    variationId: z.string().min(1).optional(),
+    quantity: z.number().int().min(1).max(100),
+  })).min(1, 'Cart cannot be empty'),
+  shippingMethod: z.object({
+    id: z.string().min(1),
+  }),
+  currency: z.string().optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
+  customerEmail: z.string().email().optional(),
+  shippingAddress: z.object({
+    name: z.string().min(1),
+    address: z.object({
+      line1: z.string().min(1),
+      line2: z.string().optional(),
+      city: z.string().min(1),
+      state: z.string().optional(),
+      postal_code: z.string().min(1),
+      country: z.string().min(2).max(2),
+    }),
+  }).optional(),
+});
 
 export async function POST(request: NextRequest) {
   const startedAt = Date.now();
@@ -74,24 +124,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    body = await request.json();
-
-    const { amount, currency = 'usd', metadata, customerEmail, shippingAddress } = body!;
-
-    // Validate amount
-    if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_PAYMENT_INTENT_AMOUNT_USD) {
+    const parsedBody = createIntentSchema.safeParse(await request.json());
+    if (!parsedBody.success) {
       await logDurableEvent({
-        eventType: 'checkout_intent_invalid_amount',
+        eventType: 'checkout_intent_validation_failed',
         severity: 'warning',
-        message: 'Rejected create-intent request with invalid amount',
+        message: 'Rejected create-intent request due to validation errors',
         ...requestMeta,
-        payload: { amount: amount ?? null, currency, maxAllowed: MAX_PAYMENT_INTENT_AMOUNT_USD },
+        payload: {
+          issueCount: parsedBody.error.issues.length,
+        },
       });
       return NextResponse.json(
-        { error: 'Invalid amount' },
+        { error: 'Invalid request payload' },
         { status: 400 }
       );
     }
+
+    body = parsedBody.data;
+
+    const {
+      amount: clientAmount,
+      cartItems,
+      shippingMethod,
+      currency = 'usd',
+      metadata,
+      customerEmail,
+      shippingAddress,
+    } = body;
 
     if (currency.toLowerCase() !== 'usd') {
       await logDurableEvent({
@@ -124,18 +184,70 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const pricing = await computeAuthoritativeCheckoutPricing({
+      cartItems,
+      shippingMethodId: shippingMethod.id,
+      shippingCountry: shippingAddress?.address.country,
+    });
+
+    // If client sent a total, enforce parity with authoritative pricing.
+    if (typeof clientAmount === 'number') {
+      const delta = Math.abs(clientAmount - pricing.total);
+      if (delta > 0.01) {
+        await logDurableEvent({
+          eventType: 'checkout_intent_amount_mismatch',
+          severity: 'warning',
+          message: 'Rejected create-intent request due to amount mismatch',
+          ...requestMeta,
+          payload: {
+            clientAmount,
+            authoritativeTotal: pricing.total,
+            delta: Number(delta.toFixed(2)),
+          },
+        });
+        return NextResponse.json(
+          { error: 'Order total has changed. Please review your cart and try again.' },
+          { status: 409 }
+        );
+      }
+    }
+
+    if (!Number.isFinite(pricing.total) || pricing.total <= 0 || pricing.total > MAX_PAYMENT_INTENT_AMOUNT_USD) {
+      await logDurableEvent({
+        eventType: 'checkout_intent_invalid_amount',
+        severity: 'warning',
+        message: 'Rejected create-intent request with invalid authoritative amount',
+        ...requestMeta,
+        payload: {
+          amount: pricing.total,
+          currency,
+          maxAllowed: MAX_PAYMENT_INTENT_AMOUNT_USD,
+        },
+      });
+      return NextResponse.json(
+        { error: 'Invalid amount' },
+        { status: 400 }
+      );
+    }
+
     const safeMetadata = sanitizeMetadata(metadata);
 
     // Create the PaymentIntent
     const stripe = getStripeServer();
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: formatAmountForStripe(amount),
+      amount: formatAmountForStripe(pricing.total),
       currency,
       automatic_payment_methods: {
         enabled: true,
       },
       metadata: {
         ...safeMetadata,
+        checkout_subtotal: pricing.subtotal.toFixed(2),
+        checkout_shipping: pricing.shipping.toFixed(2),
+        checkout_discount: pricing.discount.toFixed(2),
+        checkout_total: pricing.total.toFixed(2),
+        shipping_method_id: pricing.shippingMethod.id,
+        shipping_country: pricing.shippingCountry,
         source: 'maleq-headless-checkout',
       },
       ...(customerEmail && { receipt_email: customerEmail }),
@@ -149,6 +261,17 @@ export async function POST(request: NextRequest) {
     const response: CreatePaymentIntentResponse = {
       clientSecret: paymentIntent.client_secret,
       paymentIntentId: paymentIntent.id,
+      amount: pricing.total,
+      pricing: {
+        subtotal: pricing.subtotal,
+        shipping: pricing.shipping,
+        discount: pricing.discount,
+        tax: pricing.tax,
+        total: pricing.total,
+        shippingMethodId: pricing.shippingMethod.id,
+        shippingMethodName: pricing.shippingMethod.name,
+        shippingCountry: pricing.shippingCountry,
+      },
     };
 
     await logDurableEvent({
@@ -157,7 +280,10 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
       ...requestMeta,
       payload: {
-        amount,
+        amount: pricing.total,
+        subtotal: pricing.subtotal,
+        shipping: pricing.shipping,
+        discount: pricing.discount,
         currency,
         metadataKeys: Object.keys(safeMetadata).length,
         hasCustomerEmail: Boolean(customerEmail),
@@ -168,6 +294,23 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof CheckoutPricingError) {
+      await logDurableEvent({
+        eventType: 'checkout_intent_pricing_error',
+        severity: 'warning',
+        message: error.message,
+        ...requestMeta,
+        payload: {
+          code: error.code,
+          durationMs: Date.now() - startedAt,
+        },
+      });
+      return NextResponse.json(
+        { error: error.message, code: error.code },
+        { status: error.status }
+      );
+    }
+
     console.error('Error creating payment intent:', error);
     sendAdminAlert('PaymentIntent Creation Failed', {
       'Amount': `$${body?.amount || 'N/A'}`,

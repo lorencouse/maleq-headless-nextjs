@@ -6,8 +6,11 @@ import {
   useStripe,
   useElements,
 } from '@stripe/react-stripe-js';
+import { savePendingCheckout, type PendingOrderPayload } from '@/lib/checkout/pending-order';
 
 interface PaymentFormProps {
+  paymentIntentId?: string | null;
+  pendingOrderPayload?: PendingOrderPayload;
   onSuccess: (paymentIntentId: string) => void;
   onError: (error: string) => void;
   isProcessing: boolean;
@@ -15,6 +18,8 @@ interface PaymentFormProps {
 }
 
 export default function PaymentForm({
+  paymentIntentId,
+  pendingOrderPayload,
   onSuccess,
   onError,
   isProcessing,
@@ -35,10 +40,17 @@ export default function PaymentForm({
     setErrorMessage(null);
 
     try {
+      // Persist pending order data before payment confirmation so redirect-based
+      // payment methods can recover and complete order creation on return.
+      if (paymentIntentId && pendingOrderPayload) {
+        savePendingCheckout(paymentIntentId, pendingOrderPayload);
+      }
+
       const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${window.location.origin}/order-confirmation`,
+          // Keep return URL on an existing route for redirect-required payment methods.
+          return_url: `${window.location.origin}/checkout`,
         },
         redirect: 'if_required',
       });

@@ -16,6 +16,7 @@ import type {
 } from '@stripe/stripe-js';
 import { getStripe } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
+import { useAuthStore } from '@/lib/store/auth-store';
 import {
   getShippingOptions,
   getShippingPrice,
@@ -24,6 +25,7 @@ import {
   normalizeCountryCode,
 } from '@/lib/checkout/shipping-rates';
 import * as gtag from '@/lib/analytics/gtag';
+import { clearPendingCheckout, savePendingCheckout } from '@/lib/checkout/pending-order';
 
 /**
  * Inner component that uses Stripe hooks (must be inside Elements provider)
@@ -37,6 +39,9 @@ function ExpressCheckoutForm() {
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
   const clearCart = useCartStore((state) => state.clearCart);
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  const authenticatedCustomerId = user?.id && token ? Number(user.id) : undefined;
 
   const onClick = useCallback(
     (event: StripeExpressCheckoutElementClickEvent) => {
@@ -98,6 +103,14 @@ function ExpressCheckoutForm() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             amount: totalAmount,
+            cartItems: items.map((item) => ({
+              productId: item.productId,
+              variationId: item.variationId,
+              quantity: item.quantity,
+            })),
+            shippingMethod: {
+              id: selectedRate?.id || 'standard',
+            },
             customerEmail: billingDetails?.email,
             metadata: {
               customer_email: billingDetails?.email || '',
@@ -125,12 +138,61 @@ function ExpressCheckoutForm() {
 
         const { clientSecret, paymentIntentId } = await intentResponse.json();
 
+        // Parse the name from the shipping address
+        const nameParts = (shippingAddress?.name || '').split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        // Persist pending order data before confirmation so redirect-required
+        // payment methods can complete order creation on return.
+        savePendingCheckout(paymentIntentId, {
+          ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
+          contact: {
+            email: billingDetails?.email || '',
+            phone: billingDetails?.phone || '',
+          },
+          shippingAddress: {
+            firstName,
+            lastName,
+            company: '',
+            address1: shippingAddress?.address.line1 || '',
+            address2: shippingAddress?.address.line2 || '',
+            city: shippingAddress?.address.city || '',
+            state: shippingAddress?.address.state || '',
+            zipCode: shippingAddress?.address.postal_code || '',
+            country: shippingAddress?.address.country || 'US',
+          },
+          shippingMethod: {
+            id: selectedRate?.id || 'standard',
+            name: selectedRate?.name || 'Standard Shipping',
+            price: shippingDollars,
+          },
+          cartItems: items.map((item) => ({
+            productId: item.productId,
+            variationId: item.variationId,
+            quantity: item.quantity,
+            name: item.name,
+            sku: item.sku,
+            price: item.price,
+          })),
+          totals: {
+            subtotal,
+            shipping: shippingDollars,
+            tax: 0,
+            discount: 0,
+            total: totalAmount,
+          },
+          authToken: token || undefined,
+          flow: 'express',
+        });
+
         // Confirm the payment
         const { error: confirmError } = await stripe.confirmPayment({
           elements,
           clientSecret,
           confirmParams: {
-            return_url: `${window.location.origin}/order-confirmation`,
+            // Keep return URL on an existing route for redirect-required payment methods.
+            return_url: `${window.location.origin}/checkout`,
           },
           redirect: 'if_required',
         });
@@ -139,11 +201,6 @@ function ExpressCheckoutForm() {
           setError(confirmError.message || 'Payment failed');
           return;
         }
-
-        // Parse the name from the shipping address
-        const nameParts = (shippingAddress?.name || '').split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
 
         const shippingAddr = {
           firstName,
@@ -164,9 +221,13 @@ function ExpressCheckoutForm() {
         // Create order in WooCommerce
         const orderResponse = await fetch('/api/orders/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             paymentIntentId,
+            ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
             contact: {
               email: billingDetails?.email || '',
               phone: billingDetails?.phone || '',
@@ -215,14 +276,15 @@ function ExpressCheckoutForm() {
           })),
         });
 
+        clearPendingCheckout(paymentIntentId);
         clearCart();
-        router.push(`/order-confirmation/${orderData.orderId}`);
+        router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
       } catch (err) {
         console.error('Express checkout error:', err);
         setError(err instanceof Error ? err.message : 'Payment failed');
       }
     },
-    [stripe, elements, items, subtotal, clearCart, router]
+    [stripe, elements, items, subtotal, clearCart, router, token, authenticatedCustomerId]
   );
 
   return (
