@@ -70,24 +70,31 @@ export async function POST(request: NextRequest) {
     });
 
     const emailFingerprint = getEmailFingerprint(email);
+    const failedWithoutProvider = result.syncStatus === 'failed' && !result.provider;
 
     await logDurableEvent({
       eventType:
         result.syncStatus === 'failed'
-          ? 'newsletter_subscribe_provider_sync_failed'
+          ? (failedWithoutProvider
+            ? 'newsletter_subscribe_unpersisted'
+            : 'newsletter_subscribe_provider_sync_failed')
           : 'newsletter_subscribe_success',
       severity: result.syncStatus === 'failed' ? 'warning' : 'info',
       message:
         result.syncStatus === 'failed'
-          ? 'Newsletter subscriber saved, but provider sync failed'
+          ? (failedWithoutProvider
+            ? 'Newsletter subscribe accepted but could not be persisted'
+            : 'Newsletter subscriber saved, but provider sync failed')
           : 'Newsletter subscriber saved',
       ...requestMeta,
       payload: {
         source,
         created: result.created,
+        persisted: result.persisted,
         syncStatus: result.syncStatus,
         provider: result.provider,
         emailFingerprint,
+        syncError: result.syncError,
       },
     });
 

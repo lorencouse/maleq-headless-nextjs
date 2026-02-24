@@ -15,6 +15,7 @@ export interface NewsletterSubscribeInput {
 
 export interface NewsletterSubscribeResult {
   created: boolean;
+  persisted: boolean;
   syncStatus: SyncStatus;
   provider: ProviderName | null;
   providerSubscriberId: string | null;
@@ -44,6 +45,16 @@ interface ProviderConfigWebhook {
 type ProviderConfig = ProviderConfigMailchimp | ProviderConfigWebhook;
 
 let ensureTablePromise: Promise<void> | null = null;
+
+function isDbWriteUnavailableError(error: unknown): boolean {
+  const code = (error as { code?: string }).code;
+  return (
+    code === 'ER_TABLEACCESS_DENIED_ERROR' ||
+    code === 'ER_DBACCESS_DENIED_ERROR' ||
+    code === 'ER_ACCESS_DENIED_ERROR' ||
+    code === 'ER_NO_SUCH_TABLE'
+  );
+}
 
 function truncate(value: string | null | undefined, max: number): string | null {
   if (!value) return null;
@@ -336,58 +347,87 @@ export async function subscribeNewsletter(
 
   const providerConfig = resolveProviderConfig();
   const initialSyncStatus: SyncStatus = providerConfig ? 'pending' : 'skipped';
-  const created = await upsertSubscriber(input, initialSyncStatus);
+  let created = false;
+  let persisted = false;
+  let dbWriteError: string | null = null;
+
+  try {
+    created = await upsertSubscriber(input, initialSyncStatus);
+    persisted = true;
+  } catch (error) {
+    if (!isDbWriteUnavailableError(error)) {
+      throw error;
+    }
+    dbWriteError = error instanceof Error ? error.message : String(error);
+  }
 
   if (!providerConfig) {
-    await updateSyncState(input.email, {
-      syncStatus: 'skipped',
-      provider: null,
-      providerSubscriberId: null,
-      providerListId: null,
-      syncError: null,
-    });
+    if (persisted) {
+      await updateSyncState(input.email, {
+        syncStatus: 'skipped',
+        provider: null,
+        providerSubscriberId: null,
+        providerListId: null,
+        syncError: null,
+      });
+    }
+
+    const syncError = persisted
+      ? null
+      : (dbWriteError || 'Database write unavailable and no provider configured');
+    const syncStatus: SyncStatus = persisted ? 'skipped' : 'failed';
 
     return {
       created,
-      syncStatus: 'skipped',
+      persisted,
+      syncStatus,
       provider: null,
       providerSubscriberId: null,
       providerListId: null,
-      syncError: null,
+      syncError,
     };
   }
 
   try {
     const syncResult = await syncWithProvider(providerConfig, input);
-    await updateSyncState(input.email, {
-      syncStatus: 'synced',
-      provider: syncResult.provider,
-      providerSubscriberId: syncResult.providerSubscriberId,
-      providerListId: syncResult.providerListId,
-      syncError: null,
-    });
+    if (persisted) {
+      await updateSyncState(input.email, {
+        syncStatus: 'synced',
+        provider: syncResult.provider,
+        providerSubscriberId: syncResult.providerSubscriberId,
+        providerListId: syncResult.providerListId,
+        syncError: null,
+      });
+    }
 
     return {
       created,
+      persisted,
       syncStatus: 'synced',
       provider: syncResult.provider,
       providerSubscriberId: syncResult.providerSubscriberId,
       providerListId: syncResult.providerListId,
-      syncError: null,
+      syncError: dbWriteError,
     };
   } catch (error) {
-    const syncError = error instanceof Error ? error.message : String(error);
-    await updateSyncState(input.email, {
-      syncStatus: 'failed',
-      provider: providerConfig.provider,
-      providerSubscriberId: null,
-      providerListId:
-        providerConfig.provider === 'mailchimp' ? providerConfig.audienceId : null,
-      syncError,
-    });
+    const providerSyncError = error instanceof Error ? error.message : String(error);
+    const syncError = dbWriteError
+      ? `${dbWriteError}; provider sync: ${providerSyncError}`
+      : providerSyncError;
+    if (persisted) {
+      await updateSyncState(input.email, {
+        syncStatus: 'failed',
+        provider: providerConfig.provider,
+        providerSubscriberId: null,
+        providerListId:
+          providerConfig.provider === 'mailchimp' ? providerConfig.audienceId : null,
+        syncError,
+      });
+    }
 
     return {
       created,
+      persisted,
       syncStatus: 'failed',
       provider: providerConfig.provider,
       providerSubscriberId: null,

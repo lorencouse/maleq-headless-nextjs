@@ -22,6 +22,7 @@ This document preserves operational context and the current prioritized audit fi
 - Production expectation: `DATA_SOURCE=auto` (not `graphql`).
 - GraphQL-only mode is incident fallback, not normal operation.
 - Current production caveat: app container MySQL user is read-only (`maleq_readonly`), so write-oriented API features must not assume direct DB write permissions from Next.js.
+- Operational requirement: grant least-privilege write access on app-owned tables only (do not grant broad write on core WooCommerce/WordPress tables).
 - Code paths enforcing this:
   - `app/page.tsx` (home product grid source selection)
   - `app/shop/page.tsx` (shop listing source selection)
@@ -42,7 +43,7 @@ This document preserves operational context and the current prioritized audit fi
 
 - Production headers include CSP and permissions policy in `next.config.ts`.
 - Current live header value includes:
-  - `permissions-policy: ... payment=(self)`
+  - `permissions-policy: ... payment=(self "https://js.stripe.com" "https://hooks.stripe.com")`
   - CSP allows Stripe + GA + Cloudflare insights connect/script domains.
 - `panel.maleq.com` and `status.maleq.com` currently return `401` by design (auth gate).
 - `wp.maleq.com/graphql` health should be monitored using POST GraphQL query, not plain GET semantics.
@@ -103,9 +104,11 @@ This document preserves operational context and the current prioritized audit fi
 - Integrated newsletter subscribe endpoint with persistence + provider sync:
   - `app/api/newsletter/subscribe/route.ts` now validates JSON/email, applies rate limiting, persists subscribers, and logs durable events.
   - `lib/newsletter/subscription-service.ts` adds `maleq_newsletter_subscribers` upsert flow plus optional Mailchimp/webhook sync.
+- Added newsletter degrade-safe behavior for read-only DB:
+  - Endpoint returns user success even if local DB persistence is unavailable, and logs `newsletter_subscribe_unpersisted` for operational follow-up.
 - Production spot-check:
   - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
-  - `permissions-policy` header still observed as `payment=(self)` on current live response (needs post-deploy recheck).
+  - `permissions-policy` header now includes Stripe wallet origins in production.
 
 ## Quick Verification Commands
 
