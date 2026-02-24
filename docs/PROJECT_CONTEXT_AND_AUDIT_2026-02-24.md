@@ -100,6 +100,7 @@ This document preserves operational context and the current prioritized audit fi
 - Launch readiness checks completed:
   - SSL/domain validated for `maleq.com`, `wp.maleq.com`, `panel.maleq.com`, `status.maleq.com` (valid certificates + expected HTTPS status codes).
   - `ADMIN_API_KEY` verified as configured in production (`/api/admin/events` returns `401 Unauthorized` for invalid key instead of config error).
+  - Static asset CDN behavior verified (`/_next/static/*` served via Cloudflare with `cf-cache-status: HIT` and one-year immutable cache headers).
 - Checkout conversion UX update:
   - `components/checkout/OrderSummary.tsx` now links product images to product pages (name links already existed).
 - Contact form hardening + validation:

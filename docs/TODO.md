@@ -58,7 +58,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 - [x] `[HIGH]` Transfer Apple Pay token to new server
 - [ ] `[MED]` Do page testing on Safari
 - [x] `[MED]` Set up monitoring — Uptime Kuma running at `http://159.69.220.162:3001` (Docker on Hetzner VPS)
-- [ ] `[MED]` Configure CDN for static assets
+- [x] `[MED]` Configure CDN for static assets (Cloudflare serving `/_next/static/*` with `cache-control: public,max-age=31536000,immutable` and `cf-cache-status: HIT`)
 - [x] `[MED]` Set up database backups
 
 ---
