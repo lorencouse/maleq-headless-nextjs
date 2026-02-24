@@ -130,6 +130,8 @@ This document preserves operational context and the current prioritized audit fi
   - `e2e/shop.spec.ts` product URL assertion updated to match `/product/*` route structure.
 - UAT smoke test stabilization:
   - Hardened selector strategy in `e2e/home.spec.ts`, `e2e/cart.spec.ts`, and `e2e/shop.spec.ts` to avoid strict-mode collisions and nav ambiguity.
+- UAT smoke verification:
+  - Production smoke suite passed locally against `https://maleq.com` for Chromium + WebKit (`30/30`, 2026-02-24) using `PLAYWRIGHT_SKIP_WEBSERVER=1`.
   - Production Chromium smoke against `https://maleq.com` now passes locally (`15/15`).
   - Local WebKit execution remains host-dependent; Safari parity is enforced through CI WebKit in `.github/workflows/uat-smoke.yml` (manual/scheduled + push on `main`).
 - Review submission E2E verification:

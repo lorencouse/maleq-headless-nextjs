@@ -42,7 +42,7 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 ## Pre-Launch Checklist
 
-- [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`; Chromium production smoke is green locally `15/15`; complete after first successful CI WebKit run from `.github/workflows/uat-smoke.yml`, which now auto-runs on `main` pushes)
+- [ ] `[HIGH]` Complete UAT testing (see `docs/UAT_TEST_PLAN.md`; local production smoke now green `30/30` across Chromium + WebKit on 2026-02-24; complete after full UAT plan + first successful CI WebKit run from `.github/workflows/uat-smoke.yml`)
 - [x] `[HIGH]` Verify all payment flows work correctly
   - Test Stripe live mode with real cards
   - Verify order confirmation emails
