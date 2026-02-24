@@ -21,8 +21,8 @@ This document preserves operational context and the current prioritized audit fi
 - Primary rule: product/catalog data must stay **MySQL-direct first**; GraphQL is fallback only.
 - Production expectation: `DATA_SOURCE=auto` (not `graphql`).
 - GraphQL-only mode is incident fallback, not normal operation.
-- Current production caveat: app container MySQL user is read-only (`maleq_readonly`), so write-oriented API features must not assume direct DB write permissions from Next.js.
-- Operational requirement: grant least-privilege write access on app-owned tables only (do not grant broad write on core WooCommerce/WordPress tables).
+- Current production model: app DB user (`maleq_readonly`) has read access to `maleq-wp` plus least-privilege writes on app-owned operational tables only.
+- Applied grants (2026-02-24): `maleq_newsletter_subscribers` (`INSERT,UPDATE`), `maleq_push_subscriptions` (`INSERT,UPDATE,DELETE`), `maleq_stock_alert_products` (`INSERT,UPDATE,DELETE`), `maleq_event_log` (`INSERT`).
 - Code paths enforcing this:
   - `app/page.tsx` (home product grid source selection)
   - `app/shop/page.tsx` (shop listing source selection)
@@ -109,6 +109,7 @@ This document preserves operational context and the current prioritized audit fi
 - Production spot-check:
   - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
   - `permissions-policy` header now includes Stripe wallet origins in production.
+  - `POST /api/newsletter/subscribe` returns `200` and now persists rows in `maleq_newsletter_subscribers` (verified).
 
 ## Quick Verification Commands
 

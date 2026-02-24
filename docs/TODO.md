@@ -24,7 +24,7 @@ Source: production architecture + code review for performance, SEO, conversion, 
 - [x] `[HIGH]` Review/adjust `Permissions-Policy` for checkout wallet compatibility (`payment` policy) — verified in production header (`payment=(self "https://js.stripe.com" "https://hooks.stripe.com")`)
 - [ ] `[HIGH]` Add auth/anti-abuse guard on `POST /api/payment/create-intent` (currently unauthenticated) — baseline trusted origin/referrer + amount/currency validation added, pending production verification and hardening decision (auth vs Turnstile)
 - [x] `[HIGH]` Integrate newsletter subscribe endpoint with ESP (Klaviyo/Mailchimp/etc.) + persistence (DB-backed `maleq_newsletter_subscribers` + provider sync support for Mailchimp/webhook, durable-event logging, route rate limit, graceful fallback if DB writes unavailable)
-- [ ] `[HIGH]` Grant least-privilege DB write access for app-owned tables to frontend DB user (`maleq_readonly`) so newsletter/push/event logs persist in production
+- [x] `[HIGH]` Grant least-privilege DB write access for app-owned tables to frontend DB user (`maleq_readonly`) so newsletter/push/event logs persist in production (granted on `maleq_newsletter_subscribers`, `maleq_push_subscriptions`, `maleq_stock_alert_products`; verified newsletter row insert)
 - [ ] `[MED]` Harden `/api/products/[id]` fallback/caching behavior for cart reliability — response cache headers added, remaining work: reduce upstream-failure 5xx pathways
 - [ ] `[MED]` Update Uptime Kuma checks:
   - `panel.maleq.com` and `status.maleq.com`: authenticated check or expected-401 check
