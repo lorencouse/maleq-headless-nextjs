@@ -15,6 +15,25 @@
 
 ---
 
+## Audit-Driven Execution Board (2026-02-24)
+
+Source: production architecture + code review for performance, SEO, conversion, and reliability.
+
+- [x] `[HIGH]` Fix cart stock revalidation contract mismatch (`components/pwa/CartStockRevalidation.tsx` vs `/api/products/[id]`)
+- [x] `[HIGH]` De-duplicate GA4 pageview tracking (single pageview emission path)
+- [ ] `[HIGH]` Review/adjust `Permissions-Policy` for checkout wallet compatibility (`payment` policy) — code updated in `next.config.ts`, pending production verification
+- [ ] `[HIGH]` Add auth/anti-abuse guard on `POST /api/payment/create-intent` (currently unauthenticated) — baseline trusted origin/referrer + amount/currency validation added, pending production verification and hardening decision (auth vs Turnstile)
+- [ ] `[HIGH]` Integrate newsletter subscribe endpoint with ESP (Klaviyo/Mailchimp/etc.) + persistence
+- [ ] `[MED]` Harden `/api/products/[id]` fallback/caching behavior for cart reliability — response cache headers added, remaining work: reduce upstream-failure 5xx pathways
+- [ ] `[MED]` Update Uptime Kuma checks:
+  - `panel.maleq.com` and `status.maleq.com`: authenticated check or expected-401 check
+  - `wp.maleq.com/graphql`: POST monitor with GraphQL body assertion
+- [ ] `[MED]` Implement KPI baseline instrumentation plan (GA4 funnel + server-side durable event metrics)
+
+Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT_2026-02-24.md`
+
+---
+
 have logged in users' info auto populate contact form (name, email) when available
 
 Add product links to order summary images on checkout page

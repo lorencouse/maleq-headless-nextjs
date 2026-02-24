@@ -33,26 +33,55 @@ export interface CreatePaymentIntentResponse {
   paymentIntentId: string;
 }
 
+const MAX_PAYMENT_INTENT_AMOUNT_USD = Number(process.env.MAX_PAYMENT_INTENT_AMOUNT_USD || 5000);
+
 export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   const requestMeta = getRequestMeta(request);
   let body: CreatePaymentIntentRequest | undefined;
   try {
+    if (!isTrustedCheckoutSource(request)) {
+      await logDurableEvent({
+        eventType: 'checkout_intent_untrusted_source',
+        severity: 'warning',
+        message: 'Rejected create-intent request from untrusted origin/referrer',
+        ...requestMeta,
+      });
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
+
     body = await request.json();
 
     const { amount, currency = 'usd', metadata, customerEmail, shippingAddress } = body!;
 
     // Validate amount
-    if (!amount || amount <= 0) {
+    if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_PAYMENT_INTENT_AMOUNT_USD) {
       await logDurableEvent({
         eventType: 'checkout_intent_invalid_amount',
         severity: 'warning',
         message: 'Rejected create-intent request with invalid amount',
         ...requestMeta,
-        payload: { amount: amount ?? null, currency },
+        payload: { amount: amount ?? null, currency, maxAllowed: MAX_PAYMENT_INTENT_AMOUNT_USD },
       });
       return NextResponse.json(
         { error: 'Invalid amount' },
+        { status: 400 }
+      );
+    }
+
+    if (currency.toLowerCase() !== 'usd') {
+      await logDurableEvent({
+        eventType: 'checkout_intent_invalid_currency',
+        severity: 'warning',
+        message: 'Rejected create-intent request with unsupported currency',
+        ...requestMeta,
+        payload: { currency },
+      });
+      return NextResponse.json(
+        { error: 'Unsupported currency' },
         { status: 400 }
       );
     }
@@ -145,4 +174,30 @@ function getRequestMeta(request: NextRequest): {
     userAgent: request.headers.get('user-agent'),
     referrer: request.headers.get('referer'),
   };
+}
+
+function parseHost(value: string | null): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function getTrustedHosts(): Set<string> {
+  const trustedHosts = new Set<string>(['maleq.com', 'www.maleq.com']);
+  const siteHost = parseHost(process.env.NEXT_PUBLIC_SITE_URL || null);
+  if (siteHost) trustedHosts.add(siteHost);
+  return trustedHosts;
+}
+
+function isTrustedCheckoutSource(request: NextRequest): boolean {
+  const trustedHosts = getTrustedHosts();
+  const originHost = parseHost(request.headers.get('origin'));
+  const refererHost = parseHost(request.headers.get('referer'));
+  return (
+    (originHost !== null && trustedHosts.has(originHost)) ||
+    (refererHost !== null && trustedHosts.has(refererHost))
+  );
 }

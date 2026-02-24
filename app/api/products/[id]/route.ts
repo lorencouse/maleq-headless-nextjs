@@ -34,9 +34,18 @@ const GET_PRODUCT_BY_ID = `
   }
 `;
 
+const PRODUCT_RESPONSE_CACHE_CONTROL = 'public, s-maxage=300, stale-while-revalidate=3600';
+const NOT_FOUND_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=300';
+
 function formatPrice(value: number | null | undefined): string | null {
   if (value === null || value === undefined) return null;
   return `$${value.toFixed(2)}`;
+}
+
+function jsonWithCache(data: unknown, status = 200, cacheControl = PRODUCT_RESPONSE_CACHE_CONTROL) {
+  const response = NextResponse.json(data, { status });
+  response.headers.set('Cache-Control', cacheControl);
+  return response;
 }
 
 function mapIndexEntryToApiProduct(entry: {
@@ -119,7 +128,7 @@ export async function GET(
 
         const product = result.data?.product;
         if (product) {
-          return NextResponse.json({
+          return jsonWithCache({
             id: product.databaseId,
             name: product.name,
             slug: product.slug,
@@ -152,7 +161,7 @@ export async function GET(
         const { getIndexEntryById } = await import('@/lib/products/product-index');
         const indexEntry = await getIndexEntryById(productId);
         if (indexEntry) {
-          return NextResponse.json(mapIndexEntryToApiProduct(indexEntry));
+          return jsonWithCache(mapIndexEntryToApiProduct(indexEntry));
         }
       }
     } catch (indexError) {
@@ -160,7 +169,7 @@ export async function GET(
     }
 
     if (graphQlNotFound) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+      return jsonWithCache({ error: 'Product not found' }, 404, NOT_FOUND_CACHE_CONTROL);
     }
 
     return NextResponse.json(

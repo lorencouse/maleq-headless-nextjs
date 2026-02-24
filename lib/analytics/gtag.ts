@@ -37,9 +37,20 @@ function gtagOrQueue(type: 'event' | 'config', ...args: unknown[]) {
 export const pageview = (url: string): void => {
   if (!isGAAvailable()) return;
 
-  gtagOrQueue('config', GA_TRACKING_ID, {
+  const payload: Record<string, unknown> = {
     page_path: url,
-  });
+  };
+
+  if (typeof window !== 'undefined') {
+    payload.page_location = `${window.location.origin}${url}`;
+  }
+
+  if (typeof document !== 'undefined' && document.title) {
+    payload.page_title = document.title;
+  }
+
+  // Use explicit page_view events to avoid duplicate hits from repeated config calls.
+  gtagOrQueue('event', 'page_view', payload);
 };
 
 // Custom event tracking

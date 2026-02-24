@@ -39,7 +39,7 @@ export default function GoogleAnalytics() {
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
             gtag('config', '${GA_TRACKING_ID}', {
-              page_path: window.location.pathname,
+              send_page_view: false,
             });
           `,
         }}

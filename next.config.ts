@@ -369,7 +369,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), payment=(self)',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(self "https://js.stripe.com" "https://hooks.stripe.com")',
           },
           {
             key: 'Content-Security-Policy',

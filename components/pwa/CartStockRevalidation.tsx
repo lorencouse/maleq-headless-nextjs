@@ -26,8 +26,13 @@ export default function CartStockRevalidation() {
       try {
         const res = await fetch(`/api/products/${item.productId}`);
         if (!res.ok) return;
-        const data = await res.json();
-        if (data.product?.stockStatus === 'OUT_OF_STOCK') {
+        const data = await res.json() as {
+          stockStatus?: string;
+          product?: { stockStatus?: string };
+        };
+        // Support both legacy nested shape and current top-level shape.
+        const stockStatus = data.stockStatus ?? data.product?.stockStatus;
+        if (stockStatus === 'OUT_OF_STOCK') {
           outOfStock.push(item.name);
         }
       } catch {
