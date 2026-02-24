@@ -50,43 +50,27 @@ This document preserves operational context and the current prioritized audit fi
 
 ## Highest-Impact Findings (Open)
 
-1. Cart out-of-stock revalidation mismatch:
-   - Client checks `data.product.stockStatus` while API returns top-level `stockStatus`.
-   - File: `components/pwa/CartStockRevalidation.tsx`
-   - API: `app/api/products/[id]/route.ts`
+1. Finalize Uptime Kuma monitor configuration in UI:
+   - `panel.maleq.com` and `status.maleq.com` should use authenticated probe or expected-401 probe.
+   - `wp.maleq.com/graphql` should use POST body (`{"query":"{__typename}"}`) with content assertion.
+   - Runbook: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md`.
 
-2. GA pageview duplication:
-   - Initial `gtag('config', ...)` pageview plus route-change pageview path.
-   - Files: `components/analytics/GoogleAnalytics.tsx`, `lib/analytics/gtag.ts`
-
-3. Wallet/payment policy risk:
-   - `payment=(self)` may interfere with wallet flows in embedded/checkout contexts.
-   - File: `next.config.ts`
-
-4. Payment intent endpoint exposed:
-   - `POST /api/payment/create-intent` currently has no auth/anti-abuse gate.
-   - File: `app/api/payment/create-intent/route.ts`
-
-5. Newsletter conversion leakage:
-   - Subscribe endpoint returns success but does not persist to ESP or DB.
-   - File: `app/api/newsletter/subscribe/route.ts`
+2. Complete KPI baseline capture window:
+   - Confirm GA4 receives full funnel events in live mode (`view_item` through `purchase`).
+   - Confirm admin durable event stream is monitored (`/api/admin/events`).
+   - Plan: `docs/KPI_BASELINE_PLAN.md`.
 
 ## Secondary Findings (Open)
 
-- `/api/products/[id]` fallback/caching can still produce fragile behavior in upstream faults.
-- Need stronger KPI instrumentation and clean baseline process for GA4/GSC/Stripe.
-- Add regression tests for analytics emission and cart stock validation contract.
+- Keep analytics env canonical in production (`NEXT_PUBLIC_GA_ID` as primary, avoid conflicting IDs).
+- Add regression tests for analytics emission and cart stock validation contract when test bandwidth allows.
 
 ## Execution Order (Business Impact First)
 
-1. Fix cart stock revalidation contract.
-2. Remove GA pageview duplication.
-3. Verify wallet checkout behavior + adjust permissions policy if needed.
-4. Protect payment-intent creation endpoint from abuse.
-5. Integrate newsletter endpoint with ESP + persistence.
-6. Harden product-by-id API fallback + cache behavior.
-7. Finalize monitoring checks (auth-aware and GraphQL POST health).
-8. Complete KPI baseline + dashboard validation checklist.
+1. Apply Uptime Kuma monitor updates from runbook.
+2. Capture KPI baseline and verify GA4 funnel continuity.
+3. Validate admin event stream and alert thresholds.
+4. Add targeted regression tests for analytics + cart stock contract.
 
 ## Progress Completed In This Session (2026-02-24)
 
@@ -113,6 +97,8 @@ This document preserves operational context and the current prioritized audit fi
   - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
   - `permissions-policy` header now includes Stripe wallet origins in production.
   - `POST /api/newsletter/subscribe` returns `200` and now persists rows in `maleq_newsletter_subscribers` (verified).
+- Checkout conversion UX update:
+  - `components/checkout/OrderSummary.tsx` now links product images to product pages (name links already existed).
 
 ## Quick Verification Commands
 

@@ -36,11 +36,9 @@ Reference context for future compacted sessions: `docs/PROJECT_CONTEXT_AND_AUDIT
 
 ---
 
-have logged in users' info auto populate contact form (name, email) when available
-
-Add product links to order summary images on checkout page
-
-Add image to add-on complete kit product
+- [x] Auto-populate logged-in users' contact form (name/email) when available
+- [x] Add product links to order summary images on checkout page (name + image now link to product)
+- [ ] Add image to add-on complete kit product
 
 ## Pre-Launch Checklist
 

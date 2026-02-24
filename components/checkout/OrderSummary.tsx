@@ -50,7 +50,11 @@ export default function OrderSummary() {
           {items.map((item) => (
             <li key={item.id} className='flex gap-3'>
               {/* Product Image */}
-              <div className='relative w-16 h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden'>
+              <Link
+                href={`/product/${item.slug}`}
+                className='relative w-16 h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary'
+                aria-label={`View ${item.name}`}
+              >
                 {item.image ? (
                   <Image
                     src={item.image.url}
@@ -76,7 +80,7 @@ export default function OrderSummary() {
                     </svg>
                   </div>
                 )}
-              </div>
+              </Link>
 
               {/* Product Details */}
               <div className='flex-1 min-w-0'>
