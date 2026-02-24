@@ -15,6 +15,7 @@ This document preserves operational context and the current prioritized audit fi
 - WordPress/API domain: `https://wp.maleq.com`
 - Frontend host: Coolify VPS (`deploy@46.224.227.119`)
 - WordPress/CloudPanel host: WP VPS (`root@159.69.220.162`)
+- Package manager / scripts: **Bun-first** (`bun install`, `bun run ...`, `bunx ...`)
 
 ## Data Source Guardrail (Performance-Critical)
 
@@ -87,6 +88,9 @@ This document preserves operational context and the current prioritized audit fi
   - `lib/newsletter/subscription-service.ts` adds `maleq_newsletter_subscribers` upsert flow plus optional Mailchimp/webhook sync.
 - Added newsletter degrade-safe behavior for read-only DB:
   - Endpoint returns user success even if local DB persistence is unavailable, and logs `newsletter_subscribe_unpersisted` for operational follow-up.
+- Added legacy root-blog slug resolver for authority preservation:
+  - `app/[slug]/page.tsx` now checks if a root slug is a valid blog post and issues a permanent redirect to `/guides/:slug`.
+  - Fixes old backlink patterns like `/best-anal-lubes` (including `.org` traffic that first 301s to `.com`).
 - Production spot-check:
   - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
   - `permissions-policy` header now includes Stripe wallet origins in production.
