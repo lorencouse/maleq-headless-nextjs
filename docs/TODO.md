@@ -1,6 +1,6 @@
 # Male Q Headless - Project TODO
 
-- [ ] `[MED]` Verify &amp; entity fix visible on production after next deploy (patch merged in `152e5a0`; verify at https://maleq.com/sex-toys/bondage-fetish-kink once Coolify rollout completes)
+- [x] `[MED]` Verify &amp; entity fix visible on production after deploy (confirmed 2026-02-24 at `https://maleq.com/sex-toys/bondage-fetish-kink`; page/title metadata render `&` correctly)
 
 ~~fix/remove &AMP; artifacts in products/DB~~ — DONE (local + production, `scripts/fix-html-entities.ts`)
 
