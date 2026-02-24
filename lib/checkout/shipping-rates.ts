@@ -102,6 +102,7 @@ export const SHIPPING_COUNTRY_OPTIONS = [
 export const SUPPORTED_SHIPPING_COUNTRIES = SHIPPING_COUNTRY_OPTIONS.map(
   (country) => country.code
 );
+const SUPPORTED_SHIPPING_COUNTRY_SET = new Set<string>(SUPPORTED_SHIPPING_COUNTRIES);
 
 export function normalizeCountryCode(countryCode?: string): string {
   return (countryCode || 'US').toUpperCase();
@@ -112,7 +113,7 @@ export function isDomesticShippingCountry(countryCode?: string): boolean {
 }
 
 export function isSupportedShippingCountry(countryCode?: string): boolean {
-  return SUPPORTED_SHIPPING_COUNTRIES.includes(normalizeCountryCode(countryCode));
+  return SUPPORTED_SHIPPING_COUNTRY_SET.has(normalizeCountryCode(countryCode));
 }
 
 export function getShippingRegion(countryCode?: string): ShippingRegion {
