@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import {
   successResponse,
@@ -10,6 +10,7 @@ import {
   validateLength,
   hasErrors,
 } from '@/lib/api/validation';
+import { checkRateLimit } from '@/lib/api/rate-limit';
 
 interface ContactFormData {
   name: string;
@@ -31,8 +32,28 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const CONTACT_RATE_LIMIT = {
+  limit: Number(process.env.CONTACT_RATE_LIMIT_PER_MINUTE || 5),
+  windowSeconds: 60,
+};
+
+function getContactRateLimitKey(request: NextRequest): string {
+  const forwardedFor = request.headers.get('x-forwarded-for');
+  const ip = forwardedFor?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+  const userAgent = (request.headers.get('user-agent') || 'na').slice(0, 64);
+  return `contact:${ip}:${userAgent}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getContactRateLimitKey(request), CONTACT_RATE_LIMIT);
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const body: ContactFormData = await request.json();
     const { name, email, subject, message } = body;
 
