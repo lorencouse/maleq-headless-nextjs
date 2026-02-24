@@ -1,6 +1,6 @@
 # Male Q Headless - Project TODO
 
-- [ ] `[MED]` Verify &amp; entity fix visible on production after next Vercel deploy (DB fixed, likely Vercel/ISR cache — check https://maleq.com/sex-toys/bondage-fetish-kink)
+- [ ] `[MED]` Verify &amp; entity fix visible on production after next deploy (patch merged in `152e5a0`; verify at https://maleq.com/sex-toys/bondage-fetish-kink once Coolify rollout completes)
 
 ~~fix/remove &AMP; artifacts in products/DB~~ — DONE (local + production, `scripts/fix-html-entities.ts`)
 

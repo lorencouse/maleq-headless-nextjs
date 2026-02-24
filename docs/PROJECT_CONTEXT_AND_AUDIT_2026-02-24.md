@@ -115,6 +115,9 @@ This document preserves operational context and the current prioritized audit fi
 - UAT harness updates:
   - `playwright.config.ts` supports `PLAYWRIGHT_SKIP_WEBSERVER=1` for running tests against deployed environments.
   - `e2e/shop.spec.ts` product URL assertion updated to match `/product/*` route structure.
+- Category entity rendering fix (pending production verification after deploy):
+  - `lib/db/category-loader.ts` now decodes HTML entities for category names from MySQL loaders.
+  - `lib/products/combined-service.ts` now decodes category names in GraphQL paths and bumped category cache keys (`product-categories-v2`, `hierarchical-categories-v3`) to flush stale encoded names.
 
 ## Quick Verification Commands
 
