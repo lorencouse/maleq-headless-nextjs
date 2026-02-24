@@ -2,10 +2,38 @@
 
 import { queueGtagCall } from './offline-queue';
 
-export const GA_TRACKING_ID =
-  process.env.NEXT_PUBLIC_GA_ID ||
-  process.env.NEXT_PUBLIC_GA_TRACKING_ID ||
-  '';
+export interface GAResolution {
+  trackingId: string;
+  primaryId: string;
+  fallbackId: string;
+  hasMismatch: boolean;
+}
+
+export function resolveGATrackingId(
+  primaryId?: string,
+  fallbackId?: string
+): GAResolution {
+  const normalizedPrimary = (primaryId || '').trim();
+  const normalizedFallback = (fallbackId || '').trim();
+
+  return {
+    trackingId: normalizedPrimary || normalizedFallback || '',
+    primaryId: normalizedPrimary,
+    fallbackId: normalizedFallback,
+    hasMismatch:
+      normalizedPrimary.length > 0 &&
+      normalizedFallback.length > 0 &&
+      normalizedPrimary !== normalizedFallback,
+  };
+}
+
+const gaResolution = resolveGATrackingId(
+  process.env.NEXT_PUBLIC_GA_ID,
+  process.env.NEXT_PUBLIC_GA_TRACKING_ID
+);
+
+export const GA_TRACKING_ID = gaResolution.trackingId;
+export const HAS_GA_ID_MISMATCH = gaResolution.hasMismatch;
 
 // Check if GA is available
 export const isGAAvailable = (): boolean => {

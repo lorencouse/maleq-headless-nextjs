@@ -3,7 +3,7 @@
 import Script from 'next/script';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
-import { GA_TRACKING_ID, pageview } from '@/lib/analytics/gtag';
+import { GA_TRACKING_ID, HAS_GA_ID_MISMATCH, pageview } from '@/lib/analytics/gtag';
 
 function GoogleAnalyticsTracking() {
   const pathname = usePathname();
@@ -20,6 +20,14 @@ function GoogleAnalyticsTracking() {
 }
 
 export default function GoogleAnalytics() {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && HAS_GA_ID_MISMATCH) {
+      console.warn(
+        '[GA] NEXT_PUBLIC_GA_ID and NEXT_PUBLIC_GA_TRACKING_ID differ. Using NEXT_PUBLIC_GA_ID.'
+      );
+    }
+  }, []);
+
   if (!GA_TRACKING_ID) {
     return null;
   }

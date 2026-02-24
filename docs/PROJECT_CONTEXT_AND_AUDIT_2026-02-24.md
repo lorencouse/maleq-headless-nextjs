@@ -74,6 +74,10 @@ This document preserves operational context and the current prioritized audit fi
 - De-duplicated GA pageview emission:
   - `components/analytics/GoogleAnalytics.tsx` sets `send_page_view: false`.
   - `lib/analytics/gtag.ts` now emits explicit `page_view` event payloads.
+- Hardened GA env resolution:
+  - `lib/analytics/gtag.ts` now resolves IDs deterministically (`NEXT_PUBLIC_GA_ID` priority, `NEXT_PUBLIC_GA_TRACKING_ID` fallback) and flags mismatch state.
+  - `components/analytics/GoogleAnalytics.tsx` now warns in non-production if the two GA env vars differ.
+  - Added regression tests in `__tests__/lib/ga-config.test.ts`.
 - Adjusted permissions policy for Stripe wallet compatibility:
   - `next.config.ts` payment policy now allows Stripe origins.
 - Added baseline anti-abuse guard for payment intent creation:
@@ -91,6 +95,8 @@ This document preserves operational context and the current prioritized audit fi
 - Added legacy root-blog slug resolver for authority preservation:
   - `app/[slug]/page.tsx` now checks if a root slug is a valid blog post and issues a permanent redirect to `/guides/:slug`.
   - Fixes old backlink patterns like `/best-anal-lubes` (including `.org` traffic that first 301s to `.com`).
+- Optimized legacy category redirect coverage:
+  - `next.config.ts` now includes trailing-slash variants for `product-category` routes (including paginated URLs) to reduce redirect chaining on legacy backlinks.
 - Production spot-check:
   - `https://maleq.com/api/products/{id}` now returns `200` for previously failing cart IDs.
   - `permissions-policy` header now includes Stripe wallet origins in production.

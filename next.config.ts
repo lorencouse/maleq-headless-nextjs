@@ -114,10 +114,23 @@ const nextConfig: NextConfig = {
     return [
       // --- WooCommerce / Account routes ---
       {
+        // Legacy trailing-slash pagination variant
+        // /product-category/dildos/page/2/ → /sex-toys/dildos
+        source: '/product-category/:slug/page/:num(\\d+)/',
+        destination: '/sex-toys/:slug',
+        permanent: true,
+      },
+      {
         // Strip pagination from old category URLs before redirect
         // /product-category/dildos/page/2/ → /sex-toys/dildos
         source: '/product-category/:slug/page/:num(\\d+)',
         destination: '/sex-toys/:slug',
+        permanent: true,
+      },
+      {
+        // Legacy trailing-slash category archive variant
+        source: '/product-category/:slug*/',
+        destination: '/sex-toys/:slug*',
         permanent: true,
       },
       {
