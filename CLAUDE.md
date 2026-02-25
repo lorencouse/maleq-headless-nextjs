@@ -33,6 +33,14 @@
 - **mu-plugins**: `~/Local Sites/maleq-local/app/public/wp-content/mu-plugins/`
 - **Platform**: Local by Flywheel
 
+## Database Backup Policy (Required)
+
+- Before any production DB push/sync, create a fresh production backup on this machine.
+- Use **SSH-streamed mysqldump + gzip** (preferred format: `.sql.gz`) instead of plain `.sql`:
+  - `ssh root@159.69.220.162 "mysqldump --ssl-mode=REQUIRED --no-tablespaces -u <user> -p'<pass>' -h 127.0.0.1 <db> --single-transaction --quick --lock-tables=false 2>/dev/null" | gzip -1 > backups/prod-backup-$(date +%Y%m%d_%H%M%S).sql.gz`
+- Validate backup integrity immediately: `gzip -t backups/<file>.sql.gz`
+- Keep the backup file path recorded in the task notes/output before making production writes.
+
 ## API Preferences
 
 - **Always prefer direct SQL queries over GraphQL** - SQL via the MySQL connection pool (`lib/db/pool.ts`) is faster and avoids WPGraphQL overhead. Use GraphQL only when absolutely necessary (e.g., reusable block rendering in blog post content which requires WordPress's `do_blocks()` pipeline).
