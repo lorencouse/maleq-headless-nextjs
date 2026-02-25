@@ -105,7 +105,16 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create payment intent');
+        let message = `Payment setup failed (${response.status})`;
+        try {
+          const errorData = await response.json() as { error?: string };
+          if (errorData?.error) {
+            message = errorData.error;
+          }
+        } catch {
+          // ignore JSON parse errors and keep fallback message
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -113,7 +122,11 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       setPaymentIntentId(data.paymentIntentId);
     } catch (err) {
       console.error('Error creating payment intent:', err);
-      setError('Failed to initialize payment. Please try again.');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to initialize payment. Please try again.',
+      );
     }
   }, [contact.email, items, shippingAddress, shippingMethod?.id, total, validateCart]);
 

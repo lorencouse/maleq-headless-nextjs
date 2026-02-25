@@ -328,7 +328,11 @@ export default function ExpressCheckout() {
   const shipping = useCartStore((state) => state.shipping);
 
   // Convert dollars to cents for Stripe Elements
-  const totalCents = Math.round((subtotal + (shipping || getShippingOptions('US')[0].price)) * 100);
+  const fallbackShipping = getShippingOptions('US')[0]?.price || 0;
+  const effectiveShipping = Number.isFinite(shipping) && shipping >= 0
+    ? shipping
+    : fallbackShipping;
+  const totalCents = Math.round((subtotal + effectiveShipping) * 100);
 
   if (totalCents <= 0) return null;
 
