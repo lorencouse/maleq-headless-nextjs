@@ -152,6 +152,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   let brandsData: FilterOption[] = [];
   let colorsData: FilterOption[] = [];
   let materialsData: FilterOption[] = [];
+  let totalProductCount = 0;
 
   if (useIndex) {
     try {
@@ -179,6 +180,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
       products = indexEntriesToUnifiedProducts(mainResult.products);
       productsPageInfo = { hasNextPage: mainResult.total > 24, endCursor: null };
+      totalProductCount = mainResult.total;
       saleProducts = indexEntriesToUnifiedProducts(saleResult.products);
 
       // Use facets from main result
@@ -211,6 +213,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       materialsData = attrsResult.materials;
       products = productsResult.products;
       productsPageInfo = productsResult.pageInfo;
+      totalProductCount = hasAdditionalFilters ? products.length : category.count;
       saleProducts = saleProductsResult.products;
     } catch (err) {
       console.error('[category] GraphQL fallback also failed:', err);
@@ -218,6 +221,9 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
   }
 
   products = sortProductsByPriority(products);
+  const displayedProductCount = hasAdditionalFilters
+    ? totalProductCount || products.length
+    : category.count;
 
   // Get child categories with products
   const childCategories = category.children?.filter(c => c.count > 0) || [];
@@ -242,7 +248,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       {/* Category Hero */}
       <CategoryHero
         category={category}
-        productCount={products.length}
+        productCount={displayedProductCount}
         parentCategory={parentCategory}
       />
 
@@ -289,7 +295,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           </Suspense>
         </div>
         <p className="text-sm text-muted-foreground">
-          {products.length} {products.length === 1 ? 'product' : 'products'}
+          {displayedProductCount} {displayedProductCount === 1 ? 'product' : 'products'}
           {hasAdditionalFilters ? ' matching your filters' : ' available'}
         </p>
       </div>
@@ -305,6 +311,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
           hasMore={productsPageInfo.hasNextPage}
           initialCursor={productsPageInfo.endCursor}
           initialCategory={slug}
+          initialTotal={displayedProductCount}
         />
       </Suspense>
     </div>

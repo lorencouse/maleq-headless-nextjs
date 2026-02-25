@@ -38,8 +38,6 @@ export default memo(function ProductCard({
     setImgError(true);
   }, []);
 
-  // Get first category
-  const primaryCategory = product.categories?.[0];
   const isVariable = product.type === 'VARIABLE';
 
   return (

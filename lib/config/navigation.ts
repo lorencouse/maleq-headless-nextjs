@@ -114,9 +114,9 @@ export const mainNavigation: NavSection[] = [
       },
     ],
     featured: [
-      { label: 'New Arrivals', href: '/shop?sort=date', featured: true },
+      { label: 'New Arrivals', href: '/shop?sort=newest', featured: true },
       { label: 'Best Sellers', href: '/shop?sort=popularity', featured: true },
-      { label: 'On Sale', href: '/shop?on_sale=true', featured: true },
+      { label: 'On Sale', href: '/shop?onSale=true', featured: true },
     ],
   },
   {

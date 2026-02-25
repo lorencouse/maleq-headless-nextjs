@@ -125,11 +125,29 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
   const handleContactComplete = (data: { email: string; phone: string; newsletter: boolean }) => {
     setContact(data);
+    setError(null);
     setContactComplete(true);
     setCurrentStep('shipping');
   };
 
   const handleShippingComplete = () => {
+    const hasMissingShippingFields = [
+      shippingAddress.firstName,
+      shippingAddress.lastName,
+      shippingAddress.address1,
+      shippingAddress.city,
+      shippingAddress.state,
+      shippingAddress.zipCode,
+      shippingAddress.country,
+    ].some((value) => !value?.trim());
+
+    if (hasMissingShippingFields) {
+      setError('Please complete all required shipping address fields before continuing.');
+      return;
+    }
+
+    setError(null);
+
     // Track shipping info
     const cartItems = items.map((item) => ({
       item_id: item.productId,

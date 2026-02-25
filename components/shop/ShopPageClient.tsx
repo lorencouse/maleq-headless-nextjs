@@ -170,6 +170,7 @@ export default function ShopPageClient({
     onSale: onSaleFilter,
     productType: productTypeFilter,
   };
+  const displayedTotalCount = Math.max(totalCount, products.length);
 
   // Update URL with filters
   const updateURL = useCallback((newFilters: FilterState, newSort: SortOption) => {
@@ -285,6 +286,9 @@ export default function ShopPageClient({
         // Append products when loading more (offset or cursor pagination)
         if ((offset !== undefined && offset > 0) || afterCursor) {
           setProducts((prev) => [...prev, ...data.products]);
+          if (typeof data.total === 'number') {
+            setTotalCount((prevTotal) => Math.max(prevTotal, data.total));
+          }
           if (filterParams.search) {
             setSearchOffset((prev) => prev + data.products.length);
           }
@@ -295,8 +299,10 @@ export default function ShopPageClient({
             setSearchOffset(data.products.length);
           }
           // Update total count for fresh queries (not load more)
-          if (data.total !== undefined) {
-            setTotalCount(data.total);
+          if (typeof data.total === 'number') {
+            setTotalCount(Math.max(data.total, data.products.length));
+          } else {
+            setTotalCount(data.products.length);
           }
 
           // Faceted search: update filter options based on context and current selections
@@ -615,7 +621,7 @@ export default function ShopPageClient({
 
             {/* Results Count */}
             <p className="text-sm text-muted-foreground">
-              Showing {totalCount} {totalCount === 1 ? 'product' : 'products'}
+              Showing {displayedTotalCount} {displayedTotalCount === 1 ? 'product' : 'products'}
             </p>
           </div>
 

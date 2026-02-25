@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import { formatPrice, getFreeShippingProgress, FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
@@ -17,6 +17,7 @@ interface ShippingMethodProps {
 }
 
 export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
+  const shippingAddress = useCheckoutStore((state) => state.shippingAddress);
   const shippingCountry = useCheckoutStore((state) => state.shippingAddress.country);
   const countryCode = normalizeCountryCode(shippingCountry);
   const shippingOptions = getShippingOptions(countryCode);
@@ -36,6 +37,25 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
 
   const freeShipping = getFreeShippingProgress(subtotal, FREE_SHIPPING_THRESHOLD);
   const supportsFreeShipping = isDomesticShippingCountry(countryCode);
+  const missingRequiredFields = useMemo(() => {
+    const requiredFields: Array<{
+      key: keyof typeof shippingAddress;
+      label: string;
+    }> = [
+      { key: 'firstName', label: 'First name' },
+      { key: 'lastName', label: 'Last name' },
+      { key: 'address1', label: 'Address' },
+      { key: 'city', label: 'City' },
+      { key: 'state', label: 'State/Region' },
+      { key: 'zipCode', label: 'ZIP/Postal code' },
+      { key: 'country', label: 'Country' },
+    ];
+
+    return requiredFields
+      .filter((field) => !shippingAddress[field.key]?.trim())
+      .map((field) => field.label);
+  }, [shippingAddress]);
+  const isAddressComplete = missingRequiredFields.length === 0;
 
   const handleMethodChange = (methodId: string, option: ShippingOption) => {
     setSelectedMethod(methodId);
@@ -116,10 +136,17 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
         </div>
       )}
 
+      {!isAddressComplete && (
+        <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm text-foreground">
+          Complete your shipping address to continue to payment.
+        </div>
+      )}
+
       {/* Continue Button */}
       <button
         onClick={handleContinue}
-        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
+        disabled={!isAddressComplete}
+        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
       >
         Continue to Payment
       </button>

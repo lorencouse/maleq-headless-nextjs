@@ -153,6 +153,9 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const products = sortProductsByPriority(productsResult.products);
   const productsPageInfo = productsResult.pageInfo;
   const saleProducts = saleProductsResult.products;
+  const displayedProductCount = hasAdditionalFilters
+    ? products.length
+    : (brand.count ?? products.length);
 
   // Show featured sections only when no filters are active
   const showFeaturedSections = !hasAdditionalFilters;
@@ -163,7 +166,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
       <BreadcrumbSchema
         items={[
           { name: 'Home', url: SITE_URL },
-          { name: 'Brands', url: `${SITE_URL}/brand` },
+          { name: 'Brands', url: `${SITE_URL}/brands` },
           { name: brand.name, url: `${SITE_URL}/brand/${slug}` },
         ]}
       />
@@ -171,7 +174,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
       {/* Brand Hero */}
       <BrandHero
         brand={brand}
-        productCount={products.length}
+        productCount={displayedProductCount}
       />
 
       {/* Featured Sections - Only show when no filters */}
@@ -206,7 +209,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           </Suspense>
         </div>
         <p className="text-sm text-muted-foreground">
-          {products.length} {products.length === 1 ? 'product' : 'products'}
+          {displayedProductCount} {displayedProductCount === 1 ? 'product' : 'products'}
           {hasAdditionalFilters ? ' matching your filters' : ' available'}
         </p>
       </div>
@@ -222,6 +225,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           hasMore={productsPageInfo.hasNextPage}
           initialCursor={productsPageInfo.endCursor}
           initialBrand={slug}
+          initialTotal={displayedProductCount}
         />
       </Suspense>
     </div>

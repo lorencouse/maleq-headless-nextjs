@@ -7,21 +7,41 @@ interface DiscountTierBannerProps {
 
 export default function DiscountTierBanner({
   className = '',
+  variant = 'full',
 }: DiscountTierBannerProps) {
   // Sort tiers by minSubtotal ascending for display
   const tiers = [...AUTO_DISCOUNT_TIERS].sort(
     (a, b) => a.minSubtotal - b.minSubtotal,
   );
+  const isCompact = variant === 'compact';
 
   return (
-    <div className='relative rounded-lg overflow-hidden shadow-[0_0_15px_rgba(255,57,57,0.3)] ring-1 ring-primary/30 discount-banner-shimmer max-w-xl mx-auto my-4'>
+    <div
+      className={`relative overflow-hidden shadow-[0_0_15px_rgba(255,57,57,0.3)] ring-1 ring-primary/30 discount-banner-shimmer mx-auto ${
+        isCompact
+          ? 'rounded-lg max-w-xl my-4'
+          : 'rounded-xl max-w-4xl my-6'
+      } ${className}`}
+    >
       <div className='flex items-stretch'>
         {/* Accent sidebar with labels */}
-        <div className='bg-gradient-to-b from-primary to-primary-dark flex flex-col justify-center px-2.5 sm:px-3'>
-          <span className='text-sm font-bold uppercase tracking-widest text-white/80 py-0.5'>
+        <div
+          className={`bg-gradient-to-b from-primary to-primary-dark flex flex-col justify-center ${
+            isCompact ? 'px-2.5 sm:px-3' : 'px-4 sm:px-5'
+          }`}
+        >
+          <span
+            className={`font-bold uppercase tracking-widest text-white/80 ${
+              isCompact ? 'text-sm py-0.5' : 'text-base sm:text-lg py-1'
+            }`}
+          >
             Spend
           </span>
-          <span className='text-lg font-bold uppercase tracking-widest text-white py-0.5'>
+          <span
+            className={`font-bold uppercase tracking-widest text-white ${
+              isCompact ? 'text-lg py-0.5' : 'text-xl sm:text-2xl py-1'
+            }`}
+          >
             Save
           </span>
         </div>
@@ -31,7 +51,11 @@ export default function DiscountTierBanner({
             {tiers.map((tier) => (
               <span
                 key={`spend-${tier.minSubtotal}`}
-                className='py-0.5 text-base sm:text-xl font-bold tabular-nums'
+                className={`font-bold tabular-nums ${
+                  isCompact
+                    ? 'py-0.5 text-base sm:text-xl'
+                    : 'py-1 text-lg sm:text-2xl'
+                }`}
               >
                 ${tier.minSubtotal}
               </span>
@@ -42,7 +66,11 @@ export default function DiscountTierBanner({
             {tiers.map((tier) => (
               <span
                 key={`save-${tier.minSubtotal}`}
-                className='py-0.5 text-lg sm:text-2xl font-extrabold text-primary tabular-nums'
+                className={`font-extrabold text-primary tabular-nums ${
+                  isCompact
+                    ? 'py-0.5 text-lg sm:text-2xl'
+                    : 'py-1 text-xl sm:text-3xl'
+                }`}
               >
                 ${tier.discountAmount}
               </span>
@@ -50,8 +78,14 @@ export default function DiscountTierBanner({
           </div>
         </div>
       </div>
-      <div className='font-bold text-center py-1 bg-foreground text-background '>
-        Bonus Discount Applied at Checkout
+      <div
+        className={`font-bold text-center bg-foreground text-background ${
+          isCompact ? 'py-1 text-sm sm:text-base' : 'py-2 text-base sm:text-lg'
+        }`}
+      >
+        {isCompact
+          ? 'Bonus Discount Applied at Checkout'
+          : 'Automatic Bonus Discount Applied at Checkout'}
       </div>
     </div>
   );

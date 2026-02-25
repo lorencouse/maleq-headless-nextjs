@@ -298,9 +298,8 @@ export default function SearchAutocomplete({
       setIsOpen(false);
       setQuery('');
       onClose?.();
-      // Use window.location for hard navigation to ensure fresh data
-      // router.push can use cached data when navigating to the same route
-      window.location.href = url;
+      router.push(url);
+      router.refresh();
     }
   };
 

@@ -77,7 +77,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href='/returns'
+                  href='/shipping-returns'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
                   Returns
