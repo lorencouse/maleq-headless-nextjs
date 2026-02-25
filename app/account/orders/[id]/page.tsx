@@ -39,6 +39,11 @@ interface Tracking {
   date_shipped?: string;
 }
 
+interface WarehouseTrackingSummary {
+  fulfillmentStatus?: string | null;
+  strategy?: string | null;
+}
+
 interface Order {
   id: number;
   number: string;
@@ -57,6 +62,8 @@ interface Order {
   billing: Address;
   shipping: Address;
   tracking?: Tracking;
+  tracking_shipments?: Tracking[];
+  warehouse_tracking?: WarehouseTrackingSummary;
   customer_note?: string;
 }
 
@@ -183,6 +190,13 @@ export default function OrderDetailPage() {
   }, [user?.id, token, params.id]);
 
   const currentStatusIndex = order ? getStatusIndex(order.status) : 0;
+  const trackingShipments = order
+    ? order.tracking_shipments && order.tracking_shipments.length > 0
+      ? order.tracking_shipments
+      : order.tracking?.tracking_number
+        ? [order.tracking]
+        : []
+    : [];
 
   return (
     <AccountLayout>
@@ -287,34 +301,62 @@ export default function OrderDetailPage() {
             )}
 
             {/* Tracking Information */}
-            {order.tracking?.tracking_number && (
+            {trackingShipments.length > 0 && (
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">Tracking Information</h2>
-                <div className="flex flex-wrap items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">
-                      {order.tracking.tracking_provider || 'Carrier'}
-                    </p>
-                    <p className="font-mono font-semibold text-foreground text-lg">
-                      {order.tracking.tracking_number}
-                    </p>
-                    {order.tracking.date_shipped && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Shipped on {formatDate(order.tracking.date_shipped)}
-                      </p>
-                    )}
-                  </div>
-                  <a
-                    href={order.tracking.tracking_link || getTrackingUrl(order.tracking.tracking_provider, order.tracking.tracking_number)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
-                  >
-                    Track Package
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Tracking Information
+                </h2>
+                <div className="space-y-4">
+                  {trackingShipments.map((shipment, idx) => {
+                    if (!shipment.tracking_number) return null;
+                    return (
+                      <div
+                        key={`${shipment.tracking_number}-${idx}`}
+                        className="flex flex-wrap items-center justify-between gap-4 p-4 bg-muted/30 rounded-lg"
+                      >
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">
+                            {shipment.tracking_provider || 'Carrier'}
+                          </p>
+                          <p className="font-mono font-semibold text-foreground text-lg">
+                            {shipment.tracking_number}
+                          </p>
+                          {shipment.date_shipped && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Shipped on {formatDate(shipment.date_shipped)}
+                            </p>
+                          )}
+                        </div>
+                        <a
+                          href={
+                            shipment.tracking_link ||
+                            getTrackingUrl(
+                              shipment.tracking_provider,
+                              shipment.tracking_number
+                            )
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                        >
+                          Track Package
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                            />
+                          </svg>
+                        </a>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

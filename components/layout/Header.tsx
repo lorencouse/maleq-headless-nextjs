@@ -18,6 +18,7 @@ import {
   getNotificationsWithCount,
   addNotification,
   STORAGE_KEY as NOTIFICATIONS_STORAGE_KEY,
+  onNotificationsUpdated,
   type StoredNotification,
 } from '@/lib/pwa/notification-store';
 
@@ -44,12 +45,13 @@ export default function Header() {
 
   // Load notifications on mount + listen for SW push broadcasts + cross-tab sync
   useEffect(() => {
-    refreshNotifications();
+    const initialLoadTimer = setTimeout(() => {
+      refreshNotifications();
+    }, 0);
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PUSH_RECEIVED') {
         addNotification(event.data.payload);
-        refreshNotifications();
       }
     };
 
@@ -60,9 +62,13 @@ export default function Header() {
       }
     };
 
+    const unsubscribeLocal = onNotificationsUpdated(refreshNotifications);
+
     navigator.serviceWorker?.addEventListener('message', handleMessage);
     window.addEventListener('storage', handleStorage);
     return () => {
+      clearTimeout(initialLoadTimer);
+      unsubscribeLocal();
       navigator.serviceWorker?.removeEventListener('message', handleMessage);
       window.removeEventListener('storage', handleStorage);
     };

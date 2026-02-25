@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createOrder, getOrder, CreateOrderData, OrderLineItem, OrderAddress } from '@/lib/woocommerce/orders';
+import {
+  createOrder,
+  getOrder,
+  upsertOrderMeta,
+  CreateOrderData,
+  OrderLineItem,
+  OrderAddress,
+} from '@/lib/woocommerce/orders';
 import { getStripeServer } from '@/lib/stripe/server';
 import { errorResponse, handleApiError, validationError } from '@/lib/api/response';
 import { z } from 'zod';
@@ -10,6 +17,7 @@ import {
   CheckoutPricingError,
   computeAuthoritativeCheckoutPricing,
 } from '@/lib/checkout/server-pricing';
+import { processWarehouseFulfillment } from '@/lib/fulfillment/service';
 
 /**
  * Create Order API Route
@@ -304,6 +312,89 @@ export async function POST(request: NextRequest) {
       metadata: { woocommerce_order_id: String(order.id) },
     });
 
+    let fulfillmentSummary:
+      | {
+          status: string;
+          strategy: string;
+          williams: { attempted: boolean; success: boolean; reference: string | null; error: string | null };
+          stc: { attempted: boolean; success: boolean; reference: string | null; error: string | null };
+          backorderedCount: number;
+        }
+      | null = null;
+
+    try {
+      const fulfillment = await processWarehouseFulfillment({
+        orderId: order.id,
+        paymentIntentId,
+        contact,
+        shippingAddress,
+        shippingMethod: {
+          id: shippingMethod.id,
+          name: shippingMethod.name,
+        },
+        cartItems,
+        customerNote,
+      });
+
+      await upsertOrderMeta(order.id, fulfillment.meta);
+
+      fulfillmentSummary = {
+        status: fulfillment.result.status,
+        strategy: fulfillment.result.plan.strategy,
+        williams: fulfillment.result.williams,
+        stc: fulfillment.result.stc,
+        backorderedCount: fulfillment.result.plan.backorderedLines.length,
+      };
+
+      if (
+        fulfillment.result.status !== 'submitted' &&
+        fulfillment.result.status !== 'unallocated'
+      ) {
+        sendAdminAlert('Warehouse Fulfillment Requires Attention', {
+          'Order ID': order.id,
+          'PaymentIntent': paymentIntentId,
+          'Status': fulfillment.result.status,
+          'Strategy': fulfillment.result.plan.strategy,
+          'Williams Ref': fulfillment.result.williams.reference || 'N/A',
+          'Williams Error': fulfillment.result.williams.error || 'None',
+          'STC Ref': fulfillment.result.stc.reference || 'N/A',
+          'STC Error': fulfillment.result.stc.error || 'None',
+          'Backordered Items': fulfillment.result.plan.backorderedLines.length,
+        });
+      }
+
+      await logDurableEvent({
+        eventType: 'checkout_order_fulfillment_processed',
+        message: `Processed warehouse fulfillment for order ${order.id}`,
+        paymentIntentId,
+        orderId: order.id,
+        ...requestMeta,
+        payload: fulfillmentSummary,
+      });
+    } catch (fulfillmentError) {
+      const message =
+        fulfillmentError instanceof Error
+          ? fulfillmentError.message
+          : String(fulfillmentError);
+
+      sendAdminAlert('Warehouse Fulfillment Failed', {
+        'Order ID': order.id,
+        'PaymentIntent': paymentIntentId,
+        'Customer Email': contact.email,
+        'Error': message,
+      });
+
+      await logDurableEvent({
+        eventType: 'checkout_order_fulfillment_failed',
+        severity: 'error',
+        message: `Warehouse fulfillment failed for order ${order.id}`,
+        paymentIntentId,
+        orderId: order.id,
+        ...requestMeta,
+        payload: { error: message },
+      });
+    }
+
     const response: CreateOrderResponse = {
       orderId: order.id,
       orderKey: order.order_key,
@@ -325,6 +416,7 @@ export async function POST(request: NextRequest) {
         discount: pricing.discount,
         couponApplied: Boolean(couponCode),
         customerId: customerId ?? null,
+        fulfillment: fulfillmentSummary,
         durationMs: Date.now() - startedAt,
       },
     });

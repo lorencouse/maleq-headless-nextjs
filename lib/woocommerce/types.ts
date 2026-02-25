@@ -44,7 +44,7 @@ export interface WooProductVariation {
   dimensions?: WooProductDimensions;
   attributes?: { name: string; option: string }[];
   image?: WooProductImage;
-  meta_data?: { key: string; value: string }[];
+  meta_data?: { id?: number; key: string; value: unknown }[];
 }
 
 export interface WooProduct {
@@ -84,7 +84,7 @@ export interface WooProduct {
   attributes?: WooProductAttribute[];
   default_attributes?: { name: string; option: string }[];
   variations?: number[];
-  meta_data?: { key: string; value: string }[];
+  meta_data?: { id?: number; key: string; value: unknown }[];
 }
 
 // Category Types

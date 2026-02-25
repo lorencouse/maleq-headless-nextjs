@@ -11,6 +11,7 @@ import type {
   DBSubscription,
 } from './types';
 import type { RowDataPacket, ResultSetHeader } from 'mysql2';
+import { recordPushNotificationHistory } from '@/lib/push/notification-history-service';
 
 // ── Subscription CRUD ───────────────────────────────────────────────
 
@@ -144,7 +145,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   const result: SendResult = { sent: 0, failed: 0, expired: 0 };
 
   const prefColumn = getPrefColumn(request.type);
-  let query = `SELECT id, endpoint, p256dh, auth FROM maleq_push_subscriptions WHERE ${prefColumn} = 1`;
+  let query = `SELECT id, endpoint, p256dh, auth, customer_id FROM maleq_push_subscriptions WHERE ${prefColumn} = 1`;
   const params: (number | string)[] = [];
 
   // Target specific customer for order updates
@@ -156,7 +157,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   // For back_in_stock with specific product, join stock alerts table
   if (request.type === 'back_in_stock' && request.productId) {
     query = `
-      SELECT s.id, s.endpoint, s.p256dh, s.auth FROM maleq_push_subscriptions s
+      SELECT s.id, s.endpoint, s.p256dh, s.auth, s.customer_id FROM maleq_push_subscriptions s
       INNER JOIN maleq_stock_alert_products a ON a.subscription_id = s.id
       WHERE s.pref_back_in_stock = 1
         AND a.product_id = ?
@@ -167,7 +168,7 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(query, params);
-  const subs = rows as Pick<DBSubscription, 'id' | 'endpoint' | 'p256dh' | 'auth'>[];
+  const subs = rows as Pick<DBSubscription, 'id' | 'endpoint' | 'p256dh' | 'auth' | 'customer_id'>[];
 
   const payload: PushPayload = {
     title: request.title,
@@ -186,10 +187,47 @@ export async function sendByType(request: SendPushRequest): Promise<SendResult> 
     const results = await Promise.all(
       batch.map((sub) => sendToSubscription(sub, payload))
     );
-    for (const r of results) {
-      if (r === 'ok') result.sent++;
-      else if (r === 'expired') result.expired++;
-      else result.failed++;
+    const historyRows: Array<{
+      subscriptionId: number;
+      customerId: number;
+      type: SendPushRequest['type'];
+      title: string;
+      body: string;
+      url: string;
+      image?: string;
+      tag: string;
+      productId?: number;
+      orderId?: number;
+    }> = [];
+    for (let j = 0; j < results.length; j++) {
+      const r = results[j];
+      const sub = batch[j];
+      if (r === 'ok') {
+        result.sent++;
+        if (sub.customer_id) {
+          historyRows.push({
+            subscriptionId: sub.id,
+            customerId: sub.customer_id,
+            type: request.type,
+            title: payload.title,
+            body: payload.body,
+            url: payload.url || '/',
+            image: payload.image,
+            tag: payload.tag || request.type,
+            productId: request.type === 'back_in_stock' ? request.productId : undefined,
+            orderId: request.type === 'order_update' ? request.orderId : undefined,
+          });
+        }
+      } else if (r === 'expired') {
+        result.expired++;
+      } else {
+        result.failed++;
+      }
+    }
+    if (historyRows.length > 0) {
+      await recordPushNotificationHistory(historyRows).catch((error) => {
+        console.error('Failed to record push notification history:', error);
+      });
     }
   }
 
@@ -255,6 +293,7 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
   const claimId = `claim-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   await pool.execute<ResultSetHeader>(`
     UPDATE maleq_stock_alert_products a
+    INNER JOIN maleq_push_subscriptions s ON s.id = a.subscription_id AND s.pref_back_in_stock = 1
     INNER JOIN wp_postmeta pm ON pm.post_id = a.product_id AND pm.meta_key = '_stock_status'
     SET a.notified_at = CURRENT_TIMESTAMP, a.product_slug = CONCAT(a.product_slug, '|', ?)
     WHERE a.notified_at IS NULL
@@ -265,21 +304,18 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
   const [rows] = await pool.execute<RowDataPacket[]>(`
     SELECT a.id AS alert_id, a.product_id, a.product_name,
            SUBSTRING_INDEX(a.product_slug, '|', 1) AS product_slug,
-           s.id AS sub_id, s.endpoint, s.p256dh, s.auth
+           s.id AS sub_id, s.customer_id, s.endpoint, s.p256dh, s.auth
     FROM maleq_stock_alert_products a
     INNER JOIN maleq_push_subscriptions s ON s.id = a.subscription_id
     WHERE a.product_slug LIKE CONCAT('%|', ?)
-      AND s.pref_back_in_stock = 1
   `, [claimId]);
 
   // Clean up the claim marker from product_slug
-  if (rows.length > 0) {
-    await pool.execute(`
-      UPDATE maleq_stock_alert_products
-      SET product_slug = SUBSTRING_INDEX(product_slug, '|', 1)
-      WHERE product_slug LIKE CONCAT('%|', ?)
-    `, [claimId]);
-  }
+  await pool.execute(`
+    UPDATE maleq_stock_alert_products
+    SET product_slug = SUBSTRING_INDEX(product_slug, '|', 1)
+    WHERE product_slug LIKE CONCAT('%|', ?)
+  `, [claimId]);
 
   const alerts = rows as Array<{
     alert_id: number;
@@ -287,6 +323,7 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
     product_name: string;
     product_slug: string;
     sub_id: number;
+    customer_id: number | null;
     endpoint: string;
     p256dh: string;
     auth: string;
@@ -311,11 +348,34 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
         )
       )
     );
+    const historyRows: Array<{
+      subscriptionId: number;
+      customerId: number;
+      type: SendPushRequest['type'];
+      title: string;
+      body: string;
+      url: string;
+      tag: string;
+      productId: number;
+    }> = [];
 
     for (let j = 0; j < results.length; j++) {
       const r = results[j];
       if (r === 'ok') {
         result.sent++;
+        const alert = batch[j];
+        if (alert.customer_id) {
+          historyRows.push({
+            subscriptionId: alert.sub_id,
+            customerId: alert.customer_id,
+            type: 'back_in_stock',
+            title: 'Back in Stock!',
+            body: `${alert.product_name} is available again.`,
+            url: `/product/${alert.product_slug}`,
+            tag: `stock-${alert.product_id}`,
+            productId: alert.product_id,
+          });
+        }
       } else if (r === 'expired') {
         result.expired++;
         // Clear notified_at so if they re-subscribe, they can get notified again
@@ -327,6 +387,11 @@ export async function checkAndNotifyStockAlerts(): Promise<SendResult> {
           [batch[j].alert_id]
         );
       }
+    }
+    if (historyRows.length > 0) {
+      await recordPushNotificationHistory(historyRows).catch((error) => {
+        console.error('Failed to record push notification history:', error);
+      });
     }
   }
 

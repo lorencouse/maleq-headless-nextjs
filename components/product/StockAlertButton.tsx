@@ -9,7 +9,7 @@ import {
 } from '@/lib/utils/stock-alerts';
 import { isValidEmail } from '@/lib/api/validation';
 import { showSuccess, showError } from '@/lib/utils/toast';
-import { usePushSubscription } from '@/lib/hooks/usePushSubscription';
+import { PUSH_OWNERSHIP_TOKEN_KEY, usePushSubscription } from '@/lib/hooks/usePushSubscription';
 
 interface StockAlertButtonProps {
   productId: string;
@@ -32,7 +32,13 @@ export default function StockAlertButton({
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const { isSupported: pushSupported, isSubscribed: pushSubscribed, endpoint, subscribe: pushSubscribe } = usePushSubscription();
+  const {
+    isSupported: pushSupported,
+    isSubscribed: pushSubscribed,
+    endpoint,
+    ownershipToken,
+    subscribe: pushSubscribe,
+  } = usePushSubscription();
 
   useEffect(() => {
     const subscribed = isSubscribedToAlert(productId);
@@ -50,6 +56,7 @@ export default function StockAlertButton({
 
     try {
       let currentEndpoint = endpoint;
+      let currentOwnershipToken = ownershipToken;
 
       // If not push-subscribed yet, opt in first
       if (!pushSubscribed) {
@@ -62,9 +69,10 @@ export default function StockAlertButton({
         }
         // After subscribing, read the new endpoint from localStorage
         currentEndpoint = localStorage.getItem('maleq-push-endpoint');
+        currentOwnershipToken = localStorage.getItem(PUSH_OWNERSHIP_TOKEN_KEY);
       }
 
-      if (!currentEndpoint) {
+      if (!currentEndpoint || !currentOwnershipToken) {
         setShowForm(true);
         setIsLoading(false);
         return;
@@ -75,6 +83,7 @@ export default function StockAlertButton({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           endpoint: currentEndpoint,
+          ownershipToken: currentOwnershipToken,
           productId: Number(productId),
           productName,
           productSlug,
@@ -115,7 +124,7 @@ export default function StockAlertButton({
       const response = await fetch('/api/stock-alerts/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ productId, productName, email: email.trim() }),
+        body: JSON.stringify({ productId, productName, productSlug, email: email.trim() }),
       });
 
       const result = await response.json();
@@ -125,8 +134,9 @@ export default function StockAlertButton({
         setShowForm(false);
         showSuccess(result.message);
       } else {
-        setError(result.message);
-        showError(result.message);
+        const message = result.error || 'Failed to subscribe. Please try again.';
+        setError(message);
+        showError(message);
       }
     } catch {
       setError('Failed to subscribe. Please try again.');
@@ -142,11 +152,21 @@ export default function StockAlertButton({
     try {
       // Remove push stock alert if applicable
       if (pushSubscribed && endpoint) {
-        await fetch('/api/push/stock-alert', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint, productId: Number(productId) }),
-        });
+        let tokenForDelete = ownershipToken;
+        if (!tokenForDelete) {
+          tokenForDelete = localStorage.getItem(PUSH_OWNERSHIP_TOKEN_KEY);
+        }
+        if (tokenForDelete) {
+          await fetch('/api/push/stock-alert', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              endpoint,
+              ownershipToken: tokenForDelete,
+              productId: Number(productId),
+            }),
+          });
+        }
       }
 
       // Also remove email-based alert

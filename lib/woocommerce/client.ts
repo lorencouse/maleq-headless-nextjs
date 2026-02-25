@@ -129,6 +129,10 @@ class WooCommerceClient {
     return this.request<WooProductVariation[]>(`/products/${productId}/variations`);
   }
 
+  async getVariationById(productId: number, variationId: number): Promise<WooProductVariation> {
+    return this.request<WooProductVariation>(`/products/${productId}/variations/${variationId}`);
+  }
+
   async createVariation(productId: number, variation: Partial<WooProductVariation>): Promise<WooProductVariation> {
     return this.request<WooProductVariation>(`/products/${productId}/variations`, {
       method: 'POST',

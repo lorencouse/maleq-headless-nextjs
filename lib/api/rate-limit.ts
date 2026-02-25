@@ -95,6 +95,8 @@ export const RATE_LIMITS = {
   auth: { limit: 10, windowSeconds: 60 } satisfies RateLimitConfig,
   /** Form submissions: 5 requests per minute */
   form: { limit: 5, windowSeconds: 60 } satisfies RateLimitConfig,
+  /** Push endpoints: 30 requests per minute */
+  push: { limit: 30, windowSeconds: 60 } satisfies RateLimitConfig,
   /** General API: 60 requests per minute */
   api: { limit: 60, windowSeconds: 60 } satisfies RateLimitConfig,
 } as const;

@@ -42,8 +42,9 @@ export interface CreateOrderData {
     total: string;
   }>;
   meta_data?: Array<{
+    id?: number;
     key: string;
-    value: string;
+    value: unknown;
   }>;
   customer_note?: string;
   transaction_id?: string;
@@ -96,7 +97,7 @@ export interface WooCommerceOrder {
   meta_data: Array<{
     id: number;
     key: string;
-    value: string;
+    value: unknown;
   }>;
 }
 
@@ -184,6 +185,28 @@ export async function updateOrder(
   }
 
   return response.json();
+}
+
+/**
+ * Upsert order meta entries by key.
+ * Existing keys are updated in-place using their meta ID to avoid duplicates.
+ */
+export async function upsertOrderMeta(
+  orderId: number,
+  updates: Record<string, unknown>
+): Promise<WooCommerceOrder> {
+  const order = await getOrder(orderId);
+  const existingMeta = order.meta_data || [];
+
+  const metaData = Object.entries(updates).map(([key, value]) => {
+    const existing = existingMeta.find((entry) => entry.key === key);
+    if (existing) {
+      return { id: existing.id, key, value };
+    }
+    return { key, value };
+  });
+
+  return updateOrder(orderId, { meta_data: metaData });
 }
 
 /**

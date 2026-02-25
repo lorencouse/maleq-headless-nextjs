@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
-import { getUnreadCount, addNotification, STORAGE_KEY as NOTIFICATIONS_STORAGE_KEY } from '@/lib/pwa/notification-store';
+import {
+  getUnreadCount,
+  STORAGE_KEY as NOTIFICATIONS_STORAGE_KEY,
+  onNotificationsUpdated,
+} from '@/lib/pwa/notification-store';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import { mainNavigation, simpleNavLinks, accountNavigation } from '@/lib/config/navigation';
 import { CategoryIcons } from '@/lib/config/category-icons';
@@ -54,12 +58,14 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
 
   // Keep notification count in sync with SW broadcasts and cross-tab changes
   useEffect(() => {
-    setNotificationUnreadCount(getUnreadCount());
+    const initialLoadTimer = setTimeout(() => {
+      setNotificationUnreadCount(getUnreadCount());
+    }, 0);
 
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'PUSH_RECEIVED') {
-        addNotification(event.data.payload);
-        setNotificationUnreadCount(getUnreadCount());
+        // Header handles persistence; refresh after message dispatch settles.
+        setTimeout(() => setNotificationUnreadCount(getUnreadCount()), 0);
       }
     };
 
@@ -69,9 +75,15 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       }
     };
 
+    const unsubscribeLocal = onNotificationsUpdated(() => {
+      setNotificationUnreadCount(getUnreadCount());
+    });
+
     navigator.serviceWorker?.addEventListener('message', handleMessage);
     window.addEventListener('storage', handleStorage);
     return () => {
+      clearTimeout(initialLoadTimer);
+      unsubscribeLocal();
       navigator.serviceWorker?.removeEventListener('message', handleMessage);
       window.removeEventListener('storage', handleStorage);
     };

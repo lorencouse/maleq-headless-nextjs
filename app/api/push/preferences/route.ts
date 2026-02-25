@@ -1,9 +1,17 @@
 import { NextRequest } from 'next/server';
 import { getPreferences, updatePreferences } from '@/lib/push/push-service';
 import { successResponse, validationError, notFoundError, handleApiError, errorResponse } from '@/lib/api/response';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/api/rate-limit';
+import { getPushRateLimitKey, isValidPushEndpointUrl } from '@/lib/push/route-helpers';
+import { verifyEndpointOwnershipToken } from '@/lib/push/endpoint-ownership';
 
 export async function POST(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getPushRateLimitKey(request, 'preferences-post'), RATE_LIMITS.push);
+    if (!rateResult.allowed) {
+      return errorResponse('Too many requests. Please try again later.', 429, 'RATE_LIMITED');
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await request.json();
@@ -11,9 +19,24 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid JSON body', 400);
     }
 
-    const { endpoint } = body as { endpoint?: string };
+    const { endpoint, ownershipToken } = body as { endpoint?: string; ownershipToken?: string };
     if (!endpoint || typeof endpoint !== 'string') {
       return validationError({ endpoint: 'Endpoint is required' });
+    }
+    if (!isValidPushEndpointUrl(endpoint)) {
+      return validationError({ endpoint: 'Endpoint must be a valid HTTPS URL' });
+    }
+    if (endpoint.length > 1000) {
+      return validationError({ endpoint: 'Endpoint URL too long' });
+    }
+    if (!ownershipToken || typeof ownershipToken !== 'string') {
+      return errorResponse('Missing endpoint ownership token', 401, 'MISSING_OWNERSHIP_TOKEN');
+    }
+    if (ownershipToken.length > 4096) {
+      return validationError({ ownershipToken: 'Invalid ownership token' });
+    }
+    if (!verifyEndpointOwnershipToken(ownershipToken, endpoint)) {
+      return errorResponse('Unauthorized endpoint access', 401, 'UNAUTHORIZED_ENDPOINT');
     }
 
     const prefs = await getPreferences(endpoint);
@@ -29,6 +52,11 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getPushRateLimitKey(request, 'preferences-put'), RATE_LIMITS.push);
+    if (!rateResult.allowed) {
+      return errorResponse('Too many requests. Please try again later.', 429, 'RATE_LIMITED');
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await request.json();
@@ -36,8 +64,9 @@ export async function PUT(request: NextRequest) {
       return errorResponse('Invalid JSON body', 400);
     }
 
-    const { endpoint, orderUpdates, backInStock, promotions } = body as {
+    const { endpoint, ownershipToken, orderUpdates, backInStock, promotions } = body as {
       endpoint?: string;
+      ownershipToken?: string;
       orderUpdates?: unknown;
       backInStock?: unknown;
       promotions?: unknown;
@@ -45,6 +74,21 @@ export async function PUT(request: NextRequest) {
 
     if (!endpoint || typeof endpoint !== 'string') {
       return validationError({ endpoint: 'Endpoint is required' });
+    }
+    if (!isValidPushEndpointUrl(endpoint)) {
+      return validationError({ endpoint: 'Endpoint must be a valid HTTPS URL' });
+    }
+    if (endpoint.length > 1000) {
+      return validationError({ endpoint: 'Endpoint URL too long' });
+    }
+    if (!ownershipToken || typeof ownershipToken !== 'string') {
+      return errorResponse('Missing endpoint ownership token', 401, 'MISSING_OWNERSHIP_TOKEN');
+    }
+    if (ownershipToken.length > 4096) {
+      return validationError({ ownershipToken: 'Invalid ownership token' });
+    }
+    if (!verifyEndpointOwnershipToken(ownershipToken, endpoint)) {
+      return errorResponse('Unauthorized endpoint access', 401, 'UNAUTHORIZED_ENDPOINT');
     }
 
     // Validate preference values are booleans if provided
@@ -66,6 +110,10 @@ export async function PUT(request: NextRequest) {
         return validationError({ promotions: 'Must be a boolean' });
       }
       prefs.promotions = promotions;
+    }
+
+    if (Object.keys(prefs).length === 0) {
+      return validationError({ preferences: 'At least one preference field is required' });
     }
 
     const updated = await updatePreferences(endpoint, prefs);

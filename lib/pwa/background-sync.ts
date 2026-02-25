@@ -50,9 +50,13 @@ export async function queueRequest(req: Omit<QueuedRequest, 'id' | 'createdAt'>)
 
   // Request a Background Sync if supported
   if ('serviceWorker' in navigator && 'SyncManager' in window) {
-    const reg = await navigator.serviceWorker.ready;
-    await (reg as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } })
-      .sync.register('replay-queue');
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await (reg as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } })
+        .sync.register('replay-queue');
+    } catch {
+      // Queueing already succeeded in IDB; online listener fallback will replay later.
+    }
   }
 }
 

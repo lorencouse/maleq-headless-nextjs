@@ -1,15 +1,9 @@
 import { NextRequest } from 'next/server';
 import { saveSubscription, deleteSubscription } from '@/lib/push/push-service';
 import { successResponse, validationError, handleApiError, errorResponse } from '@/lib/api/response';
-
-function isValidEndpointUrl(url: string): boolean {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
+import { checkRateLimit, RATE_LIMITS } from '@/lib/api/rate-limit';
+import { getPushRateLimitKey, isValidPushEndpointUrl } from '@/lib/push/route-helpers';
+import { createEndpointOwnershipToken, verifyEndpointOwnershipToken } from '@/lib/push/endpoint-ownership';
 
 function parseIntSafe(value: unknown): number | undefined {
   if (value === undefined || value === null || value === '') return undefined;
@@ -19,6 +13,11 @@ function parseIntSafe(value: unknown): number | undefined {
 
 export async function POST(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getPushRateLimitKey(request, 'subscribe-post'), RATE_LIMITS.push);
+    if (!rateResult.allowed) {
+      return errorResponse('Too many requests. Please try again later.', 429, 'RATE_LIMITED');
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await request.json();
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (!isValidEndpointUrl(endpoint)) {
+    if (!isValidPushEndpointUrl(endpoint)) {
       return validationError({ endpoint: 'Endpoint must be a valid HTTPS URL' });
     }
 
@@ -63,7 +62,15 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent') || undefined,
     });
 
-    return successResponse(null, 'Subscribed to push notifications');
+    const ownership = createEndpointOwnershipToken(endpoint);
+
+    return successResponse(
+      {
+        ownershipToken: ownership.token,
+        ownershipTokenExpiresAt: ownership.expiresAt,
+      },
+      'Subscribed to push notifications'
+    );
   } catch (error) {
     return handleApiError(error, 'Failed to save push subscription');
   }
@@ -71,6 +78,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getPushRateLimitKey(request, 'subscribe-delete'), RATE_LIMITS.push);
+    if (!rateResult.allowed) {
+      return errorResponse('Too many requests. Please try again later.', 429, 'RATE_LIMITED');
+    }
+
     let body: Record<string, unknown>;
     try {
       body = await request.json();
@@ -78,10 +90,25 @@ export async function DELETE(request: NextRequest) {
       return errorResponse('Invalid JSON body', 400);
     }
 
-    const { endpoint } = body as { endpoint?: string };
+    const { endpoint, ownershipToken } = body as { endpoint?: string; ownershipToken?: string };
 
     if (!endpoint || typeof endpoint !== 'string') {
       return validationError({ endpoint: 'Endpoint is required' });
+    }
+    if (!isValidPushEndpointUrl(endpoint)) {
+      return validationError({ endpoint: 'Endpoint must be a valid HTTPS URL' });
+    }
+    if (endpoint.length > 1000) {
+      return validationError({ endpoint: 'Endpoint URL too long' });
+    }
+    if (!ownershipToken || typeof ownershipToken !== 'string') {
+      return errorResponse('Missing endpoint ownership token', 401, 'MISSING_OWNERSHIP_TOKEN');
+    }
+    if (ownershipToken.length > 4096) {
+      return validationError({ ownershipToken: 'Invalid ownership token' });
+    }
+    if (!verifyEndpointOwnershipToken(ownershipToken, endpoint)) {
+      return errorResponse('Unauthorized endpoint access', 401, 'UNAUTHORIZED_ENDPOINT');
     }
 
     await deleteSubscription(endpoint);

@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  getNotifications,
   markAsRead,
   markAllAsRead,
   type StoredNotification,
@@ -113,7 +112,7 @@ export default function NotificationDropdown({
             onClick={onClose}
             className="block text-center text-xs text-primary hover:text-primary-hover py-2 transition-colors"
           >
-            Notification Settings
+            Notification Center
           </Link>
         </div>
       </div>

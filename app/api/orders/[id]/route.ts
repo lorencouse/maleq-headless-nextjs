@@ -2,6 +2,60 @@ import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse, handleApiError } from '@/lib/api/response';
 import { extractAuthToken } from '@/lib/api/auth-token';
 import { getWooCommerceEndpoint, getAuthHeader, isWooCommerceConfigured } from '@/lib/woocommerce/auth';
+import {
+  getWarehouseTrackingSummary,
+  mergeTrackingEntries,
+  warehouseShipmentsToTrackingEntries,
+} from '@/lib/fulfillment/service';
+
+function normalizePrimaryTracking(
+  trackingValue: unknown
+): Array<{
+  tracking_provider: string;
+  tracking_number: string;
+  tracking_link: string;
+  date_shipped?: string;
+}> {
+  const entries: Array<{
+    tracking_provider: string;
+    tracking_number: string;
+    tracking_link: string;
+    date_shipped?: string;
+  }> = [];
+
+  if (Array.isArray(trackingValue)) {
+    for (const item of trackingValue) {
+      if (!item || typeof item !== 'object') continue;
+      const value = item as Record<string, unknown>;
+      const trackingNumber =
+        typeof value.tracking_number === 'string'
+          ? value.tracking_number.trim()
+          : '';
+      if (!trackingNumber) continue;
+      entries.push({
+        tracking_provider:
+          typeof value.tracking_provider === 'string'
+            ? value.tracking_provider
+            : 'Carrier',
+        tracking_number: trackingNumber,
+        tracking_link:
+          typeof value.tracking_link === 'string' ? value.tracking_link : '',
+        date_shipped:
+          typeof value.date_shipped === 'string'
+            ? value.date_shipped
+            : undefined,
+      });
+    }
+  } else if (typeof trackingValue === 'string' && trackingValue.trim()) {
+    entries.push({
+      tracking_provider: 'Carrier',
+      tracking_number: trackingValue.trim(),
+      tracking_link: '',
+    });
+  }
+
+  return entries;
+}
 
 export async function GET(
   request: NextRequest,
@@ -57,21 +111,24 @@ export async function GET(
         meta.key === '_tracking_number'
     );
 
-    let tracking = null;
-    if (trackingMeta?.value) {
-      // Handle different tracking data formats
-      if (Array.isArray(trackingMeta.value) && trackingMeta.value.length > 0) {
-        tracking = trackingMeta.value[0];
-      } else if (typeof trackingMeta.value === 'string') {
-        tracking = { tracking_number: trackingMeta.value };
-      }
-    }
+    const primaryTrackingEntries = normalizePrimaryTracking(trackingMeta?.value);
+    const warehouseTracking = await getWarehouseTrackingSummary(order);
+    const warehouseEntries = warehouseShipmentsToTrackingEntries(
+      warehouseTracking.shipments
+    );
+    const trackingShipments = mergeTrackingEntries(
+      primaryTrackingEntries,
+      warehouseEntries
+    );
+    const tracking = trackingShipments[0] || null;
 
     return NextResponse.json({
       success: true,
       order: {
         ...order,
         tracking,
+        tracking_shipments: trackingShipments,
+        warehouse_tracking: warehouseTracking,
       },
     });
   } catch (error) {

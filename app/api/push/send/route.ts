@@ -24,13 +24,14 @@ export async function POST(request: NextRequest) {
       return errorResponse('Invalid JSON body', 400);
     }
 
-    const { type, title, body: msgBody, url, image, customerId, productId } = body as {
+    const { type, title, body: msgBody, url, image, customerId, orderId, productId } = body as {
       type?: string;
       title?: string;
       body?: string;
       url?: string;
       image?: string;
       customerId?: unknown;
+      orderId?: unknown;
       productId?: unknown;
     };
 
@@ -45,14 +46,32 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const parsedCustomerId = parseIntSafe(customerId);
+    const parsedOrderId = parseIntSafe(orderId);
+    const parsedProductId = parseIntSafe(productId);
+
+    if (type === 'order_update' && !parsedCustomerId) {
+      return validationError({ customerId: 'Valid customerId is required for order_update notifications' });
+    }
+    if (type === 'back_in_stock' && !parsedProductId) {
+      return validationError({ productId: 'Valid productId is required for back_in_stock notifications' });
+    }
+    if (typeof url === 'string' && url.length > 2048) {
+      return validationError({ url: 'URL too long' });
+    }
+    if (typeof image === 'string' && image.length > 2048) {
+      return validationError({ image: 'Image URL too long' });
+    }
+
     const result = await sendByType({
       type: type as PushType,
       title,
       body: msgBody,
       url: typeof url === 'string' ? url : undefined,
       image: typeof image === 'string' ? image : undefined,
-      customerId: parseIntSafe(customerId),
-      productId: parseIntSafe(productId),
+      customerId: parsedCustomerId,
+      orderId: parsedOrderId,
+      productId: parsedProductId,
     });
 
     return successResponse(result, `Sent ${result.sent}, failed ${result.failed}, expired ${result.expired}`);

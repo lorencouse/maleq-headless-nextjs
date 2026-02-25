@@ -107,13 +107,15 @@ function networkFirst(event, cacheName, maxAgeMs) {
         return response;
       })
       .catch(() =>
-        caches.match(event.request).then((cached) => {
-          // If cached response exists but is expired, don't serve stale data
-          if (cached && maxAgeMs && isExpired(cached, maxAgeMs)) {
-            return new Response('Service Unavailable', { status: 503 });
-          }
-          return cached || new Response('Service Unavailable', { status: 503 });
-        })
+        caches.open(cacheName).then((cache) =>
+          cache.match(event.request).then((cached) => {
+            // If cached response exists but is expired, don't serve stale data
+            if (cached && maxAgeMs && isExpired(cached, maxAgeMs)) {
+              return new Response('Service Unavailable', { status: 503 });
+            }
+            return cached || new Response('Service Unavailable', { status: 503 });
+          })
+        )
       )
   );
 }
@@ -385,10 +387,14 @@ async function replayQueueFromIDB() {
 
 self.addEventListener('message', (event) => {
   if (event.data === 'TRIM_CACHES') {
-    trimCache(CACHES.pages, LIMITS.pages);
-    trimCache(CACHES.images, LIMITS.images);
-    trimCache(CACHES.api, LIMITS.api);
-    trimCache(CACHES.static, LIMITS.static);
+    event.waitUntil(
+      Promise.all([
+        trimCache(CACHES.pages, LIMITS.pages),
+        trimCache(CACHES.images, LIMITS.images),
+        trimCache(CACHES.api, LIMITS.api),
+        trimCache(CACHES.static, LIMITS.static),
+      ])
+    );
   }
 
   if (event.data === 'SKIP_WAITING') {
@@ -454,24 +460,28 @@ self.addEventListener('notificationclick', (event) => {
   const rawUrl = event.notification.data?.url || '/';
 
   // Validate URL is same-origin to prevent open-redirect attacks
-  let targetPath;
+  let targetUrl = '/';
   try {
     const parsed = new URL(rawUrl, self.location.origin);
-    targetPath = parsed.origin === self.location.origin ? parsed.pathname : '/';
+    if (parsed.origin === self.location.origin) {
+      targetUrl = `${parsed.pathname}${parsed.search}${parsed.hash}` || '/';
+    }
   } catch {
-    targetPath = '/';
+    targetUrl = '/';
   }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       // Focus an existing tab if one is open at the target URL
       for (const client of clients) {
-        if (new URL(client.url).pathname === targetPath && 'focus' in client) {
+        const clientUrl = new URL(client.url);
+        const current = `${clientUrl.pathname}${clientUrl.search}${clientUrl.hash}`;
+        if (clientUrl.origin === self.location.origin && current === targetUrl && 'focus' in client) {
           return client.focus();
         }
       }
       // Otherwise open a new tab
-      return self.clients.openWindow(targetPath);
+      return self.clients.openWindow(targetUrl);
     })
   );
 });

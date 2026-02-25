@@ -1,4 +1,36 @@
 import '@testing-library/jest-dom';
+import { TextEncoder, TextDecoder } from 'util';
+import { ReadableStream, WritableStream, TransformStream } from 'stream/web';
+import { MessageChannel, MessagePort } from 'worker_threads';
+
+if (typeof global.TextEncoder === 'undefined' || typeof global.TextDecoder === 'undefined') {
+  if (typeof global.TextEncoder === 'undefined') {
+    global.TextEncoder = TextEncoder;
+  }
+  if (typeof global.TextDecoder === 'undefined') {
+    global.TextDecoder = TextDecoder;
+  }
+}
+
+if (typeof global.ReadableStream === 'undefined') {
+  global.ReadableStream = ReadableStream;
+  global.WritableStream = WritableStream;
+  global.TransformStream = TransformStream;
+}
+
+if (typeof global.MessagePort === 'undefined') {
+  global.MessageChannel = MessageChannel;
+  global.MessagePort = MessagePort;
+}
+
+if (typeof global.Request === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Request, Response, Headers, fetch } = require('undici');
+  global.Request = Request;
+  global.Response = Response;
+  global.Headers = Headers;
+  global.fetch = fetch;
+}
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
@@ -24,7 +56,7 @@ jest.mock('next/image', () => ({
   __esModule: true,
   default: (props) => {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img {...props} />;
+    return <img {...props} alt={props.alt || ''} />;
   },
 }));
 

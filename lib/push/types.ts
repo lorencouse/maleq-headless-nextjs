@@ -35,6 +35,8 @@ export interface SendPushRequest {
   image?: string;
   /** For order_update: the customer ID to target */
   customerId?: number;
+  /** For order_update: the order ID represented by this notification */
+  orderId?: number;
   /** For back_in_stock: the product ID */
   productId?: number;
 }
