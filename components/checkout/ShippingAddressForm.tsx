@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import { SHIPPING_COUNTRY_OPTIONS } from '@/lib/checkout/shipping-rates';
@@ -59,6 +59,23 @@ const US_STATES = [
   { code: 'WY', name: 'Wyoming' },
 ];
 
+interface AddressSuggestion {
+  id: string;
+  label: string;
+  line1: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+const US_STATE_LOOKUP = new Map<string, string>(
+  US_STATES.flatMap((entry) => [
+    [entry.code.toLowerCase(), entry.code],
+    [entry.name.toLowerCase(), entry.code],
+  ]),
+);
+
 interface ShippingAddress {
   firstName: string;
   lastName: string;
@@ -86,6 +103,13 @@ export default function ShippingAddressForm() {
     country: 'US',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [isAutocompleteLoading, setIsAutocompleteLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [hasAutocompleteError, setHasAutocompleteError] = useState(false);
+  const [isAddressInputFocused, setIsAddressInputFocused] = useState(false);
+  const skipAutocompleteRef = useRef(false);
+  const hideSuggestionsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isUSAddress = address.country === 'US';
 
   // Auto-populate from saved customer addresses
@@ -129,6 +153,111 @@ export default function ShippingAddressForm() {
     setCheckoutAddress(address);
   }, [address, setCheckoutAddress]);
 
+  useEffect(() => {
+    return () => {
+      if (hideSuggestionsTimerRef.current) {
+        clearTimeout(hideSuggestionsTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isAddressInputFocused) return;
+
+    if (skipAutocompleteRef.current) {
+      skipAutocompleteRef.current = false;
+      return;
+    }
+
+    const query = address.address1.trim();
+    if (query.length < 3) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsAutocompleteLoading(false);
+      setHasAutocompleteError(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timerId = setTimeout(async () => {
+      try {
+        setIsAutocompleteLoading(true);
+        setHasAutocompleteError(false);
+
+        const params = new URLSearchParams({
+          q: query,
+          country: address.country || 'US',
+          limit: '5',
+        });
+        const response = await fetch(`/api/address/autocomplete?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch address suggestions');
+        }
+
+        const data = await response.json() as {
+          suggestions?: AddressSuggestion[];
+        };
+        const nextSuggestions = data.suggestions || [];
+        setSuggestions(nextSuggestions);
+        setShowSuggestions(nextSuggestions.length > 0);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        console.error('Address autocomplete failed:', error);
+        setSuggestions([]);
+        setShowSuggestions(false);
+        setHasAutocompleteError(true);
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsAutocompleteLoading(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timerId);
+      controller.abort();
+    };
+  }, [address.address1, address.country, isAddressInputFocused]);
+
+  const normalizeUSState = (value: string): string => {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return '';
+    return US_STATE_LOOKUP.get(normalized) || '';
+  };
+
+  const handleAddressSuggestionSelect = (suggestion: AddressSuggestion) => {
+    const country = (suggestion.country || address.country || 'US').toUpperCase();
+    const state = country === 'US'
+      ? normalizeUSState(suggestion.state)
+      : suggestion.state.trim();
+
+    skipAutocompleteRef.current = true;
+    setAddress((prev) => ({
+      ...prev,
+      address1: suggestion.line1 || prev.address1,
+      city: suggestion.city || prev.city,
+      state: suggestion.state ? state : prev.state,
+      zipCode: suggestion.zipCode || prev.zipCode,
+      country: country || prev.country,
+    }));
+    setErrors((prev) => ({
+      ...prev,
+      address1: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: '',
+    }));
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setHasAutocompleteError(false);
+  };
+
   const handleChange = (field: keyof ShippingAddress, value: string) => {
     setAddress(prev => ({ ...prev, [field]: value }));
     // Clear error when field is edited
@@ -157,6 +286,7 @@ export default function ShippingAddressForm() {
             id="firstName"
             value={address.firstName}
             onChange={(e) => handleChange('firstName', e.target.value)}
+            autoComplete="given-name"
             className={inputClassName('firstName')}
           />
           {errors.firstName && (
@@ -172,6 +302,7 @@ export default function ShippingAddressForm() {
             id="lastName"
             value={address.lastName}
             onChange={(e) => handleChange('lastName', e.target.value)}
+            autoComplete="family-name"
             className={inputClassName('lastName')}
           />
           {errors.lastName && (
@@ -190,6 +321,7 @@ export default function ShippingAddressForm() {
           id="company"
           value={address.company}
           onChange={(e) => handleChange('company', e.target.value)}
+          autoComplete="organization"
           className={inputClassName('company')}
         />
       </div>
@@ -199,16 +331,83 @@ export default function ShippingAddressForm() {
         <label htmlFor="address1" className="block text-sm font-medium text-foreground mb-1">
           Address <span className="text-red-500">*</span>
         </label>
-        <input
-          type="text"
-          id="address1"
-          value={address.address1}
-          onChange={(e) => handleChange('address1', e.target.value)}
-          placeholder="Street address"
-          className={inputClassName('address1')}
-        />
+        <div className="relative">
+          <input
+            type="text"
+            id="address1"
+            value={address.address1}
+            onChange={(e) => {
+              handleChange('address1', e.target.value);
+              setShowSuggestions(true);
+              setHasAutocompleteError(false);
+            }}
+            onFocus={() => {
+              setIsAddressInputFocused(true);
+              if (suggestions.length > 0) {
+                setShowSuggestions(true);
+              }
+            }}
+            onBlur={() => {
+              setIsAddressInputFocused(false);
+              hideSuggestionsTimerRef.current = setTimeout(() => {
+                setShowSuggestions(false);
+              }, 120);
+            }}
+            placeholder="Street address"
+            autoComplete="address-line1"
+            className={inputClassName('address1')}
+          />
+          {isAutocompleteLoading && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+            </div>
+          )}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-20 mt-1 w-full rounded-lg border border-input bg-card shadow-lg max-h-64 overflow-y-auto">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => handleAddressSuggestionSelect(suggestion)}
+                  className="w-full text-left px-3 py-2.5 hover:bg-muted transition-colors border-b last:border-b-0 border-border"
+                >
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {suggestion.line1}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {suggestion.label}
+                  </p>
+                </button>
+              ))}
+              <p className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border">
+                Suggestions powered by OpenStreetMap
+              </p>
+            </div>
+          )}
+        </div>
         {errors.address1 && (
           <p className="mt-1 text-sm text-red-500">{errors.address1}</p>
+        )}
+        {!isAutocompleteLoading && hasAutocompleteError && address.address1.trim().length >= 3 && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Address suggestions are temporarily unavailable. You can still enter your address manually.
+          </p>
         )}
       </div>
 
@@ -222,6 +421,7 @@ export default function ShippingAddressForm() {
           id="address2"
           value={address.address2}
           onChange={(e) => handleChange('address2', e.target.value)}
+          autoComplete="address-line2"
           className={inputClassName('address2')}
         />
       </div>
@@ -237,6 +437,7 @@ export default function ShippingAddressForm() {
             id="city"
             value={address.city}
             onChange={(e) => handleChange('city', e.target.value)}
+            autoComplete="address-level2"
             className={inputClassName('city')}
           />
           {errors.city && (
@@ -252,6 +453,7 @@ export default function ShippingAddressForm() {
               id="state"
               value={address.state}
               onChange={(e) => handleChange('state', e.target.value)}
+              autoComplete="address-level1"
               className={inputClassName('state')}
             >
               <option value="">Select state</option>
@@ -268,6 +470,7 @@ export default function ShippingAddressForm() {
               value={address.state}
               onChange={(e) => handleChange('state', e.target.value)}
               placeholder="Province / Region"
+              autoComplete="address-level1"
               className={inputClassName('state')}
             />
           )}
@@ -285,6 +488,7 @@ export default function ShippingAddressForm() {
             value={address.zipCode}
             onChange={(e) => handleChange('zipCode', e.target.value)}
             placeholder={isUSAddress ? '12345' : 'Postal code'}
+            autoComplete="postal-code"
             className={inputClassName('zipCode')}
           />
           {errors.zipCode && (
@@ -301,7 +505,13 @@ export default function ShippingAddressForm() {
         <select
           id="country"
           value={address.country}
-          onChange={(e) => handleChange('country', e.target.value)}
+          onChange={(e) => {
+            handleChange('country', e.target.value);
+            setSuggestions([]);
+            setShowSuggestions(false);
+            setHasAutocompleteError(false);
+          }}
+          autoComplete="country"
           className={inputClassName('country')}
         >
           {SHIPPING_COUNTRY_OPTIONS.map((country) => (
