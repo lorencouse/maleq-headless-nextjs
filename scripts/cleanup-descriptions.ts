@@ -360,6 +360,43 @@ function escHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
+function normalizeHeading(header: string): string {
+  const normalized = header.trim().replace(/\s+/g, ' ');
+  const key = normalized.toLowerCase();
+
+  const map: Record<string, string> = {
+    'key feature': 'Key Features',
+    'key features': 'Key Features',
+    'product dimensions': 'Product Dimensions',
+    'package dimensions': 'Package Dimensions',
+    'panel details': 'Panel Details',
+    'size specs': 'Size Specs',
+    'product specifications': 'Product Specifications',
+    'materials': 'Materials',
+    'material': 'Material',
+    'measurements': 'Measurements',
+    'specifications': 'Specifications',
+    'description': 'Description',
+    'note': 'Note',
+  };
+
+  if (map[key]) return map[key];
+
+  const smallWords = new Set(['and', 'or', 'of', 'in', 'to', 'for', 'with', 'without', 'at', 'by', 'from', 'on']);
+  return normalized
+    .split(/\s+/)
+    .map((word, idx) => {
+      const clean = word.trim();
+      if (!clean) return clean;
+      const upper = clean.toUpperCase();
+      if (ACRONYMS.has(upper)) return upper;
+      const lower = clean.toLowerCase();
+      if (idx > 0 && smallWords.has(lower)) return lower;
+      return lower[0].toUpperCase() + lower.slice(1);
+    })
+    .join(' ');
+}
+
 function sectionToHtml(section: Section): string {
   const { header, content } = section;
 
@@ -367,7 +404,8 @@ function sectionToHtml(section: Section): string {
     return buildParagraphs(content);
   }
 
-  const isSpecSection = SPEC_SECTION_HEADERS.has(header.toLowerCase());
+  const heading = normalizeHeading(header);
+  const isSpecSection = SPEC_SECTION_HEADERS.has(heading.toLowerCase());
 
   // Check for spec-like content
   if (isSpecContent(content, isSpecSection)) {
@@ -386,7 +424,7 @@ function sectionToHtml(section: Section): string {
         })
         .filter(s => s.length > 0);
 
-      let html = buildSpecTable(header, specs);
+      let html = buildSpecTable(heading, specs);
       if (remaining.length > 0) {
         html += '\n' + buildParagraphs(remaining.join('. ') + '.');
       }
@@ -396,11 +434,11 @@ function sectionToHtml(section: Section): string {
 
   // Check for feature list
   if (isFeatureList(content)) {
-    return buildFeatureList(header, content);
+    return buildFeatureList(heading, content);
   }
 
   // Default: heading + paragraphs
-  return `<h3>${escHtml(header)}</h3>\n${buildParagraphs(content)}`;
+  return `<h3>${escHtml(heading)}</h3>\n${buildParagraphs(content)}`;
 }
 
 // ─── Reformat existing HTML (fix spec blobs inside <p> tags) ─────────────────
@@ -415,6 +453,276 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&#39;/g, "'");
 }
 
+interface ParsedSpecsResult {
+  specs: { key: string; value: string }[];
+  remaining: string;
+}
+
+const UNIT_PATTERN = '(?:inches?|inch|in\\.?|cm|mm|oz|lbs?|lb|g|kg|mL|ml|["”″])';
+const UNIT_RE = new RegExp(`\\b${UNIT_PATTERN}\\b`, 'i');
+const KEY_BEFORE_VALUE_RE = new RegExp(
+  `^([A-Za-z][A-Za-z0-9\\s()\\/-]{1,70}?)(?:\\s*:\\s*|\\s+)([0-9]+(?:\\.[0-9]+)?\\s*${UNIT_PATTERN})(?:\\b|$)`,
+  'i'
+);
+const VALUE_BEFORE_KEY_RE = new RegExp(
+  `^([0-9]+(?:\\.[0-9]+)?\\s*${UNIT_PATTERN})\\s+([A-Za-z][A-Za-z0-9\\s()\\/-]{1,70})$`,
+  'i'
+);
+const PREFIXED_MEASUREMENT_RE = new RegExp(
+  `([0-9]+(?:\\.[0-9]+)?\\s*${UNIT_PATTERN})\\s*(long|length|wide|width|diameter|height|insertable length|insertable diameter|overall length|overall diameter|base height|massager head)?`,
+  'gi'
+);
+
+function normalizeMeasurementValue(value: string): string {
+  return value
+    .replace(/[”″]/g, ' in')
+    .replace(/\bin\./gi, 'in')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\.$/, '');
+}
+
+function normalizeSpecKey(key: string): string {
+  const clean = key.trim().replace(/\s+/g, ' ');
+  if (!clean) return clean;
+  const normalized = normalizeHeading(clean).replace(/^(In|At|For)\s+/i, '');
+  return normalized || 'Measurement';
+}
+
+function dedupeSpecs(specs: { key: string; value: string }[]): { key: string; value: string }[] {
+  const seen = new Set<string>();
+  const keyCounts = new Map<string, number>();
+  const deduped: { key: string; value: string }[] = [];
+
+  for (const spec of specs) {
+    const cleanKey = normalizeSpecKey(spec.key);
+    const cleanValue = spec.value.trim().replace(/\.$/, '');
+    if (!cleanKey || !cleanValue) continue;
+
+    const signature = `${cleanKey.toLowerCase()}|${cleanValue.toLowerCase()}`;
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+
+    const count = (keyCounts.get(cleanKey.toLowerCase()) || 0) + 1;
+    keyCounts.set(cleanKey.toLowerCase(), count);
+    const finalKey = count > 1 ? `${cleanKey} ${count}` : cleanKey;
+    deduped.push({ key: finalKey, value: cleanValue });
+  }
+
+  return deduped;
+}
+
+function parseNarrativeSpecs(text: string): ParsedSpecsResult {
+  const specs: { key: string; value: string }[] = [];
+  const remaining: string[] = [];
+
+  const normalizedText = text.replace(/\s*-\s*(?=[A-Za-z][A-Za-z\s]{1,30}:)/g, ', ');
+  const pieces = normalizedText
+    .replace(/^Measurements?\s*:?\s*/i, '')
+    .split(/\s*;\s*|\s*,\s*|(?<=\.)\s+/)
+    .map((s) => s.trim().replace(/\.$/, ''))
+    .filter((s) => s.length > 0);
+
+  for (const rawPiece of pieces) {
+    const piece = rawPiece.replace(/\s+/g, ' ').trim();
+    if (!piece) continue;
+
+    const materialMatch = piece.match(/^Materials?\s*:?\s*(.+)$/i);
+    if (materialMatch) {
+      specs.push({ key: 'Material', value: materialMatch[1].trim() });
+      continue;
+    }
+
+    const colorMatch = piece.match(/^Colors?\s*:?\s*(.+)$/i);
+    if (colorMatch) {
+      specs.push({ key: 'Color', value: colorMatch[1].trim() });
+      continue;
+    }
+
+    const prefixed = piece.match(/^([A-Za-z][A-Za-z\s]{1,30})\s*:\s*(.+)$/);
+    if (prefixed) {
+      const prefix = normalizeSpecKey(prefixed[1]);
+      const body = prefixed[2].trim();
+      const matches = [...body.matchAll(PREFIXED_MEASUREMENT_RE)];
+      if (matches.length > 0) {
+        for (const m of matches) {
+          const value = normalizeMeasurementValue(m[1]);
+          const suffix = m[2] ? ` ${normalizeSpecKey(m[2])}` : '';
+          specs.push({ key: `${prefix}${suffix}`.trim(), value });
+        }
+        continue;
+      }
+      if (UNIT_RE.test(body)) {
+        specs.push({ key: prefix, value: normalizeMeasurementValue(body) });
+        continue;
+      }
+    }
+
+    const explicit = piece.match(SPEC_LINE_RE);
+    if (explicit && UNIT_RE.test(explicit[2])) {
+      specs.push({
+        key: normalizeSpecKey(explicit[1]),
+        value: normalizeMeasurementValue(explicit[2]),
+      });
+      continue;
+    }
+
+    const keyBefore = piece.match(KEY_BEFORE_VALUE_RE);
+    if (keyBefore) {
+      specs.push({
+        key: normalizeSpecKey(keyBefore[1]),
+        value: normalizeMeasurementValue(keyBefore[2]),
+      });
+      const rest = piece.slice(keyBefore[0].length).trim();
+      if (rest && !/^and\b/i.test(rest)) remaining.push(rest);
+      continue;
+    }
+
+    const valueBefore = piece.match(VALUE_BEFORE_KEY_RE);
+    if (valueBefore) {
+      specs.push({
+        key: normalizeSpecKey(valueBefore[2]),
+        value: normalizeMeasurementValue(valueBefore[1]),
+      });
+      continue;
+    }
+
+    const valueBeforeLoose = piece.match(new RegExp(
+      `^([0-9]+(?:\\.[0-9]+)?\\s*${UNIT_PATTERN})\\s+([A-Za-z][A-Za-z0-9\\s()\\/-]{1,70}?)(?=\\s+(?:Material|Materials|Color|Warning|Note)\\b|$)`,
+      'i'
+    ));
+    if (valueBeforeLoose) {
+      specs.push({
+        key: normalizeSpecKey(valueBeforeLoose[2]),
+        value: normalizeMeasurementValue(valueBeforeLoose[1]),
+      });
+      const rest = piece.slice(valueBeforeLoose[0].length).trim().replace(/^[:.\-]\s*/, '');
+      if (rest) remaining.push(rest);
+      continue;
+    }
+
+    const standaloneVolume = piece.match(/^([0-9]+(?:\.[0-9]+)?\s*(?:fluid ounces?|ounces?|oz|mL|ml))$/i);
+    if (standaloneVolume) {
+      specs.push({ key: 'Volume', value: normalizeMeasurementValue(standaloneVolume[1]) });
+      continue;
+    }
+
+    if (/^one size fits most$/i.test(piece)) {
+      specs.push({ key: 'Size', value: 'One size fits most' });
+      continue;
+    }
+
+    remaining.push(piece);
+  }
+
+  const cleanedRemaining: string[] = [];
+  for (const fragment of remaining) {
+    let working = fragment.trim();
+    if (!working) continue;
+
+    const embeddedMaterial = working.match(/\bMaterials?\s*:\s*([^.;]+?)(?=\s+Warning:|$|[.;])(.*)$/i);
+    if (embeddedMaterial) {
+      specs.push({ key: 'Material', value: embeddedMaterial[1].trim() });
+      working = embeddedMaterial[2].trim();
+    }
+
+    const embeddedColor = working.match(/\bColors?\s*:\s*([^.;]+?)(?=\s+Warning:|$|[.;])(.*)$/i);
+    if (embeddedColor) {
+      specs.push({ key: 'Color', value: embeddedColor[1].trim() });
+      working = embeddedColor[2].trim();
+    }
+
+    working = working.replace(/^[,;.\s]+/, '').trim();
+    working = working.replace(/^Approx\.?\s*/i, '').trim();
+    if (working) cleanedRemaining.push(working);
+  }
+
+  return {
+    specs: dedupeSpecs(specs),
+    remaining: cleanedRemaining.join(' ').replace(/\s{2,}/g, ' ').trim(),
+  };
+}
+
+function expandCompactSizeSeries(key: string, value: string): { rows: { key: string; value: string }[]; extras: { key: string; value: string }[] } | null {
+  const keyLc = key.toLowerCase();
+  const looksLikeSeries =
+    /smallest to largest/.test(keyLc) ||
+    (value.includes(';') && /in\s+length/i.test(value) && /in\s+diameter/i.test(value));
+
+  if (!looksLikeSeries) return null;
+
+  const extras: { key: string; value: string }[] = [];
+  let working = value.trim().replace(/\.$/, '');
+
+  const materialMatch = working.match(/\bMaterials?\s*:?\s*([^.;]+)$/i);
+  if (materialMatch && materialMatch.index !== undefined) {
+    extras.push({ key: 'Material', value: materialMatch[1].trim() });
+    working = working.slice(0, materialMatch.index).trim().replace(/[.;]\s*$/, '');
+  }
+
+  const segments = working
+    .split(/\s*;\s*/)
+    .map((s) => s.trim().replace(/\.$/, ''))
+    .filter((s) => s.length > 0);
+
+  if (segments.length < 2) return null;
+
+  const rows: { key: string; value: string }[] = [];
+  let idx = 1;
+  for (const segment of segments) {
+    const lengthMatch = segment.match(/([0-9]+(?:\.[0-9]+)?)\s*(inch(?:es)?)\s+in\s+length/i);
+    const diameterMatch = segment.match(/([0-9]+(?:\.[0-9]+)?)\s*(inch(?:es)?)\s+in\s+diameter/i);
+
+    if (lengthMatch || diameterMatch) {
+      const parts: string[] = [];
+      if (lengthMatch) parts.push(`Length ${lengthMatch[1]} ${lengthMatch[2]}`);
+      if (diameterMatch) parts.push(`Diameter ${diameterMatch[1]} ${diameterMatch[2]}`);
+      rows.push({ key: `Size ${idx}`, value: parts.join('; ') });
+    } else {
+      const parsed = parseNarrativeSpecs(segment);
+      if (parsed.specs.length >= 2) {
+        const merged = parsed.specs.map((s) => `${s.key} ${s.value}`).join('; ');
+        rows.push({ key: `Size ${idx}`, value: merged });
+      } else {
+        rows.push({ key: `Size ${idx}`, value: segment });
+      }
+    }
+    idx++;
+  }
+
+  if (rows.length < 2) return null;
+  return { rows, extras };
+}
+
+function buildFeatureListItems(content: string): string[] {
+  const embedded = splitEmbeddedFeatures(content);
+  if (embedded.length >= 2) {
+    return embedded.map((f) => {
+      if (f.key) return `<li><strong>${escHtml(f.key)}</strong> - ${escHtml(f.value)}</li>`;
+      return `<li>${escHtml(f.value)}</li>`;
+    });
+  }
+
+  const sentences = content
+    .split(/(?<=[.!?])\s+/)
+    .map((s) => s.trim().replace(/[.!?]\s*$/, ''))
+    .filter((s) => s.length > 0);
+
+  if (sentences.length >= 3) {
+    return sentences.map((s) => `<li>${escHtml(s)}</li>`);
+  }
+
+  const commaItems = content
+    .split(/\s*,\s*/)
+    .map((s) => s.trim().replace(/[.!?]\s*$/, ''))
+    .filter((s) => s.length > 0);
+  if (commaItems.length >= 3 && commaItems.every((s) => s.length <= 120)) {
+    return commaItems.map((s) => `<li>${escHtml(s)}</li>`);
+  }
+
+  return [];
+}
+
 /**
  * Split a long text value at embedded sub-feature headers.
  * Pattern: "Intro text. Sub Feature: Description! Another Feature: More text"
@@ -422,8 +730,9 @@ function decodeHtmlEntities(text: string): string {
  */
 function splitEmbeddedFeatures(text: string): { key: string | null; value: string }[] {
   // Match sub-feature headers: "Word(s):" preceded by sentence-ending punctuation or start
-  // Handles hyphens (Nickel-Free), ampersands (Adjustable & Easy), and "and" connectors
-  const re = /(?:^|(?<=[.!?]\s*))([A-Z][A-Za-z]+(?:[-][A-Z][A-Za-z]+)?(?:(?:\s+(?:&|and)\s+|\s+)[A-Z][A-Za-z]+(?:[-][A-Z][A-Za-z]+)?)*)\s*:\s*/g;
+  // Handles hyphens (Nickel-Free), ampersands (Adjustable & Easy), and "and" connectors.
+  // Also allows comma-separated feature fragments.
+  const re = /(?:^|(?<=[.!?,]\s*))([A-Z][A-Za-z]+(?:[-][A-Z][A-Za-z]+)?(?:(?:\s+(?:&|and)\s+|\s+)[A-Z][A-Za-z]+(?:[-][A-Z][A-Za-z]+)?)*)\s*:\s*/g;
   const parts: { key: string | null; value: string }[] = [];
   let lastIdx = 0;
   let m: RegExpExecArray | null;
@@ -455,7 +764,7 @@ function splitEmbeddedFeatures(text: string): { key: string | null; value: strin
   // Clean up: trim values, remove trailing punctuation
   // Truncate excessively long values to first 2-3 sentences (narrative doesn't belong in feature list)
   for (const p of parts) {
-    p.value = p.value.trim().replace(/[.!]\s*$/, '').trim();
+    p.value = p.value.trim().replace(/[.!?,]\s*$/, '').trim();
     if (p.value.length > 250 && p.key) {
       const sentences = p.value.split(/(?<=[.!?])\s+/);
       // Keep first 2 sentences max
@@ -495,7 +804,12 @@ function reformatExistingHtml(html: string): string {
   // Global text fixes (applies to all HTML content)
   let result = html
     .replace(/andamp;/g, '&amp;')   // double-encoded &amp; artifact → proper &amp;
-    .replace(/([a-z])([A-Z][a-z]+:)(?=[^<]*<)/g, '$1 $2');  // missing space before "Note:" etc. in text
+    .replace(/([a-z0-9])([A-Z][a-z]+(?:\s+[a-z]+){0,3}:)(?=[^<]*<)/g, '$1 $2');  // missing space before "Note:" etc. in text
+
+  // Normalize heading casing for consistency across product descriptions.
+  result = result.replace(/<h3>\s*([^<]+?)\s*<\/h3>/g, (_match, heading: string) => {
+    return `<h3>${escHtml(normalizeHeading(decodeHtmlEntities(heading)))}</h3>`;
+  });
 
   // Fix tables where values are too long (narrative text wrongly in spec table)
   // Optionally capture preceding <h3> heading to avoid orphaned headings
@@ -514,7 +828,7 @@ function reformatExistingHtml(html: string): string {
         let val = decodeHtmlEntities(tdContent);
         const th = decodeHtmlEntities(thContent);
         // Fix missing space before "Note:" pattern
-        val = val.replace(/([a-z])([A-Z][a-z]+:)/g, '$1 $2');
+        val = val.replace(/([a-z0-9])([A-Z][a-z]+(?:\s+[a-z]+){0,3}:)/g, '$1 $2');
         // Split concatenated sub-values (e.g., "Yes Phthalate free: Yes")
         const subSpecs = splitGenericSpecs(val);
         if (subSpecs.length >= 2) {
@@ -549,7 +863,17 @@ function reformatExistingHtml(html: string): string {
       let val = decodeHtmlEntities(r[2]);
 
       // Fix missing spaces before capitalized words (e.g., "whiteNote:" → "white Note:")
-      val = val.replace(/([a-z])([A-Z][a-z]+:)/g, '$1 $2');
+      val = val.replace(/([a-z0-9])([A-Z][a-z]+(?:\s+[a-z]+){0,3}:)/g, '$1 $2');
+
+      // Expand compact size ranges (e.g., "from smallest to largest ...; ...; ...").
+      const expandedSeries = expandCompactSizeSeries(key, val);
+      if (expandedSeries) {
+        tableRows.push(...expandedSeries.rows);
+        if (expandedSeries.extras.length > 0) {
+          tableRows.push(...expandedSeries.extras);
+        }
+        continue;
+      }
 
       // Check if value contains an embedded section header
       const sectionMatch = val.match(EMBEDDED_SECTION_RE);
@@ -583,6 +907,7 @@ function reformatExistingHtml(html: string): string {
         // Process the embedded section content
         const sectionName = sectionMatch[1];
         const sectionBody = sectionContent.replace(EMBEDDED_SECTION_RE, '').trim();
+        const normalizedSectionName = normalizeHeading(sectionName);
 
         if (sectionName.toLowerCase().startsWith('key feature') || sectionName.toLowerCase() === 'features') {
           // Convert to feature list
@@ -592,9 +917,9 @@ function reformatExistingHtml(html: string): string {
               if (f.key) return `<li><strong>${escHtml(f.key)}</strong> - ${escHtml(f.value)}</li>`;
               return `<li>${escHtml(f.value)}</li>`;
             });
-            extraSections.push(`<h3>${escHtml(sectionName)}</h3>\n<ul>\n${items.join('\n')}\n</ul>`);
+            extraSections.push(`<h3>${escHtml(normalizedSectionName)}</h3>\n<ul>\n${items.join('\n')}\n</ul>`);
           } else {
-            extraSections.push(`<h3>${escHtml(sectionName)}</h3>\n<p>${escHtml(sectionBody)}</p>`);
+            extraSections.push(`<h3>${escHtml(normalizedSectionName)}</h3>\n<p>${escHtml(sectionBody)}</p>`);
           }
         } else if (sectionName.toLowerCase() === 'measurements') {
           const { measurements } = extractEmbeddedMeasurements(sectionName + ': ' + sectionBody);
@@ -606,7 +931,7 @@ function reformatExistingHtml(html: string): string {
         } else if (sectionName.toLowerCase() === 'note') {
           extraSections.push(`<p><strong>Note:</strong> ${escHtml(sectionBody)}</p>`);
         } else {
-          extraSections.push(`<h3>${escHtml(sectionName)}</h3>\n<p>${escHtml(sectionBody)}</p>`);
+          extraSections.push(`<h3>${escHtml(normalizedSectionName)}</h3>\n<p>${escHtml(sectionBody)}</p>`);
         }
         continue;
       }
@@ -672,19 +997,39 @@ function reformatExistingHtml(html: string): string {
   // Convert "Feature Name: description text! Another Feature: more text" into <ul>
   result = result.replace(/(<h3>Key [Ff]eatures<\/h3>\s*)<p>([^<]+)<\/p>/g, (_match, heading: string, content: string) => {
     const decoded = decodeHtmlEntities(content);
-    const features = splitEmbeddedFeatures(decoded);
-
-    if (features.length >= 2) {
-      const items = features.map(f => {
-        if (f.key) {
-          return `<li><strong>${escHtml(f.key)}</strong> - ${escHtml(f.value)}</li>`;
-        }
-        return `<li>${escHtml(f.value)}</li>`;
-      });
+    const items = buildFeatureListItems(decoded);
+    if (items.length > 0) {
       return `${heading}<ul>\n${items.join('\n')}\n</ul>`;
     }
 
     return _match; // Couldn't split, keep as-is
+  });
+
+  // Convert inline feature paragraphs ("Key features ...") into explicit heading + list.
+  result = result.replace(/<p>\s*(Key [Ff]eatures?|Features?)\s*:?\s*([^<]+)<\/p>/g, (_match, headingText: string, body: string) => {
+    const heading = normalizeHeading(headingText);
+    const decoded = decodeHtmlEntities(body);
+    const items = buildFeatureListItems(decoded);
+    if (items.length > 0) {
+      return `<h3>${escHtml(heading)}</h3>\n<ul>\n${items.join('\n')}\n</ul>`;
+    }
+    return `<h3>${escHtml(heading)}</h3>\n<p>${escHtml(decoded.trim())}</p>`;
+  });
+
+  // Convert measurement/dimension narratives under a heading into spec tables.
+  result = result.replace(/(<h3>(Measurements|Dimensions|Product Dimensions)<\/h3>\s*)<p>([^<]+)<\/p>/g, (_match, headingBlock: string, _headingName: string, content: string) => {
+    const decoded = decodeHtmlEntities(content);
+    const parsed = parseNarrativeSpecs(decoded);
+    if (parsed.specs.length === 0) return _match;
+
+    const rows = parsed.specs
+      .map((s) => `<tr><th>${escHtml(s.key)}</th><td>${escHtml(s.value)}</td></tr>`)
+      .join('\n');
+    let out = `${headingBlock}<table><tbody>\n${rows}\n</tbody></table>`;
+    if (parsed.remaining) {
+      out += `\n<p>${escHtml(parsed.remaining)}</p>`;
+    }
+    return out;
   });
 
   // Find <p> blocks that contain concatenated spec-like content

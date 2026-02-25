@@ -1,18 +1,14 @@
 /**
  * Returns the WordPress admin base URL based on which database is active.
- * Checks if the Local by Flywheel socket exists to determine local vs production.
+ * Checks if a Local by Flywheel socket exists to determine local vs production.
  * Lightweight — no mysql2 dependency, safe to import from any server component.
  */
+import { detectLocalMysqlSocket } from './local-runtime';
+
 export function getWpBaseUrl(): string {
-  const socket = process.env.MYSQL_LOCAL_SOCKET;
+  const socket = detectLocalMysqlSocket(process.env.MYSQL_LOCAL_SOCKET);
   if (socket) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      require('fs').accessSync(socket);
-      return 'http://maleq-local.local';
-    } catch {
-      // Socket configured but not running
-    }
+    return process.env.WP_LOCAL_URL || 'http://maleq-local.local';
   }
   return 'https://wp.maleq.com';
 }

@@ -202,7 +202,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <div className="mt-16 border-t border-border pt-12">
           <h2 className="text-2xl font-bold text-foreground mb-6">Product Description</h2>
           <div
-            className="prose prose-lg max-w-none text-foreground/80 leading-relaxed dark:prose-invert"
+            className="product-description-content max-w-none"
             dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }}
           />
         </div>

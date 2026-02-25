@@ -17,6 +17,21 @@ echo "║   Clone Database from Remote Server   ║"
 echo "╚════════════════════════════════════════╝"
 echo ""
 
+detect_local_socket() {
+  local run_root="$HOME/Library/Application Support/Local/run"
+  if [ ! -d "$run_root" ]; then
+    return
+  fi
+
+  find "$run_root" -mindepth 3 -maxdepth 3 -type s -path "*/mysql/mysqld.sock" -print 2>/dev/null \
+    | while IFS= read -r sock; do
+        printf '%s\t%s\n' "$(stat -f '%m' "$sock" 2>/dev/null || echo 0)" "$sock"
+      done \
+    | sort -nr \
+    | head -n 1 \
+    | cut -f2-
+}
+
 # Configuration - Production server (wp.maleq.com)
 REMOTE_HOST="159.69.220.162"
 REMOTE_USER="root"
@@ -25,7 +40,7 @@ REMOTE_DB_USER="maleq-wp"
 REMOTE_DB_PASS="S9meeDoehU8VPiHd1ByJ"
 
 # Local by Flywheel database
-LOCAL_SOCKET="${MYSQL_SOCKET:-$HOME/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock}"
+LOCAL_SOCKET="${MYSQL_SOCKET:-$(detect_local_socket)}"
 LOCAL_DB_NAME="local"
 LOCAL_DB_USER="root"
 LOCAL_DB_PASS="root"

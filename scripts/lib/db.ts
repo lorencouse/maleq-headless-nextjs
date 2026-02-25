@@ -15,6 +15,7 @@
  * Requires SSH tunnel for remote: ssh -L 3307:127.0.0.1:3306 root@159.69.220.162
  */
 import mysql from 'mysql2/promise';
+import { detectLocalMysqlSocket } from '../../lib/db/local-runtime';
 
 const isLocal = process.argv.includes('--local') || process.env.MYSQL_LOCAL === '1';
 // Legacy flag support
@@ -30,9 +31,13 @@ function getDbFlag(): string | undefined {
 }
 
 const dbOverride = getDbFlag();
+const explicitLocalSocket = process.env.MYSQL_SOCKET || process.env.DEV_MYSQL_SOCKET;
+const detectedLocalSocket =
+  detectLocalMysqlSocket(explicitLocalSocket || undefined) ||
+  '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock';
 
 const localConfig = {
-  socketPath: process.env.MYSQL_SOCKET || process.env.DEV_MYSQL_SOCKET || '/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock',
+  socketPath: detectedLocalSocket,
   database: dbOverride || process.env.MYSQL_DB || 'local',
   user: process.env.MYSQL_USER || 'root',
   password: process.env.MYSQL_PASS || 'root',

@@ -6,14 +6,37 @@
 #   bash scripts/db-toggle.sh tunnel    Start SSH tunnel for production access
 #   bash scripts/db-toggle.sh kill      Kill the SSH tunnel
 
-SOCKET_PATH="/Users/lorencouse/Library/Application Support/Local/run/MgtM6VLEi/mysql/mysqld.sock"
+detect_socket_path() {
+  if [ -n "${MYSQL_LOCAL_SOCKET:-}" ] && [ -e "${MYSQL_LOCAL_SOCKET}" ]; then
+    echo "${MYSQL_LOCAL_SOCKET}"
+    return
+  fi
+
+  local run_root="$HOME/Library/Application Support/Local/run"
+  if [ ! -d "$run_root" ]; then
+    return
+  fi
+
+  # Pick the most recently updated Local run socket.
+  find "$run_root" -mindepth 3 -maxdepth 3 -type s -path "*/mysql/mysqld.sock" -print 2>/dev/null \
+    | while IFS= read -r sock; do
+        printf '%s\t%s\n' "$(stat -f '%m' "$sock" 2>/dev/null || echo 0)" "$sock"
+      done \
+    | sort -nr \
+    | head -n 1 \
+    | cut -f2-
+}
 
 show_status() {
+  local socket_path
+  socket_path="$(detect_socket_path)"
+
   echo "=== MySQL Connection Status ==="
   echo ""
 
-  if [ -e "$SOCKET_PATH" ]; then
+  if [ -n "$socket_path" ] && [ -e "$socket_path" ]; then
     echo "  Local WP (socket):   AVAILABLE ✓"
+    echo "  Local socket:        $socket_path"
     echo "  → Will use: LOCAL database (Local by Flywheel)"
   else
     echo "  Local WP (socket):   NOT RUNNING"
@@ -23,12 +46,12 @@ show_status() {
 
   if lsof -i :3307 -sTCP:LISTEN >/dev/null 2>&1; then
     echo "  SSH tunnel (3307):   RUNNING ✓"
-    if [ ! -e "$SOCKET_PATH" ]; then
+    if [ -z "$socket_path" ] || [ ! -e "$socket_path" ]; then
       echo "  → Will use: PRODUCTION database (wp.maleq.com)"
     fi
   else
     echo "  SSH tunnel (3307):   NOT RUNNING"
-    if [ ! -e "$SOCKET_PATH" ]; then
+    if [ -z "$socket_path" ] || [ ! -e "$socket_path" ]; then
       echo "  → WARNING: No database available! Start Local WP or run: bash scripts/db-toggle.sh tunnel"
     fi
   fi

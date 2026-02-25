@@ -16,6 +16,7 @@ import mysql from 'mysql2/promise';
 import type { Pool } from 'mysql2/promise';
 import type { SslOptions } from 'mysql2';
 import { existsSync } from 'fs';
+import { detectLocalMysqlSocket } from './local-runtime';
 
 let pool: Pool | null = null;
 let activeMode: 'local' | 'prod' | 'legacy' | null = null;
@@ -71,12 +72,13 @@ function getRemoteSslConfig(prefix: 'MYSQL_PROD' | 'MYSQL'): SslOptions | undefi
 }
 
 function getLocalConfig(): DBConfig | null {
-  const socket = process.env.MYSQL_LOCAL_SOCKET;
-  const db = process.env.MYSQL_LOCAL_DB;
-  const user = process.env.MYSQL_LOCAL_USER;
-  const pass = process.env.MYSQL_LOCAL_PASS;
-  if (!socket || !db || !user || !pass) return null;
-  if (!existsSync(socket)) return null;
+  const explicitSocket = process.env.MYSQL_LOCAL_SOCKET;
+  const socket = detectLocalMysqlSocket(explicitSocket || undefined);
+  if (!socket || !existsSync(socket)) return null;
+
+  const db = process.env.MYSQL_LOCAL_DB || 'local';
+  const user = process.env.MYSQL_LOCAL_USER || 'root';
+  const pass = process.env.MYSQL_LOCAL_PASS || 'root';
   return { mode: 'local', socketPath: socket, database: db, user, password: pass };
 }
 

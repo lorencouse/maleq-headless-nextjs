@@ -8,11 +8,11 @@
  * calls are instant. Use `ensureWpEnv()` early in your app to warm the cache.
  *
  * Environment variables:
- *   WP_LOCAL_URL, WP_LOCAL_GRAPHQL  — local WordPress (Local by Flywheel)
- *   WP_PROD_URL, WP_PROD_GRAPHQL   — production WordPress
- *   MYSQL_LOCAL_SOCKET              — socket path used as quick pre-check
+ *   WP_LOCAL_URL, WP_LOCAL_GRAPHQL   — local WordPress (optional; defaults used if omitted)
+ *   WP_PROD_URL, WP_PROD_GRAPHQL     — production WordPress
+ *   MYSQL_LOCAL_SOCKET               — local socket override (optional; auto-detected if omitted)
  */
-import { existsSync } from 'fs';
+import { detectLocalMysqlSocket } from '@/lib/db/local-runtime';
 
 let detected: 'local' | 'prod' | null = null;
 let detecting: Promise<'local' | 'prod'> | null = null;
@@ -43,24 +43,26 @@ function getProdGraphqlUrl(): string {
   );
 }
 
-function hasLocalConfig(): boolean {
-  return !!(process.env.WP_LOCAL_URL && process.env.WP_LOCAL_GRAPHQL);
+function getLocalWordPressBaseUrl(): string {
+  return process.env.WP_LOCAL_URL || 'http://maleq-local.local';
 }
 
-function socketExists(): boolean {
-  const socket = process.env.MYSQL_LOCAL_SOCKET;
-  if (!socket) return false;
-  try { return existsSync(socket); } catch { return false; }
+function getLocalGraphqlUrl(): string {
+  return process.env.WP_LOCAL_GRAPHQL || `${getLocalWordPressBaseUrl().replace(/\/$/, '')}/graphql`;
+}
+
+function hasLocalConfig(): boolean {
+  return !!detectLocalMysqlSocket(process.env.MYSQL_LOCAL_SOCKET);
 }
 
 /** Probe the local WordPress to see if it's actually responding */
 async function probeLocal(): Promise<boolean> {
-  if (!hasLocalConfig() || !socketExists()) return false;
+  if (!hasLocalConfig()) return false;
 
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2000);
-    const res = await fetch(process.env.WP_LOCAL_URL!, {
+    const res = await fetch(getLocalWordPressBaseUrl(), {
       method: 'HEAD',
       signal: controller.signal,
     });
@@ -77,7 +79,7 @@ async function detectMode(): Promise<'local' | 'prod'> {
 
   if (await probeLocal()) {
     detected = 'local';
-    console.log(`🟢 Local WordPress (${process.env.WP_LOCAL_URL})`);
+    console.log(`🟢 Local WordPress (${getLocalWordPressBaseUrl()})`);
   } else {
     detected = 'prod';
     console.log(`🟠 Production WordPress (${getProdWordPressBaseUrl()})`);
@@ -94,7 +96,7 @@ function getModeSyncFallback(): 'local' | 'prod' {
     detecting = detectMode();
   }
   // Quick sync heuristic: if socket doesn't exist, definitely prod
-  if (!hasLocalConfig() || !socketExists()) {
+  if (!hasLocalConfig()) {
     detected = 'prod';
     return 'prod';
   }
@@ -115,7 +117,7 @@ export async function ensureWpEnv(): Promise<void> {
 export function getWordPressUrl(): string {
   const mode = getModeSyncFallback();
   return mode === 'local'
-    ? process.env.WP_LOCAL_URL!
+    ? getLocalWordPressBaseUrl()
     : getProdWordPressBaseUrl();
 }
 
@@ -123,7 +125,7 @@ export function getWordPressUrl(): string {
 export function getGraphqlUrl(): string {
   const mode = getModeSyncFallback();
   return mode === 'local'
-    ? process.env.WP_LOCAL_GRAPHQL!
+    ? getLocalGraphqlUrl()
     : getProdGraphqlUrl();
 }
 
