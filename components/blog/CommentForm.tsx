@@ -12,6 +12,8 @@ export default function CommentForm({
   postId,
   onCommentSubmitted,
 }: CommentFormProps) {
+  const [formLoadedAt] = useState(() => Date.now());
+  const [honeypot, setHoneypot] = useState('');
   const [formData, setFormData] = useState({
     author: '',
     email: '',
@@ -46,6 +48,8 @@ export default function CommentForm({
         body: JSON.stringify({
           postId,
           ...formData,
+          website: honeypot,
+          _t: formLoadedAt,
         }),
       });
 
@@ -107,6 +111,19 @@ export default function CommentForm({
 
   return (
     <form onSubmit={handleSubmit} className='space-y-4'>
+      {/* Honeypot - hidden from humans, bots will fill it */}
+      <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <label htmlFor="comment-website">Website</label>
+        <input
+          type="text"
+          id="comment-website"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
       <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
         {/* Name */}
         <div>

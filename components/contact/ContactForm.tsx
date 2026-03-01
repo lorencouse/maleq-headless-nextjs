@@ -11,6 +11,8 @@ export default function ContactForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const [formLoadedAt] = useState(() => Date.now());
+
   const {
     register,
     handleSubmit,
@@ -30,6 +32,9 @@ export default function ContactForm() {
     },
   });
 
+  // Honeypot field - bots will fill this, humans won't see it
+  const [honeypot, setHoneypot] = useState('');
+
   const selectedSubject = watch('subject');
 
   const onSubmit = async (data: ContactFormData) => {
@@ -38,7 +43,7 @@ export default function ContactForm() {
     try {
       const { queued, data: result } = await submitWithSync<{ success: boolean; message: string }>(
         '/api/contact',
-        data,
+        { ...data, website: honeypot, _t: formLoadedAt },
       );
 
       if (queued) {
@@ -83,6 +88,19 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {/* Honeypot - hidden from humans, bots will fill it */}
+      <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+        <label htmlFor="website">Website</label>
+        <input
+          type="text"
+          id="website"
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </div>
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">

@@ -11,6 +11,7 @@ import {
   hasErrors,
 } from '@/lib/api/validation';
 import { checkRateLimit } from '@/lib/api/rate-limit';
+import { checkSpam } from '@/lib/api/spam-check';
 
 interface ContactFormData {
   name: string;
@@ -54,8 +55,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: ContactFormData = await request.json();
+    const body = await request.json();
     const { name, email, subject, message } = body;
+
+    const spamResponse = checkSpam(body, "Thank you for your message! We'll get back to you soon.");
+    if (spamResponse) return spamResponse;
 
     // Validate required fields
     const errors: Record<string, string> = {};

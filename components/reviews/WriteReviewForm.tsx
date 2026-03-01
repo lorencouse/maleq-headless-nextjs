@@ -19,6 +19,8 @@ export default function WriteReviewForm({
   onCancel,
 }: WriteReviewFormProps) {
   const { user, isAuthenticated } = useAuthStore();
+  const [formLoadedAt] = useState(() => Date.now());
+  const [honeypot, setHoneypot] = useState('');
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [name, setName] = useState(user?.displayName || '');
@@ -63,6 +65,8 @@ export default function WriteReviewForm({
           reviewerEmail: email.trim(),
           review: review.trim(),
           rating,
+          website: honeypot,
+          _t: formLoadedAt,
         },
       );
 
@@ -126,6 +130,19 @@ export default function WriteReviewForm({
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Honeypot - hidden from humans, bots will fill it */}
+        <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
+          <label htmlFor="review-website">Website</label>
+          <input
+            type="text"
+            id="review-website"
+            name="website"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
+        </div>
         {/* Rating */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">

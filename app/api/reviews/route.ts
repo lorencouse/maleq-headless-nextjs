@@ -13,6 +13,7 @@ import {
   parseIntSafe,
   hasErrors,
 } from '@/lib/api/validation';
+import { checkSpam } from '@/lib/api/spam-check';
 
 // GET /api/reviews?productId=123&page=1&per_page=10
 export async function GET(request: NextRequest) {
@@ -47,6 +48,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { productId, reviewer, reviewerEmail, review, rating } = body;
+
+    const spamResponse = checkSpam(body, 'Review submitted successfully');
+    if (spamResponse) return spamResponse;
 
     // Validate required fields
     const errors = validateRequired(body, ['productId', 'reviewer', 'reviewerEmail', 'review', 'rating']);

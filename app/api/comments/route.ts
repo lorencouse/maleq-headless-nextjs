@@ -11,6 +11,7 @@ import {
   validateLength,
   hasErrors,
 } from '@/lib/api/validation';
+import { checkSpam } from '@/lib/api/spam-check';
 
 interface CommentFormData {
   postId: number;
@@ -22,8 +23,11 @@ interface CommentFormData {
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CommentFormData = await request.json();
-    const { postId, author, email, content, parentId } = body;
+    const body = await request.json();
+    const { postId, author, email, content, parentId } = body as CommentFormData & { website?: string; _t?: number };
+
+    const spamResponse = checkSpam(body, 'Your comment has been submitted and is awaiting moderation.');
+    if (spamResponse) return spamResponse;
 
     // Validate required fields
     const errors: Record<string, string> = {};
