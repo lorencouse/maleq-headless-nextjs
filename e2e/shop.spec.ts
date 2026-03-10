@@ -59,7 +59,7 @@ test.describe('Product Page', () => {
     // Product page should render a primary heading and purchase CTA.
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 
-    const addToCartButton = page.getByRole('button', { name: /add to cart|view options/i }).first();
+    const addToCartButton = page.getByRole('button', { name: /add to cart|select options/i }).first();
     await expect(addToCartButton).toBeVisible();
   });
 });
