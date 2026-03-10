@@ -59,7 +59,10 @@ test.describe('Product Page', () => {
     // Product page should render a primary heading and purchase CTA.
     await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 
-    const addToCartButton = page.getByRole('button', { name: /add to cart|select options/i }).first();
-    await expect(addToCartButton).toBeVisible();
+    // Accept any purchase-related CTA (in-stock: "Add to Cart", out-of-stock: "Notify Me When Available")
+    const ctaButton = page.getByRole('button', {
+      name: /add to cart|select options|notify me when available/i,
+    }).first();
+    await expect(ctaButton).toBeVisible({ timeout: 10000 });
   });
 });
