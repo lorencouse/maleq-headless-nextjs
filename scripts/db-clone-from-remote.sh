@@ -72,7 +72,7 @@ echo "  Saving to: ${BACKUP_FILE}"
 echo ""
 
 ssh "${REMOTE_USER}@${REMOTE_HOST}" \
-  "mysqldump -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' -h 127.0.0.1 ${REMOTE_DB_NAME} \
+  "mysqldump --ssl-mode=REQUIRED --no-tablespaces -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' -h 127.0.0.1 ${REMOTE_DB_NAME} \
   --single-transaction \
   --quick \
   --lock-tables=false 2>/dev/null" > "${BACKUP_FILE}"

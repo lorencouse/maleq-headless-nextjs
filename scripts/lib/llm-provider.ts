@@ -16,9 +16,21 @@ export interface LLMGenerateOptions {
   onToken?: (token: string) => void;
 }
 
+/** Accumulated token usage for cost tracking */
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
+  totalCalls: number;
+}
+
 export interface LLMProvider {
   generate(prompt: string, options?: LLMGenerateOptions): Promise<string>;
   healthCheck(): Promise<void>;
+  /** Get accumulated token usage (if tracked by this provider) */
+  getUsage?(): TokenUsage;
+  /** Reset accumulated usage counters */
+  resetUsage?(): void;
 }
 
 export interface OllamaConfig {

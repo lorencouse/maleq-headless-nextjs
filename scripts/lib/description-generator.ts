@@ -1,9 +1,14 @@
 /**
- * Description Generator V2
+ * Description Generator V3
  *
- * Two-path architecture:
- *  - Reformat: existing description >= 300 chars → restructure, don't rewrite
- *  - Generate: short/no description → fresh content with varied templates
+ * Three-path architecture based on word count:
+ *  - Enhance: >= 400 words → light touch, preserve base text, fix & improve
+ *  - Reformat: 100–399 words → restructure with creative license, build upon existing
+ *  - Generate: < 100 words → fresh content with varied templates
+ *
+ * Variation handling:
+ *  - Parent descriptions are informed by all child variation descriptions
+ *  - Variation descriptions focus on what makes each variant unique
  *
  * Category-aware profiles × rotating structure variants = diverse output.
  */
@@ -20,12 +25,12 @@ export interface GeneratedDescription {
   metaDescription: string;
   status: 'success' | 'fallback' | 'error';
   error?: string;
-  path: 'reformat' | 'generate' | 'variation' | 'skipped';
+  path: 'enhance' | 'reformat' | 'generate' | 'variation' | 'skipped';
   categoryProfile?: string;
   structureVariant?: number;
 }
 
-type EnrichmentPath = 'reformat' | 'generate';
+type EnrichmentPath = 'enhance' | 'reformat' | 'generate';
 
 interface CategoryProfile {
   id: string;
@@ -50,6 +55,7 @@ Rules:
 - Output ONLY valid HTML. No markdown, no code fences, no preamble, no sign-offs.
 - Use <h2> and <h3> tags for headings. Never use <h1>.
 - Use <p> tags for paragraphs. Use <ul><li> for feature lists only when the prompt calls for them.
+- Preserve existing <table>, <thead>, <tbody>, <tr>, <td>, <th>, and <ol> structures exactly. Do not remove, simplify, or convert tables to lists/prose or ordered lists to unordered lists.
 - Vary your sentence length. Mix short punchy sentences with longer descriptive ones.
 - Do not invent features or specifications not provided in the input data.
 - Do not include price information.
@@ -200,16 +206,18 @@ const STRUCTURE_VARIANTS: StructureVariant[] = [
 
 // ─── Classification ───
 
-const REFORMAT_CHAR_THRESHOLD = 300;
-
-/** Strip HTML tags and return plain-text length */
-function plainTextLength(html: string): number {
-  return html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().length;
+/** Count words in HTML content (strips tags first) */
+function wordCount(html: string): number {
+  const text = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!text) return 0;
+  return text.split(/\s+/).length;
 }
 
 export function classifyProduct(product: MergedProduct): EnrichmentPath {
-  const descLength = plainTextLength(product.mergedDescription || '');
-  return descLength >= REFORMAT_CHAR_THRESHOLD ? 'reformat' : 'generate';
+  const words = wordCount(product.mergedDescription || '');
+  if (words >= 400) return 'enhance';
+  if (words >= 100) return 'reformat';
+  return 'generate';
 }
 
 export function matchCategoryProfile(product: MergedProduct): CategoryProfile {
@@ -236,6 +244,17 @@ function buildProductContext(product: MergedProduct): string {
   if (product.brand) parts.push(`Brand: ${product.brand}`);
   if (product.categories.length) parts.push(`Categories: ${product.categories.join(', ')}`);
   if (product.material) parts.push(`Material: ${product.material}`);
+  if (product.productType) parts.push(`Product Type: ${product.productType}`);
+
+  // Supplement with feed categories if DB categories are sparse
+  if (product.categories.length <= 1) {
+    if (product.xmlCategories.length > 0) {
+      parts.push(`Feed Categories: ${product.xmlCategories.join(', ')}`);
+    }
+    if (product.stcCategories.length > 0) {
+      parts.push(`STC Categories: ${product.stcCategories.join(', ')}`);
+    }
+  }
 
   if (Object.keys(product.mergedSpecifications).length > 0) {
     const specLines = Object.entries(product.mergedSpecifications)
@@ -251,33 +270,127 @@ function buildProductContext(product: MergedProduct): string {
   return parts.join('\n\n');
 }
 
-function buildReformatPrompt(product: MergedProduct, profile: CategoryProfile): string {
+/** Build context for variations to include in parent prompt */
+function buildVariationsContext(variations: MergedProduct[]): string {
+  if (variations.length === 0) return '';
+
+  const lines: string[] = ['Available Variations:'];
+  // Cap at 20 variations to avoid token explosion
+  const subset = variations.slice(0, 20);
+  for (const v of subset) {
+    let line = `- ${v.title}`;
+    if (v.mergedDescription) {
+      const snippet = v.mergedDescription.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 200);
+      line += `: ${snippet}`;
+    }
+    lines.push(line);
+  }
+  if (variations.length > 20) {
+    lines.push(`  ... and ${variations.length - 20} more variations`);
+  }
+  return lines.join('\n');
+}
+
+/** Truncate HTML without cutting mid-tag. Finds last closing tag before limit. */
+function safeTruncate(html: string, maxChars: number): string {
+  if (html.length <= maxChars) return html;
+  // Find the last '>' before maxChars to avoid cutting mid-tag
+  const cutpoint = html.lastIndexOf('>', maxChars);
+  if (cutpoint > 0) return html.substring(0, cutpoint + 1);
+  return html.substring(0, maxChars);
+}
+
+const PRESERVE_STRUCTURES_INSTRUCTION =
+  '- Preserve any existing <table>, <thead>, <tbody>, <tr>, <td>, <th>, and <ol> tags exactly as they are. Do not convert tables to lists or prose. Do not convert ordered lists to unordered lists.';
+
+function buildEnhancePrompt(
+  product: MergedProduct,
+  profile: CategoryProfile,
+  variations?: MergedProduct[]
+): string {
   const context = buildProductContext(product);
-  const existingDesc = (product.mergedDescription || '').substring(0, 2500);
+  const existingDesc = safeTruncate(product.mergedDescription || '', 6000);
+  const variationsCtx = variations ? buildVariationsContext(variations) : '';
 
-  return `${context}
+  let prompt = `${context}`;
+  if (variationsCtx) {
+    prompt += `\n\n${variationsCtx}`;
+  }
 
-Existing description to reformat:
+  prompt += `
+
+Existing description to enhance:
 ---
 ${existingDesc}
 ---
 
-Reformat this existing description into structured HTML. Do NOT rewrite it from scratch — preserve the original wording and information.
+Enhance this existing description. Keep the base text and its information mostly intact — do NOT rewrite from scratch.
 
 Your tasks:
-- Break the text into logical paragraphs with <p> tags
-- Add 2–3 <h2>/<h3> headings to organize sections (suggestions: ${profile.headingSuggestions.slice(0, 3).join(', ')})
 - Fix grammar, spelling, and punctuation errors
+- Add or improve <h2>/<h3> headings if the structure is weak (suggestions: ${profile.headingSuggestions.slice(0, 3).join(', ')})
+- Fill any information gaps using the product data above (specs, features, materials)
 - Remove duplicate sentences or repeated information
-- If specifications are mentioned inline, consider grouping them under a short heading
-- Keep the original tone and content. Do not add information that isn't in the source text.
-- ${profile.toneGuidance}
+- Tighten weak or generic phrasing with more specific copy
+${PRESERVE_STRUCTURES_INSTRUCTION}
+- ${profile.toneGuidance}`;
 
-Output ONLY the reformatted HTML. No markdown. No code fences.`;
+  if (variationsCtx) {
+    prompt += '\n- The product comes in multiple variations. Mention the range of options available (sizes, colors, styles) where natural.';
+  }
+
+  prompt += '\n\nOutput ONLY the enhanced HTML. No markdown. No code fences.';
+  return prompt;
 }
 
-function buildGeneratePrompt(product: MergedProduct, profile: CategoryProfile, variant: StructureVariant): string {
+function buildReformatPrompt(
+  product: MergedProduct,
+  profile: CategoryProfile,
+  variations?: MergedProduct[]
+): string {
   const context = buildProductContext(product);
+  const existingDesc = safeTruncate(product.mergedDescription || '', 4000);
+  const variationsCtx = variations ? buildVariationsContext(variations) : '';
+
+  let prompt = `${context}`;
+  if (variationsCtx) {
+    prompt += `\n\n${variationsCtx}`;
+  }
+
+  prompt += `
+
+Existing description to restructure:
+---
+${existingDesc}
+---
+
+Restructure and improve this description into well-organized HTML. You have creative license to reorganize and expand, but build upon the existing text rather than starting from scratch.
+
+Your tasks:
+- Break the text into logical sections with <h2>/<h3> headings (suggestions: ${profile.headingSuggestions.slice(0, 3).join(', ')})
+- Expand thin sections using the product data above (specs, features, materials)
+- Fix grammar, spelling, and punctuation errors
+- Remove duplicate sentences or repeated information
+${PRESERVE_STRUCTURES_INSTRUCTION}
+- ${profile.toneGuidance}
+- ${profile.usageAngle}`;
+
+  if (variationsCtx) {
+    prompt += '\n- The product comes in multiple variations. Mention the range of options available where natural.';
+  }
+
+  prompt += '\n\nOutput ONLY the restructured HTML. No markdown. No code fences.';
+  return prompt;
+}
+
+function buildGeneratePrompt(
+  product: MergedProduct,
+  profile: CategoryProfile,
+  variant: StructureVariant,
+  variations?: MergedProduct[]
+): string {
+  const context = buildProductContext(product);
+  const variationsCtx = variations ? buildVariationsContext(variations) : '';
 
   // Pick headings from the profile to fill placeholders
   const headings = [...profile.headingSuggestions];
@@ -289,6 +402,10 @@ function buildGeneratePrompt(product: MergedProduct, profile: CategoryProfile, v
 
   let prompt = `${context}`;
 
+  if (variationsCtx) {
+    prompt += `\n\n${variationsCtx}`;
+  }
+
   if (product.mergedDescription) {
     const desc = product.mergedDescription.substring(0, 800);
     prompt += `\n\nExisting brief description (use as reference, rewrite and expand):\n${desc}`;
@@ -297,23 +414,39 @@ function buildGeneratePrompt(product: MergedProduct, profile: CategoryProfile, v
   prompt += `\n\n${structure}`;
   prompt += `\n\n${profile.toneGuidance}`;
   prompt += `\n${profile.usageAngle}`;
+
+  if (variationsCtx) {
+    prompt += '\nThe product comes in multiple variations. Mention the range of options available where natural.';
+  }
+
   prompt += `\n\nOutput ONLY the HTML. No markdown. No code fences.`;
 
   return prompt;
 }
 
-function buildVariationPrompt(product: MergedProduct, parentTitle: string): string {
+function buildVariationPrompt(
+  product: MergedProduct,
+  parentTitle: string,
+  parentHtml?: string
+): string {
   const parts: string[] = [];
 
-  parts.push(`This is a variation of: ${parentTitle}`);
-  parts.push(`Variation name: ${product.title}`);
+  parts.push(`Parent product: ${parentTitle}`);
+  parts.push(`Variation: ${product.title}`);
 
   if (product.mergedDescription) {
-    parts.push(`Existing description: ${product.mergedDescription.substring(0, 500)}`);
+    parts.push(`Existing variation description:\n${product.mergedDescription.substring(0, 500)}`);
   }
 
-  parts.push(`Write a brief HTML description (50-100 words) for this product variation.
-Focus on what makes this variant specific (size, color, style differences).
+  if (parentHtml) {
+    // Give the LLM the parent description so it knows what's covered
+    const parentText = parentHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 500);
+    parts.push(`Parent description summary: ${parentText}`);
+  }
+
+  parts.push(`Write a brief HTML description (40-80 words) for this product variation.
+Focus on what makes THIS variant specific — size, color, style, or feature differences from the base product.
+Do not repeat general product information already covered in the parent description.
 Use only <p> tags. No headings. No lists. Output ONLY HTML.`);
 
   return parts.join('\n\n');
@@ -346,9 +479,9 @@ function markdownToHtml(text: string): string {
   // Convert markdown bold/italic
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Convert markdown lists
+  // Convert markdown lists (but not inside <ol> blocks)
   html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-  // Wrap consecutive <li> in <ul>
+  // Wrap consecutive <li> in <ul> (only if not already inside <ol>)
   html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>\n${match}</ul>\n`);
   return html.trim();
 }
@@ -398,10 +531,23 @@ function parseSeoJson(response: string): { meta_title: string; meta_description:
 
 // ─── Public API ───
 
+/**
+ * Generate or enhance a product description.
+ *
+ * @param llm - LLM provider to use
+ * @param product - The product to generate a description for
+ * @param options.parentTitle - Parent product title (for variations)
+ * @param options.parentHtml - Parent's generated HTML (for variations, to avoid repeating info)
+ * @param options.variations - Child variations (for parent products, to inform comprehensive parent desc)
+ */
 export async function generateDescription(
   llm: LLMProvider,
   product: MergedProduct,
-  parentTitle?: string
+  options: {
+    parentTitle?: string;
+    parentHtml?: string;
+    variations?: MergedProduct[];
+  } = {}
 ): Promise<GeneratedDescription> {
   const isVariation = product.postType === 'product_variation';
 
@@ -438,7 +584,7 @@ export async function generateDescription(
     let structureVariant: number | undefined;
 
     if (isVariation) {
-      prompt = buildVariationPrompt(product, parentTitle || '');
+      prompt = buildVariationPrompt(product, options.parentTitle || '', options.parentHtml);
       path = 'variation';
     } else {
       const enrichPath = classifyProduct(product);
@@ -446,18 +592,20 @@ export async function generateDescription(
       categoryProfile = profile.id;
       path = enrichPath;
 
-      if (enrichPath === 'reformat') {
-        prompt = buildReformatPrompt(product, profile);
+      if (enrichPath === 'enhance') {
+        prompt = buildEnhancePrompt(product, profile, options.variations);
+      } else if (enrichPath === 'reformat') {
+        prompt = buildReformatPrompt(product, profile, options.variations);
       } else {
         const variantIdx = product.postId % STRUCTURE_VARIANTS.length;
         const variant = STRUCTURE_VARIANTS[variantIdx];
         structureVariant = variantIdx;
-        prompt = buildGeneratePrompt(product, profile, variant);
+        prompt = buildGeneratePrompt(product, profile, variant, options.variations);
       }
     }
 
-    // Variations need fewer tokens than parents
-    const maxTokens = isVariation ? 256 : 1024;
+    // Variations need fewer tokens than parents; enhance path needs more for longer text
+    const maxTokens = isVariation ? 256 : (path === 'enhance' ? 2048 : 1024);
 
     let html = await llm.generate(prompt, { system: SYSTEM_PROMPT_V2, temperature: 0.7, maxTokens });
     html = markdownToHtml(html);

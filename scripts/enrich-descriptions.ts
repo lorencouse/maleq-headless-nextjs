@@ -19,10 +19,17 @@
  *   bun scripts/enrich-descriptions.ts --apply --model mistral      # Override model
  *   bun scripts/enrich-descriptions.ts --dry-run --path reformat    # Only reformat path
  *   bun scripts/enrich-descriptions.ts --dry-run --path generate    # Only generate path
+ *
+ * Provider selection:
+ *   bun scripts/enrich-descriptions.ts --dry-run --provider claude  # Claude Haiku 4.5
+ *   bun scripts/enrich-descriptions.ts --dry-run --provider openai  # GPT-5 nano
+ *   bun scripts/enrich-descriptions.ts --apply --provider openai --concurrency 5
  */
 
 import { join } from 'path';
-import { OllamaProvider } from './lib/llm-provider';
+import { OllamaProvider, type LLMProvider } from './lib/llm-provider';
+import { ClaudeProvider } from './lib/claude-provider';
+import { OpenAIProvider } from './lib/openai-provider';
 import { mergeAllSources, type MergedProduct, type MergeOptions } from './lib/product-data-merger';
 import {
   generateDescription,
@@ -42,6 +49,8 @@ import {
 
 // ─── CLI Parsing ───
 
+type ProviderType = 'ollama' | 'claude' | 'openai';
+
 interface CliOptions {
   mode: 'analyze' | 'dry-run' | 'apply';
   limit?: number;
@@ -49,10 +58,11 @@ interface CliOptions {
   batchSize: number;
   concurrency: number;
   source: MergeOptions['source'];
+  provider: ProviderType;
   model: string;
   numCtx: number;
   timeoutMs: number;
-  pathFilter?: 'reformat' | 'generate';
+  pathFilter?: 'enhance' | 'reformat' | 'generate';
 }
 
 function parseArgs(): CliOptions {
@@ -63,6 +73,7 @@ function parseArgs(): CliOptions {
     batchSize: 50,
     concurrency: 1,
     source: 'all',
+    provider: 'ollama',
     model: 'qwen3:14b',
     numCtx: 4096,
     timeoutMs: 180_000,
@@ -82,6 +93,18 @@ function parseArgs(): CliOptions {
       opts.concurrency = parseInt(args[++i], 10);
     } else if (arg === '--source' && i + 1 < args.length) {
       opts.source = args[++i] as MergeOptions['source'];
+    } else if (arg === '--provider' && i + 1 < args.length) {
+      const val = args[++i] as ProviderType;
+      if (!['ollama', 'claude', 'openai'].includes(val)) {
+        console.error(`Invalid --provider value: ${val}. Use "ollama", "claude", or "openai".`);
+        process.exit(1);
+      }
+      opts.provider = val;
+      // Set default model for the provider if user hasn't explicitly set --model
+      if (!args.includes('--model')) {
+        if (val === 'claude') opts.model = 'claude-haiku-4-5-20251001';
+        else if (val === 'openai') opts.model = 'gpt-4.1-nano';
+      }
     } else if (arg === '--model' && i + 1 < args.length) {
       opts.model = args[++i];
     } else if (arg === '--num-ctx' && i + 1 < args.length) {
@@ -90,10 +113,10 @@ function parseArgs(): CliOptions {
       opts.timeoutMs = parseInt(args[++i], 10) * 1000;
     } else if (arg === '--path' && i + 1 < args.length) {
       const val = args[++i];
-      if (val === 'reformat' || val === 'generate') {
+      if (val === 'enhance' || val === 'reformat' || val === 'generate') {
         opts.pathFilter = val;
       } else {
-        console.error(`Invalid --path value: ${val}. Use "reformat" or "generate".`);
+        console.error(`Invalid --path value: ${val}. Use "enhance", "reformat", or "generate".`);
         process.exit(1);
       }
     } else if (arg === '--help' || arg === '-h') {
@@ -114,11 +137,16 @@ Options:
   --batch-size <n>         Products per batch (default: 50)
   --concurrency <n>        Parallel LLM calls (default: 1)
   --source <type>          Filter: xml_active | xml_inactive | stc | all (default: all)
-  --model <name>           Ollama model (default: qwen3:14b)
-  --num-ctx <n>            Context window tokens (default: 4096, lower = less RAM)
+  --provider <type>        LLM provider: ollama | claude | openai (default: ollama)
+  --model <name>           Model override (default: qwen3:14b / claude-haiku-4-5-20251001 / gpt-4.1-nano)
+  --num-ctx <n>            Context window tokens - Ollama only (default: 4096)
   --timeout <seconds>      Per-request timeout (default: 180)
-  --path <type>            Filter by enrichment path: reformat | generate
+  --path <type>            Filter by enrichment path: enhance | reformat | generate
   --help                   Show this help
+
+Environment variables:
+  ANTHROPIC_API_KEY        Required for --provider claude
+  OPENAI_API_KEY           Required for --provider openai
 `);
       process.exit(0);
     }
@@ -163,11 +191,13 @@ function printAnalysis(products: MergedProduct[], stats: any): void {
   console.log(`  Has brand:           ${withBrand.length.toLocaleString()} (${pct(withBrand.length, parents.length)})`);
 
   // Enrichment path distribution
+  const enhanceCount = parents.filter((p) => classifyProduct(p) === 'enhance').length;
   const reformatCount = parents.filter((p) => classifyProduct(p) === 'reformat').length;
-  const generateCount = parents.length - reformatCount;
+  const generateCount = parents.filter((p) => classifyProduct(p) === 'generate').length;
   console.log(`\nEnrichment path distribution:`);
-  console.log(`  Reformat (>= 300 chars): ${reformatCount.toLocaleString()} (${pct(reformatCount, parents.length)})`);
-  console.log(`  Generate (< 300 chars):  ${generateCount.toLocaleString()} (${pct(generateCount, parents.length)})`);
+  console.log(`  Enhance  (>= 400 words): ${enhanceCount.toLocaleString()} (${pct(enhanceCount, parents.length)})`);
+  console.log(`  Reformat (100-399 words): ${reformatCount.toLocaleString()} (${pct(reformatCount, parents.length)})`);
+  console.log(`  Generate (< 100 words):   ${generateCount.toLocaleString()} (${pct(generateCount, parents.length)})`);
 
   // Category profile distribution
   const profileCounts = new Map<string, number>();
@@ -219,11 +249,15 @@ function pct(num: number, total: number): string {
 // ─── Process a single product ───
 
 async function processProduct(
-  llm: OllamaProvider,
+  llm: LLMProvider,
   product: MergedProduct,
-  parentTitle?: string
+  options: {
+    parentTitle?: string;
+    parentHtml?: string;
+    variations?: MergedProduct[];
+  } = {}
 ): Promise<{ row: CsvRow; status: string; result: GeneratedDescription }> {
-  const result = await generateDescription(llm, product, parentTitle);
+  const result = await generateDescription(llm, product, options);
 
   // Embed images for parent products with successful generation
   let finalHtml = result.html;
@@ -263,10 +297,10 @@ async function processProduct(
 // ─── Dry-Run Mode ───
 
 async function runDryRun(
-  llm: OllamaProvider,
+  llm: LLMProvider,
   products: MergedProduct[],
   limit: number,
-  pathFilter?: 'reformat' | 'generate'
+  pathFilter?: 'enhance' | 'reformat' | 'generate'
 ): Promise<void> {
   let parents = products.filter((p) => p.postType === 'product');
 
@@ -293,7 +327,7 @@ async function runDryRun(
     console.log(`Gallery images: ${product.galleryImageUrls.length}`);
     console.log(`Path: ${enrichPath} | Profile: ${profile.id} | Variant: ${variantIdx}`);
 
-    const { row, status, result } = await processProduct(llm, product);
+    const { row, status, result } = await processProduct(llm, product, {});
 
     console.log(`\nStatus: ${status}`);
     console.log(`SEO Title: ${row.meta_title}`);
@@ -306,7 +340,7 @@ async function runDryRun(
 // ─── Apply Mode ───
 
 async function runApply(
-  llm: OllamaProvider,
+  llm: LLMProvider,
   products: MergedProduct[],
   opts: CliOptions
 ): Promise<void> {
@@ -368,12 +402,18 @@ async function runApply(
     for (let i = 0; i < batch.length; i += opts.concurrency) {
       const chunk = batch.slice(i, i + opts.concurrency);
 
+      // Process parents — pass variation data so LLM can write comprehensive parent descriptions
       const results = await Promise.all(
-        chunk.map((product) => processProduct(llm, product))
+        chunk.map((product) => {
+          const childVariations = variationsByParent.get(product.postId) || [];
+          return processProduct(llm, product, {
+            variations: childVariations.length > 0 ? childVariations : undefined,
+          });
+        })
       );
 
       for (let j = 0; j < results.length; j++) {
-        const { row, status } = results[j];
+        const { row, status, result } = results[j];
         const product = chunk[j];
 
         batchRows.push(row);
@@ -387,13 +427,16 @@ async function runApply(
           checkpoint.errors.push({ postId: product.postId, error: row.enrichment_status });
         }
 
-        // Process variations for this parent (if not too many)
+        // Process variations — pass parent's generated HTML so variations avoid repeating info
         if (product.variationCount > 0 && product.variationCount <= 50) {
           const childVariations = (variationsByParent.get(product.postId) || [])
             .filter((v) => !processedSet.has(v.postId));
 
           for (const variation of childVariations) {
-            const varResult = await processProduct(llm, variation, product.title);
+            const varResult = await processProduct(llm, variation, {
+              parentTitle: product.title,
+              parentHtml: result.html,
+            });
             batchRows.push(varResult.row);
             checkpoint.processedIds.push(variation.postId);
             if (varResult.status === 'success') checkpoint.successCount++;
@@ -466,13 +509,40 @@ function printSummary(checkpoint: CheckpointData, csvPath: string, allProducts: 
   }
 }
 
+// ─── Provider Factory ───
+
+function createProvider(opts: CliOptions): LLMProvider {
+  switch (opts.provider) {
+    case 'claude':
+      return new ClaudeProvider({
+        model: opts.model,
+        timeoutMs: opts.timeoutMs,
+      });
+    case 'openai':
+      return new OpenAIProvider({
+        model: opts.model,
+        timeoutMs: opts.timeoutMs,
+      });
+    case 'ollama':
+    default:
+      return new OllamaProvider({
+        model: opts.model,
+        numCtx: opts.numCtx,
+        timeoutMs: opts.timeoutMs,
+      });
+  }
+}
+
 // ─── Main ───
 
 async function main(): Promise<void> {
   const opts = parseArgs();
 
   console.log('Product Description Enrichment Pipeline');
-  console.log(`   Mode: ${opts.mode} | Source: ${opts.source} | Model: ${opts.model} | Context: ${opts.numCtx} tokens`);
+  console.log(`   Mode: ${opts.mode} | Provider: ${opts.provider} | Model: ${opts.model}`);
+  if (opts.provider === 'ollama') {
+    console.log(`   Context: ${opts.numCtx} tokens`);
+  }
   if (opts.pathFilter) {
     console.log(`   Path filter: ${opts.pathFilter}`);
   }
@@ -487,11 +557,7 @@ async function main(): Promise<void> {
   }
 
   // For dry-run and apply, we need the LLM
-  const llm = new OllamaProvider({
-    model: opts.model,
-    numCtx: opts.numCtx,
-    timeoutMs: opts.timeoutMs,
-  });
+  const llm = createProvider(opts);
 
   try {
     await llm.healthCheck();

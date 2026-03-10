@@ -46,6 +46,11 @@ export interface MergedProduct {
   // Feed data sources that matched
   dataSources: string[];
 
+  // Supplementary feed data (for richer LLM prompts)
+  productType: string;
+  xmlCategories: string[];
+  stcCategories: string[];
+
   // Variation info
   variationCount: number;
 }
@@ -271,6 +276,8 @@ function mergeSpecifications(
     if (stcProduct.power) specs['Power'] = stcProduct.power;
     if (stcProduct.waterResistance) specs['Water Resistance'] = stcProduct.waterResistance;
     if (stcProduct.warranty) specs['Warranty'] = stcProduct.warranty;
+    if (stcProduct.innerDiameter) specs['Inner Diameter'] = stcProduct.innerDiameter;
+    if (stcProduct.functions) specs['Functions'] = stcProduct.functions;
   }
 
   return specs;
@@ -406,6 +413,9 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
         thumbnailUrl,
         galleryImageUrls,
         dataSources,
+        productType: xmlPrimary?.type?.name || '',
+        xmlCategories: xmlPrimary?.categories?.map(c => c.name).filter(Boolean) || [],
+        stcCategories: [stc?.category1, stc?.category2, stc?.category3].filter(Boolean) as string[],
         variationCount: varCounts.get(product.ID) || 0,
       });
     }
@@ -437,6 +447,9 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
         thumbnailUrl: '',
         galleryImageUrls: [],
         dataSources: ['db'],
+        productType: '',
+        xmlCategories: [],
+        stcCategories: [],
         variationCount: 0,
       });
     }
