@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -58,7 +59,7 @@ export default function Error({ error, reset }: ErrorProps) {
             </svg>
             Try Again
           </button>
-          <a
+          <Link
             href="/"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors"
           >
@@ -71,7 +72,7 @@ export default function Error({ error, reset }: ErrorProps) {
               />
             </svg>
             Go Home
-          </a>
+          </Link>
         </div>
 
         {/* Error Details (Development) */}
@@ -94,9 +95,9 @@ export default function Error({ error, reset }: ErrorProps) {
           <p className="text-sm text-muted-foreground mb-4">
             If the problem persists, please contact us
           </p>
-          <a href="/contact" className="text-sm text-primary hover:underline">
+          <Link href="/contact" className="text-sm text-primary hover:underline">
             Contact Support
-          </a>
+          </Link>
         </div>
       </div>
     </div>

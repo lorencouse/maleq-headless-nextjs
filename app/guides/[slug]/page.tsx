@@ -228,7 +228,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         dateModified={post.modified || undefined}
         authorName={post.author?.node?.name || 'Male Q'}
         url={`${SITE_URL}/guides/${slug}`}
-        keywords={post.tags?.nodes?.map((tag: any) => tag.name)}
+        keywords={post.tags?.nodes?.map((tag) => tag.name)}
         articleSection={post.categories?.nodes?.[0]?.name}
       />
 
@@ -332,7 +332,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         <div className='border-t border-border pt-6 mb-12'>
           <h3 className='text-sm font-semibold text-foreground mb-3'>Tags:</h3>
           <div className='flex flex-wrap items-center gap-2'>
-            {post.tags.nodes.map((tag: any) => (
+            {post.tags.nodes.map((tag) => (
               <Link
                 key={tag.id}
                 href={`/guides/tag/${tag.slug}`}
@@ -376,19 +376,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
           // Separate top-level comments and replies
           const topLevelComments = post.comments.nodes.filter(
-            (c: any) => !c.parent?.node?.id
+            (c) => !c.parent?.node?.id
           );
           const replies = post.comments.nodes.filter(
-            (c: any) => c.parent?.node?.id
+            (c) => c.parent?.node?.id
           );
 
           // Get replies for a specific comment
           const getReplies = (commentId: string) =>
-            replies.filter((r: any) => r.parent?.node?.id === commentId);
+            replies.filter((r) => r.parent?.node?.id === commentId);
 
           return (
             <div className='space-y-6'>
-              {topLevelComments.map((comment: any) => (
+              {topLevelComments.map((comment) => (
                 <div key={comment.id}>
                   {/* Parent Comment */}
                   <div className='bg-card border border-border rounded-lg p-6'>
@@ -425,7 +425,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   {/* Replies */}
                   {getReplies(comment.id).length > 0 && (
                     <div className='ml-8 mt-4 space-y-4'>
-                      {getReplies(comment.id).map((reply: any) => (
+                      {getReplies(comment.id).map((reply) => (
                         <div
                           key={reply.id}
                           className='bg-muted/50 border border-border rounded-lg p-4'

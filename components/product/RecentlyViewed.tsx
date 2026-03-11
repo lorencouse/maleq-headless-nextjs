@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/utils/recently-viewed';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import ProductCarousel from './ProductCarousel';
@@ -39,17 +39,14 @@ export default function RecentlyViewed({
   title = 'Recently Viewed',
   maxItems = 8,
 }: RecentlyViewedProps) {
-  const [products, setProducts] = useState<UnifiedProduct[]>([]);
-
-  useEffect(() => {
-    const viewed = getRecentlyViewed();
-    // Filter out current product, limit, and convert to UnifiedProduct
-    const filtered = viewed
+  const products = useMemo(
+    () =>
+      getRecentlyViewed()
       .filter((item) => item.productId !== currentProductId)
       .slice(0, maxItems)
-      .map(toUnifiedProduct);
-    setProducts(filtered);
-  }, [currentProductId, maxItems]);
+      .map(toUnifiedProduct),
+    [currentProductId, maxItems]
+  );
 
   return <ProductCarousel products={products} title={title} />;
 }

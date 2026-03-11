@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import AccountLayout from '@/components/account/AccountLayout';
 import ProductCard from '@/components/shop/ProductCard';
 import { useWishlistStore, WishlistItem } from '@/lib/store/wishlist-store';
 import { useCartStore } from '@/lib/store/cart-store';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 import { showSuccess, showAddedToCart, showError } from '@/lib/utils/toast';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 
@@ -40,12 +41,12 @@ function wishlistItemToProduct(item: WishlistItem): UnifiedProduct {
 export default function WishlistPage() {
   const { items, removeItem, clearWishlist, hydrate } = useWishlistStore();
   const addToCart = useCartStore((state) => state.addItem);
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useHydrated();
 
   useEffect(() => {
+    if (!hydrated) return;
     hydrate();
-    setMounted(true);
-  }, [hydrate]);
+  }, [hydrate, hydrated]);
 
   const handleRemove = (productId: string) => {
     removeItem(productId);
@@ -77,7 +78,7 @@ export default function WishlistPage() {
     showAddedToCart(`${inStockItems.length} items added to cart`);
   };
 
-  if (!mounted) {
+  if (!hydrated) {
     return (
       <AccountLayout>
         <div className="animate-pulse space-y-4">

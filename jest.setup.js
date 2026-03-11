@@ -23,9 +23,14 @@ if (typeof global.MessagePort === 'undefined') {
   global.MessagePort = MessagePort;
 }
 
-if (typeof global.Request === 'undefined') {
+if (typeof global.Request === 'undefined' && typeof globalThis.Request !== 'undefined') {
+  global.Request = globalThis.Request;
+  global.Response = globalThis.Response;
+  global.Headers = globalThis.Headers;
+  global.fetch = globalThis.fetch;
+} else if (typeof global.Request === 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { Request, Response, Headers, fetch } = require('undici');
+  const { Request, Response, Headers, fetch } = require('next/dist/compiled/@edge-runtime/primitives/fetch');
   global.Request = Request;
   global.Response = Response;
   global.Headers = Headers;

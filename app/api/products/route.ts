@@ -6,6 +6,14 @@ import { isMySQLConfigured } from '@/lib/db/pool';
 import { queryProductIndex, type FacetOption } from '@/lib/products/product-index';
 import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 
+type ProductWithDimensions = UnifiedProduct & {
+  length?: string | number | null;
+  width?: string | number | null;
+  height?: string | number | null;
+  weight?: string | number | null;
+  dimensions?: Partial<Record<'length' | 'width' | 'height' | 'weight', string | number | null>>;
+};
+
 /**
  * Extract available filter options from a list of products
  * Returns unique brands, materials, and colors with counts
@@ -362,15 +370,15 @@ export async function GET(request: NextRequest) {
 }
 
 function getProductDimension(product: UnifiedProduct, dimension: 'length' | 'width' | 'height'): number | null {
-  const productAny = product as any;
+  const productWithDimensions = product as ProductWithDimensions;
 
-  if (productAny[dimension]) {
-    const value = parseFloat(productAny[dimension]);
+  if (productWithDimensions[dimension]) {
+    const value = parseFloat(String(productWithDimensions[dimension]));
     if (!isNaN(value)) return value;
   }
 
-  if (productAny.dimensions?.[dimension]) {
-    const value = parseFloat(productAny.dimensions[dimension]);
+  if (productWithDimensions.dimensions?.[dimension]) {
+    const value = parseFloat(String(productWithDimensions.dimensions[dimension]));
     if (!isNaN(value)) return value;
   }
 
@@ -403,15 +411,15 @@ function getProductDimension(product: UnifiedProduct, dimension: 'length' | 'wid
 }
 
 function getProductWeight(product: UnifiedProduct): number | null {
-  const productAny = product as any;
+  const productWithDimensions = product as ProductWithDimensions;
 
-  if (productAny.weight) {
-    const value = parseFloat(productAny.weight);
+  if (productWithDimensions.weight) {
+    const value = parseFloat(String(productWithDimensions.weight));
     if (!isNaN(value)) return value;
   }
 
-  if (productAny.dimensions?.weight) {
-    const value = parseFloat(productAny.dimensions.weight);
+  if (productWithDimensions.dimensions?.weight) {
+    const value = parseFloat(String(productWithDimensions.dimensions.weight));
     if (!isNaN(value)) return value;
   }
 

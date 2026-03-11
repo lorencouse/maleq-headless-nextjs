@@ -216,7 +216,7 @@ export default function VariationsPage() {
 
       {!detecting && !loading && groups.length === 0 && !mergeResult && (
         <div className="text-center py-12 text-gray-500">
-          Click "Detect Variations" to scan your products for variation groups.
+          Click &quot;Detect Variations&quot; to scan your products for variation groups.
         </div>
       )}
     </div>

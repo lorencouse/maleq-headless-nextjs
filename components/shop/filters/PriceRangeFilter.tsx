@@ -17,8 +17,14 @@ export default function PriceRangeFilter({
   const [localMax, setLocalMax] = useState(maxPrice > 0 ? maxPrice.toString() : '');
 
   useEffect(() => {
-    setLocalMin(minPrice > 0 ? minPrice.toString() : '');
-    setLocalMax(maxPrice > 0 ? maxPrice.toString() : '');
+    const nextMin = minPrice > 0 ? minPrice.toString() : '';
+    const nextMax = maxPrice > 0 ? maxPrice.toString() : '';
+    const timeoutId = window.setTimeout(() => {
+      setLocalMin(nextMin);
+      setLocalMax(nextMax);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [minPrice, maxPrice]);
 
   const handleBlur = () => {

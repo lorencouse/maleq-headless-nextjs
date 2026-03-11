@@ -10,6 +10,21 @@ interface ReviewListProps {
 
 type SortOption = 'recent' | 'rating-high' | 'rating-low';
 
+interface ReviewApiItem {
+  id: number;
+  reviewer: string;
+  review: string;
+  rating: number;
+  date_created: string;
+  verified: boolean;
+  reviewer_avatar_urls?: Record<string, string>;
+}
+
+interface ReviewApiResponse {
+  data?: ReviewApiItem[];
+  reviews?: ReviewApiItem[];
+}
+
 export default function ReviewList({ productId, initialReviews = [] }: ReviewListProps) {
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [loading, setLoading] = useState(initialReviews.length === 0);
@@ -30,18 +45,18 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
         throw new Error('Failed to fetch reviews');
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as ReviewApiResponse;
 
       // Transform WooCommerce review format to our Review interface
       const reviewsArray = data.data || data.reviews || [];
-      const transformedReviews: Review[] = reviewsArray.map((r: any) => ({
+      const transformedReviews: Review[] = reviewsArray.map((r) => ({
         id: r.id,
         reviewer: r.reviewer,
         review: r.review,
         rating: r.rating,
         dateCreated: r.date_created,
         verified: r.verified,
-        avatarUrl: r.reviewer_avatar_urls?.['96'] || null,
+        avatarUrl: r.reviewer_avatar_urls?.['96'] || undefined,
       }));
 
       if (append) {

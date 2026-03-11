@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useCallback } from 'react';
 
 // Hierarchical category interface
@@ -172,12 +173,12 @@ export default function CategoryFilter({
 
       {/* Link to browse all categories (only on category pages) */}
       {scopedCategory && (
-        <a
+        <Link
           href="/shop"
           className="block text-center text-xs text-muted-foreground hover:text-primary transition-colors pt-2 border-t border-border"
         >
           Browse all categories
-        </a>
+        </Link>
       )}
     </div>
   );

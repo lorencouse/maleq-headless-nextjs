@@ -20,6 +20,7 @@ import SocialSection from '@/components/home/SocialSection';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
+import type { Post } from '@/lib/types/wordpress';
 
 export const metadata: Metadata = {
   title: { absolute: 'Male Q - Premium Adult Products | Fast & Discreet Shipping' },
@@ -71,7 +72,7 @@ export default async function Home() {
       trendingProductsPromise,
     ]);
 
-  const posts = postsData?.data?.posts?.nodes || [];
+  const posts = (postsData?.data?.posts?.nodes || []) as Post[];
   const products = sortProductsByPriority(productsResult.products);
 
   return (
@@ -97,7 +98,7 @@ export default async function Home() {
 
         {products.length > 0 ? (
           <div className='grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6'>
-            {products.map((product: any) => (
+            {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
@@ -178,7 +179,7 @@ export default async function Home() {
             </p>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {posts.slice(0, 3).map((post: any) => (
+            {posts.slice(0, 3).map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
           </div>

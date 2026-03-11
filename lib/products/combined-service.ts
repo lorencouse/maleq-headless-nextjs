@@ -214,8 +214,9 @@ function convertWooProduct(product: WooProduct | GraphQLProduct): UnifiedProduct
     source: undefined, // Source priority handled at DB level by maleq-stock-priority.php
     averageRating: product.averageRating,
     reviewCount: product.reviewCount,
-    viewCount: (product as any).viewCount ?? 0,
-    popularityScore: (product as any).popularityScore ?? 0,
+    viewCount: (product as GraphQLProduct & { viewCount?: number }).viewCount ?? 0,
+    popularityScore:
+      (product as GraphQLProduct & { popularityScore?: number }).popularityScore ?? 0,
     attributes: attributeNodes.map((attr) => ({
       name: attr.name,
       options: attr.options || [],

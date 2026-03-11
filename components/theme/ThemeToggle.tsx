@@ -1,18 +1,14 @@
 'use client';
 
 import { useTheme } from './ThemeProvider';
-import { useState, useEffect } from 'react';
+import { useHydrated } from '@/lib/hooks/useHydrated';
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const hydrated = useHydrated();
 
   // Avoid hydration mismatch by not rendering until mounted
-  if (!mounted) {
+  if (!hydrated) {
     return (
       <button
         className="relative p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-input border border-border hover:border-foreground/20 transition-all duration-200"

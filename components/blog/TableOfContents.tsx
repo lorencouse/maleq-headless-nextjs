@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
 
 interface TocItem {
   id: string;
@@ -12,31 +12,76 @@ interface TableOfContentsProps {
   variant?: 'desktop' | 'mobile';
 }
 
+let headingsSnapshotCache: {
+  key: string;
+  items: TocItem[];
+} = {
+  key: '',
+  items: [],
+};
+
+function getHeadingsFromDocument(): TocItem[] {
+  if (typeof document === 'undefined') {
+    return [];
+  }
+
+  const content = document.querySelector('.entry-content');
+  if (!content) return [];
+
+  const elements = content.querySelectorAll('h2, h3');
+  const items: TocItem[] = [];
+
+  elements.forEach((el, index) => {
+    if (!el.id) {
+      el.id = `heading-${index}`;
+    }
+    items.push({
+      id: el.id,
+      text: el.textContent?.trim() || '',
+      level: parseInt(el.tagName[1], 10),
+    });
+  });
+
+  const key = items.map(({ id, text, level }) => `${id}:${level}:${text}`).join('|');
+  if (key === headingsSnapshotCache.key) {
+    return headingsSnapshotCache.items;
+  }
+
+  headingsSnapshotCache = {
+    key,
+    items,
+  };
+
+  return items;
+}
+
+function subscribeToHeadings(onStoreChange: () => void) {
+  if (typeof document === 'undefined') {
+    return () => {};
+  }
+
+  const observer = new MutationObserver(() => {
+    onStoreChange();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  queueMicrotask(onStoreChange);
+
+  return () => observer.disconnect();
+}
+
 function useTocData() {
-  const [headings, setHeadings] = useState<TocItem[]>([]);
+  const headings = useSyncExternalStore(
+    subscribeToHeadings,
+    getHeadingsFromDocument,
+    () => []
+  );
   const [activeId, setActiveId] = useState<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
-
-  useEffect(() => {
-    const content = document.querySelector('.entry-content');
-    if (!content) return;
-
-    const elements = content.querySelectorAll('h2, h3');
-    const items: TocItem[] = [];
-
-    elements.forEach((el, index) => {
-      if (!el.id) {
-        el.id = `heading-${index}`;
-      }
-      items.push({
-        id: el.id,
-        text: el.textContent?.trim() || '',
-        level: parseInt(el.tagName[1]),
-      });
-    });
-
-    setHeadings(items);
-  }, []);
 
   const handleIntersect = useCallback((entries: IntersectionObserverEntry[]) => {
     const visibleEntries = entries.filter(e => e.isIntersecting);

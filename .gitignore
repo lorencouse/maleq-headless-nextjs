@@ -62,3 +62,9 @@ backups/
 
 # script output/reports
 scripts/output/
+playwright-report/
+test-results/
+
+# local notes/artifacts
+gpt-enrich-products-script.rtf
+product-enrichment-reguirments-prompt.rtf

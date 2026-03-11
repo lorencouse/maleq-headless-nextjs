@@ -259,9 +259,6 @@ class WooCommerceClient {
       // Download image from external URL
       const imageResponse = await fetch(imageUrl, {
         signal: controller.signal,
-        // Add timeout at the fetch level
-        // @ts-ignore - signal is valid
-        timeout: 20000
       });
 
       if (!imageResponse.ok) {

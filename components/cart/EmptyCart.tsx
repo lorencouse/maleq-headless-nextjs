@@ -27,8 +27,8 @@ export default function EmptyCart() {
         Your cart is empty
       </h2>
       <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-        Looks like you haven't added any items to your cart yet.
-        Browse our collection and find something you'll love!
+        Looks like you haven&apos;t added any items to your cart yet.
+        Browse our collection and find something you&apos;ll love!
       </p>
 
       {/* Action Button */}

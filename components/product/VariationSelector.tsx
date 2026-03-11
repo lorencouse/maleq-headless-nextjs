@@ -41,7 +41,6 @@ export interface Variation {
 interface VariationSelectorProps {
   variations: Variation[];
   onVariationChange?: (variation: Variation) => void;
-  productId?: number; // Parent product database ID (for debugging)
   externalSelectedVariationId?: string | null;
   defaultAttributes?: { name: string; value: string }[];
 }
@@ -52,10 +51,6 @@ function VariationDescription({ description }: { description: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setIsExpanded(false);
-  }, [description]);
 
   useEffect(() => {
     const el = contentRef.current;
@@ -93,7 +88,6 @@ function VariationDescription({ description }: { description: string }) {
 export default function VariationSelector({
   variations,
   onVariationChange,
-  productId,
   externalSelectedVariationId,
   defaultAttributes,
 }: VariationSelectorProps) {
@@ -396,7 +390,10 @@ export default function VariationSelector({
 
           {/* Variation Description */}
           {selectedVariation.description && (
-            <VariationDescription description={selectedVariation.description} />
+            <VariationDescription
+              key={selectedVariation.id}
+              description={selectedVariation.description}
+            />
           )}
         </div>
       )}

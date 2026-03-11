@@ -1,6 +1,6 @@
 import { wooClient } from '../woocommerce/client';
 import type { WooCategory } from '../woocommerce/types';
-import { writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import type { XMLProduct } from './xml-parser';
 
@@ -217,7 +217,6 @@ export class CategoryImporter {
    */
   loadMapping(): CategoryMapping | null {
     try {
-      const { readFileSync } = require('fs');
       const raw = readFileSync(this.mappingPath, 'utf-8');
       return JSON.parse(raw);
     } catch {

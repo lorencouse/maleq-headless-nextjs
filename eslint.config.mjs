@@ -12,6 +12,19 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated and local-only artifacts:
+    ".cache/**",
+    "audit-inputs/**",
+    "backups/**",
+    "data/**",
+    "app/api/dev/**",
+    "jest.config.js",
+    "lib/import/**",
+    "lib/williams-trading/**",
+    "playwright-report/**",
+    "scripts/**",
+    "test-results/**",
+    "lib/redirects/product-redirects.ts",
   ]),
 ]);
 

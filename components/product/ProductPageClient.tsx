@@ -350,7 +350,6 @@ export default function ProductPageClient({
               sku: v.sku || '',
               stockQuantity: v.stockQuantity ?? 0,
             }))}
-            productId={product.databaseId}
             externalSelectedVariationId={externalSelectedVariationId}
             defaultAttributes={product.defaultAttributes}
             onVariationChange={(variation) => {

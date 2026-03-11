@@ -407,7 +407,7 @@ export async function getBlogSearchSuggestions(
   }
 
   // Fetch posts (try SQL first)
-  let allPosts: Post[] = [];
+  const allPosts: Post[] = [];
 
   if (await isMySQLAvailable()) {
     try {
@@ -451,7 +451,12 @@ export async function getBlogSearchSuggestions(
     const contentPosts: Post[] = results[1].status === 'fulfilled' ? results[1].value.data?.posts?.nodes || [] : [];
 
     if (allCategories.length === 0 && results[2]?.status === 'fulfilled') {
-      allCategories = (results[2] as PromiseFulfilledResult<any>).value.data?.categories?.nodes || [];
+      allCategories =
+        (
+          results[2] as PromiseFulfilledResult<{
+            data?: { categories?: { nodes?: CategoryNode[] } };
+          }>
+        ).value.data?.categories?.nodes || [];
     }
 
     const seenIds = new Set<string>();

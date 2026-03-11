@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { showSuccess } from '@/lib/utils/toast';
 
 interface SocialShareProps {
@@ -86,10 +86,7 @@ export default function SocialShare({
     }
   };
 
-  const [hasNativeShare, setHasNativeShare] = useState(false);
-  useEffect(() => {
-    setHasNativeShare(!!navigator.share);
-  }, []);
+  const hasNativeShare = typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
   // Icon-only variant
   if (variant === 'icons') {

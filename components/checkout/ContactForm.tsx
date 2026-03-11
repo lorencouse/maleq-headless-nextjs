@@ -14,12 +14,9 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
   const [newsletter, setNewsletter] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Auto-populate from logged-in user
+  const resolvedEmail = email || user?.email || '';
+
   useEffect(() => {
-    if (user?.email && !email) {
-      setEmail(user.email);
-    }
-    // Fetch phone from customer data if logged in
     if (user?.id && token && !phone) {
       fetch(`/api/customers/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -30,7 +27,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
         })
         .catch(() => {});
     }
-  }, [user?.email, user?.id, token]);
+  }, [user?.id, token, phone]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -48,9 +45,9 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!email) {
+    if (!resolvedEmail) {
       newErrors.email = 'Email is required';
-    } else if (!validateEmail(email)) {
+    } else if (!validateEmail(resolvedEmail)) {
       newErrors.email = 'Please enter a valid email address';
     }
 
@@ -61,7 +58,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      onComplete({ email, phone, newsletter });
+      onComplete({ email: resolvedEmail, phone, newsletter });
     }
   };
 
@@ -75,7 +72,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
         <input
           type="email"
           id="email"
-          value={email}
+          value={resolvedEmail}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
           className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${

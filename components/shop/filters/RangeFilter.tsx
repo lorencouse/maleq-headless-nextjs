@@ -27,8 +27,14 @@ export default function RangeFilter({
   const [localMax, setLocalMax] = useState(maxValue < max ? maxValue.toString() : '');
 
   useEffect(() => {
-    setLocalMin(minValue > 0 ? minValue.toString() : '');
-    setLocalMax(maxValue < max ? maxValue.toString() : '');
+    const nextMin = minValue > 0 ? minValue.toString() : '';
+    const nextMax = maxValue < max ? maxValue.toString() : '';
+    const timeoutId = window.setTimeout(() => {
+      setLocalMin(nextMin);
+      setLocalMax(nextMax);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [minValue, maxValue, max]);
 
   const handleMinChange = (value: string) => {

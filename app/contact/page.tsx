@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Metadata } from 'next';
 import ContactForm from '@/components/contact/ContactForm';
 
@@ -94,7 +95,7 @@ export default function ContactPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Check out our FAQ page for quick answers to common questions.
               </p>
-              <a
+              <Link
                 href="/faq"
                 className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
               >
@@ -102,7 +103,7 @@ export default function ContactPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
+              </Link>
             </div>
 
             {/* Shipping Info */}
@@ -111,7 +112,7 @@ export default function ContactPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Learn about our shipping policies and delivery times.
               </p>
-              <a
+              <Link
                 href="/shipping-returns"
                 className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
               >
@@ -119,7 +120,7 @@ export default function ContactPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </div>
 

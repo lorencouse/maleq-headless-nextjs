@@ -2,9 +2,20 @@
 
 import { useState } from 'react';
 
+interface SyncResult {
+  label: string;
+  data: unknown;
+}
+
+interface SyncResponse {
+  success?: boolean;
+  data?: unknown;
+  error?: string;
+}
+
 export default function SyncPage() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<SyncResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const runSync = async (endpoint: string, label: string) => {
@@ -17,7 +28,7 @@ export default function SyncPage() {
         method: 'POST',
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as SyncResponse;
 
       if (data.success) {
         setResult({ label, data: data.data });

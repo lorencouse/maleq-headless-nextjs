@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,6 +15,63 @@ interface ProductPlaceholder {
 
 interface AddToCartEnhancerProps {
   products: Record<string, BlogProduct>;
+}
+
+let placeholderSnapshotCache: {
+  key: string;
+  items: ProductPlaceholder[];
+} = {
+  key: '',
+  items: [],
+};
+
+function getPlaceholderSnapshot(): ProductPlaceholder[] {
+  if (typeof document === 'undefined') {
+    return [];
+  }
+
+  const elements = document.querySelectorAll('.blog-add-to-cart-placeholder');
+  const found: ProductPlaceholder[] = [];
+
+  elements.forEach((el) => {
+    const element = el as HTMLElement;
+    const productId = element.dataset.productId;
+
+    if (productId) {
+      found.push({ element, productId });
+    }
+  });
+
+  const key = found.map(({ element, productId }, index) => `${index}:${productId}:${element.dataset.productId || ''}`).join('|');
+  if (key === placeholderSnapshotCache.key) {
+    return placeholderSnapshotCache.items;
+  }
+
+  placeholderSnapshotCache = {
+    key,
+    items: found,
+  };
+
+  return found;
+}
+
+function subscribeToPlaceholders(onStoreChange: () => void) {
+  if (typeof document === 'undefined') {
+    return () => {};
+  }
+
+  const observer = new MutationObserver(() => {
+    onStoreChange();
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  queueMicrotask(onStoreChange);
+
+  return () => observer.disconnect();
 }
 
 /**
@@ -190,24 +247,11 @@ function ProductUnavailable() {
  * Uses pre-fetched product data passed from server component
  */
 export default function AddToCartEnhancer({ products }: AddToCartEnhancerProps) {
-  const [placeholders, setPlaceholders] = useState<ProductPlaceholder[]>([]);
-
-  useEffect(() => {
-    // Find all placeholder divs
-    const elements = document.querySelectorAll('.blog-add-to-cart-placeholder');
-
-    const found: ProductPlaceholder[] = [];
-    elements.forEach((el) => {
-      const element = el as HTMLElement;
-      const productId = element.dataset.productId;
-
-      if (productId) {
-        found.push({ element, productId });
-      }
-    });
-
-    setPlaceholders(found);
-  }, []);
+  const placeholders = useSyncExternalStore(
+    subscribeToPlaceholders,
+    getPlaceholderSnapshot,
+    () => []
+  );
 
   return (
     <>

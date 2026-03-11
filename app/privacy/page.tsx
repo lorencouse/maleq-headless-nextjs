@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -131,7 +132,7 @@ export default function PrivacyPolicyPage() {
                 <li>Withdraw consent for data processing</li>
               </ul>
               <p className="text-muted-foreground mt-4">
-                To exercise these rights, please <a href="/contact" className="text-primary hover:underline">contact us</a>.
+                To exercise these rights, please <Link href="/contact" className="text-primary hover:underline">contact us</Link>.
               </p>
             </section>
 
@@ -155,7 +156,7 @@ export default function PrivacyPolicyPage() {
                 If you have questions about this Privacy Policy, please contact us:
               </p>
               <ul className="list-none text-muted-foreground mt-2 space-y-1">
-                <li>Contact form: <a href="/contact" className="text-primary hover:underline">Contact Us</a></li>
+                <li>Contact form: <Link href="/contact" className="text-primary hover:underline">Contact Us</Link></li>
               </ul>
             </section>
           </div>

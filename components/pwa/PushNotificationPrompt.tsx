@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePushSubscription } from '@/lib/hooks/usePushSubscription';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
@@ -24,42 +24,40 @@ export default function PushNotificationPrompt({
   className = '',
 }: PushNotificationPromptProps) {
   const { isSupported, permission, isSubscribed, isLoading, subscribe } = usePushSubscription();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    // Don't show if not supported, already subscribed, or permission denied
-    if (!isSupported || isSubscribed || permission === 'denied') return;
-
-    // Don't show if dismissed
+  const [dismissed, setDismissed] = useState(() => {
     try {
-      if (localStorage.getItem(DISMISS_KEY)) return;
+      return localStorage.getItem(DISMISS_KEY) === '1';
     } catch {
-      return;
+      return false;
     }
-
-    // Check visit count
-    if (minVisits > 0) {
-      try {
-        const visits = parseInt(localStorage.getItem(VISITS_KEY) || '0', 10) + 1;
-        localStorage.setItem(VISITS_KEY, String(visits));
-        if (visits < minVisits) return;
-      } catch {
-        // localStorage unavailable — show prompt anyway
-      }
+  });
+  const [visitEligible] = useState(() => {
+    if (minVisits <= 0) return true;
+    try {
+      const visits = parseInt(localStorage.getItem(VISITS_KEY) || '0', 10) + 1;
+      localStorage.setItem(VISITS_KEY, String(visits));
+      return visits >= minVisits;
+    } catch {
+      return true;
     }
+  });
 
-    setVisible(true);
-  }, [isSupported, isSubscribed, permission, minVisits]);
+  const visible =
+    visitEligible &&
+    !dismissed &&
+    isSupported &&
+    !isSubscribed &&
+    permission !== 'denied';
 
   if (!visible) return null;
 
   const handleEnable = async () => {
     const success = await subscribe(customerId, email);
     if (success) {
-      setVisible(false);
+      setDismissed(true);
       showSuccess('Notifications enabled! You\'ll receive updates about your orders and deals.');
     } else if (Notification.permission === 'denied') {
-      setVisible(false);
+      setDismissed(true);
       showError('Notifications blocked. You can enable them in your browser settings.');
     } else {
       showError('Could not enable notifications. Please try again.');
@@ -68,7 +66,7 @@ export default function PushNotificationPrompt({
 
   const handleDismiss = () => {
     try { localStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
-    setVisible(false);
+    setDismissed(true);
   };
 
   return (

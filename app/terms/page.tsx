@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -89,14 +90,14 @@ export default function TermsPage() {
                 Shipping times are estimates and not guaranteed. We are not responsible for delays caused by carriers, customs, weather, or other factors beyond our control. Risk of loss passes to you upon delivery to the carrier.
               </p>
               <p className="text-muted-foreground mt-4">
-                Please refer to our <a href="/shipping-returns" className="text-primary hover:underline">Shipping & Returns</a> page for detailed shipping information.
+                Please refer to our <Link href="/shipping-returns" className="text-primary hover:underline">Shipping & Returns</Link> page for detailed shipping information.
               </p>
             </section>
 
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-4">Returns and Refunds</h2>
               <p className="text-muted-foreground">
-                Our return and refund policy is detailed on our <a href="/shipping-returns" className="text-primary hover:underline">Shipping & Returns</a> page. By making a purchase, you agree to the terms of that policy.
+                Our return and refund policy is detailed on our <Link href="/shipping-returns" className="text-primary hover:underline">Shipping & Returns</Link> page. By making a purchase, you agree to the terms of that policy.
               </p>
             </section>
 
@@ -171,7 +172,7 @@ export default function TermsPage() {
                 For questions about these Terms of Service, please contact us:
               </p>
               <ul className="list-none text-muted-foreground mt-2 space-y-1">
-                <li>Contact form: <a href="/contact" className="text-primary hover:underline">Contact Us</a></li>
+                <li>Contact form: <Link href="/contact" className="text-primary hover:underline">Contact Us</Link></li>
               </ul>
             </section>
           </div>

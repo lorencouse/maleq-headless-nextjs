@@ -103,7 +103,7 @@ function parseSourceFlags(metaMap: Map<string, MetaValue>): {
     '';
   const normalized = source.toLowerCase();
 
-  let hasWilliams =
+  const hasWilliams =
     normalized.includes('williams') ||
     normalized.includes('muffs') ||
     Boolean(getString(metaMap.get('_wt_sku'))) ||

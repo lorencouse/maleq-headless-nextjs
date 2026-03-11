@@ -158,7 +158,7 @@ export class STCCSVParser {
    * Clean product description
    */
   static cleanDescription(description: string): string {
-    let cleaned = description
+    const cleaned = description
       .replace(/\s*20\d{2}\s*\.?\s*$/g, '')
       .replace(/\s*Restricted[^.]*\.\s*$/gi, '')
       .replace(/\s+/g, ' ')

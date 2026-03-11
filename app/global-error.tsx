@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface GlobalErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -53,7 +55,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                 </svg>
                 Try Again
               </button>
-              <a
+              <Link
                 href="/"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
@@ -66,7 +68,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                   />
                 </svg>
                 Go Home
-              </a>
+              </Link>
             </div>
 
             {/* Error ID for support */}

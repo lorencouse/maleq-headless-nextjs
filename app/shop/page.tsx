@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { getAllProducts, getHierarchicalCategories, getBrands, getGlobalAttributes, getFilteredProducts, searchProducts } from '@/lib/products/combined-service';
@@ -263,7 +264,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
       {/* Show featured sections link when in browse mode */}
       {!showFeaturedSections && (
-        <a
+        <Link
           href="/shop"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
@@ -271,7 +272,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           Show featured sections
-        </a>
+        </Link>
       )}
 
       {/* Page Header */}

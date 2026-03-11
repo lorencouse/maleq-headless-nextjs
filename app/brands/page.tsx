@@ -66,7 +66,7 @@ export default async function BrandsPage() {
           </Suspense>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          Explore our curated selection of {brands.length} premium brands. From industry leaders to specialty manufacturers, find the quality products you're looking for.
+          Explore our curated selection of {brands.length} premium brands. From industry leaders to specialty manufacturers, find the quality products you&apos;re looking for.
         </p>
       </div>
 

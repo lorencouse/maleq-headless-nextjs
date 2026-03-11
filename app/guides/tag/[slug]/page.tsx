@@ -169,7 +169,7 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
 
         {/* Post count */}
         <p className="text-sm text-muted-foreground">
-          {tag.count} {tag.count === 1 ? 'article' : 'articles'} tagged with "{tag.name}"
+          {tag.count} {tag.count === 1 ? 'article' : 'articles'} tagged with &quot;{tag.name}&quot;
         </p>
       </div>
 

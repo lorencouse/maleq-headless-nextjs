@@ -180,7 +180,7 @@ async function getProductSuggestions(
     result = await searchProducts(keywords.join(' '), { limit: 10 });
   }
 
-  let suggestions = result.products.map((p) => ({
+  const suggestions = result.products.map((p) => ({
     name: p.name,
     url: `/product/${p.slug}`,
     type: 'product' as const,

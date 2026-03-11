@@ -6,7 +6,7 @@
 
 'use client';
 
-import { Toaster as HotToaster } from 'react-hot-toast';
+import toast, { ToastBar, Toaster as HotToaster } from 'react-hot-toast';
 
 export function Toaster() {
   return (
@@ -56,6 +56,22 @@ export function Toaster() {
           },
         },
       }}
-    />
+    >
+      {(t) => (
+        <div
+          className="cursor-pointer"
+          onClick={() => toast.dismiss(t.id)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              toast.dismiss(t.id);
+            }
+          }}
+        >
+          <ToastBar toast={t} />
+        </div>
+      )}
+    </HotToaster>
   );
 }
