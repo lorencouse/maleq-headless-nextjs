@@ -23,6 +23,7 @@ export interface GeneratedDescription {
   excerpt: string;
   metaTitle: string;
   metaDescription: string;
+  focusKeyword: string;
   status: 'success' | 'fallback' | 'error';
   error?: string;
   path: 'enhance' | 'reformat' | 'generate' | 'variation' | 'skipped';
@@ -457,12 +458,17 @@ function buildSeoPrompt(product: MergedProduct): string {
 Brand: ${product.brand || 'N/A'}
 Categories: ${product.categories.join(', ') || 'N/A'}
 
-Generate SEO metadata for this product. Return ONLY a JSON object with exactly these fields:
+Generate SEO metadata for this product page. Return ONLY a JSON object with exactly these fields:
 {
-  "meta_title": "SEO title, max 60 characters, include brand and product type",
-  "meta_description": "SEO description, max 155 characters, compelling and keyword-rich"
+  "meta_title": "SEO title under 55 characters. Must end with a complete word. Include brand and product type.",
+  "meta_description": "SEO description, max 155 characters, compelling and keyword-rich. Must end with a complete word or sentence.",
+  "focus_keyword": "Primary keyword phrase (2-4 words) that a shopper would search for to find this product"
 }
 
+IMPORTANT:
+- meta_title MUST be under 55 characters. Count carefully. Do NOT go over.
+- This is a PRODUCT page, not a blog or list article. Do NOT use words like "Best", "Top", "Review", "Guide", "Ultimate", or numbered lists (e.g. "Top 10") in any field.
+- focus_keyword should be a product-type search term, not a brand name alone.
 Output ONLY the JSON object. No markdown. No explanation.`;
 }
 
@@ -479,10 +485,28 @@ function markdownToHtml(text: string): string {
   // Convert markdown bold/italic
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Convert markdown lists (but not inside <ol> blocks)
+  // Convert markdown lists — only convert bare "- item" lines, not already-HTML lists
   html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-  // Wrap consecutive <li> in <ul> (only if not already inside <ol>)
-  html = html.replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>\n${match}</ul>\n`);
+  // Wrap consecutive <li> in <ul>, but skip if already wrapped in <ul> or <ol>
+  // Note: regex has a capture group, so callback args are (match, group1, offset, fullString)
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, (match, _group, offset, fullString) => {
+    // Check if this block is already inside a <ul> or <ol>
+    const before = fullString.substring(0, offset);
+    const lastUlOpen = before.lastIndexOf('<ul>');
+    const lastUlClose = before.lastIndexOf('</ul>');
+    const lastOlOpen = before.lastIndexOf('<ol>');
+    const lastOlClose = before.lastIndexOf('</ol>');
+    const insideUl = lastUlOpen > lastUlClose;
+    const insideOl = lastOlOpen > lastOlClose;
+    if (insideUl || insideOl) return match;
+    return `<ul>\n${match}</ul>\n`;
+  });
+  // Fix double-nested <ul><ul> from LLM output
+  html = html.replace(/<ul>\s*<ul>/gi, '<ul>');
+  html = html.replace(/<\/ul>\s*<\/ul>/gi, '</ul>');
+  // Fix <ul>\n  <ul> pattern (indented nesting)
+  html = html.replace(/<ul>\s*\n\s*<ul>/gi, '<ul>');
+  html = html.replace(/<\/ul>\s*\n\s*<\/ul>/gi, '</ul>');
   return html.trim();
 }
 
@@ -512,8 +536,19 @@ function extractExcerpt(html: string): string {
   return excerpt.trim();
 }
 
+/** Truncate string at word boundary, not mid-word */
+function truncateAtWord(str: string, maxLen: number): string {
+  if (str.length <= maxLen) return str;
+  const truncated = str.substring(0, maxLen);
+  const lastSpace = truncated.lastIndexOf(' ');
+  if (lastSpace > maxLen * 0.6) {
+    return truncated.substring(0, lastSpace);
+  }
+  return truncated;
+}
+
 /** Parse JSON from LLM response, handling common issues */
-function parseSeoJson(response: string): { meta_title: string; meta_description: string } {
+function parseSeoJson(response: string): { meta_title: string; meta_description: string; focus_keyword: string } {
   let clean = response.replace(/```json?\s*/gi, '').replace(/```\s*/g, '').trim();
   const match = clean.match(/\{[\s\S]*\}/);
   if (match) clean = match[0];
@@ -521,11 +556,12 @@ function parseSeoJson(response: string): { meta_title: string; meta_description:
   try {
     const parsed = JSON.parse(clean);
     return {
-      meta_title: (parsed.meta_title || '').substring(0, 60),
-      meta_description: (parsed.meta_description || '').substring(0, 155),
+      meta_title: truncateAtWord(parsed.meta_title || '', 60),
+      meta_description: truncateAtWord(parsed.meta_description || '', 155),
+      focus_keyword: (parsed.focus_keyword || '').substring(0, 60),
     };
   } catch {
-    return { meta_title: '', meta_description: '' };
+    return { meta_title: '', meta_description: '', focus_keyword: '' };
   }
 }
 
@@ -558,6 +594,7 @@ export async function generateDescription(
       excerpt: product.existingExcerpt || '',
       metaTitle: '',
       metaDescription: '',
+      focusKeyword: '',
       status: 'fallback',
       error: 'Skipped: large variation group',
       path: 'skipped',
@@ -571,6 +608,7 @@ export async function generateDescription(
       excerpt: '',
       metaTitle: '',
       metaDescription: '',
+      focusKeyword: '',
       status: 'error',
       error: 'No source data available',
       path: 'skipped',
@@ -625,6 +663,7 @@ export async function generateDescription(
           excerpt: product.existingExcerpt || '',
           metaTitle: '',
           metaDescription: '',
+          focusKeyword: '',
           status: 'fallback',
           error: 'Generated HTML failed validation after retry',
           path,
@@ -639,6 +678,7 @@ export async function generateDescription(
     // Generate SEO metadata (only for parent products, non-fatal)
     let metaTitle = '';
     let metaDescription = '';
+    let focusKeyword = '';
     if (!isVariation) {
       try {
         const seoResponse = await llm.generate(buildSeoPrompt(product), {
@@ -648,6 +688,7 @@ export async function generateDescription(
         const seo = parseSeoJson(seoResponse);
         metaTitle = seo.meta_title;
         metaDescription = seo.meta_description;
+        focusKeyword = seo.focus_keyword;
         if (!metaTitle && !metaDescription) {
           console.warn(`  ⚠ SEO parse returned empty for #${product.postId} (raw: ${seoResponse.substring(0, 100)})`);
         }
@@ -661,6 +702,7 @@ export async function generateDescription(
       excerpt,
       metaTitle,
       metaDescription,
+      focusKeyword,
       status: 'success',
       path,
       categoryProfile,
@@ -672,6 +714,7 @@ export async function generateDescription(
       excerpt: product.existingExcerpt || '',
       metaTitle: '',
       metaDescription: '',
+      focusKeyword: '',
       status: 'error',
       error: err.message,
       path: isVariation ? 'variation' : classifyProduct(product),

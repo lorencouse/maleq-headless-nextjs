@@ -14,14 +14,21 @@ if (!defined('ABSPATH')) {
  */
 add_filter('woocommerce_email_styles', function($css) {
     $css .= '
-    /* Header */
+    /* Header logo image */
     #template_header_image {
-        padding: 24px 0 0 0;
+        padding: 24px 0 20px 0 !important;
+    }
+    #template_header_image p {
+        margin: 0 !important;
     }
     #template_header_image img {
         max-width: 200px !important;
         height: auto !important;
+        margin: 0 auto !important;
+        display: block !important;
     }
+
+    /* Header title bar */
     #template_header {
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
@@ -36,6 +43,9 @@ add_filter('woocommerce_email_styles', function($css) {
     /* Body */
     #body_content {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    #body_content_inner {
+        padding: 28px 48px 32px !important;
     }
     #body_content table td {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -60,15 +70,57 @@ add_filter('woocommerce_email_styles', function($css) {
         border-bottom: 1px solid #f0f0f0 !important;
     }
 
+    /* Order totals */
+    tfoot .td {
+        border-top: 1px solid #e5e5e5 !important;
+    }
+    tfoot tr:last-child .td {
+        font-weight: 700 !important;
+        font-size: 15px !important;
+    }
+
+    /* Order table header */
+    thead .td {
+        font-weight: 600 !important;
+        color: #333 !important;
+        text-transform: uppercase !important;
+        font-size: 12px !important;
+        letter-spacing: 0.04em !important;
+        padding: 10px 12px !important;
+        background: #f9f9f9 !important;
+    }
+
     /* Address blocks */
     address {
-        font-style: normal;
-        line-height: 1.6;
-        color: #444;
-        padding: 12px 16px;
-        background: #f9f9f9;
-        border-radius: 6px;
-        border: 1px solid #eee;
+        font-style: normal !important;
+        line-height: 1.7 !important;
+        color: #444 !important;
+        padding: 16px 20px !important;
+        background: #f9f9f9 !important;
+        border-radius: 6px !important;
+        border: 1px solid #e5e5e5 !important;
+        margin: 0 !important;
+    }
+    /* Reset the wrapping td so padding only comes from the address element */
+    .addresses .address {
+        padding: 0 !important;
+    }
+    .addresses td.td {
+        padding: 0 12px 12px 0 !important;
+        vertical-align: top !important;
+    }
+    .addresses td.td:last-child {
+        padding-right: 0 !important;
+    }
+    .addresses h3,
+    .addresses h2 {
+        margin: 0 0 8px !important;
+        padding-bottom: 0 !important;
+        border-bottom: none !important;
+        font-size: 14px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: #666 !important;
     }
 
     /* Links */
@@ -91,9 +143,10 @@ add_filter('woocommerce_email_styles', function($css) {
     }
     #credit {
         font-size: 12px;
-        color: #888;
-        padding: 24px 0;
+        color: #999;
+        padding: 20px 48px;
         line-height: 1.6;
+        border-top: 1px solid #eee;
     }
     #credit a {
         color: #E63946 !important;
@@ -103,6 +156,7 @@ add_filter('woocommerce_email_styles', function($css) {
     /* Wrapper */
     #wrapper {
         padding: 40px 0;
+        background-color: #f7f7f7;
     }
     #template_container {
         border-radius: 8px;
@@ -157,3 +211,4 @@ add_action('woocommerce_email_after_order_table', function($order, $sent_to_admi
         <a href="https://maleq.com/shop" style="display: inline-block; padding: 12px 32px; background: #E63946; color: #ffffff !important; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; font-family: -apple-system, BlinkMacSystemFont, sans-serif;">Continue Shopping</a>
     </p>';
 }, 10, 3);
+

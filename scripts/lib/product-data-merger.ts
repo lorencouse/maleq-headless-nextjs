@@ -26,6 +26,7 @@ export interface MergedProduct {
   sku: string;
   barcode: string;
   title: string;
+  slug: string;
   existingDescription: string;
   existingExcerpt: string;
 
@@ -53,6 +54,20 @@ export interface MergedProduct {
 
   // Variation info
   variationCount: number;
+
+  // Physical attributes — existing DB values + feed fill candidates
+  dbWeight: string;
+  dbLength: string;
+  dbWidth: string;
+  dbHeight: string;
+  dbInsertableLength: string;
+  dbInnerDiameter: string;
+  feedWeight: string;
+  feedLength: string;
+  feedWidth: string;
+  feedHeight: string;
+  feedInsertableLength: string;
+  feedInnerDiameter: string;
 }
 
 interface DbProduct {
@@ -72,6 +87,12 @@ interface DbMeta {
   thumbnail_id: string | null;
   gallery_ids: string | null;
   product_source: string | null;
+  weight: string | null;
+  length: string | null;
+  width: string | null;
+  height: string | null;
+  insertable_length: string | null;
+  inner_diameter: string | null;
 }
 
 interface DbTaxRow {
@@ -139,11 +160,18 @@ async function fetchProductMeta(db: Connection): Promise<Map<number, DbMeta>> {
        MAX(CASE WHEN pm.meta_key = '_wt_barcode' THEN pm.meta_value END) AS barcode,
        MAX(CASE WHEN pm.meta_key = '_thumbnail_id' THEN pm.meta_value END) AS thumbnail_id,
        MAX(CASE WHEN pm.meta_key = '_product_image_gallery' THEN pm.meta_value END) AS gallery_ids,
-       MAX(CASE WHEN pm.meta_key = '_product_source' THEN pm.meta_value END) AS product_source
+       MAX(CASE WHEN pm.meta_key = '_product_source' THEN pm.meta_value END) AS product_source,
+       MAX(CASE WHEN pm.meta_key = '_weight' THEN pm.meta_value END) AS weight,
+       MAX(CASE WHEN pm.meta_key = '_length' THEN pm.meta_value END) AS length,
+       MAX(CASE WHEN pm.meta_key = '_width' THEN pm.meta_value END) AS width,
+       MAX(CASE WHEN pm.meta_key = '_height' THEN pm.meta_value END) AS height,
+       MAX(CASE WHEN pm.meta_key = '_insertable_length' THEN pm.meta_value END) AS insertable_length,
+       MAX(CASE WHEN pm.meta_key = '_inner_diameter' THEN pm.meta_value END) AS inner_diameter
      FROM wp_postmeta pm
      INNER JOIN wp_posts p ON pm.post_id = p.ID
      WHERE p.post_type IN ('product', 'product_variation') AND p.post_status = 'publish'
-       AND pm.meta_key IN ('_sku', '_wt_barcode', '_thumbnail_id', '_product_image_gallery', '_product_source')
+       AND pm.meta_key IN ('_sku', '_wt_barcode', '_thumbnail_id', '_product_image_gallery', '_product_source',
+                           '_weight', '_length', '_width', '_height', '_insertable_length', '_inner_diameter')
      GROUP BY pm.post_id`
   );
   const map = new Map<number, DbMeta>();
@@ -283,6 +311,31 @@ function mergeSpecifications(
   return specs;
 }
 
+// ─── Physical attribute helpers ───
+
+interface PhysicalAttributes {
+  weight: string;
+  length: string;
+  width: string;
+  height: string;
+  insertableLength: string;
+  innerDiameter: string;
+}
+
+function mergePhysicalFromFeeds(
+  xmlProduct: XMLProduct | undefined,
+  stcProduct: STCProduct | undefined
+): PhysicalAttributes {
+  return {
+    weight: xmlProduct?.weight || stcProduct?.weight || '',
+    length: xmlProduct?.length || stcProduct?.length || '',
+    width: xmlProduct?.diameter || stcProduct?.width || '',
+    height: xmlProduct?.height || stcProduct?.height || '',
+    insertableLength: stcProduct?.insertableLength || '',
+    innerDiameter: stcProduct?.innerDiameter || '',
+  };
+}
+
 // ─── Public API ───
 
 export interface MergeOptions {
@@ -394,6 +447,7 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
       const mergedDescription = mergeDescription(product.post_content, xmlPrimary, stc);
       const mergedFeatures = mergeFeatures(xmlPrimary, stc);
       const mergedSpecifications = mergeSpecifications(xmlPrimary, stc);
+      const feedPhysical = mergePhysicalFromFeeds(xmlPrimary, stc);
 
       merged.push({
         postId: product.ID,
@@ -402,6 +456,7 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
         sku: meta?.sku || '',
         barcode,
         title: decodeEntities(product.post_title),
+        slug: product.post_name,
         existingDescription: product.post_content,
         existingExcerpt: product.post_excerpt,
         mergedDescription,
@@ -417,6 +472,18 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
         xmlCategories: xmlPrimary?.categories?.map(c => c.name).filter(Boolean) || [],
         stcCategories: [stc?.category1, stc?.category2, stc?.category3].filter(Boolean) as string[],
         variationCount: varCounts.get(product.ID) || 0,
+        dbWeight: meta?.weight || '',
+        dbLength: meta?.length || '',
+        dbWidth: meta?.width || '',
+        dbHeight: meta?.height || '',
+        dbInsertableLength: meta?.insertable_length || '',
+        dbInnerDiameter: meta?.inner_diameter || '',
+        feedWeight: feedPhysical.weight,
+        feedLength: feedPhysical.length,
+        feedWidth: feedPhysical.width,
+        feedHeight: feedPhysical.height,
+        feedInsertableLength: feedPhysical.insertableLength,
+        feedInnerDiameter: feedPhysical.innerDiameter,
       });
     }
 
@@ -429,6 +496,13 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
       const meta = metaMap.get(variation.ID);
       const barcode = meta?.barcode || meta?.sku || '';
 
+      // Look up variation in feeds for physical attributes
+      const varXmlActive = barcode ? xmlActiveMap.get(barcode) : undefined;
+      const varXmlInactive = barcode ? xmlInactiveMap.get(barcode) : undefined;
+      const varStc = barcode ? stcMap.get(barcode) : undefined;
+      const varXmlPrimary = varXmlActive || varXmlInactive;
+      const varFeedPhysical = mergePhysicalFromFeeds(varXmlPrimary, varStc);
+
       merged.push({
         postId: variation.ID,
         postType: 'product_variation',
@@ -436,6 +510,7 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
         sku: meta?.sku || '',
         barcode,
         title: decodeEntities(variation.post_title),
+        slug: variation.post_name,
         existingDescription: variation.post_content,
         existingExcerpt: variation.post_excerpt,
         mergedDescription: variation.post_content ? decodeEntities(variation.post_content) : '',
@@ -451,6 +526,18 @@ export async function mergeAllSources(options: MergeOptions = {}): Promise<Merge
         xmlCategories: [],
         stcCategories: [],
         variationCount: 0,
+        dbWeight: meta?.weight || '',
+        dbLength: meta?.length || '',
+        dbWidth: meta?.width || '',
+        dbHeight: meta?.height || '',
+        dbInsertableLength: meta?.insertable_length || '',
+        dbInnerDiameter: meta?.inner_diameter || '',
+        feedWeight: varFeedPhysical.weight,
+        feedLength: varFeedPhysical.length,
+        feedWidth: varFeedPhysical.width,
+        feedHeight: varFeedPhysical.height,
+        feedInsertableLength: varFeedPhysical.insertableLength,
+        feedInnerDiameter: varFeedPhysical.innerDiameter,
       });
     }
 

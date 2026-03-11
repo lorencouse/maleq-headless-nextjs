@@ -18,6 +18,7 @@ export interface CsvRow {
   post_excerpt: string;
   meta_title: string;
   meta_description: string;
+  focus_keyword: string;
   brand: string;
   categories: string;
   images_embedded: number;
@@ -37,6 +38,7 @@ const CSV_COLUMNS: (keyof CsvRow)[] = [
   'post_excerpt',
   'meta_title',
   'meta_description',
+  'focus_keyword',
   'brand',
   'categories',
   'images_embedded',

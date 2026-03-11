@@ -24,7 +24,9 @@ export function embedImages(
 
   // Limit images
   const images = galleryImageUrls.slice(0, MAX_EMBEDDED_IMAGES);
-  const alt = [productTitle, brand].filter(Boolean).join(' - ');
+
+  // Extract heading texts for varied alt attributes
+  const headingTexts = extractHeadingTexts(html);
 
   // Split HTML into sections at <h2> and <h3> boundaries
   // Each section starts with a heading (except possibly the first)
@@ -32,6 +34,7 @@ export function embedImages(
 
   if (sections.length <= 1) {
     // No headings found — append first image at the end
+    const alt = buildAltText(productTitle, brand, undefined, 0);
     const imgTag = buildImgTag(images[0], alt);
     return html + '\n' + imgTag;
   }
@@ -53,12 +56,42 @@ export function embedImages(
         continue;
       }
 
+      const sectionHeading = headingTexts[i] || undefined;
+      const alt = buildAltText(productTitle, brand, sectionHeading, imageIdx);
       result.push('\n' + buildImgTag(images[imageIdx], alt) + '\n');
       imageIdx++;
     }
   }
 
   return result.join('');
+}
+
+/** Extract heading text from each section for use in alt attributes */
+function extractHeadingTexts(html: string): string[] {
+  const sections = html.split(/(?=<h[23][^>]*>)/i);
+  return sections.map((section) => {
+    const match = section.match(/<h[23][^>]*>(.*?)<\/h[23]>/i);
+    return match ? match[1].replace(/<[^>]+>/g, '').trim() : '';
+  });
+}
+
+/** Build descriptive, varied alt text for each image */
+function buildAltText(
+  productTitle: string,
+  brand: string,
+  sectionContext: string | undefined,
+  imageIndex: number
+): string {
+  const parts: string[] = [productTitle];
+  if (sectionContext) {
+    parts.push(sectionContext);
+  } else if (brand) {
+    parts.push(`by ${brand}`);
+  }
+  if (imageIndex > 0 && !sectionContext) {
+    parts.push(`view ${imageIndex + 1}`);
+  }
+  return parts.join(' - ');
 }
 
 function buildImgTag(url: string, alt: string): string {
