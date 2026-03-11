@@ -124,7 +124,7 @@ echo "Step 4: Uploading to remote server..."
 
 # Upload and import to remote server
 cat "${LOCAL_EXPORT}" | ssh -o StrictHostKeyChecking=no "${REMOTE_USER}@${REMOTE_HOST}" \
-  "mysql -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' -h 127.0.0.1 ${REMOTE_DB_NAME}"
+  "mysql --ssl-mode=REQUIRED -u ${REMOTE_DB_USER} -p'${REMOTE_DB_PASS}' -h 127.0.0.1 ${REMOTE_DB_NAME}"
 
 if [ $? -eq 0 ]; then
   echo "✓ Database uploaded successfully"

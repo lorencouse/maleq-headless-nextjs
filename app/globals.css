@@ -927,11 +927,12 @@ a:has(img):not(.product-card-link):not(.blog-card-link):hover::after {
 }
 
 .product-description-content img {
-  max-width: 100%;
+  display: block;
+  max-width: min(100%, 32rem);
   height: auto;
   border: 1px solid var(--border);
   border-radius: 0.75rem;
-  margin: 0.5rem 0;
+  margin: 0.5rem auto;
 }
 
 .product-description-content table {
