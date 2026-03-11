@@ -47,7 +47,7 @@ export default memo(function ProductCard({
         href={`/product/${product.slug}`}
         className='product-card-link block'
       >
-        <div className='relative h-44 sm:h-56 lg:h-64 w-full overflow-hidden bg-background'>
+        <div className='relative h-44 sm:h-56 lg:h-64 w-full overflow-hidden bg-white'>
           {product.image && !imgError ? (
             <Image
               src={product.image.url}

@@ -10,7 +10,6 @@ import {
 import { isMySQLConfigured } from '@/lib/db/pool';
 import { queryProductIndex } from '@/lib/products/product-index';
 import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
-import ProductCard from '@/components/shop/ProductCard';
 import BlogCard from '@/components/blog/BlogCard';
 import HomeHero from '@/components/home/HomeHero';
 import HomeBenefits from '@/components/home/HomeBenefits';
@@ -23,7 +22,9 @@ import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import type { Post } from '@/lib/types/wordpress';
 
 export const metadata: Metadata = {
-  title: { absolute: 'Male Q - Premium Adult Products | Fast & Discreet Shipping' },
+  title: {
+    absolute: 'Male Q - Premium Adult Products | Fast & Discreet Shipping',
+  },
   description:
     'Shop premium adult products with fast, discreet shipping. Expert guides, unsponsored reviews, and quality products to help you choose with confidence.',
   openGraph: {
@@ -50,23 +51,30 @@ export default async function Home() {
   // Build product promises (index or GraphQL)
   const featuredProductsPromise = useIndex
     ? queryProductIndex({ inStock: true, limit: 8, sort: 'popularity' })
-        .then(r => ({ products: indexEntriesToUnifiedProducts(r.products) }))
+        .then((r) => ({ products: indexEntriesToUnifiedProducts(r.products) }))
         .catch(() => getFilteredProducts({ limit: 8, inStock: true }))
     : getFilteredProducts({ limit: 8, inStock: true });
 
   const trendingProductsPromise = useIndex
-    ? queryProductIndex({ onSale: true, inStock: true, limit: 12, sort: 'popularity' })
-        .then(r => indexEntriesToUnifiedProducts(r.products))
+    ? queryProductIndex({
+        onSale: true,
+        inStock: true,
+        limit: 12,
+        sort: 'popularity',
+      })
+        .then((r) => indexEntriesToUnifiedProducts(r.products))
         .catch(() => getTrendingProducts(12))
     : getTrendingProducts(12);
 
   // Fetch data in parallel (blog posts still need GraphQL)
   const [postsData, productsResult, categories, trendingProducts] =
     await Promise.all([
-      getClient().query({
-        query: GET_ALL_POSTS,
-        variables: { first: 6 },
-      }).catch(() => ({ data: { posts: { nodes: [] } } })),
+      getClient()
+        .query({
+          query: GET_ALL_POSTS,
+          variables: { first: 6 },
+        })
+        .catch(() => ({ data: { posts: { nodes: [] } } })),
       featuredProductsPromise,
       getHierarchicalCategories().catch(() => []),
       trendingProductsPromise,
@@ -81,60 +89,30 @@ export default async function Home() {
       <HomeHero />
 
       {/* Featured Categories */}
-      <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12'>
+      <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12'>
         <FeaturedCategories categories={categories} />
       </section>
 
       {/* Featured Products */}
-      <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-16'>
-        <div className='mb-8'>
-          <h2 className='text-2xl sm:text-3xl font-bold text-foreground'>
-            Featured Products
-          </h2>
-          <p className='text-muted-foreground mt-1'>
-            Discover our most popular items
-          </p>
-        </div>
-
-        {products.length > 0 ? (
-          <div className='grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(256px,1fr))] gap-4 sm:gap-6'>
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        ) : (
-          <div className='text-center py-12 bg-card border border-border rounded-lg'>
-            <p className='text-muted-foreground'>No products available yet.</p>
-          </div>
-        )}
-
-        <div className='mt-8 text-center'>
-          <Link
-            href='/shop'
-            className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
-          >
-            View All Products
-            <svg
-              className='w-4 h-4'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M9 5l7 7-7 7'
-              />
-            </svg>
-          </Link>
-        </div>
-      </section>
+      {products.length > 0 && (
+        <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-16'>
+          <ProductCarousel
+            products={products}
+            title='Featured Products'
+            subtitle='Discover our most popular items'
+            viewAllLink='/shop'
+            viewAllText='View All Products'
+            showGradients
+            showMobileHint
+            variant='section'
+          />
+        </section>
+      )}
 
       {/* Trending Products Carousel */}
       {trendingProducts.length > 0 && (
         <section className='py-6 sm:py-12 bg-muted/30'>
-          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8'>
             <ProductCarousel
               products={trendingProducts}
               title='Trending Now'
@@ -169,7 +147,7 @@ export default async function Home() {
 
       {/* Recent Blog Posts */}
       {posts.length > 0 && (
-        <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
+        <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
           <div className='mb-8'>
             <h2 className='text-2xl sm:text-3xl font-bold text-foreground'>
               Expert Guides & Reviews
@@ -178,8 +156,8 @@ export default async function Home() {
               Unsponsored advice to help you choose
             </p>
           </div>
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-            {posts.slice(0, 3).map((post) => (
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
+            {posts.slice(0, 4).map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
           </div>

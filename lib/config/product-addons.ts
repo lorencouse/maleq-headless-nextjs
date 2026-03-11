@@ -105,9 +105,9 @@ export const ADDON_PRODUCTS: AddonProduct[] = [
  */
 export const ADDON_BUNDLE: AddonBundle = {
   id: 'addon-bundle-all',
-  productId: '0', // TODO: Update with actual WooCommerce product ID if exists
+  productId: '595311',
   sku: 'CARE-KIT-BUNDLE',
-  slug: 'complete-care-kit', // TODO: Update with actual product slug if exists
+  slug: 'complete-care-kit',
   name: 'Complete Care Kit (Cleaner, Lube, & Enema)',
   shortName: 'Complete Care Kit',
   price: 49.91,
@@ -116,6 +116,7 @@ export const ADDON_BUNDLE: AddonBundle = {
     'Cleaner, Lube, & Enema - Everything you need for the best experience',
   includes: ['716770030474', '827160112158', '685239852653'],
   savings: 15.0, // $59.91 addon total - $44.91 bundle
+  image: '/wp-content/uploads/2026/03/addon-kit.jpg',
 };
 
 /**
