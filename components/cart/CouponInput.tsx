@@ -122,7 +122,7 @@ export default function CouponInput() {
         </button>
       </div>
       {error && (
-        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+        <p className="mt-2 text-sm text-destructive dark:text-destructive">{error}</p>
       )}
     </div>
   );

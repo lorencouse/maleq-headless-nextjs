@@ -100,27 +100,7 @@ function formatPrice(price: string | number): string {
   }).format(num);
 }
 
-function getStatusColor(status: string): string {
-  switch (status) {
-    case 'completed':
-      return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400';
-    case 'processing':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
-    case 'on-hold':
-      return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400';
-    case 'pending':
-      return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400';
-    case 'cancelled':
-    case 'failed':
-      return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-    case 'refunded':
-      return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
-    case 'shipped':
-      return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400';
-    default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400';
-  }
-}
+import { getStatusColor } from '@/lib/constants/status-colors';
 
 function formatStatus(status: string): string {
   return status.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());

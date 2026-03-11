@@ -106,7 +106,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
   if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-500">{error}</p>
+        <p className="text-destructive">{error}</p>
         <button
           onClick={() => fetchReviews(1)}
           className="mt-4 px-4 py-2 text-primary hover:underline"

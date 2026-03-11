@@ -60,10 +60,10 @@ export default function NewsletterSection() {
           {/* Form */}
           {status === 'success' ? (
             <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 text-center">
-              <svg className="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-12 h-12 text-success mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p className="text-green-600 dark:text-green-400 font-medium">{message}</p>
+              <p className="text-success dark:text-success font-medium">{message}</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
@@ -86,7 +86,7 @@ export default function NewsletterSection() {
           )}
 
           {status === 'error' && (
-            <p className="mt-3 text-sm text-red-500">{message}</p>
+            <p className="mt-3 text-sm text-destructive">{message}</p>
           )}
 
           {/* Privacy note */}

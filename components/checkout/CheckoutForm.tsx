@@ -450,7 +450,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       {/* Error Display - at bottom near checkout button */}
       {error && (
         <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
-          <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-sm font-medium text-destructive dark:text-destructive">{error}</p>
         </div>
       )}
     </div>

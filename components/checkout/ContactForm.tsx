@@ -67,7 +67,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
       {/* Email */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-          Email Address <span className="text-red-500">*</span>
+          Email Address <span className="text-destructive">*</span>
         </label>
         <input
           type="email"
@@ -80,7 +80,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
           }`}
         />
         {errors.email && (
-          <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.email}</p>
         )}
       </div>
 
@@ -100,7 +100,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
           }`}
         />
         {errors.phone && (
-          <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.phone}</p>
         )}
         <p className="mt-1 text-xs text-muted-foreground">
           For delivery updates and questions about your order

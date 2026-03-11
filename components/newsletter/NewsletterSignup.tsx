@@ -87,7 +87,7 @@ export default function NewsletterSignup({
   if (isAlreadySubscribed || subscribed) {
     return (
       <div className={`${className}`}>
-        <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+        <div className="flex items-center gap-2 text-sm text-success dark:text-success">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
@@ -136,7 +136,7 @@ export default function NewsletterSignup({
           </button>
         </form>
         {error && (
-          <p className="mt-2 text-xs text-red-600 dark:text-red-400">{error}</p>
+          <p className="mt-2 text-xs text-destructive dark:text-destructive">{error}</p>
         )}
       </div>
     );
@@ -173,7 +173,7 @@ export default function NewsletterSignup({
           </button>
         </form>
         {error && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="mt-2 text-sm text-destructive dark:text-destructive">{error}</p>
         )}
       </div>
     );
@@ -203,7 +203,7 @@ export default function NewsletterSignup({
         </button>
       </form>
       {error && (
-        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>
+        <p className="mt-1 text-xs text-destructive dark:text-destructive">{error}</p>
       )}
     </div>
   );

@@ -48,13 +48,23 @@ export function useHorizontalScroll(
 
   const scroll = useCallback((direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
-    if (container) {
-      const scrollAmount = direction === 'left'
-        ? -cardWidth * scrollMultiplier
-        : cardWidth * scrollMultiplier;
+    if (!container) return;
+
+    const scrollAmount = direction === 'left'
+      ? -cardWidth * scrollMultiplier
+      : cardWidth * scrollMultiplier;
+
+    const maxScroll = container.scrollWidth - container.clientWidth;
+
+    // Wrap around at edges
+    if (direction === 'right' && container.scrollLeft >= maxScroll - threshold) {
+      container.scrollTo({ left: 0, behavior: 'smooth' });
+    } else if (direction === 'left' && container.scrollLeft <= threshold) {
+      container.scrollTo({ left: maxScroll, behavior: 'smooth' });
+    } else {
       container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
-  }, [cardWidth, scrollMultiplier]);
+  }, [cardWidth, scrollMultiplier, threshold]);
 
   const scrollLeft = useCallback(() => scroll('left'), [scroll]);
   const scrollRight = useCallback(() => scroll('right'), [scroll]);

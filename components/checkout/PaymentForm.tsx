@@ -99,7 +99,7 @@ export default function PaymentForm({
 
       {errorMessage && (
         <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
+          <p className="text-sm text-destructive dark:text-destructive">{errorMessage}</p>
         </div>
       )}
 

@@ -31,17 +31,7 @@ interface OrderData {
   tracking: TrackingItem[];
 }
 
-const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
-  processing: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  'on-hold': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300',
-  completed: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  shipped: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300',
-  delivered: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-  cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-  refunded: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300',
-  failed: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-};
+import { statusColors } from '@/lib/constants/status-colors';
 
 export default function TrackingForm() {
   const [order, setOrder] = useState<OrderData | null>(null);
@@ -115,7 +105,7 @@ export default function TrackingForm() {
               {...register('orderNumber')}
             />
             {errors.orderNumber && (
-              <p className="mt-1 text-sm text-red-500">{errors.orderNumber.message}</p>
+              <p className="mt-1 text-sm text-destructive">{errors.orderNumber.message}</p>
             )}
           </div>
           <div>
@@ -130,7 +120,7 @@ export default function TrackingForm() {
               {...register('email')}
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
+              <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
             )}
           </div>
         </div>
@@ -157,10 +147,10 @@ export default function TrackingForm() {
       {error && (
         <div className="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
           <div className="flex items-center gap-3">
-            <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 text-destructive flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p className="text-red-800 dark:text-red-200">{error}</p>
+            <p className="text-destructive dark:text-destructive">{error}</p>
           </div>
         </div>
       )}

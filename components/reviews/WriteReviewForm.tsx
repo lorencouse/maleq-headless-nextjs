@@ -100,7 +100,7 @@ export default function WriteReviewForm({
     return (
       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
         <svg
-          className="w-12 h-12 mx-auto mb-4 text-green-500"
+          className="w-12 h-12 mx-auto mb-4 text-success"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -112,10 +112,10 @@ export default function WriteReviewForm({
             d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <h3 className="text-lg font-semibold text-green-700 dark:text-green-400 mb-2">
+        <h3 className="text-lg font-semibold text-success dark:text-success mb-2">
           Thank you for your review!
         </h3>
-        <p className="text-green-600 dark:text-green-500">
+        <p className="text-success dark:text-success">
           Your review has been submitted and will be visible once approved.
         </p>
       </div>
@@ -146,7 +146,7 @@ export default function WriteReviewForm({
         {/* Rating */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Your Rating <span className="text-red-500">*</span>
+            Your Rating <span className="text-destructive">*</span>
           </label>
           <div className="flex items-center gap-4">
             <StarRating
@@ -170,7 +170,7 @@ export default function WriteReviewForm({
         {/* Review */}
         <div>
           <label htmlFor="review" className="block text-sm font-medium text-foreground mb-2">
-            Your Review <span className="text-red-500">*</span>
+            Your Review <span className="text-destructive">*</span>
           </label>
           <textarea
             id="review"
@@ -192,7 +192,7 @@ export default function WriteReviewForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                Your Name <span className="text-red-500">*</span>
+                Your Name <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
@@ -206,7 +206,7 @@ export default function WriteReviewForm({
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email Address <span className="text-red-500">*</span>
+                Email Address <span className="text-destructive">*</span>
               </label>
               <input
                 type="email"
@@ -226,7 +226,7 @@ export default function WriteReviewForm({
 
         {/* Error */}
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-destructive dark:text-destructive text-sm">
             {error}
           </div>
         )}

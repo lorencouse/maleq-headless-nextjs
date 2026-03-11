@@ -79,8 +79,7 @@ export default function ProductCarousel({
           <>
             <button
               onClick={scrollLeft}
-              disabled={!canScrollLeft}
-              className='absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all'
+              className='absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted transition-all'
               aria-label='Scroll left'
             >
               <svg
@@ -99,8 +98,7 @@ export default function ProductCarousel({
             </button>
             <button
               onClick={scrollRight}
-              disabled={!canScrollRight}
-              className='absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted disabled:opacity-0 disabled:pointer-events-none transition-all'
+              className='absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted transition-all'
               aria-label='Scroll right'
             >
               <svg
@@ -129,7 +127,7 @@ export default function ProductCarousel({
           {products.map((product) => (
             <div
               key={product.id}
-              className='flex-shrink-0 snap-start w-[260px] sm:w-[280px]'
+              className='flex-shrink-0 snap-start w-[260px] sm:w-[280px] lg:w-[300px]'
             >
               <ProductCard product={product} />
             </div>

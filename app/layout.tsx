@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { DM_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -20,16 +20,16 @@ import PwaAnalytics from "@/components/pwa/PwaAnalytics";
 import BackgroundSyncReplay from "@/components/pwa/BackgroundSyncReplay";
 import CartStockRevalidation from "@/components/pwa/CartStockRevalidation";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
   display: "swap",
+  variable: "--font-dm-sans",
 });
 
-const poppins = Poppins({
+const outfit = Outfit({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
-  variable: "--font-poppins",
+  variable: "--font-outfit",
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -132,7 +132,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} ${poppins.variable} antialiased flex flex-col min-h-screen`}>
+      <body className={`${dmSans.variable} ${outfit.variable} antialiased flex flex-col min-h-screen`}>
         <ServiceWorkerRegistration />
         <OfflineIndicator />
         <GoogleAnalytics />

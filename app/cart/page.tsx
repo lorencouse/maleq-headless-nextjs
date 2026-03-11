@@ -5,6 +5,7 @@ import { useCartStore, useIsCartEmpty, useCartSubtotal } from '@/lib/store/cart-
 import CartItem from '@/components/cart/CartItem';
 import CartSummary from '@/components/cart/CartSummary';
 import EmptyCart from '@/components/cart/EmptyCart';
+import CartCrossSells from '@/components/cart/CartCrossSells';
 import * as gtag from '@/lib/analytics/gtag';
 
 export default function CartPage() {
@@ -76,6 +77,9 @@ export default function CartPage() {
           <CartSummary />
         </div>
       </div>
+
+      {/* Cross-sells */}
+      <CartCrossSells />
     </div>
   );
 }

@@ -147,6 +147,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const productGtin = product.sku && /^\d{12,13}$/.test(product.sku) ? product.sku : undefined;
 
   return (
+    <>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
       {/* Dev: Edit in WordPress link */}
       <DevEditLink type="product" databaseId={product.databaseId} wpBaseUrl={getWpBaseUrl()} />
@@ -221,18 +222,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
         reviewCount={product.reviewCount || 0}
       />
 
-      {/* Related Products */}
-      {relatedProducts.length > 0 && (
-        <RelatedProducts
-          products={relatedProducts}
-          currentProductId={product.id}
-          title="You May Also Like"
-        />
-      )}
-
-      {/* Recently Viewed */}
-      <RecentlyViewed currentProductId={product.id} />
-
       {/* Track this product view */}
       <TrackRecentlyViewed
         productId={product.databaseId?.toString() || product.id}
@@ -247,5 +236,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
         brand={product.brands?.[0]?.name || null}
       />
     </div>
+
+    {/* Full-width carousels outside max-w container */}
+    <div className="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <RelatedProducts
+          products={relatedProducts}
+          currentProductId={product.id}
+          title="You May Also Like"
+        />
+      )}
+
+      {/* Recently Viewed */}
+      <RecentlyViewed currentProductId={product.id} />
+    </div>
+    </>
   );
 }

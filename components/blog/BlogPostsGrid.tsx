@@ -94,7 +94,7 @@ export default function BlogPostsGrid({
       {/* Error Message */}
       {error && (
         <div className="mt-8 text-center">
-          <p className="text-red-500 text-sm">{error}</p>
+          <p className="text-destructive text-sm">{error}</p>
         </div>
       )}
 

@@ -43,7 +43,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className="text-sm font-semibold text-primary hover:text-red-500 transition-colors"
+                className="text-sm font-semibold text-primary hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>
@@ -77,12 +77,12 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
                       <Link
                         href={item.href}
                         onClick={onClose}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-red-500 transition-colors group"
+                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors group"
                       >
                         {item.icon && (
                           <NavIcon
                             iconKey={item.icon}
-                            className="w-4 h-4 text-muted-foreground group-hover:text-red-500 transition-colors flex-shrink-0"
+                            className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0"
                           />
                         )}
                         <span>{item.label}</span>
@@ -96,7 +96,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
               <Link
                 href={group.href}
                 onClick={onClose}
-                className="inline-block text-xs font-medium text-primary hover:text-red-500 transition-colors mt-3"
+                className="inline-block text-xs font-medium text-primary hover:text-primary transition-colors mt-3"
               >
                 View All &rarr;
               </Link>
@@ -110,7 +110,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
             <Link
               href={section.href}
               onClick={onClose}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-red-500 transition-colors"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary transition-colors"
             >
               Shop All Products
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,7 +140,7 @@ function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className="flex flex-col px-3 py-2.5 rounded-md hover:bg-muted hover:text-red-500 transition-colors"
+                className="flex flex-col px-3 py-2.5 rounded-md hover:bg-muted hover:text-primary transition-colors"
               >
                 <span className="text-sm font-medium text-foreground">{item.label}</span>
                 {item.description && (

@@ -11,12 +11,12 @@
   --card: #ffffff;
   --card-foreground: #0a0a0a;
 
-  /* Brand colors - Primary: #FF3939 */
-  --primary: #FF3939;
+  /* Brand colors - Primary: refined imperial red */
+  --primary: #E63946;
   --primary-foreground: #ffffff;
-  --primary-hover: #e62e2e;
-  --primary-light: #ff5c5c;
-  --primary-dark: #cc2e2e;
+  --primary-hover: #cf2f3c;
+  --primary-light: #ef5663;
+  --primary-dark: #b82d37;
 
   /* Accent colors */
   --accent: #f97316;
@@ -63,8 +63,8 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
   /* Colored shadows for brand elements */
-  --shadow-primary: 0 4px 14px -3px rgba(255, 57, 57, 0.25);
-  --shadow-primary-lg: 0 10px 25px -5px rgba(255, 57, 57, 0.3);
+  --shadow-primary: 0 4px 14px -3px rgba(230, 57, 70, 0.25);
+  --shadow-primary-lg: 0 10px 25px -5px rgba(230, 57, 70, 0.3);
   --shadow-success: 0 4px 14px -3px rgba(16, 185, 129, 0.25);
   --shadow-info: 0 4px 14px -3px rgba(59, 130, 246, 0.25);
 
@@ -98,11 +98,11 @@
   --card-foreground: #fafafa;
 
   /* Brand colors adjusted for dark mode */
-  --primary: #FF3939;
+  --primary: #E63946;
   --primary-foreground: #ffffff;
-  --primary-hover: #ff5c5c;
-  --primary-light: #ff7070;
-  --primary-dark: #e62e2e;
+  --primary-hover: #ef5663;
+  --primary-light: #f47580;
+  --primary-dark: #cf2f3c;
 
   /* Accent colors for dark mode */
   --accent: #fb923c;
@@ -140,8 +140,8 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 
   /* Colored shadows for dark mode */
-  --shadow-primary: 0 4px 14px -3px rgba(255, 57, 57, 0.35);
-  --shadow-primary-lg: 0 10px 25px -5px rgba(255, 57, 57, 0.4);
+  --shadow-primary: 0 4px 14px -3px rgba(230, 57, 70, 0.35);
+  --shadow-primary-lg: 0 10px 25px -5px rgba(230, 57, 70, 0.4);
   --shadow-success: 0 4px 14px -3px rgba(52, 211, 153, 0.35);
   --shadow-info: 0 4px 14px -3px rgba(96, 165, 250, 0.35);
 
@@ -207,14 +207,14 @@
   --radius-full: var(--radius-full);
 
   /* Fonts */
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, sans-serif;
+  font-family: var(--font-dm-sans), 'DM Sans', sans-serif;
   line-height: 1.6;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -225,7 +225,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-poppins), Poppins, sans-serif;
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
   font-weight: 700;
   font-style: normal;
   line-height: 1.2;

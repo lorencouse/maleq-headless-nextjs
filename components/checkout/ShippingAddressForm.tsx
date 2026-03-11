@@ -279,7 +279,7 @@ export default function ShippingAddressForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
-            First Name <span className="text-red-500">*</span>
+            First Name <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -290,12 +290,12 @@ export default function ShippingAddressForm() {
             className={inputClassName('firstName')}
           />
           {errors.firstName && (
-            <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.firstName}</p>
           )}
         </div>
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-1">
-            Last Name <span className="text-red-500">*</span>
+            Last Name <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -306,7 +306,7 @@ export default function ShippingAddressForm() {
             className={inputClassName('lastName')}
           />
           {errors.lastName && (
-            <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.lastName}</p>
           )}
         </div>
       </div>
@@ -329,7 +329,7 @@ export default function ShippingAddressForm() {
       {/* Address Line 1 */}
       <div>
         <label htmlFor="address1" className="block text-sm font-medium text-foreground mb-1">
-          Address <span className="text-red-500">*</span>
+          Address <span className="text-destructive">*</span>
         </label>
         <div className="relative">
           <input
@@ -402,7 +402,7 @@ export default function ShippingAddressForm() {
           )}
         </div>
         {errors.address1 && (
-          <p className="mt-1 text-sm text-red-500">{errors.address1}</p>
+          <p className="mt-1 text-sm text-destructive">{errors.address1}</p>
         )}
         {!isAutocompleteLoading && hasAutocompleteError && address.address1.trim().length >= 3 && (
           <p className="mt-1 text-xs text-muted-foreground">
@@ -430,7 +430,7 @@ export default function ShippingAddressForm() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-foreground mb-1">
-            City <span className="text-red-500">*</span>
+            City <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -441,12 +441,12 @@ export default function ShippingAddressForm() {
             className={inputClassName('city')}
           />
           {errors.city && (
-            <p className="mt-1 text-sm text-red-500">{errors.city}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.city}</p>
           )}
         </div>
         <div>
           <label htmlFor="state" className="block text-sm font-medium text-foreground mb-1">
-            {isUSAddress ? 'State' : 'Province / Region'} <span className="text-red-500">*</span>
+            {isUSAddress ? 'State' : 'Province / Region'} <span className="text-destructive">*</span>
           </label>
           {isUSAddress ? (
             <select
@@ -475,12 +475,12 @@ export default function ShippingAddressForm() {
             />
           )}
           {errors.state && (
-            <p className="mt-1 text-sm text-red-500">{errors.state}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.state}</p>
           )}
         </div>
         <div>
           <label htmlFor="zipCode" className="block text-sm font-medium text-foreground mb-1">
-            {isUSAddress ? 'ZIP Code' : 'Postal Code'} <span className="text-red-500">*</span>
+            {isUSAddress ? 'ZIP Code' : 'Postal Code'} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -492,7 +492,7 @@ export default function ShippingAddressForm() {
             className={inputClassName('zipCode')}
           />
           {errors.zipCode && (
-            <p className="mt-1 text-sm text-red-500">{errors.zipCode}</p>
+            <p className="mt-1 text-sm text-destructive">{errors.zipCode}</p>
           )}
         </div>
       </div>
@@ -500,7 +500,7 @@ export default function ShippingAddressForm() {
       {/* Country */}
       <div>
         <label htmlFor="country" className="block text-sm font-medium text-foreground mb-1">
-          Country <span className="text-red-500">*</span>
+          Country <span className="text-destructive">*</span>
         </label>
         <select
           id="country"

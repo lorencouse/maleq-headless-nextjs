@@ -37,6 +37,7 @@ export default function ProductImageGallery({
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [isSettingDefault, setIsSettingDefault] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const handleImageError = useCallback((imageUrl: string) => {
     setFailedImages(prev => new Set(prev).add(imageUrl));
@@ -50,7 +51,6 @@ export default function ProductImageGallery({
     setSelectedImage(image);
 
     if (variationImageMap && onVariationSelectByImage) {
-      // Normalize URLs for comparison (strip protocol, trailing slashes, query params)
       const normalize = (url: string) =>
         url.replace(/^https?:\/\//, '').replace(/[?#].*$/, '').replace(/\/$/, '');
       const clickedNorm = normalize(image.url);
@@ -98,6 +98,20 @@ export default function ProductImageGallery({
     };
   }, [images]);
 
+  // Close lightbox on ESC
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsLightboxOpen(false);
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isLightboxOpen]);
+
   const scroll = (direction: 'left' | 'right') => {
     const container = scrollContainerRef.current;
     if (container) {
@@ -108,6 +122,16 @@ export default function ProductImageGallery({
       });
     }
   };
+
+  const navigateLightbox = useCallback((direction: 'prev' | 'next') => {
+    const currentIndex = images.findIndex(img => img.url === selectedImage?.url);
+    if (currentIndex === -1) return;
+    const newIndex = direction === 'next'
+      ? (currentIndex + 1) % images.length
+      : (currentIndex - 1 + images.length) % images.length;
+    setSelectedImage(images[newIndex]);
+    setMainImageLoaded(false);
+  }, [images, selectedImage]);
 
   const isDev = process.env.NODE_ENV === 'development';
   const showSetDefault =
@@ -151,18 +175,27 @@ export default function ProductImageGallery({
     );
   }
 
+  const currentImageUrl = selectedImage?.url || images[0].url;
+
   return (
     <div className="space-y-4">
       {/* Main Image / Video */}
-      <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-        {isVideo(selectedImage?.url || images[0].url) ? (
+      <div
+        className="relative aspect-square rounded-lg overflow-hidden bg-muted cursor-zoom-in group/main"
+        onClick={() => {
+          if (!isVideo(currentImageUrl)) {
+            setIsLightboxOpen(true);
+          }
+        }}
+      >
+        {isVideo(currentImageUrl) ? (
           <video
-            src={selectedImage?.url || images[0].url}
+            src={currentImageUrl}
             controls
             playsInline
             className="w-full h-full object-contain"
           />
-        ) : failedImages.has(selectedImage?.url || images[0].url) ? (
+        ) : failedImages.has(currentImageUrl) ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
             Image unavailable
           </div>
@@ -174,25 +207,35 @@ export default function ProductImageGallery({
               </div>
             )}
             <Image
-              src={selectedImage?.url || images[0].url}
+              src={currentImageUrl}
               alt={selectedImage?.altText || productName}
               title={selectedImage?.title || productName}
               fill
               className={`object-contain transition-opacity duration-200 ${mainImageLoaded ? 'opacity-100' : 'opacity-0'}`}
               priority
               sizes="(max-width: 768px) 100vw, 50vw"
-              onError={() => handleImageError(selectedImage?.url || images[0].url)}
+              onError={() => handleImageError(currentImageUrl)}
               onLoad={() => setMainImageLoaded(true)}
             />
+            {/* Zoom hint */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 backdrop-blur-sm text-white text-xs rounded-full opacity-0 group-hover/main:opacity-100 transition-opacity pointer-events-none">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+              </svg>
+              Tap to zoom
+            </div>
           </>
         )}
         {showSetDefault && (
           <button
-            onClick={handleSetDefault}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSetDefault();
+            }}
             disabled={isSettingDefault}
             className="absolute bottom-2 left-2 z-10 px-3 py-1.5 text-xs font-medium rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-colors disabled:opacity-50"
           >
-            {isSettingDefault ? 'Setting…' : 'Set as Default'}
+            {isSettingDefault ? 'Setting\u2026' : 'Set as Default'}
           </button>
         )}
       </div>
@@ -265,6 +308,71 @@ export default function ProductImageGallery({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
+          )}
+        </div>
+      )}
+
+      {/* Lightbox / Zoom Modal */}
+      {isLightboxOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          {/* Close button */}
+          <button
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            aria-label="Close zoom"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+
+          {/* Navigation arrows */}
+          {images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigateLightbox('prev'); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                aria-label="Previous image"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); navigateLightbox('next'); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                aria-label="Next image"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
+
+          {/* Full-size image */}
+          <div
+            className="relative w-[90vw] h-[85vh] max-w-5xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Image
+              src={currentImageUrl}
+              alt={selectedImage?.altText || productName}
+              fill
+              className="object-contain"
+              sizes="90vw"
+              quality={90}
+            />
+          </div>
+
+          {/* Image counter */}
+          {images.length > 1 && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-sm text-white text-sm rounded-full">
+              {(images.findIndex(img => img.url === selectedImage?.url) + 1) || 1} / {images.length}
+            </div>
           )}
         </div>
       )}

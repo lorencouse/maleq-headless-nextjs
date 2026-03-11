@@ -92,7 +92,7 @@ html {
 
 /* Bold black underline for h2 */
 .entry-content h2 {
-  font-family: var(--font-poppins), Poppins, sans-serif;
+  font-family: var(--font-outfit), 'Outfit', sans-serif;
   font-weight: 700;
   font-style: normal;
   font-size: clamp(1.75rem, 4vw, 36px);

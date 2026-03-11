@@ -10,7 +10,7 @@ interface GlobalErrorProps {
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="en">
-      <body className="bg-white dark:bg-gray-900">
+      <body className="bg-background">
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center max-w-lg">
             {/* Error Icon */}
@@ -32,10 +32,10 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               </div>
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Something Went Wrong
             </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
+            <p className="text-lg text-muted-foreground mb-8">
               We encountered a critical error. Please try refreshing the page.
             </p>
 
@@ -57,7 +57,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               </button>
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -73,7 +73,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
 
             {/* Error ID for support */}
             {error.digest && (
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-8">
+              <p className="text-xs text-muted-foreground mt-8">
                 Error ID: {error.digest}
               </p>
             )}
