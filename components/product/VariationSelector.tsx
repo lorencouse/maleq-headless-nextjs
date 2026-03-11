@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import {
   formatAttributeName,
@@ -8,6 +8,7 @@ import {
   formatPrice,
 } from '@/lib/utils/woocommerce-format';
 import { findDefaultVariation } from '@/lib/products/variation-utils';
+import { sanitizeHtml } from '@/lib/utils/sanitize';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
 
 interface VariationAttribute {
@@ -43,6 +44,50 @@ interface VariationSelectorProps {
   productId?: number; // Parent product database ID (for debugging)
   externalSelectedVariationId?: string | null;
   defaultAttributes?: { name: string; value: string }[];
+}
+
+const DESCRIPTION_CLAMP_LINES = 4;
+
+function VariationDescription({ description }: { description: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isClamped, setIsClamped] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [description]);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (el) {
+      // Check if content overflows when clamped
+      const lineHeight = parseFloat(getComputedStyle(el).lineHeight || '20');
+      const maxHeight = lineHeight * DESCRIPTION_CLAMP_LINES;
+      setIsClamped(el.scrollHeight > maxHeight + 2);
+    }
+  }, [description]);
+
+  return (
+    <div className='pt-3 border-t border-border'>
+      <p className='text-sm text-muted-foreground mb-1'>Description:</p>
+      <div
+        ref={contentRef}
+        className={`text-sm text-foreground leading-relaxed prose prose-sm max-w-none ${
+          !isExpanded ? `line-clamp-[${DESCRIPTION_CLAMP_LINES}]` : ''
+        }`}
+        style={!isExpanded ? { WebkitLineClamp: DESCRIPTION_CLAMP_LINES, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' } : undefined}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
+      />
+      {isClamped && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className='mt-1 text-sm text-primary hover:text-primary-hover font-medium transition-colors'
+        >
+          {isExpanded ? 'Show less' : 'Read more'}
+        </button>
+      )}
+    </div>
+  );
 }
 
 export default function VariationSelector({
@@ -351,17 +396,13 @@ export default function VariationSelector({
 
           {/* Variation Description */}
           {selectedVariation.description && (
-            <div className='pt-3 border-t border-border'>
-              <p className='text-sm text-muted-foreground mb-1'>Description:</p>
-              <p className='text-sm text-foreground leading-relaxed line-clamp-4'>
-                {selectedVariation.description}
-              </p>
-            </div>
+            <VariationDescription description={selectedVariation.description} />
           )}
         </div>
       )}
 
       {/* Variation Comparison Table (if there are multiple variations) */}
+
       {variations.length > 1 && variations.length <= 6 && (
         <details className='mt-6'>
           <summary className='cursor-pointer text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors'>
