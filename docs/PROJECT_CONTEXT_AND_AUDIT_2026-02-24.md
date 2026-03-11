@@ -180,3 +180,7 @@ ssh deploy@46.224.227.119 "for id in 193481 550240 551884 189933 201835; do echo
 - Update that checklist immediately after each production-impacting fix.
 - KPI baseline/instrumentation reference: `docs/KPI_BASELINE_PLAN.md`.
 - Uptime monitor configuration reference: `docs/UPTIME_KUMA_MONITOR_RUNBOOK.md`.
+- Blog `add_to_cart` shortcode fragility:
+  - `rewriteWordPressUrls()` in [lib/utils/image.ts](/Users/lorencouse/Documents/Development/NextJS/maleq-headless-nextjs/lib/utils/image.ts) rewrites WooCommerce shortcode HTML to `<div class="blog-add-to-cart-placeholder" data-product-id="..."></div>`.
+  - `AddToCartEnhancer` in [components/blog/AddToCartEnhancer.tsx](/Users/lorencouse/Documents/Development/NextJS/maleq-headless-nextjs/components/blog/AddToCartEnhancer.tsx) depends on both the class and the `data-product-id` attribute surviving sanitization.
+  - Any sanitizer/content-rendering change must verify that blog placeholders still retain `data-product-id`, or blog add-to-cart components will silently stop mounting.

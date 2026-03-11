@@ -16,6 +16,7 @@ import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
 import InstallPrompt from "@/components/pwa/InstallPrompt";
 import AppBadge from "@/components/pwa/AppBadge";
+import RouteScrollManager from "@/components/navigation/RouteScrollManager";
 import PwaAnalytics from "@/components/pwa/PwaAnalytics";
 import BackgroundSyncReplay from "@/components/pwa/BackgroundSyncReplay";
 import CartStockRevalidation from "@/components/pwa/CartStockRevalidation";
@@ -134,6 +135,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${outfit.variable} antialiased flex flex-col min-h-screen`}>
         <ServiceWorkerRegistration />
+        <RouteScrollManager />
         <OfflineIndicator />
         <GoogleAnalytics />
         <WebVitals />
