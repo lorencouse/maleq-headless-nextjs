@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { extractAuthToken } from '@/lib/api/auth-token';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
@@ -14,18 +15,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Forward auth token to WordPress
-    const authHeader = request.headers.get('Authorization');
+    const parsedUserId = Number(userId);
+    if (!Number.isFinite(parsedUserId) || parsedUserId <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
+
+    const tokenData = extractAuthToken(request);
+    if (!tokenData) {
+      return NextResponse.json(
+        { valid: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    if (tokenData.userId !== parsedUserId) {
+      return NextResponse.json(
+        { valid: false, error: 'Forbidden' },
+        { status: 403 }
+      );
+    }
 
     // Use WordPress endpoint to verify password
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/verify-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        'Authorization': `Bearer ${tokenData.rawToken}`,
       },
       body: JSON.stringify({
-        user_id: userId,
+        user_id: parsedUserId,
         password,
       }),
     });

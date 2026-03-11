@@ -100,9 +100,13 @@ function ExpressCheckoutForm() {
         // Create PaymentIntent server-side
         const intentResponse = await fetch('/api/payment/create-intent', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             amount: totalAmount,
+            ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
             cartItems: items.map((item) => ({
               productId: item.productId,
               variationId: item.variationId,

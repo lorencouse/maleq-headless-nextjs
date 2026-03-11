@@ -18,6 +18,15 @@ import {
   computeAuthoritativeCheckoutPricing,
 } from '@/lib/checkout/server-pricing';
 import { processWarehouseFulfillment } from '@/lib/fulfillment/service';
+import {
+  buildCheckoutCustomerRef,
+  buildCheckoutFingerprint,
+} from '@/lib/checkout/integrity';
+import {
+  markPaymentIntentOrderComplete,
+  releasePaymentIntentReservation,
+  reservePaymentIntent,
+} from '@/lib/checkout/payment-intent-lock';
 
 /**
  * Create Order API Route
@@ -82,6 +91,7 @@ export async function POST(request: NextRequest) {
   const startedAt = Date.now();
   const requestMeta = getRequestMeta(request);
   let rawBody: Record<string, unknown> | undefined;
+  let releaseReservation = false;
   try {
     rawBody = await request.json();
 
@@ -172,6 +182,42 @@ export async function POST(request: NextRequest) {
       return errorResponse('Payment has not been completed', 400, 'PAYMENT_INCOMPLETE');
     }
 
+    const expectedFingerprint = buildCheckoutFingerprint({
+      cartItems,
+      shippingMethodId: pricing.shippingMethod.id,
+      shippingCountry: shippingAddress.country,
+      customerId,
+      customerEmail: contact.email,
+    });
+    const expectedCustomerRef = buildCheckoutCustomerRef(customerId, contact.email);
+    const paymentIntentFingerprint = paymentIntent.metadata?.checkout_fingerprint || '';
+    const paymentIntentCustomerRef = paymentIntent.metadata?.checkout_customer_ref || '';
+
+    if (
+      paymentIntent.metadata?.source !== 'maleq-headless-checkout' ||
+      paymentIntentFingerprint !== expectedFingerprint ||
+      paymentIntentCustomerRef !== expectedCustomerRef
+    ) {
+      await logDurableEvent({
+        eventType: 'checkout_order_integrity_mismatch',
+        severity: 'warning',
+        message: 'Rejected order creation due to payment intent integrity mismatch',
+        paymentIntentId,
+        ...requestMeta,
+        payload: {
+          hasExpectedSource: paymentIntent.metadata?.source === 'maleq-headless-checkout',
+          fingerprintMatches: paymentIntentFingerprint === expectedFingerprint,
+          customerRefMatches: paymentIntentCustomerRef === expectedCustomerRef,
+          durationMs: Date.now() - startedAt,
+        },
+      });
+      return errorResponse(
+        'Checkout details no longer match the original payment request. Please restart checkout.',
+        409,
+        'CHECKOUT_INTEGRITY_MISMATCH'
+      );
+    }
+
     // Check for duplicate order - if this paymentIntentId already has an order, return it
     const existingOrderId = paymentIntent.metadata?.woocommerce_order_id;
     if (existingOrderId) {
@@ -198,6 +244,26 @@ export async function POST(request: NextRequest) {
         console.warn(`Duplicate check: order ${existingOrderId} not found, creating new order`);
       }
     }
+
+    const reservation = await reservePaymentIntent(paymentIntentId);
+    if (!reservation.acquired) {
+      if (reservation.orderId) {
+        const existingOrder = await getOrder(reservation.orderId);
+        return NextResponse.json({
+          orderId: existingOrder.id,
+          orderKey: existingOrder.order_key,
+          status: existingOrder.status,
+          total: existingOrder.total,
+        });
+      }
+
+      return errorResponse(
+        'Order is already being processed for this payment. Please wait a moment and refresh.',
+        409,
+        'ORDER_ALREADY_PROCESSING'
+      );
+    }
+    releaseReservation = true;
 
     // Verify the amount matches - reject mismatches to prevent incorrect charges
     const expectedAmount = Math.round(pricing.total * 100);
@@ -306,6 +372,8 @@ export async function POST(request: NextRequest) {
 
     // Create the order in WooCommerce
     const order = await createOrder(orderData);
+    releaseReservation = false;
+    await markPaymentIntentOrderComplete(paymentIntentId, order.id);
 
     // Store order ID in PaymentIntent metadata so the webhook can find it
     await stripe.paymentIntents.update(paymentIntentId, {
@@ -456,6 +524,14 @@ export async function POST(request: NextRequest) {
       'Error': error instanceof Error ? error.message : String(error),
     });
     return handleApiError(error, 'Failed to create order');
+  } finally {
+    if (
+      releaseReservation &&
+      typeof rawBody?.paymentIntentId === 'string' &&
+      rawBody.paymentIntentId.length > 0
+    ) {
+      await releasePaymentIntentReservation(rawBody.paymentIntentId).catch(() => {});
+    }
   }
 }
 

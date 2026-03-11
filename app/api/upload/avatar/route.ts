@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/api/rate-limit';
+import { extractAuthToken } from '@/lib/api/auth-token';
 
 const WOOCOMMERCE_URL = process.env.WOOCOMMERCE_URL || process.env.NEXT_PUBLIC_WORDPRESS_API_URL?.replace('/graphql', '');
 
@@ -7,8 +9,26 @@ const MAX_UPLOAD_SIZE = 5 * 1024 * 1024; // 5MB
 const TARGET_SIZE = 650;
 const WEBP_QUALITY = 90;
 
+function getUploadRateLimitKey(request: NextRequest): string {
+  const ip =
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
+  const userAgent = (request.headers.get('user-agent') || 'na').slice(0, 64);
+  return `avatar-upload:${ip}:${userAgent}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getUploadRateLimitKey(request), RATE_LIMITS.form);
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const userId = formData.get('userId') as string;
@@ -24,6 +44,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'User ID is required' },
         { status: 400 }
+      );
+    }
+
+    const parsedUserId = parseInt(userId, 10);
+    if (isNaN(parsedUserId) || parsedUserId <= 0) {
+      return NextResponse.json(
+        { error: 'Invalid user ID' },
+        { status: 400 }
+      );
+    }
+
+    const tokenData = extractAuthToken(request);
+    if (!tokenData) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    if (tokenData.userId !== parsedUserId) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       );
     }
 
@@ -70,16 +112,14 @@ export async function POST(request: NextRequest) {
     );
 
     // Forward auth token and processed image to WordPress custom endpoint
-    const authHeader = request.headers.get('Authorization');
-
     const wpFormData = new FormData();
     wpFormData.append('file', processedFile);
-    wpFormData.append('user_id', userId);
+    wpFormData.append('user_id', String(parsedUserId));
 
     const response = await fetch(`${WOOCOMMERCE_URL}/wp-json/maleq/v1/upload-avatar`, {
       method: 'POST',
       headers: {
-        ...(authHeader ? { Authorization: authHeader } : {}),
+        'Authorization': `Bearer ${tokenData.rawToken}`,
       },
       body: wpFormData,
     });

@@ -75,9 +75,13 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
       const response = await fetch('/api/payment/create-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           amount: total,
+          ...(authenticatedCustomerId && { customerId: authenticatedCustomerId }),
           cartItems: items.map((item) => ({
             productId: item.productId,
             variationId: item.variationId,
@@ -128,7 +132,16 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           : 'Failed to initialize payment. Please try again.',
       );
     }
-  }, [contact.email, items, shippingAddress, shippingMethod?.id, total, validateCart]);
+  }, [
+    authenticatedCustomerId,
+    contact.email,
+    items,
+    shippingAddress,
+    shippingMethod?.id,
+    token,
+    total,
+    validateCart,
+  ]);
 
   useEffect(() => {
     if (currentStep === 'payment' && !clientSecret && total > 0) {

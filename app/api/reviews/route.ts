@@ -14,6 +14,17 @@ import {
   hasErrors,
 } from '@/lib/api/validation';
 import { checkSpam } from '@/lib/api/spam-check';
+import { checkRateLimit, RATE_LIMITS } from '@/lib/api/rate-limit';
+
+function getReviewRateLimitKey(request: NextRequest): string {
+  const ip =
+    request.headers.get('cf-connecting-ip') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    'unknown';
+  const userAgent = (request.headers.get('user-agent') || 'na').slice(0, 64);
+  return `reviews:${ip}:${userAgent}`;
+}
 
 // GET /api/reviews?productId=123&page=1&per_page=10
 export async function GET(request: NextRequest) {
@@ -46,6 +57,11 @@ export async function GET(request: NextRequest) {
 // POST /api/reviews - Create a new review
 export async function POST(request: NextRequest) {
   try {
+    const rateResult = checkRateLimit(getReviewRateLimitKey(request), RATE_LIMITS.form);
+    if (!rateResult.allowed) {
+      return errorResponse('Too many requests. Please try again later.', 429, 'RATE_LIMITED');
+    }
+
     const body = await request.json();
     const { productId, reviewer, reviewerEmail, review, rating } = body;
 

@@ -1,5 +1,65 @@
 import sanitize from 'sanitize-html';
 
+const TRUSTED_ALLOWED_TAGS = Array.from(
+  new Set([
+    ...(sanitize.defaults.allowedTags || []),
+    'img',
+    'figure',
+    'figcaption',
+    'picture',
+    'source',
+    'iframe',
+    'video',
+    'audio',
+    'track',
+    'div',
+    'span',
+    'section',
+    'article',
+    'header',
+    'footer',
+    'main',
+    'aside',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'table',
+    'thead',
+    'tbody',
+    'tfoot',
+    'tr',
+    'th',
+    'td',
+    'colgroup',
+    'col',
+    'hr',
+    'button',
+    'details',
+    'summary',
+  ])
+);
+
+const TRUSTED_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
+  '*': ['class', 'id', 'title', 'role', 'aria-label', 'aria-hidden'],
+  a: ['href', 'name', 'target', 'rel'],
+  img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'sizes'],
+  picture: ['class'],
+  source: ['src', 'srcset', 'type', 'media', 'sizes'],
+  iframe: ['src', 'title', 'width', 'height', 'allow', 'allowfullscreen', 'loading', 'referrerpolicy'],
+  video: ['src', 'poster', 'preload', 'controls', 'autoplay', 'muted', 'loop', 'playsinline', 'width', 'height'],
+  audio: ['src', 'preload', 'controls', 'autoplay', 'loop', 'muted'],
+  track: ['default', 'kind', 'label', 'src', 'srclang'],
+  table: ['width'],
+  th: ['colspan', 'rowspan', 'scope'],
+  td: ['colspan', 'rowspan'],
+  ol: ['start', 'type'],
+  li: ['value'],
+  button: ['type', 'disabled'],
+};
+
 /**
  * Sanitize trusted WordPress post/page content.
  *
@@ -17,43 +77,33 @@ import sanitize from 'sanitize-html';
 export function sanitizeHtml(html: string): string {
   if (!html) return '';
 
-  let cleaned = html;
-
-  // Remove <script> tags and their contents
-  cleaned = cleaned.replace(
-    /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-    ''
-  );
-
-  // Remove <style> tags and their contents (inline style="" attributes are fine)
-  cleaned = cleaned.replace(
-    /<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi,
-    ''
-  );
-
-  // Remove on* event handler attributes (onclick, onload, onerror, etc.)
-  cleaned = cleaned.replace(
-    /\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]*)/gi,
-    ''
-  );
-
-  // Remove javascript: protocol in href/src/action attributes
-  cleaned = cleaned.replace(
-    /(href|src|action)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*')/gi,
-    '$1=""'
-  );
-
-  // Remove dangerous embed elements (Flash/plugin vectors)
-  cleaned = cleaned.replace(
-    /<(object|embed|applet)\b[^>]*>[\s\S]*?<\/\1>/gi,
-    ''
-  );
-  cleaned = cleaned.replace(/<(object|embed|applet)\b[^>]*\/?>/gi, '');
-
-  // Remove <form> tags to prevent form injection (keeps inner content)
-  cleaned = cleaned.replace(/<\/?form\b[^>]*>/gi, '');
-
-  return cleaned;
+  return sanitize(html, {
+    allowedTags: TRUSTED_ALLOWED_TAGS,
+    allowedAttributes: TRUSTED_ALLOWED_ATTRIBUTES,
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    allowedSchemesByTag: {
+      img: ['http', 'https', 'data'],
+      source: ['http', 'https', 'data'],
+    },
+    allowedIframeHostnames: [
+      'www.youtube.com',
+      'youtube.com',
+      'youtu.be',
+      'player.vimeo.com',
+      'www.maleq.com',
+      'maleq.com',
+      'wp.maleq.com',
+      'www.maleq.org',
+    ],
+    disallowedTagsMode: 'discard',
+    parser: {
+      lowerCaseTags: false,
+      lowerCaseAttributeNames: false,
+    },
+    transformTags: {
+      a: sanitize.simpleTransform('a', { rel: 'noopener noreferrer' }, true),
+    },
+  });
 }
 
 /**

@@ -69,6 +69,7 @@ export function usePushSubscription() {
   const [ownershipToken, setOwnershipToken] = useState<string | null>(null);
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const token = useAuthStore((state) => state.token);
   const { user, isAuthenticated } = useAuthStore();
 
   const persistLocalSubscription = useCallback((ep: string, token: string) => {
@@ -112,7 +113,10 @@ export function usePushSubscription() {
     try {
       res = await fetch('/api/push/subscribe', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           endpoint: ep,
           keys: { p256dh, auth },
@@ -142,7 +146,7 @@ export function usePushSubscription() {
 
     persistLocalSubscription(ep, tokenValue);
     return { endpoint: ep, ownershipToken: tokenValue };
-  }, [persistLocalSubscription]);
+  }, [persistLocalSubscription, token]);
 
   useEffect(() => {
     const supported =

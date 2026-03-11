@@ -4,6 +4,7 @@ import { successResponse, validationError, handleApiError, errorResponse } from 
 import { checkRateLimit, RATE_LIMITS } from '@/lib/api/rate-limit';
 import { getPushRateLimitKey, isValidPushEndpointUrl } from '@/lib/push/route-helpers';
 import { createEndpointOwnershipToken, verifyEndpointOwnershipToken } from '@/lib/push/endpoint-ownership';
+import { extractAuthToken } from '@/lib/api/auth-token';
 
 function parseIntSafe(value: unknown): number | undefined {
   if (value === undefined || value === null || value === '') return undefined;
@@ -54,10 +55,21 @@ export async function POST(request: NextRequest) {
       return validationError({ email: 'Invalid email' });
     }
 
+    const parsedCustomerId = parseIntSafe(customerId);
+    if (parsedCustomerId) {
+      const tokenData = extractAuthToken(request);
+      if (!tokenData) {
+        return errorResponse('Unauthorized', 401, 'UNAUTHORIZED');
+      }
+      if (tokenData.userId !== parsedCustomerId) {
+        return errorResponse('Forbidden', 403, 'FORBIDDEN');
+      }
+    }
+
     await saveSubscription({
       endpoint,
       keys: { p256dh: keys.p256dh, auth: keys.auth },
-      customerId: parseIntSafe(customerId),
+      customerId: parsedCustomerId,
       email: email || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
     });

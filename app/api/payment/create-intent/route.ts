@@ -4,6 +4,11 @@ import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
 import { checkRateLimit } from '@/lib/api/rate-limit';
 import { validateEmail } from '@/lib/api/validation';
+import { extractAuthToken } from '@/lib/api/auth-token';
+import {
+  buildCheckoutCustomerRef,
+  buildCheckoutFingerprint,
+} from '@/lib/checkout/integrity';
 import { z } from 'zod';
 import {
   CheckoutPricingError,
@@ -30,6 +35,7 @@ export interface CreatePaymentIntentRequest {
   currency?: string;
   metadata?: Record<string, string>;
   customerEmail?: string;
+  customerId?: number;
   shippingAddress?: {
     name: string;
     address: {
@@ -78,6 +84,7 @@ const createIntentSchema = z.object({
   currency: z.string().optional(),
   metadata: z.record(z.string(), z.string()).optional(),
   customerEmail: z.string().email().optional(),
+  customerId: z.number().int().positive().optional(),
   shippingAddress: z.object({
     name: z.string().min(1),
     address: z.object({
@@ -150,8 +157,25 @@ export async function POST(request: NextRequest) {
       currency = 'usd',
       metadata,
       customerEmail,
+      customerId,
       shippingAddress,
     } = body;
+
+    if (customerId !== undefined) {
+      const tokenData = extractAuthToken(request);
+      if (!tokenData) {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 401 }
+        );
+      }
+      if (tokenData.userId !== customerId) {
+        return NextResponse.json(
+          { error: 'Forbidden' },
+          { status: 403 }
+        );
+      }
+    }
 
     if (currency.toLowerCase() !== 'usd') {
       await logDurableEvent({
@@ -231,6 +255,14 @@ export async function POST(request: NextRequest) {
     }
 
     const safeMetadata = sanitizeMetadata(metadata);
+    const checkoutFingerprint = buildCheckoutFingerprint({
+      cartItems,
+      shippingMethodId: pricing.shippingMethod.id,
+      shippingCountry: pricing.shippingCountry,
+      customerId,
+      customerEmail,
+    });
+    const checkoutCustomerRef = buildCheckoutCustomerRef(customerId, customerEmail);
 
     // Create the PaymentIntent
     const stripe = getStripeServer();
@@ -248,6 +280,8 @@ export async function POST(request: NextRequest) {
         checkout_total: pricing.total.toFixed(2),
         shipping_method_id: pricing.shippingMethod.id,
         shipping_country: pricing.shippingCountry,
+        checkout_fingerprint: checkoutFingerprint,
+        checkout_customer_ref: checkoutCustomerRef,
         source: 'maleq-headless-checkout',
       },
       ...(customerEmail && { receipt_email: customerEmail }),
