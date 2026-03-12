@@ -1,4 +1,5 @@
 import sanitize from 'sanitize-html';
+import { BLOG_ADD_TO_CART_PRODUCT_ID_ATTR } from '@/lib/blog/add-to-cart-shortcode';
 
 const TRUSTED_ALLOWED_TAGS = Array.from(
   new Set([
@@ -48,7 +49,7 @@ const TRUSTED_ALLOWED_ATTRIBUTES: Record<string, string[]> = {
   // Blog add-to-cart shortcodes are rewritten to placeholder divs that the
   // client enhancer mounts into. If this attribute is stripped, the component
   // silently stops rendering on blog pages.
-  div: ['data-product-id'],
+  div: [BLOG_ADD_TO_CART_PRODUCT_ID_ATTR],
   img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading', 'decoding', 'sizes'],
   picture: ['class'],
   source: ['src', 'srcset', 'type', 'media', 'sizes'],

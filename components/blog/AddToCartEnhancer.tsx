@@ -7,6 +7,10 @@ import Link from 'next/link';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { BlogProduct } from '@/lib/utils/blog-products';
+import {
+  BLOG_ADD_TO_CART_PLACEHOLDER_SELECTOR,
+  BLOG_ADD_TO_CART_PRODUCT_ID_ATTR,
+} from '@/lib/blog/add-to-cart-shortcode';
 
 interface ProductPlaceholder {
   element: HTMLElement;
@@ -30,19 +34,19 @@ function getPlaceholderSnapshot(): ProductPlaceholder[] {
     return [];
   }
 
-  const elements = document.querySelectorAll('.blog-add-to-cart-placeholder');
+  const elements = document.querySelectorAll(BLOG_ADD_TO_CART_PLACEHOLDER_SELECTOR);
   const found: ProductPlaceholder[] = [];
 
   elements.forEach((el) => {
     const element = el as HTMLElement;
-    const productId = element.dataset.productId;
+    const productId = element.getAttribute(BLOG_ADD_TO_CART_PRODUCT_ID_ATTR);
 
     if (productId) {
       found.push({ element, productId });
     }
   });
 
-  const key = found.map(({ element, productId }, index) => `${index}:${productId}:${element.dataset.productId || ''}`).join('|');
+  const key = found.map(({ element, productId }, index) => `${index}:${productId}:${element.getAttribute(BLOG_ADD_TO_CART_PRODUCT_ID_ATTR) || ''}`).join('|');
   if (key === placeholderSnapshotCache.key) {
     return placeholderSnapshotCache.items;
   }

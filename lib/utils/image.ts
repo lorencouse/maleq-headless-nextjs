@@ -1,6 +1,7 @@
 /**
  * Image utility functions for handling WordPress images
  */
+import { buildBlogAddToCartPlaceholder } from '@/lib/blog/add-to-cart-shortcode';
 
 /**
  * Default image base URL (production)
@@ -100,7 +101,6 @@ export function rewriteWordPressUrls(html: string | undefined): string {
   if (!html) return '';
 
   const baseUrl = getImageBaseUrl();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
   let processed = html;
 
   // Replace relative wp-content URLs with absolute URLs
@@ -191,7 +191,7 @@ export function rewriteWordPressUrls(html: string | undefined): string {
       const productIdMatch = innerContent.match(/data-product_id="(\d+)"/);
       if (!productIdMatch) return match;
       const productId = productIdMatch[1];
-      return `<div class="blog-add-to-cart-placeholder" data-product-id="${productId}"></div>`;
+      return buildBlogAddToCartPlaceholder(productId);
     }
   );
 
@@ -202,7 +202,7 @@ export function rewriteWordPressUrls(html: string | undefined): string {
       const productIdMatch = innerContent.match(/data-product_id="(\d+)"/);
       if (!productIdMatch) return match;
       const productId = productIdMatch[1];
-      return `<div class="blog-add-to-cart-placeholder" data-product-id="${productId}"></div>`;
+      return buildBlogAddToCartPlaceholder(productId);
     }
   );
 

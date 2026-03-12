@@ -1,8 +1,8 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { stripHtml } from '@/lib/utils/text-utils';
-import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { getFilteredProducts } from '@/lib/products/combined-service';
+import { renderProductDescriptionHtml } from '@/lib/product/description-html';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
@@ -204,7 +204,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <h2 className="text-2xl font-bold text-foreground mb-6">Product Description</h2>
           <div
             className="product-description-content max-w-none"
-            dangerouslySetInnerHTML={{ __html: sanitizeHtml(product.description) }}
+            dangerouslySetInnerHTML={{ __html: renderProductDescriptionHtml(product.description) }}
           />
         </div>
       )}

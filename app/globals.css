@@ -831,6 +831,10 @@ a:has(img):not(.product-card-link):not(.blog-card-link):hover::after {
 .product-description-content {
   color: var(--foreground);
   line-height: 1.75;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .product-description-content > * {
@@ -935,6 +939,20 @@ a:has(img):not(.product-card-link):not(.blog-card-link):hover::after {
   margin: 0.5rem auto;
 }
 
+.product-description-content table,
+.product-description-content pre,
+.product-description-content figure,
+.product-description-content .wp-block-table,
+.product-description-content iframe,
+.product-description-content video {
+  max-width: 100%;
+}
+
+.product-description-scroll {
+  width: 100%;
+  max-width: 100%;
+}
+
 .product-description-content table {
   width: 100%;
   border-collapse: separate !important;
@@ -991,16 +1009,32 @@ a:has(img):not(.product-card-link):not(.blog-card-link):hover::after {
 }
 
 @media (max-width: 768px) {
-  .product-description-content table {
-    display: block;
-    min-width: 32rem;
+  .product-description-scroll,
+  .product-description-content .wp-block-table {
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .product-description-scroll > table {
+    width: max(100%, 32rem);
+    min-width: 32rem;
+  }
+
+  .product-description-scroll > pre {
+    min-width: max-content;
   }
 
   .product-description-content th,
   .product-description-content td {
     min-width: 12rem;
+  }
+
+  .product-description-content iframe,
+  .product-description-content video {
+    display: block;
+    width: 100%;
+    height: auto;
   }
 }
 
