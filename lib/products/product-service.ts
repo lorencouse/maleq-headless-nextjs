@@ -72,6 +72,7 @@ export interface EnhancedProduct extends UnifiedProduct {
   externalUrl?: string | null;
   buttonText?: string | null;
   defaultAttributes?: { name: string; value: string }[];
+  videoUrl?: string | null;
 }
 
 

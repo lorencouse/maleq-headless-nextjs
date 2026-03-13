@@ -49,6 +49,7 @@ const remoteConfig = {
   database: dbOverride || process.env.REMOTE_MYSQL_DB || process.env.MYSQL_DB || 'maleq-wp',
   user: process.env.REMOTE_MYSQL_USER || process.env.MYSQL_USER || 'maleq-wp',
   password: process.env.REMOTE_MYSQL_PASS || process.env.MYSQL_PASS || 'S9meeDoehU8VPiHd1ByJ',
+  ssl: { rejectUnauthorized: false },
 };
 
 const config = isLocal ? localConfig : remoteConfig;

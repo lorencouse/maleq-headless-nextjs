@@ -41,6 +41,7 @@ interface DbMeta extends RowDataPacket {
   external_url: string | null;
   button_text: string | null;
   default_attributes_ser: string | null;
+  video_id: string | null;
 }
 
 interface DbTaxonomy extends RowDataPacket {
@@ -152,13 +153,14 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
         MAX(CASE WHEN meta_key = '_featured' THEN meta_value END) AS featured,
         MAX(CASE WHEN meta_key = '_product_url' THEN meta_value END) AS external_url,
         MAX(CASE WHEN meta_key = '_button_text' THEN meta_value END) AS button_text,
-        MAX(CASE WHEN meta_key = '_default_attributes' THEN meta_value END) AS default_attributes_ser
+        MAX(CASE WHEN meta_key = '_default_attributes' THEN meta_value END) AS default_attributes_ser,
+        MAX(CASE WHEN meta_key = '_product_video_id' THEN meta_value END) AS video_id
        FROM wp_postmeta
        WHERE post_id = (SELECT ID FROM wp_posts WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ? LIMIT 1)
          AND meta_key IN ('_sku','_price','_regular_price','_sale_price','_stock_status','_stock',
            '_weight','_length','_width','_height','_thumbnail_id','_product_image_gallery',
            '_product_attributes','_purchase_note','_featured','_product_url','_button_text',
-           '_default_attributes')`,
+           '_default_attributes','_product_video_id')`,
       [slug]
     ),
     // Taxonomies
@@ -199,6 +201,8 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
 
   // Collect parent product attachment IDs (known from meta already)
   const attachmentIds = new Set<number>();
+  const videoAttachmentId = meta.video_id ? parseInt(meta.video_id, 10) : null;
+  if (videoAttachmentId) attachmentIds.add(videoAttachmentId);
   if (meta.thumbnail_id) attachmentIds.add(parseInt(meta.thumbnail_id, 10));
   if (meta.gallery_ids) {
     meta.gallery_ids.split(',').forEach(id => {
@@ -475,5 +479,6 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     externalUrl: meta.external_url || null,
     buttonText: meta.button_text || null,
     defaultAttributes,
+    videoUrl: videoAttachmentId ? (attachments.get(videoAttachmentId)?.guid ? getProductionImageUrl(attachments.get(videoAttachmentId)!.guid) : null) : null,
   };
 }

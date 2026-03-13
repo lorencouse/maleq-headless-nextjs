@@ -338,6 +338,22 @@ export default function ProductPageClient({
           );
         })()}
 
+      {/* Product Video */}
+      {product.videoUrl && (
+        <div className="mb-8">
+          <video
+            src={product.videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="none"
+            className="w-full rounded-lg"
+            aria-label={`Video for ${product.name}`}
+          />
+        </div>
+      )}
+
       {/* Variation Selector */}
       {isVariable && product.variations && product.variations.length > 0 && (
         <div className='mb-8 p-6 bg-input rounded-xl border border-border'>
