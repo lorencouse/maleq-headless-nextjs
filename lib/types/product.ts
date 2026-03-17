@@ -18,6 +18,7 @@ export interface VariationImage {
  */
 export interface SelectedVariation {
   id: string;
+  databaseId?: number;
   name: string;
   sku: string | null;
   price: string | null;
