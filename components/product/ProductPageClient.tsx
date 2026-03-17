@@ -148,7 +148,7 @@ export default function ProductPageClient({
       // Add main product to cart
       addItem({
         productId: product.databaseId?.toString() || product.id,
-        variationId: selectedVariation?.id,
+        variationId: selectedVariation?.databaseId?.toString(),
         name: product.name,
         slug: product.slug,
         sku: product.sku || '',
