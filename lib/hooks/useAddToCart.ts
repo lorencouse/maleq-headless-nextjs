@@ -24,6 +24,7 @@ export interface ProductForCart {
 
 export interface VariationForCart {
   id: string;
+  databaseId?: number;
   sku?: string | null;
   price?: string | null;
   regularPrice?: string | null;
@@ -146,7 +147,7 @@ export function useAddToCart(options: UseAddToCartOptions = {}): UseAddToCartRet
 
         addItem({
           productId: product.databaseId?.toString() || product.id,
-          variationId: variation?.id,
+          variationId: variation?.databaseId?.toString() || variation?.id,
           name: product.name,
           slug: product.slug,
           sku: product.sku || '',
