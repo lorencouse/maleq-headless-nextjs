@@ -41,6 +41,13 @@ export interface CreateOrderData {
     method_title: string;
     total: string;
   }>;
+  fee_lines?: Array<{
+    name: string;
+    total: string;
+  }>;
+  coupon_lines?: Array<{
+    code: string;
+  }>;
   meta_data?: Array<{
     id?: number;
     key: string;

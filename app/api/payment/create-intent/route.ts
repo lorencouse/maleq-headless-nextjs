@@ -29,6 +29,7 @@ export interface CreatePaymentIntentRequest {
     variationId?: string;
     quantity: number;
   }>;
+  couponCode?: string;
   shippingMethod: {
     id: string;
   };
@@ -78,6 +79,7 @@ const createIntentSchema = z.object({
     variationId: z.string().min(1).optional(),
     quantity: z.number().int().min(1).max(100),
   })).min(1, 'Cart cannot be empty'),
+  couponCode: z.string().max(100).optional(),
   shippingMethod: z.object({
     id: z.string().min(1),
   }),
@@ -153,6 +155,7 @@ export async function POST(request: NextRequest) {
     const {
       amount: clientAmount,
       cartItems,
+      couponCode,
       shippingMethod,
       currency = 'usd',
       metadata,
@@ -210,6 +213,7 @@ export async function POST(request: NextRequest) {
 
     const pricing = await computeAuthoritativeCheckoutPricing({
       cartItems,
+      couponCode,
       shippingMethodId: shippingMethod.id,
       shippingCountry: shippingAddress?.address.country,
     });

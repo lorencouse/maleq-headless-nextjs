@@ -10,6 +10,7 @@ import {
   getWooCommerceEndpoint,
   isWooCommerceConfigured,
 } from '@/lib/woocommerce/auth';
+import { wooClient } from '@/lib/woocommerce/client';
 import { parsePrice } from '@/lib/utils/woocommerce-format';
 
 export interface CheckoutPricingCartItemInput {
@@ -22,6 +23,7 @@ export interface CheckoutPricingInput {
   cartItems: CheckoutPricingCartItemInput[];
   shippingMethodId: string;
   shippingCountry?: string;
+  couponCode?: string;
   enforceStockChecks?: boolean;
 }
 
@@ -43,6 +45,8 @@ export interface CheckoutPricingResult {
   subtotal: number;
   shipping: number;
   tax: number;
+  couponDiscount: number;
+  autoDiscount: number;
   discount: number;
   total: number;
 }
@@ -146,6 +150,28 @@ async function fetchWooPricePayload(
   return json;
 }
 
+async function computeCouponDiscount(
+  couponCode: string | undefined,
+  subtotal: number,
+  productIds: number[]
+): Promise<number> {
+  const normalizedCode = couponCode?.trim().toUpperCase();
+  if (!normalizedCode) {
+    return 0;
+  }
+
+  const result = await wooClient.validateCoupon(normalizedCode, subtotal, productIds);
+  if (!result.valid) {
+    throw new CheckoutPricingError(
+      result.message || 'Invalid coupon code',
+      'INVALID_COUPON',
+      409
+    );
+  }
+
+  return roundMoney(result.discountAmount || 0);
+}
+
 export async function computeAuthoritativeCheckoutPricing(
   input: CheckoutPricingInput
 ): Promise<CheckoutPricingResult> {
@@ -205,7 +231,13 @@ export async function computeAuthoritativeCheckoutPricing(
 
   const subtotal = roundMoney(pricedItems.reduce((sum, item) => sum + item.lineTotal, 0));
   const shipping = roundMoney(getShippingPrice(shippingOption, subtotal));
-  const discount = roundMoney(calculateAutoDiscount(subtotal).amount);
+  const autoDiscount = roundMoney(calculateAutoDiscount(subtotal).amount);
+  const couponDiscount = await computeCouponDiscount(
+    input.couponCode,
+    subtotal,
+    pricedItems.map((item) => Number.parseInt(item.productId, 10))
+  );
+  const discount = roundMoney(autoDiscount + couponDiscount);
   const tax = 0;
   const total = roundMoney(Math.max(0, subtotal + shipping + tax - discount));
 
@@ -219,6 +251,8 @@ export async function computeAuthoritativeCheckoutPricing(
     subtotal,
     shipping,
     tax,
+    couponDiscount,
+    autoDiscount,
     discount,
     total,
   };

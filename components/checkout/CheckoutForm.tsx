@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
@@ -47,6 +47,9 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const shipping = useCartStore((state) => state.shipping);
   const tax = useCartStore((state) => state.tax);
   const total = useCartStore((state) => state.total);
+  const discount = useCartStore((state) => state.discount);
+  const autoDiscount = useCartStore((state) => state.autoDiscount);
+  const couponCode = useCartStore((state) => state.couponCode);
   const validateCart = useCartStore((state) => state.validateCart);
 
   // Checkout store for form data
@@ -54,6 +57,20 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const shippingAddress = useCheckoutStore((state) => state.shippingAddress);
   const shippingMethod = useCheckoutStore((state) => state.shippingMethod);
   const setContact = useCheckoutStore((state) => state.setContact);
+  const paymentIntentContextRef = useRef<string | null>(null);
+  const paymentIntentContext = JSON.stringify({
+    customerId: authenticatedCustomerId || null,
+    email: contact.email.trim().toLowerCase(),
+    couponCode: couponCode || null,
+    shippingMethodId: shippingMethod?.id || 'standard',
+    shippingCountry: shippingAddress.country || 'US',
+    total,
+    cartItems: items.map((item) => ({
+      productId: item.productId,
+      variationId: item.variationId || null,
+      quantity: item.quantity,
+    })),
+  });
 
   // Notify parent of step changes for progress bar
   useEffect(() => {
@@ -87,6 +104,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
             variationId: item.variationId,
             quantity: item.quantity,
           })),
+          ...(couponCode && { couponCode }),
           shippingMethod: {
             id: shippingMethod?.id || 'standard',
           },
@@ -124,6 +142,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       const data = await response.json();
       setClientSecret(data.clientSecret);
       setPaymentIntentId(data.paymentIntentId);
+      paymentIntentContextRef.current = paymentIntentContext;
     } catch (err) {
       console.error('Error creating payment intent:', err);
       setError(
@@ -135,7 +154,9 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   }, [
     authenticatedCustomerId,
     contact.email,
+    couponCode,
     items,
+    paymentIntentContext,
     shippingAddress,
     shippingMethod?.id,
     token,
@@ -148,6 +169,18 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       void createPaymentIntent();
     }
   }, [clientSecret, createPaymentIntent, currentStep, total]);
+
+  useEffect(() => {
+    if (!clientSecret || !paymentIntentContextRef.current) {
+      return;
+    }
+
+    if (paymentIntentContextRef.current !== paymentIntentContext) {
+      setClientSecret(null);
+      setPaymentIntentId(null);
+      paymentIntentContextRef.current = null;
+    }
+  }, [clientSecret, paymentIntentContext]);
 
   const handleContactComplete = (data: { email: string; phone: string; newsletter: boolean }) => {
     setContact(data);
@@ -218,9 +251,10 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           subtotal,
           shipping,
           tax,
-          discount: 0,
+          discount: discount + autoDiscount,
           total,
         },
+        ...(couponCode && { couponCode }),
       };
 
       if (paymentIntentId) {
@@ -231,6 +265,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           shippingMethod: orderRequest.shippingMethod,
           cartItems: orderRequest.cartItems,
           totals: orderRequest.totals,
+          couponCode: orderRequest.couponCode,
           authToken: token || undefined,
           flow: 'standard',
         });
@@ -426,9 +461,10 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
                       subtotal,
                       shipping,
                       tax,
-                      discount: 0,
+                      discount: discount + autoDiscount,
                       total,
                     },
+                    ...(couponCode && { couponCode }),
                     authToken: token || undefined,
                     flow: 'standard',
                   }}

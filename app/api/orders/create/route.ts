@@ -142,6 +142,7 @@ export async function POST(request: NextRequest) {
 
     const pricing = await computeAuthoritativeCheckoutPricing({
       cartItems,
+      couponCode,
       shippingMethodId: shippingMethod.id,
       shippingCountry: shippingAddress.country,
       enforceStockChecks: false,
@@ -358,6 +359,8 @@ export async function POST(request: NextRequest) {
         { key: '_stripe_payment_intent_id', value: paymentIntentId },
         { key: '_order_source', value: 'maleq-headless' },
         { key: '_checkout_subtotal', value: pricing.subtotal.toFixed(2) },
+        { key: '_checkout_coupon_discount', value: pricing.couponDiscount.toFixed(2) },
+        { key: '_checkout_auto_discount', value: pricing.autoDiscount.toFixed(2) },
         { key: '_checkout_shipping', value: pricing.shipping.toFixed(2) },
         { key: '_checkout_discount', value: pricing.discount.toFixed(2) },
         { key: '_checkout_total', value: pricing.total.toFixed(2) },
@@ -365,9 +368,20 @@ export async function POST(request: NextRequest) {
       ...(customerNote && { customer_note: customerNote }),
     };
 
+    if (pricing.autoDiscount > 0) {
+      orderData.fee_lines = [
+        {
+          name: 'Automatic discount',
+          total: (-pricing.autoDiscount).toFixed(2),
+        },
+      ];
+    }
+
     // Add coupon if present
     if (couponCode) {
-      orderData.meta_data?.push({ key: '_coupon_code', value: couponCode });
+      const normalizedCouponCode = couponCode.trim().toUpperCase();
+      orderData.coupon_lines = [{ code: normalizedCouponCode }];
+      orderData.meta_data?.push({ key: '_coupon_code', value: normalizedCouponCode });
     }
 
     // Create the order in WooCommerce

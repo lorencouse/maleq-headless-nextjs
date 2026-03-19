@@ -39,6 +39,9 @@ function ExpressCheckoutForm() {
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
   const clearCart = useCartStore((state) => state.clearCart);
+  const discount = useCartStore((state) => state.discount);
+  const autoDiscount = useCartStore((state) => state.autoDiscount);
+  const couponCode = useCartStore((state) => state.couponCode);
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
   const authenticatedCustomerId = user?.id && token ? Number(user.id) : undefined;
@@ -95,7 +98,9 @@ function ExpressCheckoutForm() {
         const shippingDollars = selectedRate
           ? getShippingPrice(selectedRate, subtotal)
           : 0;
-        const totalAmount = subtotal + shippingDollars;
+        const totalAmount = Number(
+          Math.max(0, subtotal + shippingDollars - discount - autoDiscount).toFixed(2)
+        );
 
         // Create PaymentIntent server-side
         const intentResponse = await fetch('/api/payment/create-intent', {
@@ -112,6 +117,7 @@ function ExpressCheckoutForm() {
               variationId: item.variationId,
               quantity: item.quantity,
             })),
+            ...(couponCode && { couponCode }),
             shippingMethod: {
               id: selectedRate?.id || 'standard',
             },
@@ -183,9 +189,10 @@ function ExpressCheckoutForm() {
             subtotal,
             shipping: shippingDollars,
             tax: 0,
-            discount: 0,
+            discount: discount + autoDiscount,
             total: totalAmount,
           },
+          ...(couponCode && { couponCode }),
           authToken: token || undefined,
           flow: 'express',
         });
@@ -253,9 +260,10 @@ function ExpressCheckoutForm() {
               subtotal,
               shipping: shippingDollars,
               tax: 0,
-              discount: 0,
+              discount: discount + autoDiscount,
               total: totalAmount,
             },
+            ...(couponCode && { couponCode }),
           }),
         });
 
@@ -288,7 +296,19 @@ function ExpressCheckoutForm() {
         setError(err instanceof Error ? err.message : 'Payment failed');
       }
     },
-    [stripe, elements, items, subtotal, clearCart, router, token, authenticatedCustomerId]
+    [
+      stripe,
+      elements,
+      items,
+      subtotal,
+      discount,
+      autoDiscount,
+      couponCode,
+      clearCart,
+      router,
+      token,
+      authenticatedCustomerId,
+    ]
   );
 
   return (
