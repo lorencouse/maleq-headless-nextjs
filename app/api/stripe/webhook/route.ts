@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error(`Error handling Stripe event ${event.type}:`, error);
     const pi = event.data.object as { id?: string };
-    sendAdminAlert('Webhook Handler Failed', {
+    await sendAdminAlert('Webhook Handler Failed', {
       'Event Type': event.type,
       'Event ID': event.id,
       'PaymentIntent': pi.id || 'N/A',
@@ -144,7 +144,7 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
         receiptEmail: paymentIntent.receipt_email || null,
       },
     });
-    sendAdminAlert('Payment Succeeded — No WooCommerce Order', {
+    await sendAdminAlert('Payment Succeeded — No WooCommerce Order', {
       'PaymentIntent': paymentIntent.id,
       'Amount': `$${(paymentIntent.amount / 100).toFixed(2)}`,
       'Customer Email': paymentIntent.receipt_email || 'N/A',
@@ -202,7 +202,7 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     `payment_intent.payment_failed: Marking order #${orderId} as failed (${paymentIntent.id}): ${failureMessage}`
   );
 
-  sendAdminAlert('Payment Failed', {
+  await sendAdminAlert('Payment Failed', {
     'Order ID': orderId,
     'PaymentIntent': paymentIntent.id,
     'Failure Reason': failureMessage,
@@ -306,7 +306,7 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
     `charge.dispute.created: Putting order #${orderId} on hold — reason: ${dispute.reason} (${dispute.id})`
   );
 
-  sendAdminAlert('Dispute Created', {
+  await sendAdminAlert('Dispute Created', {
     'Order ID': orderId,
     'Dispute ID': dispute.id,
     'Reason': dispute.reason,

@@ -9,6 +9,7 @@ interface SummaryRow extends RowDataPacket {
   checkout_order_created: number;
   checkout_order_create_failed: number;
   checkout_order_validation_failed: number;
+  checkout_order_total_mismatch: number;
   checkout_order_amount_mismatch: number;
   checkout_order_payment_incomplete: number;
   stripe_payment_succeeded: number;
@@ -74,6 +75,7 @@ export async function GET(request: NextRequest) {
          SUM(event_type = 'checkout_order_created') AS checkout_order_created,
          SUM(event_type = 'checkout_order_create_failed') AS checkout_order_create_failed,
          SUM(event_type = 'checkout_order_validation_failed') AS checkout_order_validation_failed,
+         SUM(event_type = 'checkout_order_total_mismatch') AS checkout_order_total_mismatch,
          SUM(event_type = 'checkout_order_amount_mismatch') AS checkout_order_amount_mismatch,
          SUM(event_type = 'checkout_order_payment_incomplete') AS checkout_order_payment_incomplete,
          SUM(event_type = 'stripe_payment_succeeded') AS stripe_payment_succeeded,
@@ -91,6 +93,7 @@ export async function GET(request: NextRequest) {
       checkout_order_created: 0,
       checkout_order_create_failed: 0,
       checkout_order_validation_failed: 0,
+      checkout_order_total_mismatch: 0,
       checkout_order_amount_mismatch: 0,
       checkout_order_payment_incomplete: 0,
       stripe_payment_succeeded: 0,
@@ -139,6 +142,7 @@ export async function GET(request: NextRequest) {
            'checkout_intent_failed',
            'checkout_order_create_failed',
            'checkout_order_validation_failed',
+           'checkout_order_total_mismatch',
            'checkout_order_amount_mismatch',
            'checkout_order_payment_incomplete',
            'stripe_payment_failed',
@@ -163,6 +167,7 @@ export async function GET(request: NextRequest) {
         checkoutOrderCreated: orderCreated,
         checkoutOrderCreateFailed: Number(summary.checkout_order_create_failed || 0),
         checkoutOrderValidationFailed: Number(summary.checkout_order_validation_failed || 0),
+        checkoutOrderTotalMismatch: Number(summary.checkout_order_total_mismatch || 0),
         checkoutOrderAmountMismatch: Number(summary.checkout_order_amount_mismatch || 0),
         checkoutOrderPaymentIncomplete: Number(summary.checkout_order_payment_incomplete || 0),
         stripePaymentSucceeded: paid,

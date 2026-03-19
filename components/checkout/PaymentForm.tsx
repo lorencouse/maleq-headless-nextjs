@@ -7,6 +7,7 @@ import {
   useElements,
 } from '@stripe/react-stripe-js';
 import { savePendingCheckout, type PendingOrderPayload } from '@/lib/checkout/pending-order';
+import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
 
 interface PaymentFormProps {
   paymentIntentId?: string | null;
@@ -56,6 +57,19 @@ export default function PaymentForm({
       });
 
       if (error) {
+        void reportCheckoutClientError({
+          eventType: 'checkout_client_payment_confirmation_failed',
+          message: error.message || 'Stripe payment confirmation failed',
+          severity: error.type === 'card_error' || error.type === 'validation_error'
+            ? 'warning'
+            : 'error',
+          paymentIntentId: paymentIntentId || null,
+          context: {
+            errorType: error.type,
+            errorCode: error.code || null,
+            declineCode: error.decline_code || null,
+          },
+        });
         // Show error to customer
         if (error.type === 'card_error' || error.type === 'validation_error') {
           setErrorMessage(error.message || 'An error occurred with your payment');
@@ -76,6 +90,14 @@ export default function PaymentForm({
       }
     } catch (err) {
       console.error('Payment error:', err);
+      void reportCheckoutClientError({
+        eventType: 'checkout_client_payment_confirmation_exception',
+        message: err instanceof Error ? err.message : 'Unexpected payment confirmation error',
+        severity: 'error',
+        paymentIntentId: paymentIntentId || null,
+        notifyAdmin: true,
+        adminSubject: 'Checkout Payment Confirmation Exception',
+      });
       setErrorMessage('An unexpected error occurred');
       setIsProcessing(false);
       onError('Payment processing failed');

@@ -350,7 +350,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Error creating payment intent:', error);
-    sendAdminAlert('PaymentIntent Creation Failed', {
+    await sendAdminAlert('PaymentIntent Creation Failed', {
       'Amount': `$${body?.amount || 'N/A'}`,
       'Customer Email': body?.customerEmail || 'N/A',
       'Error': error instanceof Error ? error.message : String(error),

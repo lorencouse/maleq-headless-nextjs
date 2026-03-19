@@ -12,6 +12,7 @@ import PaymentForm from './PaymentForm';
 import StripeProvider from './StripeProvider';
 import * as gtag from '@/lib/analytics/gtag';
 import { clearPendingCheckout, savePendingCheckout } from '@/lib/checkout/pending-order';
+import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
 
 type CheckoutStep = 'contact' | 'shipping' | 'payment';
 
@@ -145,6 +146,18 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       paymentIntentContextRef.current = paymentIntentContext;
     } catch (err) {
       console.error('Error creating payment intent:', err);
+      void reportCheckoutClientError({
+        eventType: 'checkout_client_payment_setup_failed',
+        message: err instanceof Error
+          ? err.message
+          : 'Failed to initialize payment intent on the client',
+        severity: 'warning',
+        context: {
+          flow: 'standard',
+          hasAuthToken: Boolean(token),
+          shippingMethodId: shippingMethod?.id || 'standard',
+        },
+      });
       setError(
         err instanceof Error
           ? err.message
@@ -222,6 +235,8 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   };
 
   const handlePaymentSuccess = async (paymentIntentId: string) => {
+    let orderCreateFailedAfterServerResponse = false;
+
     try {
       setIsProcessing(true);
       setError(null);
@@ -283,6 +298,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
+        orderCreateFailedAfterServerResponse = true;
         // Show specific field errors if available
         if (errorData.details && typeof errorData.details === 'object') {
           const fieldErrors = Object.values(errorData.details).join('. ');
@@ -313,6 +329,19 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
     } catch (err) {
       console.error('Error creating order:', err);
+      void reportCheckoutClientError({
+        eventType: 'checkout_client_order_create_failed',
+        message: err instanceof Error ? err.message : 'Failed to create order after payment',
+        severity: 'error',
+        paymentIntentId,
+        notifyAdmin: !orderCreateFailedAfterServerResponse,
+        adminSubject: 'Checkout Order Creation Failed After Payment',
+        context: {
+          flow: 'standard',
+          customerEmail: contact.email || null,
+          hasAuthToken: Boolean(token),
+        },
+      });
       setError(err instanceof Error ? err.message : 'Failed to complete order');
       setIsProcessing(false);
     }

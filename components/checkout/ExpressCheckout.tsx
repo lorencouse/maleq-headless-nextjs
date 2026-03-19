@@ -17,6 +17,7 @@ import type {
 import { getStripe } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
 import {
   getShippingOptions,
   getShippingPrice,
@@ -82,6 +83,9 @@ function ExpressCheckoutForm() {
       if (!stripe || !elements) return;
 
       setError(null);
+      let failureStage: 'intent' | 'confirm' | 'order' = 'intent';
+      let currentPaymentIntentId: string | null = null;
+      let orderCreateFailedAfterServerResponse = false;
 
       try {
         const { expressPaymentType, billingDetails, shippingAddress, shippingRate } =
@@ -143,10 +147,20 @@ function ExpressCheckoutForm() {
         });
 
         if (!intentResponse.ok) {
-          throw new Error('Failed to create payment');
+          let message = `Failed to create payment (${intentResponse.status})`;
+          try {
+            const errorData = await intentResponse.json() as { error?: string };
+            if (errorData?.error) {
+              message = errorData.error;
+            }
+          } catch {
+            // Keep fallback message.
+          }
+          throw new Error(message);
         }
 
         const { clientSecret, paymentIntentId } = await intentResponse.json();
+        currentPaymentIntentId = paymentIntentId;
 
         // Parse the name from the shipping address
         const nameParts = (shippingAddress?.name || '').split(' ');
@@ -198,6 +212,7 @@ function ExpressCheckoutForm() {
         });
 
         // Confirm the payment
+        failureStage = 'confirm';
         const { error: confirmError } = await stripe.confirmPayment({
           elements,
           clientSecret,
@@ -209,6 +224,20 @@ function ExpressCheckoutForm() {
         });
 
         if (confirmError) {
+          void reportCheckoutClientError({
+            eventType: 'checkout_express_payment_confirmation_failed',
+            message: confirmError.message || 'Express checkout payment confirmation failed',
+            severity: confirmError.type === 'card_error' || confirmError.type === 'validation_error'
+              ? 'warning'
+              : 'error',
+            paymentIntentId,
+            context: {
+              expressPaymentType,
+              errorType: confirmError.type,
+              errorCode: confirmError.code || null,
+              declineCode: confirmError.decline_code || null,
+            },
+          });
           setError(confirmError.message || 'Payment failed');
           return;
         }
@@ -230,6 +259,7 @@ function ExpressCheckoutForm() {
         const shippingMethodId = selectedRate?.id || 'standard';
 
         // Create order in WooCommerce
+        failureStage = 'order';
         const orderResponse = await fetch('/api/orders/create', {
           method: 'POST',
           headers: {
@@ -269,6 +299,7 @@ function ExpressCheckoutForm() {
 
         if (!orderResponse.ok) {
           const errorData = await orderResponse.json();
+          orderCreateFailedAfterServerResponse = true;
           throw new Error(errorData.error || 'Failed to create order');
         }
 
@@ -293,7 +324,30 @@ function ExpressCheckoutForm() {
         router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
       } catch (err) {
         console.error('Express checkout error:', err);
-        setError(err instanceof Error ? err.message : 'Payment failed');
+        const errorMessage = err instanceof Error ? err.message : 'Payment failed';
+        const eventType = failureStage === 'order'
+          ? 'checkout_express_order_create_failed'
+          : failureStage === 'confirm'
+            ? 'checkout_express_payment_confirmation_exception'
+            : 'checkout_express_intent_failed';
+        void reportCheckoutClientError({
+          eventType,
+          message: errorMessage,
+          severity: failureStage === 'intent' ? 'warning' : 'error',
+          paymentIntentId: currentPaymentIntentId,
+          notifyAdmin:
+            failureStage === 'confirm' ||
+            (failureStage === 'order' && !orderCreateFailedAfterServerResponse),
+          adminSubject: failureStage === 'order'
+            ? 'Express Checkout Order Creation Failed After Payment'
+            : failureStage === 'confirm'
+              ? 'Express Checkout Payment Confirmation Exception'
+              : undefined,
+          context: {
+            flow: 'express',
+          },
+        });
+        setError(errorMessage);
       }
     },
     [

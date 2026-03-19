@@ -270,7 +270,7 @@ export async function POST(request: NextRequest) {
     const expectedAmount = Math.round(pricing.total * 100);
     if (paymentIntent.amount !== expectedAmount) {
       console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amount}`);
-      sendAdminAlert('Amount Mismatch on Order Creation', {
+      await sendAdminAlert('Amount Mismatch on Order Creation', {
         'PaymentIntent': paymentIntentId,
         'Expected (cents)': expectedAmount,
         'Actual (cents)': paymentIntent.amount,
@@ -432,7 +432,7 @@ export async function POST(request: NextRequest) {
         fulfillment.result.status !== 'submitted' &&
         fulfillment.result.status !== 'unallocated'
       ) {
-        sendAdminAlert('Warehouse Fulfillment Requires Attention', {
+        await sendAdminAlert('Warehouse Fulfillment Requires Attention', {
           'Order ID': order.id,
           'PaymentIntent': paymentIntentId,
           'Status': fulfillment.result.status,
@@ -459,7 +459,7 @@ export async function POST(request: NextRequest) {
           ? fulfillmentError.message
           : String(fulfillmentError);
 
-      sendAdminAlert('Warehouse Fulfillment Failed', {
+      await sendAdminAlert('Warehouse Fulfillment Failed', {
         'Order ID': order.id,
         'PaymentIntent': paymentIntentId,
         'Customer Email': contact.email,
@@ -532,7 +532,7 @@ export async function POST(request: NextRequest) {
         durationMs: Date.now() - startedAt,
       },
     });
-    sendAdminAlert('Order Creation Failed', {
+    await sendAdminAlert('Order Creation Failed', {
       'PaymentIntent': (rawBody?.paymentIntentId as string) || 'N/A',
       'Customer Email': (rawBody?.contact as Record<string, string>)?.email || 'N/A',
       'Error': error instanceof Error ? error.message : String(error),
