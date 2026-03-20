@@ -6,6 +6,7 @@ import CartItem from '@/components/cart/CartItem';
 import CartSummary from '@/components/cart/CartSummary';
 import EmptyCart from '@/components/cart/EmptyCart';
 import CartCrossSells from '@/components/cart/CartCrossSells';
+import CartRecoveryHandler from '@/components/cart/CartRecoveryHandler';
 import * as gtag from '@/lib/analytics/gtag';
 
 export default function CartPage() {
@@ -32,6 +33,7 @@ export default function CartPage() {
   if (isEmpty) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <CartRecoveryHandler />
         <EmptyCart />
       </div>
     );
@@ -39,6 +41,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <CartRecoveryHandler />
       {/* Page Header */}
       <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

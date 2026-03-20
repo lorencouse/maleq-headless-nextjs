@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
 import { extractAuthToken } from '@/lib/api/auth-token';
+import { markCartRecoveryConverted } from '@/lib/cart-recovery/service';
 import {
   CheckoutPricingError,
   computeAuthoritativeCheckoutPricing,
@@ -393,6 +394,12 @@ export async function POST(request: NextRequest) {
     await stripe.paymentIntents.update(paymentIntentId, {
       metadata: { woocommerce_order_id: String(order.id) },
     });
+
+    await markCartRecoveryConverted({
+      paymentIntentId,
+      email: contact.email,
+      orderId: order.id,
+    }).catch(() => {});
 
     let fulfillmentSummary:
       | {

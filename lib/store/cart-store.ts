@@ -22,6 +22,7 @@ import {
   isSameProduct,
   calculateAutoDiscount,
 } from '../utils/cart-helpers';
+import { clearCartRecoveryKey } from '@/lib/cart-recovery/client';
 
 /**
  * Cart Store
@@ -167,6 +168,7 @@ export const useCartStore = create<CartStore>()(
    * Clear all items from cart
    */
   clearCart: () => {
+    clearCartRecoveryKey();
     set({
       ...createEmptyCart(),
       error: undefined,
@@ -338,6 +340,36 @@ export const useCartStore = create<CartStore>()(
   hydrate: () => {
     // Persist middleware handles hydration automatically
     // This is a no-op for backwards compatibility
+  },
+
+  replaceCart: (cart) => {
+    const items = Array.isArray(cart.items) ? cart.items : [];
+    const subtotal = Number.isFinite(cart.subtotal) ? cart.subtotal : calculateCartSubtotal(items);
+    const itemCount = Number.isFinite(cart.itemCount) ? cart.itemCount : calculateItemCount(items);
+    const tax = Number.isFinite(cart.tax) ? cart.tax : 0;
+    const shipping = Number.isFinite(cart.shipping) ? cart.shipping : 0;
+    const discount = Number.isFinite(cart.discount) ? cart.discount : 0;
+    const autoDiscount = Number.isFinite(cart.autoDiscount) ? cart.autoDiscount : 0;
+    const total = Number.isFinite(cart.total)
+      ? cart.total
+      : calculateCartTotal(subtotal, tax, shipping, discount, autoDiscount);
+
+    set({
+      ...createEmptyCart(),
+      items,
+      subtotal,
+      tax,
+      shipping,
+      discount,
+      autoDiscount,
+      autoDiscountLabel: cart.autoDiscountLabel,
+      total,
+      itemCount,
+      currency: cart.currency || 'USD',
+      couponCode: cart.couponCode,
+      updatedAt: Date.now(),
+      error: undefined,
+    });
   },
     }),
     {

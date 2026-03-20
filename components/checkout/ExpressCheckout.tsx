@@ -18,6 +18,7 @@ import { getStripe } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
+import { persistCartRecoverySnapshot } from '@/lib/cart-recovery/client';
 import {
   getShippingOptions,
   getShippingPrice,
@@ -42,7 +43,10 @@ function ExpressCheckoutForm() {
   const clearCart = useCartStore((state) => state.clearCart);
   const discount = useCartStore((state) => state.discount);
   const autoDiscount = useCartStore((state) => state.autoDiscount);
+  const autoDiscountLabel = useCartStore((state) => state.autoDiscountLabel);
   const couponCode = useCartStore((state) => state.couponCode);
+  const itemCount = useCartStore((state) => state.itemCount);
+  const currency = useCartStore((state) => state.currency);
   const user = useAuthStore((state) => state.user);
   const token = useAuthStore((state) => state.token);
   const authenticatedCustomerId = user?.id && token ? Number(user.id) : undefined;
@@ -161,6 +165,32 @@ function ExpressCheckoutForm() {
 
         const { clientSecret, paymentIntentId } = await intentResponse.json();
         currentPaymentIntentId = paymentIntentId;
+
+        if (billingDetails?.email) {
+          void persistCartRecoverySnapshot({
+            email: billingDetails.email,
+            customerId: authenticatedCustomerId || null,
+            cart: {
+              items,
+              subtotal,
+              tax: 0,
+              shipping: shippingDollars,
+              discount,
+              autoDiscount,
+              autoDiscountLabel,
+              total: totalAmount,
+              itemCount,
+              currency,
+              couponCode: couponCode || undefined,
+              updatedAt: Date.now(),
+            },
+            shippingMethodId: selectedRate?.id || 'standard',
+            shippingMethodName: selectedRate?.name || 'Standard Shipping',
+            shippingCountry: shippingAddress?.address.country || 'US',
+            checkoutUrl: '/checkout',
+            paymentIntentId,
+          });
+        }
 
         // Parse the name from the shipping address
         const nameParts = (shippingAddress?.name || '').split(' ');
@@ -357,7 +387,10 @@ function ExpressCheckoutForm() {
       subtotal,
       discount,
       autoDiscount,
+      autoDiscountLabel,
       couponCode,
+      itemCount,
+      currency,
       clearCart,
       router,
       token,

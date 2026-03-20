@@ -13,6 +13,7 @@ import StripeProvider from './StripeProvider';
 import * as gtag from '@/lib/analytics/gtag';
 import { clearPendingCheckout, savePendingCheckout } from '@/lib/checkout/pending-order';
 import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
+import { persistCartRecoverySnapshot } from '@/lib/cart-recovery/client';
 
 type CheckoutStep = 'contact' | 'shipping' | 'payment';
 
@@ -50,7 +51,10 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
   const total = useCartStore((state) => state.total);
   const discount = useCartStore((state) => state.discount);
   const autoDiscount = useCartStore((state) => state.autoDiscount);
+  const autoDiscountLabel = useCartStore((state) => state.autoDiscountLabel);
   const couponCode = useCartStore((state) => state.couponCode);
+  const itemCount = useCartStore((state) => state.itemCount);
+  const currency = useCartStore((state) => state.currency);
   const validateCart = useCartStore((state) => state.validateCart);
 
   // Checkout store for form data
@@ -194,6 +198,61 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       paymentIntentContextRef.current = null;
     }
   }, [clientSecret, paymentIntentContext]);
+
+  useEffect(() => {
+    const normalizedEmail = contact.email.trim().toLowerCase();
+    if (!normalizedEmail || items.length === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      void persistCartRecoverySnapshot({
+        email: normalizedEmail,
+        customerId: authenticatedCustomerId || null,
+        cart: {
+          items,
+          subtotal,
+          tax,
+          shipping,
+          discount,
+          autoDiscount,
+          autoDiscountLabel,
+          total,
+          itemCount,
+          currency,
+          couponCode: couponCode || undefined,
+          updatedAt: Date.now(),
+        },
+        shippingMethodId: shippingMethod?.id || 'standard',
+        shippingMethodName: shippingMethod?.name || 'Standard Shipping',
+        shippingCountry: shippingAddress.country || 'US',
+        checkoutUrl: '/checkout',
+        paymentIntentId,
+      });
+    }, 800);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    authenticatedCustomerId,
+    autoDiscount,
+    autoDiscountLabel,
+    contact.email,
+    couponCode,
+    currency,
+    discount,
+    itemCount,
+    items,
+    paymentIntentId,
+    shipping,
+    shippingAddress.country,
+    shippingMethod?.id,
+    shippingMethod?.name,
+    subtotal,
+    tax,
+    total,
+  ]);
 
   const handleContactComplete = (data: { email: string; phone: string; newsletter: boolean }) => {
     setContact(data);

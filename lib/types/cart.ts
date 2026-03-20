@@ -151,6 +151,9 @@ export interface CartActions {
 
   /** Validate cart before checkout - checks stock, prices, availability */
   validateCart: () => CartValidationResult;
+
+  /** Replace the entire cart state from a saved snapshot */
+  replaceCart: (cart: Cart) => void;
 }
 
 /**
