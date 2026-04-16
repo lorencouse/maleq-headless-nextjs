@@ -268,6 +268,17 @@ export async function POST(request: NextRequest) {
     });
     const checkoutCustomerRef = buildCheckoutCustomerRef(customerId, customerEmail);
 
+    // Serialize cart items into Stripe metadata for disaster recovery.
+    // Stripe allows up to 50 keys, 500 chars per value. We use a compact
+    // JSON array: [[productId, variationId|null, qty, unitPrice], ...]
+    const cartItemsCompact = pricing.items.map((item) => [
+      item.productId,
+      item.variationId || null,
+      item.quantity,
+      item.unitPrice,
+    ]);
+    const cartItemsJson = JSON.stringify(cartItemsCompact);
+
     // Create the PaymentIntent
     const stripe = getStripeServer();
     const paymentIntent = await stripe.paymentIntents.create({
@@ -286,6 +297,9 @@ export async function POST(request: NextRequest) {
         shipping_country: pricing.shippingCountry,
         checkout_fingerprint: checkoutFingerprint,
         checkout_customer_ref: checkoutCustomerRef,
+        // Cart items for recovery if order creation fails (max 500 chars).
+        // Format: [[productId, variationId|null, qty, unitPrice], ...]
+        checkout_cart_items: cartItemsJson.slice(0, 500),
         source: 'maleq-headless-checkout',
       },
       ...(customerEmail && { receipt_email: customerEmail }),
@@ -326,6 +340,12 @@ export async function POST(request: NextRequest) {
         metadataKeys: Object.keys(safeMetadata).length,
         hasCustomerEmail: Boolean(customerEmail),
         hasShippingAddress: Boolean(shippingAddress),
+        cartItems: pricing.items.map((item) => ({
+          productId: item.productId,
+          variationId: item.variationId || null,
+          qty: item.quantity,
+          price: item.unitPrice,
+        })),
         durationMs: Date.now() - startedAt,
       },
     });
