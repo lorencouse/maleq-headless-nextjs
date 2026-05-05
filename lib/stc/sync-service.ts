@@ -139,8 +139,12 @@ function computeUpdates(
 
     if (stcQty === undefined) continue;
 
-    // Skip if stock hasn't changed
-    if (product.stock === stcQty) continue;
+    // Check if stock_status is correct for the current quantity
+    const expectedStatus = stcQty > 0 ? 'instock' : 'outofstock';
+    const statusMismatch = product.stock_status !== expectedStatus;
+
+    // Skip if stock hasn't changed AND status is already correct
+    if (product.stock === stcQty && !statusMismatch) continue;
 
     updates.push({
       id: product.id,
