@@ -1,9 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
-import { SHIPPING_COUNTRY_OPTIONS } from '@/lib/checkout/shipping-rates';
+import {
+  isSupportedShippingCountry,
+  isDomesticShippingCountry,
+} from '@/lib/checkout/shipping-rates';
+import { ALL_COUNTRIES, getCountryName } from '@/lib/data/countries';
 
 // US States for dropdown
 const US_STATES = [
@@ -111,6 +115,24 @@ export default function ShippingAddressForm() {
   const skipAutocompleteRef = useRef(false);
   const hideSuggestionsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isUSAddress = address.country === 'US';
+  const usesZipCode = isDomesticShippingCountry(address.country);
+
+  const [countryQuery, setCountryQuery] = useState('');
+  const [isCountryFocused, setIsCountryFocused] = useState(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const hideCountryDropdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isCountrySupported = isSupportedShippingCountry(address.country);
+  const selectedCountryName = getCountryName(address.country);
+  const countryInputValue = isCountryFocused ? countryQuery : selectedCountryName;
+  const filteredCountries = useMemo(() => {
+    const q = countryQuery.trim().toLowerCase();
+    if (!q) return ALL_COUNTRIES;
+    return ALL_COUNTRIES.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.code.toLowerCase() === q,
+    );
+  }, [countryQuery]);
 
   // Auto-populate from saved customer addresses
   useEffect(() => {
@@ -480,14 +502,14 @@ export default function ShippingAddressForm() {
         </div>
         <div>
           <label htmlFor="zipCode" className="block text-sm font-medium text-foreground mb-1">
-            {isUSAddress ? 'ZIP Code' : 'Postal Code'} <span className="text-destructive">*</span>
+            {usesZipCode ? 'ZIP Code' : 'Postal Code'} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
             id="zipCode"
             value={address.zipCode}
             onChange={(e) => handleChange('zipCode', e.target.value)}
-            placeholder={isUSAddress ? '12345' : 'Postal code'}
+            placeholder={usesZipCode ? '12345' : 'Postal code'}
             autoComplete="postal-code"
             className={inputClassName('zipCode')}
           />
@@ -502,27 +524,92 @@ export default function ShippingAddressForm() {
         <label htmlFor="country" className="block text-sm font-medium text-foreground mb-1">
           Country <span className="text-destructive">*</span>
         </label>
-        <select
-          id="country"
-          value={address.country}
-          onChange={(e) => {
-            handleChange('country', e.target.value);
-            setSuggestions([]);
-            setShowSuggestions(false);
-            setHasAutocompleteError(false);
-          }}
-          autoComplete="country"
-          className={inputClassName('country')}
-        >
-          {SHIPPING_COUNTRY_OPTIONS.map((country) => (
-            <option key={country.code} value={country.code}>
-              {country.name}
-            </option>
-          ))}
-        </select>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Domestic and international shipping options are available.
-        </p>
+        <div className="relative">
+          <input
+            type="text"
+            id="country"
+            role="combobox"
+            aria-expanded={showCountryDropdown}
+            aria-autocomplete="list"
+            autoComplete="country-name"
+            value={countryInputValue}
+            placeholder="Start typing your country…"
+            onChange={(e) => {
+              setCountryQuery(e.target.value);
+              setShowCountryDropdown(true);
+            }}
+            onFocus={() => {
+              setIsCountryFocused(true);
+              setCountryQuery('');
+              setShowCountryDropdown(true);
+            }}
+            onBlur={() => {
+              hideCountryDropdownTimerRef.current = setTimeout(() => {
+                setShowCountryDropdown(false);
+                setIsCountryFocused(false);
+                setCountryQuery('');
+              }, 150);
+            }}
+            className={inputClassName('country')}
+          />
+          {showCountryDropdown && filteredCountries.length > 0 && (
+            <ul
+              role="listbox"
+              className="absolute z-20 mt-1 w-full rounded-lg border border-input bg-card shadow-lg max-h-64 overflow-y-auto"
+            >
+              {filteredCountries.map((c) => {
+                const supported = isSupportedShippingCountry(c.code);
+                return (
+                  <li key={c.code} role="option" aria-selected={c.code === address.country}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        if (hideCountryDropdownTimerRef.current) {
+                          clearTimeout(hideCountryDropdownTimerRef.current);
+                        }
+                        handleChange('country', c.code);
+                        setShowCountryDropdown(false);
+                        setIsCountryFocused(false);
+                        setCountryQuery('');
+                        setSuggestions([]);
+                        setShowSuggestions(false);
+                        setHasAutocompleteError(false);
+                      }}
+                      className="w-full text-left px-3 py-2.5 hover:bg-muted transition-colors border-b last:border-b-0 border-border flex items-center justify-between gap-2"
+                    >
+                      <span className="text-sm text-foreground">{c.name}</span>
+                      {!supported && (
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          Not shippable
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {showCountryDropdown && filteredCountries.length === 0 && (
+            <div className="absolute z-20 mt-1 w-full rounded-lg border border-input bg-card shadow-lg px-3 py-2.5 text-sm text-muted-foreground">
+              No matches for &ldquo;{countryQuery}&rdquo;
+            </div>
+          )}
+        </div>
+        {errors.country && (
+          <p className="mt-1 text-sm text-destructive">{errors.country}</p>
+        )}
+        {!errors.country && address.country && !isCountrySupported && (
+          <p className="mt-1 text-sm text-destructive">
+            Sorry, we don&apos;t ship to {selectedCountryName || 'this country'} yet. Please
+            contact us at info@maleq.com if you&apos;d like to request shipping here.
+          </p>
+        )}
+        {!errors.country && isCountrySupported && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Domestic and international shipping options are available.
+          </p>
+        )}
       </div>
     </div>
   );
