@@ -1,9 +1,15 @@
 /**
  * Loads lightweight product data from MySQL for the in-memory index.
  *
- * Two queries total:
- * 1. Products + wp_wc_product_meta_lookup (WooCommerce denormalized table) + thumbnail
- * 2. Taxonomy relationships (categories, brands, materials, colors, product_type)
+ * Three parallel queries plus a follow-up:
+ * 1. Products + wp_wc_product_meta_lookup
+ * 2. Postmeta scalars (_thumbnail_id, _view_count, _regular_price, _sale_price)
+ *    — filtered by meta_key first so the (meta_key) index drives the scan
+ * 3. Taxonomy relationships (categories, brands, materials, colors, product_type)
+ * Then a PK lookup on wp_posts for thumbnail attachments.
+ *
+ * Replaces an earlier single-query version that LEFT JOIN'd wp_postmeta four
+ * times — that plan examined ~3.7M rows to return 35K and ran ~15s.
  *
  * Returns ~31K ProductIndexEntry items (~15-20 MB in memory).
  */
@@ -48,12 +54,19 @@ interface RawProduct extends RowDataPacket {
   average_rating: number | null;
   rating_count: number | null;
   total_sales: number | null;
-  thumb_url: string | null;
-  thumb_title: string | null;
-  thumb_excerpt: string | null;
-  view_count: string | null;
-  regular_price: string | null;
-  sale_price: string | null;
+}
+
+interface RawPostmeta extends RowDataPacket {
+  post_id: number;
+  meta_key: string;
+  meta_value: string | null;
+}
+
+interface RawAttachment extends RowDataPacket {
+  ID: number;
+  guid: string | null;
+  post_title: string | null;
+  post_excerpt: string | null;
 }
 
 interface RawTaxonomy extends RowDataPacket {
@@ -80,7 +93,9 @@ const TYPE_MAP: Record<string, string> = {
 export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
   const pool = await getPoolAsync();
 
-  const [productsResult, taxonomiesResult] = await Promise.all([
+  const PRODUCT_FILTER = `p.post_type = 'product' AND p.post_status = 'publish'`;
+
+  const [productsResult, postmetaResult, taxonomiesResult] = await Promise.all([
     pool.query<RawProduct[]>(`
       SELECT
         p.ID,
@@ -92,21 +107,17 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
         lk.stock_status,
         lk.average_rating,
         lk.rating_count,
-        lk.total_sales,
-        att.guid AS thumb_url,
-        att.post_title AS thumb_title,
-        att.post_excerpt AS thumb_excerpt,
-        vc.meta_value AS view_count,
-        rp.meta_value AS regular_price,
-        sp.meta_value AS sale_price
+        lk.total_sales
       FROM wp_posts p
       LEFT JOIN wp_wc_product_meta_lookup lk ON lk.product_id = p.ID
-      LEFT JOIN wp_postmeta tm ON tm.post_id = p.ID AND tm.meta_key = '_thumbnail_id'
-      LEFT JOIN wp_posts att ON att.ID = CAST(tm.meta_value AS UNSIGNED)
-      LEFT JOIN wp_postmeta vc ON vc.post_id = p.ID AND vc.meta_key = '_view_count'
-      LEFT JOIN wp_postmeta rp ON rp.post_id = p.ID AND rp.meta_key = '_regular_price'
-      LEFT JOIN wp_postmeta sp ON sp.post_id = p.ID AND sp.meta_key = '_sale_price'
-      WHERE p.post_type = 'product' AND p.post_status = 'publish'
+      WHERE ${PRODUCT_FILTER}
+    `),
+    pool.query<RawPostmeta[]>(`
+      SELECT pm.post_id, pm.meta_key, pm.meta_value
+      FROM wp_postmeta pm
+      INNER JOIN wp_posts p ON p.ID = pm.post_id
+      WHERE pm.meta_key IN ('_thumbnail_id','_view_count','_regular_price','_sale_price')
+        AND ${PRODUCT_FILTER}
     `),
     pool.query<RawTaxonomy[]>(`
       SELECT tr.object_id, tt.taxonomy, t.term_id, t.name, t.slug
@@ -114,13 +125,61 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
       JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
       JOIN wp_terms t ON tt.term_id = t.term_id
       INNER JOIN wp_posts p ON tr.object_id = p.ID
-      WHERE p.post_type = 'product' AND p.post_status = 'publish'
+      WHERE ${PRODUCT_FILTER}
         AND tt.taxonomy IN ('product_cat','product_brand','product_material','pa_color','product_type')
     `),
   ]);
 
   const products = productsResult[0];
+  const postmetaRows = postmetaResult[0];
   const taxonomies = taxonomiesResult[0];
+
+  // Pivot postmeta to per-product scalar lookup
+  type PostmetaScalars = {
+    thumbId: number | null;
+    viewCount: string | null;
+    regularPrice: string | null;
+    salePrice: string | null;
+  };
+  const postmetaByProduct = new Map<number, PostmetaScalars>();
+  for (const row of postmetaRows) {
+    let entry = postmetaByProduct.get(row.post_id);
+    if (!entry) {
+      entry = { thumbId: null, viewCount: null, regularPrice: null, salePrice: null };
+      postmetaByProduct.set(row.post_id, entry);
+    }
+    switch (row.meta_key) {
+      case '_thumbnail_id': {
+        const id = row.meta_value ? parseInt(row.meta_value, 10) : NaN;
+        entry.thumbId = Number.isFinite(id) ? id : null;
+        break;
+      }
+      case '_view_count':
+        entry.viewCount = row.meta_value;
+        break;
+      case '_regular_price':
+        entry.regularPrice = row.meta_value;
+        break;
+      case '_sale_price':
+        entry.salePrice = row.meta_value;
+        break;
+    }
+  }
+
+  // Fetch thumbnail attachments by PK (fast index lookup)
+  const thumbIds = Array.from(postmetaByProduct.values())
+    .map((p) => p.thumbId)
+    .filter((id): id is number => id !== null);
+  const attachmentMap = new Map<number, RawAttachment>();
+  if (thumbIds.length > 0) {
+    const [attachmentsResult] = await pool.query<RawAttachment[]>(
+      `SELECT ID, guid, post_title, post_excerpt FROM wp_posts WHERE ID IN (?)`,
+      [thumbIds],
+    );
+    for (const att of attachmentsResult) {
+      attachmentMap.set(att.ID, att);
+    }
+  }
 
   // Build taxonomy lookup: productId -> taxonomy[]
   const taxMap = new Map<number, RawTaxonomy[]>();
@@ -173,7 +232,12 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
       }
     }
 
-    const viewCount = p.view_count ? parseInt(p.view_count, 10) || 0 : 0;
+    const meta = postmetaByProduct.get(p.ID);
+    const attachment = meta?.thumbId !== null && meta?.thumbId !== undefined
+      ? attachmentMap.get(meta.thumbId)
+      : undefined;
+
+    const viewCount = meta?.viewCount ? parseInt(meta.viewCount, 10) || 0 : 0;
     const reviewCount = Number(p.rating_count) || 0;
     const averageRating = Number(p.average_rating) || 0;
     const totalSales = Number(p.total_sales) || 0;
@@ -181,8 +245,8 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
     // MySQL DECIMAL comes back as string — coerce to number
     const minPrice = p.min_price !== null ? Number(p.min_price) || null : null;
     const maxPrice = p.max_price !== null ? Number(p.max_price) || null : null;
-    const regPrice = p.regular_price ? parseFloat(p.regular_price) : null;
-    const salPrice = p.sale_price ? parseFloat(p.sale_price) : null;
+    const regPrice = meta?.regularPrice ? parseFloat(meta.regularPrice) : null;
+    const salPrice = meta?.salePrice ? parseFloat(meta.salePrice) : null;
 
     // Compute onSale from actual prices (more reliable than lookup table flag)
     const isOnSale = !!(salPrice && regPrice && salPrice < regPrice);
@@ -205,8 +269,8 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
       materialSlug,
       materialName,
       colorSlugs,
-      imageUrl: p.thumb_url || null,
-      imageAlt: p.thumb_excerpt || p.thumb_title || p.post_title,
+      imageUrl: attachment?.guid || null,
+      imageAlt: attachment?.post_excerpt || attachment?.post_title || p.post_title,
       type: productType,
       averageRating,
       reviewCount,
