@@ -1,7 +1,5 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
-import { getClient } from '@/lib/apollo/client';
-import { GET_ALL_POSTS } from '@/lib/queries/posts';
 import {
   getFilteredProducts,
   getHierarchicalCategories,
@@ -10,6 +8,7 @@ import {
 import { isMySQLConfigured } from '@/lib/db/pool';
 import { queryProductIndex } from '@/lib/products/product-index';
 import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
+import { getBlogPosts } from '@/lib/blog/blog-service';
 import BlogCard from '@/components/blog/BlogCard';
 import HomeHero from '@/components/home/HomeHero';
 import HomeBenefits from '@/components/home/HomeBenefits';
@@ -66,21 +65,20 @@ export default async function Home() {
         .catch(() => getTrendingProducts(12))
     : getTrendingProducts(12);
 
-  // Fetch data in parallel (blog posts still need GraphQL)
-  const [postsData, productsResult, categories, trendingProducts] =
+  // Fetch data in parallel — blog listing uses SQL via blog-service (no
+  // post body rendering needed for grid cards, so no GraphQL/do_blocks).
+  const [postsResult, productsResult, categories, trendingProducts] =
     await Promise.all([
-      getClient()
-        .query({
-          query: GET_ALL_POSTS,
-          variables: { first: 6 },
-        })
-        .catch(() => ({ data: { posts: { nodes: [] } } })),
+      getBlogPosts({ first: 6 }).catch(() => ({
+        posts: [] as Post[],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      })),
       featuredProductsPromise,
       getHierarchicalCategories().catch(() => []),
       trendingProductsPromise,
     ]);
 
-  const posts = (postsData?.data?.posts?.nodes || []) as Post[];
+  const posts = postsResult.posts;
   const products = sortProductsByPriority(productsResult.products);
 
   return (

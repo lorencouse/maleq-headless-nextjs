@@ -1,7 +1,13 @@
 /**
  * In-memory product index singleton with query API.
  *
- * Lazy-initializes on first request, auto-refreshes every 5 minutes.
+ * Lazy-initializes on first request. Real-time freshness comes from the
+ * /api/revalidate webhook (WP -> Next.js) calling invalidateProductIndex().
+ * /api/cron/refresh-index provides a nightly safety-net refresh from
+ * external cron, so any data changes that bypass the webhook still surface
+ * within ~24h without a periodic in-process timer (which previously caused
+ * a ~2s MySQL spike every 5 minutes per running Next.js instance).
+ *
  * All filtering, sorting, and facet extraction happens in-memory (~1-5ms).
  */
 import { loadProductIndex, type ProductIndexEntry } from '@/lib/db/index-loader';
@@ -52,9 +58,6 @@ let byBrandSlug: Map<string, ProductIndexEntry[]> | null = null;
 /** Pre-computed lowercased searchable text and stemmed words per product */
 let searchText: Map<number, { text: string; words: string[]; stemmed: string[] }> | null = null;
 let loadPromise: Promise<void> | null = null;
-let refreshTimer: ReturnType<typeof setInterval> | null = null;
-
-const REFRESH_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 async function ensureLoaded(): Promise<void> {
   if (indexEntries) return;
@@ -66,23 +69,6 @@ async function ensureLoaded(): Promise<void> {
     buildLookups(entries);
     const elapsed = (performance.now() - start).toFixed(0);
     console.log(`[product-index] Loaded ${entries.length} products in ${elapsed}ms`);
-
-    // Schedule auto-refresh
-    if (!refreshTimer) {
-      refreshTimer = setInterval(async () => {
-        try {
-          const refreshStart = performance.now();
-          const fresh = await loadProductIndex();
-          buildLookups(fresh);
-          const refreshElapsed = (performance.now() - refreshStart).toFixed(0);
-          console.log(`[product-index] Refreshed ${fresh.length} products in ${refreshElapsed}ms`);
-        } catch (err) {
-          console.error('[product-index] Refresh failed:', err);
-        }
-      }, REFRESH_INTERVAL);
-      refreshTimer.unref();
-    }
-
     loadPromise = null;
   })();
 
