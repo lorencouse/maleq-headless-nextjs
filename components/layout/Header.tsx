@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { useCartItemCount } from '@/lib/store/cart-store';
@@ -24,6 +25,7 @@ import {
 } from '@/lib/pwa/notification-store';
 
 export default function Header() {
+  const t = useTranslations('header');
   const router = useRouter();
   const pathname = usePathname();
   const cartItemCount = useCartItemCount();
@@ -96,7 +98,7 @@ export default function Header() {
 
   return (
     <header className='bg-background border-b border-border shadow-sm transition-colors sticky top-0 z-40' role="banner">
-      <nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' aria-label="Main navigation">
+      <nav className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8' aria-label={t('mainNav')}>
         <div className='flex justify-between h-16 items-center'>
           {/* Logo and Navigation */}
           <div className='flex items-center gap-6'>
@@ -130,7 +132,7 @@ export default function Header() {
             <button
               onClick={() => setIsSearchOpen(true)}
               className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
-              aria-label='Search'
+              aria-label={t('search')}
             >
               <svg
                 className='h-5 w-5'
@@ -152,7 +154,7 @@ export default function Header() {
                   <button
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                     className='p-2 text-foreground hover:text-primary transition-colors flex items-center gap-1'
-                    aria-label='User menu'
+                    aria-label={t('userMenu')}
                   >
                     <div className='w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center'>
                       <span className='text-xs font-semibold text-primary'>
@@ -177,21 +179,21 @@ export default function Header() {
                             onClick={() => setIsUserMenuOpen(false)}
                             className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
-                            Dashboard
+                            {t('dashboard')}
                           </Link>
                           <Link
                             href='/account/orders'
                             onClick={() => setIsUserMenuOpen(false)}
                             className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
-                            Orders
+                            {t('orders')}
                           </Link>
                           <Link
                             href='/account/details'
                             onClick={() => setIsUserMenuOpen(false)}
                             className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
-                            Account Details
+                            {t('accountDetails')}
                           </Link>
                         </div>
                         <div className='border-t border-border py-1'>
@@ -203,7 +205,7 @@ export default function Header() {
                             }}
                             className='block w-full text-left px-4 py-3 min-h-[44px] text-sm text-destructive hover:bg-muted transition-colors'
                           >
-                            Sign Out
+                            {t('signOut')}
                           </button>
                         </div>
                       </div>
@@ -214,7 +216,7 @@ export default function Header() {
                 <Link
                   href={pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') ? '/login' : `/login?returnTo=${encodeURIComponent(pathname)}`}
                   className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
-                  aria-label='Sign in'
+                  aria-label={t('signIn')}
                 >
                   <svg
                     className='h-5 w-5'
@@ -237,7 +239,7 @@ export default function Header() {
                 <button
                   onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                   className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
-                  aria-label='Notifications'
+                  aria-label={t('notifications')}
                 >
                   <svg
                     className='h-5 w-5'
@@ -268,7 +270,7 @@ export default function Header() {
             <Link
               href='/account/wishlist'
               className='hidden md:flex p-2.5 min-w-[44px] min-h-[44px] items-center justify-center text-foreground hover:text-primary relative transition-colors'
-              aria-label='View wishlist'
+              aria-label={t('viewWishlist')}
             >
               <svg
                 className='h-5 w-5'
@@ -292,7 +294,7 @@ export default function Header() {
             <button
               onClick={miniCartControls.open}
               className='p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary relative transition-colors'
-              aria-label='Open shopping cart'
+              aria-label={t('openCart')}
             >
               <svg
                 className='h-5 w-5'
@@ -316,7 +318,7 @@ export default function Header() {
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className='md:hidden p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground hover:text-primary transition-colors'
-              aria-label='Open menu'
+              aria-label={t('openMenu')}
             >
               <svg
                 className='h-5 w-5'

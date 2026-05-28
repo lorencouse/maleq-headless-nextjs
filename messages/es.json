@@ -7,5 +7,19 @@
     "switchLabel": "Idioma",
     "en": "English",
     "es": "Español"
+  },
+  "header": {
+    "mainNav": "Navegación principal",
+    "search": "Buscar",
+    "userMenu": "Menú de usuario",
+    "signIn": "Iniciar sesión",
+    "notifications": "Notificaciones",
+    "viewWishlist": "Ver lista de deseos",
+    "openCart": "Abrir carrito de compras",
+    "openMenu": "Abrir menú",
+    "dashboard": "Mi cuenta",
+    "orders": "Pedidos",
+    "accountDetails": "Datos personales",
+    "signOut": "Cerrar sesión"
   }
 }
