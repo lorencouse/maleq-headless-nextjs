@@ -1,8 +1,23 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
 import StorefrontChrome from '@/components/layout/StorefrontChrome';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
 import { staticRequestLocale } from '@/lib/i18n/guide-languages';
+// Statically import the catalogs (like the root layout) instead of calling
+// getMessages() — getMessages() resolves the request config dynamically, which
+// trips DYNAMIC_SERVER_USAGE on these ISR guide routes (500). Static imports
+// are build-time, so the nested provider stays ISR-safe.
+import enMessages from '@/messages/en.json';
+import esMessages from '@/messages/es.json';
+import zhMessages from '@/messages/zh.json';
+import jaMessages from '@/messages/ja.json';
+
+const CATALOGS: Record<string, Record<string, unknown>> = {
+  en: enMessages,
+  es: esMessages,
+  zh: zhMessages,
+  ja: jaMessages,
+};
 
 /**
  * Layout for an individual guide post (`/guides/{slug}`).
@@ -35,15 +50,15 @@ export default async function GuidePostLayout({
   const locale = await getGuideLocaleBySlug(slug);
 
   // CRITICAL for ISR: setRequestLocale() opts this page into STATIC rendering.
-  // Without it, next-intl resolves the locale via headers() → DYNAMIC_SERVER_USAGE
-  // → every guide post 500s under `revalidate = N`. We must pass it a value
-  // next-intl accepts (a routing locale), so for the chrome-only locales zh/ja
-  // we seed with the default (en); the ACTUAL guide language still flows through
-  // the explicit getMessages({locale}) + provider below and the page's explicit
-  // getTranslations/locale props. (The client chrome — Footer/Header — reads the
-  // provider, so it renders in the real locale regardless.)
+  // Without it next-intl resolves the locale via headers() → DYNAMIC_SERVER_USAGE
+  // → every guide post 500s under `revalidate = N`. It must be a value next-intl
+  // accepts (a routing locale), so the chrome-only locales zh/ja seed with the
+  // default (en). The ACTUAL guide language flows through the statically-imported
+  // catalog + provider below and the page's explicit getTranslations/locale props
+  // (the client chrome — Footer/Header — reads the provider, so it renders in the
+  // real locale regardless).
   setRequestLocale(staticRequestLocale(locale));
-  const messages = await getMessages({ locale });
+  const messages = CATALOGS[locale] ?? CATALOGS.en;
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
