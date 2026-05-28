@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
 import {
   getCategoryConfig,
@@ -13,6 +14,7 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ category }: CategoryCardProps) {
+  const t = useTranslations('shop');
   const config = getCategoryConfig(category.slug);
   const categoryImage = getCategoryImage(category.slug, category.image);
 
@@ -54,7 +56,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             {category.name}
           </span>
           <span className='text-white/90 text-xs leading-none'>
-            {category.count} {category.count === 1 ? 'item' : 'items'}
+            {t('itemCount', { count: category.count })}
           </span>
         </div>
       ) : (
@@ -67,7 +69,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
               {category.name}
             </h3>
             <p className='text-white/90 text-xs'>
-              {category.count} {category.count === 1 ? 'item' : 'items'}
+              {t('itemCount', { count: category.count })}
             </p>
           </div>
         </div>

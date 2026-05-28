@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
 import CategoryCard from './CategoryCard';
 
@@ -38,6 +39,7 @@ function flattenCategories(categories: HierarchicalCategory[]): HierarchicalCate
 }
 
 export default function FeaturedCategories({ categories }: FeaturedCategoriesProps) {
+  const t = useTranslations('shop');
   const allCategories = flattenCategories(categories);
 
   // Get featured categories in order, falling back to top-level categories with highest count
@@ -60,8 +62,8 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
   return (
     <section id="categories" className="mb-10">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">Shop by Category</h2>
-        <p className="text-muted-foreground text-sm mt-1">Browse our most popular categories</p>
+        <h2 className="text-2xl font-bold text-foreground">{t('shopByCategory')}</h2>
+        <p className="text-muted-foreground text-sm mt-1">{t('shopByCategorySubtitle')}</p>
       </div>
 
       {/* Categories Grid */}
@@ -77,7 +79,7 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
           href="/shop"
           className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
         >
-          View All Categories
+          {t('viewAllCategories')}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
