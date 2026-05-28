@@ -26,6 +26,8 @@ import VideoAutoplay from '@/components/blog/VideoAutoplay';
 import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
+import RecommendedProducts from '@/components/blog/RecommendedProducts';
+import { loadPostRecommendations } from '@/lib/db/post-relations';
 import DevEditLink from '@/components/dev/DevEditLink';
 import { getWpBaseUrl } from '@/lib/db/wp-url';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
@@ -198,6 +200,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const productMap = await fetchProductsByIds(productIds);
   const blogProducts = productMapToObject(productMap);
 
+  // Editor-curated product relations (meta-box driven), independent of the
+  // inline shortcodes above. Surfaced as a "Recommended Products" block.
+  let recommendations: Awaited<ReturnType<typeof loadPostRecommendations>> = {
+    products: [],
+    categories: [],
+  };
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      recommendations = await loadPostRecommendations(post.databaseId);
+    }
+  } catch {}
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -326,6 +341,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Intercept add-to-cart links and use local cart */}
       <AddToCartEnhancer products={blogProducts} />
+
+      {/* Editor-curated recommended products & categories (meta-box driven) */}
+      <RecommendedProducts
+        products={recommendations.products}
+        categories={recommendations.categories}
+      />
 
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (

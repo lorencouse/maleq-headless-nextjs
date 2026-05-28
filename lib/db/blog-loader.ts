@@ -379,6 +379,35 @@ export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
   return { posts, hasNextPage, total };
 }
 
+// ─── Posts by ID (preserves caller order) ───
+
+/**
+ * Load published posts by their database IDs, preserving the given order and
+ * dropping IDs that are missing/unpublished. Used by the post⇄product relations
+ * layer for "related guides" lookups.
+ */
+export async function loadBlogPostsByIds(ids: number[]): Promise<Post[]> {
+  if (ids.length === 0) return [];
+
+  const pool = await getPoolAsync();
+  const placeholders = ids.map(() => '?').join(',');
+
+  const [rows] = await pool.query<DbPost[]>(
+    `${POST_SELECT} WHERE ${POST_BASE_WHERE} AND p.ID IN (${placeholders})`,
+    ids
+  );
+
+  const termsMap = await attachTermsToPosts(pool, rows.map(r => r.ID));
+  const byId = new Map<number, Post>();
+  for (const row of rows) {
+    byId.set(row.ID, rowToPost(row, termsMap.get(row.ID)));
+  }
+
+  return ids
+    .map(id => byId.get(id))
+    .filter((p): p is Post => p !== undefined);
+}
+
 // ─── Single post by slug (with comments, for detail pages) ───
 
 export async function loadPostBySlug(slug: string): Promise<Post | null> {

@@ -43,6 +43,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-product-views.php` | Tracks product view counts via REST API and exposes `viewCount` field in WPGraphQL | `wordpress/mu-plugins/maleq-product-views.php` |
 | `maleq-push-notifications.php` | Sends Web Push notifications for order status changes and back-in-stock products | `wordpress/mu-plugins/maleq-push-notifications.php` |
 | `maleq-product-video.php` | Adds MP4 video meta field to WooCommerce products (media library picker) | `wordpress/mu-plugins/maleq-product-video.php` |
+| `maleq-post-product-relations.php` | Adds a "Related Products & Categories" meta box to the post editor; stores ordered-CSV relations in post meta (`_maleq_related_products`, `_maleq_related_product_cats`) that the frontend reads via SQL. Requires WooCommerce. | `wordpress/mu-plugins/maleq-post-product-relations.php` |
 
 ### Installation Steps
 
@@ -65,6 +66,7 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-product-views.php /path/to/wordpress/wp-content/mu-plugins/maleq-product-views.php
    cp wordpress/mu-plugins/maleq-push-notifications.php /path/to/wordpress/wp-content/mu-plugins/maleq-push-notifications.php
    cp wordpress/mu-plugins/maleq-product-video.php /path/to/wordpress/wp-content/mu-plugins/maleq-product-video.php
+   cp wordpress/mu-plugins/maleq-post-product-relations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-product-relations.php
    ```
 
 2. **Run material migration** (one-time setup):
