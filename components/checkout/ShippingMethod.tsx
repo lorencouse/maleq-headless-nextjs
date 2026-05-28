@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import { formatPrice, getFreeShippingProgress, FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
@@ -17,6 +18,7 @@ interface ShippingMethodProps {
 }
 
 export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
+  const t = useTranslations('checkout.shippingMethod');
   const shippingAddress = useCheckoutStore((state) => state.shippingAddress);
   const shippingCountry = useCheckoutStore((state) => state.shippingAddress.country);
   const countryCode = normalizeCountryCode(shippingCountry);
@@ -79,7 +81,7 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
 
   return (
     <div className="space-y-4">
-      <h4 className="font-medium text-foreground">Shipping Method</h4>
+      <h4 className="font-medium text-foreground">{t('heading')}</h4>
 
       <div className="space-y-3">
         {shippingOptions.map((option) => {
@@ -113,7 +115,7 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
               <div className="text-right">
                 {isFree ? (
                   <div>
-                    <p className="font-medium text-primary">FREE</p>
+                    <p className="font-medium text-primary">{t('free')}</p>
                     <p className="text-xs text-muted-foreground line-through">
                       {formatPrice(option.price)}
                     </p>
@@ -131,14 +133,14 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
       {supportsFreeShipping && !freeShipping.qualifies && (
         <div className="p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
           <p>
-            Add {formatPrice(freeShipping.remaining)} more to qualify for free standard shipping!
+            {t('freeShippingNotice', { amount: formatPrice(freeShipping.remaining) })}
           </p>
         </div>
       )}
 
       {!isAddressComplete && (
         <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg text-sm text-foreground">
-          Complete your shipping address to continue to payment.
+          {t('completeAddressNotice')}
         </div>
       )}
 
@@ -148,7 +150,7 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
         disabled={!isAddressComplete}
         className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
       >
-        Continue to Payment
+        {t('continueToPayment')}
       </button>
     </div>
   );

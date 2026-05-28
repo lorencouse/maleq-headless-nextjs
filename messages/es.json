@@ -424,6 +424,120 @@
       "toastFailedCopy": "No se pudo copiar la dirección"
     }
   },
+  "checkout": {
+    "meta": {
+      "title": "Finalizar compra"
+    },
+    "heading": "Finalizar compra",
+    "subtitle": "Completa tu pedido de forma segura",
+    "finalizingPayment": "Finalizando tu pago. Espera un momento...",
+    "trust": {
+      "sslEncrypted": "Cifrado SSL",
+      "secureCheckout": "Pago seguro",
+      "safePayment": "Pago protegido"
+    },
+    "progress": {
+      "ariaLabel": "Progreso del pago",
+      "informationName": "Información",
+      "informationDesc": "Contacto y dirección",
+      "shippingName": "Envío",
+      "shippingDesc": "Método de entrega",
+      "paymentName": "Pago",
+      "paymentDesc": "Completar pedido"
+    },
+    "mobileSummary": {
+      "show": "Mostrar resumen del pedido",
+      "hide": "Ocultar resumen del pedido",
+      "itemCount": "({count, plural, =1 {# artículo} other {# artículos}})"
+    },
+    "redirect": {
+      "paymentNotCompleted": "El pago no se completó. Inténtalo de nuevo con otro método de pago.",
+      "couldNotRecover": "No pudimos recuperar tu pedido pendiente. Contacta con soporte si se ha realizado el cargo.",
+      "finalizingOrder": "Finalizando tu pedido...",
+      "failedToFinalize": "No se pudo finalizar el pedido",
+      "unableToFinalize": "No se pudo finalizar tu pedido automáticamente. Contacta con soporte si se capturó el pago."
+    },
+    "contact": {
+      "emailLabel": "Correo electrónico",
+      "phoneLabel": "Número de teléfono",
+      "optional": "(opcional)",
+      "phonePlaceholder": "(555) 123-4567",
+      "phoneHint": "Para actualizaciones de entrega y preguntas sobre tu pedido",
+      "newsletterOptIn": "Envíame novedades y ofertas por correo",
+      "continueToShipping": "Continuar al envío",
+      "phoneInvalid": "Introduce un número de teléfono válido"
+    },
+    "shippingMethod": {
+      "heading": "Método de envío",
+      "free": "GRATIS",
+      "freeShippingNotice": "¡Añade {amount} más para conseguir envío estándar gratis!",
+      "completeAddressNotice": "Completa tu dirección de envío para continuar al pago.",
+      "continueToPayment": "Continuar al pago"
+    },
+    "payment": {
+      "cardDetails": "Datos de la tarjeta",
+      "errorPaymentGeneric": "Ocurrió un error con tu pago",
+      "errorUnexpected": "Ocurrió un error inesperado",
+      "errorPaymentFailed": "El pago falló",
+      "errorAdditionalAuth": "Se requiere autenticación adicional",
+      "errorProcessing": "Falló el procesamiento del pago",
+      "processing": "Procesando...",
+      "completeOrder": "Completar pedido",
+      "sslNotice": "Tu pago está protegido con cifrado SSL de 256 bits"
+    },
+    "express": {
+      "heading": "Pago exprés",
+      "orContinueBelow": "o continúa abajo",
+      "failedCreatePayment": "No se pudo crear el pago ({status})",
+      "failedCreateOrder": "No se pudo crear el pedido"
+    },
+    "form": {
+      "processingTitle": "Procesando tu pedido...",
+      "processingHint": "Por favor, no cierres esta página",
+      "stepContact": "Información de contacto",
+      "stepShipping": "Envío",
+      "stepPayment": "Pago",
+      "edit": "Editar",
+      "errorShippingFieldsMissing": "Por favor, completa todos los campos obligatorios de la dirección de envío antes de continuar.",
+      "errorPaymentSetup": "Falló la configuración del pago ({status})",
+      "errorPaymentInit": "No se pudo inicializar el pago. Inténtalo de nuevo.",
+      "errorOrderCreate": "No se pudo crear el pedido",
+      "errorOrderComplete": "No se pudo completar el pedido"
+    },
+    "orderSummary": {
+      "heading": "Resumen del pedido",
+      "editCart": "Editar carrito",
+      "viewProduct": "Ver {name}",
+      "calculatedNextStep": "Calculado en el siguiente paso",
+      "total": "Total"
+    },
+    "shippingAddress": {
+      "heading": "Dirección de envío",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "company": "Empresa",
+      "optional": "(opcional)",
+      "address": "Dirección",
+      "streetPlaceholder": "Dirección postal",
+      "autocompleteUnavailable": "Las sugerencias de dirección no están disponibles temporalmente. Puedes introducir tu dirección manualmente.",
+      "autocompleteAttribution": "Sugerencias proporcionadas por OpenStreetMap",
+      "address2": "Apartamento, suite, etc.",
+      "city": "Ciudad",
+      "stateUS": "Estado",
+      "stateNonUS": "Provincia / Región",
+      "selectState": "Selecciona un estado",
+      "zipCode": "Código postal",
+      "postalCode": "Código postal",
+      "postalPlaceholder": "Código postal",
+      "country": "País",
+      "countryPlaceholder": "Empieza a escribir tu país…",
+      "notShippable": "Sin envío",
+      "noCountryMatches": "Sin coincidencias para \"{query}\"",
+      "unsupportedCountry": "Lo sentimos, aún no enviamos a {country}. Contacta con nosotros en info@maleq.com si quieres solicitar envío aquí.",
+      "unsupportedCountryFallback": "este país",
+      "shippingAvailable": "Hay opciones de envío nacional e internacional disponibles."
+    }
+  },
   "validation": {
     "common": {
       "emailRequired": "El correo electrónico es obligatorio",

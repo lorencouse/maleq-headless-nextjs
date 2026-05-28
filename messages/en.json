@@ -424,6 +424,120 @@
       "toastFailedCopy": "Failed to copy address"
     }
   },
+  "checkout": {
+    "meta": {
+      "title": "Checkout"
+    },
+    "heading": "Checkout",
+    "subtitle": "Complete your order securely",
+    "finalizingPayment": "Finalizing your payment. Please wait...",
+    "trust": {
+      "sslEncrypted": "SSL Encrypted",
+      "secureCheckout": "Secure Checkout",
+      "safePayment": "Safe Payment"
+    },
+    "progress": {
+      "ariaLabel": "Checkout progress",
+      "informationName": "Information",
+      "informationDesc": "Contact & Address",
+      "shippingName": "Shipping",
+      "shippingDesc": "Delivery Method",
+      "paymentName": "Payment",
+      "paymentDesc": "Complete Order"
+    },
+    "mobileSummary": {
+      "show": "Show order summary",
+      "hide": "Hide order summary",
+      "itemCount": "({count, plural, =1 {# item} other {# items}})"
+    },
+    "redirect": {
+      "paymentNotCompleted": "Payment was not completed. Please try again with another payment method.",
+      "couldNotRecover": "We could not recover your pending checkout. Please contact support if you were charged.",
+      "finalizingOrder": "Finalizing your order...",
+      "failedToFinalize": "Failed to finalize order",
+      "unableToFinalize": "Unable to finalize your order automatically. Please contact support if payment was captured."
+    },
+    "contact": {
+      "emailLabel": "Email Address",
+      "phoneLabel": "Phone Number",
+      "optional": "(optional)",
+      "phonePlaceholder": "(555) 123-4567",
+      "phoneHint": "For delivery updates and questions about your order",
+      "newsletterOptIn": "Email me with news and offers",
+      "continueToShipping": "Continue to Shipping",
+      "phoneInvalid": "Please enter a valid phone number"
+    },
+    "shippingMethod": {
+      "heading": "Shipping Method",
+      "free": "FREE",
+      "freeShippingNotice": "Add {amount} more to qualify for free standard shipping!",
+      "completeAddressNotice": "Complete your shipping address to continue to payment.",
+      "continueToPayment": "Continue to Payment"
+    },
+    "payment": {
+      "cardDetails": "Card Details",
+      "errorPaymentGeneric": "An error occurred with your payment",
+      "errorUnexpected": "An unexpected error occurred",
+      "errorPaymentFailed": "Payment failed",
+      "errorAdditionalAuth": "Additional authentication required",
+      "errorProcessing": "Payment processing failed",
+      "processing": "Processing...",
+      "completeOrder": "Complete Order",
+      "sslNotice": "Your payment is secured with 256-bit SSL encryption"
+    },
+    "express": {
+      "heading": "Express Checkout",
+      "orContinueBelow": "or continue below",
+      "failedCreatePayment": "Failed to create payment ({status})",
+      "failedCreateOrder": "Failed to create order"
+    },
+    "form": {
+      "processingTitle": "Processing your order...",
+      "processingHint": "Please don't close this page",
+      "stepContact": "Contact Information",
+      "stepShipping": "Shipping",
+      "stepPayment": "Payment",
+      "edit": "Edit",
+      "errorShippingFieldsMissing": "Please complete all required shipping address fields before continuing.",
+      "errorPaymentSetup": "Payment setup failed ({status})",
+      "errorPaymentInit": "Failed to initialize payment. Please try again.",
+      "errorOrderCreate": "Failed to create order",
+      "errorOrderComplete": "Failed to complete order"
+    },
+    "orderSummary": {
+      "heading": "Order Summary",
+      "editCart": "Edit Cart",
+      "viewProduct": "View {name}",
+      "calculatedNextStep": "Calculated next step",
+      "total": "Total"
+    },
+    "shippingAddress": {
+      "heading": "Shipping Address",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "company": "Company",
+      "optional": "(optional)",
+      "address": "Address",
+      "streetPlaceholder": "Street address",
+      "autocompleteUnavailable": "Address suggestions are temporarily unavailable. You can still enter your address manually.",
+      "autocompleteAttribution": "Suggestions powered by OpenStreetMap",
+      "address2": "Apartment, suite, etc.",
+      "city": "City",
+      "stateUS": "State",
+      "stateNonUS": "Province / Region",
+      "selectState": "Select state",
+      "zipCode": "ZIP Code",
+      "postalCode": "Postal Code",
+      "postalPlaceholder": "Postal code",
+      "country": "Country",
+      "countryPlaceholder": "Start typing your country…",
+      "notShippable": "Not shippable",
+      "noCountryMatches": "No matches for \"{query}\"",
+      "unsupportedCountry": "Sorry, we don't ship to {country} yet. Please contact us at info@maleq.com if you'd like to request shipping here.",
+      "unsupportedCountryFallback": "this country",
+      "shippingAvailable": "Domestic and international shipping options are available."
+    }
+  },
   "validation": {
     "common": {
       "emailRequired": "Email is required",

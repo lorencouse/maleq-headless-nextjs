@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import {
@@ -93,6 +94,7 @@ interface ShippingAddress {
 }
 
 export default function ShippingAddressForm() {
+  const t = useTranslations('checkout.shippingAddress');
   const { user, token } = useAuthStore();
   const setCheckoutAddress = useCheckoutStore((state) => state.setShippingAddress);
   const [address, setAddress] = useState<ShippingAddress>({
@@ -295,13 +297,13 @@ export default function ShippingAddressForm() {
 
   return (
     <div className="space-y-4">
-      <h4 className="font-medium text-foreground">Shipping Address</h4>
+      <h4 className="font-medium text-foreground">{t('heading')}</h4>
 
       {/* Name Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-1">
-            First Name <span className="text-destructive">*</span>
+            {t('firstName')} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -317,7 +319,7 @@ export default function ShippingAddressForm() {
         </div>
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-1">
-            Last Name <span className="text-destructive">*</span>
+            {t('lastName')} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -336,7 +338,7 @@ export default function ShippingAddressForm() {
       {/* Company (Optional) */}
       <div>
         <label htmlFor="company" className="block text-sm font-medium text-foreground mb-1">
-          Company <span className="text-muted-foreground">(optional)</span>
+          {t('company')} <span className="text-muted-foreground">{t('optional')}</span>
         </label>
         <input
           type="text"
@@ -351,7 +353,7 @@ export default function ShippingAddressForm() {
       {/* Address Line 1 */}
       <div>
         <label htmlFor="address1" className="block text-sm font-medium text-foreground mb-1">
-          Address <span className="text-destructive">*</span>
+          {t('address')} <span className="text-destructive">*</span>
         </label>
         <div className="relative">
           <input
@@ -375,7 +377,7 @@ export default function ShippingAddressForm() {
                 setShowSuggestions(false);
               }, 120);
             }}
-            placeholder="Street address"
+            placeholder={t('streetPlaceholder')}
             autoComplete="address-line1"
             className={inputClassName('address1')}
           />
@@ -418,7 +420,7 @@ export default function ShippingAddressForm() {
                 </button>
               ))}
               <p className="px-3 py-2 text-[11px] text-muted-foreground border-t border-border">
-                Suggestions powered by OpenStreetMap
+                {t('autocompleteAttribution')}
               </p>
             </div>
           )}
@@ -428,7 +430,7 @@ export default function ShippingAddressForm() {
         )}
         {!isAutocompleteLoading && hasAutocompleteError && address.address1.trim().length >= 3 && (
           <p className="mt-1 text-xs text-muted-foreground">
-            Address suggestions are temporarily unavailable. You can still enter your address manually.
+            {t('autocompleteUnavailable')}
           </p>
         )}
       </div>
@@ -436,7 +438,7 @@ export default function ShippingAddressForm() {
       {/* Address Line 2 */}
       <div>
         <label htmlFor="address2" className="block text-sm font-medium text-foreground mb-1">
-          Apartment, suite, etc. <span className="text-muted-foreground">(optional)</span>
+          {t('address2')} <span className="text-muted-foreground">{t('optional')}</span>
         </label>
         <input
           type="text"
@@ -452,7 +454,7 @@ export default function ShippingAddressForm() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-foreground mb-1">
-            City <span className="text-destructive">*</span>
+            {t('city')} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -468,7 +470,7 @@ export default function ShippingAddressForm() {
         </div>
         <div>
           <label htmlFor="state" className="block text-sm font-medium text-foreground mb-1">
-            {isUSAddress ? 'State' : 'Province / Region'} <span className="text-destructive">*</span>
+            {isUSAddress ? t('stateUS') : t('stateNonUS')} <span className="text-destructive">*</span>
           </label>
           {isUSAddress ? (
             <select
@@ -478,7 +480,7 @@ export default function ShippingAddressForm() {
               autoComplete="address-level1"
               className={inputClassName('state')}
             >
-              <option value="">Select state</option>
+              <option value="">{t('selectState')}</option>
               {US_STATES.map((state) => (
                 <option key={state.code} value={state.code}>
                   {state.name}
@@ -491,7 +493,7 @@ export default function ShippingAddressForm() {
               id="state"
               value={address.state}
               onChange={(e) => handleChange('state', e.target.value)}
-              placeholder="Province / Region"
+              placeholder={t('stateNonUS')}
               autoComplete="address-level1"
               className={inputClassName('state')}
             />
@@ -502,14 +504,14 @@ export default function ShippingAddressForm() {
         </div>
         <div>
           <label htmlFor="zipCode" className="block text-sm font-medium text-foreground mb-1">
-            {usesZipCode ? 'ZIP Code' : 'Postal Code'} <span className="text-destructive">*</span>
+            {usesZipCode ? t('zipCode') : t('postalCode')} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
             id="zipCode"
             value={address.zipCode}
             onChange={(e) => handleChange('zipCode', e.target.value)}
-            placeholder={usesZipCode ? '12345' : 'Postal code'}
+            placeholder={usesZipCode ? '12345' : t('postalPlaceholder')}
             autoComplete="postal-code"
             className={inputClassName('zipCode')}
           />
@@ -522,7 +524,7 @@ export default function ShippingAddressForm() {
       {/* Country */}
       <div>
         <label htmlFor="country" className="block text-sm font-medium text-foreground mb-1">
-          Country <span className="text-destructive">*</span>
+          {t('country')} <span className="text-destructive">*</span>
         </label>
         <div className="relative">
           <input
@@ -533,7 +535,7 @@ export default function ShippingAddressForm() {
             aria-autocomplete="list"
             autoComplete="country-name"
             value={countryInputValue}
-            placeholder="Start typing your country…"
+            placeholder={t('countryPlaceholder')}
             onChange={(e) => {
               setCountryQuery(e.target.value);
               setShowCountryDropdown(true);
@@ -581,7 +583,7 @@ export default function ShippingAddressForm() {
                       <span className="text-sm text-foreground">{c.name}</span>
                       {!supported && (
                         <span className="text-[11px] text-muted-foreground shrink-0">
-                          Not shippable
+                          {t('notShippable')}
                         </span>
                       )}
                     </button>
@@ -592,7 +594,7 @@ export default function ShippingAddressForm() {
           )}
           {showCountryDropdown && filteredCountries.length === 0 && (
             <div className="absolute z-20 mt-1 w-full rounded-lg border border-input bg-card shadow-lg px-3 py-2.5 text-sm text-muted-foreground">
-              No matches for &ldquo;{countryQuery}&rdquo;
+              {t('noCountryMatches', { query: countryQuery })}
             </div>
           )}
         </div>
@@ -601,13 +603,14 @@ export default function ShippingAddressForm() {
         )}
         {!errors.country && address.country && !isCountrySupported && (
           <p className="mt-1 text-sm text-destructive">
-            Sorry, we don&apos;t ship to {selectedCountryName || 'this country'} yet. Please
-            contact us at info@maleq.com if you&apos;d like to request shipping here.
+            {t('unsupportedCountry', {
+              country: selectedCountryName || t('unsupportedCountryFallback'),
+            })}
           </p>
         )}
         {!errors.country && isCountrySupported && (
           <p className="mt-1 text-xs text-muted-foreground">
-            Domestic and international shipping options are available.
+            {t('shippingAvailable')}
           </p>
         )}
       </div>

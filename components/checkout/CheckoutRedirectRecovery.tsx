@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/lib/store/cart-store';
 import { clearPendingCheckout, getPendingCheckout } from '@/lib/checkout/pending-order';
 import * as gtag from '@/lib/analytics/gtag';
@@ -9,6 +10,7 @@ import * as gtag from '@/lib/analytics/gtag';
 type RecoveryState = 'idle' | 'processing' | 'error';
 
 export default function CheckoutRedirectRecovery() {
+  const t = useTranslations('checkout.redirect');
   const router = useRouter();
   const searchParams = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
@@ -27,21 +29,21 @@ export default function CheckoutRedirectRecovery() {
 
     if (redirectStatus && redirectStatus !== 'succeeded') {
       setState('error');
-      setMessage('Payment was not completed. Please try again with another payment method.');
+      setMessage(t('paymentNotCompleted'));
       return;
     }
 
     const pending = getPendingCheckout(paymentIntentId);
     if (!pending) {
       setState('error');
-      setMessage('We could not recover your pending checkout. Please contact support if you were charged.');
+      setMessage(t('couldNotRecover'));
       return;
     }
 
     const { authToken, ...orderPayload } = pending.payload;
 
     setState('processing');
-    setMessage('Finalizing your order...');
+    setMessage(t('finalizingOrder'));
 
     void (async () => {
       try {
@@ -59,7 +61,7 @@ export default function CheckoutRedirectRecovery() {
 
         const responseData = await response.json().catch(() => ({}));
         if (!response.ok) {
-          throw new Error(responseData?.error || 'Failed to finalize order');
+          throw new Error(responseData?.error || t('failedToFinalize'));
         }
 
         // Emit purchase event for redirect-based payment methods where the
@@ -86,11 +88,11 @@ export default function CheckoutRedirectRecovery() {
         setMessage(
           error instanceof Error
             ? error.message
-            : 'Unable to finalize your order automatically. Please contact support if payment was captured.'
+            : t('unableToFinalize')
         );
       }
     })();
-  }, [searchParams, router, clearCart]);
+  }, [searchParams, router, clearCart, t]);
 
   if (state === 'idle') {
     return null;

@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { formatPrice } from '@/lib/utils/cart-helpers';
 
@@ -10,6 +11,7 @@ interface CheckoutLayoutProps {
 }
 
 export default function CheckoutLayout({ formSection, summarySection }: CheckoutLayoutProps) {
+  const t = useTranslations('checkout.mobileSummary');
   const [mobileOrderOpen, setMobileOrderOpen] = useState(false);
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
@@ -28,10 +30,10 @@ export default function CheckoutLayout({ formSection, summarySection }: Checkout
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             <span className="font-medium text-foreground">
-              {mobileOrderOpen ? 'Hide' : 'Show'} order summary
+              {mobileOrderOpen ? t('hide') : t('show')}
             </span>
             <span className="text-sm text-muted-foreground">
-              ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+              {t('itemCount', { count: itemCount })}
             </span>
           </div>
           <div className="flex items-center gap-2">

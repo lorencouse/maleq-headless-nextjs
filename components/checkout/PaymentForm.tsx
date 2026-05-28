@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   PaymentElement,
   useStripe,
@@ -26,6 +27,7 @@ export default function PaymentForm({
   isProcessing,
   setIsProcessing,
 }: PaymentFormProps) {
+  const t = useTranslations('checkout.payment');
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -72,12 +74,12 @@ export default function PaymentForm({
         });
         // Show error to customer
         if (error.type === 'card_error' || error.type === 'validation_error') {
-          setErrorMessage(error.message || 'An error occurred with your payment');
+          setErrorMessage(error.message || t('errorPaymentGeneric'));
         } else {
-          setErrorMessage('An unexpected error occurred');
+          setErrorMessage(t('errorUnexpected'));
         }
         setIsProcessing(false);
-        onError(error.message || 'Payment failed');
+        onError(error.message || t('errorPaymentFailed'));
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         // Payment succeeded - keep isProcessing true so CheckoutForm's
         // overlay stays visible during order creation
@@ -86,7 +88,7 @@ export default function PaymentForm({
         // Handle 3D Secure or other actions
         // The redirect: 'if_required' should handle this automatically
         setIsProcessing(false);
-        setErrorMessage('Additional authentication required');
+        setErrorMessage(t('errorAdditionalAuth'));
       }
     } catch (err) {
       console.error('Payment error:', err);
@@ -98,9 +100,9 @@ export default function PaymentForm({
         notifyAdmin: true,
         adminSubject: 'Checkout Payment Confirmation Exception',
       });
-      setErrorMessage('An unexpected error occurred');
+      setErrorMessage(t('errorUnexpected'));
       setIsProcessing(false);
-      onError('Payment processing failed');
+      onError(t('errorProcessing'));
     }
   };
 
@@ -108,7 +110,7 @@ export default function PaymentForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-foreground mb-3">
-          Card Details
+          {t('cardDetails')}
         </label>
         <div className="p-4 border border-input rounded-lg bg-background">
           <PaymentElement
@@ -148,21 +150,21 @@ export default function PaymentForm({
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            Processing...
+            {t('processing')}
           </>
         ) : (
           <>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            Complete Order
+            {t('completeOrder')}
           </>
         )}
       </button>
 
       {/* Security Notice */}
       <p className="text-xs text-center text-muted-foreground">
-        Your payment is secured with 256-bit SSL encryption
+        {t('sslNotice')}
       </p>
     </form>
   );
