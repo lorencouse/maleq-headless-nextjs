@@ -1,10 +1,19 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'My Account',
-  description: 'Manage your Male Q account. View orders, update addresses, and manage your profile.',
-  robots: { index: false, follow: false },
+type Props = {
+  params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'account.meta' });
+  return {
+    title: t('title'),
+    description: t('description'),
+    robots: { index: false, follow: false },
+  };
+}
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

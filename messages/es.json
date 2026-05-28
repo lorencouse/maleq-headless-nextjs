@@ -202,6 +202,36 @@
       "createAccount": "Crear cuenta"
     }
   },
+  "account": {
+    "meta": {
+      "title": "Mi cuenta",
+      "description": "Gestiona tu cuenta de Male Q. Consulta pedidos, actualiza direcciones y administra tu perfil."
+    },
+    "nav": {
+      "dashboard": "Inicio",
+      "orders": "Pedidos",
+      "addresses": "Direcciones",
+      "wishlist": "Lista de deseos",
+      "notifications": "Notificaciones",
+      "accountDetails": "Datos personales",
+      "signOut": "Cerrar sesión"
+    },
+    "dashboard": {
+      "welcomeBack": "¡Hola, {name}!",
+      "welcomeBackAnonymous": "¡Hola!",
+      "intro": "Desde el panel de tu cuenta puedes ver tus pedidos recientes, gestionar tus direcciones de envío y facturación, y editar los datos de tu cuenta.",
+      "ordersDescription": "Consulta y haz seguimiento de tus pedidos",
+      "addressesDescription": "Gestiona tus direcciones de envío y facturación",
+      "accountDetailsDescription": "Actualiza tu perfil y contraseña",
+      "recentOrders": "Pedidos recientes",
+      "viewAllOrders": "Ver todos los pedidos",
+      "orderNumber": "Pedido #{number}",
+      "itemCount": "{count, plural, =1 {# artículo} other {# artículos}}",
+      "viewDetails": "Ver detalles",
+      "noOrdersYet": "Aún no has hecho ningún pedido.",
+      "startShopping": "Empezar a comprar"
+    }
+  },
   "validation": {
     "common": {
       "emailRequired": "El correo electrónico es obligatorio",

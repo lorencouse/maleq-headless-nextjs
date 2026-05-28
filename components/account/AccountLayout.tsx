@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useEffect } from 'react';
 
@@ -9,9 +10,12 @@ interface AccountLayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
+// Nav items: labels resolved at render time via useTranslations so they
+// stay locale-aware. The icon/href pairs are static; only the visible
+// label changes per locale.
+const navItemsConfig = [
   {
-    label: 'Dashboard',
+    labelKey: 'dashboard',
     href: '/account',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +24,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Orders',
+    labelKey: 'orders',
     href: '/account/orders',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -29,7 +33,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Addresses',
+    labelKey: 'addresses',
     href: '/account/addresses',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,7 +43,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Wishlist',
+    labelKey: 'wishlist',
     href: '/account/wishlist',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +52,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Notifications',
+    labelKey: 'notifications',
     href: '/account/notifications',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -57,7 +61,7 @@ const navItems = [
     ),
   },
   {
-    label: 'Account Details',
+    labelKey: 'accountDetails',
     href: '/account/details',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,9 +69,10 @@ const navItems = [
       </svg>
     ),
   },
-];
+] as const;
 
 export default function AccountLayout({ children }: AccountLayoutProps) {
+  const t = useTranslations('account.nav');
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout, hasHydrated } = useAuthStore();
@@ -120,7 +125,7 @@ export default function AccountLayout({ children }: AccountLayoutProps) {
 
             {/* Navigation */}
             <nav className="space-y-1">
-              {navItems.map((item) => {
+              {navItemsConfig.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link
@@ -133,7 +138,7 @@ export default function AccountLayout({ children }: AccountLayoutProps) {
                     }`}
                   >
                     {item.icon}
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium">{t(item.labelKey)}</span>
                   </Link>
                 );
               })}
@@ -147,7 +152,7 @@ export default function AccountLayout({ children }: AccountLayoutProps) {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
-              <span className="font-medium">Sign Out</span>
+              <span className="font-medium">{t('signOut')}</span>
             </button>
           </div>
         </aside>

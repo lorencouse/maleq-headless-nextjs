@@ -202,6 +202,36 @@
       "createAccount": "Create Account"
     }
   },
+  "account": {
+    "meta": {
+      "title": "My Account",
+      "description": "Manage your Male Q account. View orders, update addresses, and manage your profile."
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "addresses": "Addresses",
+      "wishlist": "Wishlist",
+      "notifications": "Notifications",
+      "accountDetails": "Account Details",
+      "signOut": "Sign Out"
+    },
+    "dashboard": {
+      "welcomeBack": "Welcome back, {name}!",
+      "welcomeBackAnonymous": "Welcome back!",
+      "intro": "From your account dashboard you can view your recent orders, manage your shipping and billing addresses, and edit your account details.",
+      "ordersDescription": "View and track your orders",
+      "addressesDescription": "Manage shipping and billing addresses",
+      "accountDetailsDescription": "Update your profile and password",
+      "recentOrders": "Recent Orders",
+      "viewAllOrders": "View all orders",
+      "orderNumber": "Order #{number}",
+      "itemCount": "{count, plural, =1 {# item} other {# items}}",
+      "viewDetails": "View details",
+      "noOrdersYet": "You haven't placed any orders yet.",
+      "startShopping": "Start shopping"
+    }
+  },
   "validation": {
     "common": {
       "emailRequired": "Email is required",

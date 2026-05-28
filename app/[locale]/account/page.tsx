@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
 
@@ -22,6 +23,9 @@ interface Order {
 import { statusColors } from '@/lib/constants/status-colors';
 
 export default function AccountDashboard() {
+  const t = useTranslations('account.dashboard');
+  const tNav = useTranslations('account.nav');
+  const locale = useLocale();
   const { user, token } = useAuthStore();
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,18 +58,20 @@ export default function AccountDashboard() {
     fetchRecentOrders();
   }, [user?.id, token]);
 
+  // Locale-aware date formatting: en-US → "May 27, 2026", es → "27 may 2026"
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
     });
   };
 
+  // Labels reuse the account.nav keys so they match the sidebar exactly.
   const quickLinks = [
     {
-      title: 'Orders',
-      description: 'View and track your orders',
+      titleKey: 'orders' as const,
+      descriptionKey: 'ordersDescription' as const,
       href: '/account/orders',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,8 +80,8 @@ export default function AccountDashboard() {
       ),
     },
     {
-      title: 'Addresses',
-      description: 'Manage shipping and billing addresses',
+      titleKey: 'addresses' as const,
+      descriptionKey: 'addressesDescription' as const,
       href: '/account/addresses',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,8 +91,8 @@ export default function AccountDashboard() {
       ),
     },
     {
-      title: 'Account Details',
-      description: 'Update your profile and password',
+      titleKey: 'accountDetails' as const,
+      descriptionKey: 'accountDetailsDescription' as const,
       href: '/account/details',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,11 +108,12 @@ export default function AccountDashboard() {
         {/* Welcome Section */}
         <div className="bg-card border border-border rounded-xl p-6">
           <h1 className="text-2xl font-bold text-foreground mb-2">
-            Welcome back, {user?.firstName || 'there'}!
+            {user?.firstName
+              ? t('welcomeBack', { name: user.firstName })
+              : t('welcomeBackAnonymous')}
           </h1>
           <p className="text-muted-foreground">
-            From your account dashboard you can view your recent orders, manage your shipping and
-            billing addresses, and edit your account details.
+            {t('intro')}
           </p>
         </div>
 
@@ -121,8 +128,8 @@ export default function AccountDashboard() {
               <div className="text-primary mb-4 group-hover:scale-110 transition-transform">
                 {link.icon}
               </div>
-              <h3 className="font-semibold text-foreground mb-1">{link.title}</h3>
-              <p className="text-sm text-muted-foreground">{link.description}</p>
+              <h3 className="font-semibold text-foreground mb-1">{tNav(link.titleKey)}</h3>
+              <p className="text-sm text-muted-foreground">{t(link.descriptionKey)}</p>
             </Link>
           ))}
         </div>
@@ -130,12 +137,12 @@ export default function AccountDashboard() {
         {/* Recent Orders Preview */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-6 border-b border-border flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-foreground">Recent Orders</h2>
+            <h2 className="text-lg font-semibold text-foreground">{t('recentOrders')}</h2>
             <Link
               href="/account/orders"
               className="text-sm text-primary hover:text-primary-hover font-medium"
             >
-              View all orders
+              {t('viewAllOrders')}
             </Link>
           </div>
           <div className="p-6">
@@ -153,7 +160,7 @@ export default function AccountDashboard() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <span className="font-semibold text-foreground">
-                          Order #{order.number}
+                          {t('orderNumber', { number: order.number })}
                         </span>
                         <span
                           className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${
@@ -164,8 +171,7 @@ export default function AccountDashboard() {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {formatDate(order.date_created)} &middot; {order.line_items.length} item
-                        {order.line_items.length !== 1 ? 's' : ''}
+                        {formatDate(order.date_created)} &middot; {t('itemCount', { count: order.line_items.length })}
                       </p>
                     </div>
                     <div className="text-right">
@@ -174,7 +180,7 @@ export default function AccountDashboard() {
                         href={`/account/orders/${order.id}`}
                         className="text-sm text-primary hover:text-primary-hover"
                       >
-                        View details
+                        {t('viewDetails')}
                       </Link>
                     </div>
                   </div>
@@ -195,12 +201,12 @@ export default function AccountDashboard() {
                     d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                   />
                 </svg>
-                <p className="mb-4">You haven&apos;t placed any orders yet.</p>
+                <p className="mb-4">{t('noOrdersYet')}</p>
                 <Link
                   href="/shop"
                   className="inline-flex items-center gap-2 text-primary hover:text-primary-hover font-medium"
                 >
-                  Start shopping
+                  {t('startShopping')}
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
