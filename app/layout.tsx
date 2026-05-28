@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { getMessages, setRequestLocale } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -134,10 +135,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Locale resolution: URL segment (for app/[locale]/...) wins, otherwise
-  // i18n/request.ts falls back to the NEXT_LOCALE cookie. Messages are loaded
-  // by the same hook and handed to NextIntlClientProvider for client trees.
-  const locale = await getLocale();
+  // Hard-code the default locale at the root and seed next-intl's request
+  // cache so downstream APIs don't read headers() (which throws
+  // DYNAMIC_SERVER_USAGE on any ISR page outside [locale]/). The chrome
+  // (Header/Footer rendered in this layout) always renders in the default
+  // locale; [locale]/layout.tsx wraps {children} in a NESTED
+  // NextIntlClientProvider so the PAGE content on /es/* routes still
+  // renders in Spanish. Restoring locale-aware chrome on [locale]/ routes
+  // is a follow-up (Phase 8) — requires moving Header/Footer out of the
+  // root and into per-locale-aware sub-layouts (route groups).
+  const locale = routing.defaultLocale;
+  setRequestLocale(locale);
   const messages = await getMessages();
 
   return (
