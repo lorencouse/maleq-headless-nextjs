@@ -246,6 +246,94 @@
     "shippingLink": "Shipping & Returns",
     "formSectionTitle": "Send us a Message"
   },
+  "faq": {
+    "metaTitle": "Frequently Asked Questions",
+    "metaDescription": "Find answers to common questions about orders, shipping, returns, and more at Male Q.",
+    "pageHeading": "Frequently Asked Questions",
+    "pageSubtitle": "Find answers to common questions about shopping with Male Q",
+    "stillQuestionsHeading": "Still have questions?",
+    "stillQuestionsBody": "Can't find the answer you're looking for? Our customer support team is here to help.",
+    "contactSupport": "Contact Support",
+    "discreetShippingImageAlt": "Example of our plain, discreet shipping packaging",
+    "ordersShipping": {
+      "title": "Orders & Shipping",
+      "shippingTimeQ": "How long does shipping take?",
+      "shippingTimeA": "Shipping times vary depending on the shipping tier selected at checkout. Estimated delivery times are listed next to each shipping option and on your purchase receipt. All shipping times are quoted in business days (excluding weekends and holidays) and are based on typical delivery estimates from UPS and USPS. If your order hasn't arrived within the estimated window, please contact us.",
+      "trackingQ": "Will I receive a tracking number?",
+      "trackingA": "We provide tracking information for all express shipping options. Please note that free and economy shipping may not include detailed tracking. You can check your order status by logging into your account.",
+      "multiPackageQ": "Why did my order arrive in multiple packages?",
+      "multiPackageA": "We ship from multiple warehouses across the US. Depending on item availability and order size, your purchase may arrive in more than one shipment. If you haven't received all items by the end of the estimated delivery period, please contact us.",
+      "internationalQ": "Do you ship internationally?",
+      "internationalA": "Yes, we ship to many countries worldwide. International shipping options and estimated delivery times are available at checkout. For international orders, if your item hasn't arrived within the estimated shipping period, we'll compensate the difference in price to the next applicable shipping tier.",
+      "carriersQ": "What shipping carriers do you use?",
+      "carriersA": "We primarily use USPS and UPS depending on the shipping method selected and package size. The specific carrier will be noted in your shipping confirmation email."
+    },
+    "privacyShipping": {
+      "title": "Privacy & Discreet Shipping",
+      "discreetQ": "Is your shipping discreet?",
+      "discreetA": "Your privacy is our top priority. All items are shipped in plain, unmarked packaging with no indication of the contents. The sender name will appear as CNV or TMQ. For international shipments and customs, items are declared as \"Health Equipment\", \"Cosmetic\", or \"Gift\".",
+      "billingNameQ": "What name appears on my billing statement?",
+      "billingNameA": "All purchases appear as \"TMQ LLC\" on your debit or credit card statement. We never reveal details of your purchase or the nature of the items on your statement."
+    },
+    "returns": {
+      "title": "Cancellations & Returns",
+      "cancelQ": "Can I cancel my order?",
+      "cancelA": "To deliver items as quickly as possible, orders are processed throughout the day as they are received. We can only cancel orders that have not yet shipped. We are unable to recall packages that have already been sent. Please contact us as soon as possible if you need to cancel.",
+      "policyQ": "What is your return policy?",
+      "policyA": "For sanitary and hygienic purposes, all sales are final. We provide refunds and replacements for incorrectly sent or damaged-on-arrival items only. Please inspect your items promptly upon delivery.",
+      "bouncedQ": "What about bounced or refused packages?",
+      "bouncedA": "Bounced orders, undeliverable packages, or refused shipments are subject to a 10% restocking fee. Please note that shipping fees on already-sent items are non-refundable.",
+      "brokenQ": "My item arrived broken or defective. What do I do?",
+      "brokenA": "When you receive your package, promptly check all items to ensure they are in working order. We will credit or exchange defective items, as well as correct any shipping errors on our part. Please contact us with details of the issue to receive a refund or replacement."
+    },
+    "payment": {
+      "title": "Payment & Billing",
+      "methodsQ": "What payment methods do you accept?",
+      "methodsA": "We accept all major credit cards (Visa, MasterCard, American Express, Discover) as well as Apple Pay and Google Pay through our secure Stripe-powered checkout.",
+      "currenciesQ": "Do you accept international currencies?",
+      "currenciesA": "Yes, we accept most world currencies. All items are listed in US Dollars and can be charged in your local currency. At checkout, you will be billed according to the exchange rate set by your bank or credit card company, which may include additional fees. Contact your bank for details about international transaction fees.",
+      "secureQ": "Is my payment information secure?",
+      "secureA": "Yes, we use industry-standard SSL encryption and our payment processing is handled by Stripe, a PCI-compliant payment processor. We never store your full credit card information on our servers.",
+      "plansQ": "Do you offer payment plans?",
+      "plansA": "Yes! We offer Afterpay and Klarna at checkout, allowing you to split your purchase into interest-free installments. These options will appear automatically during checkout for qualifying orders.",
+      "declinedQ": "Why was my payment declined?",
+      "declinedA": "Payments can be declined for various reasons including incorrect card information, insufficient funds, or your bank's fraud protection. Please verify your information and try again, or contact your bank for assistance."
+    },
+    "account": {
+      "title": "Account & Orders",
+      "needAccountQ": "Do I need an account to place an order?",
+      "needAccountA": "You can checkout as a guest, but creating an account allows you to track orders, save addresses, create wishlists, and view your order history.",
+      "resetPasswordQ": "How do I reset my password?",
+      "resetPasswordA": "Click \"Forgot Password\" on the login page and enter your email address. We'll send you a link to reset your password. Check your spam folder if you don't see the email within a few minutes.",
+      "couponQ": "How do I use a coupon code?",
+      "couponA": "Enter your coupon code in the designated field on the cart page or during checkout. Click \"Apply\" and the discount will be reflected in your order total. Only one coupon can be used per order."
+    },
+    "products": {
+      "title": "Products",
+      "authenticQ": "Are your products authentic?",
+      "authenticA": "Yes, we only sell 100% authentic products sourced directly from authorized distributors and manufacturers. We guarantee the authenticity of every item we sell.",
+      "outOfStockQ": "What if an item is out of stock?",
+      "outOfStockA": "You can sign up for stock alerts on any product page. We'll email you as soon as the item is back in stock.",
+      "sizeQ": "How do I know what size to order?",
+      "sizeA": "Check the product description for detailed specifications including dimensions and weight. If you have questions about sizing, don't hesitate to contact our customer service team for guidance."
+    },
+    "productCare": {
+      "title": "Product Care",
+      "cleanQ": "How should I clean my products?",
+      "cleanA": "Most products should be cleaned before and after each use with warm water and mild antibacterial soap, or a specialized toy cleaner. Always check the product instructions for specific care guidelines. Avoid harsh chemicals that could damage the material.",
+      "storeQ": "How should I store my products?",
+      "storeA": "Store products in a cool, dry place away from direct sunlight. Many items come with storage pouches or cases. Keep silicone items separate from other materials to prevent chemical reactions. Avoid storing in plastic bags which can trap moisture.",
+      "lubeQ": "What type of lubricant should I use?",
+      "lubeA": "Water-based lubricants are safe with all materials. Silicone-based lubes provide longer-lasting lubrication but should NOT be used with silicone products. Oil-based lubricants should not be used with latex products. Check the product page for specific recommendations.",
+      "replaceQ": "How do I know when to replace a product?",
+      "replaceA": "Replace products if you notice any discoloration, unusual odor, tackiness, tears, or cracks. High-quality silicone products can last years with proper care, while other materials may need replacement sooner. When in doubt, replace for safety."
+    },
+    "healthSafety": {
+      "title": "Health & Safety",
+      "disclaimerQ": "Is there a health and safety disclaimer?",
+      "disclaimerA": "Please carefully review all health and safety information provided by the manufacturer of each product. As a retailer, we are not responsible for injury or medical complications resulting from the purchase or use of these products. For important health and safety information, please contact the product manufacturer directly."
+    }
+  },
   "aboutPage": {
     "metaTitle": "About Us",
     "metaDescription": "Male Q LLC — providing sexual wellness products and expert advice since 2012. Serving customers worldwide with authentic products, discreet shipping, and dedicated support.",

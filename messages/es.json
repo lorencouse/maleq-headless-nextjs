@@ -246,6 +246,94 @@
     "shippingLink": "Envíos y devoluciones",
     "formSectionTitle": "Envíanos un mensaje"
   },
+  "faq": {
+    "metaTitle": "Preguntas frecuentes",
+    "metaDescription": "Encuentra respuestas a las preguntas más comunes sobre pedidos, envíos, devoluciones y más en Male Q.",
+    "pageHeading": "Preguntas frecuentes",
+    "pageSubtitle": "Encuentra respuestas a las preguntas más comunes sobre comprar en Male Q",
+    "stillQuestionsHeading": "¿Aún tienes preguntas?",
+    "stillQuestionsBody": "¿No encuentras la respuesta que buscas? Nuestro equipo de atención al cliente está aquí para ayudarte.",
+    "contactSupport": "Contactar con soporte",
+    "discreetShippingImageAlt": "Ejemplo de nuestro embalaje liso y discreto",
+    "ordersShipping": {
+      "title": "Pedidos y envíos",
+      "shippingTimeQ": "¿Cuánto tarda el envío?",
+      "shippingTimeA": "Los tiempos de envío varían según el método de envío seleccionado al pagar. Los tiempos estimados de entrega aparecen junto a cada opción de envío y en tu recibo de compra. Todos los tiempos se expresan en días hábiles (excluyendo fines de semana y festivos) y se basan en estimaciones típicas de UPS y USPS. Si tu pedido no llega en el plazo estimado, contáctanos.",
+      "trackingQ": "¿Recibiré un número de seguimiento?",
+      "trackingA": "Proporcionamos información de seguimiento para todas las opciones de envío exprés. Ten en cuenta que los envíos gratuitos y económicos pueden no incluir seguimiento detallado. Puedes consultar el estado de tu pedido iniciando sesión en tu cuenta.",
+      "multiPackageQ": "¿Por qué llegó mi pedido en varios paquetes?",
+      "multiPackageA": "Enviamos desde varios almacenes en EE. UU. Según la disponibilidad de los artículos y el tamaño del pedido, tu compra puede llegar en más de un envío. Si no has recibido todos los artículos al final del plazo estimado, contáctanos.",
+      "internationalQ": "¿Hacen envíos internacionales?",
+      "internationalA": "Sí, enviamos a muchos países en todo el mundo. Las opciones de envío internacional y los plazos estimados están disponibles al pagar. Para pedidos internacionales, si tu artículo no llega dentro del plazo estimado, compensaremos la diferencia de precio al siguiente nivel de envío aplicable.",
+      "carriersQ": "¿Qué empresas de transporte utilizan?",
+      "carriersA": "Utilizamos principalmente USPS y UPS según el método de envío seleccionado y el tamaño del paquete. La empresa específica aparecerá en tu correo de confirmación de envío."
+    },
+    "privacyShipping": {
+      "title": "Privacidad y envío discreto",
+      "discreetQ": "¿El envío es discreto?",
+      "discreetA": "Tu privacidad es nuestra prioridad. Todos los artículos se envían en embalaje liso y sin marcas, sin indicación del contenido. El nombre del remitente aparecerá como CNV o TMQ. Para envíos internacionales y aduanas, los artículos se declaran como \"Equipo de salud\", \"Cosmético\" o \"Regalo\".",
+      "billingNameQ": "¿Qué nombre aparece en mi extracto de facturación?",
+      "billingNameA": "Todas las compras aparecen como \"TMQ LLC\" en tu estado de cuenta de tarjeta de débito o crédito. Nunca revelamos detalles de tu compra ni la naturaleza de los artículos en tu extracto."
+    },
+    "returns": {
+      "title": "Cancelaciones y devoluciones",
+      "cancelQ": "¿Puedo cancelar mi pedido?",
+      "cancelA": "Para entregar los artículos lo antes posible, los pedidos se procesan a lo largo del día a medida que se reciben. Solo podemos cancelar pedidos que aún no se hayan enviado. No podemos retirar paquetes que ya se hayan enviado. Contáctanos lo antes posible si necesitas cancelar.",
+      "policyQ": "¿Cuál es vuestra política de devoluciones?",
+      "policyA": "Por motivos sanitarios e higiénicos, todas las ventas son finales. Solo ofrecemos reembolsos y reemplazos para artículos enviados incorrectamente o dañados a la llegada. Inspecciona tus artículos rápidamente al recibirlos.",
+      "bouncedQ": "¿Qué pasa con paquetes rebotados o rechazados?",
+      "bouncedA": "Los pedidos rebotados, paquetes no entregables o envíos rechazados están sujetos a una tarifa de reposición del 10 %. Ten en cuenta que los gastos de envío de artículos ya enviados no son reembolsables.",
+      "brokenQ": "Mi artículo llegó roto o defectuoso. ¿Qué hago?",
+      "brokenA": "Al recibir tu paquete, comprueba rápidamente todos los artículos para asegurarte de que estén en buen estado. Acreditaremos o cambiaremos los artículos defectuosos, así como corregiremos cualquier error de envío por nuestra parte. Contáctanos con los detalles del problema para recibir un reembolso o reemplazo."
+    },
+    "payment": {
+      "title": "Pago y facturación",
+      "methodsQ": "¿Qué métodos de pago aceptan?",
+      "methodsA": "Aceptamos todas las tarjetas de crédito principales (Visa, MasterCard, American Express, Discover), así como Apple Pay y Google Pay a través de nuestro pago seguro con Stripe.",
+      "currenciesQ": "¿Aceptan monedas internacionales?",
+      "currenciesA": "Sí, aceptamos la mayoría de las monedas del mundo. Todos los artículos se muestran en dólares estadounidenses y se pueden cargar en tu moneda local. Al pagar, se te facturará según el tipo de cambio que establezca tu banco o compañía de tarjeta, que puede incluir tarifas adicionales. Contacta con tu banco para más detalles sobre las tarifas de transacciones internacionales.",
+      "secureQ": "¿Es segura mi información de pago?",
+      "secureA": "Sí, usamos cifrado SSL estándar de la industria y nuestro procesamiento de pagos lo gestiona Stripe, un procesador de pagos certificado PCI. Nunca almacenamos tu información completa de tarjeta de crédito en nuestros servidores.",
+      "plansQ": "¿Ofrecen planes de pago?",
+      "plansA": "¡Sí! Ofrecemos Afterpay y Klarna al pagar, permitiéndote dividir tu compra en cuotas sin intereses. Estas opciones aparecerán automáticamente al pagar para pedidos elegibles.",
+      "declinedQ": "¿Por qué se rechazó mi pago?",
+      "declinedA": "Los pagos pueden rechazarse por varios motivos, incluyendo información incorrecta de la tarjeta, fondos insuficientes o la protección antifraude de tu banco. Verifica tu información e inténtalo de nuevo, o contacta con tu banco para obtener ayuda."
+    },
+    "account": {
+      "title": "Cuenta y pedidos",
+      "needAccountQ": "¿Necesito una cuenta para hacer un pedido?",
+      "needAccountA": "Puedes pagar como invitado, pero crear una cuenta te permite hacer seguimiento de pedidos, guardar direcciones, crear listas de deseos y ver tu historial de pedidos.",
+      "resetPasswordQ": "¿Cómo restablezco mi contraseña?",
+      "resetPasswordA": "Haz clic en \"¿Olvidaste tu contraseña?\" en la página de inicio de sesión e introduce tu correo electrónico. Te enviaremos un enlace para restablecer tu contraseña. Revisa tu carpeta de spam si no ves el correo en unos minutos.",
+      "couponQ": "¿Cómo uso un código de cupón?",
+      "couponA": "Introduce tu código de cupón en el campo designado en la página del carrito o al pagar. Haz clic en \"Aplicar\" y el descuento se reflejará en el total de tu pedido. Solo se puede usar un cupón por pedido."
+    },
+    "products": {
+      "title": "Productos",
+      "authenticQ": "¿Son auténticos vuestros productos?",
+      "authenticA": "Sí, solo vendemos productos 100 % auténticos directamente de distribuidores y fabricantes autorizados. Garantizamos la autenticidad de cada artículo que vendemos.",
+      "outOfStockQ": "¿Qué pasa si un artículo está agotado?",
+      "outOfStockA": "Puedes registrarte para recibir alertas de stock en la página de cualquier producto. Te enviaremos un correo en cuanto el artículo vuelva a estar disponible.",
+      "sizeQ": "¿Cómo sé qué talla pedir?",
+      "sizeA": "Consulta la descripción del producto para ver especificaciones detalladas, incluyendo dimensiones y peso. Si tienes dudas sobre el tamaño, no dudes en contactar con nuestro equipo de atención al cliente."
+    },
+    "productCare": {
+      "title": "Cuidado del producto",
+      "cleanQ": "¿Cómo debo limpiar mis productos?",
+      "cleanA": "La mayoría de los productos deben limpiarse antes y después de cada uso con agua tibia y jabón antibacteriano suave, o con un limpiador específico para juguetes. Consulta siempre las instrucciones del producto para pautas específicas. Evita químicos agresivos que puedan dañar el material.",
+      "storeQ": "¿Cómo debo guardar mis productos?",
+      "storeA": "Guarda los productos en un lugar fresco y seco, alejado de la luz solar directa. Muchos artículos vienen con bolsas o estuches. Mantén los artículos de silicona separados de otros materiales para evitar reacciones químicas. Evita guardarlos en bolsas de plástico, que pueden atrapar humedad.",
+      "lubeQ": "¿Qué tipo de lubricante debo usar?",
+      "lubeA": "Los lubricantes a base de agua son seguros con todos los materiales. Los lubricantes a base de silicona ofrecen lubricación más duradera, pero NO deben usarse con productos de silicona. Los lubricantes a base de aceite no deben usarse con productos de látex. Consulta la página del producto para recomendaciones específicas.",
+      "replaceQ": "¿Cómo sé cuándo reemplazar un producto?",
+      "replaceA": "Reemplaza los productos si notas decoloración, olor inusual, pegajosidad, desgarros o grietas. Los productos de silicona de alta calidad pueden durar años con el cuidado adecuado, mientras que otros materiales pueden necesitar reemplazo antes. En caso de duda, reemplaza por seguridad."
+    },
+    "healthSafety": {
+      "title": "Salud y seguridad",
+      "disclaimerQ": "¿Hay un descargo de responsabilidad de salud y seguridad?",
+      "disclaimerA": "Revisa cuidadosamente toda la información de salud y seguridad proporcionada por el fabricante de cada producto. Como minorista, no somos responsables de lesiones o complicaciones médicas derivadas de la compra o el uso de estos productos. Para información importante de salud y seguridad, contacta directamente con el fabricante del producto."
+    }
+  },
   "aboutPage": {
     "metaTitle": "Acerca de nosotros",
     "metaDescription": "Male Q LLC — ofreciendo productos de bienestar sexual y consejos expertos desde 2012. Atendemos a clientes en todo el mundo con productos auténticos, envío discreto y soporte dedicado.",
