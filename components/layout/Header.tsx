@@ -8,7 +8,6 @@ import { useTranslations } from 'next-intl';
 import ThemeToggle from '@/components/theme/ThemeToggle';
 import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { useCartItemCount } from '@/lib/store/cart-store';
-import { useWishlistItemCount } from '@/lib/store/wishlist-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useMiniCartOpen, useMiniCartControls } from '@/lib/store/ui-store';
 import MiniCart from '@/components/cart/MiniCart';
@@ -29,7 +28,6 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const cartItemCount = useCartItemCount();
-  const wishlistItemCount = useWishlistItemCount();
   const { user, isAuthenticated, logout } = useAuthStore();
   const isMiniCartOpen = useMiniCartOpen();
   const miniCartControls = useMiniCartControls();
@@ -125,9 +123,6 @@ export default function Header() {
               <ThemeToggle />
             </div>
 
-            {/* Language Switcher — desktop + mobile (compact icon) */}
-            <LanguageSwitcher />
-
             {/* Search - always visible */}
             <button
               onClick={() => setIsSearchOpen(true)}
@@ -194,6 +189,13 @@ export default function Header() {
                             className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
                           >
                             {t('accountDetails')}
+                          </Link>
+                          <Link
+                            href='/account/wishlist'
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className='block px-4 py-3 min-h-[44px] text-sm text-foreground hover:bg-muted transition-colors'
+                          >
+                            {t('wishlist')}
                           </Link>
                         </div>
                         <div className='border-t border-border py-1'>
@@ -266,29 +268,10 @@ export default function Header() {
               </div>
             )}
 
-            {/* Desktop only: Wishlist */}
-            <Link
-              href='/account/wishlist'
-              className='hidden md:flex p-2.5 min-w-[44px] min-h-[44px] items-center justify-center text-foreground hover:text-primary relative transition-colors'
-              aria-label={t('viewWishlist')}
-            >
-              <svg
-                className='h-5 w-5'
-                fill='none'
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth='2'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'></path>
-              </svg>
-              {wishlistItemCount > 0 && (
-                <span className='absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center'>
-                  {wishlistItemCount}
-                </span>
-              )}
-            </Link>
+            {/* Language Switcher — replaces the desktop wishlist shortcut.
+                Wishlist is still reachable via the User menu dropdown and
+                via the Mobile drawer's Quick Actions. */}
+            <LanguageSwitcher />
 
             {/* Cart - always visible */}
             <button

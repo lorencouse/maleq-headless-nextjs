@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { parsePrice } from '@/lib/utils/woocommerce-format';
@@ -12,6 +13,7 @@ interface QuickAddButtonProps {
 }
 
 export default function QuickAddButton({ product }: QuickAddButtonProps) {
+  const t = useTranslations('product');
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   const [isAdding, setIsAdding] = useState(false);
@@ -52,20 +54,20 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
         type: product.type,
       });
 
-      showAddedToCart(`${product.name} added to cart!`);
+      showAddedToCart(t('addedToastTemplate', { name: product.name }));
     } catch (error) {
       console.error('Error adding to cart:', error);
-      showError('Failed to add to cart');
+      showError(t('addFailedToast'));
     } finally {
       setIsAdding(false);
     }
   };
 
   const getButtonText = () => {
-    if (isOutOfStock) return 'Out of Stock';
-    if (isVariable) return 'Select Options';
-    if (isAdding) return 'Adding...';
-    return 'Add to Cart';
+    if (isOutOfStock) return t('outOfStockButton');
+    if (isVariable) return t('selectOptions');
+    if (isAdding) return t('adding');
+    return t('addToCart');
   };
 
   return (

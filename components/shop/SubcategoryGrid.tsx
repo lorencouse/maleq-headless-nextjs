@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations, useLocale } from 'next-intl';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
 import CategoryCard from './CategoryCard';
 
@@ -64,22 +65,34 @@ export default function SubcategoryGrid({
   parentSlug,
   parentName,
 }: SubcategoryGridProps) {
+  const t = useTranslations('shop');
+  const locale = useLocale();
+
   // Filter to only show categories with products
   const activeSubcategories = subcategories.filter((cat) => cat.count > 0);
 
   if (activeSubcategories.length === 0) return null;
 
-  const singularName = parentName ? toSingular(parentName) : '';
+  // toSingular is an English-only polish (Vibrators → Vibrator). For other
+  // locales we use the raw parent name in the translated heading template,
+  // which has its own grammar ("subcategorías de Vibrators").
+  const displayParent = parentName
+    ? locale === 'en'
+      ? toSingular(parentName)
+      : parentName
+    : '';
 
   return (
     <section className='mb-10'>
       <div className='flex items-center justify-between mb-6'>
         <div>
           <h2 className='text-xl font-bold text-foreground'>
-            Browse {singularName ? `${singularName} ` : ''}Subcategories
+            {displayParent
+              ? t('subcategoriesHeading', { parent: displayParent })
+              : t('subcategoriesHeadingNoParent')}
           </h2>
           <p className='text-muted-foreground text-sm mt-1'>
-            Explore specific types within this category
+            {t('subcategoriesSubtitle')}
           </p>
         </div>
       </div>

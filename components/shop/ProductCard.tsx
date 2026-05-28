@@ -4,6 +4,7 @@ import { memo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import QuickAddButton from './QuickAddButton';
 import WishlistButton from '@/components/wishlist/WishlistButton';
@@ -31,6 +32,7 @@ export default memo(function ProductCard({
   isWishlist,
   onRemove,
 }: ProductCardProps) {
+  const t = useTranslations('product');
   const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
 
@@ -59,7 +61,7 @@ export default memo(function ProductCard({
             />
           ) : (
             <div className='flex items-center justify-center h-full text-muted-foreground'>
-              No Image
+              {t('noImage')}
             </div>
           )}
 
@@ -71,7 +73,9 @@ export default memo(function ProductCard({
                   product.regularPrice,
                   product.salePrice,
                 );
-                return percentOff ? `${percentOff}% OFF` : 'SALE';
+                return percentOff
+                  ? t('saleBadge', { percent: percentOff })
+                  : t('saleBadgeFallback');
               })()}
             </div>
           )}
@@ -79,7 +83,7 @@ export default memo(function ProductCard({
           {/* Stock Status Badge */}
           {product.stockStatus === 'OUT_OF_STOCK' && (
             <div className='absolute top-2 left-2 bg-foreground text-background text-xs font-bold px-2 py-1 rounded'>
-              OUT OF STOCK
+              {t('outOfStockBadge')}
             </div>
           )}
 
@@ -92,7 +96,7 @@ export default memo(function ProductCard({
                   onRemove(product.databaseId?.toString() || product.id);
                 }}
                 className='w-10 h-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg transition-colors'
-                aria-label='Remove from wishlist'
+                aria-label={t('removeFromWishlist')}
               >
                 <svg
                   className='w-5 h-5'
@@ -147,15 +151,14 @@ export default memo(function ProductCard({
         {/* Stock Status */}
         {product.stockStatus === 'LOW_STOCK' && product.stockQuantity && (
           <div className='mb-1.5 sm:mb-2 text-xs text-warning'>
-            Only {product.stockQuantity} left
+            {t('lowStockOnly', { count: product.stockQuantity })}
           </div>
         )}
 
         {/* Variation Count */}
         {isVariable && product.variations && product.variations.length > 0 && (
           <div className='mb-1.5 sm:mb-2 text-xs text-primary font-medium'>
-            {product.variations.length}{' '}
-            {product.variations.length === 1 ? 'option' : 'options'}
+            {t('optionCount', { count: product.variations.length })}
           </div>
         )}
 
@@ -188,7 +191,7 @@ export default memo(function ProductCard({
           <button
             onClick={() => setIsQuickViewOpen(true)}
             className='w-10 h-10 sm:w-11 sm:h-11 hidden sm:flex items-center justify-center rounded-lg border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0'
-            aria-label='Quick view'
+            aria-label={t('quickView')}
           >
             <svg
               className='w-5 h-5'

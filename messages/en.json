@@ -20,6 +20,7 @@
     "dashboard": "Dashboard",
     "orders": "Orders",
     "accountDetails": "Account Details",
+    "wishlist": "Wishlist",
     "signOut": "Sign Out"
   },
   "footer": {
@@ -245,6 +246,38 @@
     "shippingBody": "Learn about our shipping policies and delivery times.",
     "shippingLink": "Shipping & Returns",
     "formSectionTitle": "Send us a Message"
+  },
+  "product": {
+    "noImage": "No Image",
+    "saleBadge": "{percent}% OFF",
+    "saleBadgeFallback": "SALE",
+    "outOfStockBadge": "OUT OF STOCK",
+    "removeFromWishlist": "Remove from wishlist",
+    "quickView": "Quick view",
+    "lowStockOnly": "Only {count} left",
+    "optionCount": "{count, plural, =1 {# option} other {# options}}",
+    "addToCart": "Add to Cart",
+    "outOfStockButton": "Out of Stock",
+    "selectOptions": "Select Options",
+    "adding": "Adding...",
+    "addedToastTemplate": "{name} added to cart!",
+    "addFailedToast": "Failed to add to cart"
+  },
+  "shop": {
+    "sortLabel": "Sort:",
+    "sortNewest": "Newest",
+    "sortPopularity": "Most Popular",
+    "sortPriceAsc": "Price: Low to High",
+    "sortPriceDesc": "Price: High to Low",
+    "sortNameAsc": "Name: A to Z",
+    "sortNameDesc": "Name: Z to A",
+    "itemCount": "{count, plural, =1 {# item} other {# items}}",
+    "subcategoriesHeading": "Browse {parent} Subcategories",
+    "subcategoriesHeadingNoParent": "Browse Subcategories",
+    "subcategoriesSubtitle": "Explore specific types within this category",
+    "shopByCategory": "Shop by Category",
+    "shopByCategorySubtitle": "Browse our most popular categories",
+    "viewAllCategories": "View All Categories"
   },
   "nav": {
     "viewAll": "View All",

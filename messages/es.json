@@ -20,6 +20,7 @@
     "dashboard": "Mi cuenta",
     "orders": "Pedidos",
     "accountDetails": "Datos personales",
+    "wishlist": "Lista de deseos",
     "signOut": "Cerrar sesión"
   },
   "footer": {
@@ -245,6 +246,38 @@
     "shippingBody": "Conoce nuestras políticas de envío y tiempos de entrega.",
     "shippingLink": "Envíos y devoluciones",
     "formSectionTitle": "Envíanos un mensaje"
+  },
+  "product": {
+    "noImage": "Sin imagen",
+    "saleBadge": "{percent} % DTO.",
+    "saleBadgeFallback": "OFERTA",
+    "outOfStockBadge": "AGOTADO",
+    "removeFromWishlist": "Quitar de la lista de deseos",
+    "quickView": "Vista rápida",
+    "lowStockOnly": "Solo quedan {count}",
+    "optionCount": "{count, plural, =1 {# opción} other {# opciones}}",
+    "addToCart": "Añadir al carrito",
+    "outOfStockButton": "Agotado",
+    "selectOptions": "Seleccionar opciones",
+    "adding": "Añadiendo...",
+    "addedToastTemplate": "¡{name} añadido al carrito!",
+    "addFailedToast": "No se pudo añadir al carrito"
+  },
+  "shop": {
+    "sortLabel": "Ordenar:",
+    "sortNewest": "Más nuevos",
+    "sortPopularity": "Más populares",
+    "sortPriceAsc": "Precio: menor a mayor",
+    "sortPriceDesc": "Precio: mayor a menor",
+    "sortNameAsc": "Nombre: A a Z",
+    "sortNameDesc": "Nombre: Z a A",
+    "itemCount": "{count, plural, =1 {# artículo} other {# artículos}}",
+    "subcategoriesHeading": "Explorar subcategorías de {parent}",
+    "subcategoriesHeadingNoParent": "Explorar subcategorías",
+    "subcategoriesSubtitle": "Explora tipos específicos dentro de esta categoría",
+    "shopByCategory": "Compra por categoría",
+    "shopByCategorySubtitle": "Explora nuestras categorías más populares",
+    "viewAllCategories": "Ver todas las categorías"
   },
   "nav": {
     "viewAll": "Ver todo",

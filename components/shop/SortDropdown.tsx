@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 export type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | 'popularity';
 
@@ -9,16 +10,18 @@ interface SortDropdownProps {
   onChange: (value: SortOption) => void;
 }
 
-const sortOptions: { value: SortOption; label: string }[] = [
-  { value: 'newest', label: 'Newest' },
-  { value: 'popularity', label: 'Most Popular' },
-  { value: 'price-asc', label: 'Price: Low to High' },
-  { value: 'price-desc', label: 'Price: High to Low' },
-  { value: 'name-asc', label: 'Name: A to Z' },
-  { value: 'name-desc', label: 'Name: Z to A' },
+// Sort option config — labelKey indirection so options track the active locale.
+const sortOptions: { value: SortOption; labelKey: string }[] = [
+  { value: 'newest', labelKey: 'sortNewest' },
+  { value: 'popularity', labelKey: 'sortPopularity' },
+  { value: 'price-asc', labelKey: 'sortPriceAsc' },
+  { value: 'price-desc', labelKey: 'sortPriceDesc' },
+  { value: 'name-asc', labelKey: 'sortNameAsc' },
+  { value: 'name-desc', labelKey: 'sortNameDesc' },
 ];
 
 export default function SortDropdown({ value, onChange }: SortDropdownProps) {
+  const t = useTranslations('shop');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +45,7 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
         className="flex items-center gap-2 px-4 py-2.5 min-h-[44px] border border-input rounded-lg bg-background text-foreground hover:bg-muted transition-colors"
       >
         <span className="text-sm">
-          <span className="text-muted-foreground">Sort:</span> {selectedOption?.label}
+          <span className="text-muted-foreground">{t('sortLabel')}</span> {selectedOption && t(selectedOption.labelKey)}
         </span>
         <svg
           className={`w-4 h-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -70,7 +73,7 @@ export default function SortDropdown({ value, onChange }: SortDropdownProps) {
                     : 'text-foreground hover:bg-muted'
                 }`}
               >
-                {option.label}
+                {t(option.labelKey)}
               </button>
             ))}
           </div>
