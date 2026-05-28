@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import {
   getFilteredProducts,
   getHierarchicalCategories,
@@ -20,31 +21,40 @@ import ProductCarousel from '@/components/product/ProductCarousel';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import type { Post } from '@/lib/types/wordpress';
 
-export const metadata: Metadata = {
-  title: {
-    absolute: 'Male Q - Premium Adult Products | Fast & Discreet Shipping',
-  },
-  description:
-    'Shop premium adult products with fast, discreet shipping. Expert guides, unsponsored reviews, and quality products to help you choose with confidence.',
-  openGraph: {
-    title: 'Male Q | Premium Adult Products',
-    description: 'Shop premium adult products with fast, discreet shipping.',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Male Q | Premium Adult Products',
-    description: 'Shop premium adult products with fast, discreet shipping.',
-  },
-  alternates: {
-    canonical: '/',
-  },
+type Props = {
+  params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'home.meta' });
+  return {
+    title: {
+      absolute: t('title'),
+    },
+    description: t('description'),
+    openGraph: {
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+    },
+    alternates: {
+      canonical: '/',
+    },
+  };
+}
 
 // ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
 export const revalidate = 604800;
 
-export default async function Home() {
+export default async function Home({ params }: Props) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'home' });
   const useIndex = isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
 
   // Build product promises (index or GraphQL)
@@ -96,10 +106,10 @@ export default async function Home() {
         <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-16'>
           <ProductCarousel
             products={products}
-            title='Featured Products'
-            subtitle='Discover our most popular items'
+            title={t('featured.title')}
+            subtitle={t('featured.subtitle')}
             viewAllLink='/shop'
-            viewAllText='View All Products'
+            viewAllText={t('featured.viewAll')}
             showGradients
             showMobileHint
             variant='section'
@@ -113,8 +123,8 @@ export default async function Home() {
           <div className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8'>
             <ProductCarousel
               products={trendingProducts}
-              title='Trending Now'
-              subtitle='Our most popular products right now'
+              title={t('trending.title')}
+              subtitle={t('trending.subtitle')}
               badge={
                 <span className='inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full'>
                   <svg
@@ -128,7 +138,7 @@ export default async function Home() {
                       clipRule='evenodd'
                     />
                   </svg>
-                  Hot Deals
+                  {t('trending.hotDealsBadge')}
                 </span>
               }
               viewAllLink='/shop?onSale=true'
@@ -148,10 +158,10 @@ export default async function Home() {
         <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
           <div className='mb-8'>
             <h2 className='text-2xl sm:text-3xl font-bold text-foreground'>
-              Expert Guides & Reviews
+              {t('blogStrip.heading')}
             </h2>
             <p className='text-muted-foreground mt-1'>
-              Unsponsored advice to help you choose
+              {t('blogStrip.subtitle')}
             </p>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
@@ -164,7 +174,7 @@ export default async function Home() {
               href='/guides'
               className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
             >
-              View All Articles
+              {t('blogStrip.viewAll')}
               <svg
                 className='w-4 h-4'
                 fill='none'

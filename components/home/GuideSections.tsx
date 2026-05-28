@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import BlogCard from '@/components/blog/BlogCard';
 import { Post } from '@/lib/types/wordpress';
 
@@ -8,6 +9,8 @@ interface GuideSectionsProps {
 }
 
 export default function GuideSections({ malePosts = [], femalePosts = [] }: GuideSectionsProps) {
+  const t = useTranslations('home.guideSections');
+
   return (
     <div className="space-y-16">
       {/* Mr. Q Section - Male Guides */}
@@ -21,16 +24,15 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Mr. Q</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-2">{t('maleHeading')}</h3>
               <p className="text-muted-foreground mb-4">
-                Expert guides for men covering sex toys, techniques, and health topics.
-                Unsponsored reviews you can trust.
+                {t('maleDescription')}
               </p>
               <Link
                 href="/guides/category/male"
                 className="inline-flex items-center gap-2 text-blue-500 font-semibold hover:text-blue-600 transition-colors"
               >
-                View All Male Guides
+                {t('viewMaleAll')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -48,7 +50,7 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
               </div>
             ) : (
               <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <p className="text-muted-foreground">Guides coming soon...</p>
+                <p className="text-muted-foreground">{t('comingSoon')}</p>
               </div>
             )}
           </div>
@@ -66,16 +68,15 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Miss Q</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-2">{t('femaleHeading')}</h3>
               <p className="text-muted-foreground mb-4">
-                In-depth guides for women on toys, pleasure, and wellness.
-                Honest reviews to help you explore confidently.
+                {t('femaleDescription')}
               </p>
               <Link
                 href="/guides/category/female"
                 className="inline-flex items-center gap-2 text-pink-500 font-semibold hover:text-pink-600 transition-colors"
               >
-                View All Female Guides
+                {t('viewFemaleAll')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -93,7 +94,7 @@ export default function GuideSections({ malePosts = [], femalePosts = [] }: Guid
               </div>
             ) : (
               <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <p className="text-muted-foreground">Guides coming soon...</p>
+                <p className="text-muted-foreground">{t('comingSoon')}</p>
               </div>
             )}
           </div>

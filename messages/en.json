@@ -202,6 +202,90 @@
       "createAccount": "Create Account"
     }
   },
+  "home": {
+    "meta": {
+      "title": "Male Q - Premium Adult Products | Fast & Discreet Shipping",
+      "description": "Shop premium adult products with fast, discreet shipping. Expert guides, unsponsored reviews, and quality products to help you choose with confidence.",
+      "ogTitle": "Male Q | Premium Adult Products",
+      "ogDescription": "Shop premium adult products with fast, discreet shipping."
+    },
+    "hero": {
+      "socialProof": "Trusted by 10,000+ customers",
+      "headingMain": "Men's Questions,",
+      "headingAccent": "Answered.",
+      "subheading": "Empowering men everywhere with expert guides, quality products, and the knowledge to lead happier, healthier lives.",
+      "shopNow": "Shop Now",
+      "exploreGuides": "Explore Guides",
+      "trustSecureCheckout": "Secure Checkout",
+      "trustPlainPackaging": "Plain Packaging",
+      "trustFastShipping": "Fast Shipping"
+    },
+    "featured": {
+      "title": "Featured Products",
+      "subtitle": "Discover our most popular items",
+      "viewAll": "View All Products"
+    },
+    "trending": {
+      "title": "Trending Now",
+      "subtitle": "Our most popular products right now",
+      "hotDealsBadge": "Hot Deals"
+    },
+    "benefits": {
+      "title": "Why Shop With Us",
+      "subtitle": "Your satisfaction and privacy are our top priorities. Here's what sets us apart.",
+      "discreetPackagingTitle": "Discreet Packaging",
+      "discreetPackagingDesc": "All orders ship in plain, unmarked boxes with no indication of contents. Your privacy matters.",
+      "secureCheckoutTitle": "Secure Checkout",
+      "secureCheckoutDesc": "Your payment info is protected with 256-bit SSL encryption. Shop with confidence.",
+      "fastShippingTitle": "Fast Shipping",
+      "fastShippingDesc": "Orders ship within 24-48 hours. Get your items quickly and discreetly.",
+      "qualityGuaranteedTitle": "Quality Guaranteed",
+      "qualityGuaranteedDesc": "100% authentic products from trusted brands. We never sell knockoffs."
+    },
+    "blogStrip": {
+      "heading": "Expert Guides & Reviews",
+      "subtitle": "Unsponsored advice to help you choose",
+      "viewAll": "View All Articles"
+    },
+    "testimonials": {
+      "heading": "What Our Customers Say",
+      "subtitle": "Real reviews from verified buyers who trust Male Q for quality and discretion",
+      "verified": "Verified",
+      "prevAriaLabel": "Previous testimonial",
+      "nextAriaLabel": "Next testimonial",
+      "dotAriaLabel": "Go to testimonial {index}",
+      "statHappyCustomers": "Happy Customers",
+      "statAverageRating": "Average Rating",
+      "statSatisfactionRate": "Satisfaction Rate",
+      "statShipTime": "Avg. Ship Time"
+    },
+    "newsletter": {
+      "heading": "Get Exclusive Deals",
+      "subtitle": "Subscribe to our newsletter for special offers, new arrivals, and insider tips. Unsubscribe anytime.",
+      "successMessage": "Thanks for subscribing! Check your inbox for exclusive deals.",
+      "errorMessage": "Something went wrong. Please try again.",
+      "emailPlaceholder": "Enter your email",
+      "submitting": "Subscribing...",
+      "submit": "Subscribe",
+      "privacyNote": "We respect your privacy. Your email will never be shared."
+    },
+    "social": {
+      "heading": "Follow Us",
+      "subtitle": "Stay up-to-date with the latest news, guides, and exclusive content",
+      "youtubeTitle": "Subscribe to MQ on YouTube",
+      "youtubeDescription": "Get in-depth video guides, product reviews, and expert advice on our YouTube channel.",
+      "subscribe": "Subscribe"
+    },
+    "guideSections": {
+      "maleHeading": "Mr. Q",
+      "maleDescription": "Expert guides for men covering sex toys, techniques, and health topics. Unsponsored reviews you can trust.",
+      "viewMaleAll": "View All Male Guides",
+      "femaleHeading": "Miss Q",
+      "femaleDescription": "In-depth guides for women on toys, pleasure, and wellness. Honest reviews to help you explore confidently.",
+      "viewFemaleAll": "View All Female Guides",
+      "comingSoon": "Guides coming soon..."
+    }
+  },
   "account": {
     "meta": {
       "title": "My Account",
