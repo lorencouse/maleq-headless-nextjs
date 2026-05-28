@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { getMessages, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
+// Import the default-locale messages statically so the root layout never has to
+// call getMessages() (which would prime next-intl's getConfig(undefined) cache
+// with English and starve [locale]/layout of the slot it needs to load Spanish).
+import defaultMessages from "@/messages/en.json";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -145,18 +149,17 @@ export default async function RootLayout({
   // is a follow-up (Phase 8) — requires moving Header/Footer out of the
   // root and into per-locale-aware sub-layouts (route groups).
   //
-  // IMPORTANT: pass an explicit locale to getMessages. next-intl's
-  // getConfig is React-cached BY ARGUMENT, so calling `getMessages()`
-  // here (no args) would cache the `undefined`-keyed slot with English
-  // messages — and child server components on /es/* routes call
-  // `useTranslations()` which also resolves through `getConfig(undefined)`.
-  // They'd hit our stale cache and render English. Passing an explicit
-  // locale uses a different cache key ('en') and leaves the
-  // `undefined`-keyed slot free for `[locale]/layout` to populate with
-  // the URL-locale messages.
+  // We use a static import for messages instead of calling getMessages()
+  // so we never touch next-intl's getConfig() cache here. Why this matters:
+  // useTranslations() in server components on /es/* routes resolves via
+  // getConfig(undefined). If we'd populated that slot in root, [locale]
+  // pages would hit our English cache instead of the Spanish messages
+  // [locale]/layout loads. The setRequestLocale call below still seeds the
+  // request-locale cache to 'en' for downstream APIs on non-[locale]
+  // routes (i.e. content-root pages like /guides/[slug]).
   const locale = routing.defaultLocale;
   setRequestLocale(locale);
-  const messages = await getMessages({ locale });
+  const messages = defaultMessages;
 
   return (
     <html lang={locale} suppressHydrationWarning>
