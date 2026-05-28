@@ -21,5 +21,22 @@
     "orders": "Pedidos",
     "accountDetails": "Datos personales",
     "signOut": "Cerrar sesión"
+  },
+  "footer": {
+    "siteFooter": "Pie del sitio",
+    "tagline": "Tu tienda online de confianza con productos de calidad y contenido valioso.",
+    "quickLinks": "Enlaces rápidos",
+    "shop": "Tienda",
+    "guides": "Guías",
+    "aboutUs": "Acerca de nosotros",
+    "contact": "Contacto",
+    "customerService": "Atención al cliente",
+    "orderTracking": "Seguimiento de pedido",
+    "returns": "Devoluciones",
+    "faq": "Preguntas frecuentes",
+    "privacyPolicy": "Política de privacidad",
+    "newsletterTitle": "Boletín",
+    "newsletterDescription": "Suscríbete para recibir novedades sobre productos y artículos.",
+    "copyright": "© {year} Male Q. Todos los derechos reservados."
   }
 }

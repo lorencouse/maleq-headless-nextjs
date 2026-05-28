@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
 
 export default function Footer() {
+  const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className='bg-card border-t border-border text-muted-foreground transition-colors' role="contentinfo" aria-label="Site footer">
+    <footer className='bg-card border-t border-border text-muted-foreground transition-colors' role="contentinfo" aria-label={t('siteFooter')}>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
         <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
           {/* About */}
@@ -15,15 +17,14 @@ export default function Footer() {
               Male Q
             </h3>
             <p className='text-sm'>
-              Your trusted online store for quality products and engaging
-              content.
+              {t('tagline')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
             <h4 className='text-foreground text-sm font-semibold mb-4'>
-              Quick Links
+              {t('quickLinks')}
             </h4>
             <ul className='space-y-1'>
               <li>
@@ -31,7 +32,7 @@ export default function Footer() {
                   href='/shop'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Shop
+                  {t('shop')}
                 </Link>
               </li>
               <li>
@@ -39,7 +40,7 @@ export default function Footer() {
                   href='/guides'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Guides
+                  {t('guides')}
                 </Link>
               </li>
               <li>
@@ -47,7 +48,7 @@ export default function Footer() {
                   href='/about'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  About Us
+                  {t('aboutUs')}
                 </Link>
               </li>
               <li>
@@ -55,7 +56,7 @@ export default function Footer() {
                   href='/contact'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Contact
+                  {t('contact')}
                 </Link>
               </li>
             </ul>
@@ -64,7 +65,7 @@ export default function Footer() {
           {/* Customer Service */}
           <div>
             <h4 className='text-foreground text-sm font-semibold mb-4'>
-              Customer Service
+              {t('customerService')}
             </h4>
             <ul className='space-y-1'>
               <li>
@@ -72,7 +73,7 @@ export default function Footer() {
                   href='/track-order'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Order Tracking
+                  {t('orderTracking')}
                 </Link>
               </li>
               <li>
@@ -80,7 +81,7 @@ export default function Footer() {
                   href='/shipping-returns'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Returns
+                  {t('returns')}
                 </Link>
               </li>
               <li>
@@ -88,7 +89,7 @@ export default function Footer() {
                   href='/faq'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  FAQ
+                  {t('faq')}
                 </Link>
               </li>
               <li>
@@ -96,7 +97,7 @@ export default function Footer() {
                   href='/privacy'
                   className='inline-block py-2 text-sm hover:text-primary transition-colors'
                 >
-                  Privacy Policy
+                  {t('privacyPolicy')}
                 </Link>
               </li>
             </ul>
@@ -109,8 +110,8 @@ export default function Footer() {
               variant="inline"
               showTitle
               showDescription
-              title="Newsletter"
-              description="Subscribe to get updates on new products and blog posts."
+              title={t('newsletterTitle')}
+              description={t('newsletterDescription')}
             />
           </div>
         </div>
@@ -124,7 +125,7 @@ export default function Footer() {
             height={40}
             className='inline-block'
           />
-          <p>&copy; {currentYear} Male Q. All rights reserved.</p>
+          <p>{t('copyright', { year: currentYear })}</p>
         </div>
       </div>
     </footer>

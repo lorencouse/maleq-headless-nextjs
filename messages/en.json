@@ -21,5 +21,22 @@
     "orders": "Orders",
     "accountDetails": "Account Details",
     "signOut": "Sign Out"
+  },
+  "footer": {
+    "siteFooter": "Site footer",
+    "tagline": "Your trusted online store for quality products and engaging content.",
+    "quickLinks": "Quick Links",
+    "shop": "Shop",
+    "guides": "Guides",
+    "aboutUs": "About Us",
+    "contact": "Contact",
+    "customerService": "Customer Service",
+    "orderTracking": "Order Tracking",
+    "returns": "Returns",
+    "faq": "FAQ",
+    "privacyPolicy": "Privacy Policy",
+    "newsletterTitle": "Newsletter",
+    "newsletterDescription": "Subscribe to get updates on new products and blog posts.",
+    "copyright": "© {year} Male Q. All rights reserved."
   }
 }
