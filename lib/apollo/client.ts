@@ -14,9 +14,19 @@ export const REVALIDATE = {
   PRODUCTS: 300,
   /** Search queries, dynamic content */
   DYNAMIC: 60,
+  /** Long-lived content (blog posts, CMS pages) on ISR routes whose own
+   *  `export const revalidate` is monthly and that rely on a webhook
+   *  (revalidatePath) for real-time invalidation. Match this to the route's
+   *  revalidate: Next sets the route's revalidation to the LOWEST revalidate
+   *  among its segment config AND its fetches, so a short fetch TTL here would
+   *  drag the whole page down to that interval. 30 days. */
+  MONTH: 2592000,
   /** Minimal Data Cache — use for by-slug lookups in ISR pages where the page
    *  cache already handles caching. Uses 1s TTL (not 0) to stay compatible
-   *  with static generation; revalidate: 0 forces pages fully dynamic. */
+   *  with static generation; revalidate: 0 forces pages fully dynamic.
+   *  CAUTION: on a static/ISR route this 1s TTL becomes the ROUTE's revalidate
+   *  (lowest-wins), making the page revalidate every second — use REVALIDATE.MONTH
+   *  for by-slug content fetches on monthly-ISR + webhook routes instead. */
   NONE: 1,
 } as const;
 

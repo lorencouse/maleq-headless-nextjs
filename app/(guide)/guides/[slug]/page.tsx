@@ -140,7 +140,10 @@ export async function generateMetadata({
   const { data } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
-    revalidate: REVALIDATE.NONE,
+    // Monthly, matching this route's `export const revalidate` — Next uses the
+    // lowest revalidate across segment + fetches, so a short TTL here would
+    // make the page revalidate that often. Webhook handles real-time updates.
+    revalidate: REVALIDATE.MONTH,
   });
   post = data?.postBy;
 
@@ -263,13 +266,17 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   let post: Post | null = null;
 
-  // Fetch from GraphQL — use REVALIDATE.NONE to avoid Data Cache caching
-  // null responses. The ISR page cache (revalidate = 2592000) handles caching.
+  // Fetch from GraphQL at the route's monthly revalidate. Previously this used
+  // REVALIDATE.NONE (1s) "to avoid caching null responses", but Next takes the
+  // LOWEST revalidate across the route's segment config + its fetches — so the
+  // 1s fetch TTL silently made every guide revalidate each second (perpetual
+  // x-nextjs-cache: STALE). MONTH matches `export const revalidate` above; the
+  // webhook (revalidatePath) handles real-time invalidation on post updates.
   const { REVALIDATE } = await import('@/lib/apollo/client');
   const { data: postData } = await getClient().query({
     query: GET_POST_BY_SLUG,
     variables: { slug },
-    revalidate: REVALIDATE.NONE,
+    revalidate: REVALIDATE.MONTH,
   });
   post = postData?.postBy;
 
