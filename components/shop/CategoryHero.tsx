@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
 import {
   getCategoryConfig,
@@ -19,8 +20,11 @@ export default function CategoryHero({
   productCount,
   parentCategory,
 }: CategoryHeroProps) {
+  const t = useTranslations('categoryHero');
   const config = getCategoryConfig(category.slug);
   const categoryImage = getCategoryImage(category.slug, category.image);
+  const visibleSubcategoryCount =
+    category.children?.filter((c) => c.count > 0).length ?? 0;
 
   return (
     <section className='mb-8 select-none'>
@@ -67,7 +71,7 @@ export default function CategoryHero({
                 <Breadcrumbs
                   variant='light'
                   items={[
-                    { label: 'Shop', href: '/shop' },
+                    { label: t('breadcrumbShop'), href: '/shop' },
                     ...(parentCategory
                       ? [
                           {
@@ -102,9 +106,9 @@ export default function CategoryHero({
                       d='M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4'
                     />
                   </svg>
-                  {productCount} {productCount === 1 ? 'product' : 'products'}
+                  {t('productCount', { count: productCount })}
                 </span>
-                {category.children && category.children.length > 0 && (
+                {visibleSubcategoryCount > 0 && (
                   <span className='flex items-center gap-1.5'>
                     <svg
                       className='w-5 h-5'
@@ -119,8 +123,7 @@ export default function CategoryHero({
                         d='M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'
                       />
                     </svg>
-                    {category.children.filter((c) => c.count > 0).length}{' '}
-                    subcategories
+                    {t('subcategoryCount', { count: visibleSubcategoryCount })}
                   </span>
                 )}
               </div>
@@ -132,14 +135,14 @@ export default function CategoryHero({
                 href='#products'
                 className='px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium transition-colors backdrop-blur-sm text-center'
               >
-                Browse Products
+                {t('browseProducts')}
               </a>
               {category.children && category.children.length > 0 && (
                 <a
                   href='#subcategories'
                   className='px-4 py-2 border border-white/30 hover:bg-white/10 rounded-lg text-white text-sm font-medium transition-colors text-center'
                 >
-                  View Subcategories
+                  {t('viewSubcategories')}
                 </a>
               )}
             </div>
@@ -157,14 +160,14 @@ export default function CategoryHero({
           href='#products'
           className={`flex-1 px-4 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-lg text-sm font-medium text-center`}
         >
-          Browse Products
+          {t('browseProducts')}
         </a>
         {category.children && category.children.length > 0 && (
           <a
             href='#subcategories'
             className='flex-1 px-4 py-2.5 border border-border rounded-lg text-sm font-medium text-foreground text-center hover:bg-muted transition-colors'
           >
-            Subcategories
+            {t('subcategoriesMobile')}
           </a>
         )}
       </div>

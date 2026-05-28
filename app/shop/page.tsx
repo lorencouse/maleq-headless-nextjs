@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Metadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
 import {
   getAllProducts,
   getHierarchicalCategories,
@@ -33,29 +34,30 @@ export async function generateMetadata({
 }: ShopPageProps): Promise<Metadata> {
   const params = await searchParams;
   const searchQuery = typeof params.q === 'string' ? params.q : undefined;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'shopPage' });
 
   if (searchQuery) {
     return {
-      title: `Search results for "${searchQuery}"`,
-      description: `Browse search results for "${searchQuery}" in our collection of quality products.`,
+      title: t('metaSearchTitle', { query: searchQuery }),
+      description: t('metaSearchDescription', { query: searchQuery }),
       robots: { index: false },
     };
   }
 
-  const description =
-    'Browse our collection of quality products. Filter by category, price, and more.';
+  const description = t('metaShopDescription');
 
   return {
-    title: 'Shop',
+    title: t('metaShopTitle'),
     description,
     openGraph: {
-      title: 'Shop | Male Q',
+      title: t('metaShopOgTitle'),
       description,
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: 'Shop | Male Q',
+      title: t('metaShopOgTitle'),
       description,
     },
     alternates: {
@@ -69,6 +71,8 @@ export async function generateMetadata({
 
 export default async function ShopPage({ searchParams }: ShopPageProps) {
   const params = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'shopPage' });
 
   // Parse search query and filter params from URL
   const searchQuery = typeof params.q === 'string' ? params.q : undefined;
@@ -363,7 +367,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               d='M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6'
             />
           </svg>
-          Show featured sections
+          {t('showFeaturedSections')}
         </Link>
       )}
 
@@ -372,10 +376,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2'>
           <h1 className='text-2xl sm:text-3xl font-bold text-foreground'>
             {searchQuery
-              ? `Search results for "${searchQuery}"`
+              ? t('h1SearchResults', { query: searchQuery })
               : hasFilters
-                ? 'Filtered Results'
-                : 'All Products'}
+                ? t('h1FilteredResults')
+                : t('h1AllProducts')}
           </h1>
           <Suspense
             fallback={
@@ -393,10 +397,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
         <p className='text-muted-foreground'>
           {searchQuery
-            ? `Found ${initialTotal ?? products.length} products`
+            ? t('blurbSearchFound', { count: initialTotal ?? products.length })
             : hasFilters
-              ? `Showing ${products.length} products matching your criteria`
-              : 'Browse our complete collection of premium products'}
+              ? t('blurbFiltered', { count: products.length })
+              : t('blurbAllProducts')}
         </p>
       </div>
 

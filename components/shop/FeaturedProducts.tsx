@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import ProductCard from './ProductCard';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import { UnifiedProduct } from '@/lib/products/combined-service';
@@ -15,21 +16,22 @@ interface FeaturedProductsProps {
 
 export default function FeaturedProducts({
   products,
-  title = 'Featured Products',
-  subtitle = 'Hand-picked favorites just for you',
+  title,
+  subtitle,
   viewAllHref = '/shop',
-  viewAllText = 'View All',
+  viewAllText,
 }: FeaturedProductsProps) {
+  const t = useTranslations('shopPage');
   if (products.length === 0) return null;
 
   return (
     <section className="mb-10">
       <ProductCarousel
         products={products}
-        title={title}
-        subtitle={subtitle}
+        title={title ?? t('featuredTitle')}
+        subtitle={subtitle ?? t('featuredSubtitle')}
         viewAllLink={viewAllHref}
-        viewAllText={viewAllText}
+        viewAllText={viewAllText ?? t('viewAll')}
         showGradients
         variant="section"
       />
@@ -40,20 +42,25 @@ export default function FeaturedProducts({
 // Alternative grid layout for featured products (non-carousel)
 export function FeaturedProductsGrid({
   products,
-  title = 'Featured Products',
-  subtitle = 'Hand-picked favorites just for you',
+  title,
+  subtitle,
   viewAllHref = '/shop',
-  viewAllText = 'View All',
+  viewAllText,
   columns = 4,
 }: FeaturedProductsProps & { columns?: 2 | 3 | 4 }) {
+  const t = useTranslations('shopPage');
   if (products.length === 0) return null;
 
   return (
     <section className="mb-10">
       {/* Header */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">{title}</h2>
-        <p className="text-muted-foreground text-sm mt-1">{subtitle}</p>
+        <h2 className="text-2xl font-bold text-foreground">
+          {title ?? t('featuredTitle')}
+        </h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          {subtitle ?? t('featuredSubtitle')}
+        </p>
       </div>
 
       {/* Products Grid */}
@@ -69,7 +76,7 @@ export function FeaturedProductsGrid({
           href={viewAllHref}
           className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors"
         >
-          {viewAllText}
+          {viewAllText ?? t('viewAll')}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>

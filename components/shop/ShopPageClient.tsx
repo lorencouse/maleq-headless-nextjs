@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import ProductCard from './ProductCard';
 import FilterPanel, { FilterState } from './filters/FilterPanel';
 import ActiveFilters from './filters/ActiveFilters';
@@ -73,6 +74,7 @@ export default function ShopPageClient({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const t = useTranslations('shopPage');
 
   // Check for cached state matching current URL
   const cacheKey = getCacheKey(pathname, searchParams);
@@ -589,7 +591,7 @@ export default function ShopPageClient({
       {/* Desktop Filter Sidebar */}
       <aside className="hidden lg:block w-64 flex-shrink-0">
         <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto overflow-x-hidden pr-2 scrollbar-thin">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Filters</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">{t('filtersHeading')}</h2>
           <FilterPanel
             categories={categories}
             brands={availableBrands}
@@ -616,12 +618,12 @@ export default function ShopPageClient({
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
               </svg>
-              <span className="text-sm font-medium">Filters</span>
+              <span className="text-sm font-medium">{t('filtersMobileButton')}</span>
             </button>
 
             {/* Results Count */}
             <p className="text-sm text-muted-foreground">
-              Showing {displayedTotalCount} {displayedTotalCount === 1 ? 'product' : 'products'}
+              {t('showingProducts', { count: displayedTotalCount })}
             </p>
           </div>
 
@@ -667,7 +669,7 @@ export default function ShopPageClient({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    <span className="text-sm text-muted-foreground">Updating results...</span>
+                    <span className="text-sm text-muted-foreground">{t('updatingResults')}</span>
                   </div>
                 </div>
               )}
@@ -689,14 +691,14 @@ export default function ShopPageClient({
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Loading more products...
+                    {t('loadingMore')}
                   </div>
                 ) : (
                   <button
                     onClick={handleLoadMore}
                     className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
                   >
-                    Load More Products
+                    {t('loadMore')}
                   </button>
                 )}
               </div>
@@ -712,15 +714,15 @@ export default function ShopPageClient({
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <h3 className="text-lg font-semibold text-foreground mb-2">No products found</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-2">{t('noProductsFound')}</h3>
             <p className="text-muted-foreground mb-6">
-              Try adjusting your filters to find what you&apos;re looking for.
+              {t('tryAdjustingFilters')}
             </p>
             <button
               onClick={handleClearFilters}
               className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
             >
-              Clear Filters
+              {t('clearFilters')}
             </button>
           </div>
         )}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Brand } from '@/lib/products/combined-service';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
@@ -10,6 +11,7 @@ interface BrandHeroProps {
 }
 
 export default function BrandHero({ brand, productCount }: BrandHeroProps) {
+  const t = useTranslations('brandHero');
   return (
     <section className="mb-8 select-none">
       {/* Hero Banner */}
@@ -38,8 +40,8 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
                 <Breadcrumbs
                   variant="light"
                   items={[
-                    { label: 'Shop', href: '/shop' },
-                    { label: 'Brands', href: '/brands' },
+                    { label: t('breadcrumbShop'), href: '/shop' },
+                    { label: t('breadcrumbBrands'), href: '/brands' },
                     { label: brand.name },
                   ]}
                 />
@@ -64,7 +66,7 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                   </svg>
-                  {productCount} {productCount === 1 ? 'product' : 'products'}
+                  {t('productCount', { count: productCount })}
                 </span>
               </div>
             </div>
@@ -75,7 +77,7 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
                 href="#products"
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium transition-colors backdrop-blur-sm text-center"
               >
-                Browse Products
+                {t('browseProducts')}
               </a>
             </div>
           </div>
@@ -92,7 +94,7 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
           href="#products"
           className="flex-1 px-4 py-2.5 bg-gradient-to-r from-primary to-primary-hover text-white rounded-lg text-sm font-medium text-center"
         >
-          Browse Products
+          {t('browseProducts')}
         </a>
       </div>
     </section>

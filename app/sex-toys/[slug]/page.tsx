@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getLocale, getTranslations } from 'next-intl/server';
 import {
   getAllProducts,
   getHierarchicalCategories,
@@ -54,28 +55,33 @@ export async function generateMetadata({
 }: CategoryPageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
+    const locale = await getLocale();
+    const t = await getTranslations({ locale, namespace: 'shopPage' });
     const categories = await getCategories();
     const category = findCategoryBySlug(categories, slug);
 
     if (!category) {
       return {
-        title: 'Category Not Found',
+        title: t('categoryNotFound'),
       };
     }
 
-    const description = `Browse our ${category.name} collection at Male Q. ${category.count} products available with fast, discreet shipping.`;
+    const description = t('categoryMetaDescription', {
+      name: category.name,
+      count: category.count,
+    });
 
     return {
-      title: `${category.name} | Shop`,
+      title: t('categoryMetaTitle', { name: category.name }),
       description,
       openGraph: {
-        title: `${category.name} | Male Q`,
+        title: t('categoryMetaOgTitle', { name: category.name }),
         description,
         type: 'website',
       },
       twitter: {
         card: 'summary',
-        title: `${category.name} | Male Q`,
+        title: t('categoryMetaOgTitle', { name: category.name }),
         description,
       },
       alternates: {
@@ -136,6 +142,8 @@ export default async function CategoryPage({
 }: CategoryPageProps) {
   const { slug } = await params;
   const urlParams = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'shopPage' });
 
   // Parse additional filter params from URL
   const brand =
@@ -315,8 +323,8 @@ export default async function CategoryPage({
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[
-          { name: 'Home', url: SITE_URL },
-          { name: 'Sex Toys', url: `${SITE_URL}/sex-toys` },
+          { name: t('breadcrumbHome'), url: SITE_URL },
+          { name: t('breadcrumbSexToys'), url: `${SITE_URL}/sex-toys` },
           ...(parentCategory
             ? [
                 {
@@ -361,7 +369,9 @@ export default async function CategoryPage({
       <div id='products' className='mb-6'>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-1'>
           <h2 className='text-xl sm:text-2xl font-bold text-foreground'>
-            {hasAdditionalFilters ? 'Filtered Results' : `All ${category.name}`}
+            {hasAdditionalFilters
+              ? t('categoryFilteredResults')
+              : t('categoryAllOf', { name: category.name })}
           </h2>
           <Suspense
             fallback={
@@ -372,9 +382,9 @@ export default async function CategoryPage({
           </Suspense>
         </div>
         <p className='text-sm text-muted-foreground'>
-          {displayedProductCount}{' '}
-          {displayedProductCount === 1 ? 'product' : 'products'}
-          {hasAdditionalFilters ? ' matching your filters' : ' available'}
+          {hasAdditionalFilters
+            ? t('categoryCountSuffixMatching', { count: displayedProductCount })
+            : t('categoryCountSuffixAvailable', { count: displayedProductCount })}
         </p>
       </div>
 
