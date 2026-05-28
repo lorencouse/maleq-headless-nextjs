@@ -1,5 +1,8 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLocale, useTranslations } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
 
@@ -8,8 +11,12 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
+  const locale = useLocale();
+  const t = useTranslations('blog');
+  // Map next-intl locale → BCP-47 tag for Intl date formatting
+  const intlLocale = locale === 'es' ? 'es-ES' : 'en-US';
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(intlLocale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -112,8 +119,7 @@ export default function BlogCard({ post }: BlogCardProps) {
           {post.commentCount !== undefined && post.commentCount > 0 && (
             <div className=' '>
               <span className='text-xs text-muted-foreground'>
-                {post.commentCount}{' '}
-                {post.commentCount === 1 ? 'comment' : 'comments'}
+                {t('commentCount', { count: post.commentCount })}
               </span>
             </div>
           )}

@@ -1,3 +1,4 @@
+import { getTranslations } from 'next-intl/server';
 import { Post } from '@/lib/types/wordpress';
 import BlogCard from '@/components/blog/BlogCard';
 
@@ -6,7 +7,7 @@ interface RelatedPostsProps {
   currentSlug: string;
 }
 
-export default function RelatedPosts({
+export default async function RelatedPosts({
   posts,
   currentSlug,
 }: RelatedPostsProps) {
@@ -19,9 +20,11 @@ export default function RelatedPosts({
     return null;
   }
 
+  const t = await getTranslations('blog');
+
   return (
     <section className='border-t border-border pt-8 mt-12'>
-      <h2 className='text-2xl font-bold text-foreground'>Related Articles</h2>
+      <h2 className='text-2xl font-bold text-foreground'>{t('relatedArticlesHeading')}</h2>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-8'>
         {relatedPosts.map((post) => (
           <BlogCard key={post.id} post={post} />

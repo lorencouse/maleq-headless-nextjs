@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import type { PostTranslation } from '@/lib/db/post-translations';
 
 interface LanguageSwitcherProps {
@@ -11,14 +12,16 @@ interface LanguageSwitcherProps {
  * managed via the post-translations meta box. Renders nothing when a guide has
  * no linked translations.
  */
-export default function LanguageSwitcher({ translations }: LanguageSwitcherProps) {
+export default async function LanguageSwitcher({ translations }: LanguageSwitcherProps) {
   if (translations.length === 0) {
     return null;
   }
 
+  const t = await getTranslations('blog');
+
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">
-      <span className="text-muted-foreground">Also available in:</span>
+      <span className="text-muted-foreground">{t('alsoAvailableIn')}</span>
       {translations.map((t) => (
         <Link
           key={t.postId}

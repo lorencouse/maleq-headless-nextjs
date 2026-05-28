@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 import BlogCard from './BlogCard';
 import { Post } from '@/lib/types/wordpress';
 
@@ -54,6 +55,7 @@ export default function BlogPostsGrid({
   tagSlug,
   excludeCategories,
 }: BlogPostsGridProps) {
+  const t = useTranslations('blog');
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [pageInfo, setPageInfo] = useState<PageInfo>(initialPageInfo);
   const [isPending, startTransition] = useTransition();
@@ -70,7 +72,7 @@ export default function BlogPostsGrid({
         setPosts((prev) => [...prev, ...result.posts]);
         setPageInfo(result.pageInfo);
       } catch (err) {
-        setError('Failed to load more posts. Please try again.');
+        setError(t('gridLoadMoreError'));
         console.error('Error loading more posts:', err);
       }
     });
@@ -87,7 +89,7 @@ export default function BlogPostsGrid({
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No blog posts found.</p>
+          <p className="text-muted-foreground">{t('gridEmpty')}</p>
         </div>
       )}
 
@@ -128,10 +130,10 @@ export default function BlogPostsGrid({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                Loading...
+                {t('gridLoading')}
               </>
             ) : (
-              'Load More Posts'
+              t('gridLoadMore')
             )}
           </button>
         </div>

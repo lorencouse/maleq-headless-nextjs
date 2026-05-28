@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { getClient } from '@/lib/apollo/client';
 import {
   GET_POST_BY_SLUG,
@@ -110,6 +111,8 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
 
   let post: Post | null = null;
 
@@ -123,7 +126,7 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: 'Post Not Found',
+      title: t('metaNotFound'),
     };
   }
 
@@ -136,10 +139,10 @@ export async function generateMetadata({
     ? stripHtml(post.excerpt).slice(0, 160)
     : post.content
       ? stripHtml(post.content).slice(0, 160)
-      : `Read ${post.title} on the Male Q blog.`;
+      : t('metaPostFallbackDescription', { title: post.title });
 
   return {
-    title: `${post.title} | Guides`,
+    title: t('metaPostTitle', { title: post.title }),
     description,
     openGraph: {
       title: post.title,
@@ -221,6 +224,9 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
+  const intlLocale = locale === 'es' ? 'es-ES' : 'en-US';
 
   let post: Post | null = null;
 
@@ -285,7 +291,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const translations = await loadGuideTranslations(post);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(intlLocale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -321,8 +327,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[
-          { name: 'Home', url: SITE_URL },
-          { name: 'Guides', url: `${SITE_URL}/guides` },
+          { name: t('breadcrumbHome'), url: SITE_URL },
+          { name: t('breadcrumbGuides'), url: `${SITE_URL}/guides` },
           { name: post.title, url: `${SITE_URL}/guides/${slug}` },
         ]}
       />
@@ -333,7 +339,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Breadcrumb */}
       <Breadcrumbs
         items={[
-          { label: 'Guides', href: '/guides' },
+          { label: t('breadcrumbGuides'), href: '/guides' },
           ...(post.categories?.nodes?.[0]
             ? [{ label: post.categories.nodes[0].name, href: `/guides/category/${post.categories.nodes[0].slug}` }]
             : []),
@@ -369,8 +375,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             <>
               <span>•</span>
               <span>
-                {post.comments.nodes.length}{' '}
-                {post.comments.nodes.length === 1 ? 'comment' : 'comments'}
+                {t('commentCount', { count: post.comments.nodes.length })}
               </span>
             </>
           )}
@@ -425,7 +430,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (
         <div className='border-t border-border pt-6 mb-12'>
-          <h3 className='text-sm font-semibold text-foreground mb-3'>Tags:</h3>
+          <h3 className='text-sm font-semibold text-foreground mb-3'>{t('tagsLabel')}</h3>
           <div className='flex flex-wrap items-center gap-2'>
             {post.tags.nodes.map((tag) => (
               <Link
@@ -446,16 +451,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Comments Section */}
       <div className='border-t border-border py-8'>
         <h2 className='text-2xl font-bold text-foreground mb-6'>
-          Comments{' '}
           {post.comments?.nodes && post.comments.nodes.length > 0
-            ? `(${post.comments.nodes.length})`
-            : ''}
+            ? t('commentsHeadingWithCount', { count: post.comments.nodes.length })
+            : t('commentsHeading')}
         </h2>
 
         {/* Comment Form */}
         <div className='bg-card border border-border rounded-lg p-6 my-8'>
           <h3 className='heading-plain text-lg font-semibold text-foreground mb-4'>
-            Leave a Comment
+            {t('leaveACommentHeading')}
           </h3>
           <CommentForm postId={post.databaseId} />
         </div>
@@ -493,7 +497,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                           ? '/images/Mr-Q-profile.png'
                           : '/images/MQ-logo.png'
                         }
-                        alt={comment.author?.node?.name || 'User'}
+                        alt={comment.author?.node?.name || t('authorFallback')}
                         width={48}
                         height={48}
                         className='rounded-full'
@@ -531,7 +535,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                                 ? '/images/Mr-Q-profile.png'
                                 : '/images/MQ-logo.png'
                               }
-                              alt={reply.author?.node?.name || 'User'}
+                              alt={reply.author?.node?.name || t('authorFallback')}
                               width={40}
                               height={40}
                               className='rounded-full'

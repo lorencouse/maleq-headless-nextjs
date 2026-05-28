@@ -4,6 +4,7 @@ import { useSyncExternalStore, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { BlogProduct } from '@/lib/utils/blog-products';
@@ -83,6 +84,7 @@ function subscribeToPlaceholders(onStoreChange: () => void) {
  * Uses pre-fetched product data (no client-side fetching needed)
  */
 function BlogAddToCart({ product }: { product: BlogProduct }) {
+  const t = useTranslations('product');
   const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
@@ -104,7 +106,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
         maxQuantity: 99,
       });
 
-      showAddedToCart(`${product.name} added to cart!`);
+      showAddedToCart(t('addedToastTemplate', { name: product.name }));
       setIsAdded(true);
 
       setTimeout(() => {
@@ -113,7 +115,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
 
     } catch (err) {
       console.error('Error adding to cart:', err);
-      showError('Failed to add to cart');
+      showError(t('addFailedToast'));
     } finally {
       setIsAdding(false);
     }
@@ -146,7 +148,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
             className="w-[325px] h-[325px] bg-muted flex items-center justify-center"
             style={{ borderRadius: '0.75rem 0.75rem 0 0' }}
           >
-            <span className="text-muted-foreground text-sm">No Image</span>
+            <span className="text-muted-foreground text-sm">{t('noImage')}</span>
           </div>
         )}
         {/* Product Name as Caption */}
@@ -173,7 +175,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
             ${product.price.toFixed(2)}
           </span>
         ) : (
-          <span className="text-sm text-muted-foreground">Price not available</span>
+          <span className="text-sm text-muted-foreground">{t('priceNotAvailable')}</span>
         )}
       </div>
 
@@ -209,23 +211,23 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            Adding...
+            {t('adding')}
           </>
         ) : isAdded ? (
           <>
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            Added to Cart!
+            {t('addedToCartButton')}
           </>
         ) : !product.inStock ? (
-          'Out of Stock'
+          t('outOfStockButton')
         ) : (
           <>
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            Add to Cart
+            {t('addToCart')}
           </>
         )}
       </button>
