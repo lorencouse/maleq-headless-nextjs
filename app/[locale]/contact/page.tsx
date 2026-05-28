@@ -1,24 +1,36 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
+import { useTranslations } from 'next-intl';
 import ContactForm from '@/components/contact/ContactForm';
 
-export const metadata: Metadata = {
-  title: 'Contact Us',
-  description: 'Get in touch with Male Q. We\'re here to help with any questions about your orders, products, or general inquiries.',
-  alternates: {
-    canonical: '/contact',
-  },
+type Props = {
+  params: Promise<{ locale: string }>;
 };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'contactPage' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    alternates: {
+      canonical: '/contact',
+    },
+  };
+}
+
 export default function ContactPage() {
+  const t = useTranslations('contactPage');
+
   return (
     <div className="min-h-screen py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Contact Us</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4">{t('heading')}</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Have a question or need assistance? We&apos;re here to help. Fill out the form below or use our contact information.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -26,7 +38,7 @@ export default function ContactPage() {
           {/* Contact Information */}
           <div className="lg:col-span-1 space-y-8">
             <div>
-              <h2 className="text-xl font-semibold text-foreground mb-6">Get in Touch</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('getInTouch')}</h2>
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -35,8 +47,8 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">Contact Us</h3>
-                    <p className="text-muted-foreground">Use the form below</p>
+                    <h3 className="font-medium text-foreground">{t('contactInfoTitle')}</h3>
+                    <p className="text-muted-foreground">{t('contactInfoBody')}</p>
                   </div>
                 </div>
 
@@ -47,9 +59,9 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">Hours</h3>
-                    <p className="text-muted-foreground">Mon-Fri: 9am - 6pm EST</p>
-                    <p className="text-muted-foreground">Sat-Sun: 10am - 4pm EST</p>
+                    <h3 className="font-medium text-foreground">{t('hoursTitle')}</h3>
+                    <p className="text-muted-foreground">{t('hoursWeekday')}</p>
+                    <p className="text-muted-foreground">{t('hoursWeekend')}</p>
                   </div>
                 </div>
 
@@ -60,18 +72,18 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">Text Us</h3>
+                    <h3 className="font-medium text-foreground">{t('textUsTitle')}</h3>
                     <p className="text-muted-foreground">
-                      SMS:{' '}
+                      {t('smsLabel')}{' '}
                       <a
                         href="sms:+19785720012"
                         className="text-primary hover:underline"
-                        aria-label="Text us"
+                        aria-label={t('textUsAriaLabel')}
                       >
                         +1&thinsp;(978)&thinsp;572&#8209;0012
                       </a>
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">We&apos;ll get back to you within 24 hours</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t('smsResponseHint')}</p>
                   </div>
                 </div>
 
@@ -82,8 +94,8 @@ export default function ContactPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">Response Time</h3>
-                    <p className="text-muted-foreground">We typically respond within 24 hours</p>
+                    <h3 className="font-medium text-foreground">{t('responseTimeTitle')}</h3>
+                    <p className="text-muted-foreground">{t('responseTimeBody')}</p>
                   </div>
                 </div>
               </div>
@@ -91,15 +103,15 @@ export default function ContactPage() {
 
             {/* FAQ Link */}
             <div className="bg-muted/30 rounded-xl p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">Looking for answers?</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('faqTitle')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Check out our FAQ page for quick answers to common questions.
+                {t('faqBody')}
               </p>
               <Link
                 href="/faq"
                 className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
               >
-                View FAQ
+                {t('viewFaq')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -108,15 +120,15 @@ export default function ContactPage() {
 
             {/* Shipping Info */}
             <div className="bg-muted/30 rounded-xl p-6 border border-border">
-              <h3 className="font-semibold text-foreground mb-2">Shipping Questions?</h3>
+              <h3 className="font-semibold text-foreground mb-2">{t('shippingTitle')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Learn about our shipping policies and delivery times.
+                {t('shippingBody')}
               </p>
               <Link
                 href="/shipping-returns"
                 className="inline-flex items-center gap-2 text-primary hover:underline text-sm font-medium"
               >
-                Shipping & Returns
+                {t('shippingLink')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -127,7 +139,7 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="lg:col-span-2">
             <div className="bg-card border border-border rounded-xl p-6 md:p-8">
-              <h2 className="text-xl font-semibold text-foreground mb-6">Send us a Message</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-6">{t('formSectionTitle')}</h2>
               <ContactForm />
             </div>
           </div>
