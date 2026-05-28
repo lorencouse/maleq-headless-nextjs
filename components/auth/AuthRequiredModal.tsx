@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface AuthRequiredModalProps {
   isOpen: boolean;
@@ -14,10 +15,14 @@ interface AuthRequiredModalProps {
 export default function AuthRequiredModal({
   isOpen,
   onClose,
-  title = 'Sign in required',
-  description = 'Sign in or create an account to save products to your wishlist.',
+  title,
+  description,
   returnTo = '/',
 }: AuthRequiredModalProps) {
+  const t = useTranslations('auth.modal');
+  // Defaults are resolved at render time so they respect the current locale.
+  const resolvedTitle = title ?? t('defaultTitle');
+  const resolvedDescription = description ?? t('defaultDescription');
   useEffect(() => {
     if (!isOpen) return;
 
@@ -57,7 +62,7 @@ export default function AuthRequiredModal({
         <button
           onClick={onClose}
           className="absolute right-3 top-3 rounded-full p-2 text-muted-foreground transition-colors hover:text-foreground"
-          aria-label="Close sign in prompt"
+          aria-label={t('closeAriaLabel')}
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -65,9 +70,9 @@ export default function AuthRequiredModal({
         </button>
 
         <h3 id="auth-required-title" className="text-xl font-semibold text-foreground">
-          {title}
+          {resolvedTitle}
         </h3>
-        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{resolvedDescription}</p>
 
         <div className="mt-6 space-y-3">
           <Link
@@ -75,14 +80,14 @@ export default function AuthRequiredModal({
             onClick={onClose}
             className="block w-full rounded-lg bg-primary px-4 py-3 text-center font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
           >
-            Sign In
+            {t('signIn')}
           </Link>
           <Link
             href={`/register?returnTo=${encodedReturnTo}`}
             onClick={onClose}
             className="block w-full rounded-lg border border-border px-4 py-3 text-center font-semibold text-foreground transition-colors hover:bg-muted"
           >
-            Create Account
+            {t('createAccount')}
           </Link>
         </div>
       </div>

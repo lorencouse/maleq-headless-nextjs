@@ -1,13 +1,22 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Reset Password | Male Q',
-  description: 'Reset your Male Q account password securely.',
-  robots: { index: false, follow: false },
-  alternates: {
-    canonical: '/reset-password',
-  },
+type Props = {
+  params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'auth.resetPassword' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    robots: { index: false, follow: false },
+    alternates: {
+      canonical: '/reset-password',
+    },
+  };
+}
 
 export default function ResetPasswordLayout({
   children,
