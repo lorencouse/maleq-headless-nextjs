@@ -10,6 +10,10 @@ import dynamic from 'next/dynamic';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import RelatedProducts from '@/components/product/RelatedProducts';
+import RelatedGuides from '@/components/product/RelatedGuides';
+import { loadRelatedPostsForProduct } from '@/lib/db/post-relations';
+import { getIndexEntryBySlug } from '@/lib/products/product-index';
+import type { Post } from '@/lib/types/wordpress';
 
 const ProductReviews = dynamic(
   () => import('@/components/reviews/ProductReviews')
@@ -126,6 +130,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
     } catch (error) {
       console.error('Error fetching related products:', error);
     }
+  }
+
+  // Fetch "Related Guides" — blog posts that recommend this product (or its
+  // categories) via the post ⇄ product relations meta box. The index entry
+  // gives us both the canonical product ID and its category term IDs.
+  let relatedGuides: Post[] = [];
+  try {
+    const indexEntry = await getIndexEntryBySlug(slug);
+    const productId = indexEntry?.id ?? product.databaseId;
+    if (productId) {
+      relatedGuides = await loadRelatedPostsForProduct({
+        productId,
+        categoryTermIds: indexEntry?.categoryIds ?? [],
+        limit: 6,
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching related guides:', error);
   }
 
   // Prepare structured data
@@ -247,6 +269,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
           title="You May Also Like"
         />
       )}
+
+      {/* Related Guides (reverse of post ⇄ product relations) */}
+      <RelatedGuides posts={relatedGuides} />
 
       {/* Recently Viewed */}
       <RecentlyViewed currentProductId={product.id} />
