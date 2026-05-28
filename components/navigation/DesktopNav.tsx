@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { mainNavigation, simpleNavLinks, type NavSection, type NavItem } from '@/lib/config/navigation';
+import { useTranslations } from 'next-intl';
+import { mainNavigation, simpleNavLinks, type NavSection } from '@/lib/config/navigation';
 import { CategoryIcons } from '@/lib/config/category-icons';
 
 interface DropdownProps {
@@ -21,6 +22,7 @@ function NavIcon({ iconKey, className = 'w-4 h-4' }: { iconKey?: string; classNa
 }
 
 function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
+  const t = useTranslations('nav');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
@@ -45,7 +47,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
                 onClick={onClose}
                 className="text-sm font-semibold text-primary hover:text-primary transition-colors"
               >
-                {item.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </div>
@@ -59,14 +61,14 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
           }}
         >
           {section.children.map((group) => (
-            <div key={group.label} className="min-w-[160px]">
+            <div key={group.href} className="min-w-[160px]">
               {/* Group header */}
               <Link
                 href={group.href}
                 onClick={onClose}
                 className="link-animated inline-block mb-3"
               >
-                {group.label}
+                {t(group.labelKey)}
               </Link>
 
               {/* Group items */}
@@ -85,7 +87,7 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
                             className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0"
                           />
                         )}
-                        <span>{item.label}</span>
+                        <span>{t(item.labelKey)}</span>
                       </Link>
                     </li>
                   ))}
@@ -98,21 +100,21 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
                 onClick={onClose}
                 className="inline-block text-xs font-medium text-primary hover:text-primary transition-colors mt-3"
               >
-                View All &rarr;
+                {t('viewAll')} &rarr;
               </Link>
             </div>
           ))}
         </div>
 
-        {/* Shop all link for Shop section */}
-        {section.href && section.label === 'Shop' && (
+        {/* Shop all link — only shown on the /shop top-level section */}
+        {section.href === '/shop' && (
           <div className="mt-6 pt-4 border-t border-border">
             <Link
               href={section.href}
               onClick={onClose}
               className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary transition-colors"
             >
-              Shop All Products
+              {t('shopAll')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -125,6 +127,8 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
 }
 
 function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
+  const t = useTranslations('nav');
+
   if (!isOpen) return null;
 
   return (
@@ -134,7 +138,7 @@ function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
     >
       <div className="bg-card border border-border rounded-lg shadow-xl p-3 min-w-[220px]">
         {section.children.map((group) => (
-          <div key={group.label} className="space-y-1">
+          <div key={group.href} className="space-y-1">
             {group.children?.map((item) => (
               <Link
                 key={item.href}
@@ -142,9 +146,9 @@ function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
                 onClick={onClose}
                 className="flex flex-col px-3 py-2.5 rounded-md hover:bg-muted hover:text-primary transition-colors"
               >
-                <span className="text-sm font-medium text-foreground">{item.label}</span>
-                {item.description && (
-                  <span className="text-xs text-muted-foreground mt-0.5">{item.description}</span>
+                <span className="text-sm font-medium text-foreground">{t(item.labelKey)}</span>
+                {item.descriptionKey && (
+                  <span className="text-xs text-muted-foreground mt-0.5">{t(item.descriptionKey)}</span>
                 )}
               </Link>
             ))}
@@ -156,7 +160,10 @@ function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
 }
 
 export default function DesktopNav() {
+  const t = useTranslations('nav');
   const pathname = usePathname();
+  // Open-dropdown state keys on the section labelKey, which is locale-
+  // independent (it's the translation key, not the translated value).
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -169,11 +176,11 @@ export default function DesktopNav() {
     };
   }, []);
 
-  const handleMouseEnter = (label: string) => {
+  const handleMouseEnter = (key: string) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    setOpenDropdown(label);
+    setOpenDropdown(key);
   };
 
   const handleMouseLeave = () => {
@@ -203,9 +210,9 @@ export default function DesktopNav() {
       {/* Main navigation with dropdowns */}
       {mainNavigation.map((section) => (
         <div
-          key={section.label}
+          key={section.labelKey}
           className="relative"
-          onMouseEnter={() => handleMouseEnter(section.label)}
+          onMouseEnter={() => handleMouseEnter(section.labelKey)}
           onMouseLeave={handleMouseLeave}
         >
           <Link
@@ -216,9 +223,9 @@ export default function DesktopNav() {
                 : 'text-foreground hover:text-primary hover:bg-muted/50'
             }`}
           >
-            {section.label}
+            {t(section.labelKey)}
             <svg
-              className={`w-4 h-4 transition-transform ${openDropdown === section.label ? 'rotate-180' : ''}`}
+              className={`w-4 h-4 transition-transform ${openDropdown === section.labelKey ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -232,13 +239,13 @@ export default function DesktopNav() {
             {section.columns && section.columns > 1 ? (
               <MegaMenuDropdown
                 section={section}
-                isOpen={openDropdown === section.label}
+                isOpen={openDropdown === section.labelKey}
                 onClose={() => setOpenDropdown(null)}
               />
             ) : (
               <SimpleDropdown
                 section={section}
-                isOpen={openDropdown === section.label}
+                isOpen={openDropdown === section.labelKey}
                 onClose={() => setOpenDropdown(null)}
               />
             )}
@@ -257,7 +264,7 @@ export default function DesktopNav() {
               : 'text-foreground hover:text-primary hover:bg-muted/50'
           }`}
         >
-          {link.label}
+          {t(link.labelKey)}
         </Link>
       ))}
     </nav>
