@@ -206,5 +206,20 @@ export function rewriteWordPressUrls(html: string | undefined): string {
     }
   );
 
+  // UN-EXPANDED shortcodes: some posts deliver the add-to-cart as a Gutenberg
+  // "Shortcode" block whose dynamic content WPGraphQL never ran through
+  // do_shortcode/do_blocks, so it arrives as LITERAL text —
+  //   <!-- wp:shortcode --> [add_to_cart id="123"] <!-- /wp:shortcode -->
+  // The passes above only match WooCommerce's rendered output, so these would
+  // otherwise show as raw `[add_to_cart id="123"]` text on the page. Convert
+  // the literal shortcode (with or without the surrounding block comments)
+  // straight to the placeholder div the client enhancer mounts into.
+  // Tolerant of single/double quotes and extra attributes (e.g. sku/style).
+  const ADD_TO_CART_SHORTCODE =
+    /(?:<!--\s*wp:shortcode\s*-->)?\s*\[add_to_cart\b[^\]]*?\bid=["'](\d+)["'][^\]]*?\]\s*(?:<!--\s*\/wp:shortcode\s*-->)?/gi;
+  processed = processed.replace(ADD_TO_CART_SHORTCODE, (_match, productId) =>
+    buildBlogAddToCartPlaceholder(productId),
+  );
+
   return processed;
 }

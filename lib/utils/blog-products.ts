@@ -54,16 +54,25 @@ export function extractProductIdsFromContent(content: string): number[] {
   if (!content) return [];
 
   const ids: number[] = [];
+  const pushId = (raw: string) => {
+    const id = parseInt(raw, 10);
+    if (!isNaN(id) && !ids.includes(id)) ids.push(id);
+  };
 
-  // Match data-product_id="123" patterns from WooCommerce shortcode output
+  // Match data-product_id="123" patterns from WooCommerce's RENDERED shortcode output
   const regex = /data-product_id="(\d+)"/g;
   let match;
-
   while ((match = regex.exec(content)) !== null) {
-    const id = parseInt(match[1], 10);
-    if (!isNaN(id) && !ids.includes(id)) {
-      ids.push(id);
-    }
+    pushId(match[1]);
+  }
+
+  // Also match UN-EXPANDED `[add_to_cart id="123"]` shortcodes (Gutenberg
+  // shortcode blocks WPGraphQL didn't run through do_shortcode). These are
+  // rewritten to placeholders by rewriteWordPressUrls(); without this their
+  // product data would never be fetched and they'd render "Product unavailable".
+  const shortcodeRegex = /\[add_to_cart\b[^\]]*?\bid=["'](\d+)["'][^\]]*?\]/gi;
+  while ((match = shortcodeRegex.exec(content)) !== null) {
+    pushId(match[1]);
   }
 
   return ids;
