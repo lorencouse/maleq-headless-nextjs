@@ -107,6 +107,20 @@ export function detectGuideLocale(
   return undefined;
 }
 
+/**
+ * Map a guide locale to a value safe to pass to next-intl's setRequestLocale().
+ *
+ * setRequestLocale() must be called on ISR guide pages to opt into STATIC
+ * rendering (otherwise next-intl reads headers() → DYNAMIC_SERVER_USAGE → 500).
+ * But it validates against the ROUTING locales (en/es) and throws for the
+ * chrome-only locales zh/ja. So seed it with the real locale when it's a
+ * routing locale, else the default — the actual guide language is applied
+ * separately via explicit getMessages({locale}) / provider / getTranslations.
+ */
+export function staticRequestLocale(locale: GuideLocale): 'en' | 'es' {
+  return locale === 'es' ? 'es' : 'en';
+}
+
 /** Stable sort index for a locale, for ordering switcher entries. */
 export function localeOrder(locale: GuideLocale): number {
   const idx = GUIDE_LANGUAGES.findIndex((l) => l.locale === locale);

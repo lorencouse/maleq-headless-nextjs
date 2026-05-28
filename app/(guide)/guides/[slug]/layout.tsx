@@ -1,7 +1,8 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import StorefrontChrome from '@/components/layout/StorefrontChrome';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
+import { staticRequestLocale } from '@/lib/i18n/guide-languages';
 
 /**
  * Layout for an individual guide post (`/guides/{slug}`).
@@ -33,10 +34,15 @@ export default async function GuidePostLayout({
   const { slug } = await params;
   const locale = await getGuideLocaleBySlug(slug);
 
-  // NOTE: deliberately NOT calling setRequestLocale(locale). On these
-  // content-root routes it's a no-op for getLocale() (no next-intl middleware),
-  // AND it THROWS for zh/ja because those aren't routing.locales. We pass the
-  // locale explicitly to getMessages() and the provider instead.
+  // CRITICAL for ISR: setRequestLocale() opts this page into STATIC rendering.
+  // Without it, next-intl resolves the locale via headers() → DYNAMIC_SERVER_USAGE
+  // → every guide post 500s under `revalidate = N`. We must pass it a value
+  // next-intl accepts (a routing locale), so for the chrome-only locales zh/ja
+  // we seed with the default (en); the ACTUAL guide language still flows through
+  // the explicit getMessages({locale}) + provider below and the page's explicit
+  // getTranslations/locale props. (The client chrome — Footer/Header — reads the
+  // provider, so it renders in the real locale regardless.)
+  setRequestLocale(staticRequestLocale(locale));
   const messages = await getMessages({ locale });
 
   return (

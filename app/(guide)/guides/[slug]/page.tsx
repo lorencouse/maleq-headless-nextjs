@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getClient } from '@/lib/apollo/client';
 import {
   GET_POST_BY_SLUG,
@@ -37,6 +37,7 @@ import {
   detectGuideLocale,
   getGuideLanguage,
   DEFAULT_GUIDE_LOCALE,
+  staticRequestLocale,
 } from '@/lib/i18n/guide-languages';
 import DevEditLink from '@/components/dev/DevEditLink';
 import { getWpBaseUrl } from '@/lib/db/wp-url';
@@ -125,10 +126,12 @@ export async function generateMetadata({
   // guide slugs resolve — Next hands us the uppercase-encoded form.
   const slug = toWpPostName(slugParam);
   // Resolve the UI locale from the guide's own language category (en/es/zh/ja),
-  // ISR-safe (slug-derived). We pass it explicitly to getTranslations and the
-  // child components rather than via setRequestLocale() — the latter is a no-op
-  // here (no next-intl middleware) and THROWS for zh/ja (not routing.locales).
+  // ISR-safe (slug-derived). setRequestLocale opts this page into STATIC
+  // rendering (else next-intl reads headers() → DYNAMIC_SERVER_USAGE → 500 on
+  // ISR); it's seeded with a routing-safe locale, while the real guide language
+  // is applied via the explicit getTranslations({locale}) calls below.
   const locale = await getGuideLocaleBySlug(slug);
+  setRequestLocale(staticRequestLocale(locale));
   const t = await getTranslations({ locale, namespace: 'blog' });
 
   let post: Post | null = null;
@@ -249,9 +252,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   // guide slugs resolve — see generateMetadata / lib/utils/wp-slug.
   const slug = toWpPostName(slugParam);
   // See generateMetadata above: resolve the UI locale from the guide's own
-  // language category so the page (and the (guide) layout's chrome) render in
-  // the post's language. ISR-safe (slug-derived, no headers/cookies).
+  // language category. setRequestLocale opts this page into STATIC rendering
+  // (else next-intl reads headers() → DYNAMIC_SERVER_USAGE → 500 on ISR);
+  // seeded with a routing-safe locale, real language via explicit getTranslations.
   const locale = await getGuideLocaleBySlug(slug);
+  setRequestLocale(staticRequestLocale(locale));
   const t = await getTranslations({ locale, namespace: 'blog' });
   // BCP-47 tag for date/number formatting, matching the resolved guide locale.
   const intlLocale = { en: 'en-US', es: 'es-ES', zh: 'zh-TW', ja: 'ja-JP' }[locale];
