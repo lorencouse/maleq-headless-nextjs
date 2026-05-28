@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface SatisfactionGuaranteeProps {
   variant?: 'default' | 'compact';
@@ -9,6 +12,7 @@ export default function SatisfactionGuarantee({
   variant = 'default',
   className = '',
 }: SatisfactionGuaranteeProps) {
+  const t = useTranslations('satisfactionGuarantee');
   // if (variant === 'compact') {
   //   return (
   //     <div
@@ -64,12 +68,10 @@ export default function SatisfactionGuarantee({
         </div>
         <div className='flex-1'>
           <h3 className='font-bold text-foreground text-lg mb-1'>
-            30-Day Satisfaction Guarantee
+            {t('heading')}
           </h3>
           <p className='text-success/80  text-sm mb-3'>
-            We stand behind every product we sell. If you&apos;re not completely
-            satisfied with your purchase, contact us within 30 days for a
-            hassle-free return or exchange.
+            {t('description')}
           </p>
           <ul className='space-y-1.5 text-sm text-success/80 '>
             <li className='flex items-center gap-2'>
@@ -84,7 +86,7 @@ export default function SatisfactionGuarantee({
                   clipRule='evenodd'
                 />
               </svg>
-              Easy returns, credits, and exchanges
+              {t('bullet1')}
             </li>
             <li className='flex items-center gap-2'>
               <svg
@@ -98,7 +100,7 @@ export default function SatisfactionGuarantee({
                   clipRule='evenodd'
                 />
               </svg>
-              Defective items replaced free
+              {t('bullet2')}
             </li>
             <li className='flex items-center gap-2'>
               <svg
@@ -112,14 +114,14 @@ export default function SatisfactionGuarantee({
                   clipRule='evenodd'
                 />
               </svg>
-              Fast customer support
+              {t('bullet3')}
             </li>
           </ul>
           <Link
             href='/returns'
             className='inline-flex items-center gap-1 mt-3 text-sm font-medium text-success hover:text-foreground transition-colors'
           >
-            View return policy
+            {t('viewReturnPolicy')}
             <svg
               className='w-4 h-4'
               fill='none'

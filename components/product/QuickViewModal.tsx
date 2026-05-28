@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
@@ -18,6 +19,8 @@ interface QuickViewModalProps {
 }
 
 export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
+  const t = useTranslations('quickView');
+  const tProduct = useTranslations('product');
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -48,7 +51,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
   const handleAddToCart = async () => {
     if (displayStockStatus === 'OUT_OF_STOCK') {
-      showError('This product is out of stock');
+      showError(t('toastOutOfStock'));
       return;
     }
 
@@ -77,11 +80,11 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         type: product.type,
       });
 
-      showAddedToCart(`${product.name} added to cart!`);
+      showAddedToCart(t('toastAdded', { name: product.name }));
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      showError('Failed to add product to cart');
+      showError(t('toastAddFailed'));
     } finally {
       setIsAdding(false);
     }
@@ -117,7 +120,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
           <button
             onClick={onClose}
             className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full bg-background/80 hover:bg-muted transition-colors"
-            aria-label="Close quick view"
+            aria-label={t('closeAria')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -147,7 +150,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   </>
                 ) : (
                   <div className="flex items-center justify-center h-full text-muted-foreground">
-                    No Image
+                    {t('noImage')}
                   </div>
                 )}
 
@@ -156,7 +159,9 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded">
                     {(() => {
                       const percentOff = calculatePercentOff(product.regularPrice, product.salePrice);
-                      return percentOff ? `${percentOff}% OFF` : 'SALE';
+                      return percentOff
+                        ? tProduct('saleBadge', { percent: percentOff })
+                        : tProduct('saleBadgeFallback');
                     })()}
                   </div>
                 )}
@@ -242,7 +247,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               {/* Variable Product Notice */}
               {isVariable && (
                 <div className="mb-4 p-3 bg-muted rounded-lg text-sm text-muted-foreground">
-                  This product has multiple options. View full details to select options.
+                  {t('variableNotice')}
                 </div>
               )}
 
@@ -253,7 +258,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                       className="px-4 py-3 sm:px-3 sm:py-2 text-muted-foreground hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      aria-label="Decrease quantity"
+                      aria-label={t('decreaseQuantityAria')}
                     >
                       <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
@@ -265,7 +270,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                     <button
                       onClick={() => setQuantity((q) => q + 1)}
                       className="px-4 py-3 sm:px-3 sm:py-2 text-muted-foreground hover:text-foreground transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                      aria-label="Increase quantity"
+                      aria-label={t('increaseQuantityAria')}
                     >
                       <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -277,7 +282,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                     disabled={isAdding}
                     className="flex-1 py-3 sm:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
                   >
-                    {isAdding ? 'Adding...' : 'Add to Cart'}
+                    {isAdding ? t('adding') : t('addToCart')}
                   </button>
                 </div>
               )}
@@ -289,7 +294,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   onClick={onClose}
                   className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center mb-4"
                 >
-                  Select Options
+                  {t('selectOptions')}
                 </Link>
               )}
 
@@ -300,7 +305,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   onClick={onClose}
                   className="w-full py-3 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-semibold text-center mb-4"
                 >
-                  View Details
+                  {t('viewDetails')}
                 </Link>
               )}
 
@@ -325,7 +330,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 onClick={onClose}
                 className="mt-4 text-center text-sm link-animated inline-block mx-auto"
               >
-                View Full Product Details
+                {t('viewFullDetails')}
               </Link>
             </div>
           </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ADDON_PRODUCTS,
   ADDON_BUNDLE,
@@ -24,6 +25,7 @@ export interface SelectedAddon {
 }
 
 export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
+  const t = useTranslations('productAddons');
   const [selectedAddons, setSelectedAddons] = useState<Set<string>>(new Set());
   const [bundleSelected, setBundleSelected] = useState(false);
   const bundleImage = getAddonBundleImage();
@@ -142,7 +144,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
           />
         </svg>
         <span className='text-2xl font-extrabold text-foreground'>
-          Add-on Essentials
+          {t('heading')}
         </span>
       </div>
 
@@ -166,7 +168,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
         </div>
         <div className='relative flex justify-center'>
           <span className='bg-muted/50 px-2 text-xs text-muted-foreground'>
-            or save with bundle
+            {t('orSaveWithBundle')}
           </span>
         </div>
       </div>
@@ -183,7 +185,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
         {/* Best Value Badge */}
         <div className='absolute -top-4 left-3'>
           <span className='px-2 py-0.5 bg-primary text-primary-foreground text-xs font-bold rounded-full'>
-            BEST VALUE
+            {t('bestValueBadge')}
           </span>
         </div>
 
@@ -239,7 +241,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
                   ${regularPriceTotal.toFixed(2)}
                 </span>
                 <span className='text-xs font-semibold text-green-600 dark:text-green-400'>
-                  Save ${(regularPriceTotal - ADDON_BUNDLE.price).toFixed(0)}
+                  {t('saveAmount', { amount: (regularPriceTotal - ADDON_BUNDLE.price).toFixed(0) })}
                 </span>
               </div>
               <span className='text-sm font-bold text-primary'>
@@ -254,7 +256,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
       {currentTotal > 0 && (
         <div className='mt-3 pt-3 border-t border-border/50'>
           <div className='flex justify-between items-center text-sm'>
-            <span className='text-muted-foreground'>Add-ons total:</span>
+            <span className='text-muted-foreground'>{t('addonsTotal')}</span>
             <span className='font-semibold text-foreground'>
               +${currentTotal.toFixed(2)}
             </span>
@@ -281,6 +283,7 @@ function AddonCheckbox({
   disabled,
   onChange,
 }: AddonCheckboxProps) {
+  const t = useTranslations('productAddons');
   const imageUrl = resolveAddonImageUrl(addon.image);
 
   return (
@@ -351,7 +354,7 @@ function AddonCheckbox({
                 ${addon.regularPrice.toFixed(2)}
               </span>
               <span className='text-xs text-green-600 dark:text-green-400 font-medium'>
-                Save ${(addon.regularPrice - addon.price).toFixed(0)}
+                {t('saveAmount', { amount: (addon.regularPrice - addon.price).toFixed(0) })}
               </span>
             </div>
           )}
