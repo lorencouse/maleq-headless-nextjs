@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import ReviewSummary from './ReviewSummary';
 import ReviewList from './ReviewList';
 import WriteReviewForm from './WriteReviewForm';
@@ -18,6 +19,7 @@ export default function ProductReviews({
   averageRating,
   reviewCount,
 }: ProductReviewsProps) {
+  const t = useTranslations('reviews');
   // Show write review form by default if there are no reviews
   const [showWriteReview, setShowWriteReview] = useState(reviewCount === 0);
   const [key, setKey] = useState(0);
@@ -31,7 +33,7 @@ export default function ProductReviews({
   return (
     <div className='mt-16 border-t border-border pt-12'>
       <h2 className='text-2xl font-bold text-foreground mb-8'>
-        Customer Reviews
+        {t('title')}
       </h2>
 
       <div className='grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8'>

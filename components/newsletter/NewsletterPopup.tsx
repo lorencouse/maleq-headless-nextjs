@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { isSubscribed, isPopupDismissed, dismissPopup } from '@/lib/utils/newsletter';
 import NewsletterSignup from './NewsletterSignup';
 
@@ -13,6 +14,7 @@ export default function NewsletterPopup({
   delay = 30000, // 30 seconds default
   showOnExitIntent = true,
 }: NewsletterPopupProps) {
+  const t = useTranslations('newsletterPopup');
   const [isOpen, setIsOpen] = useState(false);
   const [hasShown, setHasShown] = useState(false);
 
@@ -99,7 +101,7 @@ export default function NewsletterPopup({
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground transition-colors"
-          aria-label="Close"
+          aria-label={t('close')}
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -120,10 +122,10 @@ export default function NewsletterPopup({
             variant="stacked"
             showTitle
             showDescription
-            title="Stay in the Loop!"
-            description="Subscribe to get exclusive deals, new product updates, and insider tips delivered to your inbox."
-            buttonText="Get Updates"
-            placeholder="Enter your email"
+            title={t('title')}
+            description={t('description')}
+            buttonText={t('button')}
+            placeholder={t('placeholder')}
             onSuccess={handleSuccess}
           />
 
@@ -132,7 +134,7 @@ export default function NewsletterPopup({
             onClick={handleClose}
             className="mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors mx-auto block"
           >
-            No thanks, maybe later
+            {t('skip')}
           </button>
         </div>
       </div>

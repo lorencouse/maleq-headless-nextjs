@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import StarRating from './StarRating';
 
 interface ReviewSummaryProps {
@@ -21,6 +22,7 @@ export default function ReviewSummary({
   ratingBreakdown,
   onWriteReview,
 }: ReviewSummaryProps) {
+  const t = useTranslations('reviews');
   const totalReviews = ratingBreakdown
     ? Object.values(ratingBreakdown).reduce((a, b) => a + b, 0)
     : reviewCount;
@@ -40,14 +42,14 @@ export default function ReviewSummary({
           </div>
           <StarRating rating={averageRating} size="lg" />
           <p className="text-muted-foreground mt-2">
-            Based on {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
+            {t('basedOn', { count: reviewCount })}
           </p>
           {onWriteReview && (
             <button
               onClick={onWriteReview}
               className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
             >
-              Write a Review
+              {t('writeReview')}
             </button>
           )}
         </div>

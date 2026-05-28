@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface QuantitySelectorProps {
   quantity: number;
   min?: number;
@@ -21,6 +23,8 @@ export default function QuantitySelector({
   onRemove,
   showInput = false,
 }: QuantitySelectorProps) {
+  const t = useTranslations('quantitySelector');
+
   const handleIncrement = () => {
     if (quantity < max) {
       onQuantityChange(quantity + 1);
@@ -59,7 +63,7 @@ export default function QuantitySelector({
           text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors
           ${quantity === min && onRemove ? 'hover:text-destructive' : ''}
         `}
-        aria-label={quantity === min && onRemove ? "Remove item" : "Decrease quantity"}
+        aria-label={quantity === min && onRemove ? t('removeItem') : t('decreaseQuantity')}
       >
         {isSmall ? (
           <span className="text-base font-medium">−</span>
@@ -83,7 +87,7 @@ export default function QuantitySelector({
             text-center py-2 bg-transparent focus:outline-none font-medium
             [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
           `}
-          aria-label="Quantity"
+          aria-label={t('quantity')}
         />
       ) : (
         <span className={`
@@ -101,7 +105,7 @@ export default function QuantitySelector({
           ${buttonClass}
           text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors
         `}
-        aria-label="Increase quantity"
+        aria-label={t('increaseQuantity')}
       >
         {isSmall ? (
           <span className="text-base font-medium">+</span>

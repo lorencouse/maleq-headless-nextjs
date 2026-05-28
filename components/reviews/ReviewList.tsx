@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import ReviewCard, { Review } from './ReviewCard';
 
 interface ReviewListProps {
@@ -26,6 +27,7 @@ interface ReviewApiResponse {
 }
 
 export default function ReviewList({ productId, initialReviews = [] }: ReviewListProps) {
+  const t = useTranslations('reviews');
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [loading, setLoading] = useState(initialReviews.length === 0);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
       );
 
       if (!response.ok) {
-        throw new Error('Failed to fetch reviews');
+        throw new Error(t('failedToFetch'));
       }
 
       const data = (await response.json()) as ReviewApiResponse;
@@ -67,7 +69,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
 
       setHasMore(transformedReviews.length === 5);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : t('anErrorOccurred'));
     } finally {
       setLoading(false);
     }
@@ -111,7 +113,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
           onClick={() => fetchReviews(1)}
           className="mt-4 px-4 py-2 text-primary hover:underline"
         >
-          Try again
+          {t('tryAgain')}
         </button>
       </div>
     );
@@ -125,7 +127,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
           {/* Sort */}
           <div className="flex items-center gap-2">
             <label htmlFor="sort-reviews" className="text-sm text-muted-foreground">
-              Sort by:
+              {t('sortBy')}
             </label>
             <select
               id="sort-reviews"
@@ -133,15 +135,15 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
               onChange={(e) => setSortBy(e.target.value as SortOption)}
               className="px-3 py-1.5 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              <option value="recent">Most Recent</option>
-              <option value="rating-high">Highest Rating</option>
-              <option value="rating-low">Lowest Rating</option>
+              <option value="recent">{t('sortMostRecent')}</option>
+              <option value="rating-high">{t('sortHighestRating')}</option>
+              <option value="rating-low">{t('sortLowestRating')}</option>
             </select>
           </div>
 
           {/* Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Filter:</span>
+            <span className="text-sm text-muted-foreground">{t('filter')}</span>
             <div className="flex gap-1">
               <button
                 onClick={() => setFilterRating(null)}
@@ -151,7 +153,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
-                All
+                {t('filterAll')}
               </button>
               {[5, 4, 3, 2, 1].map((rating) => (
                 <button
@@ -203,12 +205,12 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
             />
           </svg>
           <h3 className="text-lg font-semibold text-foreground mb-2">
-            {filterRating ? 'No reviews match your filter' : 'No reviews yet'}
+            {filterRating ? t('noMatchFilter') : t('noReviewsYet')}
           </h3>
           <p className="text-muted-foreground">
             {filterRating
-              ? 'Try selecting a different rating filter'
-              : 'Be the first to share your thoughts!'}
+              ? t('tryDifferentFilter')
+              : t('beTheFirst')}
           </p>
         </div>
       ) : (
@@ -227,7 +229,7 @@ export default function ReviewList({ productId, initialReviews = [] }: ReviewLis
             disabled={loading}
             className="px-6 py-2 border border-input rounded-lg text-foreground hover:bg-muted transition-colors disabled:opacity-50"
           >
-            {loading ? 'Loading...' : 'Load More Reviews'}
+            {loading ? t('loading') : t('loadMore')}
           </button>
         </div>
       )}

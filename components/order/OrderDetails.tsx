@@ -1,25 +1,29 @@
 import Image from 'next/image';
+import { getFormatter, getTranslations } from 'next-intl/server';
 import { WooCommerceOrder } from '@/lib/woocommerce/orders';
 
 interface OrderDetailsProps {
   order: WooCommerceOrder;
 }
 
-function formatPrice(price: string | number): string {
-  const num = typeof price === 'string' ? parseFloat(price) : price;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(num);
-}
+export default async function OrderDetails({ order }: OrderDetailsProps) {
+  const t = await getTranslations('account.orderDetail');
+  const format = await getFormatter();
 
-export default function OrderDetails({ order }: OrderDetailsProps) {
+  // Currency formatter uses the active locale (was hard-coded 'en-US' previously).
+  // The component is rendered from app/[locale]/account/orders/[id]/page.tsx, so
+  // the locale comes from the URL segment.
+  const formatPrice = (price: string | number): string => {
+    const num = typeof price === 'string' ? parseFloat(price) : price;
+    return format.number(num, { style: 'currency', currency: 'USD' });
+  };
+
   return (
     <div className="space-y-6">
       {/* Order Items */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="p-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Order Items</h2>
+          <h2 className="font-semibold text-foreground">{t('orderItems')}</h2>
         </div>
         <div className="divide-y divide-border">
           {order.line_items.map((item) => (
@@ -47,9 +51,9 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground">{item.name}</p>
                 {item.sku && (
-                  <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                  <p className="text-sm text-muted-foreground">{t('skuLabel', { sku: item.sku })}</p>
                 )}
-                <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                <p className="text-sm text-muted-foreground">{t('qtyLabel', { qty: item.quantity })}</p>
               </div>
 
               {/* Price */}
@@ -64,11 +68,11 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
       {/* Order Summary */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="p-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Order Summary</h2>
+          <h2 className="font-semibold text-foreground">{t('orderSummary')}</h2>
         </div>
         <div className="p-4 space-y-3">
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">{t('subtotal')}</span>
             <span className="text-foreground">
               {formatPrice(
                 order.line_items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0)
@@ -77,15 +81,15 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
           </div>
           {parseFloat(order.discount_total) > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-primary">Discount</span>
+              <span className="text-primary">{t('discount')}</span>
               <span className="text-primary">-{formatPrice(order.discount_total)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Shipping</span>
+            <span className="text-muted-foreground">{t('shipping')}</span>
             <span className="text-foreground">
               {parseFloat(order.shipping_total) === 0 ? (
-                <span className="text-primary">FREE</span>
+                <span className="text-primary">{t('freeUppercase')}</span>
               ) : (
                 formatPrice(order.shipping_total)
               )}
@@ -93,12 +97,12 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
           </div>
           {parseFloat(order.total_tax) > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Tax</span>
+              <span className="text-muted-foreground">{t('tax')}</span>
               <span className="text-foreground">{formatPrice(order.total_tax)}</span>
             </div>
           )}
           <div className="pt-3 border-t border-border flex justify-between">
-            <span className="font-semibold text-foreground">Total</span>
+            <span className="font-semibold text-foreground">{t('total')}</span>
             <span className="font-bold text-foreground text-lg">{formatPrice(order.total)}</span>
           </div>
         </div>
@@ -109,7 +113,7 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
         {/* Shipping Address */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold text-foreground">Shipping Address</h2>
+            <h2 className="font-semibold text-foreground">{t('shippingAddress')}</h2>
           </div>
           <div className="p-4 text-sm text-muted-foreground">
             <p className="text-foreground font-medium">
@@ -128,7 +132,7 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
         {/* Billing Address */}
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold text-foreground">Billing Address</h2>
+            <h2 className="font-semibold text-foreground">{t('billingAddress')}</h2>
           </div>
           <div className="p-4 text-sm text-muted-foreground">
             <p className="text-foreground font-medium">
@@ -151,14 +155,14 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
       {order.shipping_lines.length > 0 && (
         <div className="bg-card border border-border rounded-lg overflow-hidden">
           <div className="p-4 border-b border-border">
-            <h2 className="font-semibold text-foreground">Shipping Method</h2>
+            <h2 className="font-semibold text-foreground">{t('shippingMethod')}</h2>
           </div>
           <div className="p-4">
             {order.shipping_lines.map((shipping) => (
               <div key={shipping.id} className="flex justify-between text-sm">
                 <span className="text-foreground">{shipping.method_title}</span>
                 <span className="text-muted-foreground">
-                  {parseFloat(shipping.total) === 0 ? 'FREE' : formatPrice(shipping.total)}
+                  {parseFloat(shipping.total) === 0 ? t('freeUppercase') : formatPrice(shipping.total)}
                 </span>
               </div>
             ))}
@@ -169,7 +173,7 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
       {/* Payment Method */}
       <div className="bg-card border border-border rounded-lg overflow-hidden">
         <div className="p-4 border-b border-border">
-          <h2 className="font-semibold text-foreground">Payment Method</h2>
+          <h2 className="font-semibold text-foreground">{t('paymentMethod')}</h2>
         </div>
         <div className="p-4 flex items-center gap-3">
           <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,7 +182,7 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
           <div>
             <p className="text-foreground font-medium">{order.payment_method_title}</p>
             {order.transaction_id && (
-              <p className="text-xs text-muted-foreground">Transaction: {order.transaction_id}</p>
+              <p className="text-xs text-muted-foreground">{t('transactionLabel', { id: order.transaction_id })}</p>
             )}
           </div>
         </div>

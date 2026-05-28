@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface StarRatingProps {
   rating: number;
   maxRating?: number;
@@ -15,6 +17,7 @@ export default function StarRating({
   interactive = false,
   onChange,
 }: StarRatingProps) {
+  const t = useTranslations('reviews');
   const sizeClasses = {
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
@@ -35,7 +38,7 @@ export default function StarRating({
   };
 
   return (
-    <div className="flex items-center gap-0.5" role="img" aria-label={`${rating} out of ${maxRating} stars`}>
+    <div className="flex items-center gap-0.5" role="img" aria-label={t('starsAriaLabel', { rating, max: maxRating })}>
       {Array.from({ length: maxRating }, (_, index) => {
         const filled = index < Math.floor(rating);
         const partial = index === Math.floor(rating) && rating % 1 !== 0;
@@ -49,7 +52,7 @@ export default function StarRating({
             onKeyDown={(e) => handleKeyDown(e, index)}
             disabled={!interactive}
             className={`star-rating-btn relative block ${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'} ${sizeClasses[size]}`}
-            aria-label={interactive ? `Rate ${index + 1} stars` : undefined}
+            aria-label={interactive ? t('rateNStars', { n: index + 1 }) : undefined}
             tabIndex={interactive ? 0 : -1}
           >
             {/* Empty star */}

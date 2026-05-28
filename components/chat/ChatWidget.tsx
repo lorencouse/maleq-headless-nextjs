@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -65,7 +66,6 @@ const STORAGE_KEY = 'maleq-chat-state';
  * clean default rather than stuck mode.
  */
 const STATE_VERSION = 3;
-const GREETING = "Hi! I'm the Male Q support assistant. What can I help you with?";
 
 type Persisted = {
   version: number;
@@ -133,6 +133,7 @@ function renderContent(text: string): React.ReactNode[] {
 }
 
 export default function ChatWidget() {
+  const t = useTranslations('chat');
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('guided');
   const [path, setPath] = useState<string[]>([]);
@@ -259,7 +260,7 @@ export default function ChatWidget() {
         {
           id: newId(),
           role: 'assistant',
-          content: `Here are some popular ${labelLower}. Use the filters below to narrow down, check out related guides, or ask me directly for tailored recommendations.`,
+          content: t('discoveryIntro', { label: labelLower }),
         },
       ]);
       setDiscovery({
@@ -272,7 +273,7 @@ export default function ChatWidget() {
       });
       fetchDiscovery(node.query, {});
     },
-    [fetchDiscovery]
+    [fetchDiscovery, t]
   );
 
   const applyDiscoveryFilter = useCallback(
@@ -312,14 +313,15 @@ export default function ChatWidget() {
     });
 
     const filterParts: string[] = [];
-    if (d.filters.material) filterParts.push(`material: ${d.filters.material}`);
-    if (d.filters.color) filterParts.push(`color: ${d.filters.color}`);
-    if (d.filters.priceBand) filterParts.push(`price: ${d.filters.priceBand}`);
+    if (d.filters.material) filterParts.push(t('filterDescMaterial', { value: d.filters.material }));
+    if (d.filters.color) filterParts.push(t('filterDescColor', { value: d.filters.color }));
+    if (d.filters.priceBand) filterParts.push(t('filterDescPrice', { value: d.filters.priceBand }));
     const filterDesc = filterParts.length > 0 ? ` (${filterParts.join(', ')})` : '';
 
-    const transition =
-      `Sure — I can dig deeper into ${d.label.toLowerCase()}${filterDesc}. ` +
-      `Tell me what matters most — features, brand preferences, anything specific — and I'll search the catalog directly.`;
+    const transition = t('discoveryToAi', {
+      label: d.label.toLowerCase(),
+      filterDesc,
+    });
 
     setMessages((cur) => [
       ...cur,
@@ -327,7 +329,7 @@ export default function ChatWidget() {
     ]);
     setMode('ai');
     setDiscovery(null);
-  }, [discovery, path.length]);
+  }, [discovery, path.length, t]);
 
   const exitDiscoveryToParent = useCallback(() => {
     setDiscovery(null);
@@ -442,7 +444,7 @@ export default function ChatWidget() {
           setMessages((cur) =>
             cur.map((m) =>
               m.id === assistantId
-                ? { ...m, content: errText || 'Sorry — something went wrong. Try again in a moment.' }
+                ? { ...m, content: errText || t('errorGeneric') }
                 : m
             )
           );
@@ -489,7 +491,7 @@ export default function ChatWidget() {
                 cur.map((m) => (m.id === assistantId ? { ...m, content: acc } : m))
               );
             } else if (parsed.type === 'error') {
-              errorMessage = parsed.message ?? 'Sorry — something went wrong.';
+              errorMessage = parsed.message ?? t('errorGenericShort');
               break outer;
             } else if (parsed.type === 'done') {
               break outer;
@@ -511,7 +513,7 @@ export default function ChatWidget() {
           setMessages((cur) =>
             cur.map((m) =>
               m.id === assistantId
-                ? { ...m, content: 'Connection error. Please try again.' }
+                ? { ...m, content: t('errorConnection') }
                 : m
             )
           );
@@ -521,7 +523,7 @@ export default function ChatWidget() {
         abortRef.current = null;
       }
     },
-    [messages, streaming]
+    [messages, streaming, t]
   );
 
   const handleSend = useCallback(() => {
@@ -544,17 +546,17 @@ export default function ChatWidget() {
     });
     setMessages((cur) => [
       ...cur,
-      { id: newId(), role: 'user', content: 'Yes, that helped — thanks!' },
+      { id: newId(), role: 'user', content: t('feedbackYesUser') },
       {
         id: newId(),
         role: 'assistant',
-        content: 'Glad I could help. Anything else?',
+        content: t('feedbackYesAssistant'),
       },
     ]);
     setFeedbackPending(false);
     setPath([]);
     lastAnswerRef.current = null;
-  }, []);
+  }, [t]);
 
   const handleFeedbackNo = useCallback(() => {
     const ctx = lastAnswerRef.current;
@@ -570,21 +572,20 @@ export default function ChatWidget() {
     });
     setMessages((cur) => [
       ...cur,
-      { id: newId(), role: 'user', content: 'I still need help' },
+      { id: newId(), role: 'user', content: t('feedbackNoUser') },
       {
         id: newId(),
         role: 'assistant',
-        content:
-          "No problem — let me know more about what you're trying to do and I'll help directly.",
+        content: t('feedbackNoAssistant'),
       },
     ]);
     setMode('ai');
     setFeedbackPending(false);
-  }, [path.length]);
+  }, [path.length, t]);
 
   // Build the displayed message list (prepend greeting if empty)
   const display = messages.length === 0
-    ? [{ id: 'greeting', role: 'assistant' as const, content: GREETING }]
+    ? [{ id: 'greeting', role: 'assistant' as const, content: t('greeting') }]
     : messages;
 
   // Determine what pill row to render below the chat
@@ -597,7 +598,7 @@ export default function ChatWidget() {
       <button
         type="button"
         onClick={toggleOpen}
-        aria-label={open ? 'Close chat' : 'Open support chat'}
+        aria-label={open ? t('closeChat') : t('openChat')}
         className="fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary-hover transition-all flex items-center justify-center"
       >
         {open ? (
@@ -615,24 +616,24 @@ export default function ChatWidget() {
       {open && (
         <div
           role="dialog"
-          aria-label="Support chat"
+          aria-label={t('supportChatAria')}
           className="fixed bottom-20 right-4 z-40 w-[calc(100vw-2rem)] sm:w-[26rem] max-h-[calc(100vh-6rem)] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden"
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
             <div>
-              <div className="font-semibold text-foreground text-sm">Male Q Support</div>
+              <div className="font-semibold text-foreground text-sm">{t('headerTitle')}</div>
               <div className="text-xs text-muted-foreground">
-                {mode === 'guided' ? 'Guided help' : 'Chat with assistant'}
+                {mode === 'guided' ? t('modeGuided') : t('modeAi')}
               </div>
             </div>
             <button
               type="button"
               onClick={reset}
-              aria-label="Start over"
+              aria-label={t('startOver')}
               className="text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded"
             >
-              Start over
+              {t('startOver')}
             </button>
           </div>
 
@@ -665,7 +666,7 @@ export default function ChatWidget() {
               {feedbackPending ? (
                 <div>
                   <div className="text-xs text-muted-foreground mb-2 px-1">
-                    Did this answer your question?
+                    {t('feedbackQuestion')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -673,14 +674,14 @@ export default function ChatWidget() {
                       onClick={handleFeedbackYes}
                       className="px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
                     >
-                      Yes, thanks
+                      {t('feedbackYes')}
                     </button>
                     <button
                       type="button"
                       onClick={handleFeedbackNo}
                       className="px-3 py-1.5 rounded-full bg-muted text-foreground text-xs font-medium hover:bg-muted/70 border border-border transition-colors"
                     >
-                      I still need help
+                      {t('feedbackNo')}
                     </button>
                     <ContactUsPill
                       depth={path.length}
@@ -700,17 +701,17 @@ export default function ChatWidget() {
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
-                      Back
+                      {t('back')}
                     </button>
                   )}
 
                   {/* Product cards */}
                   <div className="text-xs font-medium text-muted-foreground mb-2 px-1">
                     {discovery.loading
-                      ? `Finding ${discovery.label.toLowerCase()}...`
+                      ? t('finding', { label: discovery.label.toLowerCase() })
                       : discovery.data && discovery.data.products.length > 0
-                        ? `Top picks (${discovery.data.totalMatches} match${discovery.data.totalMatches === 1 ? '' : 'es'})`
-                        : 'No matches — try removing a filter'}
+                        ? t('topPicks', { count: discovery.data.totalMatches })
+                        : t('noMatches')}
                   </div>
                   {discovery.data && discovery.data.products.length > 0 && (
                     <div className="grid grid-cols-2 gap-2 mb-3">
@@ -738,12 +739,12 @@ export default function ChatWidget() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                                No image
+                                {t('noImage')}
                               </div>
                             )}
                             {p.onSale && (
                               <span className="absolute top-1 left-1 bg-primary text-primary-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded">
-                                Sale
+                                {t('sale')}
                               </span>
                             )}
                           </div>
@@ -765,7 +766,7 @@ export default function ChatWidget() {
                   {discovery.data && discovery.data.articles.length > 0 && (
                     <div className="mb-3">
                       <div className="text-xs font-medium text-muted-foreground mb-2 px-1">
-                        Related guides
+                        {t('relatedGuides')}
                       </div>
                       <div className="space-y-1.5">
                         {discovery.data.articles.map((a) => (
@@ -799,7 +800,7 @@ export default function ChatWidget() {
                     <div className="space-y-2 mb-3">
                       {discovery.data.facets.materials.length > 0 && (
                         <FilterRow
-                          label="Material"
+                          label={t('filterMaterial')}
                           options={discovery.data.facets.materials.map((m) => ({ id: m.slug, label: m.name }))}
                           activeId={discovery.filters.material}
                           onClick={(id) => applyDiscoveryFilter('material', id)}
@@ -807,14 +808,14 @@ export default function ChatWidget() {
                       )}
                       {discovery.data.facets.colors.length > 0 && (
                         <FilterRow
-                          label="Color"
+                          label={t('filterColor')}
                           options={discovery.data.facets.colors.map((c) => ({ id: c.slug, label: c.name }))}
                           activeId={discovery.filters.color}
                           onClick={(id) => applyDiscoveryFilter('color', id)}
                         />
                       )}
                       <FilterRow
-                        label="Price"
+                        label={t('filterPrice')}
                         options={discovery.data.facets.priceBands.map((b) => ({ id: b.id, label: b.label }))}
                         activeId={discovery.filters.priceBand}
                         onClick={(id) => applyDiscoveryFilter('priceBand', id)}
@@ -828,7 +829,7 @@ export default function ChatWidget() {
                     onClick={exitDiscoveryToAi}
                     className="w-full px-3 py-2 rounded-full bg-primary text-primary-foreground text-xs font-medium hover:bg-primary-hover transition-colors"
                   >
-                    Ask the assistant for tailored picks →
+                    {t('askAssistant')}
                   </button>
                 </>
               ) : (
@@ -842,11 +843,11 @@ export default function ChatWidget() {
                       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
-                      Back
+                      {t('back')}
                     </button>
                   )}
                   <div className="text-xs text-muted-foreground mb-2 px-1">
-                    {path.length === 0 ? 'Choose a topic:' : 'Pick a question:'}
+                    {path.length === 0 ? t('chooseTopic') : t('pickQuestion')}
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {currentPills.map((node) => (
@@ -885,7 +886,7 @@ export default function ChatWidget() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKey}
                   rows={1}
-                  placeholder="Type your question..."
+                  placeholder={t('inputPlaceholder')}
                   className="flex-1 resize-none bg-muted/50 border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 max-h-32"
                   disabled={streaming}
                 />
@@ -893,7 +894,7 @@ export default function ChatWidget() {
                   type="button"
                   onClick={handleSend}
                   disabled={streaming || !input.trim()}
-                  aria-label="Send message"
+                  aria-label={t('sendMessage')}
                   className="w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -902,13 +903,13 @@ export default function ChatWidget() {
                 </button>
               </div>
               <div className="text-[10px] text-muted-foreground mt-2 px-1 flex items-center justify-between gap-2">
-                <span>AI assistant — for order-specific help, use the <Link href="/contact" className="underline">contact form</Link>.</span>
+                <span>{t('aiDisclaimer')} <Link href="/contact" className="underline">{t('contactForm')}</Link>.</span>
                 <button
                   type="button"
                   onClick={backToTopics}
                   className="text-muted-foreground hover:text-foreground underline whitespace-nowrap"
                 >
-                  Back to topics
+                  {t('backToTopics')}
                 </button>
               </div>
             </div>
@@ -935,6 +936,7 @@ function ContactUsPill({
   pathSlug: string;
   origin: 'pill-row' | 'feedback';
 }) {
+  const t = useTranslations('chat');
   return (
     <Link
       href="/contact"
@@ -950,7 +952,7 @@ function ContactUsPill({
       <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
       </svg>
-      Contact us
+      {t('contactUs')}
     </Link>
   );
 }

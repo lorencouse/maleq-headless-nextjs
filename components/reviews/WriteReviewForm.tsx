@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import StarRating from './StarRating';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { submitWithSync } from '@/lib/pwa/background-sync';
@@ -18,6 +19,7 @@ export default function WriteReviewForm({
   onSuccess,
   onCancel,
 }: WriteReviewFormProps) {
+  const t = useTranslations('reviews.form');
   const { user, isAuthenticated } = useAuthStore();
   const [formLoadedAt] = useState(() => Date.now());
   const [honeypot, setHoneypot] = useState('');
@@ -35,22 +37,22 @@ export default function WriteReviewForm({
 
     // Validation
     if (rating === 0) {
-      setError('Please select a rating');
+      setError(t('errors.selectRating'));
       return;
     }
 
     if (review.trim().length < 10) {
-      setError('Review must be at least 10 characters');
+      setError(t('errors.minReviewLength'));
       return;
     }
 
     if (!name.trim()) {
-      setError('Please enter your name');
+      setError(t('errors.enterName'));
       return;
     }
 
     if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Please enter a valid email address');
+      setError(t('errors.validEmail'));
       return;
     }
 
@@ -90,7 +92,7 @@ export default function WriteReviewForm({
         }, 2000);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to submit review');
+      setError(err instanceof Error ? err.message : t('errors.submitFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -113,10 +115,10 @@ export default function WriteReviewForm({
           />
         </svg>
         <h3 className="text-lg font-semibold text-success dark:text-success mb-2">
-          Thank you for your review!
+          {t('thankYou')}
         </h3>
         <p className="text-success dark:text-success">
-          Your review has been submitted and will be visible once approved.
+          {t('successMessage')}
         </p>
       </div>
     );
@@ -124,9 +126,9 @@ export default function WriteReviewForm({
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
-      <h3 className="text-lg font-semibold text-foreground mb-2">Write a Review</h3>
+      <h3 className="text-lg font-semibold text-foreground mb-2">{t('title')}</h3>
       <p className="text-muted-foreground text-sm mb-6">
-        Share your thoughts about {productName}
+        {t('shareThoughts', { productName })}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -146,7 +148,7 @@ export default function WriteReviewForm({
         {/* Rating */}
         <div>
           <label className="block text-sm font-medium text-foreground mb-2">
-            Your Rating <span className="text-destructive">*</span>
+            {t('yourRating')} <span className="text-destructive">*</span>
           </label>
           <div className="flex items-center gap-4">
             <StarRating
@@ -157,11 +159,11 @@ export default function WriteReviewForm({
             />
             {rating > 0 && (
               <span className="text-sm text-muted-foreground">
-                {rating === 5 && 'Excellent!'}
-                {rating === 4 && 'Very Good'}
-                {rating === 3 && 'Good'}
-                {rating === 2 && 'Fair'}
-                {rating === 1 && 'Poor'}
+                {rating === 5 && t('ratingExcellent')}
+                {rating === 4 && t('ratingVeryGood')}
+                {rating === 3 && t('ratingGood')}
+                {rating === 2 && t('ratingFair')}
+                {rating === 1 && t('ratingPoor')}
               </span>
             )}
           </div>
@@ -170,20 +172,20 @@ export default function WriteReviewForm({
         {/* Review */}
         <div>
           <label htmlFor="review" className="block text-sm font-medium text-foreground mb-2">
-            Your Review <span className="text-destructive">*</span>
+            {t('yourReview')} <span className="text-destructive">*</span>
           </label>
           <textarea
             id="review"
             value={review}
             onChange={(e) => setReview(e.target.value)}
             rows={4}
-            placeholder="What did you like or dislike about this product?"
+            placeholder={t('reviewPlaceholder')}
             className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             required
             minLength={10}
           />
           <p className="text-xs text-muted-foreground mt-1">
-            Minimum 10 characters ({review.length}/10)
+            {t('minCharacters', { current: review.length })}
           </p>
         </div>
 
@@ -192,33 +194,33 @@ export default function WriteReviewForm({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                Your Name <span className="text-destructive">*</span>
+                {t('yourName')} <span className="text-destructive">*</span>
               </label>
               <input
                 type="text"
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="John Doe"
+                placeholder={t('namePlaceholder')}
                 className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email Address <span className="text-destructive">*</span>
+                {t('emailAddress')} <span className="text-destructive">*</span>
               </label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="john@example.com"
+                placeholder={t('emailPlaceholder')}
                 className="w-full px-4 py-3 bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                Your email will not be published
+                {t('emailNotPublished')}
               </p>
             </div>
           </div>
@@ -238,7 +240,7 @@ export default function WriteReviewForm({
             disabled={isSubmitting}
             className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            {isSubmitting ? t('submitting') : t('submit')}
           </button>
           {onCancel && (
             <button
@@ -246,7 +248,7 @@ export default function WriteReviewForm({
               onClick={onCancel}
               className="px-6 py-3 border border-input text-foreground rounded-lg hover:bg-muted transition-colors"
             >
-              Cancel
+              {t('cancel')}
             </button>
           )}
         </div>

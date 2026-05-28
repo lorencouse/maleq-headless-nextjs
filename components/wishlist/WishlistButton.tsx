@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { showSuccessLink, showInfo } from '@/lib/utils/toast';
@@ -33,6 +34,12 @@ export default function WishlistButton({
   variant = 'icon',
   className = '',
 }: WishlistButtonProps) {
+  const t = useTranslations('wishlistButton');
+  // Reuse existing strings to avoid duplication:
+  //   product.removeFromWishlist        — "Remove from wishlist" aria-label
+  //   account.wishlist.removedToast     — "Removed from wishlist" toast
+  const tProduct = useTranslations('product');
+  const tWishlist = useTranslations('account.wishlist');
   const { toggleItem, isInWishlist, hydrate } = useWishlistStore();
   const pathname = usePathname();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -80,9 +87,9 @@ export default function WishlistButton({
     setIsWishlisted(wasAdded);
 
     if (wasAdded) {
-      showSuccessLink('Added to wishlist', 'View wishlist', '/account/wishlist');
+      showSuccessLink(t('addedToast'), t('viewWishlist'), '/account/wishlist');
     } else {
-      showInfo('Removed from wishlist');
+      showInfo(tWishlist('removedToast'));
     }
   };
 
@@ -112,10 +119,10 @@ export default function WishlistButton({
               ? 'border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
               : 'border-border text-foreground hover:bg-muted'
           } ${className}`}
-          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={isWishlisted ? tProduct('removeFromWishlist') : t('addAriaLabel')}
         >
           <HeartIcon filled={isWishlisted} />
-          {isWishlisted ? 'In Wishlist' : 'Add to Wishlist'}
+          {isWishlisted ? t('inWishlist') : t('addToWishlist')}
         </button>
         <AuthRequiredModal
           isOpen={showAuthModal}
@@ -136,10 +143,10 @@ export default function WishlistButton({
               ? 'text-red-500 hover:text-red-600'
               : 'text-muted-foreground hover:text-foreground'
           } ${className}`}
-          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          aria-label={isWishlisted ? tProduct('removeFromWishlist') : t('addAriaLabel')}
         >
           <HeartIcon filled={isWishlisted} />
-          <span>{isWishlisted ? 'Saved' : 'Save'}</span>
+          <span>{isWishlisted ? t('saved') : t('save')}</span>
         </button>
         <AuthRequiredModal
           isOpen={showAuthModal}
@@ -163,7 +170,7 @@ export default function WishlistButton({
             ? 'text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50'
             : 'text-muted-foreground hover:text-foreground bg-background/80 hover:bg-muted'
         } ${className}`}
-        aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+        aria-label={isWishlisted ? tProduct('removeFromWishlist') : t('addAriaLabel')}
       >
         <HeartIcon filled={isWishlisted} />
       </button>

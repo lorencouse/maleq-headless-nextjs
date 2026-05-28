@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { useTranslations, useFormatter } from 'next-intl';
 import StarRating from './StarRating';
 import { stripHtml } from '@/lib/utils/text-utils';
 
@@ -19,14 +20,17 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ review }: ReviewCardProps) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+  const t = useTranslations('reviews');
+  const format = useFormatter();
+  // Uses the active locale from NextIntlClientProvider — replaces the
+  // hard-coded 'en-US' so Spanish renders Spanish month names when chrome
+  // locale is Spanish.
+  const formatDate = (dateString: string) =>
+    format.dateTime(new Date(dateString), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
-  };
 
   // Get initials for avatar fallback
   const getInitials = (name: string) => {
@@ -78,7 +82,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     clipRule="evenodd"
                   />
                 </svg>
-                Verified Purchase
+                {t('verifiedPurchase')}
               </span>
             )}
           </div>
