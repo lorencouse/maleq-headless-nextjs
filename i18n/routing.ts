@@ -12,7 +12,10 @@ import { defineRouting } from 'next-intl/routing';
  * notably why product/sex-toys/brand/shop/guides routes are NOT under [locale].
  */
 export const routing = defineRouting({
-  locales: ['en', 'es'] as const,
+  // en (no prefix) + es (/es) + zh (/zh, Traditional — hreflang zh-Hant).
+  // ja is intentionally NOT here: its catalog is still an untranslated copy of
+  // en, so it stays a chrome-only locale (applied per-guide) until translated.
+  locales: ['en', 'es', 'zh'] as const,
   defaultLocale: 'en',
   localePrefix: 'as-needed',
   // Cookie that persists the user's choice across visits.

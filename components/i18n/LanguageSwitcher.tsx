@@ -6,31 +6,31 @@ import { useParams } from 'next/navigation';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { type Locale } from '@/i18n/routing';
 
-// UI locales offered by the toggle. en/es are URL-routed locales; zh is a
-// chrome-only catalog locale applied via cookie (no /zh/ URL tree).
+// UI locales offered by the toggle. en/es/zh are all URL-routed locales
+// (/, /es, /zh). On content-root pages (English-only ISR, outside [locale])
+// any selection falls back to the cookie-driven in-place chrome switch.
 const UI_LOCALES = ['en', 'es', 'zh'] as const;
 const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
   es: 'Español',
   zh: '中文',
 };
-const ROUTING_LOCALES = new Set(['en', 'es']);
+const ROUTING_LOCALES = new Set(['en', 'es', 'zh']);
 
 /**
  * Language switcher dropdown.
  *
  * Two switching modes depending on the current route:
  *
- *   1. en/es on a shell route under app/[locale]/... — uses next-intl's
- *      locale-aware router to navigate /about ↔ /es/about (URL + content +
- *      chrome all localize, server-rendered, best for SEO).
+ *   1. en/es/zh on a shell route under app/[locale]/... — uses next-intl's
+ *      locale-aware router to navigate /about ↔ /es/about ↔ /zh/about (URL +
+ *      content + chrome all localize, server-rendered, best for SEO).
  *
- *   2. Everything else (zh, or any selection on a content-root page) — writes
+ *   2. Any selection on a content-root page (product/shop/guides/etc.) — writes
  *      the NEXT_LOCALE cookie and fires a `ui-locale-change` event.
  *      ChromeLocaleProvider (client) reacts and re-renders the chrome in the
  *      chosen language in place. Needed because content-root pages are
- *      English-only ISR and can't read the cookie server-side, and because zh
- *      has no URL route.
+ *      English-only ISR and can't read the cookie server-side.
  *
  * Detection: presence of a `locale` param means we're under [locale].
  */
