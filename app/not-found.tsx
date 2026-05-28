@@ -4,9 +4,16 @@ import Log404 from '@/components/analytics/Log404';
 import NotFoundSuggestions from '@/components/analytics/NotFoundSuggestions';
 import SearchAutocomplete from '@/components/search/SearchAutocomplete';
 
+// The global not-found renders directly in the root layout, which no longer
+// includes the storefront chrome (that moved to the locale-aware sub-layouts).
+// This page is intentionally a self-contained standalone screen — it has its
+// own search bar, suggestions, and Home/Shop links for navigation — matching
+// error.tsx. (Wrapping it in <StorefrontChrome> half-renders: the Next.js
+// not-found render path skips the client Header's SSR output, leaving a Footer
+// with no Header, which looks worse than a clean standalone page.)
 export default function NotFound() {
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <Log404 />
       <div className="text-center max-w-2xl w-full">
         {/* 404 Illustration */}

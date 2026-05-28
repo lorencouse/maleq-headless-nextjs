@@ -1,33 +1,26 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
-import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 // Import the default-locale messages statically so the root layout never has to
 // call getMessages() (which would prime next-intl's getConfig(undefined) cache
 // with English and starve [locale]/layout of the slot it needs to load Spanish).
 import defaultMessages from "@/messages/en.json";
 import "./globals.css";
-import Header from "@/components/layout/Header";
-import Footer from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Toaster } from "@/components/ui/Toaster";
-import NewsletterPopup from "@/components/newsletter/NewsletterPopup";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import WebVitals from "@/components/analytics/WebVitals";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
-import PushNotificationPrompt from "@/components/pwa/PushNotificationPrompt";
-import InstallPrompt from "@/components/pwa/InstallPrompt";
 import AppBadge from "@/components/pwa/AppBadge";
 import RouteScrollManager from "@/components/navigation/RouteScrollManager";
 import PwaAnalytics from "@/components/pwa/PwaAnalytics";
 import BackgroundSyncReplay from "@/components/pwa/BackgroundSyncReplay";
 import CartStockRevalidation from "@/components/pwa/CartStockRevalidation";
-import ChatWidget from "@/components/chat/ChatWidget";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -140,25 +133,35 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Hard-code the default locale at the root and seed next-intl's request
-  // cache so downstream APIs don't read headers() (which throws
-  // DYNAMIC_SERVER_USAGE on any ISR page outside [locale]/). The chrome
-  // (Header/Footer rendered in this layout) always renders in the default
-  // locale; [locale]/layout.tsx wraps {children} in a NESTED
-  // NextIntlClientProvider so the PAGE content on /es/* routes still
-  // renders in Spanish. Restoring locale-aware chrome on [locale]/ routes
-  // is a follow-up (Phase 8) — requires moving Header/Footer out of the
-  // root and into per-locale-aware sub-layouts (route groups).
+  // DYNAMIC_SERVER_USAGE on any ISR page outside [locale]/.
   //
-  // We use a static import for messages instead of calling getMessages()
-  // so we never touch next-intl's getConfig() cache here. Why this matters:
-  // useTranslations() in server components on /es/* routes resolves via
-  // getConfig(undefined). If we'd populated that slot in root, [locale]
-  // pages would hit our English cache instead of the Spanish messages
-  // [locale]/layout loads. The setRequestLocale call below still seeds the
-  // request-locale cache to 'en' for downstream APIs on non-[locale]
-  // routes (i.e. content-root pages like /guides/[slug]).
+  // The STOREFRONT CHROME (Header/Footer/ChatWidget/Newsletter) is NOT
+  // rendered here. It lives in the two locale-knowing sub-layouts instead:
+  //   - app/[locale]/layout.tsx renders <StorefrontChrome> inside its NESTED
+  //     locale-aware NextIntlClientProvider, so /es/* chrome is Spanish.
+  //   - app/(default)/layout.tsx renders <StorefrontChrome> for the
+  //     default-locale content-root + admin routes (product, shop, guides,
+  //     brand(s), sex-toys), which are English-only by design.
+  // This root layout keeps only the locale-INDEPENDENT global shell
+  // (providers, analytics, service worker, toaster, schema) so it is shared
+  // by every route and the chrome is never double-rendered.
+  //
+  // CRITICAL: we must NOT call setRequestLocale() here. next-intl memoizes
+  // its request config per-request; the FIRST server-side useTranslations/
+  // getTranslations call resolves getConfig() against whatever locale is
+  // cached at that moment, and that result is reused for the WHOLE request.
+  // If the root pinned 'en' via setRequestLocale, every server component in
+  // the /es/* subtree (Footer, page bodies) would resolve to English even
+  // though the client provider has Spanish messages. Instead each leaf tree
+  // sets its own locale: [locale]/layout calls setRequestLocale(locale) and
+  // (default)/layout calls setRequestLocale(defaultLocale) — both static
+  // literals, so ISR stays safe. Routes that render directly in this root
+  // layout (not-found / error) have no setRequestLocale; request.ts falls
+  // back to the default locale for them without reading cookies/headers.
+  //
+  // The static `defaultMessages` import (not getMessages()) feeds this root's
+  // fallback client provider without touching the getConfig() cache.
   const locale = routing.defaultLocale;
-  setRequestLocale(locale);
   const messages = defaultMessages;
 
   return (
@@ -192,17 +195,7 @@ export default async function RootLayout({
                 <AppBadge />
                 <CartStockRevalidation />
                 <Toaster />
-                <Header />
-                <main id="main-content" className="flex-grow" role="main">
-                  {children}
-                </main>
-                <Footer />
-                <NewsletterPopup delay={45000} showOnExitIntent />
-                <div className="fixed bottom-4 right-4 z-40 max-w-sm space-y-3">
-                  <InstallPrompt minVisits={2} />
-                  <PushNotificationPrompt minVisits={3} />
-                </div>
-                <ChatWidget />
+                {children}
               </CartProvider>
             </ThemeProvider>
           </QueryProvider>

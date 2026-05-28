@@ -2,19 +2,23 @@ import { notFound } from 'next/navigation';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { routing, type Locale } from '@/i18n/routing';
+import StorefrontChrome from '@/components/layout/StorefrontChrome';
 
 /**
  * Sub-layout for localized shell routes (about, contact, cart, etc.).
  *
  * Responsibilities:
  *   1. Validate the `locale` segment — unknown values 404 instead of rendering.
- *   2. Call setRequestLocale(locale) so pages under this layout statically
- *      render in the URL locale (overriding the root layout's default-locale
- *      cache seed).
+ *   2. Call setRequestLocale(locale) so pages (and the server-rendered Footer)
+ *      under this layout statically render in the URL locale, overriding the
+ *      root layout's default-locale cache seed.
  *   3. Wrap {children} in a NESTED NextIntlClientProvider so the page tree
- *      sees the URL locale. The root layout's outer provider (locked to
- *      the default locale) keeps rendering Header/Footer in English — a
- *      known regression on /es/ chrome that's deferred to Phase 8.
+ *      AND the storefront chrome see the URL locale.
+ *   4. Render <StorefrontChrome> here (inside that nested provider) rather
+ *      than in the root layout — this is what makes Header/Footer/ChatWidget/
+ *      Newsletter render in Spanish on /es/* routes. The root layout stays
+ *      locale-independent so it can be shared with the default-locale
+ *      content-root routes without forcing English chrome onto /es/*.
  */
 
 export function generateStaticParams() {
@@ -35,11 +39,11 @@ export default async function LocaleLayout({
   }
 
   setRequestLocale(locale);
-  const messages = await getMessages();
+  const messages = await getMessages({ locale });
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
-      {children}
+      <StorefrontChrome>{children}</StorefrontChrome>
     </NextIntlClientProvider>
   );
 }
