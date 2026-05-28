@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
 
@@ -67,44 +68,13 @@ interface Order {
   customer_note?: string;
 }
 
+// Timeline step keys map to account.orderDetail.timeline.* translations.
 const ORDER_STATUSES = [
-  { key: 'pending', label: 'Order Placed', icon: 'clipboard' },
-  { key: 'processing', label: 'Processing', icon: 'cog' },
-  { key: 'shipped', label: 'Shipped', icon: 'truck' },
-  { key: 'completed', label: 'Delivered', icon: 'check' },
+  { key: 'pending', labelKey: 'orderPlaced' as const, icon: 'clipboard' },
+  { key: 'processing', labelKey: 'processing' as const, icon: 'cog' },
+  { key: 'shipped', labelKey: 'shipped' as const, icon: 'truck' },
+  { key: 'completed', labelKey: 'delivered' as const, icon: 'check' },
 ];
-
-function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-function formatDateTime(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-}
-
-function formatPrice(price: string | number): string {
-  const num = typeof price === 'string' ? parseFloat(price) : price;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(num);
-}
-
-import { getStatusColor } from '@/lib/constants/status-colors';
-
-function formatStatus(status: string): string {
-  return status.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 function getStatusIndex(status: string): number {
   if (status === 'completed') return 4;
@@ -132,12 +102,45 @@ function getTrackingUrl(provider: string | undefined, trackingNumber: string): s
   return `https://www.google.com/search?q=${trackingNumber}+tracking`;
 }
 
+import { getStatusColor } from '@/lib/constants/status-colors';
+
 export default function OrderDetailPage() {
+  const t = useTranslations('account.orderDetail');
+  const tTimeline = useTranslations('account.orderDetail.timeline');
+  const tStatus = useTranslations('account.orders.status');
+  const locale = useLocale();
   const params = useParams();
   const { user, token } = useAuthStore();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Locale-aware formatters (previously hardcoded en-US).
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const formatDateTime = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const formatPrice = (price: string | number): string => {
+    const num = typeof price === 'string' ? parseFloat(price) : price;
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: 'USD',
+    }).format(num);
+  };
 
   useEffect(() => {
     async function fetchOrder() {
@@ -152,22 +155,22 @@ export default function OrderDetailPage() {
 
         if (!response.ok) {
           if (response.status === 404) {
-            throw new Error('Order not found');
+            throw new Error(t('errorNotFound'));
           }
-          throw new Error('Failed to fetch order');
+          throw new Error(t('errorFetch'));
         }
 
         const data = await response.json();
         setOrder(data.order);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load order');
+        setError(err instanceof Error ? err.message : t('errorLoad'));
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchOrder();
-  }, [user?.id, token, params.id]);
+  }, [user?.id, token, params.id, t]);
 
   const currentStatusIndex = order ? getStatusIndex(order.status) : 0;
   const trackingShipments = order
@@ -189,19 +192,19 @@ export default function OrderDetailPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
-          Back to Orders
+          {t('backToOrders')}
         </Link>
 
         {isLoading ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading order details...</p>
+            <p className="mt-4 text-muted-foreground">{t('loading')}</p>
           </div>
         ) : error ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
             <p className="text-red-500 mb-4">{error}</p>
             <Link href="/account/orders" className="text-primary hover:text-primary-hover font-medium">
-              Return to Orders
+              {t('returnToOrders')}
             </Link>
           </div>
         ) : order ? (
@@ -210,11 +213,15 @@ export default function OrderDetailPage() {
             <div className="bg-card border border-border rounded-xl p-6">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-foreground mb-1">Order #{order.number}</h1>
-                  <p className="text-muted-foreground">Placed on {formatDateTime(order.date_created)}</p>
+                  <h1 className="text-2xl font-bold text-foreground mb-1">
+                    {t('headingNumber', { number: order.number })}
+                  </h1>
+                  <p className="text-muted-foreground">
+                    {t('placedOn', { date: formatDateTime(order.date_created) })}
+                  </p>
                 </div>
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
-                  {formatStatus(order.status)}
+                  {tStatus.has(order.status) ? tStatus(order.status) : order.status}
                 </span>
               </div>
             </div>
@@ -222,7 +229,7 @@ export default function OrderDetailPage() {
             {/* Order Status Timeline */}
             {!['cancelled', 'failed', 'refunded'].includes(order.status) && (
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-6">Order Status</h2>
+                <h2 className="text-lg font-semibold text-foreground mb-6">{t('statusTimeline')}</h2>
                 <div className="relative">
                   {/* Progress Line */}
                   <div className="absolute top-5 left-5 right-5 h-0.5 bg-border">
@@ -270,7 +277,7 @@ export default function OrderDetailPage() {
                             )}
                           </div>
                           <span className={`mt-2 text-xs font-medium text-center ${isCompleted ? 'text-foreground' : 'text-muted-foreground'}`}>
-                            {status.label}
+                            {tTimeline(status.labelKey)}
                           </span>
                         </div>
                       );
@@ -284,7 +291,7 @@ export default function OrderDetailPage() {
             {trackingShipments.length > 0 && (
               <div className="bg-card border border-border rounded-xl p-6">
                 <h2 className="text-lg font-semibold text-foreground mb-4">
-                  Tracking Information
+                  {t('trackingInformation')}
                 </h2>
                 <div className="space-y-4">
                   {trackingShipments.map((shipment, idx) => {
@@ -296,14 +303,14 @@ export default function OrderDetailPage() {
                       >
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">
-                            {shipment.tracking_provider || 'Carrier'}
+                            {shipment.tracking_provider || t('carrierFallback')}
                           </p>
                           <p className="font-mono font-semibold text-foreground text-lg">
                             {shipment.tracking_number}
                           </p>
                           {shipment.date_shipped && (
                             <p className="text-sm text-muted-foreground mt-1">
-                              Shipped on {formatDate(shipment.date_shipped)}
+                              {t('shippedOn', { date: formatDate(shipment.date_shipped) })}
                             </p>
                           )}
                         </div>
@@ -319,7 +326,7 @@ export default function OrderDetailPage() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
                         >
-                          Track Package
+                          {t('trackPackage')}
                           <svg
                             className="w-4 h-4"
                             fill="none"
@@ -344,7 +351,7 @@ export default function OrderDetailPage() {
             {/* Order Items */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-semibold text-foreground">Order Items</h2>
+                <h2 className="text-lg font-semibold text-foreground">{t('orderItems')}</h2>
               </div>
               <div className="divide-y divide-border">
                 {order.line_items.map((item) => (
@@ -356,8 +363,10 @@ export default function OrderDetailPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-foreground">{item.name}</p>
-                      {item.sku && <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>}
-                      <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                      {item.sku && (
+                        <p className="text-sm text-muted-foreground">{t('skuLabel', { sku: item.sku })}</p>
+                      )}
+                      <p className="text-sm text-muted-foreground">{t('qtyLabel', { qty: item.quantity })}</p>
                     </div>
                     <p className="font-semibold text-foreground">{formatPrice(item.total)}</p>
                   </div>
@@ -367,29 +376,29 @@ export default function OrderDetailPage() {
               {/* Order Summary */}
               <div className="p-4 border-t border-border bg-muted/30 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-muted-foreground">{t('subtotal')}</span>
                   <span className="text-foreground">{formatPrice(order.subtotal)}</span>
                 </div>
                 {parseFloat(order.discount_total) > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Discount</span>
+                    <span className="text-muted-foreground">{t('discount')}</span>
                     <span className="text-green-600">-{formatPrice(order.discount_total)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Shipping</span>
+                  <span className="text-muted-foreground">{t('shipping')}</span>
                   <span className="text-foreground">
-                    {parseFloat(order.shipping_total) > 0 ? formatPrice(order.shipping_total) : 'Free'}
+                    {parseFloat(order.shipping_total) > 0 ? formatPrice(order.shipping_total) : t('free')}
                   </span>
                 </div>
                 {parseFloat(order.total_tax) > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Tax</span>
+                    <span className="text-muted-foreground">{t('tax')}</span>
                     <span className="text-foreground">{formatPrice(order.total_tax)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-semibold pt-2 border-t border-border">
-                  <span className="text-foreground">Total</span>
+                  <span className="text-foreground">{t('total')}</span>
                   <span className="text-foreground">{formatPrice(order.total)}</span>
                 </div>
               </div>
@@ -399,7 +408,7 @@ export default function OrderDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Billing Address */}
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">Billing Address</h2>
+                <h2 className="text-lg font-semibold text-foreground mb-4">{t('billingAddress')}</h2>
                 <address className="not-italic text-muted-foreground space-y-1">
                   <p className="font-medium text-foreground">
                     {order.billing.first_name} {order.billing.last_name}
@@ -418,7 +427,7 @@ export default function OrderDetailPage() {
 
               {/* Shipping Address */}
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">Shipping Address</h2>
+                <h2 className="text-lg font-semibold text-foreground mb-4">{t('shippingAddress')}</h2>
                 <address className="not-italic text-muted-foreground space-y-1">
                   <p className="font-medium text-foreground">
                     {order.shipping.first_name} {order.shipping.last_name}
@@ -436,18 +445,24 @@ export default function OrderDetailPage() {
 
             {/* Payment & Notes */}
             <div className="bg-card border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Payment Information</h2>
+              <h2 className="text-lg font-semibold text-foreground mb-4">{t('paymentInformation')}</h2>
               <p className="text-muted-foreground">
-                Payment Method: <span className="text-foreground">{order.payment_method_title}</span>
+                {t.rich('paymentMethodLabel', {
+                  method: order.payment_method_title,
+                  strong: (chunks) => <span className="text-foreground">{chunks}</span>,
+                })}
               </p>
               {order.date_paid && (
                 <p className="text-muted-foreground mt-1">
-                  Paid on: <span className="text-foreground">{formatDateTime(order.date_paid)}</span>
+                  {t.rich('paidOnLabel', {
+                    date: formatDateTime(order.date_paid),
+                    strong: (chunks) => <span className="text-foreground">{chunks}</span>,
+                  })}
                 </p>
               )}
               {order.customer_note && (
                 <div className="mt-4 pt-4 border-t border-border">
-                  <p className="text-sm font-medium text-foreground mb-1">Order Note:</p>
+                  <p className="text-sm font-medium text-foreground mb-1">{t('orderNote')}</p>
                   <p className="text-muted-foreground">{order.customer_note}</p>
                 </div>
               )}
@@ -455,15 +470,13 @@ export default function OrderDetailPage() {
 
             {/* Help Section */}
             <div className="bg-muted/30 border border-border rounded-xl p-6 text-center">
-              <h3 className="font-semibold text-foreground mb-2">Need Help?</h3>
-              <p className="text-muted-foreground mb-4">
-                Have questions about your order? We&apos;re here to help.
-              </p>
+              <h3 className="font-semibold text-foreground mb-2">{t('needHelp')}</h3>
+              <p className="text-muted-foreground mb-4">{t('needHelpBody')}</p>
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 text-primary hover:text-primary-hover font-medium"
               >
-                Contact Support
+                {t('contactSupport')}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>

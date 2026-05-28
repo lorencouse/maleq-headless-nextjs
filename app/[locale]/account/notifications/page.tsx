@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { usePushSubscription } from '@/lib/hooks/usePushSubscription';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -27,13 +28,6 @@ interface ServerNotification {
   sentAt: string;
 }
 
-function formatNotificationDate(timestamp: number): string {
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(timestamp);
-}
-
 function normalizeNotificationUrl(url: string): string {
   if (!url) return '/';
   if (url.startsWith('http://') || url.startsWith('https://')) {
@@ -47,41 +41,53 @@ function normalizeNotificationUrl(url: string): string {
   return url.startsWith('/') ? url : `/${url}`;
 }
 
-function getNotificationCategory(type: string): { label: string; className: string } {
+// Returns a category translation key + tailwind className for the given
+// notification type. The key resolves at render time via useTranslations so
+// the label tracks the active locale.
+type CategoryKey =
+  | 'categoryOrderUpdate'
+  | 'categoryBackInStock'
+  | 'categorySalesAndDeals'
+  | 'categoryReminder'
+  | 'categoryGeneral';
+
+function getNotificationCategory(type: string): { key: CategoryKey; className: string } {
   const normalized = type.toLowerCase();
 
   if (normalized.includes('order') || normalized.includes('tracking')) {
     return {
-      label: 'Order Update',
+      key: 'categoryOrderUpdate',
       className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
     };
   }
 
   if (normalized.includes('stock')) {
     return {
-      label: 'Back in Stock',
+      key: 'categoryBackInStock',
       className: 'bg-green-500/10 text-green-700 dark:text-green-300',
     };
   }
 
   if (normalized.includes('promo') || normalized.includes('sale')) {
     return {
-      label: 'Sales and Deals',
+      key: 'categorySalesAndDeals',
       className: 'bg-orange-500/10 text-orange-700 dark:text-orange-300',
     };
   }
 
   if (normalized.includes('reminder')) {
     return {
-      label: 'Reminder',
+      key: 'categoryReminder',
       className: 'bg-purple-500/10 text-purple-700 dark:text-purple-300',
     };
   }
 
-  return { label: 'General', className: 'bg-muted text-muted-foreground' };
+  return { key: 'categoryGeneral', className: 'bg-muted text-muted-foreground' };
 }
 
 export default function NotificationsPage() {
+  const t = useTranslations('account.notifications');
+  const locale = useLocale();
   const { user, token } = useAuthStore();
   const {
     isSupported,
@@ -98,6 +104,18 @@ export default function NotificationsPage() {
   const [serverNotifications, setServerNotifications] = useState<ServerNotification[]>([]);
   const [serverLoading, setServerLoading] = useState(true);
   const [serverError, setServerError] = useState<string | null>(null);
+
+  // Locale-aware date+time formatting; previously used Intl with `undefined`
+  // (browser default) which gave inconsistent labels across visitors.
+  const formatNotificationDate = useCallback(
+    (timestamp: number): string => {
+      return new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      }).format(timestamp);
+    },
+    [locale],
+  );
 
   const refreshNotifications = useCallback(() => {
     setNotifications(getNotifications());
@@ -119,7 +137,7 @@ export default function NotificationsPage() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to load notification history');
+        throw new Error(result.error || t('accountFailed'));
       }
 
       const items = Array.isArray(result.data?.notifications)
@@ -127,12 +145,12 @@ export default function NotificationsPage() {
         : [];
       setServerNotifications(items);
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : 'Failed to load notification history');
+      setServerError(error instanceof Error ? error.message : t('accountFailed'));
       setServerNotifications([]);
     } finally {
       setServerLoading(false);
     }
-  }, [token, user?.id]);
+  }, [token, user?.id, t]);
 
   useEffect(() => {
     const initialLoadTimer = setTimeout(() => {
@@ -176,17 +194,17 @@ export default function NotificationsPage() {
   const handleTogglePush = async () => {
     if (isSubscribed) {
       await unsubscribe();
-      showSuccess('Push notifications disabled');
+      showSuccess(t('toastDisabled'));
       return;
     }
 
     const success = await subscribe();
     if (success) {
-      showSuccess('Push notifications enabled');
+      showSuccess(t('toastEnabled'));
     } else if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
-      showError('Notifications blocked by your browser. Check your browser settings to allow notifications.');
+      showError(t('toastBlockedByBrowser'));
     } else {
-      showError('Could not enable notifications. Please try again.');
+      showError(t('toastEnableFailed'));
     }
   };
 
@@ -197,7 +215,7 @@ export default function NotificationsPage() {
     const success = await updatePreferences({ [key]: newValue });
 
     if (!success) {
-      showError('Failed to update preference. Please try again.');
+      showError(t('toastPreferenceFailed'));
     }
   };
 
@@ -217,19 +235,17 @@ export default function NotificationsPage() {
   const handleClearHistory = useCallback(() => {
     clearNotifications();
     refreshNotifications();
-    showSuccess('Notification history cleared');
-  }, [refreshNotifications]);
+    showSuccess(t('toastHistoryCleared'));
+  }, [refreshNotifications, t]);
 
   return (
     <AccountLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('heading')}</h1>
 
         {!isSupported && (
           <div className="bg-card border border-border rounded-xl p-6">
-            <p className="text-muted-foreground">
-              Push notifications are not available in this browser context. On iPhone/iPad, install Male Q to Home Screen and open it as a web app. On desktop, use the latest Safari, Chrome, or Edge.
-            </p>
+            <p className="text-muted-foreground">{t('unsupported')}</p>
           </div>
         )}
 
@@ -237,16 +253,12 @@ export default function NotificationsPage() {
           <div className="bg-card border border-border rounded-xl p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="font-semibold text-foreground">Push Notifications</h2>
+                <h2 className="font-semibold text-foreground">{t('pushSection')}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {isSubscribed
-                    ? 'You are receiving push notifications'
-                    : 'Enable push notifications to stay updated'}
+                  {isSubscribed ? t('subscribed') : t('notSubscribed')}
                 </p>
                 {permission === 'denied' && (
-                  <p className="text-sm text-destructive mt-1">
-                    Notifications are blocked by your browser. Update your browser settings to enable them.
-                  </p>
+                  <p className="text-sm text-destructive mt-1">{t('blocked')}</p>
                 )}
               </div>
 
@@ -256,7 +268,7 @@ export default function NotificationsPage() {
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors disabled:opacity-50 ${
                   isSubscribed ? 'bg-primary' : 'bg-muted'
                 }`}
-                aria-label="Toggle push notifications"
+                aria-label={t('toggleAriaLabel')}
               >
                 <span
                   className={`inline-block h-5 w-5 rounded-full bg-white transition-transform shadow-sm ${
@@ -270,10 +282,8 @@ export default function NotificationsPage() {
 
         {isSupported && isSubscribed && preferences && (
           <div className="bg-card border border-border rounded-xl p-6 space-y-4">
-            <h2 className="font-semibold text-foreground">Notification Preferences</h2>
-            <p className="text-sm text-muted-foreground">
-              Choose which types of notifications you want to receive.
-            </p>
+            <h2 className="font-semibold text-foreground">{t('preferencesSection')}</h2>
+            <p className="text-sm text-muted-foreground">{t('preferencesIntro')}</p>
 
             <div className="space-y-3 mt-4">
               <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-muted/50 transition-colors">
@@ -284,10 +294,8 @@ export default function NotificationsPage() {
                   className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
                 />
                 <div>
-                  <span className="font-medium text-foreground">Order Updates</span>
-                  <p className="text-sm text-muted-foreground">
-                    Shipping confirmations, delivery updates, and order status changes
-                  </p>
+                  <span className="font-medium text-foreground">{t('prefOrderUpdates')}</span>
+                  <p className="text-sm text-muted-foreground">{t('prefOrderUpdatesDesc')}</p>
                 </div>
               </label>
 
@@ -299,10 +307,8 @@ export default function NotificationsPage() {
                   className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
                 />
                 <div>
-                  <span className="font-medium text-foreground">Back in Stock</span>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified when products you want are available again
-                  </p>
+                  <span className="font-medium text-foreground">{t('prefBackInStock')}</span>
+                  <p className="text-sm text-muted-foreground">{t('prefBackInStockDesc')}</p>
                 </div>
               </label>
 
@@ -314,10 +320,8 @@ export default function NotificationsPage() {
                   className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
                 />
                 <div>
-                  <span className="font-medium text-foreground">Promotions and Deals</span>
-                  <p className="text-sm text-muted-foreground">
-                    Sales, special offers, and exclusive deals
-                  </p>
+                  <span className="font-medium text-foreground">{t('prefPromotions')}</span>
+                  <p className="text-sm text-muted-foreground">{t('prefPromotionsDesc')}</p>
                 </div>
               </label>
             </div>
@@ -326,15 +330,13 @@ export default function NotificationsPage() {
 
         <div className="bg-card border border-border rounded-xl p-6 space-y-4">
           <div>
-            <h2 className="font-semibold text-foreground">Account Notification History</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Cross-device history for notifications linked to your account.
-            </p>
+            <h2 className="font-semibold text-foreground">{t('accountHistory')}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{t('accountHistoryDesc')}</p>
           </div>
 
           {serverLoading ? (
             <div className="p-8 text-center">
-              <p className="text-sm text-muted-foreground">Loading account notifications...</p>
+              <p className="text-sm text-muted-foreground">{t('accountLoading')}</p>
             </div>
           ) : serverError ? (
             <div className="p-8 text-center">
@@ -342,7 +344,7 @@ export default function NotificationsPage() {
             </div>
           ) : serverNotifications.length === 0 ? (
             <div className="p-8 text-center">
-              <p className="text-sm text-muted-foreground">No account-level notifications yet.</p>
+              <p className="text-sm text-muted-foreground">{t('accountEmpty')}</p>
             </div>
           ) : (
             <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
@@ -359,10 +361,10 @@ export default function NotificationsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${category.className}`}>
-                            {category.label}
+                            {t(category.key)}
                           </span>
                           <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted text-muted-foreground">
-                            Account
+                            {t('accountBadge')}
                           </span>
                         </div>
 
@@ -386,12 +388,10 @@ export default function NotificationsPage() {
         <div className="bg-card border border-border rounded-xl p-6 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="font-semibold text-foreground">This Device Notification History</h2>
-              <p className="text-sm text-muted-foreground mt-1">
-                Activity log for order updates, tracking notices, sales, reminders, and stock alerts on this device.
-              </p>
+              <h2 className="font-semibold text-foreground">{t('deviceHistory')}</h2>
+              <p className="text-sm text-muted-foreground mt-1">{t('deviceHistoryDesc')}</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {notifications.length} total, {unreadCount} unread
+                {t('deviceCounts', { total: notifications.length, unread: unreadCount })}
               </p>
             </div>
 
@@ -402,7 +402,7 @@ export default function NotificationsPage() {
                     onClick={handleMarkAllAsRead}
                     className="px-3 py-2 text-xs rounded-lg border border-border hover:bg-muted transition-colors"
                   >
-                    Mark all as read
+                    {t('markAllAsRead')}
                   </button>
                 )}
 
@@ -410,7 +410,7 @@ export default function NotificationsPage() {
                   onClick={handleClearHistory}
                   className="px-3 py-2 text-xs rounded-lg border border-border hover:bg-muted transition-colors"
                 >
-                  Clear history
+                  {t('clearHistory')}
                 </button>
               </div>
             )}
@@ -419,11 +419,9 @@ export default function NotificationsPage() {
           <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <p className="text-sm text-muted-foreground">No notifications yet.</p>
+                <p className="text-sm text-muted-foreground">{t('deviceEmpty')}</p>
                 {!isSubscribed && isSupported && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Enable push notifications to start building your history.
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">{t('deviceEmptyHint')}</p>
                 )}
               </div>
             ) : (
@@ -442,7 +440,7 @@ export default function NotificationsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${category.className}`}>
-                            {category.label}
+                            {t(category.key)}
                           </span>
                           {!notification.read && (
                             <span className="h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
