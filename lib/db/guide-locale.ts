@@ -6,6 +6,7 @@ import {
   DEFAULT_GUIDE_LOCALE,
   type GuideLocale,
 } from '@/lib/i18n/guide-languages';
+import { toWpPostName } from '@/lib/utils/wp-slug';
 import type { RowDataPacket } from 'mysql2';
 
 /**
@@ -34,7 +35,9 @@ export const getGuideLocaleBySlug = cache(async (slug: string): Promise<GuideLoc
          JOIN wp_terms t ON t.term_id = tt.term_id AND t.slug IN (${slugPlaceholders})
         WHERE p.post_name = ? AND p.post_type = 'post' AND p.post_status = 'publish'
         LIMIT 5`,
-      [...ROOT_LANGUAGE_SLUGS, slug],
+      // CJK slugs are stored percent-encoded + lowercase; normalize so the
+      // uppercase-encoded param Next hands us matches post_name.
+      [...ROOT_LANGUAGE_SLUGS, toWpPostName(slug)],
     );
     return detectGuideLocale(rows.map((r) => r.slug)) ?? DEFAULT_GUIDE_LOCALE;
   } catch {

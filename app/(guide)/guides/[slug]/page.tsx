@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { getClient } from '@/lib/apollo/client';
 import {
   GET_POST_BY_SLUG,
@@ -32,6 +32,7 @@ import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
 import { loadPostRecommendations } from '@/lib/db/post-relations';
 import { loadPostTranslations, type PostTranslation } from '@/lib/db/post-translations';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
+import { toWpPostName } from '@/lib/utils/wp-slug';
 import {
   detectGuideLocale,
   getGuideLanguage,
@@ -111,15 +112,15 @@ export const dynamicParams = true; // Allow runtime generation of any blog post
 export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
-  const { slug } = await params;
-  // Resolve the UI locale from the guide's own language category (en/es/zh/ja)
-  // — same value the (guide) layout uses — so metadata + page UI render in the
-  // post's language. getGuideLocaleBySlug derives this from the URL slug only
-  // (no headers()/cookies()), so it stays ISR-safe; setRequestLocale then
-  // pre-seeds the cached request locale for downstream next-intl server calls
-  // (RelatedPosts, LanguageSwitcher, RecommendedProducts).
+  const { slug: slugParam } = await params;
+  // Normalize to WP's stored post_name (lowercase percent-encoding) so CJK
+  // guide slugs resolve — Next hands us the uppercase-encoded form.
+  const slug = toWpPostName(slugParam);
+  // Resolve the UI locale from the guide's own language category (en/es/zh/ja),
+  // ISR-safe (slug-derived). We pass it explicitly to getTranslations and the
+  // child components rather than via setRequestLocale() — the latter is a no-op
+  // here (no next-intl middleware) and THROWS for zh/ja (not routing.locales).
   const locale = await getGuideLocaleBySlug(slug);
-  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'blog' });
 
   let post: Post | null = null;
@@ -231,12 +232,14 @@ interface BlogPostPageProps {
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const { slug } = await params;
+  const { slug: slugParam } = await params;
+  // Normalize to WP's stored post_name (lowercase percent-encoding) so CJK
+  // guide slugs resolve — see generateMetadata / lib/utils/wp-slug.
+  const slug = toWpPostName(slugParam);
   // See generateMetadata above: resolve the UI locale from the guide's own
   // language category so the page (and the (guide) layout's chrome) render in
   // the post's language. ISR-safe (slug-derived, no headers/cookies).
   const locale = await getGuideLocaleBySlug(slug);
-  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'blog' });
   // BCP-47 tag for date/number formatting, matching the resolved guide locale.
   const intlLocale = { en: 'en-US', es: 'es-ES', zh: 'zh-TW', ja: 'ja-JP' }[locale];

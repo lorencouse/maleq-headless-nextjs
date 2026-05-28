@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages } from 'next-intl/server';
 import StorefrontChrome from '@/components/layout/StorefrontChrome';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
 
@@ -33,7 +33,10 @@ export default async function GuidePostLayout({
   const { slug } = await params;
   const locale = await getGuideLocaleBySlug(slug);
 
-  setRequestLocale(locale);
+  // NOTE: deliberately NOT calling setRequestLocale(locale). On these
+  // content-root routes it's a no-op for getLocale() (no next-intl middleware),
+  // AND it THROWS for zh/ja because those aren't routing.locales. We pass the
+  // locale explicitly to getMessages() and the provider instead.
   const messages = await getMessages({ locale });
 
   return (
