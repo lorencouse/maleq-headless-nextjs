@@ -57,13 +57,13 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
     try {
       const { loadFlatCategories } = await import('@/lib/db/category-loader');
       const { loadBrands } = await import('@/lib/db/taxonomy-loader');
-      const { getAllPostSlugs } = await import('@/lib/db/post-queries');
+      const { loadGuideSitemapEntries } = await import('@/lib/db/guide-sitemap');
       const { loadBlogCategories, loadBlogTags } = await import('@/lib/db/blog-loader');
 
-      const [categories, brands, postSlugs, blogCategories, blogTags] = await Promise.all([
+      const [categories, brands, guideEntries, blogCategories, blogTags] = await Promise.all([
         loadFlatCategories(),
         loadBrands(),
-        getAllPostSlugs(),
+        loadGuideSitemapEntries(SITE_URL),
         loadBlogCategories(),
         loadBlogTags(),
       ]);
@@ -86,11 +86,12 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
           priority: 0.6,
         }));
 
-      const blogPages: MetadataRoute.Sitemap = postSlugs.map((slug) => ({
-        url: `${SITE_URL}/guides/${slug}`,
+      const blogPages: MetadataRoute.Sitemap = guideEntries.map((entry) => ({
+        url: `${SITE_URL}/guides/${entry.slug}`,
         lastModified: new Date(),
         changeFrequency: 'monthly',
         priority: 0.6,
+        ...(entry.languages ? { alternates: { languages: entry.languages } } : {}),
       }));
 
       const blogCategoryPages: MetadataRoute.Sitemap = blogCategories
@@ -112,7 +113,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
         }));
 
       const allUrls = [...staticPages, ...categoryPages, ...brandPages, ...blogPages, ...blogCategoryPages, ...blogTagPages];
-      console.log(`Sitemap segment 0: ${allUrls.length} URLs (categories: ${categories.length}, brands: ${brands.length}, posts: ${postSlugs.length})`);
+      console.log(`Sitemap segment 0: ${allUrls.length} URLs (categories: ${categories.length}, brands: ${brands.length}, posts: ${guideEntries.length})`);
       return allUrls;
     } catch (err) {
       console.warn('[sitemap] MySQL unavailable, returning static pages only:', err instanceof Error ? err.message : err);

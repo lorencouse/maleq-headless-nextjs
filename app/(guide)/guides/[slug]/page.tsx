@@ -48,6 +48,14 @@ import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 
+// Open Graph locale tags per guide language (zh = Traditional / Taiwan).
+const OG_LOCALE: Record<string, string> = {
+  en: 'en_US',
+  es: 'es_ES',
+  zh: 'zh_TW',
+  ja: 'ja_JP',
+};
+
 /**
  * Editor-curated guide translations (other-language versions of this post),
  * read via SQL. Guarded the same way as the recommendations block; returns []
@@ -158,6 +166,10 @@ export async function generateMetadata({
       description,
       url: `${SITE_URL}/guides/${slug}`,
       type: 'article',
+      locale: OG_LOCALE[locale] ?? OG_LOCALE.en,
+      alternateLocale: translations
+        .map((tr) => OG_LOCALE[tr.locale])
+        .filter((l): l is string => Boolean(l)),
       publishedTime: post.date,
       authors: post.author?.node?.name ? [post.author.node.name] : undefined,
       images: post.featuredImage?.node?.sourceUrl
