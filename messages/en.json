@@ -1180,5 +1180,71 @@
     "trackOrder": {
       "orderNumberRequired": "Order number is required"
     }
+  },
+  "shopHero": {
+    "eyebrow": "Premium Sex Toys",
+    "title": "Discover Your Fantasy",
+    "subtitle": "Shop our curated selection of premium products with fast, discreet shipping and satisfaction guaranteed.",
+    "ctaShopSale": "Shop Sale",
+    "ctaBrowseCategories": "Browse Categories",
+    "promoFreeShippingTitle": "Free Shipping",
+    "promoFreeShippingSubtitle": "On orders over $39",
+    "promoFreeShippingCta": "Shop Now",
+    "promoSaleTitle": "Sale Items",
+    "promoSaleSubtitle": "Up to 50% off select products",
+    "promoSaleCta": "View Deals",
+    "promoDiscreetTitle": "Discreet Packaging",
+    "promoDiscreetSubtitle": "Plain packaging on all orders",
+    "promoDiscreetCta": "Learn More"
+  },
+  "categoryHero": {
+    "breadcrumbShop": "Shop",
+    "productCount": "{count, plural, =1 {# product} other {# products}}",
+    "subcategoryCount": "{count, plural, =1 {# subcategory} other {# subcategories}}",
+    "browseProducts": "Browse Products",
+    "viewSubcategories": "View Subcategories",
+    "subcategoriesMobile": "Subcategories"
+  },
+  "brandHero": {
+    "breadcrumbShop": "Shop",
+    "breadcrumbBrands": "Brands",
+    "productCount": "{count, plural, =1 {# product} other {# products}}",
+    "browseProducts": "Browse Products"
+  },
+  "shopPage": {
+    "filtersHeading": "Filters",
+    "filtersMobileButton": "Filters",
+    "showingProducts": "Showing {count, plural, =1 {# product} other {# products}}",
+    "updatingResults": "Updating results...",
+    "noProductsFound": "No products found",
+    "tryAdjustingFilters": "Try adjusting your filters to find what you're looking for.",
+    "clearFilters": "Clear Filters",
+    "loadingMore": "Loading more products...",
+    "loadMore": "Load More Products",
+    "featuredTitle": "Featured Products",
+    "featuredSubtitle": "Hand-picked favorites just for you",
+    "viewAll": "View All",
+    "metaShopTitle": "Shop",
+    "metaShopOgTitle": "Shop | Male Q",
+    "metaShopDescription": "Browse our collection of quality products. Filter by category, price, and more.",
+    "metaSearchTitle": "Search results for \"{query}\"",
+    "metaSearchDescription": "Browse search results for \"{query}\" in our collection of quality products.",
+    "h1AllProducts": "All Products",
+    "h1FilteredResults": "Filtered Results",
+    "h1SearchResults": "Search results for \"{query}\"",
+    "blurbAllProducts": "Browse our complete collection of premium products",
+    "blurbFiltered": "Showing {count, plural, =1 {# product} other {# products}} matching your criteria",
+    "blurbSearchFound": "Found {count, plural, =1 {# product} other {# products}}",
+    "showFeaturedSections": "Show featured sections",
+    "categoryNotFound": "Category Not Found",
+    "categoryMetaTitle": "{name} | Shop",
+    "categoryMetaOgTitle": "{name} | Male Q",
+    "categoryMetaDescription": "Browse our {name} collection at Male Q. {count, plural, =1 {# product} other {# products}} available with fast, discreet shipping.",
+    "categoryFilteredResults": "Filtered Results",
+    "categoryAllOf": "All {name}",
+    "categoryCountSuffixMatching": "{count, plural, =1 {# product} other {# products}} matching your filters",
+    "categoryCountSuffixAvailable": "{count, plural, =1 {# product} other {# products}} available",
+    "breadcrumbHome": "Home",
+    "breadcrumbSexToys": "Sex Toys"
   }
 }

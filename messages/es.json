@@ -1180,5 +1180,71 @@
     "trackOrder": {
       "orderNumberRequired": "El número de pedido es obligatorio"
     }
+  },
+  "shopHero": {
+    "eyebrow": "Juguetes Sexuales Premium",
+    "title": "Descubre tu Fantasía",
+    "subtitle": "Compra nuestra selección curada de productos premium con envío rápido, discreto y satisfacción garantizada.",
+    "ctaShopSale": "Ver Ofertas",
+    "ctaBrowseCategories": "Explorar Categorías",
+    "promoFreeShippingTitle": "Envío Gratis",
+    "promoFreeShippingSubtitle": "En pedidos mayores a $39",
+    "promoFreeShippingCta": "Comprar Ahora",
+    "promoSaleTitle": "Artículos en Oferta",
+    "promoSaleSubtitle": "Hasta 50% de descuento en productos seleccionados",
+    "promoSaleCta": "Ver Ofertas",
+    "promoDiscreetTitle": "Embalaje Discreto",
+    "promoDiscreetSubtitle": "Embalaje sencillo en todos los pedidos",
+    "promoDiscreetCta": "Saber Más"
+  },
+  "categoryHero": {
+    "breadcrumbShop": "Tienda",
+    "productCount": "{count, plural, one {# producto} other {# productos}}",
+    "subcategoryCount": "{count, plural, one {# subcategoría} other {# subcategorías}}",
+    "browseProducts": "Ver Productos",
+    "viewSubcategories": "Ver Subcategorías",
+    "subcategoriesMobile": "Subcategorías"
+  },
+  "brandHero": {
+    "breadcrumbShop": "Tienda",
+    "breadcrumbBrands": "Marcas",
+    "productCount": "{count, plural, one {# producto} other {# productos}}",
+    "browseProducts": "Ver Productos"
+  },
+  "shopPage": {
+    "filtersHeading": "Filtros",
+    "filtersMobileButton": "Filtros",
+    "showingProducts": "Mostrando {count, plural, one {# producto} other {# productos}}",
+    "updatingResults": "Actualizando resultados...",
+    "noProductsFound": "No se encontraron productos",
+    "tryAdjustingFilters": "Intenta ajustar tus filtros para encontrar lo que buscas.",
+    "clearFilters": "Limpiar Filtros",
+    "loadingMore": "Cargando más productos...",
+    "loadMore": "Cargar Más Productos",
+    "featuredTitle": "Productos Destacados",
+    "featuredSubtitle": "Favoritos seleccionados especialmente para ti",
+    "viewAll": "Ver Todos",
+    "metaShopTitle": "Tienda",
+    "metaShopOgTitle": "Tienda | Male Q",
+    "metaShopDescription": "Explora nuestra colección de productos de calidad. Filtra por categoría, precio y más.",
+    "metaSearchTitle": "Resultados de búsqueda para \"{query}\"",
+    "metaSearchDescription": "Explora los resultados de búsqueda para \"{query}\" en nuestra colección de productos de calidad.",
+    "h1AllProducts": "Todos los Productos",
+    "h1FilteredResults": "Resultados Filtrados",
+    "h1SearchResults": "Resultados de búsqueda para \"{query}\"",
+    "blurbAllProducts": "Explora nuestra colección completa de productos premium",
+    "blurbFiltered": "Mostrando {count, plural, one {# producto} other {# productos}} que coinciden con tus criterios",
+    "blurbSearchFound": "Se {count, plural, one {encontró # producto} other {encontraron # productos}}",
+    "showFeaturedSections": "Mostrar secciones destacadas",
+    "categoryNotFound": "Categoría No Encontrada",
+    "categoryMetaTitle": "{name} | Tienda",
+    "categoryMetaOgTitle": "{name} | Male Q",
+    "categoryMetaDescription": "Explora nuestra colección de {name} en Male Q. {count, plural, one {# producto disponible} other {# productos disponibles}} con envío rápido y discreto.",
+    "categoryFilteredResults": "Resultados Filtrados",
+    "categoryAllOf": "Todos los {name}",
+    "categoryCountSuffixMatching": "{count, plural, one {# producto coincide} other {# productos coinciden}} con tus filtros",
+    "categoryCountSuffixAvailable": "{count, plural, one {# producto disponible} other {# productos disponibles}}",
+    "breadcrumbHome": "Inicio",
+    "breadcrumbSexToys": "Juguetes Sexuales"
   }
 }

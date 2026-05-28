@@ -1,86 +1,89 @@
 'use client';
 
 import Link from 'next/link';
-
-interface PromoCard {
-  title: string;
-  subtitle: string;
-  cta: string;
-  href: string;
-  bgColor: string;
-  icon?: React.ReactNode;
-}
-
-const promoCards: PromoCard[] = [
-  {
-    title: 'Free Shipping',
-    subtitle: 'On orders over $39',
-    cta: 'Shop Now',
-    href: '/shop',
-    bgColor: 'bg-gradient-to-br from-primary to-primary-hover',
-    icon: (
-      <svg
-        className='w-8 h-8'
-        fill='none'
-        stroke='currentColor'
-        viewBox='0 0 24 24'
-      >
-        <path
-          strokeLinecap='round'
-          strokeLinejoin='round'
-          strokeWidth={1.5}
-          d='M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'
-        />
-      </svg>
-    ),
-  },
-  {
-    title: 'Sale Items',
-    subtitle: 'Up to 50% off select products',
-    cta: 'View Deals',
-    href: '/shop?onSale=true',
-    bgColor: 'bg-gradient-to-br from-accent to-orange-600',
-    icon: (
-      <svg
-        className='w-8 h-8'
-        fill='none'
-        stroke='currentColor'
-        viewBox='0 0 24 24'
-      >
-        <path
-          strokeLinecap='round'
-          strokeLinejoin='round'
-          strokeWidth={1.5}
-          d='M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'
-        />
-      </svg>
-    ),
-  },
-  {
-    title: 'Discreet Packaging',
-    subtitle: 'Plain packaging on all orders',
-    cta: 'Learn More',
-    href: '/shipping-returns',
-    bgColor: 'bg-gradient-to-br from-secondary to-indigo-700',
-    icon: (
-      <svg
-        className='w-8 h-8'
-        fill='none'
-        stroke='currentColor'
-        viewBox='0 0 24 24'
-      >
-        <path
-          strokeLinecap='round'
-          strokeLinejoin='round'
-          strokeWidth={1.5}
-          d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
-        />
-      </svg>
-    ),
-  },
-];
+import { useTranslations } from 'next-intl';
 
 export default function ShopHero() {
+  const t = useTranslations('shopHero');
+
+  // Promo cards are built at render time so titles/subtitles/CTAs translate
+  // alongside the rest of the hero. Icons remain JSX since they're locale-free.
+  const promoCards: {
+    title: string;
+    subtitle: string;
+    cta: string;
+    href: string;
+    bgColor: string;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      title: t('promoFreeShippingTitle'),
+      subtitle: t('promoFreeShippingSubtitle'),
+      cta: t('promoFreeShippingCta'),
+      href: '/shop',
+      bgColor: 'bg-gradient-to-br from-primary to-primary-hover',
+      icon: (
+        <svg
+          className='w-8 h-8'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={1.5}
+            d='M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4'
+          />
+        </svg>
+      ),
+    },
+    {
+      title: t('promoSaleTitle'),
+      subtitle: t('promoSaleSubtitle'),
+      cta: t('promoSaleCta'),
+      href: '/shop?onSale=true',
+      bgColor: 'bg-gradient-to-br from-accent to-orange-600',
+      icon: (
+        <svg
+          className='w-8 h-8'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={1.5}
+            d='M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z'
+          />
+        </svg>
+      ),
+    },
+    {
+      title: t('promoDiscreetTitle'),
+      subtitle: t('promoDiscreetSubtitle'),
+      cta: t('promoDiscreetCta'),
+      href: '/shipping-returns',
+      bgColor: 'bg-gradient-to-br from-secondary to-indigo-700',
+      icon: (
+        <svg
+          className='w-8 h-8'
+          fill='none'
+          stroke='currentColor'
+          viewBox='0 0 24 24'
+        >
+          <path
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            strokeWidth={1.5}
+            d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
+          />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <section className='mb-10 select-none'>
       {/* Main Hero Banner */}
@@ -97,21 +100,20 @@ export default function ShopHero() {
         <div className='relative px-6 py-12 sm:px-12 sm:py-16 lg:py-20'>
           <div className='max-w-2xl'>
             <span className='inline-block px-3 py-1 text-xs font-semibold tracking-wider text-primary-light bg-primary/20 rounded-full mb-4 uppercase'>
-              Premium Sex Toys
+              {t('eyebrow')}
             </span>
             <h1 className='text-white text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight'>
-              Discover Your Fantasy
+              {t('title')}
             </h1>
             <p className='text-white/80 text-lg mb-8 max-w-lg'>
-              Shop our curated selection of premium products with fast, discreet
-              shipping and satisfaction guaranteed.
+              {t('subtitle')}
             </p>
             <div className='flex flex-wrap gap-4'>
               <Link
                 href='/shop?onSale=true'
                 className='inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors'
               >
-                Shop Sale
+                {t('ctaShopSale')}
                 <svg
                   className='w-5 h-5'
                   fill='none'
@@ -130,7 +132,7 @@ export default function ShopHero() {
                 href='#categories'
                 className='inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm'
               >
-                Browse Categories
+                {t('ctaBrowseCategories')}
               </Link>
             </div>
           </div>
