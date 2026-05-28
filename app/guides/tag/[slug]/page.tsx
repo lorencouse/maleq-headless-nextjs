@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { getBlogPosts } from '@/lib/blog/blog-service';
@@ -45,11 +45,13 @@ async function fetchTag(slug: string): Promise<Tag | null> {
 
 export async function generateMetadata({ params }: BlogTagPageProps): Promise<Metadata> {
   const { slug } = await params;
-  // Hard-coded 'en' instead of getLocale(): this page has `revalidate = N`
-  // (ISR) and next-intl's getLocale() reads request headers, which throws
-  // DYNAMIC_SERVER_USAGE under ISR. Per D1=A, content-root routes render
-  // with English chrome regardless of cookie.
+  // setRequestLocale + hard-coded 'en': this page has `revalidate = N` (ISR)
+  // and any next-intl API that resolves locale from request reads headers(),
+  // throwing DYNAMIC_SERVER_USAGE. setRequestLocale pre-seeds the cached
+  // request locale so downstream next-intl calls stay static. Per D1=A,
+  // content-root routes render with English chrome regardless of cookie.
   const locale = 'en';
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'blog' });
   const tag = await fetchTag(slug);
 
@@ -120,8 +122,9 @@ export const dynamicParams = true; // Allow runtime generation
 
 export default async function BlogTagPage({ params }: BlogTagPageProps) {
   const { slug } = await params;
-  // See generateMetadata above for why this is hard-coded 'en' instead of getLocale().
+  // See generateMetadata above for why this is hard-coded 'en' + setRequestLocale.
   const locale = 'en';
+  setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'blog' });
 
   // Fetch tag and posts in parallel
