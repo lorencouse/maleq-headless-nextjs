@@ -467,6 +467,30 @@
       "continueToShipping": "Continue to Shipping",
       "phoneInvalid": "Please enter a valid phone number"
     },
+    "shippingMethod": {
+      "heading": "Shipping Method",
+      "free": "FREE",
+      "freeShippingNotice": "Add {amount} more to qualify for free standard shipping!",
+      "completeAddressNotice": "Complete your shipping address to continue to payment.",
+      "continueToPayment": "Continue to Payment"
+    },
+    "payment": {
+      "cardDetails": "Card Details",
+      "errorPaymentGeneric": "An error occurred with your payment",
+      "errorUnexpected": "An unexpected error occurred",
+      "errorPaymentFailed": "Payment failed",
+      "errorAdditionalAuth": "Additional authentication required",
+      "errorProcessing": "Payment processing failed",
+      "processing": "Processing...",
+      "completeOrder": "Complete Order",
+      "sslNotice": "Your payment is secured with 256-bit SSL encryption"
+    },
+    "express": {
+      "heading": "Express Checkout",
+      "orContinueBelow": "or continue below",
+      "failedCreatePayment": "Failed to create payment ({status})",
+      "failedCreateOrder": "Failed to create order"
+    },
     "shippingAddress": {
       "heading": "Shipping Address",
       "firstName": "First Name",

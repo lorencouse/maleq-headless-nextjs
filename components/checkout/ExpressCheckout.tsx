@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   Elements,
   ExpressCheckoutElement,
@@ -33,6 +34,8 @@ import { clearPendingCheckout, savePendingCheckout } from '@/lib/checkout/pendin
  * Inner component that uses Stripe hooks (must be inside Elements provider)
  */
 function ExpressCheckoutForm() {
+  const t = useTranslations('checkout.express');
+  const tPayment = useTranslations('checkout.payment');
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
@@ -151,7 +154,7 @@ function ExpressCheckoutForm() {
         });
 
         if (!intentResponse.ok) {
-          let message = `Failed to create payment (${intentResponse.status})`;
+          let message = t('failedCreatePayment', { status: intentResponse.status });
           try {
             const errorData = await intentResponse.json() as { error?: string };
             if (errorData?.error) {
@@ -268,7 +271,7 @@ function ExpressCheckoutForm() {
               declineCode: confirmError.decline_code || null,
             },
           });
-          setError(confirmError.message || 'Payment failed');
+          setError(confirmError.message || tPayment('errorPaymentFailed'));
           return;
         }
 
@@ -330,7 +333,7 @@ function ExpressCheckoutForm() {
         if (!orderResponse.ok) {
           const errorData = await orderResponse.json();
           orderCreateFailedAfterServerResponse = true;
-          throw new Error(errorData.error || 'Failed to create order');
+          throw new Error(errorData.error || t('failedCreateOrder'));
         }
 
         const orderData = await orderResponse.json();
@@ -354,7 +357,7 @@ function ExpressCheckoutForm() {
         router.push(`/order-confirmation/${orderData.orderId}?key=${orderData.orderKey}`);
       } catch (err) {
         console.error('Express checkout error:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Payment failed';
+        const errorMessage = err instanceof Error ? err.message : tPayment('errorPaymentFailed');
         const eventType = failureStage === 'order'
           ? 'checkout_express_order_create_failed'
           : failureStage === 'confirm'
@@ -395,6 +398,8 @@ function ExpressCheckoutForm() {
       router,
       token,
       authenticatedCustomerId,
+      t,
+      tPayment,
     ]
   );
 
@@ -435,6 +440,7 @@ function ExpressCheckoutForm() {
  * Shown at the top of checkout before the regular form.
  */
 export default function ExpressCheckout() {
+  const t = useTranslations('checkout.express');
   const subtotal = useCartSubtotal();
   const shipping = useCartStore((state) => state.shipping);
 
@@ -449,7 +455,7 @@ export default function ExpressCheckout() {
 
   return (
     <div className="bg-card border border-border rounded-lg p-4">
-      <p className="text-sm font-medium text-foreground mb-3">Express Checkout</p>
+      <p className="text-sm font-medium text-foreground mb-3">{t('heading')}</p>
       <Elements
         stripe={getStripe()}
         options={{
@@ -472,7 +478,7 @@ export default function ExpressCheckout() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-card px-3 text-muted-foreground">or continue below</span>
+          <span className="bg-card px-3 text-muted-foreground">{t('orContinueBelow')}</span>
         </div>
       </div>
     </div>

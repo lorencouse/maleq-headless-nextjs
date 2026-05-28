@@ -467,6 +467,30 @@
       "continueToShipping": "Continuar al envío",
       "phoneInvalid": "Introduce un número de teléfono válido"
     },
+    "shippingMethod": {
+      "heading": "Método de envío",
+      "free": "GRATIS",
+      "freeShippingNotice": "¡Añade {amount} más para conseguir envío estándar gratis!",
+      "completeAddressNotice": "Completa tu dirección de envío para continuar al pago.",
+      "continueToPayment": "Continuar al pago"
+    },
+    "payment": {
+      "cardDetails": "Datos de la tarjeta",
+      "errorPaymentGeneric": "Ocurrió un error con tu pago",
+      "errorUnexpected": "Ocurrió un error inesperado",
+      "errorPaymentFailed": "El pago falló",
+      "errorAdditionalAuth": "Se requiere autenticación adicional",
+      "errorProcessing": "Falló el procesamiento del pago",
+      "processing": "Procesando...",
+      "completeOrder": "Completar pedido",
+      "sslNotice": "Tu pago está protegido con cifrado SSL de 256 bits"
+    },
+    "express": {
+      "heading": "Pago exprés",
+      "orContinueBelow": "o continúa abajo",
+      "failedCreatePayment": "No se pudo crear el pago ({status})",
+      "failedCreateOrder": "No se pudo crear el pedido"
+    },
     "shippingAddress": {
       "heading": "Dirección de envío",
       "firstName": "Nombre",
