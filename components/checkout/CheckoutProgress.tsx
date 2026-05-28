@@ -1,22 +1,28 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 type CheckoutStep = 'information' | 'shipping' | 'payment';
 
 interface CheckoutProgressProps {
   currentStep: CheckoutStep;
 }
 
+// Steps store translation key fragments rather than display strings; labels
+// are resolved at render time. The order here dictates the visual sequence
+// and the "complete vs upcoming" calculation.
 const steps = [
-  { id: 'information' as const, name: 'Information', description: 'Contact & Address' },
-  { id: 'shipping' as const, name: 'Shipping', description: 'Delivery Method' },
-  { id: 'payment' as const, name: 'Payment', description: 'Complete Order' },
+  { id: 'information' as const, nameKey: 'informationName' as const, descKey: 'informationDesc' as const },
+  { id: 'shipping' as const, nameKey: 'shippingName' as const, descKey: 'shippingDesc' as const },
+  { id: 'payment' as const, nameKey: 'paymentName' as const, descKey: 'paymentDesc' as const },
 ];
 
 export default function CheckoutProgress({ currentStep }: CheckoutProgressProps) {
+  const t = useTranslations('checkout.progress');
   const currentIndex = steps.findIndex(s => s.id === currentStep);
 
   return (
-    <nav aria-label="Checkout progress" className="mb-8">
+    <nav aria-label={t('ariaLabel')} className="mb-8">
       <ol className="flex items-center justify-between">
         {steps.map((step, index) => {
           const isCompleted = index < currentIndex;
@@ -62,10 +68,10 @@ export default function CheckoutProgress({ currentStep }: CheckoutProgressProps)
                       isCurrent ? 'text-foreground' : isCompleted ? 'text-primary' : 'text-muted-foreground'
                     }`}
                   >
-                    {step.name}
+                    {t(step.nameKey)}
                   </p>
                   <p className="text-xs text-muted-foreground hidden sm:block">
-                    {step.description}
+                    {t(step.descKey)}
                   </p>
                 </div>
               </div>

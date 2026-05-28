@@ -424,6 +424,40 @@
       "toastFailedCopy": "No se pudo copiar la dirección"
     }
   },
+  "checkout": {
+    "meta": {
+      "title": "Finalizar compra"
+    },
+    "heading": "Finalizar compra",
+    "subtitle": "Completa tu pedido de forma segura",
+    "finalizingPayment": "Finalizando tu pago. Espera un momento...",
+    "trust": {
+      "sslEncrypted": "Cifrado SSL",
+      "secureCheckout": "Pago seguro",
+      "safePayment": "Pago protegido"
+    },
+    "progress": {
+      "ariaLabel": "Progreso del pago",
+      "informationName": "Información",
+      "informationDesc": "Contacto y dirección",
+      "shippingName": "Envío",
+      "shippingDesc": "Método de entrega",
+      "paymentName": "Pago",
+      "paymentDesc": "Completar pedido"
+    },
+    "mobileSummary": {
+      "show": "Mostrar resumen del pedido",
+      "hide": "Ocultar resumen del pedido",
+      "itemCount": "({count, plural, =1 {# artículo} other {# artículos}})"
+    },
+    "redirect": {
+      "paymentNotCompleted": "El pago no se completó. Inténtalo de nuevo con otro método de pago.",
+      "couldNotRecover": "No pudimos recuperar tu pedido pendiente. Contacta con soporte si se ha realizado el cargo.",
+      "finalizingOrder": "Finalizando tu pedido...",
+      "failedToFinalize": "No se pudo finalizar el pedido",
+      "unableToFinalize": "No se pudo finalizar tu pedido automáticamente. Contacta con soporte si se capturó el pago."
+    }
+  },
   "validation": {
     "common": {
       "emailRequired": "El correo electrónico es obligatorio",

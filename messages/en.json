@@ -424,6 +424,40 @@
       "toastFailedCopy": "Failed to copy address"
     }
   },
+  "checkout": {
+    "meta": {
+      "title": "Checkout"
+    },
+    "heading": "Checkout",
+    "subtitle": "Complete your order securely",
+    "finalizingPayment": "Finalizing your payment. Please wait...",
+    "trust": {
+      "sslEncrypted": "SSL Encrypted",
+      "secureCheckout": "Secure Checkout",
+      "safePayment": "Safe Payment"
+    },
+    "progress": {
+      "ariaLabel": "Checkout progress",
+      "informationName": "Information",
+      "informationDesc": "Contact & Address",
+      "shippingName": "Shipping",
+      "shippingDesc": "Delivery Method",
+      "paymentName": "Payment",
+      "paymentDesc": "Complete Order"
+    },
+    "mobileSummary": {
+      "show": "Show order summary",
+      "hide": "Hide order summary",
+      "itemCount": "({count, plural, =1 {# item} other {# items}})"
+    },
+    "redirect": {
+      "paymentNotCompleted": "Payment was not completed. Please try again with another payment method.",
+      "couldNotRecover": "We could not recover your pending checkout. Please contact support if you were charged.",
+      "finalizingOrder": "Finalizing your order...",
+      "failedToFinalize": "Failed to finalize order",
+      "unableToFinalize": "Unable to finalize your order automatically. Please contact support if payment was captured."
+    }
+  },
   "validation": {
     "common": {
       "emailRequired": "Email is required",

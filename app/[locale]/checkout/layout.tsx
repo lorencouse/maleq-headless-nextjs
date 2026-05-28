@@ -1,12 +1,21 @@
 import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'Checkout',
-  robots: { index: false, follow: false },
-  alternates: {
-    canonical: '/checkout',
-  },
+type Props = {
+  params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'checkout.meta' });
+  return {
+    title: t('title'),
+    robots: { index: false, follow: false },
+    alternates: {
+      canonical: '/checkout',
+    },
+  };
+}
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
