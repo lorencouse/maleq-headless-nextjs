@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { VariationImage, GalleryProductImage } from '@/lib/types/product';
 
 interface VariationImageMapping {
@@ -30,6 +31,7 @@ export default function ProductImageGallery({
   productDatabaseId,
 }: ProductImageGalleryProps) {
   const router = useRouter();
+  const t = useTranslations('productGallery');
   const [selectedImage, setSelectedImage] = useState(images[0] || null);
   const [mainImageLoaded, setMainImageLoaded] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -169,7 +171,7 @@ export default function ProductImageGallery({
     return (
       <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
         <div className="flex items-center justify-center h-full text-muted-foreground">
-          No Image Available
+          {t('noImageAvailable')}
         </div>
       </div>
     );
@@ -197,7 +199,7 @@ export default function ProductImageGallery({
           />
         ) : failedImages.has(currentImageUrl) ? (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            Image unavailable
+            {t('imageUnavailable')}
           </div>
         ) : (
           <>
@@ -222,7 +224,7 @@ export default function ProductImageGallery({
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
               </svg>
-              Tap to zoom
+              {t('tapToZoom')}
             </div>
           </>
         )}
@@ -235,7 +237,7 @@ export default function ProductImageGallery({
             disabled={isSettingDefault}
             className="absolute bottom-2 left-2 z-10 px-3 py-1.5 text-xs font-medium rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-colors disabled:opacity-50"
           >
-            {isSettingDefault ? 'Setting\u2026' : 'Set as Default'}
+            {isSettingDefault ? t('settingDefault') : t('setAsDefault')}
           </button>
         )}
       </div>
@@ -248,7 +250,7 @@ export default function ProductImageGallery({
             <button
               onClick={() => scroll('left')}
               className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-8 sm:h-8 bg-background/90 hover:bg-background border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:text-primary transition-colors"
-              aria-label="Scroll left"
+              aria-label={t('scrollLeftAria')}
             >
               <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -280,7 +282,7 @@ export default function ProductImageGallery({
                   </div>
                 ) : failedImages.has(image.url) ? (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                    N/A
+                    {t('thumbnailFailedShort')}
                   </div>
                 ) : (
                   <Image
@@ -302,7 +304,7 @@ export default function ProductImageGallery({
             <button
               onClick={() => scroll('right')}
               className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-8 sm:h-8 bg-background/90 hover:bg-background border border-border rounded-full shadow-md flex items-center justify-center text-foreground hover:text-primary transition-colors"
-              aria-label="Scroll right"
+              aria-label={t('scrollRightAria')}
             >
               <svg className="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -322,7 +324,7 @@ export default function ProductImageGallery({
           <button
             onClick={() => setIsLightboxOpen(false)}
             className="absolute top-4 right-4 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-            aria-label="Close zoom"
+            aria-label={t('closeZoomAria')}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -335,7 +337,7 @@ export default function ProductImageGallery({
               <button
                 onClick={(e) => { e.stopPropagation(); navigateLightbox('prev'); }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-                aria-label="Previous image"
+                aria-label={t('previousImageAria')}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -344,7 +346,7 @@ export default function ProductImageGallery({
               <button
                 onClick={(e) => { e.stopPropagation(); navigateLightbox('next'); }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-                aria-label="Next image"
+                aria-label={t('nextImageAria')}
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
