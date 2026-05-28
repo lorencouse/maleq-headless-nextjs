@@ -38,5 +38,19 @@
     "newsletterTitle": "Boletín",
     "newsletterDescription": "Suscríbete para recibir novedades sobre productos y artículos.",
     "copyright": "© {year} Male Q. Todos los derechos reservados."
+  },
+  "mobileMenu": {
+    "menu": "Menú",
+    "closeMenu": "Cerrar menú",
+    "signIn": "Iniciar sesión",
+    "register": "Regístrate",
+    "viewAll": "Ver todo",
+    "viewAllSection": "Ver todo: {section}",
+    "accountSectionTitle": "Cuenta",
+    "signOut": "Cerrar sesión",
+    "quickActions": "Acceso rápido",
+    "wishlist": "Lista de deseos",
+    "notifications": "Notificaciones",
+    "darkMode": "Modo oscuro"
   }
 }

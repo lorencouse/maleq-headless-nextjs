@@ -38,5 +38,19 @@
     "newsletterTitle": "Newsletter",
     "newsletterDescription": "Subscribe to get updates on new products and blog posts.",
     "copyright": "© {year} Male Q. All rights reserved."
+  },
+  "mobileMenu": {
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "signIn": "Sign In",
+    "register": "Register",
+    "viewAll": "View All",
+    "viewAllSection": "View All {section}",
+    "accountSectionTitle": "Account",
+    "signOut": "Sign Out",
+    "quickActions": "Quick Actions",
+    "wishlist": "Wishlist",
+    "notifications": "Notifications",
+    "darkMode": "Dark Mode"
   }
 }

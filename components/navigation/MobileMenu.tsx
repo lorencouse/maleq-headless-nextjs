@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
 import {
@@ -28,6 +29,7 @@ function NavIcon({ iconKey, className = 'w-4 h-4' }: { iconKey?: string; classNa
 }
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
+  const t = useTranslations('mobileMenu');
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
   const wishlistItemCount = useWishlistItemCount();
@@ -127,11 +129,11 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Menu</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('menu')}</h2>
           <button
             onClick={onClose}
             className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
-            aria-label="Close menu"
+            aria-label={t('closeMenu')}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -160,14 +162,14 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 onClick={onClose}
                 className="flex-1 py-2.5 text-center border border-input rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
               >
-                Sign In
+                {t('signIn')}
               </Link>
               <Link
                 href="/register"
                 onClick={onClose}
                 className="flex-1 py-2.5 text-center bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
               >
-                Register
+                {t('register')}
               </Link>
             </div>
           )}
@@ -270,7 +272,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                 onClick={onClose}
                                 className="block px-4 py-2.5 min-h-[44px] text-xs font-medium text-primary hover:bg-muted rounded-lg transition-colors flex items-center"
                               >
-                                View All &rarr;
+                                {t('viewAll')} &rarr;
                               </Link>
                             </li>
                           </ul>
@@ -285,7 +287,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         onClick={onClose}
                         className="block px-4 py-2.5 min-h-[44px] text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors mt-2 flex items-center"
                       >
-                        View All {section.label} &rarr;
+                        {t('viewAllSection', { section: section.label })} &rarr;
                       </Link>
                     )}
                   </div>
@@ -316,7 +318,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         {isAuthenticated && (
           <div className="p-4 border-t border-border">
             <p className="px-4 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              Account
+              {t('accountSectionTitle')}
             </p>
             <ul className="space-y-1">
               {accountNavigation.map((link) => (
@@ -335,7 +337,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   onClick={handleLogout}
                   className="block w-full text-left px-4 py-3 text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors min-h-[44px]"
                 >
-                  Sign Out
+                  {t('signOut')}
                 </button>
               </li>
             </ul>
@@ -345,7 +347,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         {/* Quick Actions */}
         <div className="p-4 border-t border-border">
           <p className="px-4 mb-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Quick Actions
+            {t('quickActions')}
           </p>
           <ul className="space-y-1">
             <li>
@@ -358,7 +360,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                   </svg>
-                  Wishlist
+                  {t('wishlist')}
                 </span>
                 {wishlistItemCount > 0 && (
                   <span className="bg-primary text-primary-foreground text-xs font-semibold rounded-full h-5 min-w-[20px] px-1.5 flex items-center justify-center">
@@ -378,7 +380,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                     </svg>
-                    Notifications
+                    {t('notifications')}
                   </span>
                   {notificationUnreadCount > 0 && (
                     <span className="bg-destructive rounded-full h-2.5 w-2.5" />
@@ -392,7 +394,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         {/* Theme Toggle */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center justify-between px-4 py-2">
-            <span className="text-sm text-foreground">Dark Mode</span>
+            <span className="text-sm text-foreground">{t('darkMode')}</span>
             <ThemeToggle />
           </div>
         </div>
