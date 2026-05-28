@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getTranslations, getLocale } from 'next-intl/server';
 import { getOrder } from '@/lib/woocommerce/orders';
 import OrderDetails from '@/components/order/OrderDetails';
 import ClearCartOnMount from '@/components/checkout/ClearCartOnMount';
@@ -13,6 +14,8 @@ interface OrderConfirmationPageProps {
 export default async function OrderConfirmationPage({ params, searchParams }: OrderConfirmationPageProps) {
   const { orderId } = await params;
   const { key } = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations('orderConfirmation');
 
   // Order key is required to prevent unauthorized access to order details
   if (!key) {
@@ -47,19 +50,20 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-foreground mb-2">Order Confirmed!</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-2">{t('successHeading')}</h1>
         <p className="text-muted-foreground">
-          Thank you for your order. We&apos;ve sent a confirmation email to{' '}
-          <span className="font-medium text-foreground">{order.billing.email}</span>
+          {t.rich('thankYou', {
+            email: () => <span className="font-medium text-foreground">{order.billing.email}</span>,
+          })}
         </p>
       </div>
 
       {/* Order Number */}
       <div className="bg-muted/30 rounded-lg p-4 text-center mb-8">
-        <p className="text-sm text-muted-foreground">Order Number</p>
+        <p className="text-sm text-muted-foreground">{t('orderNumber')}</p>
         <p className="text-2xl font-bold text-foreground">#{order.id}</p>
         <p className="text-sm text-muted-foreground mt-1">
-          {new Date(order.date_created).toLocaleDateString('en-US', {
+          {new Date(order.date_created).toLocaleDateString(locale, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',
@@ -77,22 +81,22 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
           href="/shop"
           className="py-3 px-6 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center"
         >
-          Continue Shopping
+          {t('continueShopping')}
         </Link>
         <Link
           href="/account/orders"
           className="py-3 px-6 border border-border text-foreground rounded-lg hover:bg-muted transition-colors font-semibold text-center"
         >
-          View All Orders
+          {t('viewAllOrders')}
         </Link>
       </div>
 
       {/* Support Info */}
       <div className="mt-12 text-center text-sm text-muted-foreground">
         <p>
-          Questions about your order?{' '}
+          {t('questionsAbout')}{' '}
           <Link href="/contact" className="text-primary hover:text-primary-hover">
-            Contact us
+            {t('contactUs')}
           </Link>
         </p>
       </div>
