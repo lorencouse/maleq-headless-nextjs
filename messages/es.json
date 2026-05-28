@@ -201,5 +201,34 @@
       "signIn": "Iniciar sesión",
       "createAccount": "Crear cuenta"
     }
+  },
+  "validation": {
+    "common": {
+      "emailRequired": "El correo electrónico es obligatorio",
+      "emailInvalid": "Introduce un correo electrónico válido"
+    },
+    "auth": {
+      "identifierRequired": "El correo electrónico o usuario es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria",
+      "firstNameRequired": "El nombre es obligatorio",
+      "firstNameTooLong": "El nombre es demasiado largo",
+      "lastNameRequired": "El apellido es obligatorio",
+      "lastNameTooLong": "El apellido es demasiado largo",
+      "passwordTooShort": "La contraseña debe tener al menos 12 caracteres",
+      "passwordTooLong": "La contraseña es demasiado larga",
+      "confirmPasswordRequired": "Confirma tu contraseña",
+      "passwordsMismatch": "Las contraseñas no coinciden"
+    },
+    "contact": {
+      "nameRequired": "El nombre es obligatorio",
+      "nameTooLong": "El nombre es demasiado largo",
+      "subjectRequired": "Selecciona un asunto",
+      "messageTooShort": "El mensaje debe tener al menos 10 caracteres",
+      "messageTooLong": "El mensaje es demasiado largo",
+      "orderInfoRequired": "Proporciona al menos uno: número de pedido, apellido o correo del pedido"
+    },
+    "trackOrder": {
+      "orderNumberRequired": "El número de pedido es obligatorio"
+    }
   }
 }

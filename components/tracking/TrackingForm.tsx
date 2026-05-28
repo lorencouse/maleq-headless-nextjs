@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { trackOrderSchema, type TrackOrderInput } from '@/lib/validations/tracking';
+import { useTranslations } from 'next-intl';
+import { getTrackOrderSchema, type TrackOrderInput } from '@/lib/validations/tracking';
 
 interface TrackingItem {
   tracking_provider: string;
@@ -34,6 +35,8 @@ interface OrderData {
 import { statusColors } from '@/lib/constants/status-colors';
 
 export default function TrackingForm() {
+  const tValidation = useTranslations('validation.trackOrder');
+  const tValidationCommon = useTranslations('validation.common');
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +46,7 @@ export default function TrackingForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<TrackOrderInput>({
-    resolver: zodResolver(trackOrderSchema),
+    resolver: zodResolver(getTrackOrderSchema(tValidation, tValidationCommon)),
   });
 
   const onSubmit = async (data: TrackOrderInput) => {

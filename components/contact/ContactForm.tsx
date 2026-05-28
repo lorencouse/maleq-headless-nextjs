@@ -3,11 +3,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { showSuccess, showError, showInfo } from '@/lib/utils/toast';
-import { contactSchema, type ContactFormData } from '@/lib/validations/contact';
+import { getContactSchema, type ContactFormData } from '@/lib/validations/contact';
 import { submitWithSync } from '@/lib/pwa/background-sync';
 
 export default function ContactForm() {
+  const tValidation = useTranslations('validation.contact');
+  const tValidationCommon = useTranslations('validation.common');
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -20,7 +23,7 @@ export default function ContactForm() {
     watch,
     formState: { errors },
   } = useForm<ContactFormData>({
-    resolver: zodResolver(contactSchema),
+    resolver: zodResolver(getContactSchema(tValidation, tValidationCommon)),
     defaultValues: {
       name: '',
       email: '',

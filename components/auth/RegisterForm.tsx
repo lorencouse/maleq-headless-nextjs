@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
+import { getRegisterSchema, type RegisterFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
@@ -15,6 +15,8 @@ const REGISTER_TIMEOUT_MS = 30_000;
 
 export default function RegisterForm() {
   const t = useTranslations('auth');
+  const tValidation = useTranslations('validation.auth');
+  const tValidationCommon = useTranslations('validation.common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -29,7 +31,7 @@ export default function RegisterForm() {
     formState: { errors },
     watch,
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(getRegisterSchema(tValidation, tValidationCommon)),
     defaultValues: {
       firstName: '',
       lastName: '',

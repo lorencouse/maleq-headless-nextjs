@@ -201,5 +201,34 @@
       "signIn": "Sign In",
       "createAccount": "Create Account"
     }
+  },
+  "validation": {
+    "common": {
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address"
+    },
+    "auth": {
+      "identifierRequired": "Email or username is required",
+      "passwordRequired": "Password is required",
+      "firstNameRequired": "First name is required",
+      "firstNameTooLong": "First name is too long",
+      "lastNameRequired": "Last name is required",
+      "lastNameTooLong": "Last name is too long",
+      "passwordTooShort": "Password must be at least 12 characters",
+      "passwordTooLong": "Password is too long",
+      "confirmPasswordRequired": "Please confirm your password",
+      "passwordsMismatch": "Passwords do not match"
+    },
+    "contact": {
+      "nameRequired": "Name is required",
+      "nameTooLong": "Name is too long",
+      "subjectRequired": "Please select a subject",
+      "messageTooShort": "Message must be at least 10 characters",
+      "messageTooLong": "Message is too long",
+      "orderInfoRequired": "Please provide at least one: order number, last name, or order email"
+    },
+    "trackOrder": {
+      "orderNumberRequired": "Order number is required"
+    }
   }
 }

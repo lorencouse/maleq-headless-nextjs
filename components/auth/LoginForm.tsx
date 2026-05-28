@@ -7,12 +7,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
+import { getLoginSchema, type LoginFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
 export default function LoginForm() {
   const t = useTranslations('auth');
+  const tValidation = useTranslations('validation.auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -26,7 +27,7 @@ export default function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(getLoginSchema(tValidation)),
     defaultValues: {
       identifier: '',
       password: '',
