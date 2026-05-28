@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import StorefrontChrome from '@/components/layout/StorefrontChrome';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
 import { staticRequestLocale } from '@/lib/i18n/guide-languages';
+import { staticIntlProviderProps } from '@/i18n/static-intl-props';
 // Statically import the catalogs (like the root layout) instead of calling
 // getMessages() — getMessages() resolves the request config dynamically, which
 // trips DYNAMIC_SERVER_USAGE on these ISR guide routes (500). Static imports
@@ -61,7 +62,10 @@ export default async function GuidePostLayout({
   const messages = CATALOGS[locale] ?? CATALOGS.en;
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    // timeZone/now/formats passed explicitly so this nested server provider
+    // never inherits them via getConfig()→headers() (DYNAMIC_SERVER_USAGE on
+    // this ISR route). See i18n/static-intl-props.ts.
+    <NextIntlClientProvider locale={locale} messages={messages} {...staticIntlProviderProps()}>
       <StorefrontChrome>{children}</StorefrontChrome>
     </NextIntlClientProvider>
   );

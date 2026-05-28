@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { DM_Sans, Outfit } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { routing } from "@/i18n/routing";
+import { staticIntlProviderProps } from "@/i18n/static-intl-props";
 // Import the default-locale messages statically so the root layout never has to
 // call getMessages() (which would prime next-intl's getConfig(undefined) cache
 // with English and starve [locale]/layout of the slot it needs to load Spanish).
@@ -188,7 +189,10 @@ export default async function RootLayout({
           url={SITE_URL}
           searchUrl={`${SITE_URL}/search?q={search_term_string}`}
         />
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        {/* timeZone/now/formats passed explicitly so this server provider never
+            inherits them via getConfig()→headers() — which would 500 the ISR
+            content-root routes (/guides, /shop, …). See i18n/static-intl-props.ts. */}
+        <NextIntlClientProvider locale={locale} messages={messages} {...staticIntlProviderProps()}>
           <QueryProvider>
             <ThemeProvider>
               <CartProvider>

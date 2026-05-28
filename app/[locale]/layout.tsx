@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { routing, type Locale } from '@/i18n/routing';
 import StorefrontChrome from '@/components/layout/StorefrontChrome';
+import { staticIntlProviderProps } from '@/i18n/static-intl-props';
 
 /**
  * Sub-layout for localized shell routes (about, contact, cart, etc.).
@@ -42,7 +43,9 @@ export default async function LocaleLayout({
   const messages = await getMessages({ locale });
 
   return (
-    <NextIntlClientProvider locale={locale} messages={messages}>
+    // timeZone/now/formats passed explicitly so this nested server provider
+    // never inherits them via getConfig()→headers(). See i18n/static-intl-props.ts.
+    <NextIntlClientProvider locale={locale} messages={messages} {...staticIntlProviderProps()}>
       <StorefrontChrome>{children}</StorefrontChrome>
     </NextIntlClientProvider>
   );
