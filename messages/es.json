@@ -491,6 +491,26 @@
       "failedCreatePayment": "No se pudo crear el pago ({status})",
       "failedCreateOrder": "No se pudo crear el pedido"
     },
+    "form": {
+      "processingTitle": "Procesando tu pedido...",
+      "processingHint": "Por favor, no cierres esta página",
+      "stepContact": "Información de contacto",
+      "stepShipping": "Envío",
+      "stepPayment": "Pago",
+      "edit": "Editar",
+      "errorShippingFieldsMissing": "Por favor, completa todos los campos obligatorios de la dirección de envío antes de continuar.",
+      "errorPaymentSetup": "Falló la configuración del pago ({status})",
+      "errorPaymentInit": "No se pudo inicializar el pago. Inténtalo de nuevo.",
+      "errorOrderCreate": "No se pudo crear el pedido",
+      "errorOrderComplete": "No se pudo completar el pedido"
+    },
+    "orderSummary": {
+      "heading": "Resumen del pedido",
+      "editCart": "Editar carrito",
+      "viewProduct": "Ver {name}",
+      "calculatedNextStep": "Calculado en el siguiente paso",
+      "total": "Total"
+    },
     "shippingAddress": {
       "heading": "Dirección de envío",
       "firstName": "Nombre",

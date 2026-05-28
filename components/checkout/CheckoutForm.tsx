@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -29,6 +30,7 @@ const stepToProgress = {
 } as const;
 
 export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
+  const t = useTranslations('checkout.form');
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('contact');
   const [contactComplete, setContactComplete] = useState(false);
@@ -132,7 +134,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       });
 
       if (!response.ok) {
-        let message = `Payment setup failed (${response.status})`;
+        let message = t('errorPaymentSetup', { status: response.status });
         try {
           const errorData = await response.json() as { error?: string };
           if (errorData?.error) {
@@ -165,7 +167,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to initialize payment. Please try again.',
+          : t('errorPaymentInit'),
       );
     }
   }, [
@@ -179,6 +181,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
     token,
     total,
     validateCart,
+    t,
   ]);
 
   useEffect(() => {
@@ -273,7 +276,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
     ].some((value) => !value?.trim());
 
     if (hasMissingShippingFields) {
-      setError('Please complete all required shipping address fields before continuing.');
+      setError(t('errorShippingFieldsMissing'));
       return;
     }
 
@@ -361,9 +364,9 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
         // Show specific field errors if available
         if (errorData.details && typeof errorData.details === 'object') {
           const fieldErrors = Object.values(errorData.details).join('. ');
-          throw new Error(fieldErrors || errorData.error || 'Failed to create order');
+          throw new Error(fieldErrors || errorData.error || t('errorOrderCreate'));
         }
-        throw new Error(errorData.error || 'Failed to create order');
+        throw new Error(errorData.error || t('errorOrderCreate'));
       }
 
       const orderData = await response.json();
@@ -401,7 +404,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           hasAuthToken: Boolean(token),
         },
       });
-      setError(err instanceof Error ? err.message : 'Failed to complete order');
+      setError(err instanceof Error ? err.message : t('errorOrderComplete'));
       setIsProcessing(false);
     }
   };
@@ -419,8 +422,8 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           <div className="flex flex-col items-center gap-4 p-8 bg-card border border-border rounded-xl shadow-lg">
             <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary border-t-transparent" />
             <div className="text-center">
-              <p className="font-semibold text-foreground">Processing your order...</p>
-              <p className="text-sm text-muted-foreground mt-1">Please don&apos;t close this page</p>
+              <p className="font-semibold text-foreground">{t('processingTitle')}</p>
+              <p className="text-sm text-muted-foreground mt-1">{t('processingHint')}</p>
             </div>
           </div>
         </div>
@@ -445,7 +448,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
               ) : '1'}
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Contact Information</h3>
+              <h3 className="font-semibold text-foreground">{t('stepContact')}</h3>
               {contactComplete && currentStep !== 'contact' && (
                 <p className="text-sm text-muted-foreground">{contact.email}</p>
               )}
@@ -453,7 +456,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           </div>
           {contactComplete && currentStep !== 'contact' && (
             <button className="text-sm text-primary hover:text-primary-hover">
-              Edit
+              {t('edit')}
             </button>
           )}
         </div>
@@ -483,7 +486,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
               ) : '2'}
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">Shipping</h3>
+              <h3 className="font-semibold text-foreground">{t('stepShipping')}</h3>
               {shippingComplete && currentStep !== 'shipping' && (
                 <p className="text-sm text-muted-foreground">
                   {shippingAddress.address1}, {shippingAddress.city}, {shippingAddress.state}
@@ -493,7 +496,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
           </div>
           {shippingComplete && currentStep !== 'shipping' && (
             <button className="text-sm text-primary hover:text-primary-hover">
-              Edit
+              {t('edit')}
             </button>
           )}
         </div>
@@ -516,7 +519,7 @@ export default function CheckoutForm({ onStepChange }: CheckoutFormProps) {
             <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium bg-muted text-muted-foreground">
               3
             </div>
-            <h3 className="font-semibold text-foreground">Payment</h3>
+            <h3 className="font-semibold text-foreground">{t('stepPayment')}</h3>
           </div>
         </div>
         {currentStep === 'payment' && shippingComplete && (

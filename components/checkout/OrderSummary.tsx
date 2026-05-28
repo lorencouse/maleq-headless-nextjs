@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   useCartStore,
   useCartSubtotal,
@@ -11,6 +12,12 @@ import { formatPrice, getFreeShippingProgress, calculateAutoDiscount, FREE_SHIPP
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
 
 export default function OrderSummary() {
+  // Shared cart strings (subtotal, shipping, free, autoDiscount, coupon,
+  // free-shipping nudges) live under the cart namespace from Phase 2.4;
+  // checkout-specific strings (heading, edit cart, calculated-next-step,
+  // image aria-label) live under checkout.orderSummary.
+  const t = useTranslations('checkout.orderSummary');
+  const tCart = useTranslations('cart');
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
   const total = useCartTotal();
@@ -30,12 +37,12 @@ export default function OrderSummary() {
     <div className='bg-muted/30 rounded-lg border border-border sticky top-24'>
       {/* Header */}
       <div className='p-4 border-b border-border flex items-center justify-between'>
-        <h2 className='text-lg font-semibold text-foreground'>Order Summary</h2>
+        <h2 className='text-lg font-semibold text-foreground'>{t('heading')}</h2>
         <Link
           href='/cart'
           className='text-sm text-primary hover:text-primary-hover'
         >
-          Edit Cart
+          {t('editCart')}
         </Link>
       </div>
 
@@ -53,7 +60,7 @@ export default function OrderSummary() {
               <Link
                 href={`/product/${item.slug}`}
                 className='relative w-16 h-16 flex-shrink-0 bg-muted rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary'
-                aria-label={`View ${item.name}`}
+                aria-label={t('viewProduct', { name: item.name })}
               >
                 {item.image ? (
                   <Image
@@ -116,10 +123,10 @@ export default function OrderSummary() {
           <div className='p-3 bg-background rounded-lg'>
             <div className='flex items-center justify-between text-xs mb-2'>
               <span className='text-muted-foreground'>
-                Free shipping progress
+                {tCart('freeShippingProgress')}
               </span>
               <span className='font-medium text-primary'>
-                {formatPrice(freeShipping.remaining)} away
+                {tCart('amountAway', { amount: formatPrice(freeShipping.remaining) })}
               </span>
             </div>
             <div className='w-full bg-muted rounded-full h-1.5'>
@@ -135,13 +142,16 @@ export default function OrderSummary() {
               <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
               </svg>
-              Free shipping applied!
+              {tCart('freeShippingApplied')}
             </div>
             <div className='p-3 bg-background rounded-lg'>
               <div className='flex items-center justify-between text-xs mb-2'>
-                <span className='text-muted-foreground'>Next savings tier</span>
+                <span className='text-muted-foreground'>{tCart('nextSavingsTier')}</span>
                 <span className='font-medium text-primary'>
-                  {formatPrice(autoDiscountInfo.nextTier.amountNeeded)} away from {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off
+                  {tCart('amountAwayFromOff', {
+                    amount: formatPrice(autoDiscountInfo.nextTier.amountNeeded),
+                    discount: formatPrice(autoDiscountInfo.nextTier.discountAmount),
+                  })}
                 </span>
               </div>
               <div className='w-full bg-muted rounded-full h-1.5'>
@@ -157,40 +167,40 @@ export default function OrderSummary() {
             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
             </svg>
-            Free shipping applied!
+            {tCart('freeShippingApplied')}
           </div>
         )}
 
         {/* Line Items */}
         <div className='flex justify-between text-sm'>
-          <span className='text-muted-foreground'>Subtotal</span>
+          <span className='text-muted-foreground'>{tCart('subtotal')}</span>
           <span className='text-foreground'>{formatPrice(subtotal)}</span>
         </div>
 
         {discount > 0 && couponCode && (
           <div className='flex justify-between text-sm'>
-            <span className='text-primary'>Coupon ({couponCode})</span>
+            <span className='text-primary'>{tCart('couponLabel', { code: couponCode })}</span>
             <span className='text-primary'>-{formatPrice(discount)}</span>
           </div>
         )}
 
         {autoDiscount > 0 && (
           <div className='flex justify-between text-sm'>
-            <span className='text-primary'>{autoDiscountLabel || 'Auto Discount'}</span>
+            <span className='text-primary'>{autoDiscountLabel || tCart('autoDiscount')}</span>
             <span className='text-primary'>-{formatPrice(autoDiscount)}</span>
           </div>
         )}
 
         <div className='flex justify-between text-sm'>
-          <span className='text-muted-foreground'>Shipping</span>
+          <span className='text-muted-foreground'>{tCart('shipping')}</span>
           <span className='text-foreground'>
             {freeShipping.qualifies ? (
-              <span className='text-primary'>FREE</span>
+              <span className='text-primary'>{tCart('free')}</span>
             ) : shipping > 0 ? (
               formatPrice(shipping)
             ) : (
               <span className='text-muted-foreground'>
-                Calculated next step
+                {t('calculatedNextStep')}
               </span>
             )}
           </span>
@@ -198,7 +208,7 @@ export default function OrderSummary() {
 
         {/* Total */}
         <div className='pt-3 border-t border-border flex justify-between items-center'>
-          <span className='text-base font-semibold text-foreground'>Total</span>
+          <span className='text-base font-semibold text-foreground'>{t('total')}</span>
           <span className='text-xl font-bold text-foreground'>
             {formatPrice(total)}
           </span>

@@ -491,6 +491,26 @@
       "failedCreatePayment": "Failed to create payment ({status})",
       "failedCreateOrder": "Failed to create order"
     },
+    "form": {
+      "processingTitle": "Processing your order...",
+      "processingHint": "Please don't close this page",
+      "stepContact": "Contact Information",
+      "stepShipping": "Shipping",
+      "stepPayment": "Payment",
+      "edit": "Edit",
+      "errorShippingFieldsMissing": "Please complete all required shipping address fields before continuing.",
+      "errorPaymentSetup": "Payment setup failed ({status})",
+      "errorPaymentInit": "Failed to initialize payment. Please try again.",
+      "errorOrderCreate": "Failed to create order",
+      "errorOrderComplete": "Failed to complete order"
+    },
+    "orderSummary": {
+      "heading": "Order Summary",
+      "editCart": "Edit Cart",
+      "viewProduct": "View {name}",
+      "calculatedNextStep": "Calculated next step",
+      "total": "Total"
+    },
     "shippingAddress": {
       "heading": "Shipping Address",
       "firstName": "First Name",
