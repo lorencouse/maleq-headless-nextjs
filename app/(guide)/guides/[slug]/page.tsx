@@ -31,6 +31,7 @@ import RecommendedProducts from '@/components/blog/RecommendedProducts';
 import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
 import { loadPostRecommendations } from '@/lib/db/post-relations';
 import { loadPostTranslations, type PostTranslation } from '@/lib/db/post-translations';
+import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
 import {
   detectGuideLocale,
   getGuideLanguage,
@@ -111,14 +112,13 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  // setRequestLocale + hard-coded 'en' instead of getLocale(): this page has
-  // `revalidate = N` (ISR) and any next-intl API that resolves locale from
-  // request reads headers(), throwing DYNAMIC_SERVER_USAGE. setRequestLocale
-  // pre-seeds the cached request locale so downstream next-intl calls
-  // (here AND in child server components like RelatedPosts, LanguageSwitcher,
-  // RecommendedProducts) stay static. Per D1=A, content-root routes render
-  // with English chrome regardless of cookie.
-  const locale = 'en';
+  // Resolve the UI locale from the guide's own language category (en/es/zh/ja)
+  // — same value the (guide) layout uses — so metadata + page UI render in the
+  // post's language. getGuideLocaleBySlug derives this from the URL slug only
+  // (no headers()/cookies()), so it stays ISR-safe; setRequestLocale then
+  // pre-seeds the cached request locale for downstream next-intl server calls
+  // (RelatedPosts, LanguageSwitcher, RecommendedProducts).
+  const locale = await getGuideLocaleBySlug(slug);
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'blog' });
 
@@ -232,11 +232,14 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  // See generateMetadata above for why this is hard-coded 'en' + setRequestLocale.
-  const locale = 'en';
+  // See generateMetadata above: resolve the UI locale from the guide's own
+  // language category so the page (and the (guide) layout's chrome) render in
+  // the post's language. ISR-safe (slug-derived, no headers/cookies).
+  const locale = await getGuideLocaleBySlug(slug);
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'blog' });
-  const intlLocale = 'en-US'; // matches the hard-coded 'en' locale above
+  // BCP-47 tag for date/number formatting, matching the resolved guide locale.
+  const intlLocale = { en: 'en-US', es: 'es-ES', zh: 'zh-TW', ja: 'ja-JP' }[locale];
 
   let post: Post | null = null;
 
@@ -393,7 +396,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </header>
 
       {/* Other-language versions of this guide */}
-      <LanguageSwitcher translations={translations} />
+      <LanguageSwitcher translations={translations} locale={locale} />
 
       {/* Featured Image */}
       {post.featuredImage?.node && (
@@ -435,6 +438,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <RecommendedProducts
         products={recommendations.products}
         categories={recommendations.categories}
+        locale={locale}
       />
 
       {/* Tags */}
@@ -456,7 +460,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       )}
 
       {/* Related Posts */}
-      <RelatedPosts posts={relatedPosts} currentSlug={slug} />
+      <RelatedPosts posts={relatedPosts} currentSlug={slug} locale={locale} />
 
       {/* Comments Section */}
       <div className='border-t border-border py-8'>

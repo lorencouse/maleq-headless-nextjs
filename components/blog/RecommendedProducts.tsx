@@ -7,6 +7,8 @@ import type { RelatedProductCategory } from '@/lib/db/post-relations';
 interface RecommendedProductsProps {
   products: UnifiedProduct[];
   categories: RelatedProductCategory[];
+  /** Explicit UI locale for guide routes where setRequestLocale() is a no-op. */
+  locale?: string;
 }
 
 /**
@@ -17,12 +19,15 @@ interface RecommendedProductsProps {
 export default async function RecommendedProducts({
   products,
   categories,
+  locale,
 }: RecommendedProductsProps) {
   if (products.length === 0 && categories.length === 0) {
     return null;
   }
 
-  const t = await getTranslations('blog');
+  const t = locale
+    ? await getTranslations({ locale, namespace: 'blog' })
+    : await getTranslations('blog');
 
   return (
     <section className='border-t border-border pt-8 mt-12'>

@@ -5,11 +5,14 @@ import BlogCard from '@/components/blog/BlogCard';
 interface RelatedPostsProps {
   posts: Post[];
   currentSlug: string;
+  /** Explicit UI locale for guide routes where setRequestLocale() is a no-op. */
+  locale?: string;
 }
 
 export default async function RelatedPosts({
   posts,
   currentSlug,
+  locale,
 }: RelatedPostsProps) {
   // Filter out the current post and limit to 3
   const relatedPosts = posts
@@ -20,7 +23,9 @@ export default async function RelatedPosts({
     return null;
   }
 
-  const t = await getTranslations('blog');
+  const t = locale
+    ? await getTranslations({ locale, namespace: 'blog' })
+    : await getTranslations('blog');
 
   return (
     <section className='border-t border-border pt-8 mt-12'>

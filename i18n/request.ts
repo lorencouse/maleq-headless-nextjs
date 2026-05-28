@@ -1,23 +1,34 @@
 import { getRequestConfig } from 'next-intl/server';
-import { routing, type Locale } from './routing';
+import { routing } from './routing';
+
+/**
+ * UI locales that have a message catalog in messages/. This is a SUPERSET of
+ * routing.locales (the URL-prefixed locales en/es). zh and ja exist ONLY as
+ * chrome/UI locales: there is no /zh or /ja URL tree — they are applied
+ * per-page by the guide-post layout (app/(guide)/guides/[slug]/layout.tsx)
+ * via setRequestLocale() so a Chinese/Japanese guide renders its own-language
+ * shell. Keeping them out of routing.locales is deliberate: it stops next-intl
+ * middleware from minting /zh and /ja URL prefixes for the whole site.
+ */
+const UI_LOCALES = ['en', 'es', 'zh', 'ja'] as const;
+type UiLocale = (typeof UI_LOCALES)[number];
 
 /**
  * Resolves the active locale and loads its message catalog for every server
  * render.
  *
- * Locale is resolved from the URL via `requestLocale` (set by next-intl
- * middleware for app/[locale]/... routes). Content-root routes (product,
- * sex-toys, guides, brand, brands, shop) live outside [locale] and render with
- * the default locale's chrome — those pages have ISR / `revalidate = N`, so
- * calling `cookies()` here would throw DYNAMIC_SERVER_USAGE and break every
- * cached page. Cookie-driven chrome locale on content-root pages is a
- * follow-up; needs to be wired client-side so it doesn't poison ISR.
+ * Locale comes from `requestLocale`, which next-intl middleware sets for
+ * app/[locale]/... routes and which the guide-post layout sets explicitly via
+ * setRequestLocale() for content-root guide pages. Both are derived from the
+ * URL (segment or slug), never from cookies()/headers(), so this stays safe on
+ * ISR / `revalidate = N` pages (reading headers there throws
+ * DYNAMIC_SERVER_USAGE and breaks every cached page).
  */
 export default getRequestConfig(async ({ requestLocale }) => {
   let locale = await requestLocale;
 
-  // Validate against the configured locales; unknown values fall back to en.
-  if (!locale || !routing.locales.includes(locale as Locale)) {
+  // Validate against the UI catalogs; unknown values fall back to the default.
+  if (!locale || !UI_LOCALES.includes(locale as UiLocale)) {
     locale = routing.defaultLocale;
   }
 

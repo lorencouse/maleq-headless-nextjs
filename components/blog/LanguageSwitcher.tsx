@@ -4,6 +4,12 @@ import type { PostTranslation } from '@/lib/db/post-translations';
 
 interface LanguageSwitcherProps {
   translations: PostTranslation[];
+  /**
+   * Explicit UI locale. Required on content-root guide routes where
+   * setRequestLocale() doesn't drive server-side getTranslations() (no
+   * next-intl middleware). Falls back to the default locale when omitted.
+   */
+  locale?: string;
 }
 
 /**
@@ -12,12 +18,14 @@ interface LanguageSwitcherProps {
  * managed via the post-translations meta box. Renders nothing when a guide has
  * no linked translations.
  */
-export default async function LanguageSwitcher({ translations }: LanguageSwitcherProps) {
+export default async function LanguageSwitcher({ translations, locale }: LanguageSwitcherProps) {
   if (translations.length === 0) {
     return null;
   }
 
-  const t = await getTranslations('blog');
+  const t = locale
+    ? await getTranslations({ locale, namespace: 'blog' })
+    : await getTranslations('blog');
 
   return (
     <div className="mb-6 flex flex-wrap items-center gap-2 text-sm">

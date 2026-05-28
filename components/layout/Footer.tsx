@@ -1,8 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
 
+// Client component so it reads the active locale from the nearest
+// NextIntlClientProvider. On content-root guide routes there is no next-intl
+// middleware, so server-side setRequestLocale() does NOT drive getLocale() —
+// the provider is the only reliable source. This keeps the footer in the
+// guide's language (e.g. Spanish on a Spanish guide) and English elsewhere.
 export default function Footer() {
   const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
