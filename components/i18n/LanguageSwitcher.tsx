@@ -2,39 +2,44 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useParams, useRouter as useNextRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useRouter, usePathname } from '@/i18n/navigation';
-import { routing, type Locale } from '@/i18n/routing';
+import { type Locale } from '@/i18n/routing';
 
-const LOCALE_LABELS: Record<Locale, string> = {
+// UI locales offered by the toggle. en/es are URL-routed locales; zh is a
+// chrome-only catalog locale applied via cookie (no /zh/ URL tree).
+const UI_LOCALES = ['en', 'es', 'zh'] as const;
+const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
   es: 'Español',
+  zh: '中文',
 };
+const ROUTING_LOCALES = new Set(['en', 'es']);
 
 /**
  * Language switcher dropdown.
  *
  * Two switching modes depending on the current route:
  *
- *   1. On routes under app/[locale]/... — uses next-intl's locale-aware
- *      router to navigate /about ↔ /es/about. URL changes, cookie is set
- *      automatically by next-intl.
+ *   1. en/es on a shell route under app/[locale]/... — uses next-intl's
+ *      locale-aware router to navigate /about ↔ /es/about (URL + content +
+ *      chrome all localize, server-rendered, best for SEO).
  *
- *   2. On routes outside [locale] (product, sex-toys, brand, etc.) — sets
- *      the NEXT_LOCALE cookie manually and triggers a refresh. URL stays
- *      put, but the chrome (Header/Footer/etc.) re-renders in the new
- *      locale because i18n/request.ts falls back to the cookie for these
- *      routes.
+ *   2. Everything else (zh, or any selection on a content-root page) — writes
+ *      the NEXT_LOCALE cookie and fires a `ui-locale-change` event.
+ *      ChromeLocaleProvider (client) reacts and re-renders the chrome in the
+ *      chosen language in place. Needed because content-root pages are
+ *      English-only ISR and can't read the cookie server-side, and because zh
+ *      has no URL route.
  *
  * Detection: presence of a `locale` param means we're under [locale].
  */
 export default function LanguageSwitcher() {
   const t = useTranslations('language');
-  const locale = useLocale() as Locale;
+  const locale = useLocale();
   const params = useParams();
   const intlRouter = useRouter();
   const intlPathname = usePathname();
-  const nextRouter = useNextRouter();
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -65,18 +70,20 @@ export default function LanguageSwitcher() {
     };
   }, [isOpen]);
 
-  function selectLocale(next: Locale) {
+  function selectLocale(next: string) {
     setIsOpen(false);
     if (next === locale) return;
 
-    if (isUnderLocaleSegment) {
-      // intlPathname is the path without the locale prefix — replace() will
-      // add the right prefix for `next`. Cookie is set by next-intl.
-      intlRouter.replace(intlPathname, { locale: next });
+    // Persist the preference for ChromeLocaleProvider (and future visits).
+    document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+
+    if (isUnderLocaleSegment && ROUTING_LOCALES.has(next)) {
+      // Shell route + a URL-routed locale: navigate so URL + content + chrome
+      // all localize server-side. intlPathname is the unprefixed path.
+      intlRouter.replace(intlPathname, { locale: next as Locale });
     } else {
-      // Non-localized route: set cookie ourselves and force a server refresh.
-      document.cookie = `NEXT_LOCALE=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-      nextRouter.refresh();
+      // zh (no URL route) or any content-root page: switch the chrome in place.
+      window.dispatchEvent(new Event('ui-locale-change'));
     }
   }
 
@@ -111,7 +118,7 @@ export default function LanguageSwitcher() {
           aria-label={t('switchLabel')}
           className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50 py-1"
         >
-          {routing.locales.map((loc) => (
+          {UI_LOCALES.map((loc) => (
             <button
               key={loc}
               role="option"
