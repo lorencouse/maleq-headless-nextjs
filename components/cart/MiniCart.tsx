@@ -3,6 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import {
   useCartStore,
   useCartSubtotal,
@@ -17,6 +18,7 @@ interface MiniCartProps {
 }
 
 export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
+  const t = useTranslations('cart');
   const items = useCartStore((state) => state.items);
   const itemCount = useCartStore((state) => state.itemCount);
   const subtotal = useCartSubtotal();
@@ -68,17 +70,17 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
         }`}
         role='dialog'
         aria-modal='true'
-        aria-label='Shopping Cart'
+        aria-label={t('title')}
       >
         {/* Header */}
         <div className='flex items-center justify-between p-3 sm:p-4 border-b border-border'>
           <h4 className='font-semibold text-foreground'>
-            Shopping Cart {itemCount > 0 && `(${itemCount})`}
+            {t('title')} {itemCount > 0 && `(${itemCount})`}
           </h4>
           <button
             onClick={onClose}
             className='p-2 hover:bg-muted rounded-lg transition-colors'
-            aria-label='Close cart'
+            aria-label={t('close')}
           >
             <svg
               className='w-5 h-5'
@@ -114,12 +116,12 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
                   d='M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z'
                 />
               </svg>
-              <p className='text-muted-foreground mb-4'>Your cart is empty</p>
+              <p className='text-muted-foreground mb-4'>{t('empty')}</p>
               <button
                 onClick={onClose}
                 className='text-primary hover:underline font-medium'
               >
-                Continue Shopping
+                {t('continueShopping')}
               </button>
             </div>
           ) : (
@@ -136,27 +138,28 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
                 {/* Auto-Discount Upsell */}
                 {autoDiscountInfo.nextTier && (
                   <div className='p-2 bg-primary/10 rounded-lg text-xs text-primary text-center'>
-                    Add {formatPrice(autoDiscountInfo.nextTier.amountNeeded)}{' '}
-                    more for{' '}
-                    {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off!
+                    {t('addMoreForDiscount', {
+                      amount: formatPrice(autoDiscountInfo.nextTier.amountNeeded),
+                      discount: formatPrice(autoDiscountInfo.nextTier.discountAmount),
+                    })}
                   </div>
                 )}
 
                 {/* Auto-Discount Applied */}
                 {autoDiscount > 0 && (
                   <div className='flex items-center justify-between text-sm text-primary'>
-                    <span>Auto Discount</span>
+                    <span>{t('autoDiscount')}</span>
                     <span>-{formatPrice(autoDiscount)}</span>
                   </div>
                 )}
 
                 {/* Subtotal */}
                 <div className='flex items-center justify-between text-base sm:text-lg font-semibold'>
-                  <span>Subtotal</span>
+                  <span>{t('subtotal')}</span>
                   <span>{formatPrice(subtotal - autoDiscount)}</span>
                 </div>
                 <p className='text-xs sm:text-sm text-muted-foreground'>
-                  Shipping & taxes calculated at checkout
+                  {t('shippingTaxesAtCheckout')}
                 </p>
 
                 {/* Action Buttons */}
@@ -166,14 +169,14 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
                     onClick={onClose}
                     className='block w-full py-2.5 sm:py-3 px-4 text-center text-sm sm:text-base border border-border rounded-lg hover:bg-muted transition-colors font-medium'
                   >
-                    View Cart
+                    {t('viewCart')}
                   </Link>
                   <Link
                     href='/checkout'
                     onClick={onClose}
                     className='block w-full py-2.5 sm:py-3 px-4 text-center text-sm sm:text-base bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium'
                   >
-                    Checkout
+                    {t('checkout')}
                   </Link>
                 </div>
               </div>

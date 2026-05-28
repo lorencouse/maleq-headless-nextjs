@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/lib/store/cart-store';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 
 export default function CartCrossSells() {
+  const t = useTranslations('cart');
   const items = useCartStore((state) => state.items);
   const [products, setProducts] = useState<UnifiedProduct[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,10 +49,10 @@ export default function CartCrossSells() {
     <section className="mt-12">
       <ProductCarousel
         products={products}
-        title="You Might Also Like"
-        subtitle="Popular products other customers love"
+        title={t('crossSellTitle')}
+        subtitle={t('crossSellSubtitle')}
         viewAllLink="/shop"
-        viewAllText="Browse All"
+        viewAllText={t('crossSellViewAll')}
         showGradients
         showMobileHint
       />

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   useCartStore,
   useCartSubtotal,
@@ -16,6 +17,7 @@ import CouponInput from './CouponInput';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
 
 export default function CartSummary() {
+  const t = useTranslations('cart');
   const subtotal = useCartSubtotal();
   const total = useCartTotal();
   const shipping = useCartStore((state) => state.shipping);
@@ -36,7 +38,7 @@ export default function CartSummary() {
   return (
     <div className='bg-muted/30 rounded-lg p-6 border border-border sticky top-24'>
       <h2 className='text-xl font-semibold text-foreground mb-4'>
-        Order Summary
+        {t('orderSummary')}
       </h2>
 
       {/* Discount Tiers */}
@@ -47,10 +49,10 @@ export default function CartSummary() {
         <div className='mb-4 p-3 bg-background rounded-lg'>
           <div className='flex items-center justify-between text-sm mb-2'>
             <span className='text-muted-foreground'>
-              Free shipping progress
+              {t('freeShippingProgress')}
             </span>
             <span className='font-medium text-primary'>
-              {formatPrice(freeShipping.remaining)} away
+              {t('amountAway', { amount: formatPrice(freeShipping.remaining) })}
             </span>
           </div>
           <div className='w-full bg-muted rounded-full h-2'>
@@ -66,13 +68,16 @@ export default function CartSummary() {
             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
             </svg>
-            Free shipping applied!
+            {t('freeShippingApplied')}
           </div>
           <div className='p-3 bg-background rounded-lg'>
             <div className='flex items-center justify-between text-sm mb-2'>
-              <span className='text-muted-foreground'>Next savings tier</span>
+              <span className='text-muted-foreground'>{t('nextSavingsTier')}</span>
               <span className='font-medium text-primary'>
-                {formatPrice(autoDiscountInfo.nextTier.amountNeeded)} away from {formatPrice(autoDiscountInfo.nextTier.discountAmount)} off
+                {t('amountAwayFromOff', {
+                  amount: formatPrice(autoDiscountInfo.nextTier.amountNeeded),
+                  discount: formatPrice(autoDiscountInfo.nextTier.discountAmount),
+                })}
               </span>
             </div>
             <div className='w-full bg-muted rounded-full h-2'>
@@ -88,7 +93,7 @@ export default function CartSummary() {
           <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
           </svg>
-          Free shipping applied!
+          {t('freeShippingApplied')}
         </div>
       )}
 
@@ -119,34 +124,34 @@ export default function CartSummary() {
       <div className='space-y-3 mb-4'>
         <div className='flex justify-between text-sm'>
           <span className='text-muted-foreground'>
-            Subtotal ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+            {t('summaryItemCount', { count: itemCount })}
           </span>
           <span className='text-foreground'>{formatPrice(subtotal)}</span>
         </div>
 
         {discount > 0 && couponCode && (
           <div className='flex justify-between text-sm'>
-            <span className='text-primary'>Coupon ({couponCode})</span>
+            <span className='text-primary'>{t('couponLabel', { code: couponCode })}</span>
             <span className='text-primary'>-{formatPrice(discount)}</span>
           </div>
         )}
 
         {autoDiscount > 0 && (
           <div className='flex justify-between text-sm'>
-            <span className='text-primary'>Auto Discount</span>
+            <span className='text-primary'>{t('autoDiscount')}</span>
             <span className='text-primary'>-{formatPrice(autoDiscount)}</span>
           </div>
         )}
 
         <div className='flex justify-between text-sm'>
-          <span className='text-muted-foreground'>Shipping</span>
+          <span className='text-muted-foreground'>{t('shipping')}</span>
           <span className='text-foreground'>
             {freeShipping.qualifies ? (
-              <span className='text-primary'>FREE</span>
+              <span className='text-primary'>{t('free')}</span>
             ) : shipping > 0 ? (
               formatPrice(shipping)
             ) : (
-              'Calculated at checkout'
+              t('calculatedAtCheckout')
             )}
           </span>
         </div>
@@ -159,7 +164,7 @@ export default function CartSummary() {
       {/* Total */}
       <div className='flex justify-between items-center mb-6'>
         <span className='text-lg font-semibold text-foreground'>
-          Estimated Total
+          {t('estimatedTotal')}
         </span>
         <span className='text-2xl font-bold text-foreground'>
           {formatPrice(total)}
@@ -171,7 +176,7 @@ export default function CartSummary() {
         href='/checkout'
         className='block w-full py-3 px-4 text-center bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-lg'
       >
-        Proceed to Checkout
+        {t('proceedToCheckout')}
       </Link>
 
       {/* Continue Shopping */}
@@ -179,7 +184,7 @@ export default function CartSummary() {
         href='/shop'
         className='block w-full py-3 px-4 text-center text-muted-foreground hover:text-foreground transition-colors mt-3'
       >
-        Continue Shopping
+        {t('continueShopping')}
       </Link>
 
       {/* Trust Badges */}
@@ -199,7 +204,7 @@ export default function CartSummary() {
                 d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'
               />
             </svg>
-            Secure Checkout
+            {t('secureCheckout')}
           </div>
           <div className='flex items-center gap-1 text-xs'>
             <svg
@@ -215,7 +220,7 @@ export default function CartSummary() {
                 d='M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'
               />
             </svg>
-            Safe Payment
+            {t('safePayment')}
           </div>
         </div>
       </div>

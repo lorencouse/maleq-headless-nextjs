@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { CartItem } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice } from '@/lib/utils/cart-helpers';
@@ -25,6 +26,7 @@ interface MiniCartItemProps {
 }
 
 export default function MiniCartItem({ item }: MiniCartItemProps) {
+  const t = useTranslations('cart');
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -58,7 +60,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-            No Image
+            {t('noImage')}
           </div>
         )}
       </Link>
@@ -111,7 +113,7 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
           <button
             onClick={handleRemove}
             className="p-1.5 text-muted-foreground hover:text-destructive transition-colors flex-shrink-0"
-            aria-label="Remove item"
+            aria-label={t('removeItem')}
           >
             <svg
               className="w-4 h-4"
