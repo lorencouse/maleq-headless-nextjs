@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   formatAttributeName,
   formatAttributeValue,
@@ -48,6 +49,7 @@ interface VariationSelectorProps {
 const DESCRIPTION_CLAMP_LINES = 4;
 
 function VariationDescription({ description }: { description: string }) {
+  const t = useTranslations('variations');
   const [isExpanded, setIsExpanded] = useState(false);
   const [isClamped, setIsClamped] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -64,7 +66,7 @@ function VariationDescription({ description }: { description: string }) {
 
   return (
     <div className='pt-3 border-t border-border'>
-      <p className='text-sm text-muted-foreground mb-1'>Description:</p>
+      <p className='text-sm text-muted-foreground mb-1'>{t('descriptionLabel')}</p>
       <div
         ref={contentRef}
         className={`text-sm text-foreground leading-relaxed prose prose-sm max-w-none ${
@@ -78,7 +80,7 @@ function VariationDescription({ description }: { description: string }) {
           onClick={() => setIsExpanded(!isExpanded)}
           className='mt-1 text-sm text-primary hover:text-primary-hover font-medium transition-colors'
         >
-          {isExpanded ? 'Show less' : 'Read more'}
+          {isExpanded ? t('showLess') : t('readMore')}
         </button>
       )}
     </div>
@@ -94,6 +96,7 @@ export default function VariationSelector({
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('variations');
 
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
@@ -290,7 +293,7 @@ export default function VariationSelector({
                 >
                   <span>{formatAttributeValue(value)}</span>
                   {!isAvailable && (
-                    <span className='block text-[10px] leading-tight text-destructive'>Out of stock</span>
+                    <span className='block text-[10px] leading-tight text-destructive'>{t('outOfStockTag')}</span>
                   )}
                 </button>
               );
@@ -305,7 +308,7 @@ export default function VariationSelector({
           {/* Header with name and price */}
           <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2'>
             <div>
-              <p className='text-sm text-muted-foreground'>Selected:</p>
+              <p className='text-sm text-muted-foreground'>{t('selectedLabel')}</p>
               <p className='font-semibold text-foreground text-sm sm:text-base'>
                 {selectedVariation.name}
               </p>
@@ -332,9 +335,9 @@ export default function VariationSelector({
           {/* SKU, Variation ID, and Stock Status */}
           <div className='flex items-center justify-between text-sm'>
             <p className='text-muted-foreground'>
-              SKU: {selectedVariation.sku}
+              {t('skuLabel', { sku: selectedVariation.sku })}
               {selectedVariation.databaseId !== undefined && selectedVariation.databaseId > 0 && (
-                <span className='ml-3'>ID: {selectedVariation.databaseId}</span>
+                <span className='ml-3'>{t('idLabel', { id: selectedVariation.databaseId })}</span>
               )}
             </p>
             <StockStatusBadge
@@ -354,33 +357,33 @@ export default function VariationSelector({
               <div className='grid grid-cols-2 gap-3 text-sm'>
                 {selectedVariation.weight && (
                   <div>
-                    <span className='text-muted-foreground'>Weight:</span>{' '}
+                    <span className='text-muted-foreground'>{t('weightLabel')}</span>{' '}
                     <span className='font-medium text-foreground'>
-                      {selectedVariation.weight} lbs
+                      {t('weightValue', { value: selectedVariation.weight })}
                     </span>
                   </div>
                 )}
                 {selectedVariation.length && (
                   <div>
-                    <span className='text-muted-foreground'>Length:</span>{' '}
+                    <span className='text-muted-foreground'>{t('lengthLabel')}</span>{' '}
                     <span className='font-medium text-foreground'>
-                      {selectedVariation.length}&quot;
+                      {t('inchValue', { value: selectedVariation.length })}
                     </span>
                   </div>
                 )}
                 {selectedVariation.width && (
                   <div>
-                    <span className='text-muted-foreground'>Width:</span>{' '}
+                    <span className='text-muted-foreground'>{t('widthLabel')}</span>{' '}
                     <span className='font-medium text-foreground'>
-                      {selectedVariation.width}&quot;
+                      {t('inchValue', { value: selectedVariation.width })}
                     </span>
                   </div>
                 )}
                 {selectedVariation.height && (
                   <div>
-                    <span className='text-muted-foreground'>Height:</span>{' '}
+                    <span className='text-muted-foreground'>{t('heightLabel')}</span>{' '}
                     <span className='font-medium text-foreground'>
-                      {selectedVariation.height}&quot;
+                      {t('inchValue', { value: selectedVariation.height })}
                     </span>
                   </div>
                 )}
@@ -403,7 +406,7 @@ export default function VariationSelector({
       {variations.length > 1 && variations.length <= 6 && (
         <details className='mt-6'>
           <summary className='cursor-pointer text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors'>
-            Compare All Options
+            {t('compareAllOptions')}
           </summary>
           <div className='mt-4 overflow-x-auto rounded-lg border border-border'>
             <table className='min-w-full divide-y divide-border text-sm'>
@@ -418,10 +421,10 @@ export default function VariationSelector({
                     </th>
                   ))}
                   <th className='px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider'>
-                    Price
+                    {t('tablePriceHeading')}
                   </th>
                   <th className='px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider'>
-                    Stock
+                    {t('tableStockHeading')}
                   </th>
                 </tr>
               </thead>
@@ -469,12 +472,12 @@ export default function VariationSelector({
                         ${variation.stockStatus === 'OUT_OF_STOCK' ? 'text-destructive' : ''}
                       `}
                       >
-                        {variation.stockStatus === 'IN_STOCK' ? 'In Stock' : ''}
+                        {variation.stockStatus === 'IN_STOCK' ? t('stockInStock') : ''}
                         {variation.stockStatus === 'LOW_STOCK'
-                          ? `Low (${variation.stockQuantity})`
+                          ? t('stockLow', { count: variation.stockQuantity })
                           : ''}
                         {variation.stockStatus === 'OUT_OF_STOCK'
-                          ? 'Out of Stock'
+                          ? t('stockOutOfStock')
                           : ''}
                       </span>
                     </td>

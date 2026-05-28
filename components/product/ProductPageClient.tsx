@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import VariationSelector from './VariationSelector';
 import ProductAddons, { SelectedAddon } from './ProductAddons';
 import type { EnhancedProduct } from '@/lib/products/product-service';
@@ -45,6 +46,8 @@ export default function ProductPageClient({
 }: ProductPageClientProps) {
   const isVariable = product.type === 'VARIABLE';
   const router = useRouter();
+  const t = useTranslations('productPage');
+  const tProduct = useTranslations('product');
   const addItem = useCartStore((state) => state.addItem);
   const miniCartControls = useMiniCartControls();
   const [quantity, setQuantity] = useState(1);
@@ -115,24 +118,24 @@ export default function ProductPageClient({
   const handleAddToCart = async () => {
     // Validate stock
     if (displayStockStatus === 'OUT_OF_STOCK') {
-      showError('This product is out of stock');
+      showError(t('toastOutOfStock'));
       return;
     }
 
     // For variable products, ensure variation is selected
     if (isVariable && !selectedVariation) {
-      showError('Please select product options');
+      showError(t('toastSelectOptions'));
       return;
     }
 
     // Validate quantity
     if (quantity < 1) {
-      showError('Quantity must be at least 1');
+      showError(t('toastMinQuantity'));
       return;
     }
 
     if (displayStockQuantity && quantity > displayStockQuantity) {
-      showError(`Only ${displayStockQuantity} available in stock`);
+      showError(t('toastOnlyAvailable', { count: displayStockQuantity }));
       return;
     }
 
@@ -190,7 +193,7 @@ export default function ProductPageClient({
 
         addItem({
           productId: cartProductId,
-          name: `Add-on: ${addon.name}`,
+          name: t('cartAddonPrefix', { name: addon.name }),
           slug: addon.slug,
           sku: addon.sku,
           price: addon.price,
@@ -207,8 +210,8 @@ export default function ProductPageClient({
       const addonCount = selectedAddons.length;
       const successMessage =
         addonCount > 0
-          ? `${product.name} + ${addonCount} add-on${addonCount > 1 ? 's' : ''} added to cart!`
-          : `${product.name} added to cart!`;
+          ? t('toastAddedWithAddons', { name: product.name, count: addonCount })
+          : t('toastAddedSimple', { name: product.name });
 
       // Track add to cart
       gtag.addToCart({
@@ -233,7 +236,7 @@ export default function ProductPageClient({
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);
-      showError('Failed to add product to cart');
+      showError(t('toastAddFailed'));
     } finally {
       setIsAdding(false);
     }
@@ -260,7 +263,9 @@ export default function ProductPageClient({
                   selectedVariation.regularPrice,
                   selectedVariation.salePrice,
                 );
-                return percentOff ? `${percentOff}% OFF` : 'SALE';
+                return percentOff
+                  ? tProduct('saleBadge', { percent: percentOff })
+                  : tProduct('saleBadgeFallback');
               })()}
             </span>
           </div>
@@ -278,7 +283,9 @@ export default function ProductPageClient({
                   product.regularPrice,
                   product.salePrice,
                 );
-                return percentOff ? `${percentOff}% OFF` : 'SALE';
+                return percentOff
+                  ? tProduct('saleBadge', { percent: percentOff })
+                  : tProduct('saleBadgeFallback');
               })()}
             </span>
           </div>
@@ -331,7 +338,7 @@ export default function ProductPageClient({
                   }
                   className='ml-1 text-primary hover:text-primary-hover font-medium transition-colors'
                 >
-                  {isDescriptionExpanded ? 'less' : 'more'}
+                  {isDescriptionExpanded ? t('readLess') : t('readMore')}
                 </button>
               )}
             </div>
@@ -349,7 +356,7 @@ export default function ProductPageClient({
             playsInline
             preload="none"
             className="w-full rounded-lg"
-            aria-label={`Video for ${product.name}`}
+            aria-label={t('videoAria', { name: product.name })}
           />
         </div>
       )}
@@ -358,7 +365,7 @@ export default function ProductPageClient({
       {isVariable && product.variations && product.variations.length > 0 && (
         <div className='mb-8 p-6 bg-input rounded-xl border border-border'>
           <h3 className='text-lg font-semibold text-foreground mb-4'>
-            Select Options
+            {t('selectOptionsHeading')}
           </h3>
           <VariationSelector
             variations={product.variations.map((v) => ({
@@ -389,7 +396,7 @@ export default function ProductPageClient({
       {product.attributes && product.attributes.length > 0 && (
         <div className='mb-8 p-5 bg-primary/5 rounded-xl border border-primary/10'>
           <h3 className='font-semibold text-foreground mb-3'>
-            Product Details
+            {t('productDetailsHeading')}
           </h3>
           <div className='grid grid-cols-2 gap-3 text-sm'>
             {product.attributes
@@ -443,19 +450,19 @@ export default function ProductPageClient({
             {addonsTotal > 0 && (
               <div className='mb-4 p-3 bg-primary/5 rounded-lg border border-primary/10'>
                 <div className='flex justify-between items-center text-sm'>
-                  <span className='text-muted-foreground'>Product:</span>
+                  <span className='text-muted-foreground'>{t('productTotalLabel')}</span>
                   <span className='text-foreground'>
                     {formatPrice(displayPrice)}
                   </span>
                 </div>
                 <div className='flex justify-between items-center text-sm'>
-                  <span className='text-muted-foreground'>Add-ons:</span>
+                  <span className='text-muted-foreground'>{t('addonsTotalLabel')}</span>
                   <span className='text-foreground'>
                     +${addonsTotal.toFixed(2)}
                   </span>
                 </div>
                 <div className='flex justify-between items-center text-sm font-semibold mt-2 pt-2 border-t border-border'>
-                  <span className='text-foreground'>Total:</span>
+                  <span className='text-foreground'>{t('totalLabel')}</span>
                   <span className='text-primary'>
                     ${(parsePrice(displayPrice) + addonsTotal).toFixed(2)}
                   </span>
@@ -480,7 +487,7 @@ export default function ProductPageClient({
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  View Cart
+                  {t('viewCart')}
                 </button>
               ) : (
                 <button
@@ -489,10 +496,10 @@ export default function ProductPageClient({
                   className='flex-1 bg-primary text-primary-foreground py-3.5 px-6 rounded-xl hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-lg'
                 >
                   {isAdding
-                    ? 'Adding...'
+                    ? t('adding')
                     : addonsTotal > 0
-                      ? 'Add All to Cart'
-                      : 'Add to Cart'}
+                      ? t('addAllToCart')
+                      : t('addToCart')}
                 </button>
               )}
             </div>
@@ -526,27 +533,29 @@ export default function ProductPageClient({
       <div className='border-t border-border pt-6 space-y-3 text-sm'>
         {displaySku && (
           <div className='flex justify-between'>
-            <span className='text-muted-foreground'>SKU:</span>
+            <span className='text-muted-foreground'>{t('skuLabel')}</span>
             <span className='font-medium text-foreground'>{displaySku}</span>
           </div>
         )}
         <div className='flex justify-between'>
-          <span className='text-muted-foreground'>{isVariable ? 'Parent ID:' : 'Product ID:'}</span>
+          <span className='text-muted-foreground'>
+            {isVariable ? t('parentIdLabel') : t('productIdLabel')}
+          </span>
           <span className='font-medium text-foreground'>
             {product.databaseId}
           </span>
         </div>
         {(product.averageRating ?? 0) > 0 && (
           <div className='flex justify-between'>
-            <span className='text-muted-foreground'>Rating:</span>
+            <span className='text-muted-foreground'>{t('ratingLabel')}</span>
             <span className='font-medium text-foreground'>
-              {product.averageRating} / 5
+              {t('ratingValue', { value: product.averageRating ?? 0 })}
             </span>
           </div>
         )}
         {(product.reviewCount ?? 0) > 0 && (
           <div className='flex justify-between'>
-            <span className='text-muted-foreground'>Reviews:</span>
+            <span className='text-muted-foreground'>{t('reviewsLabel')}</span>
             <span className='font-medium text-foreground'>
               {product.reviewCount}
             </span>
@@ -596,7 +605,7 @@ export default function ProductPageClient({
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  View Cart
+                  {t('viewCart')}
                 </button>
               ) : (
                 <button
@@ -604,7 +613,7 @@ export default function ProductPageClient({
                   disabled={isAdding}
                   className='flex-1 sm:flex-none bg-primary text-primary-foreground py-2.5 px-6 rounded-lg hover:bg-primary-hover transition-colors disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed font-semibold text-sm sm:text-base whitespace-nowrap'
                 >
-                  {isAdding ? 'Adding...' : 'Add to Cart'}
+                  {isAdding ? t('adding') : t('addToCart')}
                 </button>
               )}
             </div>
