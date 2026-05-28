@@ -1,5 +1,12 @@
+import { useTranslations } from 'next-intl';
+
+// Static config: icon + color + translation key pairs. Labels are resolved at
+// render time via useTranslations('home.benefits') so they track the active
+// locale. Same pattern as account sidebar and checkout step indicator.
 const benefits = [
   {
+    titleKey: 'discreetPackagingTitle' as const,
+    descKey: 'discreetPackagingDesc' as const,
     icon: (
       <svg
         className='w-8 h-8'
@@ -15,12 +22,11 @@ const benefits = [
         />
       </svg>
     ),
-    title: 'Discreet Packaging',
-    description:
-      'All orders ship in plain, unmarked boxes with no indication of contents. Your privacy matters.',
     color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   },
   {
+    titleKey: 'secureCheckoutTitle' as const,
+    descKey: 'secureCheckoutDesc' as const,
     icon: (
       <svg
         className='w-8 h-8'
@@ -36,12 +42,11 @@ const benefits = [
         />
       </svg>
     ),
-    title: 'Secure Checkout',
-    description:
-      'Your payment info is protected with 256-bit SSL encryption. Shop with confidence.',
     color: 'bg-green-500/10 text-green-600 dark:text-green-400',
   },
   {
+    titleKey: 'fastShippingTitle' as const,
+    descKey: 'fastShippingDesc' as const,
     icon: (
       <svg
         className='w-8 h-8'
@@ -57,12 +62,11 @@ const benefits = [
         />
       </svg>
     ),
-    title: 'Fast Shipping',
-    description:
-      'Orders ship within 24-48 hours. Get your items quickly and discreetly.',
     color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   },
   {
+    titleKey: 'qualityGuaranteedTitle' as const,
+    descKey: 'qualityGuaranteedDesc' as const,
     icon: (
       <svg
         className='w-8 h-8'
@@ -78,24 +82,22 @@ const benefits = [
         />
       </svg>
     ),
-    title: 'Quality Guaranteed',
-    description:
-      '100% authentic products from trusted brands. We never sell knockoffs.',
     color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
 ];
 
 export default function HomeBenefits() {
+  const t = useTranslations('home.benefits');
+
   return (
     <section className='py-8 sm:py-16 bg-muted/30 select-none'>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
         <div className='text-center mb-12'>
           <h2 className='text-3xl font-bold text-foreground mb-4'>
-            Why Shop With Us
+            {t('title')}
           </h2>
           <p className='text-muted-foreground max-w-2xl mx-auto'>
-            Your satisfaction and privacy are our top priorities. Here&apos;s
-            what sets us apart.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -112,11 +114,11 @@ export default function HomeBenefits() {
                   {benefit.icon}
                 </div>
                 <h3 className='text-base sm:mt-0 mt-1 sm:text-lg font-semibold text-foreground leading-tight'>
-                  {benefit.title}
+                  {t(benefit.titleKey)}
                 </h3>
               </div>
               <p className='text-sm text-muted-foreground leading-relaxed'>
-                {benefit.description}
+                {t(benefit.descKey)}
               </p>
             </div>
           ))}

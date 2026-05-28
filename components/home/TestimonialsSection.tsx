@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Testimonial {
   id: number;
@@ -69,6 +70,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function TestimonialsSection() {
+  const t = useTranslations('home.testimonials');
   const [activeIndex, setActiveIndex] = useState(0);
 
   const nextTestimonial = () => {
@@ -84,9 +86,9 @@ export default function TestimonialsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-foreground mb-3">What Our Customers Say</h2>
+          <h2 className="text-3xl font-bold text-foreground mb-3">{t('heading')}</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Real reviews from verified buyers who trust Male Q for quality and discretion
+            {t('subtitle')}
           </p>
         </div>
 
@@ -108,7 +110,7 @@ export default function TestimonialsSection() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Verified
+                    {t('verified')}
                   </span>
                 )}
               </div>
@@ -155,7 +157,7 @@ export default function TestimonialsSection() {
             <button
               onClick={prevTestimonial}
               className="p-2 rounded-full border border-border hover:bg-muted transition-colors cursor-pointer"
-              aria-label="Previous testimonial"
+              aria-label={t('prevAriaLabel')}
             >
               <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -169,14 +171,14 @@ export default function TestimonialsSection() {
                   className={`w-2 h-2 rounded-full transition-colors cursor-pointer ${
                     index === activeIndex ? 'bg-primary' : 'bg-border'
                   }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
+                  aria-label={t('dotAriaLabel', { index: index + 1 })}
                 />
               ))}
             </div>
             <button
               onClick={nextTestimonial}
               className="p-2 rounded-full border border-border hover:bg-muted transition-colors cursor-pointer"
-              aria-label="Next testimonial"
+              aria-label={t('nextAriaLabel')}
             >
               <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -189,19 +191,19 @@ export default function TestimonialsSection() {
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           <div>
             <p className="text-3xl font-bold text-primary">10K+</p>
-            <p className="text-sm text-muted-foreground">Happy Customers</p>
+            <p className="text-sm text-muted-foreground">{t('statHappyCustomers')}</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-primary">4.8</p>
-            <p className="text-sm text-muted-foreground">Average Rating</p>
+            <p className="text-sm text-muted-foreground">{t('statAverageRating')}</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-primary">99%</p>
-            <p className="text-sm text-muted-foreground">Satisfaction Rate</p>
+            <p className="text-sm text-muted-foreground">{t('statSatisfactionRate')}</p>
           </div>
           <div>
             <p className="text-3xl font-bold text-primary">24hr</p>
-            <p className="text-sm text-muted-foreground">Avg. Ship Time</p>
+            <p className="text-sm text-muted-foreground">{t('statShipTime')}</p>
           </div>
         </div>
       </div>

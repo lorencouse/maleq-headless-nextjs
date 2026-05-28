@@ -202,6 +202,90 @@
       "createAccount": "Crear cuenta"
     }
   },
+  "home": {
+    "meta": {
+      "title": "Male Q - Productos premium para adultos | Envío rápido y discreto",
+      "description": "Compra productos premium para adultos con envío rápido y discreto. Guías expertas, reseñas independientes y productos de calidad para ayudarte a elegir con confianza.",
+      "ogTitle": "Male Q | Productos premium para adultos",
+      "ogDescription": "Compra productos premium para adultos con envío rápido y discreto."
+    },
+    "hero": {
+      "socialProof": "Más de 10,000 clientes confían en nosotros",
+      "headingMain": "Preguntas de hombres,",
+      "headingAccent": "respondidas.",
+      "subheading": "Empoderamos a los hombres en todas partes con guías expertas, productos de calidad y el conocimiento para llevar vidas más felices y saludables.",
+      "shopNow": "Comprar ahora",
+      "exploreGuides": "Explorar guías",
+      "trustSecureCheckout": "Pago seguro",
+      "trustPlainPackaging": "Embalaje discreto",
+      "trustFastShipping": "Envío rápido"
+    },
+    "featured": {
+      "title": "Productos destacados",
+      "subtitle": "Descubre nuestros artículos más populares",
+      "viewAll": "Ver todos los productos"
+    },
+    "trending": {
+      "title": "Tendencia ahora",
+      "subtitle": "Nuestros productos más populares en este momento",
+      "hotDealsBadge": "Ofertas top"
+    },
+    "benefits": {
+      "title": "Por qué comprar con nosotros",
+      "subtitle": "Tu satisfacción y privacidad son nuestras prioridades. Esto es lo que nos distingue.",
+      "discreetPackagingTitle": "Embalaje discreto",
+      "discreetPackagingDesc": "Todos los pedidos se envían en cajas lisas y sin etiquetas, sin indicación del contenido. Tu privacidad importa.",
+      "secureCheckoutTitle": "Pago seguro",
+      "secureCheckoutDesc": "Tu información de pago está protegida con cifrado SSL de 256 bits. Compra con confianza.",
+      "fastShippingTitle": "Envío rápido",
+      "fastShippingDesc": "Los pedidos se envían en 24-48 horas. Recibe tus artículos rápida y discretamente.",
+      "qualityGuaranteedTitle": "Calidad garantizada",
+      "qualityGuaranteedDesc": "Productos 100 % auténticos de marcas de confianza. Nunca vendemos imitaciones."
+    },
+    "blogStrip": {
+      "heading": "Guías y reseñas expertas",
+      "subtitle": "Consejos independientes para ayudarte a elegir",
+      "viewAll": "Ver todos los artículos"
+    },
+    "testimonials": {
+      "heading": "Lo que dicen nuestros clientes",
+      "subtitle": "Reseñas reales de compradores verificados que confían en Male Q por calidad y discreción",
+      "verified": "Verificado",
+      "prevAriaLabel": "Testimonio anterior",
+      "nextAriaLabel": "Siguiente testimonio",
+      "dotAriaLabel": "Ir al testimonio {index}",
+      "statHappyCustomers": "Clientes satisfechos",
+      "statAverageRating": "Valoración media",
+      "statSatisfactionRate": "Tasa de satisfacción",
+      "statShipTime": "Tiempo de envío medio"
+    },
+    "newsletter": {
+      "heading": "Consigue ofertas exclusivas",
+      "subtitle": "Suscríbete a nuestro boletín para recibir ofertas especiales, novedades y consejos exclusivos. Puedes cancelar la suscripción en cualquier momento.",
+      "successMessage": "¡Gracias por suscribirte! Revisa tu correo para descubrir nuestras ofertas exclusivas.",
+      "errorMessage": "Algo salió mal. Inténtalo de nuevo.",
+      "emailPlaceholder": "Introduce tu correo electrónico",
+      "submitting": "Suscribiendo...",
+      "submit": "Suscribirse",
+      "privacyNote": "Respetamos tu privacidad. Nunca compartiremos tu correo."
+    },
+    "social": {
+      "heading": "Síguenos",
+      "subtitle": "Mantente al día con las últimas noticias, guías y contenido exclusivo",
+      "youtubeTitle": "Suscríbete a MQ en YouTube",
+      "youtubeDescription": "Disfruta de guías en vídeo, reseñas de productos y consejos expertos en nuestro canal de YouTube.",
+      "subscribe": "Suscribirse"
+    },
+    "guideSections": {
+      "maleHeading": "Mr. Q",
+      "maleDescription": "Guías expertas para hombres sobre juguetes sexuales, técnicas y temas de salud. Reseñas independientes en las que puedes confiar.",
+      "viewMaleAll": "Ver todas las guías para hombres",
+      "femaleHeading": "Miss Q",
+      "femaleDescription": "Guías detalladas para mujeres sobre juguetes, placer y bienestar. Reseñas honestas para ayudarte a explorar con confianza.",
+      "viewFemaleAll": "Ver todas las guías para mujeres",
+      "comingSoon": "Guías próximamente..."
+    }
+  },
   "account": {
     "meta": {
       "title": "Mi cuenta",

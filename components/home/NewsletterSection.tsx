@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function NewsletterSection() {
+  const t = useTranslations('home.newsletter');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -25,15 +27,15 @@ export default function NewsletterSection() {
 
       if (response.ok) {
         setStatus('success');
-        setMessage('Thanks for subscribing! Check your inbox for exclusive deals.');
+        setMessage(t('successMessage'));
         setEmail('');
       } else {
         setStatus('error');
-        setMessage(data.error || 'Something went wrong. Please try again.');
+        setMessage(data.error || t('errorMessage'));
       }
     } catch {
       setStatus('error');
-      setMessage('Something went wrong. Please try again.');
+      setMessage(t('errorMessage'));
     }
   };
 
@@ -50,11 +52,10 @@ export default function NewsletterSection() {
 
           {/* Content */}
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            Get Exclusive Deals
+            {t('heading')}
           </h2>
           <p className="text-muted-foreground mb-8">
-            Subscribe to our newsletter for special offers, new arrivals, and insider tips.
-            Unsubscribe anytime.
+            {t('subtitle')}
           </p>
 
           {/* Form */}
@@ -71,7 +72,7 @@ export default function NewsletterSection() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                placeholder={t('emailPlaceholder')}
                 required
                 className="flex-1 px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               />
@@ -80,7 +81,7 @@ export default function NewsletterSection() {
                 disabled={status === 'loading'}
                 className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+                {status === 'loading' ? t('submitting') : t('submit')}
               </button>
             </form>
           )}
@@ -91,7 +92,7 @@ export default function NewsletterSection() {
 
           {/* Privacy note */}
           <p className="mt-4 text-xs text-muted-foreground">
-            We respect your privacy. Your email will never be shared.
+            {t('privacyNote')}
           </p>
         </div>
       </div>
