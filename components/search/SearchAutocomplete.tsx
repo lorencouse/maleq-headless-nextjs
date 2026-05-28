@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import * as gtag from '@/lib/analytics/gtag';
 import { searchOfflineProducts } from '@/lib/pwa/offline-search';
 
@@ -142,6 +143,7 @@ export default function SearchAutocomplete({
   className,
   persistFromUrl = false,
 }: SearchAutocompleteProps) {
+  const t = useTranslations('search');
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -376,7 +378,7 @@ export default function SearchAutocomplete({
   const showDropdown =
     isOpen && (query.length >= 2 || recentSearches.length > 0);
 
-  const dynamicPlaceholder = searchMode === 'products' ? 'Search products...' : 'Search articles...';
+  const dynamicPlaceholder = searchMode === 'products' ? t('placeholderProducts') : t('placeholderArticles');
 
   return (
     <div ref={containerRef} className={`relative w-full ${className || ''}`}>
@@ -447,7 +449,7 @@ export default function SearchAutocomplete({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Products
+                {t('tabProducts')}
               </button>
               <button
                 onClick={() => setSearchMode('articles')}
@@ -457,7 +459,7 @@ export default function SearchAutocomplete({
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Articles
+                {t('tabArticles')}
               </button>
             </div>
           </div>
@@ -466,7 +468,7 @@ export default function SearchAutocomplete({
           {query.length < 2 && recentSearches.length > 0 && (
             <div className='p-2'>
               <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 px-1'>
-                Recent Searches
+                {t('recentSearches')}
               </p>
               <div>
                 {recentSearches.map((term) => (
@@ -527,7 +529,7 @@ export default function SearchAutocomplete({
                   {categories.length > 0 && (
                     <div className='p-2 border-b border-border'>
                       <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 px-1'>
-                        Categories
+                        {t('categories')}
                       </p>
                       <div>
                         {categories.map((category, index) => (
@@ -568,7 +570,7 @@ export default function SearchAutocomplete({
                   {products.length > 0 && (
                     <div className='p-2'>
                       <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 px-1'>
-                        Products
+                        {t('productsSection')}
                       </p>
                       {products.map((product, index) => (
                         <SearchResultRow
@@ -597,7 +599,7 @@ export default function SearchAutocomplete({
                   {blogCategories.length > 0 && (
                     <div className='p-2 border-b border-border'>
                       <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 px-1'>
-                        Categories
+                        {t('categories')}
                       </p>
                       <div>
                         {blogCategories.map((category, index) => (
@@ -638,7 +640,7 @@ export default function SearchAutocomplete({
                   {posts.length > 0 && (
                     <div className='p-2'>
                       <p className='text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1 px-1'>
-                        Articles
+                        {t('articlesSection')}
                       </p>
                       {posts.map((post, index) => (
                         <SearchResultRow
@@ -664,13 +666,14 @@ export default function SearchAutocomplete({
               {!hasResults && !isLoading && (
                 <div className='p-4 text-center'>
                   <p className='text-sm text-muted-foreground'>
-                    No {searchMode === 'products' ? 'products' : 'articles'}{' '}
-                    found for &quot;{query}&quot;
+                    {searchMode === 'products'
+                      ? t('noResultsProducts', { query })
+                      : t('noResultsArticles', { query })}
                   </p>
                   {/* Did you mean? suggestions */}
                   {suggestions.length > 0 && (
                     <p className='text-sm text-muted-foreground mt-2'>
-                      Did you mean:{' '}
+                      {t('didYouMean')}{' '}
                       {suggestions.map((suggestion, index) => (
                         <span key={suggestion}>
                           <button
@@ -698,8 +701,9 @@ export default function SearchAutocomplete({
                     onClick={() => handleSearch()}
                     className='w-full py-1.5 text-sm text-primary hover:text-primary-hover font-medium transition-colors'
                   >
-                    View all {searchMode === 'products' ? 'product' : 'article'}{' '}
-                    results for &quot;{query}&quot;
+                    {searchMode === 'products'
+                      ? t('viewAllProducts', { query })
+                      : t('viewAllArticles', { query })}
                   </button>
                 </div>
               )}

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 interface DidYouMeanProps {
   /** Array of spelling/search suggestions */
@@ -26,6 +27,8 @@ export default function DidYouMean({
   align = 'right',
   className = '',
 }: DidYouMeanProps) {
+  const t = useTranslations('search');
+
   if (!suggestions || suggestions.length === 0) {
     return null;
   }
@@ -39,7 +42,7 @@ export default function DidYouMean({
   return (
     <div className={`mb-3 p-3 bg-muted/50 border border-border rounded-lg flex ${alignmentClass} ${className}`}>
       <p className="text-sm text-foreground">
-        Did you mean:{' '}
+        {t('didYouMean')}{' '}
         {suggestions.map((suggestion, index) => (
           <span key={suggestion}>
             <Link
@@ -70,6 +73,8 @@ export function DidYouMeanInline({
   onSelect: (suggestion: string) => void;
   className?: string;
 }) {
+  const t = useTranslations('search');
+
   if (!suggestions || suggestions.length === 0) {
     return null;
   }
@@ -77,7 +82,7 @@ export function DidYouMeanInline({
   return (
     <div className={`px-3 py-2 border-t border-border bg-muted/30 ${className}`}>
       <p className="text-xs text-muted-foreground">
-        Did you mean:{' '}
+        {t('didYouMean')}{' '}
         {suggestions.map((suggestion, index) => (
           <span key={suggestion}>
             <button
