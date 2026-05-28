@@ -1,8 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export default function EmptyCart() {
+  const t = useTranslations('cart');
+
   return (
     <div className="text-center py-16 px-4">
       {/* Cart Icon */}
@@ -24,11 +27,10 @@ export default function EmptyCart() {
 
       {/* Message */}
       <h2 className="text-2xl font-semibold text-foreground mb-2">
-        Your cart is empty
+        {t('empty')}
       </h2>
       <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-        Looks like you haven&apos;t added any items to your cart yet.
-        Browse our collection and find something you&apos;ll love!
+        {t('emptyLong')}
       </p>
 
       {/* Action Button */}
@@ -36,7 +38,7 @@ export default function EmptyCart() {
         href="/shop"
         className="inline-block py-3 px-8 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
       >
-        Start Shopping
+        {t('startShopping')}
       </Link>
 
       {/* Additional Links */}
@@ -45,14 +47,14 @@ export default function EmptyCart() {
           href="/"
           className="text-muted-foreground hover:text-primary transition-colors"
         >
-          Return to Home
+          {t('returnToHome')}
         </Link>
         <span className="hidden sm:inline text-muted-foreground">|</span>
         <Link
           href="/shop"
           className="text-muted-foreground hover:text-primary transition-colors"
         >
-          Browse Categories
+          {t('browseCategories')}
         </Link>
       </div>
     </div>

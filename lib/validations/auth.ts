@@ -1,33 +1,66 @@
 import { z } from 'zod';
 
 /**
- * Login form validation schema
+ * Zod's validation messages are evaluated at schema-construction time, which
+ * is module load — outside any React context. To get locale-aware error
+ * messages we expose schema *factories* that accept a translator function
+ * (e.g. the result of useTranslations('validation.auth')) and return the
+ * actual schema.
+ *
+ * The looseTranslator type intentionally avoids next-intl's strict namespace
+ * typing so this file stays independent of message-catalog typing. Pass
+ * `useTranslations('validation.auth')` for auth keys and
+ * `useTranslations('validation.common')` for shared keys — see usage in
+ * components/auth/LoginForm.tsx and RegisterForm.tsx.
  */
-export const loginSchema = z.object({
-  identifier: z.string().min(1, 'Email or username is required'),
-  password: z.string().min(1, 'Password is required'),
-  rememberMe: z.boolean().optional(),
-});
-
-export type LoginFormData = z.infer<typeof loginSchema>;
+type Translator = (key: string) => string;
 
 /**
- * Registration form validation schema
+ * Login form validation schema factory.
+ *
+ * @param t translator for the `validation.auth` namespace
  */
-export const registerSchema = z
-  .object({
-    firstName: z.string().min(1, 'First name is required').max(50, 'First name is too long'),
-    lastName: z.string().min(1, 'Last name is required').max(50, 'Last name is too long'),
-    email: z.string().min(1, 'Email is required').email('Please enter a valid email address'),
-    password: z
-      .string()
-      .min(12, 'Password must be at least 12 characters')
-      .max(100, 'Password is too long'),
-    confirmPassword: z.string().min(1, 'Please confirm your password'),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: 'Passwords do not match',
-    path: ['confirmPassword'],
+export function getLoginSchema(t: Translator) {
+  return z.object({
+    identifier: z.string().min(1, t('identifierRequired')),
+    password: z.string().min(1, t('passwordRequired')),
+    rememberMe: z.boolean().optional(),
   });
+}
 
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export type LoginFormData = z.infer<ReturnType<typeof getLoginSchema>>;
+
+/**
+ * Registration form validation schema factory.
+ *
+ * @param t translator for the `validation.auth` namespace
+ * @param tCommon translator for the `validation.common` namespace (email)
+ */
+export function getRegisterSchema(t: Translator, tCommon: Translator) {
+  return z
+    .object({
+      firstName: z
+        .string()
+        .min(1, t('firstNameRequired'))
+        .max(50, t('firstNameTooLong')),
+      lastName: z
+        .string()
+        .min(1, t('lastNameRequired'))
+        .max(50, t('lastNameTooLong')),
+      email: z
+        .string()
+        .min(1, tCommon('emailRequired'))
+        .email(tCommon('emailInvalid')),
+      password: z
+        .string()
+        .min(12, t('passwordTooShort'))
+        .max(100, t('passwordTooLong')),
+      confirmPassword: z.string().min(1, t('confirmPasswordRequired')),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t('passwordsMismatch'),
+      path: ['confirmPassword'],
+    });
+}
+
+export type RegisterFormData = z.infer<ReturnType<typeof getRegisterSchema>>;

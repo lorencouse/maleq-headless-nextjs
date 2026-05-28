@@ -5,12 +5,15 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { loginSchema, type LoginFormData } from '@/lib/validations/auth';
+import { getLoginSchema, type LoginFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
 export default function LoginForm() {
+  const t = useTranslations('auth');
+  const tValidation = useTranslations('validation.auth');
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -24,7 +27,7 @@ export default function LoginForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(getLoginSchema(tValidation)),
     defaultValues: {
       identifier: '',
       password: '',
@@ -40,7 +43,7 @@ export default function LoginForm() {
     try {
       tokenToSubmit = await getRecaptchaToken('login');
     } catch {
-      setError('Security check failed. Please refresh and try again.');
+      setError(t('common.recaptchaError'));
       return;
     }
 
@@ -60,7 +63,7 @@ export default function LoginForm() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Login failed');
+        throw new Error(result.error || t('login.failedGeneric'));
       }
 
       login(result.user, result.token);
@@ -68,7 +71,7 @@ export default function LoginForm() {
       // Use replace to avoid back-button loops (login → redirect → back → login)
       router.replace(returnTo || '/account');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : t('login.failedGeneric'));
     }
   };
 
@@ -82,7 +85,7 @@ export default function LoginForm() {
 
       <div>
         <label htmlFor="identifier" className="block text-sm font-medium text-foreground mb-2">
-          Email or Username
+          {t('login.identifierLabel')}
         </label>
         <input
           type="text"
@@ -92,7 +95,7 @@ export default function LoginForm() {
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
             errors.identifier ? 'border-destructive' : 'border-input'
           }`}
-          placeholder="Email or username"
+          placeholder={t('login.identifierPlaceholder')}
         />
         {errors.identifier && (
           <p className="mt-1 text-sm text-destructive">{errors.identifier.message}</p>
@@ -114,7 +117,7 @@ export default function LoginForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-          Password
+          {t('common.password')}
         </label>
         <div className="relative">
           <input
@@ -125,7 +128,7 @@ export default function LoginForm() {
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12 ${
               errors.password ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="Enter your password"
+            placeholder={t('login.passwordPlaceholder')}
           />
           <button
             type="button"
@@ -156,13 +159,13 @@ export default function LoginForm() {
             {...register('rememberMe')}
             className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
           />
-          <span className="ml-2 text-sm text-muted-foreground">Remember me</span>
+          <span className="ml-2 text-sm text-muted-foreground">{t('login.rememberMe')}</span>
         </label>
         <Link
           href="/forgot-password"
           className="text-sm text-primary hover:text-primary-hover"
         >
-          Forgot password?
+          {t('login.forgotPasswordLink')}
         </Link>
       </div>
 
@@ -177,17 +180,17 @@ export default function LoginForm() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            Signing in...
+            {t('login.submitting')}
           </span>
         ) : (
-          'Sign In'
+          t('login.submit')
         )}
       </button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{' '}
+        {t('login.noAccount')}{' '}
         <Link href={returnTo ? `/register?returnTo=${encodeURIComponent(returnTo)}` : '/register'} className="text-primary hover:text-primary-hover font-medium">
-          Create one
+          {t('login.createOne')}
         </Link>
       </p>
     </form>

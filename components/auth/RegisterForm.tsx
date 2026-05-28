@@ -5,14 +5,18 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
-import { registerSchema, type RegisterFormData } from '@/lib/validations/auth';
+import { getRegisterSchema, type RegisterFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 
 const REGISTER_TIMEOUT_MS = 30_000;
 
 export default function RegisterForm() {
+  const t = useTranslations('auth');
+  const tValidation = useTranslations('validation.auth');
+  const tValidationCommon = useTranslations('validation.common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
@@ -27,7 +31,7 @@ export default function RegisterForm() {
     formState: { errors },
     watch,
   } = useForm<RegisterFormData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(getRegisterSchema(tValidation, tValidationCommon)),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -47,7 +51,7 @@ export default function RegisterForm() {
     try {
       tokenToSubmit = await getRecaptchaToken('register');
     } catch {
-      setError('Security check failed. Please refresh and try again.');
+      setError(t('common.recaptchaError'));
       return;
     }
 
@@ -74,9 +78,9 @@ export default function RegisterForm() {
 
       if (!response.ok) {
         if (result.code === 'ACCOUNT_EXISTS') {
-          throw new Error('An account with this email already exists. Try signing in instead.');
+          throw new Error(t('register.accountExists'));
         }
-        throw new Error(result.error || 'Registration failed. Please try again.');
+        throw new Error(result.error || t('register.failedGeneric'));
       }
 
       login(result.user, result.token);
@@ -84,9 +88,9 @@ export default function RegisterForm() {
       router.replace(returnTo || '/account');
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        setError('Registration timed out. Please check your connection and try again.');
+        setError(t('register.timedOut'));
       } else {
-        setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+        setError(err instanceof Error ? err.message : t('register.failedGeneric'));
       }
     } finally {
       clearTimeout(timeout);
@@ -104,7 +108,7 @@ export default function RegisterForm() {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-foreground mb-2">
-            First Name
+            {t('register.firstName')}
           </label>
           <input
             type="text"
@@ -114,7 +118,7 @@ export default function RegisterForm() {
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
               errors.firstName ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="John"
+            placeholder={t('register.firstNamePlaceholder')}
           />
           {errors.firstName && (
             <p className="mt-1 text-sm text-destructive">{errors.firstName.message}</p>
@@ -123,7 +127,7 @@ export default function RegisterForm() {
 
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-foreground mb-2">
-            Last Name
+            {t('register.lastName')}
           </label>
           <input
             type="text"
@@ -133,7 +137,7 @@ export default function RegisterForm() {
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
               errors.lastName ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="Doe"
+            placeholder={t('register.lastNamePlaceholder')}
           />
           {errors.lastName && (
             <p className="mt-1 text-sm text-destructive">{errors.lastName.message}</p>
@@ -143,7 +147,7 @@ export default function RegisterForm() {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-          Email Address
+          {t('common.email')}
         </label>
         <input
           type="email"
@@ -153,7 +157,7 @@ export default function RegisterForm() {
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
             errors.email ? 'border-destructive' : 'border-input'
           }`}
-          placeholder="your@email.com"
+          placeholder={t('common.emailPlaceholder')}
         />
         {errors.email && (
           <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
@@ -175,7 +179,7 @@ export default function RegisterForm() {
 
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-          Password
+          {t('common.password')}
         </label>
         <div className="relative">
           <input
@@ -186,7 +190,7 @@ export default function RegisterForm() {
             className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground pr-12 ${
               errors.password ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="At least 12 characters"
+            placeholder={t('register.passwordPlaceholder')}
           />
           <button
             type="button"
@@ -228,10 +232,10 @@ export default function RegisterForm() {
             </div>
             <p className="text-xs text-muted-foreground">
               {password.length >= 20
-                ? 'Strong password'
+                ? t('register.strengthStrong')
                 : password.length >= 16
-                  ? 'Good password'
-                  : 'Acceptable — longer is stronger'}
+                  ? t('register.strengthGood')
+                  : t('register.strengthAcceptable')}
             </p>
           </div>
         )}
@@ -239,7 +243,7 @@ export default function RegisterForm() {
 
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
-          Confirm Password
+          {t('register.confirmPassword')}
         </label>
         <input
           type={showPassword ? 'text' : 'password'}
@@ -249,7 +253,7 @@ export default function RegisterForm() {
           className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
             errors.confirmPassword ? 'border-destructive' : 'border-input'
           }`}
-          placeholder="Confirm your password"
+          placeholder={t('register.confirmPasswordPlaceholder')}
         />
         {errors.confirmPassword && (
           <p className="mt-1 text-sm text-destructive">{errors.confirmPassword.message}</p>
@@ -267,17 +271,17 @@ export default function RegisterForm() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            Creating account...
+            {t('register.submitting')}
           </span>
         ) : (
-          'Create Account'
+          t('register.submit')
         )}
       </button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{' '}
+        {t('register.hasAccount')}{' '}
         <Link href={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : '/login'} className="text-primary hover:text-primary-hover font-medium">
-          Sign in
+          {t('register.signInLink')}
         </Link>
       </p>
     </form>

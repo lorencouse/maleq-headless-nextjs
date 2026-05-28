@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
 export default function CouponInput() {
+  const t = useTranslations('cart');
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +19,7 @@ export default function CouponInput() {
 
   const handleApply = async () => {
     if (!code.trim()) {
-      setError('Please enter a coupon code');
+      setError(t('couponPleaseEnter'));
       return;
     }
 
@@ -50,8 +52,8 @@ export default function CouponInput() {
         showError(result.message);
       }
     } catch {
-      setError('Failed to validate coupon');
-      showError('Failed to validate coupon');
+      setError(t('couponValidateFailed'));
+      showError(t('couponValidateFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +61,7 @@ export default function CouponInput() {
 
   const handleRemove = () => {
     removeCoupon();
-    showSuccess('Coupon removed');
+    showSuccess(t('couponRemoved'));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -84,7 +86,7 @@ export default function CouponInput() {
             onClick={handleRemove}
             className="px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-background/50 rounded-lg transition-colors"
           >
-            Remove
+            {t('remove')}
           </button>
         </div>
       </div>
@@ -102,7 +104,7 @@ export default function CouponInput() {
             setError(null);
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Enter coupon code"
+          placeholder={t('couponPlaceholder')}
           className="flex-1 px-3 py-2.5 min-h-[44px] text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           disabled={isLoading}
         />
@@ -117,7 +119,7 @@ export default function CouponInput() {
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           ) : (
-            'Apply'
+            t('couponApply')
           )}
         </button>
       </div>

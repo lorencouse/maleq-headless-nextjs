@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { CartItem as CartItemType } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice, calculateSavings } from '@/lib/utils/cart-helpers';
@@ -26,6 +27,7 @@ interface CartItemProps {
 }
 
 export default function CartItem({ item }: CartItemProps) {
+  const t = useTranslations('cart');
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -70,7 +72,7 @@ export default function CartItem({ item }: CartItemProps) {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-            No Image
+            {t('noImage')}
           </div>
         )}
       </Link>
@@ -115,7 +117,7 @@ export default function CartItem({ item }: CartItemProps) {
                   {formatPrice(item.regularPrice)}
                 </span>
                 <span className="text-xs text-primary font-medium">
-                  Save {formatPrice(savings)}
+                  {t('save', { amount: formatPrice(savings) })}
                 </span>
               </>
             )}
@@ -124,12 +126,12 @@ export default function CartItem({ item }: CartItemProps) {
           {/* Stock Warning */}
           {!item.inStock && (
             <p className="text-sm text-destructive mt-2">
-              This item is out of stock
+              {t('outOfStock')}
             </p>
           )}
           {item.inStock && item.stockQuantity && item.stockQuantity < 5 && (
             <p className="text-sm text-warning mt-2">
-              Only {item.stockQuantity} left in stock
+              {t('lowStock', { count: item.stockQuantity })}
             </p>
           )}
         </div>
@@ -149,7 +151,7 @@ export default function CartItem({ item }: CartItemProps) {
 
           {/* Line Subtotal */}
           <div className="text-right">
-            <p className="text-sm text-muted-foreground">Subtotal</p>
+            <p className="text-sm text-muted-foreground">{t('subtotal')}</p>
             <p className="text-lg font-semibold text-foreground">
               {formatPrice(item.subtotal)}
             </p>
@@ -162,13 +164,13 @@ export default function CartItem({ item }: CartItemProps) {
                 onClick={handleRemove}
                 className="px-3 py-2 min-h-[44px] text-sm text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
               >
-                Confirm
+                {t('confirm')}
               </button>
               <button
                 onClick={() => setShowRemoveConfirm(false)}
                 className="px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:bg-muted rounded-lg transition-colors"
               >
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           ) : (
@@ -176,7 +178,7 @@ export default function CartItem({ item }: CartItemProps) {
               onClick={() => setShowRemoveConfirm(true)}
               className="px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:text-destructive hover:bg-muted rounded-lg transition-colors"
             >
-              Remove
+              {t('remove')}
             </button>
           )}
         </div>

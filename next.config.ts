@@ -1,4 +1,9 @@
 import type { NextConfig } from 'next';
+import createNextIntlPlugin from 'next-intl/plugin';
+
+// Plugin points at our request config (i18n/request.ts) — loaded once per
+// request to resolve locale + messages. See i18n/routing.ts for locale list.
+const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
 
 const nextConfig: NextConfig = {
   // Standalone output for Docker/self-hosted deployment
@@ -427,4 +432,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);
