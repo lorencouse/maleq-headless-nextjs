@@ -371,3 +371,31 @@ export const share = (method: string, contentType: string, itemId: string): void
     item_id: itemId,
   });
 };
+
+// Support chatbot events.
+// Param values are coerced to GA4-friendly primitives; never log message content
+// (PII risk) — message_length is fine.
+export type ChatbotEventName =
+  | 'chatbot_open'
+  | 'chatbot_pill_click'
+  | 'chatbot_feedback'
+  | 'chatbot_escalated'
+  | 'chatbot_ai_message'
+  | 'chatbot_reset'
+  | 'chatbot_filter_apply'
+  | 'chatbot_product_click'
+  | 'chatbot_article_click';
+
+export const trackChatbot = (
+  eventName: ChatbotEventName,
+  params: Record<string, string | number | boolean | undefined> = {}
+): void => {
+  if (!isGAAvailable()) return;
+
+  const cleaned: Record<string, string | number | boolean> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined) cleaned[k] = v;
+  }
+
+  gtagOrQueue('event', eventName, cleaned);
+};

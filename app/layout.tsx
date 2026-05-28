@@ -20,6 +20,7 @@ import RouteScrollManager from "@/components/navigation/RouteScrollManager";
 import PwaAnalytics from "@/components/pwa/PwaAnalytics";
 import BackgroundSyncReplay from "@/components/pwa/BackgroundSyncReplay";
 import CartStockRevalidation from "@/components/pwa/CartStockRevalidation";
+import ChatWidget from "@/components/chat/ChatWidget";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -171,6 +172,7 @@ export default function RootLayout({
                 <InstallPrompt minVisits={2} />
                 <PushNotificationPrompt minVisits={3} />
               </div>
+              <ChatWidget />
             </CartProvider>
           </ThemeProvider>
         </QueryProvider>
