@@ -384,7 +384,8 @@ export type ChatbotEventName =
   | 'chatbot_reset'
   | 'chatbot_filter_apply'
   | 'chatbot_product_click'
-  | 'chatbot_article_click';
+  | 'chatbot_article_click'
+  | 'chatbot_contact_click';
 
 export const trackChatbot = (
   eventName: ChatbotEventName,

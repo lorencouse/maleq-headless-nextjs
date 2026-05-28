@@ -28,7 +28,13 @@ function isValidMessage(m: unknown): m is ChatMessage {
 export async function POST(req: NextRequest) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return new Response('Chat is not configured.', { status: 503 });
+    // Plain-text body intentionally — the widget echoes `await res.text()`
+    // into the assistant bubble and renderContent parses the `[label](/path)`
+    // markdown into a clickable Link to /contact.
+    return new Response(
+      'Chat is offline. Please [contact us via email](/contact).',
+      { status: 503 },
+    );
   }
 
   let payload: unknown;
