@@ -144,9 +144,19 @@ export default async function RootLayout({
   // renders in Spanish. Restoring locale-aware chrome on [locale]/ routes
   // is a follow-up (Phase 8) — requires moving Header/Footer out of the
   // root and into per-locale-aware sub-layouts (route groups).
+  //
+  // IMPORTANT: pass an explicit locale to getMessages. next-intl's
+  // getConfig is React-cached BY ARGUMENT, so calling `getMessages()`
+  // here (no args) would cache the `undefined`-keyed slot with English
+  // messages — and child server components on /es/* routes call
+  // `useTranslations()` which also resolves through `getConfig(undefined)`.
+  // They'd hit our stale cache and render English. Passing an explicit
+  // locale uses a different cache key ('en') and leaves the
+  // `undefined`-keyed slot free for `[locale]/layout` to populate with
+  // the URL-locale messages.
   const locale = routing.defaultLocale;
   setRequestLocale(locale);
-  const messages = await getMessages();
+  const messages = await getMessages({ locale });
 
   return (
     <html lang={locale} suppressHydrationWarning>
