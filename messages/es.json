@@ -456,6 +456,42 @@
       "finalizingOrder": "Finalizando tu pedido...",
       "failedToFinalize": "No se pudo finalizar el pedido",
       "unableToFinalize": "No se pudo finalizar tu pedido automáticamente. Contacta con soporte si se capturó el pago."
+    },
+    "contact": {
+      "emailLabel": "Correo electrónico",
+      "phoneLabel": "Número de teléfono",
+      "optional": "(opcional)",
+      "phonePlaceholder": "(555) 123-4567",
+      "phoneHint": "Para actualizaciones de entrega y preguntas sobre tu pedido",
+      "newsletterOptIn": "Envíame novedades y ofertas por correo",
+      "continueToShipping": "Continuar al envío",
+      "phoneInvalid": "Introduce un número de teléfono válido"
+    },
+    "shippingAddress": {
+      "heading": "Dirección de envío",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "company": "Empresa",
+      "optional": "(opcional)",
+      "address": "Dirección",
+      "streetPlaceholder": "Dirección postal",
+      "autocompleteUnavailable": "Las sugerencias de dirección no están disponibles temporalmente. Puedes introducir tu dirección manualmente.",
+      "autocompleteAttribution": "Sugerencias proporcionadas por OpenStreetMap",
+      "address2": "Apartamento, suite, etc.",
+      "city": "Ciudad",
+      "stateUS": "Estado",
+      "stateNonUS": "Provincia / Región",
+      "selectState": "Selecciona un estado",
+      "zipCode": "Código postal",
+      "postalCode": "Código postal",
+      "postalPlaceholder": "Código postal",
+      "country": "País",
+      "countryPlaceholder": "Empieza a escribir tu país…",
+      "notShippable": "Sin envío",
+      "noCountryMatches": "Sin coincidencias para \"{query}\"",
+      "unsupportedCountry": "Lo sentimos, aún no enviamos a {country}. Contacta con nosotros en info@maleq.com si quieres solicitar envío aquí.",
+      "unsupportedCountryFallback": "este país",
+      "shippingAvailable": "Hay opciones de envío nacional e internacional disponibles."
     }
   },
   "validation": {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 
 interface ContactFormProps {
@@ -8,6 +9,8 @@ interface ContactFormProps {
 }
 
 export default function ContactForm({ onComplete }: ContactFormProps) {
+  const t = useTranslations('checkout.contact');
+  const tValidation = useTranslations('validation.common');
   const { user, token } = useAuthStore();
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -46,13 +49,13 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
     const newErrors: Record<string, string> = {};
 
     if (!resolvedEmail) {
-      newErrors.email = 'Email is required';
+      newErrors.email = tValidation('emailRequired');
     } else if (!validateEmail(resolvedEmail)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = tValidation('emailInvalid');
     }
 
     if (phone && !validatePhone(phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
+      newErrors.phone = t('phoneInvalid');
     }
 
     setErrors(newErrors);
@@ -67,7 +70,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
       {/* Email */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
-          Email Address <span className="text-destructive">*</span>
+          {t('emailLabel')} <span className="text-destructive">*</span>
         </label>
         <input
           type="email"
@@ -87,14 +90,14 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
       {/* Phone (Optional) */}
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-foreground mb-1">
-          Phone Number <span className="text-muted-foreground">(optional)</span>
+          {t('phoneLabel')} <span className="text-muted-foreground">{t('optional')}</span>
         </label>
         <input
           type="tel"
           id="phone"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          placeholder="(555) 123-4567"
+          placeholder={t('phonePlaceholder')}
           className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
             errors.phone ? 'border-red-500' : 'border-input'
           }`}
@@ -103,7 +106,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
           <p className="mt-1 text-sm text-destructive">{errors.phone}</p>
         )}
         <p className="mt-1 text-xs text-muted-foreground">
-          For delivery updates and questions about your order
+          {t('phoneHint')}
         </p>
       </div>
 
@@ -117,7 +120,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
           className="mt-1 h-4 w-4 rounded border-input text-primary focus:ring-primary"
         />
         <label htmlFor="newsletter" className="text-sm text-muted-foreground">
-          Email me with news and offers
+          {t('newsletterOptIn')}
         </label>
       </div>
 
@@ -126,7 +129,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
         type="submit"
         className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
       >
-        Continue to Shipping
+        {t('continueToShipping')}
       </button>
     </form>
   );

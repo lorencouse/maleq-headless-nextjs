@@ -456,6 +456,42 @@
       "finalizingOrder": "Finalizing your order...",
       "failedToFinalize": "Failed to finalize order",
       "unableToFinalize": "Unable to finalize your order automatically. Please contact support if payment was captured."
+    },
+    "contact": {
+      "emailLabel": "Email Address",
+      "phoneLabel": "Phone Number",
+      "optional": "(optional)",
+      "phonePlaceholder": "(555) 123-4567",
+      "phoneHint": "For delivery updates and questions about your order",
+      "newsletterOptIn": "Email me with news and offers",
+      "continueToShipping": "Continue to Shipping",
+      "phoneInvalid": "Please enter a valid phone number"
+    },
+    "shippingAddress": {
+      "heading": "Shipping Address",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "company": "Company",
+      "optional": "(optional)",
+      "address": "Address",
+      "streetPlaceholder": "Street address",
+      "autocompleteUnavailable": "Address suggestions are temporarily unavailable. You can still enter your address manually.",
+      "autocompleteAttribution": "Suggestions powered by OpenStreetMap",
+      "address2": "Apartment, suite, etc.",
+      "city": "City",
+      "stateUS": "State",
+      "stateNonUS": "Province / Region",
+      "selectState": "Select state",
+      "zipCode": "ZIP Code",
+      "postalCode": "Postal Code",
+      "postalPlaceholder": "Postal code",
+      "country": "Country",
+      "countryPlaceholder": "Start typing your country…",
+      "notShippable": "Not shippable",
+      "noCountryMatches": "No matches for \"{query}\"",
+      "unsupportedCountry": "Sorry, we don't ship to {country} yet. Please contact us at info@maleq.com if you'd like to request shipping here.",
+      "unsupportedCountryFallback": "this country",
+      "shippingAvailable": "Domestic and international shipping options are available."
     }
   },
   "validation": {
