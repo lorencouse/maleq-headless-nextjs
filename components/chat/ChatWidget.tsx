@@ -682,6 +682,11 @@ export default function ChatWidget() {
                     >
                       I still need help
                     </button>
+                    <ContactUsPill
+                      depth={path.length}
+                      pathSlug={path.join('/') || 'root'}
+                      origin="feedback"
+                    />
                   </div>
                 </div>
               ) : discovery ? (
@@ -858,6 +863,12 @@ export default function ChatWidget() {
                         {node.label}
                       </button>
                     ))}
+                    {/* Always-available escape hatch to /contact, at every level of the tree. */}
+                    <ContactUsPill
+                      depth={path.length}
+                      pathSlug={path.join('/') || 'root'}
+                      origin="pill-row"
+                    />
                   </div>
                 </>
               )}
@@ -905,6 +916,42 @@ export default function ChatWidget() {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Small Link styled like the secondary pills, used as a permanent
+ * /contact escape hatch on every guided screen — root pills, every
+ * sub-category, and the helpful/unhelpful feedback row. Routes to the
+ * contact page so users always have a human path, including when the
+ * AI escalation is offline (missing ANTHROPIC_API_KEY).
+ */
+function ContactUsPill({
+  depth,
+  pathSlug,
+  origin,
+}: {
+  depth: number;
+  pathSlug: string;
+  origin: 'pill-row' | 'feedback';
+}) {
+  return (
+    <Link
+      href="/contact"
+      onClick={() =>
+        trackChatbot('chatbot_contact_click', {
+          depth,
+          path: pathSlug,
+          origin,
+        })
+      }
+      className="px-3 py-1.5 rounded-full bg-muted text-foreground text-xs font-medium hover:bg-muted/70 border border-border transition-colors inline-flex items-center gap-1"
+    >
+      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+      Contact us
+    </Link>
   );
 }
 
