@@ -246,6 +246,21 @@
     "shippingLink": "Shipping & Returns",
     "formSectionTitle": "Send us a Message"
   },
+  "search": {
+    "placeholderProducts": "Search products...",
+    "placeholderArticles": "Search articles...",
+    "tabProducts": "Products",
+    "tabArticles": "Articles",
+    "recentSearches": "Recent Searches",
+    "categories": "Categories",
+    "productsSection": "Products",
+    "articlesSection": "Articles",
+    "noResultsProducts": "No products found for \"{query}\"",
+    "noResultsArticles": "No articles found for \"{query}\"",
+    "didYouMean": "Did you mean:",
+    "viewAllProducts": "View all product results for \"{query}\"",
+    "viewAllArticles": "View all article results for \"{query}\""
+  },
   "shippingReturnsPage": {
     "metaTitle": "Shipping & Returns",
     "metaDescription": "Learn about Male Q shipping options, delivery times, discreet packaging, and our return and refund policy.",

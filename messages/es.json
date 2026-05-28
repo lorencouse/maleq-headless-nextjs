@@ -246,6 +246,21 @@
     "shippingLink": "Envíos y devoluciones",
     "formSectionTitle": "Envíanos un mensaje"
   },
+  "search": {
+    "placeholderProducts": "Buscar productos...",
+    "placeholderArticles": "Buscar artículos...",
+    "tabProducts": "Productos",
+    "tabArticles": "Artículos",
+    "recentSearches": "Búsquedas recientes",
+    "categories": "Categorías",
+    "productsSection": "Productos",
+    "articlesSection": "Artículos",
+    "noResultsProducts": "No se encontraron productos para \"{query}\"",
+    "noResultsArticles": "No se encontraron artículos para \"{query}\"",
+    "didYouMean": "¿Quisiste decir:",
+    "viewAllProducts": "Ver todos los productos para \"{query}\"",
+    "viewAllArticles": "Ver todos los artículos para \"{query}\""
+  },
   "shippingReturnsPage": {
     "metaTitle": "Envíos y devoluciones",
     "metaDescription": "Conoce las opciones de envío de Male Q, los tiempos de entrega, el embalaje discreto y nuestra política de devoluciones y reembolsos.",
