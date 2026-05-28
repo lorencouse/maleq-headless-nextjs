@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
 
@@ -90,6 +91,8 @@ const emptyAddress: Address = {
 };
 
 export default function AddressesPage() {
+  const t = useTranslations('account.addresses');
+  const tForm = useTranslations('account.addresses.form');
   const { user, token } = useAuthStore();
   const [customerData, setCustomerData] = useState<CustomerData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,7 +113,7 @@ export default function AddressesPage() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to fetch customer data');
+          throw new Error(t('toastFailedSave'));
         }
 
         const data = await response.json();
@@ -169,7 +172,7 @@ export default function AddressesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to copy address');
+        throw new Error(t('toastFailedCopy'));
       }
 
       const data = await response.json();
@@ -177,11 +180,11 @@ export default function AddressesPage() {
         billing: data.billing || emptyAddress,
         shipping: data.shipping || emptyAddress,
       });
-      setMessage({ type: 'success', text: 'Shipping address updated from billing!' });
+      setMessage({ type: 'success', text: t('toastCopied') });
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to copy address',
+        text: err instanceof Error ? err.message : t('toastFailedCopy'),
       });
     } finally {
       setIsSaving(false);
@@ -217,7 +220,7 @@ export default function AddressesPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to save address');
+        throw new Error(t('toastFailedSave'));
       }
 
       const data = await response.json();
@@ -226,11 +229,11 @@ export default function AddressesPage() {
         shipping: data.shipping || emptyAddress,
       });
       setEditingType(null);
-      setMessage({ type: 'success', text: 'Address saved successfully!' });
+      setMessage({ type: 'success', text: t('toastSaved') });
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to save address',
+        text: err instanceof Error ? err.message : t('toastFailedSave'),
       });
     } finally {
       setIsSaving(false);
@@ -241,7 +244,7 @@ export default function AddressesPage() {
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">First Name</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{tForm('firstName')}</label>
           <input
             type="text"
             name="first_name"
@@ -251,7 +254,7 @@ export default function AddressesPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Last Name</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{tForm('lastName')}</label>
           <input
             type="text"
             name="last_name"
@@ -264,7 +267,7 @@ export default function AddressesPage() {
 
       <div>
         <label className="block text-sm font-medium text-foreground mb-1">
-          Company <span className="text-muted-foreground">(optional)</span>
+          {tForm('company')} <span className="text-muted-foreground">{tForm('optional')}</span>
         </label>
         <input
           type="text"
@@ -276,7 +279,7 @@ export default function AddressesPage() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-foreground mb-1">Address Line 1</label>
+        <label className="block text-sm font-medium text-foreground mb-1">{tForm('address1')}</label>
         <input
           type="text"
           name="address_1"
@@ -288,7 +291,7 @@ export default function AddressesPage() {
 
       <div>
         <label className="block text-sm font-medium text-foreground mb-1">
-          Address Line 2 <span className="text-muted-foreground">(optional)</span>
+          {tForm('address2')} <span className="text-muted-foreground">{tForm('optional')}</span>
         </label>
         <input
           type="text"
@@ -301,7 +304,7 @@ export default function AddressesPage() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">City</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{tForm('city')}</label>
           <input
             type="text"
             name="city"
@@ -311,14 +314,14 @@ export default function AddressesPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">State</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{tForm('state')}</label>
           <select
             name="state"
             value={editAddress.state}
             onChange={handleChange}
             className="w-full px-4 py-2.5 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground"
           >
-            <option value="">Select state</option>
+            <option value="">{tForm('selectState')}</option>
             {US_STATES.map((state) => (
               <option key={state.code} value={state.code}>
                 {state.name}
@@ -330,7 +333,7 @@ export default function AddressesPage() {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">ZIP Code</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{tForm('zipCode')}</label>
           <input
             type="text"
             name="postcode"
@@ -340,7 +343,7 @@ export default function AddressesPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">Phone</label>
+          <label className="block text-sm font-medium text-foreground mb-1">{tForm('phone')}</label>
           <input
             type="tel"
             name="phone"
@@ -357,13 +360,13 @@ export default function AddressesPage() {
           disabled={isSaving}
           className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
         >
-          {isSaving ? 'Saving...' : 'Save Address'}
+          {isSaving ? tForm('saving') : tForm('saveAddress')}
         </button>
         <button
           onClick={handleCancel}
           className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground"
         >
-          Cancel
+          {tForm('cancel')}
         </button>
       </div>
     </div>
@@ -375,12 +378,14 @@ export default function AddressesPage() {
     if (!hasAddress) {
       return (
         <div className="text-center py-8">
-          <p className="text-muted-foreground mb-4">No {type} address saved yet.</p>
+          <p className="text-muted-foreground mb-4">
+            {type === 'billing' ? t('noBilling') : t('noShipping')}
+          </p>
           <button
             onClick={() => handleEdit(type)}
             className="text-primary hover:text-primary-hover font-medium"
           >
-            Add Address
+            {t('addAddress')}
           </button>
         </div>
       );
@@ -406,7 +411,7 @@ export default function AddressesPage() {
   return (
     <AccountLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Addresses</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('heading')}</h1>
 
         {message && (
           <div
@@ -423,20 +428,20 @@ export default function AddressesPage() {
         {isLoading ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading addresses...</p>
+            <p className="mt-4 text-muted-foreground">{t('loading')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Billing Address */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
-                <h2 className="font-semibold text-foreground">Billing Address</h2>
+                <h2 className="font-semibold text-foreground">{t('billing')}</h2>
                 {editingType !== 'billing' && customerData?.billing?.address_1 && (
                   <button
                     onClick={() => handleEdit('billing')}
                     className="text-sm text-primary hover:text-primary-hover font-medium"
                   >
-                    Edit
+                    {t('edit')}
                   </button>
                 )}
               </div>
@@ -450,16 +455,16 @@ export default function AddressesPage() {
             {/* Shipping Address */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
-                <h2 className="font-semibold text-foreground">Shipping Address</h2>
+                <h2 className="font-semibold text-foreground">{t('shipping')}</h2>
                 <div className="flex gap-3">
                   {editingType !== 'shipping' && customerData?.billing?.address_1 && (
                     <button
                       onClick={handleCopyBillingToShipping}
                       disabled={isSaving}
                       className="text-sm text-muted-foreground hover:text-foreground font-medium cursor-pointer disabled:opacity-50"
-                      title="Copy billing address to shipping"
+                      title={t('copyBillingTitle')}
                     >
-                      Use billing address
+                      {t('useBillingAddress')}
                     </button>
                   )}
                   {editingType !== 'shipping' && customerData?.shipping?.address_1 && (
@@ -467,7 +472,7 @@ export default function AddressesPage() {
                       onClick={() => handleEdit('shipping')}
                       className="text-sm text-primary hover:text-primary-hover font-medium cursor-pointer"
                     >
-                      Edit
+                      {t('edit')}
                     </button>
                   )}
                 </div>

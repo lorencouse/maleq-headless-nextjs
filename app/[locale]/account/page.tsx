@@ -25,6 +25,7 @@ import { statusColors } from '@/lib/constants/status-colors';
 export default function AccountDashboard() {
   const t = useTranslations('account.dashboard');
   const tNav = useTranslations('account.nav');
+  const tStatus = useTranslations('account.orders.status');
   const locale = useLocale();
   const { user, token } = useAuthStore();
   const [recentOrders, setRecentOrders] = useState<Order[]>([]);
@@ -167,7 +168,7 @@ export default function AccountDashboard() {
                             statusColors[order.status] || 'bg-gray-100 text-gray-800'
                           }`}
                         >
-                          {order.status.replace('-', ' ')}
+                          {tStatus.has(order.status) ? tStatus(order.status) : order.status.replace('-', ' ')}
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">

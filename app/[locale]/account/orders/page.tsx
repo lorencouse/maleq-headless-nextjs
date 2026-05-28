@@ -30,10 +30,11 @@ function formatPrice(price: string | number, locale: string): string {
   }).format(num);
 }
 
-import { getStatusColor, formatStatus } from '@/lib/constants/status-colors';
+import { getStatusColor } from '@/lib/constants/status-colors';
 
 export default function OrdersPage() {
   const t = useTranslations('account.orders');
+  const tStatus = useTranslations('account.orders.status');
   const locale = useLocale();
   const { user, token } = useAuthStore();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -158,7 +159,7 @@ export default function OrdersPage() {
                       order.status
                     )}`}
                   >
-                    {formatStatus(order.status)}
+                    {tStatus.has(order.status) ? tStatus(order.status) : order.status}
                   </span>
                 </div>
 

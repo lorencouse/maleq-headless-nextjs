@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
 
 export default function AccountDetailsPage() {
+  const t = useTranslations('account.details');
   const { user, token, setUser, logout } = useAuthStore();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -82,7 +84,7 @@ export default function AccountDetailsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to upload avatar');
+        throw new Error(data.error || t('toastAvatarFailed'));
       }
 
       // Update local state
@@ -91,11 +93,11 @@ export default function AccountDetailsPage() {
         avatarUrl: data.avatarUrl,
       });
 
-      setMessage({ type: 'success', text: 'Avatar updated successfully!' });
+      setMessage({ type: 'success', text: t('toastAvatarSuccess') });
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to upload avatar',
+        text: err instanceof Error ? err.message : t('toastAvatarFailed'),
       });
     } finally {
       setIsUploadingAvatar(false);
@@ -128,7 +130,7 @@ export default function AccountDetailsPage() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update profile');
+        throw new Error(data.error || t('toastProfileFailed'));
       }
 
       // Update local state
@@ -141,11 +143,11 @@ export default function AccountDetailsPage() {
       });
 
       setIsEditingProfile(false);
-      setMessage({ type: 'success', text: 'Profile updated successfully!' });
+      setMessage({ type: 'success', text: t('toastProfileSuccess') });
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to update profile',
+        text: err instanceof Error ? err.message : t('toastProfileFailed'),
       });
     } finally {
       setIsSaving(false);
@@ -156,17 +158,17 @@ export default function AccountDetailsPage() {
     const errors: Record<string, string> = {};
 
     if (!passwordData.currentPassword) {
-      errors.currentPassword = 'Current password is required';
+      errors.currentPassword = t('errorCurrentPasswordRequired');
     }
 
     if (!passwordData.newPassword) {
-      errors.newPassword = 'New password is required';
+      errors.newPassword = t('errorNewPasswordRequired');
     } else if (passwordData.newPassword.length < 12) {
-      errors.newPassword = 'Password must be at least 12 characters';
+      errors.newPassword = t('errorPasswordTooShort');
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
+      errors.confirmPassword = t('errorPasswordsMismatch');
     }
 
     setPasswordErrors(errors);
@@ -196,7 +198,7 @@ export default function AccountDetailsPage() {
       const verifyData = await verifyResponse.json();
 
       if (!verifyResponse.ok || !verifyData.valid) {
-        setPasswordErrors({ currentPassword: 'Incorrect current password' });
+        setPasswordErrors({ currentPassword: t('errorIncorrectPassword') });
         setIsSaving(false);
         return;
       }
@@ -214,7 +216,7 @@ export default function AccountDetailsPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to change password');
+        throw new Error(t('toastPasswordFailed'));
       }
 
       setIsChangingPassword(false);
@@ -223,11 +225,11 @@ export default function AccountDetailsPage() {
         newPassword: '',
         confirmPassword: '',
       });
-      setMessage({ type: 'success', text: 'Password changed successfully!' });
+      setMessage({ type: 'success', text: t('toastPasswordSuccess') });
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to change password',
+        text: err instanceof Error ? err.message : t('toastPasswordFailed'),
       });
     } finally {
       setIsSaving(false);
@@ -238,11 +240,11 @@ export default function AccountDetailsPage() {
     const errors: Record<string, string> = {};
 
     if (!deleteData.password) {
-      errors.password = 'Password is required';
+      errors.password = t('errorDeletePasswordRequired');
     }
 
     if (deleteData.confirmText !== 'DELETE') {
-      errors.confirmText = 'Please type DELETE to confirm';
+      errors.confirmText = t('errorDeleteConfirmRequired');
     }
 
     setDeleteErrors(errors);
@@ -271,7 +273,7 @@ export default function AccountDetailsPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete account');
+        throw new Error(data.error || t('toastDeleteFailed'));
       }
 
       // Log out and redirect
@@ -280,7 +282,7 @@ export default function AccountDetailsPage() {
     } catch (err) {
       setMessage({
         type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to delete account',
+        text: err instanceof Error ? err.message : t('toastDeleteFailed'),
       });
       setIsSaving(false);
     }
@@ -289,7 +291,7 @@ export default function AccountDetailsPage() {
   return (
     <AccountLayout>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-foreground">Account Details</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('heading')}</h1>
 
         {message && (
           <div
@@ -306,13 +308,13 @@ export default function AccountDetailsPage() {
         {/* Profile Information */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-4 border-b border-border flex justify-between items-center">
-            <h2 className="font-semibold text-foreground">Profile Information</h2>
+            <h2 className="font-semibold text-foreground">{t('profileSection')}</h2>
             {!isEditingProfile && (
               <button
                 onClick={() => setIsEditingProfile(true)}
                 className="text-sm text-primary hover:text-primary-hover font-medium cursor-pointer"
               >
-                Edit
+                {t('edit')}
               </button>
             )}
           </div>
@@ -322,7 +324,7 @@ export default function AccountDetailsPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      First Name
+                      {t('firstName')}
                     </label>
                     <input
                       type="text"
@@ -334,7 +336,7 @@ export default function AccountDetailsPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1">
-                      Last Name
+                      {t('lastName')}
                     </label>
                     <input
                       type="text"
@@ -347,7 +349,7 @@ export default function AccountDetailsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Email Address
+                    {t('email')}
                   </label>
                   <input
                     type="email"
@@ -363,7 +365,7 @@ export default function AccountDetailsPage() {
                     disabled={isSaving}
                     className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 cursor-pointer"
                   >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+                    {isSaving ? t('saving') : t('saveChanges')}
                   </button>
                   <button
                     onClick={() => {
@@ -376,7 +378,7 @@ export default function AccountDetailsPage() {
                     }}
                     className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground cursor-pointer"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                 </div>
               </div>
@@ -438,21 +440,21 @@ export default function AccountDetailsPage() {
                       onClick={handleAvatarClick}
                       className="text-sm text-primary hover:text-primary-hover font-medium mt-1 cursor-pointer"
                     >
-                      Change photo
+                      {t('changePhoto')}
                     </button>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-6 pt-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">First Name</p>
+                    <p className="text-sm text-muted-foreground">{t('firstName')}</p>
                     <p className="font-medium text-foreground">{user?.firstName}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Last Name</p>
+                    <p className="text-sm text-muted-foreground">{t('lastName')}</p>
                     <p className="font-medium text-foreground">{user?.lastName}</p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-sm text-muted-foreground">Email Address</p>
+                    <p className="text-sm text-muted-foreground">{t('email')}</p>
                     <p className="font-medium text-foreground">{user?.email}</p>
                   </div>
                 </div>
@@ -464,13 +466,13 @@ export default function AccountDetailsPage() {
         {/* Password */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-4 border-b border-border flex justify-between items-center">
-            <h2 className="font-semibold text-foreground">Password</h2>
+            <h2 className="font-semibold text-foreground">{t('passwordSection')}</h2>
             {!isChangingPassword && (
               <button
                 onClick={() => setIsChangingPassword(true)}
                 className="text-sm text-primary hover:text-primary-hover font-medium cursor-pointer"
               >
-                Change Password
+                {t('changePassword')}
               </button>
             )}
           </div>
@@ -479,7 +481,7 @@ export default function AccountDetailsPage() {
               <div className="space-y-4 max-w-md">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Current Password
+                    {t('currentPassword')}
                   </label>
                   <input
                     type="password"
@@ -496,7 +498,7 @@ export default function AccountDetailsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    New Password
+                    {t('newPassword')}
                   </label>
                   <input
                     type="password"
@@ -506,7 +508,7 @@ export default function AccountDetailsPage() {
                     className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
                       passwordErrors.newPassword ? 'border-red-500' : 'border-input'
                     }`}
-                    placeholder="At least 8 characters"
+                    placeholder={t('newPasswordPlaceholder')}
                   />
                   {passwordErrors.newPassword && (
                     <p className="mt-1 text-sm text-red-500">{passwordErrors.newPassword}</p>
@@ -514,7 +516,7 @@ export default function AccountDetailsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Confirm New Password
+                    {t('confirmNewPassword')}
                   </label>
                   <input
                     type="password"
@@ -535,7 +537,7 @@ export default function AccountDetailsPage() {
                     disabled={isSaving}
                     className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 cursor-pointer"
                   >
-                    {isSaving ? 'Changing...' : 'Change Password'}
+                    {isSaving ? t('changing') : t('changePassword')}
                   </button>
                   <button
                     onClick={() => {
@@ -549,13 +551,13 @@ export default function AccountDetailsPage() {
                     }}
                     className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground cursor-pointer"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                 </div>
               </div>
             ) : (
               <p className="text-muted-foreground">
-                For security, we recommend changing your password regularly.
+                {t('passwordSecurityHint')}
               </p>
             )}
           </div>
@@ -564,20 +566,19 @@ export default function AccountDetailsPage() {
         {/* Delete Account */}
         <div className="bg-card border border-red-200 dark:border-red-800 rounded-xl overflow-hidden">
           <div className="p-4 border-b border-red-200 dark:border-red-800">
-            <h2 className="font-semibold text-red-600 dark:text-red-400">Danger Zone</h2>
+            <h2 className="font-semibold text-red-600 dark:text-red-400">{t('dangerZone')}</h2>
           </div>
           <div className="p-6">
             {isDeletingAccount ? (
               <div className="space-y-4 max-w-md">
                 <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
                   <p className="text-sm text-red-600 dark:text-red-400 font-medium">
-                    Warning: This action cannot be undone. All your data, orders, and account
-                    information will be permanently deleted.
+                    {t('deleteWarning')}
                   </p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Enter your password
+                    {t('enterPassword')}
                   </label>
                   <input
                     type="password"
@@ -594,7 +595,10 @@ export default function AccountDetailsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1">
-                    Type <span className="font-bold">DELETE</span> to confirm
+                    {t.rich('typeDeleteToConfirm', {
+                      // Bold the literal word DELETE inside the sentence
+                      strong: (chunks) => <span className="font-bold">{chunks}</span>,
+                    })}
                   </label>
                   <input
                     type="text"
@@ -604,7 +608,7 @@ export default function AccountDetailsPage() {
                     className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-background text-foreground ${
                       deleteErrors.confirmText ? 'border-red-500' : 'border-input'
                     }`}
-                    placeholder="DELETE"
+                    placeholder={t('typeDeletePlaceholder')}
                   />
                   {deleteErrors.confirmText && (
                     <p className="mt-1 text-sm text-red-500">{deleteErrors.confirmText}</p>
@@ -616,7 +620,7 @@ export default function AccountDetailsPage() {
                     disabled={isSaving}
                     className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 cursor-pointer"
                   >
-                    {isSaving ? 'Deleting...' : 'Delete My Account'}
+                    {isSaving ? t('deleting') : t('deleteMyAccount')}
                   </button>
                   <button
                     onClick={() => {
@@ -626,20 +630,20 @@ export default function AccountDetailsPage() {
                     }}
                     className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground cursor-pointer"
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                 </div>
               </div>
             ) : (
               <>
                 <p className="text-muted-foreground mb-4">
-                  Once you delete your account, there is no going back. Please be certain.
+                  {t('deleteAccountHint')}
                 </p>
                 <button
                   onClick={() => setIsDeletingAccount(true)}
                   className="px-6 py-2.5 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors font-medium cursor-pointer"
                 >
-                  Delete Account
+                  {t('deleteAccount')}
                 </button>
               </>
             )}
