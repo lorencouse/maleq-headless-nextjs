@@ -3,7 +3,7 @@ import { getClient } from '@/lib/apollo/client';
 import { GET_POST_BY_SLUG } from '@/lib/queries/posts';
 
 interface LegacyRootSlugPageProps {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }
 
 async function blogPostExists(slug: string): Promise<boolean> {
