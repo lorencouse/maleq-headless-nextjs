@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import ProductCarousel from '@/components/product/ProductCarousel';
 import type { UnifiedProduct } from '@/lib/products/combined-service';
 import type { RelatedProductCategory } from '@/lib/db/post-relations';
@@ -13,7 +14,7 @@ interface RecommendedProductsProps {
  * post ⇄ product relations meta box (independent of inline shortcodes).
  * Renders nothing when a post has no relations.
  */
-export default function RecommendedProducts({
+export default async function RecommendedProducts({
   products,
   categories,
 }: RecommendedProductsProps) {
@@ -21,20 +22,22 @@ export default function RecommendedProducts({
     return null;
   }
 
+  const t = await getTranslations('blog');
+
   return (
     <section className='border-t border-border pt-8 mt-12'>
       {products.length > 0 && (
         <ProductCarousel
           products={products}
-          title='Recommended Products'
-          subtitle='Hand-picked for this guide'
+          title={t('recommendedProductsTitle')}
+          subtitle={t('recommendedProductsSubtitle')}
         />
       )}
 
       {categories.length > 0 && (
         <div className='mt-6'>
           <h3 className='text-sm font-semibold text-foreground mb-3'>
-            Browse related categories
+            {t('browseRelatedCategories')}
           </h3>
           <div className='flex flex-wrap items-center gap-2'>
             {categories.map((cat) => (

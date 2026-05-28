@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
+import { getLocale, getTranslations } from 'next-intl/server';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
@@ -48,29 +49,31 @@ async function fetchCategory(slug: string): Promise<Category | null> {
 
 export async function generateMetadata({ params }: BlogCategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
   const category = await fetchCategory(slug);
 
   if (!category) {
     return {
-      title: 'Category Not Found | Guides',
+      title: t('categoryMetaNotFound'),
     };
   }
 
   const description = category.description
     ? stripHtml(category.description).slice(0, 160)
-    : `Browse ${category.name} articles on the Male Q blog. ${category.count} posts available.`;
+    : t('categoryMetaDescription', { name: category.name, count: category.count });
 
   return {
-    title: `${category.name} | Guides`,
+    title: t('categoryMetaTitle', { name: category.name }),
     description,
     openGraph: {
-      title: `${category.name} | Male Q Guides`,
+      title: t('categoryMetaOgTitle', { name: category.name }),
       description,
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: `${category.name} | Male Q Guides`,
+      title: t('categoryMetaOgTitle', { name: category.name }),
       description,
     },
     alternates: {
@@ -119,6 +122,8 @@ export async function generateStaticParams() {
 export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;
   const { q: searchQuery } = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
 
   const category = await fetchCategory(slug);
 
@@ -138,9 +143,9 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
         {/* Breadcrumb Schema */}
         <BreadcrumbSchema
           items={[
-            { name: 'Home', url: SITE_URL },
-            { name: 'Guides', url: `${SITE_URL}/guides` },
-            { name: 'Category', url: `${SITE_URL}/guides/category` },
+            { name: t('breadcrumbHome'), url: SITE_URL },
+            { name: t('breadcrumbGuides'), url: `${SITE_URL}/guides` },
+            { name: t('categoryBreadcrumbSchemaName'), url: `${SITE_URL}/guides/category` },
             { name: category.name, url: `${SITE_URL}/guides/category/${slug}` },
           ]}
         />
@@ -148,7 +153,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
         {/* Breadcrumb */}
         <Breadcrumbs
           items={[
-            { label: 'Blog', href: '/guides' },
+            { label: t('breadcrumbBlog'), href: '/guides' },
             { label: category.name },
           ]}
         />
@@ -170,9 +175,9 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
             <p className="text-sm text-muted-foreground mt-2">
               {searchQuery
                 ? posts.length === 0
-                  ? `No articles found for "${searchQuery}"`
-                  : `Showing ${posts.length} result${posts.length !== 1 ? 's' : ''} for "${searchQuery}"`
-                : `${category.count} ${category.count === 1 ? 'article' : 'articles'} in this category`}
+                  ? t('searchNoResults', { query: searchQuery })
+                  : t('searchResultsCount', { count: posts.length, query: searchQuery })
+                : t('categoryArticleCount', { count: category.count })}
             </p>
           </div>
 
@@ -201,7 +206,7 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to all articles
+          {t('backToAllArticles')}
         </Link>
       </div>
     </div>

@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { getLocale, getTranslations } from 'next-intl/server';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { getBlogPosts } from '@/lib/blog/blog-service';
@@ -44,29 +45,31 @@ async function fetchTag(slug: string): Promise<Tag | null> {
 
 export async function generateMetadata({ params }: BlogTagPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
   const tag = await fetchTag(slug);
 
   if (!tag) {
     return {
-      title: 'Tag Not Found | Guides',
+      title: t('tagMetaNotFound'),
     };
   }
 
   const description = tag.description
     ? stripHtml(tag.description).slice(0, 160)
-    : `Browse articles tagged with "${tag.name}" on the Male Q blog. ${tag.count} posts available.`;
+    : t('tagMetaDescription', { name: tag.name, count: tag.count });
 
   return {
-    title: `${tag.name} | Guides`,
+    title: t('tagMetaTitle', { name: tag.name }),
     description,
     openGraph: {
-      title: `${tag.name} | Male Q Guides`,
+      title: t('tagMetaOgTitle', { name: tag.name }),
       description,
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: `${tag.name} | Male Q Guides`,
+      title: t('tagMetaOgTitle', { name: tag.name }),
       description,
     },
     alternates: {
@@ -113,6 +116,8 @@ export const dynamicParams = true; // Allow runtime generation
 
 export default async function BlogTagPage({ params }: BlogTagPageProps) {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
 
   // Fetch tag and posts in parallel
   const [tag, postsResult] = await Promise.all([
@@ -134,9 +139,9 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
         {/* Breadcrumb Schema */}
         <BreadcrumbSchema
           items={[
-            { name: 'Home', url: SITE_URL },
-            { name: 'Guides', url: `${SITE_URL}/guides` },
-            { name: 'Tag', url: `${SITE_URL}/guides/tag` },
+            { name: t('breadcrumbHome'), url: SITE_URL },
+            { name: t('breadcrumbGuides'), url: `${SITE_URL}/guides` },
+            { name: t('tagBreadcrumbSchemaName'), url: `${SITE_URL}/guides/tag` },
             { name: tag.name, url: `${SITE_URL}/guides/tag/${slug}` },
           ]}
         />
@@ -144,7 +149,7 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
         {/* Breadcrumb */}
         <Breadcrumbs
           items={[
-            { label: 'Blog', href: '/guides' },
+            { label: t('breadcrumbBlog'), href: '/guides' },
             { label: tag.name },
           ]}
         />
@@ -169,7 +174,7 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
 
         {/* Post count */}
         <p className="text-sm text-muted-foreground">
-          {tag.count} {tag.count === 1 ? 'article' : 'articles'} tagged with &quot;{tag.name}&quot;
+          {t('tagArticleCount', { count: tag.count, name: tag.name })}
         </p>
       </div>
 
@@ -192,7 +197,7 @@ export default async function BlogTagPage({ params }: BlogTagPageProps) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Back to all articles
+          {t('backToAllArticles')}
         </Link>
       </div>
     </div>

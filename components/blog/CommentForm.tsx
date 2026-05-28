@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
+import { useTranslations } from 'next-intl';
 
 interface CommentFormProps {
   postId: number;
@@ -12,6 +13,7 @@ export default function CommentForm({
   postId,
   onCommentSubmitted,
 }: CommentFormProps) {
+  const t = useTranslations('blogComments');
   const [formLoadedAt] = useState(() => Date.now());
   const [honeypot, setHoneypot] = useState('');
   const [formData, setFormData] = useState({
@@ -59,19 +61,19 @@ export default function CommentForm({
         if (data.errors) {
           setErrors(data.errors);
         } else {
-          toast.error(data.message || 'Failed to submit comment');
+          toast.error(data.message || t('toastFailure'));
         }
         return;
       }
 
       // Success
-      toast.success(data.message || 'Comment submitted successfully!');
+      toast.success(data.message || t('toastSuccess'));
       setIsSubmitted(true);
       setFormData({ author: '', email: '', content: '' });
       onCommentSubmitted?.();
     } catch (error) {
       console.error('Comment submission error:', error);
-      toast.error('Failed to submit comment. Please try again.');
+      toast.error(t('toastRetry'));
     } finally {
       setIsSubmitting(false);
     }
@@ -94,16 +96,16 @@ export default function CommentForm({
           />
         </svg>
         <h3 className='text-lg font-semibold text-foreground mb-2'>
-          Thank you for your comment!
+          {t('thankYouHeading')}
         </h3>
         <p className='text-muted-foreground'>
-          Your comment has been submitted and is awaiting moderation.
+          {t('thankYouMessage')}
         </p>
         <button
           onClick={() => setIsSubmitted(false)}
           className='mt-4 px-4 py-2.5 min-h-[44px] text-primary hover:bg-primary/10 rounded-lg font-medium transition-colors'
         >
-          Leave another comment
+          {t('leaveAnother')}
         </button>
       </div>
     );
@@ -113,7 +115,7 @@ export default function CommentForm({
     <form onSubmit={handleSubmit} className='space-y-4'>
       {/* Honeypot - hidden from humans, bots will fill it */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-        <label htmlFor="comment-website">Website</label>
+        <label htmlFor="comment-website">{t('honeypotLabel')}</label>
         <input
           type="text"
           id="comment-website"
@@ -131,7 +133,7 @@ export default function CommentForm({
             htmlFor='author'
             className='block text-sm font-medium text-foreground mb-1'
           >
-            Name <span className='text-destructive'>*</span>
+            {t('nameLabel')} <span className='text-destructive'>*</span>
           </label>
           <input
             type='text'
@@ -142,7 +144,7 @@ export default function CommentForm({
             className={`w-full px-4 py-2.5 min-h-[44px] border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
               errors.author ? 'border-destructive' : 'border-border'
             }`}
-            placeholder='Your name'
+            placeholder={t('namePlaceholder')}
           />
           {errors.author && (
             <p className='mt-1 text-sm text-destructive'>{errors.author}</p>
@@ -155,7 +157,7 @@ export default function CommentForm({
             htmlFor='email'
             className='block text-sm font-medium text-foreground mb-1'
           >
-            Email <span className='text-destructive'>*</span>
+            {t('emailLabel')} <span className='text-destructive'>*</span>
           </label>
           <input
             type='email'
@@ -166,13 +168,13 @@ export default function CommentForm({
             className={`w-full px-4 py-2.5 min-h-[44px] border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary ${
               errors.email ? 'border-destructive' : 'border-border'
             }`}
-            placeholder='your@email.com'
+            placeholder={t('emailPlaceholder')}
           />
           {errors.email && (
             <p className='mt-1 text-sm text-destructive'>{errors.email}</p>
           )}
           <p className='mt-1 text-xs text-muted-foreground'>
-            Your email will not be published.
+            {t('emailNotPublished')}
           </p>
         </div>
       </div>
@@ -183,7 +185,7 @@ export default function CommentForm({
           htmlFor='content'
           className='block text-sm font-medium text-foreground mb-1'
         >
-          Comment <span className='text-destructive'>*</span>
+          {t('commentLabel')} <span className='text-destructive'>*</span>
         </label>
         <textarea
           id='content'
@@ -194,7 +196,7 @@ export default function CommentForm({
           className={`w-full px-4 py-2.5 border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-y ${
             errors.content ? 'border-destructive' : 'border-border'
           }`}
-          placeholder='Share your thoughts...'
+          placeholder={t('commentPlaceholder')}
         />
         {errors.content && (
           <p className='mt-1 text-sm text-destructive'>{errors.content}</p>
@@ -236,10 +238,10 @@ export default function CommentForm({
                 d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
               />
             </svg>
-            Submitting...
+            {t('submitting')}
           </span>
         ) : (
-          'Post Comment'
+          t('submitButton')
         )}
       </button>
     </form>

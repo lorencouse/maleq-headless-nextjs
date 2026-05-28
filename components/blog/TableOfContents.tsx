@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, useSyncExternalStore } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface TocItem {
   id: string;
@@ -112,6 +113,7 @@ function useTocData() {
 }
 
 export default function TableOfContents({ variant = 'desktop' }: TableOfContentsProps) {
+  const t = useTranslations('blog');
   const { headings, activeId, setActiveId } = useTocData();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -133,7 +135,7 @@ export default function TableOfContents({ variant = 'desktop' }: TableOfContents
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-between w-full px-4 py-3 bg-card border border-border rounded-lg text-sm font-medium text-foreground"
         >
-          <span>Table of Contents</span>
+          <span>{t('tocMobileLabel')}</span>
           <svg
             className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
@@ -165,11 +167,11 @@ export default function TableOfContents({ variant = 'desktop' }: TableOfContents
 
   return (
     <nav
-      aria-label="Table of contents"
+      aria-label={t('tocAria')}
       className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 scrollbar-thin"
     >
       <h2 className="text-sm font-semibold text-foreground uppercase tracking-wider mb-3">
-        On this page
+        {t('tocDesktopHeading')}
       </h2>
       <ul className="space-y-1 border-l-2 border-border">
         {headings.map(({ id, text, level }) => (

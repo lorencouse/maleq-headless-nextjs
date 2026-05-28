@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { searchBlogPosts, getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
@@ -9,27 +10,29 @@ import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
   const { q: searchQuery } = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
 
   if (searchQuery) {
     return {
-      title: `Search results for "${searchQuery}" | Guides`,
-      description: `Browse guide search results for "${searchQuery}".`,
+      title: t('metaSearchTitle', { query: searchQuery }),
+      description: t('metaSearchDescription', { query: searchQuery }),
       robots: { index: false },
     };
   }
 
   return {
-    title: 'Guides',
-    description: 'Read the latest articles, guides, and insights from Male Q. Tips, product reviews, and expert advice for your intimate wellness.',
+    title: t('metaTitle'),
+    description: t('metaDescription'),
     openGraph: {
-      title: 'Guides | Male Q',
-      description: 'Read the latest articles, guides, and insights from Male Q.',
+      title: t('metaOgTitle'),
+      description: t('metaDescriptionShort'),
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: 'Guides | Male Q',
-      description: 'Read the latest articles, guides, and insights from Male Q.',
+      title: t('metaOgTitle'),
+      description: t('metaDescriptionShort'),
     },
     alternates: {
       canonical: '/guides',
@@ -46,6 +49,8 @@ interface BlogPageProps {
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { q: searchQuery } = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'blog' });
 
   // Use search if provided, otherwise get EN-only posts (exclude Spanish/Chinese)
   const result = searchQuery
@@ -56,20 +61,20 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
-      <Breadcrumbs items={[{ label: 'Guides' }]} />
+      <Breadcrumbs items={[{ label: t('breadcrumbGuides') }]} />
 
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-4xl font-bold text-foreground mb-2">Guides</h1>
+            <h1 className="text-4xl font-bold text-foreground mb-2">{t('pageTitle')}</h1>
             <p className="text-lg text-muted-foreground">
-              Insights, stories, and updates from our team
+              {t('pageSubtitle')}
             </p>
             {/* Language category links */}
             {!searchQuery && (
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-sm text-muted-foreground">Also available in:</span>
+                <span className="text-sm text-muted-foreground">{t('alsoAvailableIn')}</span>
                 <Link
                   href="/guides/category/espanol"
                   className="text-sm font-medium text-primary hover:text-primary-hover transition-colors"
@@ -99,8 +104,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
         {searchQuery && (
           <p className="text-sm text-muted-foreground">
             {posts.length === 0
-              ? `No articles found for "${searchQuery}"`
-              : `Showing ${posts.length} result${posts.length !== 1 ? 's' : ''} for "${searchQuery}"`}
+              ? t('searchNoResults', { query: searchQuery })
+              : t('searchResultsCount', { count: posts.length, query: searchQuery })}
           </p>
         )}
       </div>
