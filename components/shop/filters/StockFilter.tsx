@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 interface StockFilterProps {
   inStock: boolean;
   onSale: boolean;
@@ -13,6 +15,8 @@ export default function StockFilter({
   onInStockChange,
   onSaleChange,
 }: StockFilterProps) {
+  const t = useTranslations('filters');
+
   return (
     <div className="pt-3 space-y-3">
       {/* In Stock */}
@@ -24,7 +28,7 @@ export default function StockFilter({
           className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
         />
         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-          In Stock Only
+          {t('stockInStock')}
         </span>
       </label>
 
@@ -37,7 +41,7 @@ export default function StockFilter({
           className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
         />
         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-          On Sale
+          {t('stockOnSale')}
         </span>
       </label>
     </div>

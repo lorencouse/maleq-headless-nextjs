@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface RangeFilterProps {
   minValue: number;
@@ -23,6 +24,7 @@ export default function RangeFilter({
   unit = '"',
   presets,
 }: RangeFilterProps) {
+  const t = useTranslations('filters');
   const [localMin, setLocalMin] = useState(minValue > 0 ? minValue.toString() : '');
   const [localMax, setLocalMax] = useState(maxValue < max ? maxValue.toString() : '');
 
@@ -73,7 +75,7 @@ export default function RangeFilter({
       {/* Input Fields */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="sr-only">Minimum</label>
+          <label className="sr-only">{t('rangeMinAria')}</label>
           <div className="relative">
             <input
               type="number"
@@ -84,7 +86,7 @@ export default function RangeFilter({
               min={min}
               max={max}
               step={step}
-              placeholder="Min"
+              placeholder={t('rangeMin')}
               className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
             />
             {unit && (
@@ -94,9 +96,9 @@ export default function RangeFilter({
             )}
           </div>
         </div>
-        <span className="text-muted-foreground text-sm">to</span>
+        <span className="text-muted-foreground text-sm">{t('rangeTo')}</span>
         <div className="flex-1">
-          <label className="sr-only">Maximum</label>
+          <label className="sr-only">{t('rangeMaxAria')}</label>
           <div className="relative">
             <input
               type="number"
@@ -107,7 +109,7 @@ export default function RangeFilter({
               min={min}
               max={max}
               step={step}
-              placeholder="Max"
+              placeholder={t('rangeMax')}
               className="w-full px-3 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
             />
             {unit && (

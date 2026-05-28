@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 
 // Hierarchical category interface
 export interface HierarchicalCategory {
@@ -36,6 +37,7 @@ export default function CategoryFilter({
   onSelect,
   initialCategory,
 }: CategoryFilterProps) {
+  const t = useTranslations('filters');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Toggle expansion state of a category
@@ -96,7 +98,7 @@ export default function CategoryFilter({
                 toggleExpand(category.slug);
               }}
               className="p-1 hover:bg-muted rounded transition-colors flex-shrink-0"
-              aria-label={isExpanded ? 'Collapse' : 'Expand'}
+              aria-label={isExpanded ? t('collapseAria') : t('expandAria')}
             >
               <svg
                 className={`w-3 h-3 text-muted-foreground transition-transform ${
@@ -148,7 +150,9 @@ export default function CategoryFilter({
   // When on a category page, scope to subcategories of that category
   const scopedCategory = initialCategory ? findCategory(categories, initialCategory) : null;
   const displayCategories = scopedCategory?.children.length ? scopedCategory.children : categories;
-  const allLabel = scopedCategory ? `All ${scopedCategory.name}` : 'All Categories';
+  const allLabel = scopedCategory
+    ? t('allScopedCategory', { parent: scopedCategory.name })
+    : t('allCategories');
 
   return (
     <div className="pt-3 space-y-3">
@@ -177,7 +181,7 @@ export default function CategoryFilter({
           href="/shop"
           className="block text-center text-xs text-muted-foreground hover:text-primary transition-colors pt-2 border-t border-border"
         >
-          Browse all categories
+          {t('browseAllCategories')}
         </Link>
       )}
     </div>

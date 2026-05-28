@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { FilterState } from './FilterPanel';
 import { HierarchicalCategory } from './CategoryFilter';
 import { findCategoryBySlug } from '@/lib/utils/category-helpers';
@@ -42,62 +43,68 @@ export default function ActiveFilters({
   onClearSearch,
   onClearAll,
 }: ActiveFiltersProps) {
+  const t = useTranslations('filters');
   const activeFilters: { key: keyof FilterState; label: string }[] = [];
 
   if (filters.category) {
     const category = findCategoryBySlug(categories, filters.category);
     const categoryName = category?.name || formatSlug(filters.category);
-    activeFilters.push({ key: 'category', label: `Category: ${categoryName}` });
+    activeFilters.push({ key: 'category', label: t('activeCategoryPill', { name: categoryName }) });
   }
 
   if (filters.minPrice > 0 || filters.maxPrice > 0) {
-    const maxLabel = filters.maxPrice > 0 ? `$${filters.maxPrice}` : 'No Max';
+    const maxLabel = filters.maxPrice > 0 ? `$${filters.maxPrice}` : t('rangeNoMax');
     activeFilters.push({
       key: 'minPrice',
-      label: filters.minPrice > 0 ? `$${filters.minPrice} - ${maxLabel}` : `Up to ${maxLabel}`,
+      label:
+        filters.minPrice > 0
+          ? t('rangeBetween', { min: `$${filters.minPrice}`, max: maxLabel })
+          : t('rangeUpTo', { max: maxLabel }),
     });
   }
 
   if (filters.minLength > 0 || filters.maxLength < 24) {
     activeFilters.push({
       key: 'minLength',
-      label: `Length: ${filters.minLength}" - ${filters.maxLength}"`,
+      label: t('activeLengthPill', { min: filters.minLength, max: filters.maxLength }),
     });
   }
 
   if (filters.minWeight > 0 || filters.maxWeight < 10) {
     activeFilters.push({
       key: 'minWeight',
-      label: `Weight: ${filters.minWeight} - ${filters.maxWeight} lbs`,
+      label: t('activeWeightPill', { min: filters.minWeight, max: filters.maxWeight }),
     });
   }
 
   if (filters.brand) {
     const brandName = getOptionName(brands, filters.brand);
-    activeFilters.push({ key: 'brand', label: `Brand: ${brandName}` });
+    activeFilters.push({ key: 'brand', label: t('activeBrandPill', { name: brandName }) });
   }
 
   if (filters.color) {
     const colorName = getOptionName(colors, filters.color);
-    activeFilters.push({ key: 'color', label: `Color: ${colorName}` });
+    activeFilters.push({ key: 'color', label: t('activeColorPill', { name: colorName }) });
   }
 
   if (filters.material) {
     const materialName = getOptionName(materials, filters.material);
-    activeFilters.push({ key: 'material', label: `Material: ${materialName}` });
+    activeFilters.push({ key: 'material', label: t('activeMaterialPill', { name: materialName }) });
   }
 
   if (filters.inStock) {
-    activeFilters.push({ key: 'inStock', label: 'In Stock' });
+    activeFilters.push({ key: 'inStock', label: t('activeInStock') });
   }
 
   if (filters.onSale) {
-    activeFilters.push({ key: 'onSale', label: 'On Sale' });
+    activeFilters.push({ key: 'onSale', label: t('activeOnSale') });
   }
 
   if (filters.productType) {
-    const typeLabel = filters.productType === 'simple' ? 'Simple Products' : 'Variable Products';
-    activeFilters.push({ key: 'productType', label: `Type: ${typeLabel}` });
+    activeFilters.push({
+      key: 'productType',
+      label: filters.productType === 'simple' ? t('activeTypeSimple') : t('activeTypeVariable'),
+    });
   }
 
   // Show nothing if no search and no filters
@@ -107,7 +114,7 @@ export default function ActiveFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
-      <span className="text-sm text-muted-foreground">Active filters:</span>
+      <span className="text-sm text-muted-foreground">{t('active')}</span>
 
       {/* Search query pill */}
       {searchQuery && onClearSearch && (
@@ -145,7 +152,7 @@ export default function ActiveFilters({
           onClick={onClearAll}
           className="text-sm text-muted-foreground hover:text-foreground transition-colors underline"
         >
-          Clear all
+          {t('activeClearAll')}
         </button>
       )}
     </div>
