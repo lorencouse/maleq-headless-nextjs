@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   isSubscribedToAlert,
   addStockAlert,
@@ -26,6 +27,7 @@ export default function StockAlertButton({
   variant = 'button',
   className = '',
 }: StockAlertButtonProps) {
+  const t = useTranslations('stockAlert');
   const [isAlertSet, setIsAlertSet] = useState(false);
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -95,12 +97,12 @@ export default function StockAlertButton({
         addStockAlert({ productId, productName, email: 'push' });
         setIsAlertSet(true);
         setShowForm(false);
-        showSuccess("We'll notify you when this item is back in stock!");
+        showSuccess(t('toastPushSubscribed'));
       } else {
-        showError(result.error || 'Failed to set stock alert');
+        showError(result.error || t('toastSubscribeFailed'));
       }
     } catch {
-      showError('Failed to set stock alert. Please try again.');
+      showError(t('toastSubscribeRetry'));
     } finally {
       setIsLoading(false);
     }
@@ -109,11 +111,11 @@ export default function StockAlertButton({
   // ── Email-based stock alert (fallback) ──────────────────────────────
   const handleEmailAlert = async () => {
     if (!email.trim()) {
-      setError('Please enter your email');
+      setError(t('errorEnterEmail'));
       return;
     }
     if (!isValidEmail(email)) {
-      setError('Please enter a valid email address');
+      setError(t('errorInvalidEmail'));
       return;
     }
 
@@ -134,13 +136,13 @@ export default function StockAlertButton({
         setShowForm(false);
         showSuccess(result.message);
       } else {
-        const message = result.error || 'Failed to subscribe. Please try again.';
+        const message = result.error || t('toastEmailFailed');
         setError(message);
         showError(message);
       }
     } catch {
-      setError('Failed to subscribe. Please try again.');
-      showError('Failed to subscribe. Please try again.');
+      setError(t('toastEmailFailed'));
+      showError(t('toastEmailFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -180,9 +182,9 @@ export default function StockAlertButton({
       removeStockAlert(productId);
       setIsAlertSet(false);
       setEmail('');
-      showSuccess('Stock alert removed');
+      showSuccess(t('toastRemoved'));
     } catch {
-      showError('Failed to remove alert');
+      showError(t('toastRemoveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -217,12 +219,12 @@ export default function StockAlertButton({
           </svg>
           <div className="flex-1">
             <p className="text-sm font-medium text-info">
-              Stock alert set!
+              {t('alertSetHeading')}
             </p>
             <p className="text-xs text-info/80">
               {email === 'push'
-                ? "We'll send you a notification when available"
-                : `We'll email ${email} when available`}
+                ? t('alertSetPushDetail')
+                : t('alertSetEmailDetail', { email })}
             </p>
           </div>
           <button
@@ -230,7 +232,7 @@ export default function StockAlertButton({
             disabled={isLoading}
             className="px-3 py-2 min-h-[44px] text-sm text-info hover:text-info-hover hover:bg-info/10 rounded-lg transition-colors disabled:opacity-50"
           >
-            {isLoading ? '...' : 'Remove'}
+            {isLoading ? '...' : t('remove')}
           </button>
         </div>
       </div>
@@ -249,7 +251,7 @@ export default function StockAlertButton({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          {isLoading ? 'Setting up...' : 'Notify Me When Available'}
+          {isLoading ? t('settingUp') : t('notifyMeWhenAvailable')}
         </button>
       );
     }
@@ -261,10 +263,10 @@ export default function StockAlertButton({
           <svg className="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <span className="font-medium text-foreground">Get Stock Alert</span>
+          <span className="font-medium text-foreground">{t('getStockAlertHeading')}</span>
         </div>
         <p className="text-sm text-muted-foreground mb-3">
-          Enter your email to be notified when this item is back in stock.
+          {t('enterEmailPrompt')}
         </p>
         <div className="flex gap-2">
           <input
@@ -275,7 +277,7 @@ export default function StockAlertButton({
               setError(null);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Your email"
+            placeholder={t('placeholderYourEmail')}
             disabled={isLoading}
             className="flex-1 px-3 py-2.5 min-h-[44px] text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
           />
@@ -284,7 +286,7 @@ export default function StockAlertButton({
             disabled={isLoading || !email.trim()}
             className="px-4 py-2.5 min-h-[44px] bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {isLoading ? '...' : 'Notify'}
+            {isLoading ? '...' : t('notify')}
           </button>
         </div>
         {error && (
@@ -297,7 +299,7 @@ export default function StockAlertButton({
           }}
           className="mt-2 px-3 py-2 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
         >
-          Cancel
+          {t('cancel')}
         </button>
       </div>
     );
@@ -314,7 +316,7 @@ export default function StockAlertButton({
           setError(null);
         }}
         onKeyDown={handleKeyDown}
-        placeholder="Email for stock alert"
+        placeholder={t('placeholderInlineEmail')}
         disabled={isLoading}
         className="flex-1 px-3 py-2.5 min-h-[44px] text-sm border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary disabled:opacity-50"
       />
@@ -323,7 +325,7 @@ export default function StockAlertButton({
         disabled={isLoading || !email.trim()}
         className="px-4 py-2.5 min-h-[44px] bg-info text-info-foreground text-sm font-medium rounded-lg hover:bg-info-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
       >
-        {isLoading ? '...' : 'Notify Me'}
+        {isLoading ? '...' : t('notifyMe')}
       </button>
     </div>
   );
