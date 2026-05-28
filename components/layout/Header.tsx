@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import LanguageSwitcher from '@/components/i18n/LanguageSwitcher';
 import { useCartItemCount } from '@/lib/store/cart-store';
 import { useWishlistItemCount } from '@/lib/store/wishlist-store';
 import { useAuthStore } from '@/lib/store/auth-store';
@@ -121,6 +122,9 @@ export default function Header() {
             <div className='hidden md:block'>
               <ThemeToggle />
             </div>
+
+            {/* Language Switcher — desktop + mobile (compact icon) */}
+            <LanguageSwitcher />
 
             {/* Search - always visible */}
             <button

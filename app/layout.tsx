@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Outfit } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -127,13 +129,19 @@ export const metadata: Metadata = {
   manifest: '/favicon/site.webmanifest',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Locale resolution: URL segment (for app/[locale]/...) wins, otherwise
+  // i18n/request.ts falls back to the NEXT_LOCALE cookie. Messages are loaded
+  // by the same hook and handed to NextIntlClientProvider for client trees.
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${dmSans.variable} ${outfit.variable} antialiased flex flex-col min-h-screen`}>
         <ServiceWorkerRegistration />
         <RouteScrollManager />
@@ -156,26 +164,28 @@ export default function RootLayout({
           url={SITE_URL}
           searchUrl={`${SITE_URL}/search?q={search_term_string}`}
         />
-        <QueryProvider>
-          <ThemeProvider>
-            <CartProvider>
-              <AppBadge />
-              <CartStockRevalidation />
-              <Toaster />
-              <Header />
-              <main id="main-content" className="flex-grow" role="main">
-                {children}
-              </main>
-              <Footer />
-              <NewsletterPopup delay={45000} showOnExitIntent />
-              <div className="fixed bottom-4 right-4 z-40 max-w-sm space-y-3">
-                <InstallPrompt minVisits={2} />
-                <PushNotificationPrompt minVisits={3} />
-              </div>
-              <ChatWidget />
-            </CartProvider>
-          </ThemeProvider>
-        </QueryProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <QueryProvider>
+            <ThemeProvider>
+              <CartProvider>
+                <AppBadge />
+                <CartStockRevalidation />
+                <Toaster />
+                <Header />
+                <main id="main-content" className="flex-grow" role="main">
+                  {children}
+                </main>
+                <Footer />
+                <NewsletterPopup delay={45000} showOnExitIntent />
+                <div className="fixed bottom-4 right-4 z-40 max-w-sm space-y-3">
+                  <InstallPrompt minVisits={2} />
+                  <PushNotificationPrompt minVisits={3} />
+                </div>
+                <ChatWidget />
+              </CartProvider>
+            </ThemeProvider>
+          </QueryProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

@@ -1,0 +1,11 @@
+{
+  "common": {
+    "siteName": "Male Q",
+    "siteTagline": "Productos Premium para Adultos"
+  },
+  "language": {
+    "switchLabel": "Idioma",
+    "en": "English",
+    "es": "Español"
+  }
+}
