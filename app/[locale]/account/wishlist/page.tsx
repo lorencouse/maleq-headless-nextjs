@@ -41,6 +41,7 @@ function wishlistItemToProduct(item: WishlistItem): UnifiedProduct {
 
 export default function WishlistPage() {
   const t = useTranslations('account.wishlist');
+  const tCart = useTranslations('cart');
   const { items, removeItem, clearWishlist, hydrate } = useWishlistStore();
   const addToCart = useCartStore((state) => state.addItem);
   const hydrated = useHydrated();
@@ -77,7 +78,7 @@ export default function WishlistPage() {
       });
     });
 
-    showAddedToCart(t('addedToCartToast', { count: inStockItems.length }));
+    showAddedToCart(t('addedToCartToast', { count: inStockItems.length }), tCart('viewCart'));
   };
 
   if (!hydrated) {

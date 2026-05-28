@@ -211,7 +211,24 @@
     "helpHeading": "Need help with your order?",
     "helpBody": "If you have an account, you can also view your orders there. Otherwise, contact our support team.",
     "viewAccount": "View Account Orders",
-    "contactSupport": "Contact Support"
+    "contactSupport": "Contact Support",
+    "orderNumberLabel": "Order Number",
+    "orderNumberPlaceholder": "e.g. 12345",
+    "emailLabel": "Billing Email",
+    "lookingUp": "Looking up order…",
+    "trackButton": "Track Order",
+    "noOrderFound": "No order found. Please check your details.",
+    "genericError": "Something went wrong. Please try again.",
+    "orderNumberHeading": "Order #{number}",
+    "placedOn": "Placed on {date}",
+    "itemsHeading": "Items",
+    "qty": "Qty: {count}",
+    "totalLabel": "Total",
+    "shippingMethodHeading": "Shipping Method",
+    "shipmentTracking": "Shipment Tracking",
+    "shippedOn": "Shipped: {date}",
+    "trackPackage": "Track Package",
+    "preparingOrder": "Your order is being prepared. Tracking information will be available once your order ships."
   },
   "orderConfirmation": {
     "successHeading": "Order Confirmed!",
@@ -245,7 +262,9 @@
     "shippingTitle": "Shipping Questions?",
     "shippingBody": "Learn about our shipping policies and delivery times.",
     "shippingLink": "Shipping & Returns",
-    "formSectionTitle": "Send us a Message"
+    "formSectionTitle": "Send us a Message",
+    "offlineQueued": "You appear to be offline. Your message has been queued and will be sent when you reconnect.",
+    "sendFailed": "Failed to send message. Please try again."
   },
   "filters": {
     "panelHeading": "Filters",
@@ -1614,5 +1633,42 @@
     "contactForm": "contact form",
     "backToTopics": "Back to topics",
     "contactUs": "Contact us"
+  },
+  "discountBanner": {
+    "spend": "Spend",
+    "save": "Save",
+    "appliedCompact": "Bonus Discount Applied at Checkout",
+    "appliedFull": "Automatic Bonus Discount Applied at Checkout"
+  },
+  "installPrompt": {
+    "titleIos": "Install on iPhone/iPad",
+    "titleMacos": "Install on Mac",
+    "titleDefault": "Install Male Q",
+    "descIos": "Open the Share menu, then tap Add to Home Screen to install this app.",
+    "descMacos": "In Safari, use File › Add to Dock to install this app on your Mac.",
+    "descDefault": "Add Male Q to your home screen for faster access and a better experience.",
+    "installButton": "Install App",
+    "notNow": "Not now",
+    "gotIt": "Got it"
+  },
+  "pushPrompt": {
+    "heading": "Stay Updated",
+    "body": "Get notified about order updates, back-in-stock products, and exclusive deals.",
+    "enabling": "Enabling…",
+    "enableButton": "Enable Notifications",
+    "notNow": "Not now",
+    "enabledToast": "Notifications enabled! You’ll receive updates about your orders and deals.",
+    "blockedToast": "Notifications blocked. You can enable them in your browser settings.",
+    "errorToast": "Could not enable notifications. Please try again."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet",
+    "center": "Notification Center",
+    "justNow": "just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago"
   }
 }

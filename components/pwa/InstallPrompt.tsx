@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { event as gaEvent } from '@/lib/analytics/gtag';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -34,6 +35,7 @@ function detectManualInstallMode(): Exclude<InstallMode, 'prompt'> | null {
 }
 
 export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number }) {
+  const t = useTranslations('installPrompt');
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [mode, setMode] = useState<InstallMode>('prompt');
@@ -129,17 +131,17 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
 
   const title =
     mode === 'manual-ios'
-      ? 'Install on iPhone/iPad'
+      ? t('titleIos')
       : mode === 'manual-macos'
-        ? 'Install on Mac'
-        : 'Install Male Q';
+        ? t('titleMacos')
+        : t('titleDefault');
 
   const description =
     mode === 'manual-ios'
-      ? 'Open the Share menu, then tap Add to Home Screen to install this app.'
+      ? t('descIos')
       : mode === 'manual-macos'
-        ? 'In Safari, use File > Add to Dock to install this app on your Mac.'
-        : 'Add Male Q to your home screen for faster access and a better experience.';
+        ? t('descMacos')
+        : t('descDefault');
 
   return (
     <div className="bg-card border border-border rounded-xl p-5">
@@ -160,14 +162,14 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
                 onClick={handleInstall}
                 className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors"
               >
-                Install App
+                {t('installButton')}
               </button>
             )}
             <button
               onClick={handleDismiss}
               className="px-4 py-2.5 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             >
-              {mode === 'prompt' ? 'Not now' : 'Got it'}
+              {mode === 'prompt' ? t('notNow') : t('gotIt')}
             </button>
           </div>
         </div>

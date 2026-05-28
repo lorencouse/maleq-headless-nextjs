@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   markAsRead,
   markAllAsRead,
@@ -14,15 +15,15 @@ interface NotificationDropdownProps {
   onUpdate: () => void;
 }
 
-function timeAgo(timestamp: number): string {
+function timeAgo(timestamp: number, t: (key: string, values?: Record<string, number>) => string): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
-  if (seconds < 60) return 'just now';
+  if (seconds < 60) return t('justNow');
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 60) return t('minutesAgo', { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
+  if (days < 7) return t('daysAgo', { count: days });
   return new Date(timestamp).toLocaleDateString();
 }
 
@@ -32,6 +33,7 @@ export default function NotificationDropdown({
   onUpdate,
 }: NotificationDropdownProps) {
   const router = useRouter();
+  const t = useTranslations('notifications');
   const recent = notifications.slice(0, 10);
   const hasUnread = recent.some((n) => !n.read);
 
@@ -56,13 +58,13 @@ export default function NotificationDropdown({
       <div className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] bg-card border border-border rounded-lg shadow-lg z-50">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-border">
-          <p className="font-medium text-foreground text-sm">Notifications</p>
+          <p className="font-medium text-foreground text-sm">{t('title')}</p>
           {hasUnread && (
             <button
               onClick={handleMarkAllRead}
               className="text-xs text-primary hover:text-primary-hover transition-colors"
             >
-              Mark all as read
+              {t('markAllRead')}
             </button>
           )}
         </div>
@@ -71,7 +73,7 @@ export default function NotificationDropdown({
         <div className="max-h-[360px] overflow-y-auto">
           {recent.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted-foreground">
-              No notifications yet
+              {t('empty')}
             </div>
           ) : (
             recent.map((n) => (
@@ -96,7 +98,7 @@ export default function NotificationDropdown({
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground mt-1">
-                      {timeAgo(n.timestamp)}
+                      {timeAgo(n.timestamp, t)}
                     </p>
                   </div>
                 </div>
@@ -112,7 +114,7 @@ export default function NotificationDropdown({
             onClick={onClose}
             className="block text-center text-xs text-primary hover:text-primary-hover py-2 transition-colors"
           >
-            Notification Center
+            {t('center')}
           </Link>
         </div>
       </div>

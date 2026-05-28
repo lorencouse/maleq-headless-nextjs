@@ -3,8 +3,11 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { getTrackOrderSchema, type TrackOrderInput } from '@/lib/validations/tracking';
+
+// BCP-47 tag for locale-aware date/currency formatting in this form.
+const BCP47: Record<string, string> = { en: 'en-US', es: 'es-ES', zh: 'zh-TW', ja: 'ja-JP' };
 
 interface TrackingItem {
   tracking_provider: string;
@@ -37,6 +40,8 @@ import { statusColors } from '@/lib/constants/status-colors';
 export default function TrackingForm() {
   const tValidation = useTranslations('validation.trackOrder');
   const tValidationCommon = useTranslations('validation.common');
+  const t = useTranslations('trackOrderPage');
+  const intlLocale = BCP47[useLocale()] ?? 'en-US';
   const [order, setOrder] = useState<OrderData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,27 +69,27 @@ export default function TrackingForm() {
       const result = await response.json();
 
       if (!result.success) {
-        setError(result.error || 'No order found. Please check your details.');
+        setError(result.error || t('noOrderFound'));
         return;
       }
 
       setOrder(result.data);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(t('genericError'));
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatCurrency = (amount: string, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(intlLocale, {
       style: 'currency',
       currency: currency || 'USD',
     }).format(parseFloat(amount));
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    return new Date(dateStr).toLocaleDateString(intlLocale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -98,12 +103,12 @@ export default function TrackingForm() {
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <label htmlFor="orderNumber" className="block text-sm font-medium text-foreground mb-2">
-              Order Number
+              {t('orderNumberLabel')}
             </label>
             <input
               id="orderNumber"
               type="text"
-              placeholder="e.g. 12345"
+              placeholder={t('orderNumberPlaceholder')}
               className="w-full px-4 py-3 bg-input border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               {...register('orderNumber')}
             />
@@ -113,7 +118,7 @@ export default function TrackingForm() {
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-              Billing Email
+              {t('emailLabel')}
             </label>
             <input
               id="email"
@@ -138,10 +143,10 @@ export default function TrackingForm() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Looking up order...
+              {t('lookingUp')}
             </span>
           ) : (
-            'Track Order'
+            t('trackButton')
           )}
         </button>
       </form>
@@ -166,10 +171,10 @@ export default function TrackingForm() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-foreground">
-                  Order #{order.number}
+                  {t('orderNumberHeading', { number: order.number })}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Placed on {formatDate(order.date_created)}
+                  {t('placedOn', { date: formatDate(order.date_created) })}
                 </p>
               </div>
               <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status] || 'bg-gray-100 text-gray-800'}`}>
@@ -179,13 +184,13 @@ export default function TrackingForm() {
 
             {/* Items */}
             <div className="border-t border-border pt-6">
-              <h3 className="font-semibold text-foreground mb-4">Items</h3>
+              <h3 className="font-semibold text-foreground mb-4">{t('itemsHeading')}</h3>
               <div className="space-y-3">
                 {order.items.map((item, i) => (
                   <div key={i} className="flex items-center justify-between py-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-foreground truncate">{item.name}</p>
-                      <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                      <p className="text-sm text-muted-foreground">{t('qty', { count: item.quantity })}</p>
                     </div>
                     <p className="text-foreground font-medium ml-4">
                       {formatCurrency(item.total, order.currency)}
@@ -194,7 +199,7 @@ export default function TrackingForm() {
                 ))}
               </div>
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-                <p className="font-semibold text-foreground">Total</p>
+                <p className="font-semibold text-foreground">{t('totalLabel')}</p>
                 <p className="font-semibold text-foreground">
                   {formatCurrency(order.total, order.currency)}
                 </p>
@@ -204,7 +209,7 @@ export default function TrackingForm() {
             {/* Shipping Method */}
             {order.shipping_method && (
               <div className="border-t border-border pt-6 mt-6">
-                <h3 className="font-semibold text-foreground mb-2">Shipping Method</h3>
+                <h3 className="font-semibold text-foreground mb-2">{t('shippingMethodHeading')}</h3>
                 <p className="text-muted-foreground">{order.shipping_method}</p>
               </div>
             )}
@@ -219,7 +224,7 @@ export default function TrackingForm() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">Shipment Tracking</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t('shipmentTracking')}</h3>
               </div>
               <div className="space-y-4">
                 {order.tracking.map((shipment, i) => (
@@ -234,7 +239,7 @@ export default function TrackingForm() {
                         </p>
                         {shipment.date_shipped && (
                           <p className="text-sm text-muted-foreground mt-1">
-                            Shipped: {formatDate(shipment.date_shipped)}
+                            {t('shippedOn', { date: formatDate(shipment.date_shipped) })}
                           </p>
                         )}
                       </div>
@@ -245,7 +250,7 @@ export default function TrackingForm() {
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors"
                         >
-                          Track Package
+                          {t('trackPackage')}
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
@@ -266,7 +271,7 @@ export default function TrackingForm() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <p className="text-blue-800 dark:text-blue-200">
-                  Your order is being prepared. Tracking information will be available once your order ships.
+                  {t('preparingOrder')}
                 </p>
               </div>
             </div>

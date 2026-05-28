@@ -14,6 +14,7 @@ interface QuickAddButtonProps {
 
 export default function QuickAddButton({ product }: QuickAddButtonProps) {
   const t = useTranslations('product');
+  const tCart = useTranslations('cart');
   const router = useRouter();
   const addItem = useCartStore((state) => state.addItem);
   const [isAdding, setIsAdding] = useState(false);
@@ -54,7 +55,7 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
         type: product.type,
       });
 
-      showAddedToCart(t('addedToastTemplate', { name: product.name }));
+      showAddedToCart(t('addedToastTemplate', { name: product.name }), tCart('viewCart'));
     } catch (error) {
       console.error('Error adding to cart:', error);
       showError(t('addFailedToast'));

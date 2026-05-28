@@ -48,6 +48,7 @@ export default function ProductPageClient({
   const router = useRouter();
   const t = useTranslations('productPage');
   const tProduct = useTranslations('product');
+  const tCart = useTranslations('cart');
   const addItem = useCartStore((state) => state.addItem);
   const miniCartControls = useMiniCartControls();
   const [quantity, setQuantity] = useState(1);
@@ -223,7 +224,7 @@ export default function ProductPageClient({
         item_variant: selectedVariation?.attributes?.map(a => a.value).join(' / '),
       });
 
-      showAddedToCart(successMessage);
+      showAddedToCart(successMessage, tCart('viewCart'));
 
       // Show "View Cart" button for 5 seconds
       setJustAdded(true);

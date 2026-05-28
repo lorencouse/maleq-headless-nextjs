@@ -11,6 +11,7 @@ import { submitWithSync } from '@/lib/pwa/background-sync';
 export default function ContactForm() {
   const tValidation = useTranslations('validation.contact');
   const tValidationCommon = useTranslations('validation.common');
+  const t = useTranslations('contactPage');
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -51,14 +52,14 @@ export default function ContactForm() {
 
       if (queued) {
         setSubmitted(true);
-        showInfo('You appear to be offline. Your message has been queued and will be sent when you reconnect.');
+        showInfo(t('offlineQueued'));
         reset();
       } else if (result?.success) {
         setSubmitted(true);
         showSuccess(result.message);
         reset();
       } else {
-        showError(result?.message || 'Failed to send message.');
+        showError(result?.message || t('sendFailed'));
       }
     } catch {
       showError('Failed to send message. Please try again.');

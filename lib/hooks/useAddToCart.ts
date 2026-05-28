@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { parsePrice } from '@/lib/utils/woocommerce-format';
@@ -62,6 +63,8 @@ export function useAddToCart(options: UseAddToCartOptions = {}): UseAddToCartRet
   const { onSuccess, onError, redirectVariableProducts = true } = options;
 
   const router = useRouter();
+  const t = useTranslations('product');
+  const tCart = useTranslations('cart');
   const addItem = useCartStore((state) => state.addItem);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -162,12 +165,12 @@ export function useAddToCart(options: UseAddToCartOptions = {}): UseAddToCartRet
           type: product.type,
         });
 
-        showAddedToCart(`${product.name} added to cart!`);
+        showAddedToCart(t('addedToastTemplate', { name: product.name }), tCart('viewCart'));
         onSuccess?.();
         return true;
       } catch (error) {
         console.error('Error adding to cart:', error);
-        showError('Failed to add product to cart');
+        showError(t('addFailedToast'));
         onError?.(error instanceof Error ? error : new Error('Unknown error'));
         return false;
       } finally {
@@ -183,6 +186,8 @@ export function useAddToCart(options: UseAddToCartOptions = {}): UseAddToCartRet
       getStockQuantity,
       onSuccess,
       onError,
+      t,
+      tCart,
     ]
   );
 

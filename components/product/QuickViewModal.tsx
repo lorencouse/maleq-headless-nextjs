@@ -21,6 +21,7 @@ interface QuickViewModalProps {
 export default function QuickViewModal({ product, isOpen, onClose }: QuickViewModalProps) {
   const t = useTranslations('quickView');
   const tProduct = useTranslations('product');
+  const tCart = useTranslations('cart');
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
   const [isAdding, setIsAdding] = useState(false);
@@ -80,7 +81,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         type: product.type,
       });
 
-      showAddedToCart(t('toastAdded', { name: product.name }));
+      showAddedToCart(t('toastAdded', { name: product.name }), tCart('viewCart'));
       setQuantity(1);
     } catch (error) {
       console.error('Error adding to cart:', error);

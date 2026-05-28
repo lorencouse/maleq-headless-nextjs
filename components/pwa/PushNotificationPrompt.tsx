@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePushSubscription } from '@/lib/hooks/usePushSubscription';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
@@ -23,6 +24,7 @@ export default function PushNotificationPrompt({
   email,
   className = '',
 }: PushNotificationPromptProps) {
+  const t = useTranslations('pushPrompt');
   const { isSupported, permission, isSubscribed, isLoading, subscribe } = usePushSubscription();
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -55,12 +57,12 @@ export default function PushNotificationPrompt({
     const success = await subscribe(customerId, email);
     if (success) {
       setDismissed(true);
-      showSuccess('Notifications enabled! You\'ll receive updates about your orders and deals.');
+      showSuccess(t('enabledToast'));
     } else if (Notification.permission === 'denied') {
       setDismissed(true);
-      showError('Notifications blocked. You can enable them in your browser settings.');
+      showError(t('blockedToast'));
     } else {
-      showError('Could not enable notifications. Please try again.');
+      showError(t('errorToast'));
     }
   };
 
@@ -78,9 +80,9 @@ export default function PushNotificationPrompt({
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground mb-1">Stay Updated</h3>
+          <h3 className="font-semibold text-foreground mb-1">{t('heading')}</h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Get notified about order updates, back-in-stock products, and exclusive deals.
+            {t('body')}
           </p>
           <div className="flex flex-wrap gap-3">
             <button
@@ -88,13 +90,13 @@ export default function PushNotificationPrompt({
               disabled={isLoading}
               className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary-hover disabled:opacity-50 transition-colors"
             >
-              {isLoading ? 'Enabling...' : 'Enable Notifications'}
+              {isLoading ? t('enabling') : t('enableButton')}
             </button>
             <button
               onClick={handleDismiss}
               className="px-4 py-2.5 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             >
-              Not now
+              {t('notNow')}
             </button>
           </div>
         </div>

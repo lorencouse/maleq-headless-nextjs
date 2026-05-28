@@ -211,7 +211,24 @@
     "helpHeading": "¿Necesitas ayuda con tu pedido?",
     "helpBody": "Si tienes una cuenta, también puedes ver tus pedidos allí. De lo contrario, contacta con nuestro equipo de soporte.",
     "viewAccount": "Ver pedidos de la cuenta",
-    "contactSupport": "Contactar con soporte"
+    "contactSupport": "Contactar con soporte",
+    "orderNumberLabel": "Número de pedido",
+    "orderNumberPlaceholder": "p. ej. 12345",
+    "emailLabel": "Correo de facturación",
+    "lookingUp": "Buscando pedido…",
+    "trackButton": "Rastrear pedido",
+    "noOrderFound": "No se encontró ningún pedido. Verifica tus datos.",
+    "genericError": "Algo salió mal. Inténtalo de nuevo.",
+    "orderNumberHeading": "Pedido n.º {number}",
+    "placedOn": "Realizado el {date}",
+    "itemsHeading": "Artículos",
+    "qty": "Cant.: {count}",
+    "totalLabel": "Total",
+    "shippingMethodHeading": "Método de envío",
+    "shipmentTracking": "Seguimiento del envío",
+    "shippedOn": "Enviado: {date}",
+    "trackPackage": "Rastrear paquete",
+    "preparingOrder": "Tu pedido se está preparando. La información de seguimiento estará disponible cuando se envíe."
   },
   "orderConfirmation": {
     "successHeading": "¡Pedido confirmado!",
@@ -245,7 +262,9 @@
     "shippingTitle": "¿Preguntas sobre envíos?",
     "shippingBody": "Conoce nuestras políticas de envío y tiempos de entrega.",
     "shippingLink": "Envíos y devoluciones",
-    "formSectionTitle": "Envíanos un mensaje"
+    "formSectionTitle": "Envíanos un mensaje",
+    "offlineQueued": "Parece que estás sin conexión. Tu mensaje se ha puesto en cola y se enviará cuando vuelvas a conectarte.",
+    "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo."
   },
   "filters": {
     "panelHeading": "Filtros",
@@ -1614,5 +1633,42 @@
     "contactForm": "formulario de contacto",
     "backToTopics": "Volver a los temas",
     "contactUs": "Contáctanos"
+  },
+  "discountBanner": {
+    "spend": "Gasta",
+    "save": "Ahorra",
+    "appliedCompact": "Descuento adicional aplicado al pagar",
+    "appliedFull": "Descuento adicional automático aplicado al pagar"
+  },
+  "installPrompt": {
+    "titleIos": "Instalar en iPhone/iPad",
+    "titleMacos": "Instalar en Mac",
+    "titleDefault": "Instalar Male Q",
+    "descIos": "Abre el menú Compartir y toca Añadir a pantalla de inicio para instalar la app.",
+    "descMacos": "En Safari, usa Archivo › Añadir al Dock para instalar la app en tu Mac.",
+    "descDefault": "Añade Male Q a tu pantalla de inicio para un acceso más rápido y una mejor experiencia.",
+    "installButton": "Instalar app",
+    "notNow": "Ahora no",
+    "gotIt": "Entendido"
+  },
+  "pushPrompt": {
+    "heading": "Mantente al día",
+    "body": "Recibe avisos sobre actualizaciones de pedidos, productos de nuevo en stock y ofertas exclusivas.",
+    "enabling": "Activando…",
+    "enableButton": "Activar notificaciones",
+    "notNow": "Ahora no",
+    "enabledToast": "¡Notificaciones activadas! Recibirás novedades sobre tus pedidos y ofertas.",
+    "blockedToast": "Notificaciones bloqueadas. Puedes activarlas en la configuración de tu navegador.",
+    "errorToast": "No se pudieron activar las notificaciones. Inténtalo de nuevo."
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "markAllRead": "Marcar todo como leído",
+    "empty": "Aún no hay notificaciones",
+    "center": "Centro de notificaciones",
+    "justNow": "ahora mismo",
+    "minutesAgo": "hace {count} min",
+    "hoursAgo": "hace {count} h",
+    "daysAgo": "hace {count} d"
   }
 }

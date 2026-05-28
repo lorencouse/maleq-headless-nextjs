@@ -85,6 +85,7 @@ function subscribeToPlaceholders(onStoreChange: () => void) {
  */
 function BlogAddToCart({ product }: { product: BlogProduct }) {
   const t = useTranslations('product');
+  const tCart = useTranslations('cart');
   const [isAdding, setIsAdding] = useState(false);
   const [isAdded, setIsAdded] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
@@ -106,7 +107,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
         maxQuantity: 99,
       });
 
-      showAddedToCart(t('addedToastTemplate', { name: product.name }));
+      showAddedToCart(t('addedToastTemplate', { name: product.name }), tCart('viewCart'));
       setIsAdded(true);
 
       setTimeout(() => {

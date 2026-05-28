@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { AUTO_DISCOUNT_TIERS } from '@/lib/utils/cart-helpers';
 
 interface DiscountTierBannerProps {
@@ -9,6 +12,7 @@ export default function DiscountTierBanner({
   className = '',
   variant = 'full',
 }: DiscountTierBannerProps) {
+  const t = useTranslations('discountBanner');
   // Sort tiers by minSubtotal ascending for display
   const tiers = [...AUTO_DISCOUNT_TIERS].sort(
     (a, b) => a.minSubtotal - b.minSubtotal,
@@ -35,14 +39,14 @@ export default function DiscountTierBanner({
               isCompact ? 'text-sm py-0.5' : 'text-base sm:text-lg py-1'
             }`}
           >
-            Spend
+            {t('spend')}
           </span>
           <span
             className={`font-bold uppercase tracking-widest text-white ${
               isCompact ? 'text-lg py-0.5' : 'text-xl sm:text-2xl py-1'
             }`}
           >
-            Save
+            {t('save')}
           </span>
         </div>
         {/* Tier values */}
@@ -83,9 +87,7 @@ export default function DiscountTierBanner({
           isCompact ? 'py-1 text-sm sm:text-base' : 'py-2 text-base sm:text-lg'
         }`}
       >
-        {isCompact
-          ? 'Bonus Discount Applied at Checkout'
-          : 'Automatic Bonus Discount Applied at Checkout'}
+        {isCompact ? t('appliedCompact') : t('appliedFull')}
       </div>
     </div>
   );

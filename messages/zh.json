@@ -211,7 +211,24 @@
     "helpHeading": "需要訂單方面的協助嗎？",
     "helpBody": "如果您擁有帳戶，也可以在帳戶中查看您的訂單。否則，請聯絡我們的客服團隊。",
     "viewAccount": "查看帳戶訂單",
-    "contactSupport": "聯絡客服"
+    "contactSupport": "聯絡客服",
+    "orderNumberLabel": "訂單編號",
+    "orderNumberPlaceholder": "例如 12345",
+    "emailLabel": "帳單電子郵件",
+    "lookingUp": "查詢訂單中…",
+    "trackButton": "追蹤訂單",
+    "noOrderFound": "找不到訂單，請檢查您的資料。",
+    "genericError": "發生錯誤，請再試一次。",
+    "orderNumberHeading": "訂單 #{number}",
+    "placedOn": "下單日期：{date}",
+    "itemsHeading": "商品",
+    "qty": "數量：{count}",
+    "totalLabel": "總計",
+    "shippingMethodHeading": "運送方式",
+    "shipmentTracking": "貨件追蹤",
+    "shippedOn": "出貨日期：{date}",
+    "trackPackage": "追蹤包裹",
+    "preparingOrder": "您的訂單正在準備中。出貨後即可查看追蹤資訊。"
   },
   "orderConfirmation": {
     "successHeading": "訂單已確認！",
@@ -245,7 +262,9 @@
     "shippingTitle": "有運送相關問題嗎？",
     "shippingBody": "了解我們的運送政策與配送時間。",
     "shippingLink": "運送與退貨",
-    "formSectionTitle": "傳送訊息給我們"
+    "formSectionTitle": "傳送訊息給我們",
+    "offlineQueued": "您目前似乎已離線。您的訊息已排入佇列，將在重新連線後送出。",
+    "sendFailed": "訊息傳送失敗，請再試一次。"
   },
   "filters": {
     "panelHeading": "篩選條件",
@@ -1614,5 +1633,42 @@
     "contactForm": "聯絡表單",
     "backToTopics": "返回主題",
     "contactUs": "聯絡我們"
+  },
+  "discountBanner": {
+    "spend": "消費",
+    "save": "省下",
+    "appliedCompact": "結帳時自動套用額外折扣",
+    "appliedFull": "結帳時自動套用額外折扣"
+  },
+  "installPrompt": {
+    "titleIos": "在 iPhone/iPad 上安裝",
+    "titleMacos": "在 Mac 上安裝",
+    "titleDefault": "安裝 Male Q",
+    "descIos": "開啟「分享」選單，然後點選「加入主畫面」即可安裝此應用程式。",
+    "descMacos": "在 Safari 中，使用「檔案」›「加入 Dock」即可在 Mac 上安裝此應用程式。",
+    "descDefault": "將 Male Q 加入主畫面，享受更快速的存取與更佳的體驗。",
+    "installButton": "安裝應用程式",
+    "notNow": "暫時不要",
+    "gotIt": "知道了"
+  },
+  "pushPrompt": {
+    "heading": "保持更新",
+    "body": "接收訂單更新、補貨商品與獨家優惠的通知。",
+    "enabling": "啟用中…",
+    "enableButton": "啟用通知",
+    "notNow": "暫時不要",
+    "enabledToast": "通知已啟用！您將收到訂單與優惠的更新通知。",
+    "blockedToast": "通知已封鎖。您可以在瀏覽器設定中啟用。",
+    "errorToast": "無法啟用通知，請再試一次。"
+  },
+  "notifications": {
+    "title": "通知",
+    "markAllRead": "全部標示為已讀",
+    "empty": "目前沒有通知",
+    "center": "通知中心",
+    "justNow": "剛剛",
+    "minutesAgo": "{count} 分鐘前",
+    "hoursAgo": "{count} 小時前",
+    "daysAgo": "{count} 天前"
   }
 }

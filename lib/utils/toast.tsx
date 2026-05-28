@@ -15,9 +15,14 @@ export function showSuccess(message: string, duration?: number) {
 }
 
 /**
- * Show "added to cart" toast that opens mini-cart when clicked
+ * Show "added to cart" toast that opens mini-cart when clicked.
+ *
+ * `viewCartLabel` is the localized "View cart" sub-label — pass it from the
+ * caller (which lives inside the locale-aware provider), because this toast
+ * renders in the root Toaster which is pinned to the default locale. Defaults
+ * to English when omitted.
  */
-export function showAddedToCart(message: string, duration: number = 4000) {
+export function showAddedToCart(message: string, viewCartLabel: string = 'View cart', duration: number = 4000) {
   return toast.custom(
     (t) => (
       <div
@@ -58,7 +63,7 @@ export function showAddedToCart(message: string, duration: number = 4000) {
               {message}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              View cart
+              {viewCartLabel}
             </p>
           </div>
           <div className="flex-shrink-0">
