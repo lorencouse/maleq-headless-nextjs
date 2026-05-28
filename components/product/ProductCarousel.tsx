@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import ProductCard from '@/components/shop/ProductCard';
 import { useHorizontalScroll } from '@/lib/hooks/useHorizontalScroll';
@@ -27,7 +28,7 @@ export default function ProductCarousel({
   subtitle,
   badge,
   viewAllLink,
-  viewAllText = 'View All',
+  viewAllText,
   cardWidth = 280,
   minItemsForArrows = 4,
   showGradients = false,
@@ -35,6 +36,8 @@ export default function ProductCarousel({
   className = '',
   variant = 'default',
 }: ProductCarouselProps) {
+  const t = useTranslations('productRelated');
+  const resolvedViewAllText = viewAllText ?? t('viewAll');
   const {
     scrollContainerRef,
     canScrollLeft,
@@ -80,7 +83,7 @@ export default function ProductCarousel({
             <button
               onClick={scrollLeft}
               className='absolute left-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted transition-all'
-              aria-label='Scroll left'
+              aria-label={t('scrollLeftAria')}
             >
               <svg
                 className='w-5 h-5 sm:w-6 sm:h-6'
@@ -99,7 +102,7 @@ export default function ProductCarousel({
             <button
               onClick={scrollRight}
               className='absolute right-0 top-1/2 -translate-y-1/2 z-10 p-2 sm:p-4 rounded-full bg-background/90 border border-border shadow-lg hover:bg-muted transition-all'
-              aria-label='Scroll right'
+              aria-label={t('scrollRightAria')}
             >
               <svg
                 className='w-5 h-5 sm:w-6 sm:h-6'
@@ -138,7 +141,7 @@ export default function ProductCarousel({
       {/* Mobile scroll indicator */}
       {showMobileHint && (
         <div className='flex justify-center mt-4 gap-1 sm:hidden'>
-          <p className='text-xs text-muted-foreground'>Swipe to see more</p>
+          <p className='text-xs text-muted-foreground'>{t('swipeHint')}</p>
           <svg
             className='w-4 h-4 text-muted-foreground'
             fill='none'
@@ -163,7 +166,7 @@ export default function ProductCarousel({
             href={viewAllLink}
             className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
           >
-            {viewAllText}
+            {resolvedViewAllText}
             <svg
               className='w-4 h-4'
               fill='none'

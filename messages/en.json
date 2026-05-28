@@ -1389,5 +1389,25 @@
     "viewReturnPolicy": "View return policy",
     "compactTitle": "30-Day Satisfaction Guarantee",
     "compactSubtitle": "Not happy? We'll make it right."
+  },
+  "productRelated": {
+    "viewAll": "View All",
+    "scrollLeftAria": "Scroll left",
+    "scrollRightAria": "Scroll right",
+    "swipeHint": "Swipe to see more",
+    "recentlyViewedTitle": "Recently Viewed",
+    "relatedGuidesHeading": "Related Guides",
+    "youMayAlsoLikeTitle": "You May Also Like",
+    "productSpecificationsHeading": "Product Specifications"
+  },
+  "productSlugPage": {
+    "metaNotFound": "Product Not Found",
+    "metaTitleWithBrand": "{name} by {brand}",
+    "metaDescriptionFallback": "Shop {name} at Male Q. Fast, discreet shipping available.",
+    "shortDescriptionFallback": "Shop {name} at Male Q.",
+    "descriptionHeading": "Product Description",
+    "breadcrumbHome": "Home",
+    "breadcrumbSexToys": "Sex Toys",
+    "breadcrumbShop": "Shop"
   }
 }
