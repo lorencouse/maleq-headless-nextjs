@@ -30,6 +30,8 @@ function NavIcon({ iconKey, className = 'w-4 h-4' }: { iconKey?: string; classNa
 
 export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const t = useTranslations('mobileMenu');
+  const tNav = useTranslations('nav');
+  const tAccountNav = useTranslations('account.nav');
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuthStore();
   const wishlistItemCount = useWishlistItemCount();
@@ -178,22 +180,24 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         {/* Main Navigation */}
         <nav className="p-4">
           <ul className="space-y-1">
-            {/* Main navigation sections */}
+            {/* Main navigation sections — section.labelKey is locale-independent
+                and stable, so we use it as the toggle/expanded-state identifier
+                rather than the translated display label. */}
             {mainNavigation.map((section) => (
-              <li key={section.label}>
+              <li key={section.labelKey}>
                 {/* Section header */}
                 <button
-                  onClick={() => toggleSection(section.label)}
+                  onClick={() => toggleSection(section.labelKey)}
                   className={`flex items-center justify-between w-full px-4 py-3 rounded-lg transition-colors ${
                     isActive(section.href || '')
                       ? 'bg-primary/10 text-primary font-medium'
                       : 'text-foreground hover:bg-muted'
                   }`}
                 >
-                  <span className="font-medium">{section.label}</span>
+                  <span className="font-medium">{tNav(section.labelKey)}</span>
                   <svg
                     className={`w-5 h-5 text-muted-foreground transition-transform ${
-                      expandedSections.includes(section.label) ? 'rotate-180' : ''
+                      expandedSections.includes(section.labelKey) ? 'rotate-180' : ''
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -204,7 +208,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                 </button>
 
                 {/* Section content */}
-                {expandedSections.includes(section.label) && (
+                {expandedSections.includes(section.labelKey) && (
                   <div className="mt-1 ml-4 border-l border-border pl-4 space-y-1">
                     {/* Featured links */}
                     {section.featured && section.featured.length > 0 && (
@@ -216,24 +220,26 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                             onClick={onClose}
                             className="block px-4 py-3 text-sm font-semibold text-primary hover:bg-muted rounded-lg transition-colors"
                           >
-                            {item.label}
+                            {tNav(item.labelKey)}
                           </Link>
                         ))}
                       </div>
                     )}
 
                     {/* Groups */}
-                    {section.children.map((group) => (
-                      <div key={group.label}>
+                    {section.children.map((group) => {
+                      const groupKey = `${section.labelKey}-${group.labelKey}`;
+                      return (
+                      <div key={group.labelKey}>
                         <button
-                          onClick={() => toggleGroup(`${section.label}-${group.label}`)}
+                          onClick={() => toggleGroup(groupKey)}
                           className="flex items-center justify-between w-full px-4 py-3 text-sm text-foreground hover:bg-muted rounded-lg transition-colors"
                         >
-                          <span>{group.label}</span>
+                          <span>{tNav(group.labelKey)}</span>
                           {group.children && group.children.length > 0 && (
                             <svg
                               className={`w-4 h-4 text-muted-foreground transition-transform ${
-                                expandedGroups.includes(`${section.label}-${group.label}`) ? 'rotate-180' : ''
+                                expandedGroups.includes(groupKey) ? 'rotate-180' : ''
                               }`}
                               fill="none"
                               stroke="currentColor"
@@ -245,7 +251,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         </button>
 
                         {/* Group items */}
-                        {group.children && expandedGroups.includes(`${section.label}-${group.label}`) && (
+                        {group.children && expandedGroups.includes(groupKey) && (
                           <ul className="ml-4 mt-1 space-y-0.5">
                             {group.children.map((item) => (
                               <li key={item.href}>
@@ -261,7 +267,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                                   {item.icon && (
                                     <NavIcon iconKey={item.icon} className="w-4 h-4" />
                                   )}
-                                  <span>{item.label}</span>
+                                  <span>{tNav(item.labelKey)}</span>
                                 </Link>
                               </li>
                             ))}
@@ -278,7 +284,8 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                           </ul>
                         )}
                       </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Section "View All" link */}
                     {section.href && (
@@ -287,7 +294,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                         onClick={onClose}
                         className="block px-4 py-2.5 min-h-[44px] text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors mt-2 flex items-center"
                       >
-                        {t('viewAllSection', { section: section.label })} &rarr;
+                        {t('viewAllSection', { section: tNav(section.labelKey) })} &rarr;
                       </Link>
                     )}
                   </div>
@@ -307,7 +314,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                       : 'text-foreground hover:bg-muted'
                   }`}
                 >
-                  {link.label}
+                  {tNav(link.labelKey)}
                 </Link>
               </li>
             ))}
@@ -328,7 +335,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
                     onClick={onClose}
                     className="block px-4 py-3 text-sm text-foreground hover:bg-muted rounded-lg transition-colors min-h-[44px]"
                   >
-                    {link.label}
+                    {tAccountNav(link.labelKey)}
                   </Link>
                 </li>
               ))}
