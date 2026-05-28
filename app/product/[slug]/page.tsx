@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import RelatedProducts from '@/components/product/RelatedProducts';
@@ -35,7 +35,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 // Generate metadata for product page
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const locale = await getLocale();
+  // Hard-coded 'en' instead of getLocale(): this page has `revalidate = N`
+  // (ISR) and next-intl's getLocale() reads request headers, which throws
+  // DYNAMIC_SERVER_USAGE under ISR. Per D1=A, content-root routes render
+  // with English chrome regardless of cookie.
+  const locale = 'en';
   const t = await getTranslations({ locale, namespace: 'productSlugPage' });
   const product = await getProductBySlug(slug);
 
@@ -116,7 +120,8 @@ interface ProductPageProps {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  const locale = await getLocale();
+  // See generateMetadata above for why this is hard-coded 'en' instead of getLocale().
+  const locale = 'en';
   const t = await getTranslations({ locale, namespace: 'productSlugPage' });
 
   const product = await getProductBySlug(slug);

@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { getLocale, getTranslations } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import { getClient } from '@/lib/apollo/client';
 import {
   GET_POST_BY_SLUG,
@@ -111,7 +111,11 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const locale = await getLocale();
+  // Hard-coded 'en' instead of getLocale(): this page has `revalidate = N`
+  // (ISR) and next-intl's getLocale() reads request headers, which throws
+  // DYNAMIC_SERVER_USAGE under ISR. Per D1=A, content-root routes render
+  // with English chrome regardless of cookie.
+  const locale = 'en';
   const t = await getTranslations({ locale, namespace: 'blog' });
 
   let post: Post | null = null;
@@ -224,9 +228,10 @@ interface BlogPostPageProps {
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const locale = await getLocale();
+  // See generateMetadata above for why this is hard-coded 'en' instead of getLocale().
+  const locale = 'en';
   const t = await getTranslations({ locale, namespace: 'blog' });
-  const intlLocale = locale === 'es' ? 'es-ES' : 'en-US';
+  const intlLocale = 'en-US'; // matches the hard-coded 'en' locale above
 
   let post: Post | null = null;
 

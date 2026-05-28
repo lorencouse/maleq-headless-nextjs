@@ -1,0 +1,21 @@
+{
+  "_comment": "Manual translation groups for lube-related guides. Each group is an array of post IDs that should be mutually linked as translations. Generated 2026-05-28 from manual review of scripts/output/translation-discovery.json + probe-lube-posts.ts output.",
+  "groups": [
+    [296, 268, 216],
+    [288, 138],
+    [281, 273],
+    [284, 274],
+    [292, 142],
+    [285, 145],
+    [293, 133]
+  ],
+  "_pairings": {
+    "[296, 268, 216]": "Best Anal Lubes (EN) ↔ Mejores Lubricantes Anales Probados (ES) ↔ 8款推薦肛交潤滑液 (ZH)",
+    "[288, 138]": "Best Water Based Lube (EN) ↔ El Mejor Lubricante para Sexo a Base de Agua (ES)",
+    "[281, 273]": "Best Silicone Lube (EN) ↔ Los Mejores Lubricantes de Silicona (ES)",
+    "[284, 274]": "Best Cheap Lubes (EN) ↔ Los Mejores Lubricantes Baratos (ES)",
+    "[292, 142]": "Best Lubes for Masturbation (EN) ↔ Los Mejores Lubricantes para Masturbación (ES)",
+    "[285, 145]": "Best Lubes for Giving a Handjob (EN) ↔ Mejores Lubricantes para una Paja (ES)",
+    "[293, 133]": "Best Lubes to Buy (EN) ↔ Mejores Lubricantes Sexuales (ES)"
+  }
+}
