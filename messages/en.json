@@ -230,6 +230,32 @@
       "viewDetails": "View details",
       "noOrdersYet": "You haven't placed any orders yet.",
       "startShopping": "Start shopping"
+    },
+    "wishlist": {
+      "heading": "My Wishlist",
+      "itemsSaved": "{count, plural, =1 {# item saved} other {# items saved}}",
+      "addAllToCart": "Add All to Cart",
+      "clearAll": "Clear All",
+      "empty": "Your wishlist is empty",
+      "emptyHint": "Save items you love by clicking the heart icon on any product.",
+      "startShopping": "Start Shopping",
+      "removedToast": "Removed from wishlist",
+      "noStockToast": "No items in stock to add",
+      "addedToCartToast": "{count, plural, =1 {# item added to cart} other {# items added to cart}}"
+    },
+    "orders": {
+      "heading": "Order History",
+      "loading": "Loading orders...",
+      "failedToLoad": "Failed to load orders",
+      "failedToFetch": "Failed to fetch orders",
+      "noOrdersHeading": "No orders yet",
+      "noOrdersHint": "You haven't placed any orders. Start shopping to see your order history here.",
+      "browseProducts": "Browse Products",
+      "colOrderNumber": "Order Number",
+      "colDate": "Date",
+      "colTotal": "Total",
+      "viewDetailsAndTrack": "View Details & Track",
+      "moreItems": "+{count, plural, =1 {# more item} other {# more items}}"
     }
   },
   "validation": {

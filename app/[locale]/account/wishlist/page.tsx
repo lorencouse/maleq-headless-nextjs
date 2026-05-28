@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import ProductCard from '@/components/shop/ProductCard';
 import { useWishlistStore, WishlistItem } from '@/lib/store/wishlist-store';
@@ -39,6 +40,7 @@ function wishlistItemToProduct(item: WishlistItem): UnifiedProduct {
 }
 
 export default function WishlistPage() {
+  const t = useTranslations('account.wishlist');
   const { items, removeItem, clearWishlist, hydrate } = useWishlistStore();
   const addToCart = useCartStore((state) => state.addItem);
   const hydrated = useHydrated();
@@ -50,13 +52,13 @@ export default function WishlistPage() {
 
   const handleRemove = (productId: string) => {
     removeItem(productId);
-    showSuccess('Removed from wishlist');
+    showSuccess(t('removedToast'));
   };
 
   const handleAddAllToCart = () => {
     const inStockItems = items.filter((item) => item.inStock);
     if (inStockItems.length === 0) {
-      showError('No items in stock to add');
+      showError(t('noStockToast'));
       return;
     }
 
@@ -75,7 +77,7 @@ export default function WishlistPage() {
       });
     });
 
-    showAddedToCart(`${inStockItems.length} items added to cart`);
+    showAddedToCart(t('addedToCartToast', { count: inStockItems.length }));
   };
 
   if (!hydrated) {
@@ -95,9 +97,9 @@ export default function WishlistPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">My Wishlist</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('heading')}</h1>
             <p className="text-muted-foreground">
-              {items.length} {items.length === 1 ? 'item' : 'items'} saved
+              {t('itemsSaved', { count: items.length })}
             </p>
           </div>
           {items.length > 0 && (
@@ -106,13 +108,13 @@ export default function WishlistPage() {
                 onClick={handleAddAllToCart}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium text-sm"
               >
-                Add All to Cart
+                {t('addAllToCart')}
               </button>
               <button
                 onClick={clearWishlist}
                 className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors font-medium text-sm"
               >
-                Clear All
+                {t('clearAll')}
               </button>
             </div>
           )}
@@ -135,16 +137,16 @@ export default function WishlistPage() {
               />
             </svg>
             <h2 className="text-xl font-semibold text-foreground mb-2">
-              Your wishlist is empty
+              {t('empty')}
             </h2>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              Save items you love by clicking the heart icon on any product.
+              {t('emptyHint')}
             </p>
             <Link
               href="/shop"
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
             >
-              Start Shopping
+              {t('startShopping')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
