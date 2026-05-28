@@ -1,21 +1,24 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { ProductSpecification } from '@/lib/products/product-service';
 
 interface ProductSpecificationsProps {
   specifications: ProductSpecification[];
 }
 
-export default function ProductSpecifications({
+export default async function ProductSpecifications({
   specifications,
 }: ProductSpecificationsProps) {
   if (!specifications || specifications.length === 0) {
     return null;
   }
 
+  const t = await getTranslations('productRelated');
+
   return (
     <div className='border-t border-border pt-8 mt-8'>
       <h2 className='text-2xl font-bold text-foreground mb-8'>
-        Product Specifications
+        {t('productSpecificationsHeading')}
       </h2>
       <div className='bg-muted rounded-lg p-6 mt-6'>
         <dl className='grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4'>

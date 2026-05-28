@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
+import { getLocale, getTranslations } from 'next-intl/server';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import RelatedProducts from '@/components/product/RelatedProducts';
@@ -34,11 +35,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 // Generate metadata for product page
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'productSlugPage' });
   const product = await getProductBySlug(slug);
 
   if (!product) {
     return {
-      title: 'Product Not Found',
+      title: t('metaNotFound'),
     };
   }
 
@@ -48,10 +51,12 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     ? stripHtml(product.shortDescription).slice(0, 160)
     : product.description
     ? stripHtml(product.description).slice(0, 160)
-    : `Shop ${product.name} at Male Q. Fast, discreet shipping available.`;
+    : t('metaDescriptionFallback', { name: product.name });
 
   // Build a richer title with brand context when available
-  const metaTitle = brand ? `${product.name} by ${brand}` : product.name;
+  const metaTitle = brand
+    ? t('metaTitleWithBrand', { name: product.name, brand })
+    : product.name;
 
   return {
     title: metaTitle,
@@ -111,6 +116,8 @@ interface ProductPageProps {
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { slug } = await params;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'productSlugPage' });
 
   const product = await getProductBySlug(slug);
 
@@ -157,7 +164,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ? stripHtml(product.shortDescription).slice(0, 300)
     : product.description
     ? stripHtml(product.description).slice(0, 300)
-    : `Shop ${product.name} at Male Q.`;
+    : t('shortDescriptionFallback', { name: product.name });
 
   const stockStatus = product.stockStatus === 'IN_STOCK' ? 'InStock' : 'OutOfStock';
   const productImages = product.gallery?.map(img => img.url) || (product.image ? [product.image.url] : []);
@@ -195,8 +202,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[
-          { name: 'Home', url: SITE_URL },
-          { name: 'Sex Toys', url: `${SITE_URL}/sex-toys` },
+          { name: t('breadcrumbHome'), url: SITE_URL },
+          { name: t('breadcrumbSexToys'), url: `${SITE_URL}/sex-toys` },
           ...(primaryCategory
             ? [{ name: primaryCategory.name, url: `${SITE_URL}/sex-toys/${primaryCategory.slug}` }]
             : []),
@@ -207,7 +214,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Breadcrumb */}
       <Breadcrumbs
         items={[
-          { label: 'Shop', href: '/shop' },
+          { label: t('breadcrumbShop'), href: '/shop' },
           ...(primaryCategory
             ? [{ label: primaryCategory.name, href: `/sex-toys/${primaryCategory.slug}` }]
             : []),
@@ -223,7 +230,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Product Description */}
       {product.description && (
         <div className="mt-16 border-t border-border pt-12">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Product Description</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">{t('descriptionHeading')}</h2>
           <div
             className="product-description-content max-w-none"
             dangerouslySetInnerHTML={{ __html: renderProductDescriptionHtml(product.description) }}
@@ -266,7 +273,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
         <RelatedProducts
           products={relatedProducts}
           currentProductId={product.id}
-          title="You May Also Like"
         />
       )}
 

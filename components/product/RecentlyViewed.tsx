@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { getRecentlyViewed, RecentlyViewedItem } from '@/lib/utils/recently-viewed';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import ProductCarousel from './ProductCarousel';
@@ -36,9 +37,10 @@ interface RecentlyViewedProps {
 
 export default function RecentlyViewed({
   currentProductId,
-  title = 'Recently Viewed',
+  title,
   maxItems = 8,
 }: RecentlyViewedProps) {
+  const t = useTranslations('productRelated');
   const products = useMemo(
     () =>
       getRecentlyViewed()
@@ -48,5 +50,5 @@ export default function RecentlyViewed({
     [currentProductId, maxItems]
   );
 
-  return <ProductCarousel products={products} title={title} />;
+  return <ProductCarousel products={products} title={title ?? t('recentlyViewedTitle')} />;
 }
