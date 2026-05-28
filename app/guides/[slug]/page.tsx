@@ -27,7 +27,14 @@ import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import RecommendedProducts from '@/components/blog/RecommendedProducts';
+import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
 import { loadPostRecommendations } from '@/lib/db/post-relations';
+import { loadPostTranslations, type PostTranslation } from '@/lib/db/post-translations';
+import {
+  detectGuideLocale,
+  getGuideLanguage,
+  DEFAULT_GUIDE_LOCALE,
+} from '@/lib/i18n/guide-languages';
 import DevEditLink from '@/components/dev/DevEditLink';
 import { getWpBaseUrl } from '@/lib/db/wp-url';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
@@ -37,6 +44,62 @@ import TableOfContents from '@/components/blog/TableOfContents';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
+/**
+ * Editor-curated guide translations (other-language versions of this post),
+ * read via SQL. Guarded the same way as the recommendations block; returns []
+ * when MySQL is unavailable so the page still renders.
+ */
+async function loadGuideTranslations(post: Post): Promise<PostTranslation[]> {
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      return await loadPostTranslations(post.databaseId);
+    }
+  } catch {}
+  return [];
+}
+
+/**
+ * Build the hreflang `alternates.languages` map for a guide and its
+ * translations (self + each translation + an x-default pointing at English).
+ * Returns undefined when the post has no linked translations.
+ */
+function buildHreflangAlternates(
+  post: Post,
+  translations: PostTranslation[],
+  slug: string,
+): Record<string, string> | undefined {
+  if (translations.length === 0) return undefined;
+
+  const currentLocale = detectGuideLocale(
+    (post.categories?.nodes ?? []).map((n) => n.slug),
+  );
+
+  const languages: Record<string, string> = {};
+
+  // This page (self-referencing hreflang).
+  if (currentLocale) {
+    const lang = getGuideLanguage(currentLocale);
+    if (lang) languages[lang.hreflang] = `${SITE_URL}/guides/${slug}`;
+  }
+
+  // Each linked translation.
+  for (const t of translations) {
+    languages[t.hreflang] = `${SITE_URL}/guides/${t.slug}`;
+  }
+
+  // x-default → the English version (this page if it's English, else the
+  // linked English translation).
+  if (currentLocale === DEFAULT_GUIDE_LOCALE) {
+    languages['x-default'] = `${SITE_URL}/guides/${slug}`;
+  } else {
+    const en = translations.find((t) => t.locale === DEFAULT_GUIDE_LOCALE);
+    if (en) languages['x-default'] = `${SITE_URL}/guides/${en.slug}`;
+  }
+
+  return languages;
+}
 
 // ISR: Revalidate monthly — webhook handles real-time invalidation on post updates
 export const revalidate = 2592000;
@@ -63,6 +126,10 @@ export async function generateMetadata({
       title: 'Post Not Found',
     };
   }
+
+  // hreflang alternates for this guide's other-language versions (SEO).
+  const translations = await loadGuideTranslations(post);
+  const languages = buildHreflangAlternates(post, translations, slug);
 
   // Strip HTML and limit description
   const description = post.excerpt
@@ -102,6 +169,7 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: `${SITE_URL}/guides/${slug}`,
+      ...(languages ? { languages } : {}),
     },
   };
 }
@@ -213,6 +281,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     }
   } catch {}
 
+  // Other-language versions of this guide (meta-box driven), for the switcher.
+  const translations = await loadGuideTranslations(post);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -305,6 +376,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           )}
         </div>
       </header>
+
+      {/* Other-language versions of this guide */}
+      <LanguageSwitcher translations={translations} />
 
       {/* Featured Image */}
       {post.featuredImage?.node && (

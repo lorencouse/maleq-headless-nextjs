@@ -44,6 +44,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-push-notifications.php` | Sends Web Push notifications for order status changes and back-in-stock products | `wordpress/mu-plugins/maleq-push-notifications.php` |
 | `maleq-product-video.php` | Adds MP4 video meta field to WooCommerce products (media library picker) | `wordpress/mu-plugins/maleq-product-video.php` |
 | `maleq-post-product-relations.php` | Adds a "Related Products & Categories" meta box to the post editor; stores ordered-CSV relations in post meta (`_maleq_related_products`, `_maleq_related_product_cats`) that the frontend reads via SQL. Requires WooCommerce. | `wordpress/mu-plugins/maleq-post-product-relations.php` |
+| `maleq-post-translations.php` | Adds a "Translations" meta box to the post editor to link a guide to its sibling-language versions (English ⇄ Español ⇄ 中文 ⇄ 日本語). Stores a symmetric CSV in post meta (`_maleq_translations`) that the frontend reads via SQL to render a language switcher + hreflang tags. Language is derived from the post's top-level language category (`en`/`espanol`/`cn`/`日本語-japanese`). | `wordpress/mu-plugins/maleq-post-translations.php` |
 
 ### Installation Steps
 
@@ -67,7 +68,14 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-push-notifications.php /path/to/wordpress/wp-content/mu-plugins/maleq-push-notifications.php
    cp wordpress/mu-plugins/maleq-product-video.php /path/to/wordpress/wp-content/mu-plugins/maleq-product-video.php
    cp wordpress/mu-plugins/maleq-post-product-relations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-product-relations.php
+   cp wordpress/mu-plugins/maleq-post-translations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-translations.php
    ```
+
+   > **Backfilling existing translations:** after installing `maleq-post-translations.php`, run
+   > `bun run scripts/backfill-post-translations.ts --local` to propose original↔translation
+   > pairings (review `scripts/output/translation-proposals.json`), then `--apply --local` to write
+   > the high-confidence groups. Follow with `wp cache flush` so WordPress's object cache reloads the
+   > new post-meta. Remaining pairs are linked by hand via the editor meta box.
 
 2. **Run material migration** (one-time setup):
 
