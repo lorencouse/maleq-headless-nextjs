@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface PriceRangeFilterProps {
   minPrice: number;
@@ -13,6 +14,7 @@ export default function PriceRangeFilter({
   maxPrice,
   onPriceChange,
 }: PriceRangeFilterProps) {
+  const t = useTranslations('filters');
   const [localMin, setLocalMin] = useState(minPrice > 0 ? minPrice.toString() : '');
   const [localMax, setLocalMax] = useState(maxPrice > 0 ? maxPrice.toString() : '');
 
@@ -47,14 +49,16 @@ export default function PriceRangeFilter({
     }
   };
 
+  // Preset labels resolved at render time; pricing uses the rangeUnder/Over/
+  // Between ICU patterns so the prefix/range structure follows site locale.
   const presetRanges = [
-    { label: 'Under $25', min: 0, max: 25 },
-    { label: '$25 - $50', min: 25, max: 50 },
-    { label: '$50 - $100', min: 50, max: 100 },
-    { label: '$100 - $200', min: 100, max: 200 },
-    { label: '$200 - $500', min: 200, max: 500 },
-    { label: '$500 - $1000', min: 500, max: 1000 },
-    { label: 'Over $1000', min: 1000, max: 0 },
+    { label: t('rangeUnder', { value: '$25' }), min: 0, max: 25 },
+    { label: t('rangeBetween', { min: '$25', max: '$50' }), min: 25, max: 50 },
+    { label: t('rangeBetween', { min: '$50', max: '$100' }), min: 50, max: 100 },
+    { label: t('rangeBetween', { min: '$100', max: '$200' }), min: 100, max: 200 },
+    { label: t('rangeBetween', { min: '$200', max: '$500' }), min: 200, max: 500 },
+    { label: t('rangeBetween', { min: '$500', max: '$1000' }), min: 500, max: 1000 },
+    { label: t('rangeOver', { value: '$1000' }), min: 1000, max: 0 },
   ];
 
   return (
@@ -62,7 +66,7 @@ export default function PriceRangeFilter({
       {/* Input Fields */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="sr-only">Minimum price</label>
+          <label className="sr-only">{t('rangeMinPriceAria')}</label>
           <div className="relative">
             <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none">$</span>
             <input
@@ -72,14 +76,14 @@ export default function PriceRangeFilter({
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               min={0}
-              placeholder="Min"
+              placeholder={t('rangeMin')}
               className="w-full pl-6 pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60"
             />
           </div>
         </div>
-        <span className="text-muted-foreground text-sm">to</span>
+        <span className="text-muted-foreground text-sm">{t('rangeTo')}</span>
         <div className="flex-1">
-          <label className="sr-only">Maximum price</label>
+          <label className="sr-only">{t('rangeMaxPriceAria')}</label>
           <div className="relative">
             <span className={`absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm pointer-events-none ${localMax === '' ? 'hidden' : ''}`}>$</span>
             <input
@@ -89,7 +93,7 @@ export default function PriceRangeFilter({
               onBlur={handleBlur}
               onKeyDown={handleKeyDown}
               min={0}
-              placeholder="No Max"
+              placeholder={t('rangeNoMax')}
               className={`w-full pr-2 py-2 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none placeholder:text-muted-foreground/60 ${localMax === '' ? 'pl-2.5' : 'pl-6'}`}
             />
           </div>

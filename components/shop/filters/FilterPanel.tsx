@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import PriceRangeFilter from './PriceRangeFilter';
 import RangeFilter from './RangeFilter';
 import CategoryFilter, { HierarchicalCategory } from './CategoryFilter';
@@ -50,6 +51,7 @@ export default function FilterPanel({
   onClose,
   initialCategory,
 }: FilterPanelProps) {
+  const t = useTranslations('filters');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     category: true,
     brand: true,
@@ -89,11 +91,11 @@ export default function FilterPanel({
       {/* Mobile Header */}
       {isMobile && (
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">Filters</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t('panelHeading')}</h2>
           <button
             onClick={onClose}
             className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-muted rounded-lg transition-colors"
-            aria-label="Close filters"
+            aria-label={t('closeAriaLabel')}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -108,7 +110,7 @@ export default function FilterPanel({
           onClick={onClearFilters}
           className="w-full mb-4 py-3 min-h-[44px] px-4 text-sm text-primary hover:text-primary-hover font-medium border border-primary rounded-lg hover:bg-primary/5 transition-colors"
         >
-          Clear All Filters
+          {t('clearAll')}
         </button>
       )}
 
@@ -118,7 +120,7 @@ export default function FilterPanel({
           onClick={() => toggleSection('category')}
           className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
-          <span className="font-semibold text-foreground">Category</span>
+          <span className="font-semibold text-foreground">{t('sectionCategory')}</span>
           <svg
             className={`w-5 h-5 text-muted-foreground transition-transform ${
               expandedSections.category ? 'rotate-180' : ''
@@ -147,7 +149,7 @@ export default function FilterPanel({
             onClick={() => toggleSection('brand')}
             className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
           >
-            <span className="font-semibold text-foreground">Brand</span>
+            <span className="font-semibold text-foreground">{t('sectionBrand')}</span>
             <svg
               className={`w-5 h-5 text-muted-foreground transition-transform ${
                 expandedSections.brand ? 'rotate-180' : ''
@@ -164,7 +166,7 @@ export default function FilterPanel({
               options={brands}
               selectedValue={filters.brand}
               onSelect={(brand) => onFilterChange({ ...filters, brand })}
-              placeholder="All Brands"
+              placeholder={t('allBrands')}
             />
           )}
         </div>
@@ -177,7 +179,7 @@ export default function FilterPanel({
             onClick={() => toggleSection('color')}
             className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
           >
-            <span className="font-semibold text-foreground">Color</span>
+            <span className="font-semibold text-foreground">{t('sectionColor')}</span>
             <svg
               className={`w-5 h-5 text-muted-foreground transition-transform ${
                 expandedSections.color ? 'rotate-180' : ''
@@ -194,7 +196,7 @@ export default function FilterPanel({
               options={colors}
               selectedValue={filters.color}
               onSelect={(color) => onFilterChange({ ...filters, color })}
-              placeholder="All Colors"
+              placeholder={t('allColors')}
             />
           )}
         </div>
@@ -207,7 +209,7 @@ export default function FilterPanel({
             onClick={() => toggleSection('material')}
             className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
           >
-            <span className="font-semibold text-foreground">Material</span>
+            <span className="font-semibold text-foreground">{t('sectionMaterial')}</span>
             <svg
               className={`w-5 h-5 text-muted-foreground transition-transform ${
                 expandedSections.material ? 'rotate-180' : ''
@@ -224,7 +226,7 @@ export default function FilterPanel({
               options={materials}
               selectedValue={filters.material}
               onSelect={(material) => onFilterChange({ ...filters, material })}
-              placeholder="All Materials"
+              placeholder={t('allMaterials')}
             />
           )}
         </div>
@@ -236,7 +238,7 @@ export default function FilterPanel({
           onClick={() => toggleSection('price')}
           className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
-          <span className="font-semibold text-foreground">Price Range</span>
+          <span className="font-semibold text-foreground">{t('sectionPrice')}</span>
           <svg
             className={`w-5 h-5 text-muted-foreground transition-transform ${
               expandedSections.price ? 'rotate-180' : ''
@@ -263,7 +265,7 @@ export default function FilterPanel({
           onClick={() => toggleSection('length')}
           className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
-          <span className="font-semibold text-foreground">Length</span>
+          <span className="font-semibold text-foreground">{t('sectionLength')}</span>
           <svg
             className={`w-5 h-5 text-muted-foreground transition-transform ${
               expandedSections.length ? 'rotate-180' : ''
@@ -285,11 +287,11 @@ export default function FilterPanel({
             step={0.5}
             unit="in"
             presets={[
-              { label: 'Under 4"', min: 0, max: 4 },
-              { label: '4" - 6"', min: 4, max: 6 },
-              { label: '6" - 8"', min: 6, max: 8 },
-              { label: '8" - 10"', min: 8, max: 10 },
-              { label: 'Over 10"', min: 10, max: 24 },
+              { label: t('rangeUnder', { value: '4"' }), min: 0, max: 4 },
+              { label: t('rangeBetween', { min: '4"', max: '6"' }), min: 4, max: 6 },
+              { label: t('rangeBetween', { min: '6"', max: '8"' }), min: 6, max: 8 },
+              { label: t('rangeBetween', { min: '8"', max: '10"' }), min: 8, max: 10 },
+              { label: t('rangeOver', { value: '10"' }), min: 10, max: 24 },
             ]}
           />
         )}
@@ -301,7 +303,7 @@ export default function FilterPanel({
           onClick={() => toggleSection('weight')}
           className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
-          <span className="font-semibold text-foreground">Weight</span>
+          <span className="font-semibold text-foreground">{t('sectionWeight')}</span>
           <svg
             className={`w-5 h-5 text-muted-foreground transition-transform ${
               expandedSections.weight ? 'rotate-180' : ''
@@ -323,10 +325,10 @@ export default function FilterPanel({
             step={0.1}
             unit="lbs"
             presets={[
-              { label: 'Under 0.5 lbs', min: 0, max: 0.5 },
-              { label: '0.5 - 1 lbs', min: 0.5, max: 1 },
-              { label: '1 - 2 lbs', min: 1, max: 2 },
-              { label: 'Over 2 lbs', min: 2, max: 10 },
+              { label: t('rangeUnder', { value: '0.5 lbs' }), min: 0, max: 0.5 },
+              { label: t('rangeBetween', { min: '0.5', max: '1 lbs' }), min: 0.5, max: 1 },
+              { label: t('rangeBetween', { min: '1', max: '2 lbs' }), min: 1, max: 2 },
+              { label: t('rangeOver', { value: '2 lbs' }), min: 2, max: 10 },
             ]}
           />
         )}
@@ -338,7 +340,7 @@ export default function FilterPanel({
           onClick={() => toggleSection('availability')}
           className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
-          <span className="font-semibold text-foreground">Availability</span>
+          <span className="font-semibold text-foreground">{t('sectionAvailability')}</span>
           <svg
             className={`w-5 h-5 text-muted-foreground transition-transform ${
               expandedSections.availability ? 'rotate-180' : ''
@@ -366,7 +368,7 @@ export default function FilterPanel({
           onClick={() => toggleSection('productType')}
           className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
         >
-          <span className="font-semibold text-foreground">Product Type</span>
+          <span className="font-semibold text-foreground">{t('sectionProductType')}</span>
           <svg
             className={`w-5 h-5 text-muted-foreground transition-transform ${
               expandedSections.productType ? 'rotate-180' : ''
@@ -381,9 +383,9 @@ export default function FilterPanel({
         {expandedSections.productType && (
           <div className="flex gap-2 mt-2">
             {[
-              { value: '', label: 'All' },
-              { value: 'simple', label: 'Simple' },
-              { value: 'variable', label: 'Variable' },
+              { value: '', label: t('productTypeAll') },
+              { value: 'simple', label: t('productTypeSimple') },
+              { value: 'variable', label: t('productTypeVariable') },
             ].map((option) => (
               <button
                 key={option.value}
@@ -407,7 +409,7 @@ export default function FilterPanel({
           onClick={onClose}
           className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold mt-4"
         >
-          Apply Filters
+          {t('applyMobile')}
         </button>
       )}
     </div>
