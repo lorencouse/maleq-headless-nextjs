@@ -14,6 +14,7 @@ interface ActiveFiltersProps {
   brands?: FilterOption[];
   colors?: FilterOption[];
   materials?: FilterOption[];
+  volumes?: FilterOption[];
   searchQuery?: string;
   onRemoveFilter: (key: keyof FilterState) => void;
   onClearSearch?: () => void;
@@ -40,6 +41,7 @@ export default function ActiveFilters({
   brands = [],
   colors = [],
   materials = [],
+  volumes = [],
   searchQuery,
   onRemoveFilter,
   onClearSearch,
@@ -98,6 +100,10 @@ export default function ActiveFilters({
   if (filters.material) {
     const materialName = localizeMaterialName(filters.material, getOptionName(materials, filters.material));
     activeFilters.push({ key: 'material', label: t('activeMaterialPill', { name: materialName }) });
+  }
+
+  if (filters.volume) {
+    activeFilters.push({ key: 'volume', label: t('activeVolumePill', { name: getOptionName(volumes, filters.volume) }) });
   }
 
   if (filters.inStock) {

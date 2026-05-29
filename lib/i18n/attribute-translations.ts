@@ -895,12 +895,12 @@ const MATERIAL_NAMES: Record<string, Record<string, string>> = {
  * back to the formatted English label.
  */
 const ATTRIBUTE_LABELS: Record<string, Record<string, string>> = {
-  de: { color: 'Farbe', material: 'Material', flavor: 'Geschmack', manufacturer: 'Hersteller', size: 'Größe', style: 'Stil', variant: 'Variante', dimensions: 'Abmessungen', weight: 'Gewicht' },
-  fr: { color: 'Couleur', material: 'Matériau', flavor: 'Parfum', manufacturer: 'Fabricant', size: 'Taille', style: 'Style', variant: 'Variante', dimensions: 'Dimensions', weight: 'Poids' },
-  es: { color: 'Color', material: 'Material', flavor: 'Sabor', manufacturer: 'Fabricante', size: 'Talla', style: 'Estilo', variant: 'Variante', dimensions: 'Dimensiones', weight: 'Peso' },
-  ja: { color: 'カラー', material: '素材', flavor: 'フレーバー', manufacturer: 'メーカー', size: 'サイズ', style: 'スタイル', variant: 'バリエーション', dimensions: '寸法', weight: '重量' },
-  zh: { color: '颜色', material: '材质', flavor: '口味', manufacturer: '制造商', size: '尺寸', style: '款式', variant: '款式变化', dimensions: '尺寸', weight: '重量' },
-  'zh-hant': { color: '顏色', material: '材質', flavor: '口味', manufacturer: '製造商', size: '尺寸', style: '款式', variant: '款式變化', dimensions: '尺寸', weight: '重量' },
+  de: { color: 'Farbe', material: 'Material', flavor: 'Geschmack', manufacturer: 'Hersteller', size: 'Größe', style: 'Stil', variant: 'Variante', dimensions: 'Abmessungen', weight: 'Gewicht', volume: 'Volumen', length: 'Länge' },
+  fr: { color: 'Couleur', material: 'Matériau', flavor: 'Parfum', manufacturer: 'Fabricant', size: 'Taille', style: 'Style', variant: 'Variante', dimensions: 'Dimensions', weight: 'Poids', volume: 'Volume', length: 'Longueur' },
+  es: { color: 'Color', material: 'Material', flavor: 'Sabor', manufacturer: 'Fabricante', size: 'Talla', style: 'Estilo', variant: 'Variante', dimensions: 'Dimensiones', weight: 'Peso', volume: 'Volumen', length: 'Longitud' },
+  ja: { color: 'カラー', material: '素材', flavor: 'フレーバー', manufacturer: 'メーカー', size: 'サイズ', style: 'スタイル', variant: 'バリエーション', dimensions: '寸法', weight: '重量', volume: '容量', length: '長さ' },
+  zh: { color: '颜色', material: '材质', flavor: '口味', manufacturer: '制造商', size: '尺寸', style: '款式', variant: '款式变化', dimensions: '尺寸', weight: '重量', volume: '容量', length: '长度' },
+  'zh-hant': { color: '顏色', material: '材質', flavor: '口味', manufacturer: '製造商', size: '尺寸', style: '款式', variant: '款式變化', dimensions: '尺寸', weight: '重量', volume: '容量', length: '長度' },
 };
 
 const FLAVOR_NAMES: Record<string, Record<string, string>> = {

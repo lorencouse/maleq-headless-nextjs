@@ -15,6 +15,7 @@ export interface FilterState {
   brand: string;
   color: string;
   material: string;
+  volume: string;
   minPrice: number;
   maxPrice: number;
   minLength: number;
@@ -31,6 +32,7 @@ interface FilterPanelProps {
   brands?: FilterOption[];
   colors?: FilterOption[];
   materials?: FilterOption[];
+  volumes?: FilterOption[];
   filters: FilterState;
   onFilterChange: (filters: FilterState) => void;
   onClearFilters: () => void;
@@ -45,6 +47,7 @@ export default function FilterPanel({
   brands = [],
   colors = [],
   materials = [],
+  volumes = [],
   filters,
   onFilterChange,
   onClearFilters,
@@ -64,6 +67,7 @@ export default function FilterPanel({
     brand: true,
     color: false,
     material: false,
+    volume: false,
     price: true,
     length: false,
     weight: false,
@@ -83,6 +87,7 @@ export default function FilterPanel({
     filters.brand !== '' ||
     filters.color !== '' ||
     filters.material !== '' ||
+    filters.volume !== '' ||
     filters.minPrice > 0 ||
     filters.maxPrice > 0 ||
     filters.minLength > 0 ||
@@ -234,6 +239,36 @@ export default function FilterPanel({
               selectedValue={filters.material}
               onSelect={(material) => onFilterChange({ ...filters, material })}
               placeholder={t('allMaterials')}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Volume */}
+      {volumes.length > 0 && (
+        <div className="mb-6">
+          <button
+            onClick={() => toggleSection('volume')}
+            className="flex justify-between items-center w-full py-3 min-h-[44px] text-left"
+          >
+            <span className="font-semibold text-foreground">{t('sectionVolume')}</span>
+            <svg
+              className={`w-5 h-5 text-muted-foreground transition-transform ${
+                expandedSections.volume ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {expandedSections.volume && (
+            <SelectFilter
+              options={volumes}
+              selectedValue={filters.volume}
+              onSelect={(volume) => onFilterChange({ ...filters, volume })}
+              placeholder={t('allVolumes')}
             />
           )}
         </div>

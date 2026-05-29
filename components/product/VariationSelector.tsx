@@ -126,14 +126,14 @@ export default function VariationSelector({
     if (an === 'color') return localizeColorName(slug, formatted);
     if (an === 'material') return localizeMaterialName(slug, formatted);
     if (an === 'flavor') return localizeFlavorName(slug, formatted);
-    if (an === 'size') return formatSizeValue(value, unitSystem) ?? formatted;
+    if (an === 'size' || an === 'volume' || an === 'length') return formatSizeValue(value, unitSystem) ?? formatted;
     return formatted;
   };
 
-  // Show the metric/imperial toggle next to a Size selector only when it has
-  // convertible (length/volume) values — apparel/pack sizes don't get it.
+  // Show the metric/imperial toggle next to a Size/Volume/Length selector only
+  // when it has convertible values — apparel/pack sizes don't get it.
   const sizeIsConvertible = (attrName: string, values: string[]) =>
-    attrName.toLowerCase().replace(/^pa_/, '') === 'size' &&
+    ['size', 'volume', 'length'].includes(attrName.toLowerCase().replace(/^pa_/, '')) &&
     values.some((v) => isConvertibleSize(v));
 
   // Get all unique attribute names and their possible values

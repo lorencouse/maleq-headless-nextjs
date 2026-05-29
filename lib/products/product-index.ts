@@ -20,6 +20,8 @@ export interface IndexQueryParams {
   brand?: string;
   material?: string;
   color?: string;
+  volume?: string;
+  length?: string;
   minPrice?: number;
   maxPrice?: number;
   inStock?: boolean;
@@ -44,6 +46,8 @@ export interface IndexQueryResult {
     brands: FacetOption[];
     materials: FacetOption[];
     colors: FacetOption[];
+    volumes: FacetOption[];
+    lengths: FacetOption[];
     categories: FacetOption[];
   };
 }
@@ -154,6 +158,8 @@ export async function queryProductIndex(params: IndexQueryParams): Promise<Index
     brand,
     material,
     color,
+    volume,
+    length,
     minPrice,
     maxPrice,
     inStock,
@@ -191,6 +197,12 @@ export async function queryProductIndex(params: IndexQueryParams): Promise<Index
   }
   if (color) {
     filtered = filtered.filter(p => p.colorSlugs.includes(color));
+  }
+  if (volume) {
+    filtered = filtered.filter(p => p.volumeSlugs.includes(volume));
+  }
+  if (length) {
+    filtered = filtered.filter(p => p.lengthSlugs.includes(length));
   }
   if (minPrice !== undefined && minPrice > 0) {
     filtered = filtered.filter(p => p.price !== null && p.price >= minPrice);
@@ -386,6 +398,8 @@ function extractFacets(products: ProductIndexEntry[]) {
   const brandMap = new Map<string, { name: string; count: number }>();
   const materialMap = new Map<string, { name: string; count: number }>();
   const colorMap = new Map<string, { name: string; count: number }>();
+  const volumeMap = new Map<string, { name: string; count: number }>();
+  const lengthMap = new Map<string, { name: string; count: number }>();
   const categoryMap = new Map<string, { name: string; count: number }>();
 
   for (const p of products) {
@@ -407,6 +421,18 @@ function extractFacets(products: ProductIndexEntry[]) {
       else colorMap.set(slug, { name: slug.replace(/-/g, ' '), count: 1 });
     }
 
+    for (const slug of p.volumeSlugs) {
+      const existing = volumeMap.get(slug);
+      if (existing) existing.count++;
+      else volumeMap.set(slug, { name: slug.replace(/-/g, ' '), count: 1 });
+    }
+
+    for (const slug of p.lengthSlugs) {
+      const existing = lengthMap.get(slug);
+      if (existing) existing.count++;
+      else lengthMap.set(slug, { name: slug.replace(/-/g, ' '), count: 1 });
+    }
+
     for (let i = 0; i < p.categorySlugs.length; i++) {
       const slug = p.categorySlugs[i];
       const existing = categoryMap.get(slug);
@@ -424,6 +450,8 @@ function extractFacets(products: ProductIndexEntry[]) {
     brands: toSorted(brandMap),
     materials: toSorted(materialMap),
     colors: toSorted(colorMap),
+    volumes: toSorted(volumeMap),
+    lengths: toSorted(lengthMap),
     categories: toSorted(categoryMap),
   };
 }

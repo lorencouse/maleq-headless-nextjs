@@ -129,6 +129,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     brands: FacetOption[];
     materials: FacetOption[];
     colors: FacetOption[];
+    volumes: FacetOption[];
+    lengths: FacetOption[];
     categories: FacetOption[];
   } | null = null;
 
@@ -298,6 +300,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const materials = indexFacets
     ? indexFacets.materials.map(facetToFilterOption)
     : (availableFilters?.materials ?? globalMaterials);
+  const volumes = indexFacets ? indexFacets.volumes.map(facetToFilterOption) : [];
 
   // Helper to find category count recursively
   function findCategoryCount(
@@ -412,6 +415,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           brands={brands}
           colors={colors}
           materials={materials}
+          volumes={volumes}
           hasMore={pageInfo.hasNextPage}
           initialCursor={pageInfo.endCursor}
           searchQuery={searchQuery}

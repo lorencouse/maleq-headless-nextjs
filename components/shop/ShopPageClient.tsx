@@ -21,6 +21,7 @@ let productCache: {
   brands: FilterOption[];
   materials: FilterOption[];
   colors: FilterOption[];
+  volumes: FilterOption[];
 } | null = null;
 
 function getCacheKey(pathname: string, params: URLSearchParams): string {
@@ -34,6 +35,7 @@ interface ShopPageClientProps {
   brands?: FilterOption[];
   colors?: FilterOption[];
   materials?: FilterOption[];
+  volumes?: FilterOption[];
   hasMore: boolean;
   initialCursor?: string | null;
   searchQuery?: string;
@@ -47,6 +49,7 @@ const DEFAULT_FILTERS: FilterState = {
   brand: '',
   color: '',
   material: '',
+  volume: '',
   minPrice: 0,
   maxPrice: 0,
   minLength: 0,
@@ -64,6 +67,7 @@ export default function ShopPageClient({
   brands = [],
   colors = [],
   materials = [],
+  volumes = [],
   hasMore: initialHasMore,
   initialCursor: initialCursorProp,
   searchQuery,
@@ -90,6 +94,7 @@ export default function ShopPageClient({
   const [availableBrands, setAvailableBrands] = useState<FilterOption[]>(cached?.brands ?? brands);
   const [availableMaterials, setAvailableMaterials] = useState<FilterOption[]>(cached?.materials ?? materials);
   const [availableColors, setAvailableColors] = useState<FilterOption[]>(cached?.colors ?? colors);
+  const [availableVolumes, setAvailableVolumes] = useState<FilterOption[]>(cached?.volumes ?? volumes);
   const isInitialMount = useRef(true);
   const restoredFromCache = useRef(!!cached);
   const hasInitialSearchResults = useRef(!!searchQuery && initialProducts.length > 0);
@@ -106,6 +111,7 @@ export default function ShopPageClient({
     searchParams.has('brand') ||
     searchParams.has('color') ||
     searchParams.has('material') ||
+    searchParams.has('volume') ||
     searchParams.has('minPrice') ||
     searchParams.has('maxPrice') ||
     searchParams.has('inStock') ||
@@ -122,12 +128,14 @@ export default function ShopPageClient({
     brands: FilterOption[];
     materials: FilterOption[];
     colors: FilterOption[];
+    volumes: FilterOption[];
   }>({
     search: searchQuery,
     category: searchParams.get('category') || undefined,
     brands: brands,
     materials: materials,
     colors: colors,
+    volumes: volumes,
   });
 
   // Extract filter options from initial products for search pages
@@ -146,6 +154,7 @@ export default function ShopPageClient({
   const brandFilter = searchParams.get('brand') || initialBrand || '';
   const colorFilter = searchParams.get('color') || '';
   const materialFilter = searchParams.get('material') || '';
+  const volumeFilter = searchParams.get('volume') || '';
   const minPriceFilter = parseInt(searchParams.get('minPrice') || '0', 10);
   const maxPriceFilter = parseInt(searchParams.get('maxPrice') || '0', 10);
   const minLengthFilter = parseFloat(searchParams.get('minLength') || '0');
@@ -162,6 +171,7 @@ export default function ShopPageClient({
     brand: brandFilter,
     color: colorFilter,
     material: materialFilter,
+    volume: volumeFilter,
     minPrice: minPriceFilter,
     maxPrice: maxPriceFilter,
     minLength: minLengthFilter,
@@ -188,6 +198,7 @@ export default function ShopPageClient({
     if (newFilters.brand) params.set('brand', newFilters.brand);
     if (newFilters.color) params.set('color', newFilters.color);
     if (newFilters.material) params.set('material', newFilters.material);
+    if (newFilters.volume) params.set('volume', newFilters.volume);
     if (newFilters.minPrice > 0) params.set('minPrice', newFilters.minPrice.toString());
     if (newFilters.maxPrice > 0) params.set('maxPrice', newFilters.maxPrice.toString());
     if (newFilters.minLength > 0) params.set('minLength', newFilters.minLength.toString());
@@ -223,6 +234,7 @@ export default function ShopPageClient({
       brand: string;
       color: string;
       material: string;
+      volume: string;
       minPrice: number;
       maxPrice: number;
       minLength: number;
@@ -268,6 +280,7 @@ export default function ShopPageClient({
       if (filterParams.brand) params.set('brand', filterParams.brand);
       if (filterParams.color) params.set('color', filterParams.color);
       if (filterParams.material) params.set('material', filterParams.material);
+      if (filterParams.volume) params.set('volume', filterParams.volume);
       if (filterParams.minPrice > 0) params.set('minPrice', filterParams.minPrice.toString());
       if (filterParams.maxPrice > 0) params.set('maxPrice', filterParams.maxPrice.toString());
       if (filterParams.minLength > 0) params.set('minLength', filterParams.minLength.toString());
@@ -327,14 +340,19 @@ export default function ShopPageClient({
               baseFilterOptions.current.colors = data.availableColors;
               setAvailableColors(data.availableColors);
             }
+            if (data.availableVolumes) {
+              baseFilterOptions.current.volumes = data.availableVolumes;
+              setAvailableVolumes(data.availableVolumes);
+            }
             baseFilterOptions.current.search = filterParams.search;
             baseFilterOptions.current.category = filterParams.category;
-          } else if (data.availableBrands || data.availableMaterials || data.availableColors) {
+          } else if (data.availableBrands || data.availableMaterials || data.availableColors || data.availableVolumes) {
             // Same context but filters applied - faceted update
             // Keep base options for selected filters, update others from filtered results
             const hasBrandFilter = !!filterParams.brand;
             const hasMaterialFilter = !!filterParams.material;
             const hasColorFilter = !!filterParams.color;
+            const hasVolumeFilter = !!filterParams.volume;
 
             // Brands: show base options if brand is selected, otherwise show filtered
             if (hasBrandFilter) {
@@ -355,6 +373,13 @@ export default function ShopPageClient({
               setAvailableColors(baseFilterOptions.current.colors);
             } else if (data.availableColors) {
               setAvailableColors(data.availableColors);
+            }
+
+            // Volumes: show base options if volume is selected, otherwise show filtered
+            if (hasVolumeFilter) {
+              setAvailableVolumes(baseFilterOptions.current.volumes);
+            } else if (data.availableVolumes) {
+              setAvailableVolumes(data.availableVolumes);
             }
           }
         }
@@ -405,6 +430,7 @@ export default function ShopPageClient({
       brand: brandFilter,
       color: colorFilter,
       material: materialFilter,
+      volume: volumeFilter,
       minPrice: minPriceFilter,
       maxPrice: maxPriceFilter,
       minLength: minLengthFilter,
@@ -417,7 +443,7 @@ export default function ShopPageClient({
       sort: sortBy,
       search: searchQuery,
     });
-  }, [categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchQuery, fetchProducts]);
+  }, [categoryFilter, brandFilter, colorFilter, materialFilter, volumeFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchQuery, fetchProducts]);
 
   // Update navigation cache when product state settles
   useEffect(() => {
@@ -432,9 +458,10 @@ export default function ShopPageClient({
         brands: availableBrands,
         materials: availableMaterials,
         colors: availableColors,
+        volumes: availableVolumes,
       };
     }
-  }, [products, totalCount, hasMore, cursor, searchOffset, availableBrands, availableMaterials, availableColors, isLoading, pathname, searchParams]);
+  }, [products, totalCount, hasMore, cursor, searchOffset, availableBrands, availableMaterials, availableColors, availableVolumes, isLoading, pathname, searchParams]);
 
   // Handle filter changes
   const handleFilterChange = (newFilters: FilterState) => {
@@ -519,6 +546,7 @@ export default function ShopPageClient({
       brand: brandFilter,
       color: colorFilter,
       material: materialFilter,
+      volume: volumeFilter,
       minPrice: minPriceFilter,
       maxPrice: maxPriceFilter,
       minLength: minLengthFilter,
@@ -597,6 +625,7 @@ export default function ShopPageClient({
             brands={availableBrands}
             colors={availableColors}
             materials={availableMaterials}
+            volumes={availableVolumes}
             filters={filters}
             onFilterChange={handleFilterChange}
             onClearFilters={handleClearFilters}
@@ -638,6 +667,7 @@ export default function ShopPageClient({
           brands={availableBrands.length > 0 ? availableBrands : brands}
           colors={availableColors.length > 0 ? availableColors : colors}
           materials={availableMaterials.length > 0 ? availableMaterials : materials}
+          volumes={availableVolumes.length > 0 ? availableVolumes : volumes}
           searchQuery={searchQuery}
           onRemoveFilter={handleRemoveFilter}
           onClearSearch={handleClearSearch}
@@ -745,6 +775,7 @@ export default function ShopPageClient({
           brands={availableBrands}
           colors={availableColors}
           materials={availableMaterials}
+          volumes={availableVolumes}
           filters={filters}
           onFilterChange={handleFilterChange}
           onClearFilters={handleClearFilters}

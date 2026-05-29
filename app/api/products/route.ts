@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
     const brand = searchParams.get('brand') || undefined;
     const color = searchParams.get('color') || undefined;
     const material = searchParams.get('material') || undefined;
+    const volume = searchParams.get('volume') || undefined;
     const search = searchParams.get('search') || undefined;
     const minPriceRaw = searchParams.get('minPrice');
     const maxPriceRaw = searchParams.get('maxPrice');
@@ -137,6 +138,7 @@ export async function GET(request: NextRequest) {
           brand,
           material,
           color,
+          volume,
           minPrice,
           maxPrice,
           inStock,
@@ -160,6 +162,7 @@ export async function GET(request: NextRequest) {
           availableBrands: facetsToFilterOptions(result.facets.brands),
           availableMaterials: facetsToFilterOptions(result.facets.materials),
           availableColors: facetsToFilterOptions(result.facets.colors),
+          availableVolumes: facetsToFilterOptions(result.facets.volumes),
         });
 
         response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=3600');

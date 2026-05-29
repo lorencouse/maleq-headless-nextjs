@@ -34,6 +34,8 @@ export interface ProductIndexEntry {
   materialSlug: string | null;
   materialName: string | null;
   colorSlugs: string[];
+  volumeSlugs: string[];
+  lengthSlugs: string[];
   imageUrl: string | null;
   imageAlt: string | null;
   type: string;              // 'SIMPLE' | 'VARIABLE' | 'GROUPED' | 'EXTERNAL'
@@ -126,7 +128,7 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
       JOIN wp_terms t ON tt.term_id = t.term_id
       INNER JOIN wp_posts p ON tr.object_id = p.ID
       WHERE ${PRODUCT_FILTER}
-        AND tt.taxonomy IN ('product_cat','product_brand','product_material','pa_color','product_type')
+        AND tt.taxonomy IN ('product_cat','product_brand','product_material','pa_color','pa_volume','pa_length','product_type')
     `),
   ]);
 
@@ -206,6 +208,8 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
     let materialSlug: string | null = null;
     let materialName: string | null = null;
     const colorSlugs: string[] = [];
+    const volumeSlugs: string[] = [];
+    const lengthSlugs: string[] = [];
     let productType = 'SIMPLE';
 
     for (const tax of taxes) {
@@ -225,6 +229,12 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
           break;
         case 'pa_color':
           colorSlugs.push(tax.slug);
+          break;
+        case 'pa_volume':
+          volumeSlugs.push(tax.slug);
+          break;
+        case 'pa_length':
+          lengthSlugs.push(tax.slug);
           break;
         case 'product_type':
           productType = TYPE_MAP[tax.slug] || 'SIMPLE';
@@ -269,6 +279,8 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
       materialSlug,
       materialName,
       colorSlugs,
+      volumeSlugs,
+      lengthSlugs,
       imageUrl: attachment?.guid || null,
       imageAlt: attachment?.post_excerpt || attachment?.post_title || p.post_title,
       type: productType,

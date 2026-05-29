@@ -170,7 +170,7 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
        JOIN wp_term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
        JOIN wp_terms t ON tt.term_id = t.term_id
        WHERE tr.object_id = (SELECT ID FROM wp_posts WHERE post_type = 'product' AND post_status = 'publish' AND post_name = ? LIMIT 1)
-         AND tt.taxonomy IN ('product_cat','product_tag','product_brand','product_material','product_type','product_visibility','pa_color')`,
+         AND tt.taxonomy IN ('product_cat','product_tag','product_brand','product_material','product_type','product_visibility','pa_color','pa_size','pa_volume','pa_length')`,
       [slug]
     ),
     // Variations

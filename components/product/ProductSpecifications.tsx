@@ -92,9 +92,9 @@ export default function ProductSpecifications({
         .map((v) => localizeFlavorName(v.toLowerCase().replace(/\s+/g, '-'), v))
         .join(', ');
     }
-    // Size: convert length/volume values to the chosen unit system; leave
+    // Size/Volume/Length: convert values to the chosen unit system; leave
     // apparel/pack values (not convertible) as-is.
-    if (spec.label === 'Size') {
+    if (spec.label === 'Size' || spec.label === 'Volume' || spec.label === 'Length') {
       return spec.value
         .split(', ')
         .map((v) => formatSizeValue(v, unitSystem) ?? v)
@@ -113,9 +113,10 @@ export default function ProductSpecifications({
     return spec.value;
   };
 
-  // Show the toggle on the Size row only when it has convertible values.
+  // Show the toggle on the Size/Volume/Length row only when it has convertible values.
   const sizeRowConvertible = (spec: ProductSpecification) =>
-    spec.label === 'Size' && spec.value.split(', ').some((v) => isConvertibleSize(v));
+    ['Size', 'Volume', 'Length'].includes(spec.label) &&
+    spec.value.split(', ').some((v) => isConvertibleSize(v));
 
   return (
     <div className='border-t border-border pt-8 mt-8'>
