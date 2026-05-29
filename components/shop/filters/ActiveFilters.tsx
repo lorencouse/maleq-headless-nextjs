@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { FilterState } from './FilterPanel';
 import { HierarchicalCategory } from './CategoryFilter';
 import { findCategoryBySlug } from '@/lib/utils/category-helpers';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 import { FilterOption } from '@/lib/products/combined-service';
 
 interface ActiveFiltersProps {
@@ -44,11 +45,15 @@ export default function ActiveFilters({
   onClearAll,
 }: ActiveFiltersProps) {
   const t = useTranslations('filters');
+  const localizeCategoryName = useLocalizedCategoryName();
   const activeFilters: { key: keyof FilterState; label: string }[] = [];
 
   if (filters.category) {
     const category = findCategoryBySlug(categories, filters.category);
-    const categoryName = category?.name || formatSlug(filters.category);
+    const categoryName = localizeCategoryName(
+      filters.category,
+      category?.name || formatSlug(filters.category),
+    );
     activeFilters.push({ key: 'category', label: t('activeCategoryPill', { name: categoryName }) });
   }
 

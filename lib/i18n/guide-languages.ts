@@ -118,14 +118,14 @@ export function detectGuideLocale(
  *
  * setRequestLocale() must be called on ISR guide pages to opt into STATIC
  * rendering (otherwise next-intl reads headers() → DYNAMIC_SERVER_USAGE → 500).
- * We seed it with `en` for every non-Spanish guide language: the actual guide
- * chrome is applied separately via the statically-imported catalog + provider
- * and explicit getTranslations({locale}), so the seed only needs to be a value
- * next-intl accepts without resolving headers(). Seeding zh-hant/ja guides with
- * `en` keeps that path identical to the one already proven in production.
+ * Every GuideLocale (en/es/zh-hant/ja) is now a full routing locale with a
+ * catalog in messages/, so we can seed setRequestLocale() with the guide's
+ * actual locale — it stays ISR-safe (a static value, no headers()) and lets any
+ * ambient getTranslations() under the guide tree resolve the right language.
+ * (Previously this seeded `en` because zh-hant/ja were not yet routing locales.)
  */
-export function staticRequestLocale(locale: GuideLocale): 'en' | 'es' {
-  return locale === 'es' ? 'es' : 'en';
+export function staticRequestLocale(locale: GuideLocale): GuideLocale {
+  return locale;
 }
 
 /** Stable sort index for a locale, for ordering switcher entries. */

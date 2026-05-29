@@ -9,6 +9,8 @@ import { useLocale } from 'next-intl';
 const BCP47: Record<string, string> = {
   en: 'en',
   es: 'es',
+  de: 'de',
+  fr: 'fr',
   zh: 'zh-Hans',
   'zh-hant': 'zh-Hant',
   ja: 'ja',

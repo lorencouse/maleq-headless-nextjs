@@ -7,6 +7,7 @@ import {
   getCategoryConfig,
   getCategoryImage,
 } from '@/lib/config/category-icons';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
 interface CategoryHeroProps {
@@ -21,8 +22,10 @@ export default function CategoryHero({
   parentCategory,
 }: CategoryHeroProps) {
   const t = useTranslations('categoryHero');
+  const localizeCategoryName = useLocalizedCategoryName();
   const config = getCategoryConfig(category.slug);
   const categoryImage = getCategoryImage(category.slug, category.image);
+  const categoryName = localizeCategoryName(category.slug, category.name);
   const visibleSubcategoryCount =
     category.children?.filter((c) => c.count > 0).length ?? 0;
 
@@ -50,7 +53,7 @@ export default function CategoryHero({
               <div className='w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-xl overflow-hidden bg-white/20 backdrop-blur-sm'>
                 <Image
                   src={categoryImage}
-                  alt={category.name}
+                  alt={categoryName}
                   width={96}
                   height={96}
                   className='w-full h-full object-contain'
@@ -75,19 +78,22 @@ export default function CategoryHero({
                     ...(parentCategory
                       ? [
                           {
-                            label: parentCategory.name,
+                            label: localizeCategoryName(
+                              parentCategory.slug,
+                              parentCategory.name,
+                            ),
                             href: `/sex-toys/${parentCategory.slug}`,
                           },
                         ]
                       : []),
-                    { label: category.name },
+                    { label: categoryName },
                   ]}
                 />
               </div>
 
               {/* Title */}
               <h1 className='text-white text-3xl sm:text-4xl font-bold mb-2 drop-shadow-lg'>
-                {category.name}
+                {categoryName}
               </h1>
 
               {/* Stats */}

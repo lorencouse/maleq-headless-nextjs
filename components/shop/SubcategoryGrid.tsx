@@ -2,6 +2,7 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 import CategoryCard from './CategoryCard';
 
 interface SubcategoryGridProps {
@@ -67,6 +68,7 @@ export default function SubcategoryGrid({
 }: SubcategoryGridProps) {
   const t = useTranslations('shop');
   const locale = useLocale();
+  const localizeCategoryName = useLocalizedCategoryName();
 
   // Filter to only show categories with products
   const activeSubcategories = subcategories.filter((cat) => cat.count > 0);
@@ -74,12 +76,12 @@ export default function SubcategoryGrid({
   if (activeSubcategories.length === 0) return null;
 
   // toSingular is an English-only polish (Vibrators → Vibrator). For other
-  // locales we use the raw parent name in the translated heading template,
-  // which has its own grammar ("subcategorías de Vibrators").
+  // locales we use the localized parent name in the translated heading template,
+  // which has its own grammar ("subcategorías de Vibradores").
   const displayParent = parentName
     ? locale === 'en'
       ? toSingular(parentName)
-      : parentName
+      : localizeCategoryName(parentSlug, parentName)
     : '';
 
   return (

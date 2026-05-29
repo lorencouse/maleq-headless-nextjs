@@ -10,6 +10,8 @@ import { getTrackOrderSchema, type TrackOrderInput } from '@/lib/validations/tra
 const BCP47: Record<string, string> = {
   en: 'en-US',
   es: 'es-ES',
+  de: 'de-DE',
+  fr: 'fr-FR',
   zh: 'zh-CN',
   'zh-hant': 'zh-TW',
   ja: 'ja-JP',

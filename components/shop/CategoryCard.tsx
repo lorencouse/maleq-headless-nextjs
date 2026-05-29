@@ -8,6 +8,7 @@ import {
   getCategoryConfig,
   getCategoryImage,
 } from '@/lib/config/category-icons';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 
 interface CategoryCardProps {
   category: HierarchicalCategory;
@@ -15,8 +16,10 @@ interface CategoryCardProps {
 
 export default function CategoryCard({ category }: CategoryCardProps) {
   const t = useTranslations('shop');
+  const localizeCategoryName = useLocalizedCategoryName();
   const config = getCategoryConfig(category.slug);
   const categoryImage = getCategoryImage(category.slug, category.image);
+  const categoryName = localizeCategoryName(category.slug, category.name);
 
   return (
     <Link
@@ -27,7 +30,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       {categoryImage ? (
         <Image
           src={categoryImage}
-          alt={category.name}
+          alt={categoryName}
           fill
           className='object-cover transition-transform group-hover:scale-105'
           sizes='(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw'
@@ -53,7 +56,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
       {categoryImage ? (
         <div className='absolute inset-x-0 bottom-0 h-1/3 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-between px-3 py-2 text-center'>
           <span className='text-white font-bold text-sm sm:text-base leading-5 line-clamp-2'>
-            {category.name}
+            {categoryName}
           </span>
           <span className='text-white/90 text-xs leading-none'>
             {t('itemCount', { count: category.count })}
@@ -66,7 +69,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           </div>
           <div>
             <h3 className='heading-plain text-white font-bold text-sm sm:text-base leading-tight line-clamp-2'>
-              {category.name}
+              {categoryName}
             </h3>
             <p className='text-white/90 text-xs'>
               {t('itemCount', { count: category.count })}

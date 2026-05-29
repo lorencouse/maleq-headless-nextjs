@@ -12,13 +12,16 @@ import { defineRouting } from 'next-intl/routing';
  * notably why product/sex-toys/brand/shop/guides routes are NOT under [locale].
  */
 export const routing = defineRouting({
-  // en (no prefix) + es (/es) + zh (/zh, Simplified — hreflang zh-Hans) +
-  // zh-hant (/zh-hant, Traditional/Taiwan — hreflang zh-Hant). Bare `zh` is
-  // Simplified by convention (the larger mainland audience); the original
-  // Traditional catalog now lives under the explicit /zh-hant prefix.
-  // ja is intentionally NOT here: its catalog is still an untranslated copy of
-  // en, so it stays a chrome-only locale (applied per-guide) until translated.
-  locales: ['en', 'es', 'zh', 'zh-hant'] as const,
+  // en (no prefix) + es (/es) + de (/de) + fr (/fr) + ja (/ja) + zh (/zh,
+  // Simplified — hreflang zh-Hans) + zh-hant (/zh-hant, Traditional/Taiwan —
+  // hreflang zh-Hant). Bare `zh` is Simplified by convention (the larger
+  // mainland audience); the original Traditional catalog lives under the
+  // explicit /zh-hant prefix. Every locale here has a fully translated UI
+  // catalog in messages/ and ships as a URL-routed, server-rendered locale.
+  // This is the single source of truth for which locales exist — i18n/request.ts
+  // and the LanguageSwitcher both derive from it, so there are no chrome-only
+  // special cases anymore.
+  locales: ['en', 'es', 'de', 'fr', 'ja', 'zh', 'zh-hant'] as const,
   defaultLocale: 'en',
   localePrefix: 'as-needed',
   // Cookie that persists the user's choice across visits.

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 
 // Hierarchical category interface
 export interface HierarchicalCategory {
@@ -38,6 +39,7 @@ export default function CategoryFilter({
   initialCategory,
 }: CategoryFilterProps) {
   const t = useTranslations('filters');
+  const localizeCategoryName = useLocalizedCategoryName();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
 
   // Toggle expansion state of a category
@@ -131,7 +133,7 @@ export default function CategoryFilter({
                 : 'text-muted-foreground hover:bg-muted hover:text-foreground'
             }`}
           >
-            {category.name}
+            {localizeCategoryName(category.slug, category.name)}
           </button>
         </div>
 
@@ -151,7 +153,9 @@ export default function CategoryFilter({
   const scopedCategory = initialCategory ? findCategory(categories, initialCategory) : null;
   const displayCategories = scopedCategory?.children.length ? scopedCategory.children : categories;
   const allLabel = scopedCategory
-    ? t('allScopedCategory', { parent: scopedCategory.name })
+    ? t('allScopedCategory', {
+        parent: localizeCategoryName(scopedCategory.slug, scopedCategory.name),
+      })
     : t('allCategories');
 
   return (

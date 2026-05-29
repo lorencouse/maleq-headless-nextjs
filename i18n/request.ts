@@ -1,17 +1,5 @@
 import { getRequestConfig } from 'next-intl/server';
-import { routing } from './routing';
-
-/**
- * UI locales that have a message catalog in messages/. This is a SUPERSET of
- * routing.locales (the URL-prefixed locales en/es/zh/zh-hant). `ja` is the only
- * chrome-ONLY locale: its catalog is still an untranslated copy of en, so it
- * gets no /ja URL tree and is applied only per-page by the guide-post layout
- * (app/(guide)/guides/[slug]/layout.tsx) via setRequestLocale() so a Japanese
- * guide renders its own shell. Keeping `ja` out of routing.locales stops
- * next-intl middleware from minting a /ja prefix until it's actually translated.
- */
-const UI_LOCALES = ['en', 'es', 'zh', 'zh-hant', 'ja'] as const;
-type UiLocale = (typeof UI_LOCALES)[number];
+import { routing, type Locale } from './routing';
 
 /**
  * Resolves the active locale and loads its message catalog for every server
@@ -27,8 +15,9 @@ type UiLocale = (typeof UI_LOCALES)[number];
 export default getRequestConfig(async ({ requestLocale }) => {
   let locale = await requestLocale;
 
-  // Validate against the UI catalogs; unknown values fall back to the default.
-  if (!locale || !UI_LOCALES.includes(locale as UiLocale)) {
+  // Validate against the routing locales (the single source of truth — every
+  // one has a catalog in messages/); unknown values fall back to the default.
+  if (!locale || !routing.locales.includes(locale as Locale)) {
     locale = routing.defaultLocale;
   }
 

@@ -15,7 +15,7 @@ export default function BlogCard({ post }: BlogCardProps) {
   const t = useTranslations('blog');
   // Map next-intl locale → BCP-47 tag for Intl date formatting
   const intlLocale =
-    ({ es: 'es-ES', zh: 'zh-CN', 'zh-hant': 'zh-TW', ja: 'ja-JP' } as Record<string, string>)[
+    ({ es: 'es-ES', de: 'de-DE', fr: 'fr-FR', zh: 'zh-CN', 'zh-hant': 'zh-TW', ja: 'ja-JP' } as Record<string, string>)[
       locale
     ] ?? 'en-US';
   const formatDate = (dateString: string) => {
