@@ -237,19 +237,6 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
 }
 
 /**
- * Fallback component when product data is not available
- */
-function ProductUnavailable() {
-  return (
-    <div className="flex flex-col items-center gap-3 py-6 max-w-sm mx-auto">
-      <div className="w-[325px] h-[325px] bg-muted rounded-lg flex items-center justify-center">
-        <span className="text-muted-foreground text-sm">Product unavailable</span>
-      </div>
-    </div>
-  );
-}
-
-/**
  * Enhances WooCommerce add-to-cart shortcodes in blog content
  * Uses pre-fetched product data passed from server component
  */
@@ -265,15 +252,17 @@ export default function AddToCartEnhancer({ products }: AddToCartEnhancerProps) 
       {placeholders.map((placeholder, index) => {
         const product = products[placeholder.productId];
 
+        // Unresolved product (deleted, trashed, or a non-product ID like an
+        // attachment) — render nothing, matching WooCommerce's [add_to_cart]
+        // which outputs empty for a missing product. The SQL renderer keeps
+        // such shortcodes as placeholders, so this is where they're dropped.
+        if (!product) return null;
+
         return createPortal(
-          product ? (
-            <BlogAddToCart
-              key={`${placeholder.productId}-${index}`}
-              product={product}
-            />
-          ) : (
-            <ProductUnavailable key={`unavailable-${placeholder.productId}-${index}`} />
-          ),
+          <BlogAddToCart
+            key={`${placeholder.productId}-${index}`}
+            product={product}
+          />,
           placeholder.element
         );
       })}

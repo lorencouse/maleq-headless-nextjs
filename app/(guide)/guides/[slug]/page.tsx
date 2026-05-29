@@ -1,6 +1,9 @@
 import { Metadata } from 'next';
+import { cache } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getClient } from '@/lib/apollo/client';
+import { loadPostBySlug } from '@/lib/db/blog-loader';
+import { renderPostContentFromSql, expandReferences } from '@/lib/db/gutenberg-render';
 import {
   GET_POST_BY_SLUG,
   GET_ALL_POST_SLUGS,
@@ -117,6 +120,66 @@ function buildHreflangAlternates(
 export const revalidate = 2592000;
 export const dynamicParams = true; // Allow runtime generation of any blog post
 
+/**
+ * Load a guide post with FULLY RENDERED content.
+ *
+ * SQL-first (project rule): the post body is rendered from SQL — reusable
+ * blocks + the pros-cons template part expanded, [add_to_cart] shortcodes
+ * resolved (incl. sku=), static block comments stripped. This is DETERMINISTIC,
+ * unlike WPGraphQL's `content` field whose do_blocks pipeline intermittently
+ * returned the raw, un-rendered editor source (reusable blocks left as bare
+ * comments) — the root cause of add-to-cart buttons vanishing on some renders.
+ *
+ * GraphQL `do_blocks` is used only as a LAST RESORT — when the post contains a
+ * genuinely dynamic block we can't safely flatten (wp:latest-posts, embeds,
+ * Rank Math blocks, …). That's ~27% of posts, all editorial/news with no
+ * add-to-cart. Even then we self-heal any un-expanded reusable-block refs via
+ * SQL so a transient bad WPGraphQL response can't strand the buttons.
+ *
+ * cache() dedupes the work across generateMetadata + the page in one request.
+ */
+const getGuidePost = cache(async (slug: string): Promise<Post | null> => {
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      const post = await loadPostBySlug(slug);
+      if (post) {
+        const { html, needsFallback } = await renderPostContentFromSql(post.content);
+        if (!needsFallback) {
+          post.content = html;
+          return post;
+        }
+        // Dynamic block present → defer this post to GraphQL do_blocks below.
+      }
+    }
+  } catch (err) {
+    console.error('getGuidePost: SQL render path failed, falling back to GraphQL', err);
+  }
+
+  const { REVALIDATE } = await import('@/lib/apollo/client');
+  const { data } = await getClient().query({
+    query: GET_POST_BY_SLUG,
+    variables: { slug },
+    // Monthly, matching this route's `export const revalidate`. Next uses the
+    // LOWEST revalidate across segment config + fetches, so a short TTL here
+    // would make the page revalidate that often. Webhook handles real-time.
+    revalidate: REVALIDATE.MONTH,
+  });
+  const post: Post | null = data?.postBy ?? null;
+
+  // Self-heal: if WPGraphQL returned un-expanded reusable-block / template-part
+  // references, expand them from SQL so add-to-cart shortcodes still surface.
+  if (post?.content && (post.content.includes('wp:block') || post.content.includes('wp:template-part'))) {
+    try {
+      post.content = await expandReferences(post.content);
+    } catch {
+      /* leave content as-is on repair failure */
+    }
+  }
+
+  return post;
+});
+
 // Generate metadata for blog post
 export async function generateMetadata({
   params,
@@ -134,18 +197,7 @@ export async function generateMetadata({
   setRequestLocale(staticRequestLocale(locale));
   const t = await getTranslations({ locale, namespace: 'blog' });
 
-  let post: Post | null = null;
-
-  const { REVALIDATE } = await import('@/lib/apollo/client');
-  const { data } = await getClient().query({
-    query: GET_POST_BY_SLUG,
-    variables: { slug },
-    // Monthly, matching this route's `export const revalidate` — Next uses the
-    // lowest revalidate across segment + fetches, so a short TTL here would
-    // make the page revalidate that often. Webhook handles real-time updates.
-    revalidate: REVALIDATE.MONTH,
-  });
-  post = data?.postBy;
+  const post = await getGuidePost(slug);
 
   if (!post) {
     return {
@@ -264,21 +316,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   // BCP-47 tag for date/number formatting, matching the resolved guide locale.
   const intlLocale = { en: 'en-US', es: 'es-ES', 'zh-hant': 'zh-TW', ja: 'ja-JP' }[locale];
 
-  let post: Post | null = null;
-
-  // Fetch from GraphQL at the route's monthly revalidate. Previously this used
-  // REVALIDATE.NONE (1s) "to avoid caching null responses", but Next takes the
-  // LOWEST revalidate across the route's segment config + its fetches — so the
-  // 1s fetch TTL silently made every guide revalidate each second (perpetual
-  // x-nextjs-cache: STALE). MONTH matches `export const revalidate` above; the
-  // webhook (revalidatePath) handles real-time invalidation on post updates.
-  const { REVALIDATE } = await import('@/lib/apollo/client');
-  const { data: postData } = await getClient().query({
-    query: GET_POST_BY_SLUG,
-    variables: { slug },
-    revalidate: REVALIDATE.MONTH,
-  });
-  post = postData?.postBy;
+  // SQL-first content render (deterministic), GraphQL do_blocks only as a
+  // last resort for posts with dynamic blocks. See getGuidePost above.
+  const post = await getGuidePost(slug);
 
   if (!post) {
     notFound();
@@ -308,6 +348,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       relatedPosts = relatedData?.posts?.nodes || [];
     }
   }
+
+  // BlogCard (the only consumer) renders title/excerpt/image/meta — never the
+  // body. Drop the heavy raw post_content here so it isn't serialized into the
+  // RSC flight payload of every guide page (it was adding ~tens of KB of
+  // un-rendered Gutenberg source per page).
+  relatedPosts = relatedPosts.map((p) => (p.content ? { ...p, content: '' } : p));
 
   // Extract and batch fetch products from WooCommerce shortcodes in content
   const productIds = extractProductIdsFromContent(post.content);
