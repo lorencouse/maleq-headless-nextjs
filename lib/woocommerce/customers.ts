@@ -5,6 +5,7 @@
  */
 
 import { UserFacingError } from '@/lib/api/response';
+import type { GoogleProfile } from '@/lib/auth/google';
 
 import { getWooCommerceUrl, getAuthHeader, isWooCommerceConfigured } from './auth';
 
@@ -237,25 +238,75 @@ export async function authenticateCustomer(
     throw new Error('Customer account not found');
   }
 
-  // Map the response to WooCommerceCustomer format
-  const customer: WooCommerceCustomer = {
-    id: authData.customer.id,
+  return {
+    customer: mapAuthEndpointCustomer(authData.customer),
+    token: authData.token,
+  };
+}
+
+/**
+ * Map the `customer` object returned by the maleq auth endpoints to the
+ * WooCommerceCustomer shape used throughout the app.
+ */
+function mapAuthEndpointCustomer(raw: Record<string, unknown>): WooCommerceCustomer {
+  return {
+    id: raw.id as number,
     date_created: '',
     date_modified: '',
-    email: authData.customer.email,
-    first_name: authData.customer.first_name || '',
-    last_name: authData.customer.last_name || '',
-    role: authData.customer.role || 'customer',
-    username: authData.customer.username || '',
-    billing: authData.customer.billing || {} as CustomerAddress,
-    shipping: authData.customer.shipping || {} as CustomerAddress,
+    email: raw.email as string,
+    first_name: (raw.first_name as string) || '',
+    last_name: (raw.last_name as string) || '',
+    role: (raw.role as string) || 'customer',
+    username: (raw.username as string) || '',
+    billing: (raw.billing as CustomerAddress) || ({} as CustomerAddress),
+    shipping: (raw.shipping as CustomerAddress) || ({} as CustomerAddress),
     is_paying_customer: false,
-    avatar_url: authData.customer.avatar_url || '',
+    avatar_url: (raw.avatar_url as string) || '',
     meta_data: [],
   };
+}
+
+/**
+ * Authenticate (find-or-create) a customer from a verified Google profile.
+ * Calls the maleq/v1/google-auth endpoint, which is guarded by a shared secret.
+ * The Google ID token must already have been verified server-side.
+ */
+export async function authenticateWithGoogle(
+  profile: GoogleProfile
+): Promise<{ customer: WooCommerceCustomer; token: string }> {
+  const secret = process.env.MALEQ_GOOGLE_AUTH_SECRET;
+  if (!secret) {
+    throw new UserFacingError('Google sign-in is not configured', 500, 'GOOGLE_UNCONFIGURED');
+  }
+
+  const authUrl = `${getWooCommerceUrl()}/wp-json/maleq/v1/google-auth`;
+
+  const authResponse = await fetch(authUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Maleq-Google-Secret': secret,
+    },
+    body: JSON.stringify({
+      email: profile.email,
+      first_name: profile.firstName,
+      last_name: profile.lastName,
+      google_id: profile.googleId,
+      avatar_url: profile.avatarUrl,
+    }),
+  });
+
+  const authData = await authResponse.json().catch(() => null);
+
+  if (!authResponse.ok || !authData?.customer) {
+    throw new UserFacingError(
+      authData?.message || 'Google sign-in failed',
+      authResponse.status >= 400 && authResponse.status < 500 ? 401 : 502
+    );
+  }
 
   return {
-    customer,
+    customer: mapAuthEndpointCustomer(authData.customer),
     token: authData.token,
   };
 }

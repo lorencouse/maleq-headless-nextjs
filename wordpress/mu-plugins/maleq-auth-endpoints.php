@@ -55,6 +55,14 @@ add_action('rest_api_init', function () {
         'permission_callback' => '__return_true',
     ]);
 
+    // Google sign-in: server-to-server only, guarded by a shared secret header.
+    // The Google ID token itself is verified on the Next.js side before this is called.
+    register_rest_route('maleq/v1', '/google-auth', [
+        'methods' => 'POST',
+        'callback' => 'maleq_google_auth',
+        'permission_callback' => '__return_true',
+    ]);
+
     // Protected endpoints (Bearer token required)
     register_rest_route('maleq/v1', '/verify-password', [
         'methods' => 'POST',
@@ -407,6 +415,104 @@ function maleq_validate_token_endpoint(WP_REST_Request $request) {
     }
 
     return maleq_get_customer_data($user);
+}
+
+/**
+ * Google sign-in endpoint.
+ *
+ * Called server-to-server by the Next.js frontend AFTER it has cryptographically
+ * verified the Google ID token. Guarded by the MALEQ_GOOGLE_AUTH_SECRET shared
+ * secret so only our server can mint tokens here. Finds an existing user by email
+ * (auto-link) or creates a new WooCommerce customer, then mints the standard
+ * maleq_auth_token used by the rest of the headless auth flow.
+ */
+function maleq_google_auth(WP_REST_Request $request) {
+    // Verify shared secret
+    if (!defined('MALEQ_GOOGLE_AUTH_SECRET') || MALEQ_GOOGLE_AUTH_SECRET === '') {
+        return new WP_Error(
+            'google_auth_unconfigured',
+            'Google authentication is not configured',
+            ['status' => 500]
+        );
+    }
+
+    $provided_secret = $request->get_header('X-Maleq-Google-Secret');
+    if (empty($provided_secret) || !hash_equals(MALEQ_GOOGLE_AUTH_SECRET, $provided_secret)) {
+        return new WP_Error(
+            'forbidden',
+            'Forbidden',
+            ['status' => 401]
+        );
+    }
+
+    $email = sanitize_email($request->get_param('email'));
+    $first_name = sanitize_text_field($request->get_param('first_name'));
+    $last_name = sanitize_text_field($request->get_param('last_name'));
+    $google_id = sanitize_text_field($request->get_param('google_id'));
+    $avatar_url = esc_url_raw($request->get_param('avatar_url'));
+
+    if (empty($email) || !is_email($email)) {
+        return new WP_Error(
+            'invalid_email',
+            'A valid email is required',
+            ['status' => 400]
+        );
+    }
+
+    // Find-or-create: auto-link by email
+    $user = get_user_by('email', $email);
+
+    if (!$user) {
+        $user_id = wp_insert_user([
+            'user_login' => $email,
+            'user_email' => $email,
+            'user_pass' => wp_generate_password(32, true, true),
+            'first_name' => $first_name,
+            'last_name' => $last_name,
+            'display_name' => trim($first_name . ' ' . $last_name) ?: $email,
+            'role' => 'customer',
+        ]);
+
+        if (is_wp_error($user_id)) {
+            return new WP_Error(
+                'user_creation_failed',
+                'Failed to create account',
+                ['status' => 500]
+            );
+        }
+
+        update_user_meta($user_id, 'billing_email', $email);
+        if (!empty($first_name)) {
+            update_user_meta($user_id, 'billing_first_name', $first_name);
+        }
+        if (!empty($last_name)) {
+            update_user_meta($user_id, 'billing_last_name', $last_name);
+        }
+
+        $user = get_user_by('ID', $user_id);
+    }
+
+    // Record Google linkage / auditing meta
+    if (!empty($google_id)) {
+        update_user_meta($user->ID, 'maleq_google_id', $google_id);
+    }
+    if (!empty($avatar_url)) {
+        update_user_meta($user->ID, 'maleq_google_avatar', $avatar_url);
+    }
+
+    // Mint a secure token (same scheme as maleq_validate_password)
+    $token = wp_generate_password(64, false);
+    $token_hash = wp_hash($token);
+
+    update_user_meta($user->ID, 'maleq_auth_token', $token_hash);
+    update_user_meta($user->ID, 'maleq_auth_token_expires', time() + DAY_IN_SECONDS);
+
+    return [
+        'success' => true,
+        'user_id' => $user->ID,
+        'token' => $token,
+        'customer' => maleq_get_customer_data($user),
+    ];
 }
 
 /**

@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/store/auth-store';
 import { getLoginSchema, type LoginFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 export default function LoginForm() {
   const t = useTranslations('auth');
@@ -82,6 +83,16 @@ export default function LoginForm() {
           <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
+
+      <GoogleSignInButton returnTo={returnTo} text="signin_with" />
+
+      <div className="relative flex items-center">
+        <div className="flex-grow border-t border-border" />
+        <span className="mx-4 text-xs uppercase tracking-wide text-muted-foreground">
+          {t('common.orDivider')}
+        </span>
+        <div className="flex-grow border-t border-border" />
+      </div>
 
       <div>
         <label htmlFor="identifier" className="block text-sm font-medium text-foreground mb-2">

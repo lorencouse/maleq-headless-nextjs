@@ -116,7 +116,8 @@
       "emailPlaceholder": "your@email.com",
       "password": "Password",
       "rememberPasswordPrompt": "Remember your password?",
-      "rememberPasswordLink": "Sign in"
+      "rememberPasswordLink": "Sign in",
+      "orDivider": "or"
     },
     "login": {
       "metaTitle": "Sign In",
@@ -201,6 +202,10 @@
       "closeAriaLabel": "Close sign in prompt",
       "signIn": "Sign In",
       "createAccount": "Create Account"
+    },
+    "google": {
+      "continueWith": "Continue with Google",
+      "failedGeneric": "Google sign-in failed. Please try again."
     }
   },
   "trackOrderPage": {

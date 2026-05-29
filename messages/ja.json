@@ -116,7 +116,8 @@
       "emailPlaceholder": "your@email.com",
       "password": "Password",
       "rememberPasswordPrompt": "Remember your password?",
-      "rememberPasswordLink": "Sign in"
+      "rememberPasswordLink": "Sign in",
+      "orDivider": "または"
     },
     "login": {
       "metaTitle": "Sign In",
@@ -201,6 +202,10 @@
       "closeAriaLabel": "Close sign in prompt",
       "signIn": "Sign In",
       "createAccount": "Create Account"
+    },
+    "google": {
+      "continueWith": "Googleで続行",
+      "failedGeneric": "Googleでのサインインに失敗しました。もう一度お試しください。"
     }
   },
   "trackOrderPage": {

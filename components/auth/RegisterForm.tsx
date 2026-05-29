@@ -10,6 +10,7 @@ import { useAuthStore } from '@/lib/store/auth-store';
 import { getRegisterSchema, type RegisterFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 const REGISTER_TIMEOUT_MS = 30_000;
 
@@ -104,6 +105,16 @@ export default function RegisterForm() {
           <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
+
+      <GoogleSignInButton returnTo={returnTo} text="signup_with" />
+
+      <div className="relative flex items-center">
+        <div className="flex-grow border-t border-border" />
+        <span className="mx-4 text-xs uppercase tracking-wide text-muted-foreground">
+          {t('common.orDivider')}
+        </span>
+        <div className="flex-grow border-t border-border" />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>

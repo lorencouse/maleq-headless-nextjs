@@ -116,7 +116,8 @@
       "emailPlaceholder": "your@email.com",
       "password": "密码",
       "rememberPasswordPrompt": "想起您的密码了吗？",
-      "rememberPasswordLink": "登入"
+      "rememberPasswordLink": "登入",
+      "orDivider": "或"
     },
     "login": {
       "metaTitle": "登入",
@@ -201,6 +202,10 @@
       "closeAriaLabel": "关闭登入提示",
       "signIn": "登入",
       "createAccount": "建立帐户"
+    },
+    "google": {
+      "continueWith": "使用 Google 继续",
+      "failedGeneric": "Google 登录失败，请重试。"
     }
   },
   "trackOrderPage": {

@@ -31,7 +31,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `wpgraphql-render-blocks.php` | Renders Gutenberg blocks (including reusable blocks) in GraphQL content | `wordpress-snippets/wpgraphql-render-blocks.php` |
 | `maleq-relative-urls.php` | Converts URLs to relative paths for database portability across environments | `wordpress-snippets/relative-urls.php` |
 | `wholesale-price-display.php` | Displays wholesale price in WooCommerce product/variation edit panels | `wordpress/mu-plugins/wholesale-price-display.php` |
-| `maleq-auth-endpoints.php` | Authentication endpoints for login, password reset, and token validation | `wordpress/mu-plugins/maleq-auth-endpoints.php` |
+| `maleq-auth-endpoints.php` | Authentication endpoints for login, Google sign-in, password reset, and token validation | `wordpress/mu-plugins/maleq-auth-endpoints.php` |
 | `maleq-graphql-title-search.php` | Adds titleSearch parameter to WPGraphQL for searching posts by title only | `wordpress/mu-plugins/maleq-graphql-title-search.php` |
 | `maleq-order-tracking.php` | Order tracking management with admin UI, REST API, and customer email notifications | `wordpress/mu-plugins/maleq-order-tracking.php` |
 | `maleq-stock-sync.php` | Bulk stock sync endpoints for daily cron (stock-mapping + stock-update) | `wordpress/mu-plugins/maleq-stock-sync.php` |
@@ -160,6 +160,19 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
 | `REVALIDATION_SECRET` | Secret for cache revalidation webhook (must match `MALEQ_REVALIDATION_SECRET` in wp-config.php) | Random string |
 | `ADMIN_API_KEY` | Admin API key for protected endpoints (must match `MALEQ_ADMIN_KEY` in wp-config.php) | Random string |
 | `CRON_SECRET` | Vercel cron secret for automated jobs (set in Vercel dashboard) | Random string |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0 Web client ID for "Sign in with Google" (public; used by the GIS button and to verify ID tokens server-side) | `xxxx.apps.googleusercontent.com` |
+| `MALEQ_GOOGLE_AUTH_SECRET` | Shared secret protecting the `maleq/v1/google-auth` WP endpoint (must match `MALEQ_GOOGLE_AUTH_SECRET` in wp-config.php) | Random 32+ char string |
+
+### Google Sign-In Setup
+
+1. In [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → Credentials, create an **OAuth 2.0 Client ID** of type **Web application**.
+2. Under **Authorized JavaScript origins**, add every origin the button loads from:
+   - `https://www.maleq.com` (production)
+   - `http://maleq-local.local` (Local by Flywheel)
+   - `http://localhost:3000` (dev)
+   (Google Identity Services uses JavaScript origins, not redirect URIs.)
+3. Copy the client ID into `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (Vercel + `.env.local`).
+4. Generate a random secret and set it **identically** in both `MALEQ_GOOGLE_AUTH_SECRET` (Vercel env) and `wp-config.php` (`define('MALEQ_GOOGLE_AUTH_SECRET', '...')`).
 
 ### WordPress wp-config.php Constants
 
@@ -168,10 +181,12 @@ Add to `wp-config.php` on the WordPress server:
 define('MALEQ_ADMIN_KEY', 'your-admin-api-key-here');
 define('MALEQ_FRONTEND_URL', 'https://your-frontend-domain.com');
 define('MALEQ_REVALIDATION_SECRET', 'your-revalidation-secret-here');
+define('MALEQ_GOOGLE_AUTH_SECRET', 'your-google-auth-shared-secret-here');
 ```
 - `MALEQ_ADMIN_KEY` must match the `ADMIN_API_KEY` env var in Vercel.
 - `MALEQ_FRONTEND_URL` is the production URL of your Next.js site (e.g., `https://maleq.com`).
 - `MALEQ_REVALIDATION_SECRET` must match the `REVALIDATION_SECRET` env var in Vercel.
+- `MALEQ_GOOGLE_AUTH_SECRET` must match the `MALEQ_GOOGLE_AUTH_SECRET` env var in Vercel.
 
 ### Daily Stock Sync (Cron)
 

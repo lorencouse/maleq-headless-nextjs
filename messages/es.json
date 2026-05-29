@@ -116,7 +116,8 @@
       "emailPlaceholder": "tu@correo.com",
       "password": "Contraseña",
       "rememberPasswordPrompt": "¿Recuerdas tu contraseña?",
-      "rememberPasswordLink": "Inicia sesión"
+      "rememberPasswordLink": "Inicia sesión",
+      "orDivider": "o"
     },
     "login": {
       "metaTitle": "Iniciar sesión",
@@ -201,6 +202,10 @@
       "closeAriaLabel": "Cerrar aviso de inicio de sesión",
       "signIn": "Iniciar sesión",
       "createAccount": "Crear cuenta"
+    },
+    "google": {
+      "continueWith": "Continuar con Google",
+      "failedGeneric": "Error al iniciar sesión con Google. Inténtalo de nuevo."
     }
   },
   "trackOrderPage": {
