@@ -9,6 +9,22 @@ export default function ServiceWorkerRegistration() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return;
 
+    // Never run the service worker in development. With HMR + slow first-compiles,
+    // the SW's network-first navigation handler times out (8s) and falls back to a
+    // stale/partial cached document — which renders as a "wall of" raw RSC flight
+    // text. So in dev we actively unregister any existing SW and purge its caches
+    // (self-healing for browsers that registered it before this guard existed),
+    // then bail. Production registers normally below.
+    if (process.env.NODE_ENV !== 'production') {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((r) => r.unregister());
+      });
+      if (typeof caches !== 'undefined') {
+        caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+      }
+      return;
+    }
+
     let trimInterval: ReturnType<typeof setInterval> | undefined;
     let updateInterval: ReturnType<typeof setInterval> | undefined;
 
