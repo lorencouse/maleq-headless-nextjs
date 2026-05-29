@@ -1506,6 +1506,9 @@
     "compactSubtitle": "不滿意嗎？我們會為您妥善處理。"
   },
   "productRelated": {
+    "unitToggleImperial": "英寸 / 盎司",
+    "unitToggleMetric": "公分 / 毫升",
+    "unitToggleAria": "單位制",
     "viewAll": "查看全部",
     "scrollLeftAria": "向左捲動",
     "scrollRightAria": "向右捲動",

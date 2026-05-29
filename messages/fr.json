@@ -1506,6 +1506,9 @@
     "compactSubtitle": "Pas satisfait ? Nous arrangerons cela."
   },
   "productRelated": {
+    "unitToggleImperial": "po / oz",
+    "unitToggleMetric": "cm / ml",
+    "unitToggleAria": "Système d’unités",
     "viewAll": "Tout voir",
     "scrollLeftAria": "Faire défiler vers la gauche",
     "scrollRightAria": "Faire défiler vers la droite",

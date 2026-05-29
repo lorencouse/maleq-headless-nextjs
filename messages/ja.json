@@ -1506,6 +1506,9 @@
     "compactSubtitle": "ご満足いただけませんか？きちんと対応します。"
   },
   "productRelated": {
+    "unitToggleImperial": "インチ / オンス",
+    "unitToggleMetric": "cm / ml",
+    "unitToggleAria": "単位系",
     "viewAll": "すべて見る",
     "scrollLeftAria": "左にスクロール",
     "scrollRightAria": "右にスクロール",

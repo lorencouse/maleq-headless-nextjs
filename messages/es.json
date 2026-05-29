@@ -1506,6 +1506,9 @@
     "compactSubtitle": "¿No estás satisfecho? Lo arreglaremos."
   },
   "productRelated": {
+    "unitToggleImperial": "pulg / oz",
+    "unitToggleMetric": "cm / ml",
+    "unitToggleAria": "Sistema de unidades",
     "viewAll": "Ver Todos",
     "scrollLeftAria": "Desplazar a la izquierda",
     "scrollRightAria": "Desplazar a la derecha",

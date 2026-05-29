@@ -1506,6 +1506,9 @@
     "compactSubtitle": "Nicht zufrieden? Wir bringen es in Ordnung."
   },
   "productRelated": {
+    "unitToggleImperial": "Zoll / oz",
+    "unitToggleMetric": "cm / ml",
+    "unitToggleAria": "Maßeinheit",
     "viewAll": "Alle ansehen",
     "scrollLeftAria": "Nach links scrollen",
     "scrollRightAria": "Nach rechts scrollen",
