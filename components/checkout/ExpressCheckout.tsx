@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Elements,
   ExpressCheckoutElement,
@@ -15,7 +15,7 @@ import type {
   StripeExpressCheckoutElementShippingAddressChangeEvent,
   StripeExpressCheckoutElementShippingRateChangeEvent,
 } from '@stripe/stripe-js';
-import { getStripe } from '@/lib/stripe/client';
+import { getStripe, getStripeLocale } from '@/lib/stripe/client';
 import { useCartStore, useCartSubtotal } from '@/lib/store/cart-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
@@ -441,6 +441,7 @@ function ExpressCheckoutForm() {
  */
 export default function ExpressCheckout() {
   const t = useTranslations('checkout.express');
+  const locale = useLocale();
   const subtotal = useCartSubtotal();
   const shipping = useCartStore((state) => state.shipping);
 
@@ -462,6 +463,7 @@ export default function ExpressCheckout() {
           mode: 'payment',
           amount: totalCents,
           currency: 'usd',
+          locale: getStripeLocale(locale),
           appearance: {
             theme: 'stripe',
             variables: {

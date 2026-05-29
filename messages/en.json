@@ -336,7 +336,13 @@
     "addedToastTemplate": "{name} added to cart!",
     "addFailedToast": "Failed to add to cart",
     "priceNotAvailable": "Price not available",
-    "addedToCartButton": "Added to Cart!"
+    "addedToCartButton": "Added to Cart!",
+    "stockInStock": "In Stock",
+    "stockLowStock": "Low Stock",
+    "stockOutOfStock": "Out of Stock",
+    "stockOnBackorder": "On Backorder",
+    "stockLowStockLeft": "Low Stock ({count} left)",
+    "stockQuantityAvailable": "({count} available)"
   },
   "shop": {
     "sortLabel": "Sort:",

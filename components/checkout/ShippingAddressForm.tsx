@@ -1,14 +1,22 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 import { useCheckoutStore } from '@/lib/store/checkout-store';
 import {
   isSupportedShippingCountry,
   isDomesticShippingCountry,
 } from '@/lib/checkout/shipping-rates';
-import { ALL_COUNTRIES, getCountryName } from '@/lib/data/countries';
+import {
+  getCountryName,
+  getLocalizedCountries,
+  getLocalizedCountryName,
+} from '@/lib/data/countries';
+
+// Map the app locale to the BCP-47 tag Intl.DisplayNames expects (the two
+// Chinese variants need the script subtag to resolve Simplified vs Traditional).
+const INTL_LOCALE: Record<string, string> = { zh: 'zh-Hans', 'zh-hant': 'zh-Hant' };
 
 // US States for dropdown
 const US_STATES = [
@@ -123,18 +131,28 @@ export default function ShippingAddressForm() {
   const [isCountryFocused, setIsCountryFocused] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const hideCountryDropdownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const locale = useLocale();
+  const intlLocale = INTL_LOCALE[locale] ?? locale;
+  // Country names localized via Intl.DisplayNames (CLDR), sorted per-locale.
+  const localizedCountries = useMemo(
+    () => getLocalizedCountries(intlLocale),
+    [intlLocale],
+  );
+
   const isCountrySupported = isSupportedShippingCountry(address.country);
-  const selectedCountryName = getCountryName(address.country);
+  const selectedCountryName = getLocalizedCountryName(address.country, intlLocale);
   const countryInputValue = isCountryFocused ? countryQuery : selectedCountryName;
   const filteredCountries = useMemo(() => {
     const q = countryQuery.trim().toLowerCase();
-    if (!q) return ALL_COUNTRIES;
-    return ALL_COUNTRIES.filter(
+    if (!q) return localizedCountries;
+    return localizedCountries.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
-        c.code.toLowerCase() === q,
+        c.code.toLowerCase() === q ||
+        // Also match the English name so typing in English works on any locale.
+        getCountryName(c.code).toLowerCase().includes(q),
     );
-  }, [countryQuery]);
+  }, [countryQuery, localizedCountries]);
 
   // Auto-populate from saved customer addresses
   useEffect(() => {

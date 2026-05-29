@@ -1,6 +1,6 @@
-import { getTranslations } from 'next-intl/server';
 import { Post } from '@/lib/types/wordpress';
 import BlogCard from '@/components/blog/BlogCard';
+import LocalizedText from '@/components/i18n/LocalizedText';
 
 interface RelatedGuidesProps {
   posts: Post[];
@@ -11,16 +11,18 @@ interface RelatedGuidesProps {
  * relation: guides that recommend this product (or its categories).
  * Renders nothing when there are no related guides.
  */
-export default async function RelatedGuides({ posts }: RelatedGuidesProps) {
+export default function RelatedGuides({ posts }: RelatedGuidesProps) {
   if (!posts || posts.length === 0) {
     return null;
   }
 
-  const t = await getTranslations('productRelated');
-
   return (
     <section className='max-w-7xl mx-auto mt-4'>
-      <h2 className='text-2xl font-bold text-foreground mb-6'>{t('relatedGuidesHeading')}</h2>
+      {/* Heading rendered client-side so it follows the language switch on this
+          English-pinned content-root page (the card content is data). */}
+      <h2 className='text-2xl font-bold text-foreground mb-6'>
+        <LocalizedText ns="productRelated" k="relatedGuidesHeading" />
+      </h2>
       <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
         {posts.slice(0, 3).map((post) => (
           <BlogCard key={post.id} post={post} />

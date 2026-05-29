@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 export type StockStatus = 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK' | 'ON_BACKORDER' | string;
 
 interface StockStatusBadgeProps {
@@ -10,26 +12,28 @@ interface StockStatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<string, { color: string; bgColor: string; label: string }> = {
+// Colours per status; the visible label comes from the `product` message
+// catalog (keyed below) so the badge localizes with the language switcher.
+const statusConfig: Record<string, { color: string; bgColor: string; labelKey: string }> = {
   IN_STOCK: {
     color: 'text-success',
     bgColor: 'bg-success',
-    label: 'In Stock',
+    labelKey: 'stockInStock',
   },
   LOW_STOCK: {
     color: 'text-warning',
     bgColor: 'bg-warning',
-    label: 'Low Stock',
+    labelKey: 'stockLowStock',
   },
   OUT_OF_STOCK: {
     color: 'text-destructive',
     bgColor: 'bg-destructive',
-    label: 'Out of Stock',
+    labelKey: 'stockOutOfStock',
   },
   ON_BACKORDER: {
     color: 'text-accent',
     bgColor: 'bg-accent',
-    label: 'On Backorder',
+    labelKey: 'stockOnBackorder',
   },
 };
 
@@ -58,18 +62,20 @@ export default function StockStatusBadge({
   size = 'md',
   className = '',
 }: StockStatusBadgeProps) {
+  const t = useTranslations('product');
+
   // Normalize status - handle different formats
   const normalizedStatus = status?.toUpperCase().replace(/-/g, '_') || 'OUT_OF_STOCK';
   const config = statusConfig[normalizedStatus] || statusConfig.OUT_OF_STOCK;
   const sizeStyles = sizeConfig[size];
 
   // Build label with quantity if provided
-  let label = config.label;
+  let label = t(config.labelKey);
   if (showQuantity && quantity !== null && quantity !== undefined && quantity > 0) {
     if (normalizedStatus === 'LOW_STOCK') {
-      label = `Low Stock (${quantity} left)`;
+      label = t('stockLowStockLeft', { count: quantity });
     } else if (normalizedStatus === 'IN_STOCK') {
-      label = `In Stock`;
+      label = t('stockInStock');
     }
   }
 
@@ -79,7 +85,7 @@ export default function StockStatusBadge({
       <span className={`${sizeStyles.text} ${config.color}`}>{label}</span>
       {showQuantity && quantity !== null && quantity !== undefined && quantity > 0 && normalizedStatus === 'IN_STOCK' && (
         <span className="text-sm text-muted-foreground">
-          ({quantity} available)
+          {t('stockQuantityAvailable', { count: quantity })}
         </span>
       )}
     </div>

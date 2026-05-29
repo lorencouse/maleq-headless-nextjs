@@ -53,7 +53,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 const OG_LOCALE: Record<string, string> = {
   en: 'en_US',
   es: 'es_ES',
-  zh: 'zh_TW',
+  'zh-hant': 'zh_TW',
   ja: 'ja_JP',
 };
 
@@ -262,7 +262,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   setRequestLocale(staticRequestLocale(locale));
   const t = await getTranslations({ locale, namespace: 'blog' });
   // BCP-47 tag for date/number formatting, matching the resolved guide locale.
-  const intlLocale = { en: 'en-US', es: 'es-ES', zh: 'zh-TW', ja: 'ja-JP' }[locale];
+  const intlLocale = { en: 'en-US', es: 'es-ES', 'zh-hant': 'zh-TW', ja: 'ja-JP' }[locale];
 
   let post: Post | null = null;
 

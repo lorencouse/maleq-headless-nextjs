@@ -267,3 +267,42 @@ export function getCountryByCode(code?: string): Country | undefined {
 export function getCountryName(code?: string): string {
   return getCountryByCode(code)?.name ?? '';
 }
+
+/**
+ * Build an Intl.DisplayNames region formatter for a BCP-47 locale, or null if
+ * the runtime can't (very old engines). `fallback: 'none'` makes `.of()`
+ * return undefined for unknown regions so callers fall back to the English
+ * name instead of getting the raw code back.
+ */
+function regionDisplay(locale: string): Intl.DisplayNames | null {
+  try {
+    return new Intl.DisplayNames([locale], { type: 'region', fallback: 'none' });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Localized country name for a code, via the platform's CLDR data — no
+ * hand-maintained translation table. Falls back to the English name for
+ * unknown regions or unsupported runtimes. `locale` should be a BCP-47 tag
+ * (e.g. 'es', 'zh-Hans', 'zh-Hant').
+ */
+export function getLocalizedCountryName(code: string | undefined, locale: string): string {
+  if (!code) return '';
+  const dn = regionDisplay(locale);
+  return (dn?.of(code.toUpperCase()) || getCountryName(code)) || '';
+}
+
+/**
+ * All countries with names localized to `locale` and sorted by the localized
+ * name (so the dropdown reads naturally in each language). English names/sort
+ * order are used as the fallback.
+ */
+export function getLocalizedCountries(locale: string): Country[] {
+  const dn = regionDisplay(locale);
+  return ALL_COUNTRIES.map((c) => ({
+    code: c.code,
+    name: (dn?.of(c.code) || c.name) as string,
+  })).sort((a, b) => a.name.localeCompare(b.name, locale));
+}

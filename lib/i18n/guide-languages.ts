@@ -7,8 +7,11 @@
  *
  *   English   → "Male Q"          (slug: en)
  *   Spanish   → "Español"         (slug: espanol)
- *   Chinese   → "Chinese 中文"    (slug: cn)        — Traditional (Taiwan content)
+ *   Chinese   → "Chinese 中文"    (slug: cn)        — Traditional (Taiwan), locale zh-hant
  *   Japanese  → "日本語 Japanese" (slug: url-encoded 日本語-japanese)
+ *
+ * Note: guide content is Traditional (locale `zh-hant`); the bare `zh` routing
+ * locale is Simplified UI chrome with no guide content yet.
  *
  * Translations are otherwise independent posts, all served under /guides/{slug}.
  * The original↔translation links themselves are stored separately, in the
@@ -16,7 +19,7 @@
  * mu-plugin and read by lib/db/post-translations.ts.
  */
 
-export type GuideLocale = 'en' | 'es' | 'zh' | 'ja';
+export type GuideLocale = 'en' | 'es' | 'zh-hant' | 'ja';
 
 export interface GuideLanguage {
   /** Internal locale key. */
@@ -52,10 +55,13 @@ export const GUIDE_LANGUAGES: GuideLanguage[] = [
     rootCategorySlugs: ['espanol'],
   },
   {
-    locale: 'zh',
+    // Guide content under the "cn" category is Traditional (Taiwan), so it maps
+    // to the zh-hant locale. There is no Simplified (zh) guide content yet —
+    // Simplified is a UI/chrome-only locale (see i18n/routing.ts).
+    locale: 'zh-hant',
     hreflang: 'zh-Hant',
-    label: 'Chinese',
-    nativeLabel: '中文',
+    label: 'Chinese (Traditional)',
+    nativeLabel: '繁體中文',
     rootCategorySlugs: ['cn'],
   },
   {
@@ -112,10 +118,11 @@ export function detectGuideLocale(
  *
  * setRequestLocale() must be called on ISR guide pages to opt into STATIC
  * rendering (otherwise next-intl reads headers() → DYNAMIC_SERVER_USAGE → 500).
- * But it validates against the ROUTING locales (en/es) and throws for the
- * chrome-only locales zh/ja. So seed it with the real locale when it's a
- * routing locale, else the default — the actual guide language is applied
- * separately via explicit getMessages({locale}) / provider / getTranslations.
+ * We seed it with `en` for every non-Spanish guide language: the actual guide
+ * chrome is applied separately via the statically-imported catalog + provider
+ * and explicit getTranslations({locale}), so the seed only needs to be a value
+ * next-intl accepts without resolving headers(). Seeding zh-hant/ja guides with
+ * `en` keeps that path identical to the one already proven in production.
  */
 export function staticRequestLocale(locale: GuideLocale): 'en' | 'es' {
   return locale === 'es' ? 'es' : 'en';

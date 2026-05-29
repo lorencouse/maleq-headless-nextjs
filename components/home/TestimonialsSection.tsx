@@ -73,6 +73,14 @@ export default function TestimonialsSection() {
   const t = useTranslations('home.testimonials');
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Localized review body; the array text above is the English source +
+  // fallback (en/ja render it; es/zh/zh-hant come from the catalog). Names and
+  // locations are proper nouns and stay as-is.
+  const reviewText = (testimonial: Testimonial) => {
+    const key = `items.${testimonial.id}.text`;
+    return t.has(key) ? t(key) : testimonial.text;
+  };
+
   const nextTestimonial = () => {
     setActiveIndex((prev) => (prev + 1) % testimonials.length);
   };
@@ -115,7 +123,7 @@ export default function TestimonialsSection() {
                 )}
               </div>
               <p className="text-foreground/80 text-sm leading-relaxed mb-4">
-                &ldquo;{testimonial.text}&rdquo;
+                &ldquo;{reviewText(testimonial)}&rdquo;
               </p>
               <div className="border-t border-border pt-4">
                 <p className="font-semibold text-foreground text-sm">{testimonial.name}</p>
@@ -139,12 +147,12 @@ export default function TestimonialsSection() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  Verified
+                  {t('verified')}
                 </span>
               )}
             </div>
             <p className="text-foreground/80 leading-relaxed mb-4">
-              &ldquo;{testimonials[activeIndex].text}&rdquo;
+              &ldquo;{reviewText(testimonials[activeIndex])}&rdquo;
             </p>
             <div className="border-t border-border pt-4">
               <p className="font-semibold text-foreground">{testimonials[activeIndex].name}</p>

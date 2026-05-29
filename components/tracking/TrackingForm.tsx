@@ -7,7 +7,13 @@ import { useTranslations, useLocale } from 'next-intl';
 import { getTrackOrderSchema, type TrackOrderInput } from '@/lib/validations/tracking';
 
 // BCP-47 tag for locale-aware date/currency formatting in this form.
-const BCP47: Record<string, string> = { en: 'en-US', es: 'es-ES', zh: 'zh-TW', ja: 'ja-JP' };
+const BCP47: Record<string, string> = {
+  en: 'en-US',
+  es: 'es-ES',
+  zh: 'zh-CN',
+  'zh-hant': 'zh-TW',
+  ja: 'ja-JP',
+};
 
 interface TrackingItem {
   tracking_provider: string;

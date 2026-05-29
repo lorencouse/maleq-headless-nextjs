@@ -1,8 +1,9 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { useLocale } from 'next-intl';
 import { Elements } from '@stripe/react-stripe-js';
-import { getStripe } from '@/lib/stripe/client';
+import { getStripe, getStripeLocale } from '@/lib/stripe/client';
 
 interface StripeProviderProps {
   children: ReactNode;
@@ -17,6 +18,7 @@ interface StripeProviderProps {
  */
 export default function StripeProvider({ children, clientSecret }: StripeProviderProps) {
   const stripePromise = getStripe();
+  const locale = useLocale();
 
   // If no client secret, render children without Stripe context
   // This allows the checkout to render before payment intent is created
@@ -29,6 +31,7 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
       stripe={stripePromise}
       options={{
         clientSecret,
+        locale: getStripeLocale(locale),
         appearance: {
           theme: 'stripe',
           variables: {

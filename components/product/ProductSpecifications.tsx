@@ -1,19 +1,61 @@
+'use client';
+
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
+import { useTranslations } from 'next-intl';
 import { ProductSpecification } from '@/lib/products/product-service';
 
 interface ProductSpecificationsProps {
   specifications: ProductSpecification[];
 }
 
-export default async function ProductSpecifications({
+// The fixed spec labels emitted by lib/products/specifications.ts → catalog
+// keys (productRelated namespace). Dynamic WP-attribute labels (Color,
+// Material, …) aren't here, so they fall back to their English label below.
+const LABEL_KEY: Record<string, string> = {
+  SKU: 'specSku',
+  Brand: 'specBrand',
+  Categories: 'specCategories',
+  Tags: 'specTags',
+  Weight: 'specWeight',
+  Dimensions: 'specDimensions',
+  Availability: 'specAvailability',
+  'Stock Quantity': 'specStockQuantity',
+};
+
+// Only the Availability row has these fixed enum values → reuse the stock keys
+// in the `product` namespace. All other values are product data (kept as-is).
+const AVAILABILITY_VALUE_KEY: Record<string, string> = {
+  'In Stock': 'stockInStock',
+  'Out of Stock': 'stockOutOfStock',
+  'On Backorder': 'stockOnBackorder',
+};
+
+// Client component so it localizes via ChromeLocaleProvider on the language
+// switch, even though the product page is server-pinned to English. Labels and
+// the Availability value localize; data values (brands, categories, tags,
+// attributes, dimensions) stay English.
+export default function ProductSpecifications({
   specifications,
 }: ProductSpecificationsProps) {
+  const t = useTranslations('productRelated');
+  const tProduct = useTranslations('product');
+
   if (!specifications || specifications.length === 0) {
     return null;
   }
 
-  const t = await getTranslations('productRelated');
+  const labelText = (label: string) => {
+    const key = LABEL_KEY[label];
+    return key && t.has(key) ? t(key) : label;
+  };
+
+  const valueText = (spec: ProductSpecification) => {
+    if (spec.label === 'Availability') {
+      const key = AVAILABILITY_VALUE_KEY[spec.value];
+      if (key && tProduct.has(key)) return tProduct(key);
+    }
+    return spec.value;
+  };
 
   return (
     <div className='border-t border-border pt-8 mt-8'>
@@ -25,7 +67,7 @@ export default async function ProductSpecifications({
           {specifications.map((spec, index) => (
             <div key={index} className='border-b border-border pb-3'>
               <dt className='text-sm font-semibold text-muted-foreground mb-1'>
-                {spec.label}
+                {labelText(spec.label)}
               </dt>
               <dd className='text-base text-foreground'>
                 {spec.links && spec.links.length > 0
@@ -40,7 +82,7 @@ export default async function ProductSpecifications({
                         </Link>
                       </span>
                     ))
-                  : spec.value}
+                  : valueText(spec)}
               </dd>
             </div>
           ))}

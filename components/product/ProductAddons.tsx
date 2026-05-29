@@ -13,6 +13,23 @@ interface ProductAddonsProps {
   onAddonsChange: (addons: SelectedAddon[]) => void;
 }
 
+/**
+ * Localized addon display text. The config strings (lib/config/product-addons)
+ * are the English source + fallback; translations live under
+ * `productAddons.items.<id>.{shortName,description}`. en/ja have no override
+ * and fall back to the config literal. The addon `name` (cart line-item label)
+ * is never localized — it must match the store.
+ */
+function addonText(
+  t: ReturnType<typeof useTranslations<'productAddons'>>,
+  id: string,
+  leaf: 'shortName' | 'description',
+  fallback: string,
+): string {
+  const key = `items.${id}.${leaf}`;
+  return t.has(key) ? t(key) : fallback;
+}
+
 export interface SelectedAddon {
   id: string;
   productId: string;
@@ -218,7 +235,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
             <div className='flex-shrink-0 w-[50px] h-[50px] rounded overflow-hidden bg-muted'>
               <img
                 src={bundleImageUrl}
-                alt={ADDON_BUNDLE.shortName}
+                alt={addonText(t, ADDON_BUNDLE.id, 'shortName', ADDON_BUNDLE.shortName)}
                 className='w-full h-full object-cover'
               />
             </div>
@@ -227,11 +244,11 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
           <div className='flex-1 min-w-0 flex justify-between gap-2'>
             <div className='flex flex-col'>
               <span className='text-sm font-semibold text-foreground'>
-                {ADDON_BUNDLE.shortName}
+                {addonText(t, ADDON_BUNDLE.id, 'shortName', ADDON_BUNDLE.shortName)}
               </span>
               {ADDON_BUNDLE.description && (
                 <p className='text-xs text-muted-foreground mt-0.5'>
-                  {ADDON_BUNDLE.description}
+                  {addonText(t, ADDON_BUNDLE.id, 'description', ADDON_BUNDLE.description)}
                 </p>
               )}
             </div>
@@ -330,7 +347,7 @@ function AddonCheckbox({
         <div className='flex-shrink-0 w-[50px] h-[50px] rounded overflow-hidden bg-muted'>
           <img
             src={imageUrl}
-            alt={addon.shortName}
+            alt={addonText(t, addon.id, 'shortName', addon.shortName)}
             className='w-full h-full object-cover'
           />
         </div>
@@ -339,11 +356,11 @@ function AddonCheckbox({
       <div className='flex-1 min-w-0 flex justify-between gap-2'>
         <div className='flex flex-col'>
           <span className='text-sm font-medium text-foreground'>
-            {addon.shortName}
+            {addonText(t, addon.id, 'shortName', addon.shortName)}
           </span>
           {addon.description && (
             <p className='text-xs text-muted-foreground mt-0.5'>
-              {addon.description}
+              {addonText(t, addon.id, 'description', addon.description)}
             </p>
           )}
         </div>

@@ -134,6 +134,20 @@ function renderContent(text: string): React.ReactNode[] {
 
 export default function ChatWidget() {
   const t = useTranslations('chat');
+
+  // Localized display text for a decision-tree node. The tree's English
+  // literals (lib/chatbot/decision-tree.ts) stay the source of truth + the
+  // analytics label; translations live under chat.tree keyed by the node's
+  // id-PATH (e.g. orders.track-order.answer) so colliding ids like `lube`
+  // stay distinct. Missing key → fall back to the English literal, which is
+  // how `en` and the untranslated `ja` placeholder render.
+  const treeText = useCallback(
+    (idPath: string[], leaf: 'label' | 'answer' | 'transition', fallback: string) => {
+      const key = `tree.${idPath.join('.')}.${leaf}`;
+      return t.has(key) ? t(key) : fallback;
+    },
+    [t]
+  );
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>('guided');
   const [path, setPath] = useState<string[]>([]);
@@ -252,11 +266,11 @@ export default function ChatWidget() {
   );
 
   const enterDiscovery = useCallback(
-    (node: Extract<TreeNode, { type: 'product-finder' }>) => {
-      const labelLower = node.label.toLowerCase();
+    (node: Extract<TreeNode, { type: 'product-finder' }>, localizedLabel: string) => {
+      const labelLower = localizedLabel.toLowerCase();
       setMessages((cur) => [
         ...cur,
-        { id: newId(), role: 'user', content: node.label },
+        { id: newId(), role: 'user', content: localizedLabel },
         {
           id: newId(),
           role: 'assistant',
@@ -265,7 +279,9 @@ export default function ChatWidget() {
       ]);
       setDiscovery({
         nodeId: node.id,
-        label: node.label,
+        // Display label is localized; node.query stays English (the product
+        // index is English-keyed) for the actual search.
+        label: localizedLabel,
         query: node.query,
         filters: {},
         data: null,
@@ -358,6 +374,10 @@ export default function ChatWidget() {
   const handlePillClick = useCallback(
     (node: TreeNode) => {
       const parentId = path[path.length - 1] ?? 'root';
+      const idPath = [...path, node.id];
+      // Localized text for what the user sees; analytics keeps node.label
+      // (stable English) so events are comparable across locales.
+      const label = treeText(idPath, 'label', node.label);
 
       trackChatbot('chatbot_pill_click', {
         pill_id: node.id,
@@ -368,7 +388,7 @@ export default function ChatWidget() {
       });
 
       if (node.type === 'category') {
-        setPath([...path, node.id]);
+        setPath(idPath);
         setFeedbackPending(false);
         return;
       }
@@ -376,8 +396,8 @@ export default function ChatWidget() {
         lastAnswerRef.current = { id: node.id, parentId };
         setMessages((cur) => [
           ...cur,
-          { id: newId(), role: 'user', content: node.label },
-          { id: newId(), role: 'assistant', content: node.answer },
+          { id: newId(), role: 'user', content: label },
+          { id: newId(), role: 'assistant', content: treeText(idPath, 'answer', node.answer) },
         ]);
         setFeedbackPending(true);
         return;
@@ -390,20 +410,20 @@ export default function ChatWidget() {
         });
         setMessages((cur) => [
           ...cur,
-          { id: newId(), role: 'user', content: node.label },
-          { id: newId(), role: 'assistant', content: node.transition },
+          { id: newId(), role: 'user', content: label },
+          { id: newId(), role: 'assistant', content: treeText(idPath, 'transition', node.transition) },
         ]);
         setMode('ai');
         setFeedbackPending(false);
         return;
       }
       if (node.type === 'product-finder') {
-        enterDiscovery(node);
+        enterDiscovery(node, label);
         setFeedbackPending(false);
         return;
       }
     },
-    [path, enterDiscovery]
+    [path, enterDiscovery, treeText]
   );
 
   const sendToAI = useCallback(
@@ -861,7 +881,7 @@ export default function ChatWidget() {
                             : 'px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors text-left'
                         }
                       >
-                        {node.label}
+                        {treeText([...path, node.id], 'label', node.label)}
                       </button>
                     ))}
                     {/* Always-available escape hatch to /contact, at every level of the tree. */}

@@ -6,16 +6,18 @@ import { useParams } from 'next/navigation';
 import { useRouter, usePathname } from '@/i18n/navigation';
 import { type Locale } from '@/i18n/routing';
 
-// UI locales offered by the toggle. en/es/zh are all URL-routed locales
-// (/, /es, /zh). On content-root pages (English-only ISR, outside [locale])
-// any selection falls back to the cookie-driven in-place chrome switch.
-const UI_LOCALES = ['en', 'es', 'zh'] as const;
+// UI locales offered by the toggle. en/es/zh/zh-hant are all URL-routed
+// locales (/, /es, /zh, /zh-hant). zh is Simplified, zh-hant Traditional.
+// On content-root pages (English-only ISR, outside [locale]) any selection
+// falls back to the cookie-driven in-place chrome switch.
+const UI_LOCALES = ['en', 'es', 'zh', 'zh-hant'] as const;
 const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
   es: 'Español',
-  zh: '中文',
+  zh: '简体中文',
+  'zh-hant': '繁體中文',
 };
-const ROUTING_LOCALES = new Set(['en', 'es', 'zh']);
+const ROUTING_LOCALES = new Set(['en', 'es', 'zh', 'zh-hant']);
 
 /**
  * Language switcher dropdown.

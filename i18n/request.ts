@@ -3,14 +3,14 @@ import { routing } from './routing';
 
 /**
  * UI locales that have a message catalog in messages/. This is a SUPERSET of
- * routing.locales (the URL-prefixed locales en/es/zh). `ja` is the only
+ * routing.locales (the URL-prefixed locales en/es/zh/zh-hant). `ja` is the only
  * chrome-ONLY locale: its catalog is still an untranslated copy of en, so it
  * gets no /ja URL tree and is applied only per-page by the guide-post layout
  * (app/(guide)/guides/[slug]/layout.tsx) via setRequestLocale() so a Japanese
  * guide renders its own shell. Keeping `ja` out of routing.locales stops
  * next-intl middleware from minting a /ja prefix until it's actually translated.
  */
-const UI_LOCALES = ['en', 'es', 'zh', 'ja'] as const;
+const UI_LOCALES = ['en', 'es', 'zh', 'zh-hant', 'ja'] as const;
 type UiLocale = (typeof UI_LOCALES)[number];
 
 /**

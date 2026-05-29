@@ -6,6 +6,14 @@
  * free-text chat. Free-text input is hidden until the user explicitly
  * escalates — this lets us serve the bulk of common questions without
  * hitting the API.
+ *
+ * i18n: the `label`/`answer`/`transition` strings below are the English
+ * source of truth, the analytics labels, and the runtime fallback. Localized
+ * versions live in the message catalogs under `chat.tree`, keyed by each
+ * node's id-PATH (e.g. `orders.track-order.answer`); ChatWidget resolves them
+ * with t.has() + fallback to these literals. `id`, `type`, and `query` are
+ * language-agnostic and must stay stable (ids anchor the catalog keys; query
+ * feeds the English-keyed product index).
  */
 
 export type TreeNode =

@@ -10,6 +10,7 @@ import dynamic from 'next/dynamic';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
+import LocalizedText from '@/components/i18n/LocalizedText';
 import RelatedProducts from '@/components/product/RelatedProducts';
 import RelatedGuides from '@/components/product/RelatedGuides';
 import { loadRelatedPostsForProduct } from '@/lib/db/post-relations';
@@ -240,7 +241,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Product Description */}
       {product.description && (
         <div className="mt-16 border-t border-border pt-12">
-          <h2 className="text-2xl font-bold text-foreground mb-6">{t('descriptionHeading')}</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">
+            <LocalizedText ns="productSlugPage" k="descriptionHeading" />
+          </h2>
           <div
             className="product-description-content max-w-none"
             dangerouslySetInnerHTML={{ __html: renderProductDescriptionHtml(product.description) }}

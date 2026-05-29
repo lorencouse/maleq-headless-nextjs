@@ -19,6 +19,18 @@ interface ShippingMethodProps {
 
 export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
   const t = useTranslations('checkout.shippingMethod');
+
+  // Localized tier name/description for DISPLAY only, keyed by the option id
+  // (tiers.<id> in the catalog) with fallback to the English rate literal. The
+  // values stored on the order + sent to analytics stay English (see below).
+  const tierName = (option: ShippingOption) => {
+    const key = `tiers.${option.id}.name`;
+    return t.has(key) ? t(key) : option.name;
+  };
+  const tierDescription = (option: ShippingOption) => {
+    const key = `tiers.${option.id}.description`;
+    return t.has(key) ? t(key) : option.description;
+  };
   const shippingAddress = useCheckoutStore((state) => state.shippingAddress);
   const shippingCountry = useCheckoutStore((state) => state.shippingAddress.country);
   const countryCode = normalizeCountryCode(shippingCountry);
@@ -108,8 +120,8 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
                   className="h-4 w-4 text-primary focus:ring-primary border-input"
                 />
                 <div>
-                  <p className="font-medium text-foreground">{option.name}</p>
-                  <p className="text-sm text-muted-foreground">{option.description}</p>
+                  <p className="font-medium text-foreground">{tierName(option)}</p>
+                  <p className="text-sm text-muted-foreground">{tierDescription(option)}</p>
                 </div>
               </div>
               <div className="text-right">

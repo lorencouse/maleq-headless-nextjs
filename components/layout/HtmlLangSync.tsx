@@ -3,13 +3,14 @@
 import { useEffect } from 'react';
 import { useLocale } from 'next-intl';
 
-// Map the internal locale to a proper BCP-47 language tag, matching the
-// hreflang values in lib/i18n/guide-languages.ts. Chinese is Traditional
-// (Taiwan) → zh-Hant so search engines treat it as a distinct language.
+// Map the internal locale to a proper BCP-47 language tag. The bare `zh`
+// routing locale is Simplified (zh-Hans); `zh-hant` is Traditional (Taiwan),
+// so search engines treat them as distinct languages.
 const BCP47: Record<string, string> = {
   en: 'en',
   es: 'es',
-  zh: 'zh-Hant',
+  zh: 'zh-Hans',
+  'zh-hant': 'zh-Hant',
   ja: 'ja',
 };
 

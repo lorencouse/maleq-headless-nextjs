@@ -336,7 +336,13 @@
     "addedToastTemplate": "¡{name} añadido al carrito!",
     "addFailedToast": "No se pudo añadir al carrito",
     "priceNotAvailable": "Precio no disponible",
-    "addedToCartButton": "¡Agregado al Carrito!"
+    "addedToCartButton": "¡Agregado al Carrito!",
+    "stockInStock": "En stock",
+    "stockLowStock": "Pocas unidades",
+    "stockOutOfStock": "Agotado",
+    "stockOnBackorder": "Bajo pedido",
+    "stockLowStockLeft": "Pocas unidades (quedan {count})",
+    "stockQuantityAvailable": "({count} disponibles)"
   },
   "shop": {
     "sortLabel": "Ordenar:",
@@ -808,7 +814,21 @@
       "statHappyCustomers": "Clientes satisfechos",
       "statAverageRating": "Valoración media",
       "statSatisfactionRate": "Tasa de satisfacción",
-      "statShipTime": "Tiempo de envío medio"
+      "statShipTime": "Tiempo de envío medio",
+      "items": {
+        "1": {
+          "text": "Envío rápido y el embalaje era totalmente discreto. Nadie sabría jamás lo que había dentro. ¡La calidad del producto superó mis expectativas!"
+        },
+        "2": {
+          "text": "Las guías de este sitio realmente me ayudaron a tomar una decisión informada. Sin tácticas de venta agresivas, solo información honesta. Sin duda volveré a comprar aquí."
+        },
+        "3": {
+          "text": "El servicio al cliente fue increíblemente útil cuando tuve preguntas. Respondieron con rapidez y profesionalidad. El producto llegó en perfecto estado."
+        },
+        "4": {
+          "text": "Los mejores precios que encontré en línea para marcas premium. La garantía de calidad me dio la confianza para probar algo nuevo. Muy satisfecho con mi compra."
+        }
+      }
     },
     "newsletter": {
       "heading": "Consigue ofertas exclusivas",
@@ -1112,7 +1132,25 @@
       "free": "GRATIS",
       "freeShippingNotice": "¡Añade {amount} más para conseguir envío estándar gratis!",
       "completeAddressNotice": "Completa tu dirección de envío para continuar al pago.",
-      "continueToPayment": "Continuar al pago"
+      "continueToPayment": "Continuar al pago",
+      "tiers": {
+        "standard": {
+          "name": "Envío estándar",
+          "description": "5-7 días hábiles"
+        },
+        "express": {
+          "name": "Envío exprés",
+          "description": "2-3 días hábiles"
+        },
+        "intl-standard": {
+          "name": "Internacional estándar",
+          "description": "6-12 días hábiles"
+        },
+        "intl-priority": {
+          "name": "Internacional prioritario",
+          "description": "3-6 días hábiles"
+        }
+      }
     },
     "payment": {
       "cardDetails": "Datos de la tarjeta",
@@ -1394,7 +1432,25 @@
     "orSaveWithBundle": "o ahorra con el paquete",
     "bestValueBadge": "MEJOR VALOR",
     "saveAmount": "Ahorra ${amount}",
-    "addonsTotal": "Total de complementos:"
+    "addonsTotal": "Total de complementos:",
+    "items": {
+      "addon-toy-cleaner": {
+        "shortName": "Limpiador de juguetes",
+        "description": "Mantén tus juguetes higiénicos y seguros"
+      },
+      "addon-anal-lube": {
+        "shortName": "Lubricante anal",
+        "description": "Lubricante anal premium a base de agua"
+      },
+      "addon-enema": {
+        "shortName": "Enema",
+        "description": "Para una preparación cómoda"
+      },
+      "addon-bundle-all": {
+        "shortName": "Kit de cuidado completo",
+        "description": "Limpiador, lubricante y enema: todo lo que necesitas para la mejor experiencia"
+      }
+    }
   },
   "trustBadges": {
     "discreetShippingTitle": "Envío Discreto",
@@ -1424,7 +1480,15 @@
     "recentlyViewedTitle": "Vistos Recientemente",
     "relatedGuidesHeading": "Guías Relacionadas",
     "youMayAlsoLikeTitle": "También te Puede Gustar",
-    "productSpecificationsHeading": "Especificaciones del Producto"
+    "productSpecificationsHeading": "Especificaciones del Producto",
+    "specSku": "SKU",
+    "specBrand": "Marca",
+    "specCategories": "Categorías",
+    "specTags": "Etiquetas",
+    "specWeight": "Peso",
+    "specDimensions": "Dimensiones",
+    "specAvailability": "Disponibilidad",
+    "specStockQuantity": "Cantidad en stock"
   },
   "productSlugPage": {
     "metaNotFound": "Producto No Encontrado",
@@ -1632,7 +1696,187 @@
     "aiDisclaimer": "Asistente de IA — para ayuda sobre un pedido específico, usa el",
     "contactForm": "formulario de contacto",
     "backToTopics": "Volver a los temas",
-    "contactUs": "Contáctanos"
+    "contactUs": "Contáctanos",
+    "tree": {
+      "orders": {
+        "label": "Pedidos y seguimiento",
+        "track-order": {
+          "label": "¿Dónde está mi pedido?",
+          "answer": "Puedes consultar tu pedido de dos formas:\n\n- Con cuenta: [ver tus pedidos](/account/orders)\n- Compra como invitado: usa el [seguimiento de pedidos](/track-order) con tu número de pedido y el correo electrónico que usaste al pagar\n\nEl seguimiento completo se incluye con el envío exprés. Los envíos gratuitos y económicos pueden no incluir seguimiento detallado."
+        },
+        "multiple-packages": {
+          "label": "Mi pedido llegó en varios paquetes",
+          "answer": "Es normal: enviamos desde varios almacenes en EE. UU., por lo que los pedidos grandes pueden llegar en paquetes separados. Si no has recibido todo al final del plazo de entrega estimado, [contáctanos](/contact) con tu número de pedido."
+        },
+        "cancel-order": {
+          "label": "Cancelar mi pedido",
+          "answer": "Los pedidos se procesan a lo largo del día, así que solo podemos cancelar los que aún no se hayan enviado. [Contáctanos](/contact) de inmediato con tu número de pedido para intentar la cancelación. Los paquetes ya enviados no se pueden recuperar."
+        },
+        "damaged-or-wrong": {
+          "label": "Llegó roto o equivocado",
+          "answer": "Lamentamos lo ocurrido: reembolsamos o reemplazamos los artículos defectuosos y corregimos cualquier error de envío. [Contáctanos](/contact) con:\n\n- Tu número de pedido\n- Una breve descripción del problema\n- Fotos del daño\n- Conserva todo el material de embalaje"
+        }
+      },
+      "shipping": {
+        "label": "Envíos y entrega",
+        "shipping-times": {
+          "label": "¿Cuánto tarda el envío?",
+          "answer": "Los tiempos de envío varían según la modalidad: las estimaciones aparecen junto a cada opción al pagar y en tu recibo. Todos los plazos son en días hábiles (sin fines de semana ni festivos), según las estimaciones de UPS/USPS. Consulta [Envíos y devoluciones](/shipping-returns) para más detalles."
+        },
+        "international": {
+          "label": "¿Hacen envíos internacionales?",
+          "answer": "Sí: enviamos a muchos países de todo el mundo. Las opciones internacionales y sus estimaciones aparecen al pagar. Si tu pedido internacional no llega dentro del plazo estimado, cubriremos la diferencia hasta la siguiente modalidad de envío."
+        },
+        "discreet": {
+          "label": "¿El envío es discreto?",
+          "answer": "Sí. Todos los artículos se envían en embalaje sencillo y sin marcas, sin ninguna indicación del contenido. El remitente aparece como **CNV** o **TMQ**. Para la aduana internacional, los artículos se declaran como «Health Equipment», «Cosmetic» o «Gift». Más información en la [página de Envíos y devoluciones](/shipping-returns)."
+        },
+        "tracking-number": {
+          "label": "¿Recibiré un número de seguimiento?",
+          "answer": "El envío exprés incluye seguimiento completo. Los envíos gratuitos y económicos pueden no incluir seguimiento detallado. Siempre puedes consultar el estado desde [tu cuenta](/account/orders) o el [seguimiento de pedidos](/track-order)."
+        },
+        "billing-statement": {
+          "label": "¿Qué nombre aparece en mi estado de cuenta?",
+          "answer": "Las compras aparecen como **TMQ LLC** en el estado de cuenta de tu tarjeta de débito o crédito. Nunca revelamos qué se compró en el propio estado de cuenta."
+        }
+      },
+      "returns": {
+        "label": "Devoluciones y reembolsos",
+        "return-policy": {
+          "label": "¿Cuál es su política de devoluciones?",
+          "answer": "Por motivos de higiene, **todas las ventas son definitivas**. Solo ofrecemos reembolsos o reemplazos en caso de:\n\n- Artículos enviados por error\n- Artículos dañados a la llegada\n\nRevisa los artículos cuanto antes. Política completa en [Envíos y devoluciones](/shipping-returns)."
+        },
+        "damaged-return": {
+          "label": "Mi artículo llegó dañado",
+          "answer": "Lo reembolsamos o lo reemplazamos. [Contáctanos](/contact) con tu número de pedido y fotos del daño, y conserva todo el material de embalaje."
+        },
+        "bounced-package": {
+          "label": "Mi paquete fue rechazado o devuelto",
+          "answer": "Los envíos devueltos, no entregables o rechazados están sujetos a una tarifa de reposición del 10 %. Los gastos de envío de artículos ya enviados no son reembolsables."
+        }
+      },
+      "payment": {
+        "label": "Pago y facturación",
+        "payment-methods": {
+          "label": "¿Qué métodos de pago aceptan?",
+          "answer": "Todas las principales tarjetas de crédito (Visa, MasterCard, American Express, Discover), Apple Pay y Google Pay, todo a través de nuestro pago con tecnología de Stripe."
+        },
+        "payment-plans": {
+          "label": "¿Ofrecen planes de pago?",
+          "answer": "Sí: Afterpay y Klarna están disponibles al pagar para pedidos que reúnan los requisitos, lo que te permite dividir las compras en cuotas sin intereses. Aparecen automáticamente durante el pago."
+        },
+        "declined": {
+          "label": "Mi pago fue rechazado",
+          "answer": "Causas habituales: datos incorrectos de la tarjeta, fondos insuficientes o la protección antifraude de tu banco. Verifica tus datos e inténtalo de nuevo, o llama a tu banco. Si el problema continúa, [contáctanos](/contact)."
+        },
+        "international-currency": {
+          "label": "¿Aceptan monedas internacionales?",
+          "answer": "Sí. Los precios se muestran en USD; tu banco cobra en tu moneda local según su tipo de cambio. Pueden añadir comisiones por transacción internacional; consulta los detalles con tu banco."
+        },
+        "payment-secure": {
+          "label": "¿Mi información de pago está segura?",
+          "answer": "Sí. Usamos cifrado SSL estándar del sector y Stripe gestiona todo el procesamiento de pagos (conforme a PCI). Nunca almacenamos los datos completos de tu tarjeta de crédito en nuestros servidores."
+        }
+      },
+      "account": {
+        "label": "Cuenta e inicio de sesión",
+        "reset-password": {
+          "label": "Olvidé mi contraseña",
+          "answer": "Ve a [Olvidé mi contraseña](/forgot-password), introduce tu correo electrónico y te enviaremos un enlace para restablecerla. Revisa tu carpeta de spam si no aparece en unos minutos."
+        },
+        "need-account": {
+          "label": "¿Necesito una cuenta?",
+          "answer": "No: la compra como invitado funciona perfectamente. Una cuenta te da historial de pedidos, direcciones guardadas, listas de deseos y un seguimiento más fácil. [Regístrate aquí](/register) si quieres una."
+        },
+        "coupon": {
+          "label": "¿Cómo uso un código de cupón?",
+          "answer": "Introduce el código en el campo de la [página del carrito](/cart) o durante el pago y haz clic en **Aplicar**. Solo se permite un cupón por pedido."
+        }
+      },
+      "product-help": {
+        "label": "Encontrar un producto / recomendaciones",
+        "audience-male": {
+          "label": "Para él",
+          "cock-rings": {
+            "label": "Anillos para el pene"
+          },
+          "prostate": {
+            "label": "Masajeadores de próstata"
+          },
+          "masturbators": {
+            "label": "Masturbadores y estimuladores"
+          },
+          "penis-pumps": {
+            "label": "Bombas de succión para el pene"
+          },
+          "sleeves": {
+            "label": "Fundas y extensiones"
+          }
+        },
+        "audience-female": {
+          "label": "Para ella",
+          "clit-vibes": {
+            "label": "Vibradores de clítoris"
+          },
+          "gspot": {
+            "label": "Juguetes para el punto G"
+          },
+          "rabbits": {
+            "label": "Vibradores tipo conejo"
+          },
+          "suction": {
+            "label": "Succión / pulso de aire"
+          },
+          "wands": {
+            "label": "Masajeadores tipo varita"
+          }
+        },
+        "audience-universal": {
+          "label": "Universal / parejas",
+          "anal": {
+            "label": "Juguetes anales"
+          },
+          "dildos": {
+            "label": "Consoladores"
+          },
+          "bondage": {
+            "label": "Bondage y BDSM"
+          },
+          "strapons": {
+            "label": "Arneses y dildos con arnés"
+          },
+          "lube": {
+            "label": "Lubricantes"
+          },
+          "condoms": {
+            "label": "Preservativos"
+          }
+        }
+      },
+      "care": {
+        "label": "Cuidado del producto y compatibilidad",
+        "cleaning": {
+          "label": "¿Cómo limpio mi producto?",
+          "answer": "La mayoría de los productos: agua tibia y jabón antibacteriano suave (o un limpiador específico para juguetes), antes y después de cada uso. Consulta siempre las instrucciones específicas del producto y evita los productos químicos agresivos."
+        },
+        "storage": {
+          "label": "¿Cómo debo guardar mis productos?",
+          "answer": "En un lugar fresco y seco, sin luz solar directa. Guarda los artículos de silicona por separado (pueden reaccionar con otros materiales). Evita las bolsas de plástico, ya que retienen la humedad. Muchos productos incluyen una bolsa para guardarlos."
+        },
+        "lube": {
+          "label": "¿Qué lubricante debo usar?",
+          "answer": "**A base de agua:** seguro con todo.\n**A base de silicona:** dura más, pero **no lo uses con productos de silicona**.\n**A base de aceite:** nunca con látex.\n\nConsulta la página del producto para ver recomendaciones específicas."
+        },
+        "replace": {
+          "label": "¿Cuándo debo reemplazar un producto?",
+          "answer": "Reemplázalo ante cualquier signo de decoloración, olor, pegajosidad, roturas o grietas. La silicona de calidad puede durar años con el cuidado adecuado; otros materiales pueden necesitar reemplazo antes. En caso de duda, reemplázalo por seguridad."
+        }
+      },
+      "something-else": {
+        "label": "Otra cosa",
+        "transition": "De acuerdo, sin problema. ¿Cuál es tu pregunta?"
+      }
+    }
   },
   "discountBanner": {
     "spend": "Gasta",

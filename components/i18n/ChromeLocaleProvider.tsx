@@ -33,7 +33,8 @@ const DEFAULT_LOCALE = 'en';
 // when a user actually selects that language).
 const CATALOG_LOADERS: Record<string, () => Promise<{ default: Record<string, unknown> }>> = {
   es: () => import('@/messages/es.json'),
-  zh: () => import('@/messages/zh.json'),
+  zh: () => import('@/messages/zh.json'), // Simplified
+  'zh-hant': () => import('@/messages/zh-hant.json'), // Traditional
 };
 
 function readLocaleCookie(): string | null {

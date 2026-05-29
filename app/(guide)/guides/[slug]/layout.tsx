@@ -10,13 +10,15 @@ import { staticIntlProviderProps } from '@/i18n/static-intl-props';
 // are build-time, so the nested provider stays ISR-safe.
 import enMessages from '@/messages/en.json';
 import esMessages from '@/messages/es.json';
-import zhMessages from '@/messages/zh.json';
+// Guide content is Traditional (zh-hant); the bare zh.json is Simplified UI
+// chrome with no guide content, so it is intentionally not loaded here.
+import zhHantMessages from '@/messages/zh-hant.json';
 import jaMessages from '@/messages/ja.json';
 
 const CATALOGS: Record<string, Record<string, unknown>> = {
   en: enMessages,
   es: esMessages,
-  zh: zhMessages,
+  'zh-hant': zhHantMessages,
   ja: jaMessages,
 };
 
@@ -53,7 +55,7 @@ export default async function GuidePostLayout({
   // CRITICAL for ISR: setRequestLocale() opts this page into STATIC rendering.
   // Without it next-intl resolves the locale via headers() → DYNAMIC_SERVER_USAGE
   // → every guide post 500s under `revalidate = N`. It must be a value next-intl
-  // accepts (a routing locale), so the chrome-only locales zh/ja seed with the
+  // accepts, so non-Spanish guide languages (zh-hant/ja) seed with the
   // default (en). The ACTUAL guide language flows through the statically-imported
   // catalog + provider below and the page's explicit getTranslations/locale props
   // (the client chrome — Footer/Header — reads the provider, so it renders in the
