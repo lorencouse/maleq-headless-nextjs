@@ -381,6 +381,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      // Pin to UTC so SSR (server is UTC in prod) and the browser produce the
+      // SAME string. Without this, a post/comment date that lands on a
+      // different calendar day in the visitor's timezone causes a hydration
+      // text mismatch (React #418) that bails the tree — which strands the
+      // client-side add-to-cart enhancer (buttons vanish on some posts).
+      timeZone: 'UTC',
     });
   };
 

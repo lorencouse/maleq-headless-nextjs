@@ -23,6 +23,9 @@ export default function BlogCard({ post }: BlogCardProps) {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      // Pin to UTC so server (UTC in prod) and browser render the same string —
+      // otherwise a timezone-shifted date triggers a hydration mismatch (#418).
+      timeZone: 'UTC',
     });
   };
 
