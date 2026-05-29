@@ -22,6 +22,7 @@ import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 import {
   useLocalizedColorName,
   useLocalizedMaterialName,
+  useLocalizedFlavorName,
   useLocalizedAttributeName,
 } from '@/lib/i18n/attribute-translations';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
@@ -58,6 +59,7 @@ export default function ProductPageClient({
   const localizeCategoryName = useLocalizedCategoryName();
   const localizeColorName = useLocalizedColorName();
   const localizeMaterialName = useLocalizedMaterialName();
+  const localizeFlavorName = useLocalizedFlavorName();
   const localizeAttributeName = useLocalizedAttributeName();
   const addItem = useCartStore((state) => state.addItem);
   const miniCartControls = useMiniCartControls();
@@ -423,6 +425,7 @@ export default function ProductPageClient({
                   const formatted = formatAttributeValue(opt);
                   if (an === 'color') return localizeColorName(slug, formatted);
                   if (an === 'material') return localizeMaterialName(slug, formatted);
+                  if (an === 'flavor') return localizeFlavorName(slug, formatted);
                   return formatted;
                 };
                 return (
