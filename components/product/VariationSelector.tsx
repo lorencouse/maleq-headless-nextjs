@@ -16,6 +16,7 @@ import {
 } from '@/lib/i18n/attribute-translations';
 import { findDefaultVariation } from '@/lib/products/variation-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
+import { processContentImages } from '@/lib/utils/image';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
 import { formatSizeValue, isConvertibleSize } from '@/lib/products/size-units';
 import { useUnitSystem } from '@/lib/hooks/useUnitSystem';
@@ -84,7 +85,7 @@ function VariationDescription({ description }: { description: string }) {
           !isExpanded ? `line-clamp-[${DESCRIPTION_CLAMP_LINES}]` : ''
         }`}
         style={!isExpanded ? { WebkitLineClamp: DESCRIPTION_CLAMP_LINES, display: '-webkit-box', WebkitBoxOrient: 'vertical', overflow: 'hidden' } : undefined}
-        dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
+        dangerouslySetInnerHTML={{ __html: processContentImages(sanitizeHtml(description)) }}
       />
       {isClamped && (
         <button
