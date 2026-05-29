@@ -50,6 +50,7 @@ export default function ProductSpecifications({
 }: ProductSpecificationsProps) {
   const t = useTranslations('productRelated');
   const tProduct = useTranslations('product');
+  const tVar = useTranslations('variations');
   const localizeCategoryName = useLocalizedCategoryName();
   const localizeColorName = useLocalizedColorName();
   const localizeMaterialName = useLocalizedMaterialName();
@@ -98,6 +99,16 @@ export default function ProductSpecifications({
         .split(', ')
         .map((v) => formatSizeValue(v, unitSystem) ?? v)
         .join(', ');
+    }
+    // Dimensions: rebuild from raw values with localized Length/Width/Height
+    // labels (the stored `value` is English-only).
+    if (spec.label === 'Dimensions' && spec.dimensions) {
+      const d = spec.dimensions;
+      const parts: string[] = [];
+      if (d.length) parts.push(`${tVar('lengthLabel')} ${tVar('inchValue', { value: d.length })}`);
+      if (d.width) parts.push(`${tVar('widthLabel')} ${tVar('inchValue', { value: d.width })}`);
+      if (d.height) parts.push(`${tVar('heightLabel')} ${tVar('inchValue', { value: d.height })}`);
+      if (parts.length > 0) return parts.join(' | ');
     }
     return spec.value;
   };

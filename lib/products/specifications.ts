@@ -15,6 +15,12 @@ export interface ProductSpecification {
   label: string;
   value: string;
   links?: ProductSpecificationLink[];
+  /**
+   * Raw dimension values (inches) so the client can render localized
+   * Length/Width/Height labels. `value` stays as an English fallback for
+   * non-localized consumers (e.g. the DB export script).
+   */
+  dimensions?: { length?: string; width?: string; height?: string };
 }
 
 /**
@@ -102,6 +108,11 @@ export function extractSpecifications(product: SpecificationInput, isVariable: b
     specs.push({
       label: 'Dimensions',
       value: dimensionParts.join(' | '),
+      dimensions: {
+        length: product.length || undefined,
+        width: product.width || undefined,
+        height: product.height || undefined,
+      },
     });
   }
 
