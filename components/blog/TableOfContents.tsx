@@ -13,12 +13,23 @@ interface TableOfContentsProps {
   variant?: 'desktop' | 'mobile';
 }
 
+// Stable empty reference for the server/initial snapshot. useSyncExternalStore
+// requires getServerSnapshot to return a CACHED value — a fresh `[]` each call
+// makes production React treat hydration as failed (#418) and bail the subtree.
+// On the guide page that bail also strands sibling client components (e.g. the
+// add-to-cart enhancer), so keep this reference stable.
+const EMPTY_HEADINGS: TocItem[] = [];
+
+function getServerHeadingsSnapshot(): TocItem[] {
+  return EMPTY_HEADINGS;
+}
+
 let headingsSnapshotCache: {
   key: string;
   items: TocItem[];
 } = {
   key: '',
-  items: [],
+  items: EMPTY_HEADINGS,
 };
 
 function getHeadingsFromDocument(): TocItem[] {
@@ -79,7 +90,7 @@ function useTocData() {
   const headings = useSyncExternalStore(
     subscribeToHeadings,
     getHeadingsFromDocument,
-    () => []
+    getServerHeadingsSnapshot
   );
   const [activeId, setActiveId] = useState<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);

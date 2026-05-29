@@ -22,12 +22,23 @@ interface AddToCartEnhancerProps {
   products: Record<string, BlogProduct>;
 }
 
+// Stable empty reference for the server/initial snapshot. useSyncExternalStore
+// requires getServerSnapshot to return a CACHED value — returning a fresh `[]`
+// each call makes production React treat hydration as failed (#418) and bail
+// the whole subtree, so the portals never mount (buttons present on soft nav,
+// gone on hard refresh). A module-level constant keeps the reference stable.
+const EMPTY_PLACEHOLDERS: ProductPlaceholder[] = [];
+
+function getServerPlaceholderSnapshot(): ProductPlaceholder[] {
+  return EMPTY_PLACEHOLDERS;
+}
+
 let placeholderSnapshotCache: {
   key: string;
   items: ProductPlaceholder[];
 } = {
   key: '',
-  items: [],
+  items: EMPTY_PLACEHOLDERS,
 };
 
 function getPlaceholderSnapshot(): ProductPlaceholder[] {
@@ -244,7 +255,7 @@ export default function AddToCartEnhancer({ products }: AddToCartEnhancerProps) 
   const placeholders = useSyncExternalStore(
     subscribeToPlaceholders,
     getPlaceholderSnapshot,
-    () => []
+    getServerPlaceholderSnapshot
   );
 
   return (
