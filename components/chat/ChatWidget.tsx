@@ -59,6 +59,19 @@ type Discovery = {
 
 const STORAGE_KEY = 'maleq-chat-state';
 /**
+ * Window event other components (e.g. the /contact "Chat with us" button) can
+ * dispatch to open the chat panel without a shared store:
+ *   window.dispatchEvent(new Event(OPEN_CHAT_EVENT))
+ */
+export const OPEN_CHAT_EVENT = 'maleq:open-chat';
+/**
+ * Short, human-feeling pause before Mr. Q's canned (guided/feedback)
+ * replies appear, during which the typing-dots indicator shows. AI replies
+ * use real network latency for the same effect, so this only gates the
+ * instant decision-tree responses.
+ */
+const TYPING_DELAY_MS = 1400;
+/**
  * Bump this whenever the decision-tree structure, persisted Message shape, or
  * Mode semantics change in a way that would make old state confusing or
  * unreachable (e.g. a node that was 'escalate' becoming 'category'). Old state
@@ -78,6 +91,25 @@ type Persisted = {
 function newId() {
   return Math.random().toString(36).slice(2);
 }
+
+/**
+ * Per-pill color palette, cycled by index so each guided pill gets its own
+ * color. Anchored to the site accent system: the first entry is the exact
+ * brand primary (--primary #E63946), and the orange/indigo entries mirror the
+ * --accent (#f97316) and --secondary (#6366f1) tokens, with the rest harmonized
+ * warm→cool at readable tones (white text). Full literal class strings so
+ * Tailwind's scanner keeps them; each has light + dark variants.
+ */
+const PILL_COLORS = [
+  'bg-primary text-white hover:bg-primary-hover',
+  'bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600',
+  'bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600',
+  'bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600',
+  'bg-pink-600 text-white hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600',
+  'bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600',
+  'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600',
+  'bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600',
+];
 
 // Renders [label](/path) markdown links and **bold** as React nodes.
 // Only internal paths (starting with /) become links — everything else is plain text.
@@ -155,11 +187,15 @@ export default function ChatWidget() {
   const [feedbackPending, setFeedbackPending] = useState(false);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
+  // `typing` drives the "Mr. Q is typing…" dots. Transient, never persisted.
+  const [typing, setTyping] = useState(false);
   // Discovery state is NOT persisted to localStorage — it's transient.
   const [discovery, setDiscovery] = useState<Discovery | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  /** Pending timer for a delayed canned reply, so we can cancel it on reset/unmount. */
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   /** Last answered node so feedback events can attribute helpful/unhelpful to a specific Q. */
   const lastAnswerRef = useRef<{ id: string; parentId: string } | null>(null);
@@ -202,7 +238,38 @@ export default function ChatWidget() {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, open, mode, path, feedbackPending]);
+  }, [messages, open, mode, path, feedbackPending, typing]);
+
+  // Cancel any pending typing timer when the widget unmounts.
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    };
+  }, []);
+
+  // Append the user's message (if any) immediately, show the typing-dots
+  // indicator for a short pause, then reveal Mr. Q's reply and run any
+  // follow-up state change (e.g. open the feedback row, switch to AI mode).
+  const botReply = useCallback(
+    (opts: { userContent?: string; assistantContent: string; after?: () => void }) => {
+      if (opts.userContent) {
+        const uc = opts.userContent;
+        setMessages((cur) => [...cur, { id: newId(), role: 'user', content: uc }]);
+      }
+      setTyping(true);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        setMessages((cur) => [
+          ...cur,
+          { id: newId(), role: 'assistant', content: opts.assistantContent },
+        ]);
+        setTyping(false);
+        typingTimerRef.current = null;
+        opts.after?.();
+      }, TYPING_DELAY_MS);
+    },
+    []
+  );
 
   // Focus input when AI mode opens
   useEffect(() => {
@@ -219,6 +286,11 @@ export default function ChatWidget() {
       depth_before: path.length,
     });
     abortRef.current?.abort();
+    if (typingTimerRef.current) {
+      clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    setTyping(false);
     setMode('guided');
     setPath([]);
     setMessages([]);
@@ -268,15 +340,10 @@ export default function ChatWidget() {
   const enterDiscovery = useCallback(
     (node: Extract<TreeNode, { type: 'product-finder' }>, localizedLabel: string) => {
       const labelLower = localizedLabel.toLowerCase();
-      setMessages((cur) => [
-        ...cur,
-        { id: newId(), role: 'user', content: localizedLabel },
-        {
-          id: newId(),
-          role: 'assistant',
-          content: t('discoveryIntro', { label: labelLower }),
-        },
-      ]);
+      botReply({
+        userContent: localizedLabel,
+        assistantContent: t('discoveryIntro', { label: labelLower }),
+      });
       setDiscovery({
         nodeId: node.id,
         // Display label is localized; node.query stays English (the product
@@ -289,7 +356,7 @@ export default function ChatWidget() {
       });
       fetchDiscovery(node.query, {});
     },
-    [fetchDiscovery, t]
+    [fetchDiscovery, botReply, t]
   );
 
   const applyDiscoveryFilter = useCallback(
@@ -339,13 +406,9 @@ export default function ChatWidget() {
       filterDesc,
     });
 
-    setMessages((cur) => [
-      ...cur,
-      { id: newId(), role: 'assistant', content: transition },
-    ]);
-    setMode('ai');
+    botReply({ assistantContent: transition, after: () => setMode('ai') });
     setDiscovery(null);
-  }, [discovery, path.length, t]);
+  }, [discovery, path.length, botReply, t]);
 
   const exitDiscoveryToParent = useCallback(() => {
     setDiscovery(null);
@@ -358,6 +421,21 @@ export default function ChatWidget() {
       }
       return !wasOpen;
     });
+  }, [mode, path.length]);
+
+  // Let other parts of the app open the chat by dispatching OPEN_CHAT_EVENT
+  // (no shared store needed). No-op if it's already open.
+  useEffect(() => {
+    const onOpenRequest = () => {
+      setOpen((wasOpen) => {
+        if (!wasOpen) {
+          trackChatbot('chatbot_open', { mode, depth: path.length, via: 'external' });
+        }
+        return true;
+      });
+    };
+    window.addEventListener(OPEN_CHAT_EVENT, onOpenRequest);
+    return () => window.removeEventListener(OPEN_CHAT_EVENT, onOpenRequest);
   }, [mode, path.length]);
 
   const goBack = useCallback(() => {
@@ -373,6 +451,7 @@ export default function ChatWidget() {
 
   const handlePillClick = useCallback(
     (node: TreeNode) => {
+      if (typing) return;
       const parentId = path[path.length - 1] ?? 'root';
       const idPath = [...path, node.id];
       // Localized text for what the user sees; analytics keeps node.label
@@ -394,12 +473,11 @@ export default function ChatWidget() {
       }
       if (node.type === 'answer') {
         lastAnswerRef.current = { id: node.id, parentId };
-        setMessages((cur) => [
-          ...cur,
-          { id: newId(), role: 'user', content: label },
-          { id: newId(), role: 'assistant', content: treeText(idPath, 'answer', node.answer) },
-        ]);
-        setFeedbackPending(true);
+        botReply({
+          userContent: label,
+          assistantContent: treeText(idPath, 'answer', node.answer),
+          after: () => setFeedbackPending(true),
+        });
         return;
       }
       if (node.type === 'escalate') {
@@ -408,13 +486,12 @@ export default function ChatWidget() {
           source_id: node.id,
           depth: path.length,
         });
-        setMessages((cur) => [
-          ...cur,
-          { id: newId(), role: 'user', content: label },
-          { id: newId(), role: 'assistant', content: treeText(idPath, 'transition', node.transition) },
-        ]);
-        setMode('ai');
         setFeedbackPending(false);
+        botReply({
+          userContent: label,
+          assistantContent: treeText(idPath, 'transition', node.transition),
+          after: () => setMode('ai'),
+        });
         return;
       }
       if (node.type === 'product-finder') {
@@ -423,7 +500,7 @@ export default function ChatWidget() {
         return;
       }
     },
-    [path, enterDiscovery, treeText]
+    [path, typing, enterDiscovery, botReply, treeText]
   );
 
   const sendToAI = useCallback(
@@ -440,9 +517,24 @@ export default function ChatWidget() {
       const userMsg: Message = { id: newId(), role: 'user', content: trimmed };
       const assistantId = newId();
       const next = [...messages, userMsg];
-      setMessages([...next, { id: assistantId, role: 'assistant', content: '' }]);
+      setMessages(next);
       setInput('');
       setStreaming(true);
+      // Show the typing-dots indicator until the first token arrives, then
+      // swap it for the assistant bubble that streams the rest of the reply.
+      setTyping(true);
+      let assistantStarted = false;
+      const writeAssistant = (content: string) => {
+        if (!assistantStarted) {
+          assistantStarted = true;
+          setTyping(false);
+          setMessages((cur) => [...cur, { id: assistantId, role: 'assistant', content }]);
+        } else {
+          setMessages((cur) =>
+            cur.map((m) => (m.id === assistantId ? { ...m, content } : m))
+          );
+        }
+      };
 
       // Only send user/assistant messages — the LLM doesn't need the canned answers,
       // but including them gives it context about what the user already saw.
@@ -461,13 +553,7 @@ export default function ChatWidget() {
 
         if (!res.ok || !res.body) {
           const errText = await res.text().catch(() => '');
-          setMessages((cur) =>
-            cur.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: errText || t('errorGeneric') }
-                : m
-            )
-          );
+          writeAssistant(errText || t('errorGeneric'));
           return;
         }
 
@@ -507,9 +593,7 @@ export default function ChatWidget() {
 
             if (parsed.type === 'delta' && typeof parsed.text === 'string') {
               acc += parsed.text;
-              setMessages((cur) =>
-                cur.map((m) => (m.id === assistantId ? { ...m, content: acc } : m))
-              );
+              writeAssistant(acc);
             } else if (parsed.type === 'error') {
               errorMessage = parsed.message ?? t('errorGenericShort');
               break outer;
@@ -520,26 +604,15 @@ export default function ChatWidget() {
         }
 
         if (errorMessage) {
-          setMessages((cur) =>
-            cur.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: acc ? `${acc}\n\n${errorMessage}` : errorMessage! }
-                : m
-            )
-          );
+          writeAssistant(acc ? `${acc}\n\n${errorMessage}` : errorMessage);
         }
       } catch (err) {
         if ((err as Error).name !== 'AbortError') {
-          setMessages((cur) =>
-            cur.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: t('errorConnection') }
-                : m
-            )
-          );
+          writeAssistant(t('errorConnection'));
         }
       } finally {
         setStreaming(false);
+        setTyping(false);
         abortRef.current = null;
       }
     },
@@ -558,50 +631,40 @@ export default function ChatWidget() {
   };
 
   const handleFeedbackYes = useCallback(() => {
+    if (typing) return;
     const ctx = lastAnswerRef.current;
     trackChatbot('chatbot_feedback', {
       helpful: true,
       answer_id: ctx?.id,
       parent_id: ctx?.parentId,
     });
-    setMessages((cur) => [
-      ...cur,
-      { id: newId(), role: 'user', content: t('feedbackYesUser') },
-      {
-        id: newId(),
-        role: 'assistant',
-        content: t('feedbackYesAssistant'),
-      },
-    ]);
     setFeedbackPending(false);
-    setPath([]);
     lastAnswerRef.current = null;
-  }, [t]);
+    botReply({
+      userContent: t('feedbackYesUser'),
+      assistantContent: t('feedbackYesAssistant'),
+      after: () => setPath([]),
+    });
+  }, [typing, botReply, t]);
 
   const handleFeedbackNo = useCallback(() => {
+    if (typing) return;
     const ctx = lastAnswerRef.current;
     trackChatbot('chatbot_feedback', {
       helpful: false,
       answer_id: ctx?.id,
       parent_id: ctx?.parentId,
     });
-    trackChatbot('chatbot_escalated', {
-      reason: 'unhelpful_answer',
-      source_id: ctx?.id,
-      depth: path.length,
-    });
-    setMessages((cur) => [
-      ...cur,
-      { id: newId(), role: 'user', content: t('feedbackNoUser') },
-      {
-        id: newId(),
-        role: 'assistant',
-        content: t('feedbackNoAssistant'),
-      },
-    ]);
-    setMode('ai');
     setFeedbackPending(false);
-  }, [path.length, t]);
+    lastAnswerRef.current = null;
+    // "I still need help" loops the user back to the top of the guided tree
+    // (the Contact Us pill there is always available as the human escape hatch).
+    botReply({
+      userContent: t('feedbackNoUser'),
+      assistantContent: t('feedbackNoAssistant'),
+      after: () => setPath([]),
+    });
+  }, [typing, botReply, t]);
 
   // Build the displayed message list (prepend greeting if empty)
   const display = messages.length === 0
@@ -641,10 +704,13 @@ export default function ChatWidget() {
         >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-            <div>
-              <div className="font-semibold text-foreground text-sm">{t('headerTitle')}</div>
-              <div className="text-xs text-muted-foreground">
-                {mode === 'guided' ? t('modeGuided') : t('modeAi')}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <BotAvatar className="w-9 h-9" />
+              <div className="min-w-0">
+                <div className="font-semibold text-foreground text-sm truncate">{t('headerTitle')}</div>
+                <div className="text-xs text-muted-foreground">
+                  {mode === 'guided' ? t('modeGuided') : t('modeAi')}
+                </div>
               </div>
             </div>
             <button
@@ -662,13 +728,14 @@ export default function ChatWidget() {
             {display.map((m) => (
               <div
                 key={m.id}
-                className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}
+                className={`flex items-end gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
+                {m.role === 'assistant' && <BotAvatar />}
                 <div
                   className={
                     m.role === 'user'
-                      ? 'max-w-[85%] rounded-2xl rounded-br-md bg-primary text-primary-foreground px-3 py-2 whitespace-pre-wrap break-words'
-                      : 'max-w-[85%] rounded-2xl rounded-bl-md bg-muted text-foreground px-3 py-2 whitespace-pre-wrap break-words'
+                      ? 'max-w-[80%] rounded-2xl rounded-br-md bg-primary text-primary-foreground px-3 py-2 whitespace-pre-wrap break-words'
+                      : 'max-w-[80%] rounded-2xl rounded-bl-md bg-muted text-foreground px-3 py-2 whitespace-pre-wrap break-words'
                   }
                 >
                   {m.role === 'assistant' ? renderContent(m.content) : m.content}
@@ -676,12 +743,27 @@ export default function ChatWidget() {
                     <span className="inline-block w-1.5 h-3 ml-0.5 bg-current animate-pulse align-middle" />
                   )}
                 </div>
+                {m.role === 'user' && <UserAvatar />}
               </div>
             ))}
+
+            {/* Typing indicator — Mr. Q "is typing…" dots */}
+            {typing && (
+              <div className="flex items-end gap-2 justify-start">
+                <BotAvatar />
+                <div className="rounded-2xl rounded-bl-md bg-muted px-3.5 py-3">
+                  <span className="flex gap-1" aria-label={t('typing')} role="status">
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Guided controls (pills) */}
-          {mode === 'guided' && (
+          {/* Guided controls (pills) — hidden while Mr. Q is "typing" */}
+          {mode === 'guided' && !typing && (
             <div className="border-t border-border bg-background px-3 py-3 max-h-[55%] overflow-y-auto">
               {feedbackPending ? (
                 <div>
@@ -870,16 +952,12 @@ export default function ChatWidget() {
                     {path.length === 0 ? t('chooseTopic') : t('pickQuestion')}
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {currentPills.map((node) => (
+                    {currentPills.map((node, i) => (
                       <button
                         key={node.id}
                         type="button"
                         onClick={() => handlePillClick(node)}
-                        className={
-                          node.type === 'escalate'
-                            ? 'px-3 py-1.5 rounded-full bg-muted text-foreground text-xs font-medium hover:bg-muted/70 border border-border transition-colors'
-                            : 'px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium hover:bg-primary/20 transition-colors text-left'
-                        }
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors text-left ${PILL_COLORS[i % PILL_COLORS.length]}`}
                       >
                         {treeText([...path, node.id], 'label', node.label)}
                       </button>
@@ -937,6 +1015,40 @@ export default function ChatWidget() {
         </div>
       )}
     </>
+  );
+}
+
+/** Mr. Q's avatar — the brand mascot, shown beside assistant messages and in the header. */
+function BotAvatar({ className }: { className?: string }) {
+  const t = useTranslations('chat');
+  return (
+    <div
+      className={`flex-shrink-0 ${className ?? 'w-8 h-8'} rounded-full overflow-hidden border border-border bg-card shadow-sm`}
+    >
+      <Image
+        src="/images/Mr-Q-profile.png"
+        alt={t('botName')}
+        width={36}
+        height={36}
+        className="w-full h-full object-cover"
+      />
+    </div>
+  );
+}
+
+/** Generic user avatar shown beside the visitor's own messages. */
+function UserAvatar() {
+  return (
+    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/15 text-primary flex items-center justify-center">
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+        />
+      </svg>
+    </div>
   );
 }
 

@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
 import ContactForm from '@/components/contact/ContactForm';
+import ChatWithUsButton from '@/components/chat/ChatWithUsButton';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -43,25 +44,13 @@ export default function ContactPage() {
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                     <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-medium text-foreground">{t('contactInfoTitle')}</h3>
-                    <p className="text-muted-foreground">{t('contactInfoBody')}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{t('hoursTitle')}</h3>
-                    <p className="text-muted-foreground">{t('hoursWeekday')}</p>
-                    <p className="text-muted-foreground">{t('hoursWeekend')}</p>
+                    <h3 className="font-medium text-foreground">{t('chatTitle')}</h3>
+                    <p className="text-muted-foreground mb-3">{t('chatBody')}</p>
+                    <ChatWithUsButton />
                   </div>
                 </div>
 

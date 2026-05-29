@@ -64,7 +64,7 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'My order arrived in multiple packages',
         type: 'answer',
         answer:
-          "That's normal — we ship from multiple warehouses across the US, so larger orders can arrive in separate packages. If you haven't received everything by the end of the estimated delivery window, [contact us](/contact) with your order number.",
+          "That's normal, we ship from multiple warehouses across the US, so larger orders can arrive in separate packages. If you haven't received everything by the end of the estimated delivery window, [contact us](/contact) with your order number.",
       },
       {
         id: 'cancel-order',
@@ -78,7 +78,7 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'Item arrived broken or wrong',
         type: 'answer',
         answer:
-          "Sorry about that — we'll credit or replace defective items and fix any shipping mistakes. [Contact us](/contact) with:\n\n- Your order number\n- A short description of the issue\n- Photos of the damage\n- Keep all packaging materials",
+          "Sorry about that, we'll credit or replace defective items and fix any shipping mistakes. [Contact us](/contact) with:\n\n- Your order number\n- A short description of the issue\n- Photos of the damage\n- Keep all packaging materials",
       },
     ],
   },
@@ -92,14 +92,14 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'How long does shipping take?',
         type: 'answer',
         answer:
-          "Shipping times vary by tier — estimates appear next to each option at checkout and on your receipt. All times are in business days (no weekends or holidays), based on UPS/USPS estimates. See [Shipping & Returns](/shipping-returns) for details.",
+          "Shipping times vary by tier, estimates appear next to each option at checkout and on your receipt. All times are in business days (no weekends or holidays), based on UPS/USPS estimates. See [Shipping & Returns](/shipping-returns) for details.",
       },
       {
         id: 'international',
         label: 'Do you ship internationally?',
         type: 'answer',
         answer:
-          "Yes — we ship to many countries worldwide. International options and estimates appear at checkout. If your international order doesn't arrive within the estimated window, we'll cover the difference to the next shipping tier.",
+          "Yes, we ship to many countries worldwide. International options and estimates appear at checkout. If your international order doesn't arrive within the estimated window, we'll cover the difference to the next shipping tier.",
       },
       {
         id: 'discreet',
@@ -162,14 +162,14 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'What payment methods do you accept?',
         type: 'answer',
         answer:
-          "All major credit cards (Visa, MasterCard, American Express, Discover), Apple Pay, and Google Pay — all through our Stripe-powered checkout.",
+          "All major credit cards (Visa, MasterCard, American Express, Discover), Apple Pay, and Google Pay, all through our Stripe-powered checkout.",
       },
       {
         id: 'payment-plans',
         label: 'Do you offer payment plans?',
         type: 'answer',
         answer:
-          "Yes — Afterpay and Klarna are available at checkout for qualifying orders, letting you split purchases into interest-free installments. They appear automatically during checkout.",
+          "Yes, Afterpay and Klarna are available at checkout for qualifying orders, letting you split purchases into interest-free installments. They appear automatically during checkout.",
       },
       {
         id: 'declined',
@@ -183,7 +183,7 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'Do you accept international currencies?',
         type: 'answer',
         answer:
-          "Yes. Prices are listed in USD; your bank charges in your local currency at their exchange rate. They may add international transaction fees — check with your bank for specifics.",
+          "Yes. Prices are listed in USD; your bank charges in your local currency at their exchange rate. They may add international transaction fees, check with your bank for specifics.",
       },
       {
         id: 'payment-secure',
@@ -211,7 +211,7 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'Do I need an account?',
         type: 'answer',
         answer:
-          "Nope — guest checkout works fine. An account gets you order history, saved addresses, wishlists, and easier tracking. [Register here](/register) if you'd like one.",
+          "Nope, guest checkout works fine. An account gets you order history, saved addresses, wishlists, and easier tracking. [Register here](/register) if you'd like one.",
       },
       {
         id: 'coupon',
@@ -283,7 +283,7 @@ export const DECISION_TREE: TreeNode[] = [
         label: 'How should I store my products?',
         type: 'answer',
         answer:
-          "Cool, dry place, out of direct sunlight. Keep silicone items separate (they can react with other materials). Avoid plastic bags — they trap moisture. Many products come with storage pouches.",
+          "Cool, dry place, out of direct sunlight. Keep silicone items separate (they can react with other materials). Avoid plastic bags, they trap moisture. Many products come with storage pouches.",
       },
       {
         id: 'lube',

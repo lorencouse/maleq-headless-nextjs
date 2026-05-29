@@ -244,12 +244,10 @@
     "metaDescription": "与 Male Q 联系。我们随时为您解答有关订单、商品或一般咨询的任何问题。",
     "heading": "联络我们",
     "subtitle": "有任何疑问或需要协助吗？我们随时为您提供服务。请填写下方表单，或使用我们的联络资讯。",
+    "chatTitle": "在线咨询",
+    "chatBody": "向我们的客服小帮手 Q先生 获取即时解答。",
+    "chatButton": "在线咨询",
     "getInTouch": "与我们联系",
-    "contactInfoTitle": "联络我们",
-    "contactInfoBody": "请使用下方表单",
-    "hoursTitle": "服务时间",
-    "hoursWeekday": "周一至周五：上午 9 点至下午 6 点（美东时间）",
-    "hoursWeekend": "周六至周日：上午 10 点至下午 4 点（美东时间）",
     "textUsTitle": "传送简讯给我们",
     "textUsAriaLabel": "传送简讯给我们",
     "smsLabel": "简讯：",
@@ -1655,19 +1653,21 @@
     "skip": "不用了，下次再说"
   },
   "chat": {
-    "greeting": "您好！我是 Male Q 的客服小帮手，有什么可以为您服务的呢？",
+    "greeting": "您好，我是 Q先生，您的专属客服小帮手。有什么可以为您服务的呢？",
+    "typing": "Q先生正在输入…",
+    "botName": "Q先生",
     "discoveryIntro": "以下是一些热门的{label}。您可以使用下方的筛选条件缩小范围、参考相关指南，或直接告诉我，我将为您提供量身推荐。",
-    "discoveryToAi": "没问题——我可以更深入地为您搜寻{label}{filterDesc}。请告诉我您最在意的部分——功能、品牌偏好或任何特定需求——我会直接为您查询商品目录。",
+    "discoveryToAi": "没问题，我可以更深入地为您搜寻{label}{filterDesc}。请告诉我您最在意的部分，功能、品牌偏好或任何特定需求，我会直接为您查询商品目录。",
     "filterDescMaterial": "材质：{value}",
     "filterDescColor": "颜色：{value}",
     "filterDescPrice": "价格：{value}",
-    "errorGeneric": "抱歉——发生了一些问题，请稍候再试一次。",
-    "errorGenericShort": "抱歉——发生了一些问题。",
+    "errorGeneric": "抱歉，发生了一些问题，请稍候再试一次。",
+    "errorGenericShort": "抱歉，发生了一些问题。",
     "errorConnection": "连线错误，请再试一次。",
-    "feedbackYesUser": "有的，这很有帮助——谢谢！",
+    "feedbackYesUser": "有的，这很有帮助，谢谢！",
     "feedbackYesAssistant": "很高兴能帮上忙。还有其他需要协助的吗？",
     "feedbackNoUser": "我还是需要协助",
-    "feedbackNoAssistant": "没问题——请多告诉我一些您想完成的事，我会直接为您协助。",
+    "feedbackNoAssistant": "没问题，我们回到开头吧。请在下方选择其他主题，或联络我们以获得直接协助。",
     "closeChat": "关闭对话",
     "openChat": "开启客服对话",
     "supportChatAria": "客服对话",
@@ -1681,7 +1681,7 @@
     "back": "返回",
     "finding": "正在寻找{label}…",
     "topPicks": "精选推荐（{count, plural, =1 {# 项符合} other {# 项符合}}）",
-    "noMatches": "没有符合的结果——请试着移除一项筛选条件",
+    "noMatches": "没有符合的结果，请试着移除一项筛选条件",
     "noImage": "无图片",
     "sale": "特价",
     "relatedGuides": "相关指南",
@@ -1693,7 +1693,7 @@
     "pickQuestion": "选择一个问题：",
     "inputPlaceholder": "输入您的问题…",
     "sendMessage": "传送讯息",
-    "aiDisclaimer": "AI 小帮手——若需订单相关的协助，请使用",
+    "aiDisclaimer": "AI 小帮手，若需订单相关的协助，请使用",
     "contactForm": "联络表单",
     "backToTopics": "返回主题",
     "contactUs": "联络我们",
@@ -1706,7 +1706,7 @@
         },
         "multiple-packages": {
           "label": "我的订单分成多个包裹寄送",
-          "answer": "这是正常的——我们从美国多个仓库出货，因此较大的订单可能会分开包裹寄送。如果在预计送达时间结束后仍未收到所有商品，请[联络我们](/contact)并提供您的订单编号。"
+          "answer": "这是正常的，我们从美国多个仓库出货，因此较大的订单可能会分开包裹寄送。如果在预计送达时间结束后仍未收到所有商品，请[联络我们](/contact)并提供您的订单编号。"
         },
         "cancel-order": {
           "label": "取消我的订单",
@@ -1714,18 +1714,18 @@
         },
         "damaged-or-wrong": {
           "label": "商品损坏或寄错",
-          "answer": "很抱歉造成困扰——我们会为瑕疵商品退款或更换，并修正任何出货错误。请[联络我们](/contact)并提供：\n\n- 您的订单编号\n- 简短的问题说明\n- 损坏的照片\n- 请保留所有包装材料"
+          "answer": "很抱歉造成困扰，我们会为瑕疵商品退款或更换，并修正任何出货错误。请[联络我们](/contact)并提供：\n\n- 您的订单编号\n- 简短的问题说明\n- 损坏的照片\n- 请保留所有包装材料"
         }
       },
       "shipping": {
         "label": "运送与配送",
         "shipping-times": {
           "label": "运送需要多久？",
-          "answer": "运送时间依方案而异——结帐时每个选项旁与您的收据上都会显示预估时间。所有时间皆以工作天计算（不含周末与假日），依 UPS/USPS 的预估为准。详情请见[运送与退货](/shipping-returns)。"
+          "answer": "运送时间依方案而异，结帐时每个选项旁与您的收据上都会显示预估时间。所有时间皆以工作天计算（不含周末与假日），依 UPS/USPS 的预估为准。详情请见[运送与退货](/shipping-returns)。"
         },
         "international": {
           "label": "你们有国际运送吗？",
-          "answer": "有的——我们运送至全球许多国家。国际运送选项与预估时间会在结帐时显示。若您的国际订单未在预估时间内送达，我们将补足升级至下一级运送方案的差额。"
+          "answer": "有的，我们运送至全球许多国家。国际运送选项与预估时间会在结帐时显示。若您的国际订单未在预估时间内送达，我们将补足升级至下一级运送方案的差额。"
         },
         "discreet": {
           "label": "包装隐密吗？",
@@ -1759,11 +1759,11 @@
         "label": "付款与帐务",
         "payment-methods": {
           "label": "你们接受哪些付款方式？",
-          "answer": "所有主要信用卡（Visa、MasterCard、American Express、Discover）、Apple Pay 与 Google Pay——全部透过我们采用 Stripe 技术的结帐系统。"
+          "answer": "所有主要信用卡（Visa、MasterCard、American Express、Discover）、Apple Pay 与 Google Pay，全部透过我们采用 Stripe 技术的结帐系统。"
         },
         "payment-plans": {
           "label": "你们有提供分期付款吗？",
-          "answer": "有的——符合条件的订单可在结帐时使用 Afterpay 与 Klarna，让您将消费分成无息分期付款。它们会在结帐过程中自动显示。"
+          "answer": "有的，符合条件的订单可在结帐时使用 Afterpay 与 Klarna，让您将消费分成无息分期付款。它们会在结帐过程中自动显示。"
         },
         "declined": {
           "label": "我的付款遭拒",
@@ -1771,7 +1771,7 @@
         },
         "international-currency": {
           "label": "你们接受外币吗？",
-          "answer": "接受。价格以美元（USD）标示；您的银行会依其汇率以您的当地货币扣款，并可能加收国际交易手续费——详情请洽您的银行。"
+          "answer": "接受。价格以美元（USD）标示；您的银行会依其汇率以您的当地货币扣款，并可能加收国际交易手续费，详情请洽您的银行。"
         },
         "payment-secure": {
           "label": "我的付款资讯安全吗？",
@@ -1786,7 +1786,7 @@
         },
         "need-account": {
           "label": "我需要注册帐户吗？",
-          "answer": "不需要——访客结帐也完全没问题。注册帐户可享有订单纪录、已储存的地址、愿望清单，以及更便利的追踪功能。如需注册，请[在此注册](/register)。"
+          "answer": "不需要，访客结帐也完全没问题。注册帐户可享有订单纪录、已储存的地址、愿望清单，以及更便利的追踪功能。如需注册，请[在此注册](/register)。"
         },
         "coupon": {
           "label": "如何使用优惠码？",
@@ -1861,7 +1861,7 @@
         },
         "storage": {
           "label": "我该如何收纳商品？",
-          "answer": "存放于阴凉干燥、避免阳光直射处。矽胶制品请分开存放（可能与其他材质产生反应）。避免使用塑胶袋——容易积聚湿气。许多商品都附有收纳袋。"
+          "answer": "存放于阴凉干燥、避免阳光直射处。矽胶制品请分开存放（可能与其他材质产生反应）。避免使用塑胶袋，容易积聚湿气。许多商品都附有收纳袋。"
         },
         "lube": {
           "label": "我该使用哪种润滑液？",
