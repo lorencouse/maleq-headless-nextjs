@@ -7,8 +7,12 @@ import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 import {
   useLocalizedColorName,
   useLocalizedMaterialName,
+  useLocalizedFlavorName,
   useLocalizedAttributeName,
 } from '@/lib/i18n/attribute-translations';
+import { formatSizeValue, isConvertibleSize } from '@/lib/products/size-units';
+import { useUnitSystem } from '@/lib/hooks/useUnitSystem';
+import UnitSystemToggle from '@/components/product/UnitSystemToggle';
 
 interface ProductSpecificationsProps {
   specifications: ProductSpecification[];
@@ -49,7 +53,9 @@ export default function ProductSpecifications({
   const localizeCategoryName = useLocalizedCategoryName();
   const localizeColorName = useLocalizedColorName();
   const localizeMaterialName = useLocalizedMaterialName();
+  const localizeFlavorName = useLocalizedFlavorName();
   const localizeAttributeName = useLocalizedAttributeName();
+  const [unitSystem, setUnitSystem] = useUnitSystem();
 
   if (!specifications || specifications.length === 0) {
     return null;
@@ -77,8 +83,28 @@ export default function ProductSpecifications({
       const key = AVAILABILITY_VALUE_KEY[spec.value];
       if (key && tProduct.has(key)) return tProduct(key);
     }
+    // Flavor is a plain (non-linked) value row — localize each comma-separated
+    // value via the flavor dictionary (slug = lowercased, spaces → hyphens).
+    if (spec.label === 'Flavor') {
+      return spec.value
+        .split(', ')
+        .map((v) => localizeFlavorName(v.toLowerCase().replace(/\s+/g, '-'), v))
+        .join(', ');
+    }
+    // Size: convert length/volume values to the chosen unit system; leave
+    // apparel/pack values (not convertible) as-is.
+    if (spec.label === 'Size') {
+      return spec.value
+        .split(', ')
+        .map((v) => formatSizeValue(v, unitSystem) ?? v)
+        .join(', ');
+    }
     return spec.value;
   };
+
+  // Show the toggle on the Size row only when it has convertible values.
+  const sizeRowConvertible = (spec: ProductSpecification) =>
+    spec.label === 'Size' && spec.value.split(', ').some((v) => isConvertibleSize(v));
 
   return (
     <div className='border-t border-border pt-8 mt-8'>
@@ -106,6 +132,11 @@ export default function ProductSpecifications({
                       </span>
                     ))
                   : valueText(spec)}
+                {sizeRowConvertible(spec) && (
+                  <span className='ml-3 inline-block align-middle'>
+                    <UnitSystemToggle system={unitSystem} onChange={setUnitSystem} />
+                  </span>
+                )}
               </dd>
             </div>
           ))}

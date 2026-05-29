@@ -11,11 +11,15 @@ import {
 import {
   useLocalizedColorName,
   useLocalizedMaterialName,
+  useLocalizedFlavorName,
   useLocalizedAttributeName,
 } from '@/lib/i18n/attribute-translations';
 import { findDefaultVariation } from '@/lib/products/variation-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
+import { formatSizeValue, isConvertibleSize } from '@/lib/products/size-units';
+import { useUnitSystem } from '@/lib/hooks/useUnitSystem';
+import UnitSystemToggle from '@/components/product/UnitSystemToggle';
 
 interface VariationAttribute {
   name: string;
@@ -107,18 +111,29 @@ export default function VariationSelector({
   const t = useTranslations('variations');
   const localizeColorName = useLocalizedColorName();
   const localizeMaterialName = useLocalizedMaterialName();
+  const localizeFlavorName = useLocalizedFlavorName();
   const localizeAttributeName = useLocalizedAttributeName();
+  const [unitSystem, setUnitSystem] = useUnitSystem();
 
-  // Localize an option value for color/material attributes via the slug
-  // dictionaries; other attribute values (size, style, …) stay as-is.
+  // Localize an option value for color/material/flavor attributes via the slug
+  // dictionaries; size length/volume values convert to the chosen unit system;
+  // other attribute values (style, …) stay as-is.
   const localizeValue = (attrName: string, value: string) => {
     const an = attrName.toLowerCase().replace(/^pa_/, '');
     const slug = value.toLowerCase().replace(/\s+/g, '-');
     const formatted = formatAttributeValue(value);
     if (an === 'color') return localizeColorName(slug, formatted);
     if (an === 'material') return localizeMaterialName(slug, formatted);
+    if (an === 'flavor') return localizeFlavorName(slug, formatted);
+    if (an === 'size') return formatSizeValue(value, unitSystem) ?? formatted;
     return formatted;
   };
+
+  // Show the metric/imperial toggle next to a Size selector only when it has
+  // convertible (length/volume) values — apparel/pack sizes don't get it.
+  const sizeIsConvertible = (attrName: string, values: string[]) =>
+    attrName.toLowerCase().replace(/^pa_/, '') === 'size' &&
+    values.some((v) => isConvertibleSize(v));
 
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
@@ -294,6 +309,9 @@ export default function VariationSelector({
           <label className='text-lg sm:text-xl font-semibold text-foreground whitespace-nowrap'>
             {localizeAttributeName(name, formatAttributeName(name))}:
           </label>
+          {sizeIsConvertible(name, values) && (
+            <UnitSystemToggle system={unitSystem} onChange={setUnitSystem} />
+          )}
           <div className='flex flex-wrap gap-2'>
             {values.map((value) => {
               const isSelected = selectedAttributes[name] === value;
