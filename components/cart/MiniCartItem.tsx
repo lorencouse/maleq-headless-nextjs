@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useLocalizedVariationAttribute } from '@/lib/i18n/attribute-translations';
 import { CartItem } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice } from '@/lib/utils/cart-helpers';
@@ -27,6 +28,7 @@ interface MiniCartItemProps {
 
 export default function MiniCartItem({ item }: MiniCartItemProps) {
   const t = useTranslations('cart');
+  const localizeVariationAttribute = useLocalizedVariationAttribute();
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -77,11 +79,14 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
         {/* Variation Attributes */}
         {item.attributes && Object.keys(item.attributes).length > 0 && (
           <div className="text-xs text-muted-foreground mt-1 truncate">
-            {Object.entries(item.attributes).map(([key, value]) => (
-              <span key={key} className="mr-2">
-                {key}: {value}
-              </span>
-            ))}
+            {Object.entries(item.attributes).map(([key, value]) => {
+              const a = localizeVariationAttribute(key, value);
+              return (
+                <span key={key} className="mr-2">
+                  {a.name}: {a.value}
+                </span>
+              );
+            })}
           </div>
         )}
 

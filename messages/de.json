@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "Premium-Erotikartikel"
+    "siteTagline": "Premium-Erotikartikel",
+    "home": "Startseite"
   },
   "language": {
     "switchLabel": "Sprache",
@@ -267,7 +268,36 @@
     "shippingLink": "Versand & Rücksendungen",
     "formSectionTitle": "Senden Sie uns eine Nachricht",
     "offlineQueued": "Sie scheinen offline zu sein. Ihre Nachricht wurde in die Warteschlange gestellt und wird gesendet, sobald Sie wieder verbunden sind.",
-    "sendFailed": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+    "sendFailed": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+    "form": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Ihr Name",
+      "emailLabel": "E-Mail",
+      "emailPlaceholder": "ihre@email.de",
+      "subjectLabel": "Betreff",
+      "subjectSelect": "Betreff auswählen",
+      "subjectGeneral": "Allgemeine Anfrage",
+      "subjectOrderStatus": "Bestellstatus",
+      "subjectReturns": "Rücksendungen & Erstattungen",
+      "subjectProduct": "Produktfrage",
+      "subjectTechnical": "Technischer Support",
+      "subjectFeedback": "Feedback",
+      "subjectOther": "Sonstiges",
+      "orderInfoPrompt": "Bitte geben Sie mindestens eine der folgenden Angaben an, damit wir Ihre Bestellung finden können:",
+      "orderNumberLabel": "Bestellnummer",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "Nachname",
+      "orderLastNamePlaceholder": "Nachname auf der Bestellung",
+      "orderEmailLabel": "Bestell-E-Mail",
+      "orderEmailPlaceholder": "Für die Bestellung verwendete E-Mail",
+      "messageLabel": "Nachricht",
+      "messagePlaceholder": "Wie können wir Ihnen helfen?",
+      "sending": "Wird gesendet...",
+      "send": "Nachricht senden",
+      "successHeading": "Nachricht gesendet!",
+      "successBody": "Vielen Dank für Ihre Nachricht. Wir melden uns so schnell wie möglich bei Ihnen.",
+      "sendAnother": "Weitere Nachricht senden"
+    }
   },
   "filters": {
     "panelHeading": "Filter",

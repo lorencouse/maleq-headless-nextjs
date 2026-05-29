@@ -18,6 +18,12 @@ import SocialShare from '@/components/product/SocialShare';
 import TrustBadges from '@/components/product/TrustBadges';
 import SatisfactionGuarantee from '@/components/product/SatisfactionGuarantee';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
+import {
+  useLocalizedColorName,
+  useLocalizedMaterialName,
+  useLocalizedAttributeName,
+} from '@/lib/i18n/attribute-translations';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
 import {
   formatAttributeName,
@@ -49,6 +55,10 @@ export default function ProductPageClient({
   const t = useTranslations('productPage');
   const tProduct = useTranslations('product');
   const tCart = useTranslations('cart');
+  const localizeCategoryName = useLocalizedCategoryName();
+  const localizeColorName = useLocalizedColorName();
+  const localizeMaterialName = useLocalizedMaterialName();
+  const localizeAttributeName = useLocalizedAttributeName();
   const addItem = useCartStore((state) => state.addItem);
   const miniCartControls = useMiniCartControls();
   const [quantity, setQuantity] = useState(1);
@@ -310,7 +320,7 @@ export default function ProductPageClient({
             href={`/sex-toys/${primaryCategory.slug}`}
             className='link-subtle text-sm'
           >
-            {primaryCategory.name}
+            {localizeCategoryName(primaryCategory.slug, primaryCategory.name)}
           </a>
         )}
       </div>
@@ -369,6 +379,7 @@ export default function ProductPageClient({
             {t('selectOptionsHeading')}
           </h3>
           <VariationSelector
+            productName={product.name}
             variations={product.variations.map((v) => ({
               ...v,
               sku: v.sku || '',
@@ -402,18 +413,29 @@ export default function ProductPageClient({
           <div className='grid grid-cols-2 gap-3 text-sm'>
             {product.attributes
               .filter((attr) => attr.visible)
-              .map((attr, index) => (
-                <div key={index}>
-                  <span className='text-muted-foreground'>
-                    {formatAttributeName(attr.name)}:
-                  </span>
-                  <span className='ml-2 font-medium text-foreground'>
-                    {attr.options
-                      .map((opt) => formatAttributeValue(opt))
-                      .join(', ')}
-                  </span>
-                </div>
-              ))}
+              .map((attr, index) => {
+                // Localize the value for color/material attributes via the
+                // dictionaries (keyed by the slugified option); other attribute
+                // values (size, style, flavor, variant…) stay as-is.
+                const an = attr.name.toLowerCase().replace(/^pa_/, '');
+                const localizeValue = (opt: string) => {
+                  const slug = opt.toLowerCase().replace(/\s+/g, '-');
+                  const formatted = formatAttributeValue(opt);
+                  if (an === 'color') return localizeColorName(slug, formatted);
+                  if (an === 'material') return localizeMaterialName(slug, formatted);
+                  return formatted;
+                };
+                return (
+                  <div key={index}>
+                    <span className='text-muted-foreground'>
+                      {localizeAttributeName(attr.name, formatAttributeName(attr.name))}:
+                    </span>
+                    <span className='ml-2 font-medium text-foreground'>
+                      {attr.options.map(localizeValue).join(', ')}
+                    </span>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

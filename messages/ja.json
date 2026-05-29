@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "プレミアムアダルトグッズ"
+    "siteTagline": "プレミアムアダルトグッズ",
+    "home": "ホーム"
   },
   "language": {
     "switchLabel": "言語",
@@ -267,7 +268,36 @@
     "shippingLink": "配送と返品",
     "formSectionTitle": "メッセージを送る",
     "offlineQueued": "オフラインのようです。メッセージはキューに保存され、再接続時に送信されます。",
-    "sendFailed": "メッセージの送信に失敗しました。もう一度お試しください。"
+    "sendFailed": "メッセージの送信に失敗しました。もう一度お試しください。",
+    "form": {
+      "nameLabel": "お名前",
+      "namePlaceholder": "お名前",
+      "emailLabel": "メール",
+      "emailPlaceholder": "your@email.com",
+      "subjectLabel": "件名",
+      "subjectSelect": "件名を選択",
+      "subjectGeneral": "一般的なお問い合わせ",
+      "subjectOrderStatus": "注文状況",
+      "subjectReturns": "返品・返金",
+      "subjectProduct": "商品に関する質問",
+      "subjectTechnical": "テクニカルサポート",
+      "subjectFeedback": "ご意見・ご感想",
+      "subjectOther": "その他",
+      "orderInfoPrompt": "ご注文を確認できるよう、次のうち少なくとも1つをご入力ください：",
+      "orderNumberLabel": "注文番号",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "姓",
+      "orderLastNamePlaceholder": "ご注文時の姓",
+      "orderEmailLabel": "注文メールアドレス",
+      "orderEmailPlaceholder": "ご注文に使用したメールアドレス",
+      "messageLabel": "メッセージ",
+      "messagePlaceholder": "どのようなご用件でしょうか？",
+      "sending": "送信中...",
+      "send": "メッセージを送信",
+      "successHeading": "メッセージを送信しました！",
+      "successBody": "お問い合わせありがとうございます。できるだけ早くご返信いたします。",
+      "sendAnother": "別のメッセージを送る"
+    }
   },
   "filters": {
     "panelHeading": "絞り込み",

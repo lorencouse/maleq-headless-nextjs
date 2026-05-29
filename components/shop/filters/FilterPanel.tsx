@@ -8,6 +8,7 @@ import CategoryFilter, { HierarchicalCategory } from './CategoryFilter';
 import StockFilter from './StockFilter';
 import SelectFilter from './SelectFilter';
 import type { FilterOption } from '@/lib/products/combined-service';
+import { useLocalizedColorName, useLocalizedMaterialName } from '@/lib/i18n/attribute-translations';
 
 export interface FilterState {
   category: string;
@@ -52,6 +53,12 @@ export default function FilterPanel({
   initialCategory,
 }: FilterPanelProps) {
   const t = useTranslations('filters');
+  const localizeColorName = useLocalizedColorName();
+  const localizeMaterialName = useLocalizedMaterialName();
+  // Localize the option labels (slug stays the filter value) so colors/materials
+  // render in the active locale; unmapped values fall back to English.
+  const localizedColors = colors.map((c) => ({ ...c, name: localizeColorName(c.slug, c.name) }));
+  const localizedMaterials = materials.map((m) => ({ ...m, name: localizeMaterialName(m.slug, m.name) }));
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     category: true,
     brand: true,
@@ -193,7 +200,7 @@ export default function FilterPanel({
           </button>
           {expandedSections.color && (
             <SelectFilter
-              options={colors}
+              options={localizedColors}
               selectedValue={filters.color}
               onSelect={(color) => onFilterChange({ ...filters, color })}
               placeholder={t('allColors')}
@@ -223,7 +230,7 @@ export default function FilterPanel({
           </button>
           {expandedSections.material && (
             <SelectFilter
-              options={materials}
+              options={localizedMaterials}
               selectedValue={filters.material}
               onSelect={(material) => onFilterChange({ ...filters, material })}
               placeholder={t('allMaterials')}

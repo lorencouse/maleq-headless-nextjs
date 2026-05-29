@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "Premium Adult Products"
+    "siteTagline": "Premium Adult Products",
+    "home": "Home"
   },
   "language": {
     "switchLabel": "Language",
@@ -267,7 +268,36 @@
     "shippingLink": "Shipping & Returns",
     "formSectionTitle": "Send us a Message",
     "offlineQueued": "You appear to be offline. Your message has been queued and will be sent when you reconnect.",
-    "sendFailed": "Failed to send message. Please try again."
+    "sendFailed": "Failed to send message. Please try again.",
+    "form": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Your name",
+      "emailLabel": "Email",
+      "emailPlaceholder": "your@email.com",
+      "subjectLabel": "Subject",
+      "subjectSelect": "Select a subject",
+      "subjectGeneral": "General Inquiry",
+      "subjectOrderStatus": "Order Status",
+      "subjectReturns": "Returns & Refunds",
+      "subjectProduct": "Product Question",
+      "subjectTechnical": "Technical Support",
+      "subjectFeedback": "Feedback",
+      "subjectOther": "Other",
+      "orderInfoPrompt": "Please provide at least one of the following to help us locate your order:",
+      "orderNumberLabel": "Order Number",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "Last Name",
+      "orderLastNamePlaceholder": "Last name on order",
+      "orderEmailLabel": "Order Email",
+      "orderEmailPlaceholder": "Email used for order",
+      "messageLabel": "Message",
+      "messagePlaceholder": "How can we help you?",
+      "sending": "Sending...",
+      "send": "Send Message",
+      "successHeading": "Message Sent!",
+      "successBody": "Thank you for reaching out. We'll get back to you as soon as possible.",
+      "sendAnother": "Send another message"
+    }
   },
   "filters": {
     "panelHeading": "Filters",

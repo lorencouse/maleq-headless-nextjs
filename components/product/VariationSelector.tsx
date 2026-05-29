@@ -8,6 +8,11 @@ import {
   formatAttributeValue,
   formatPrice,
 } from '@/lib/utils/woocommerce-format';
+import {
+  useLocalizedColorName,
+  useLocalizedMaterialName,
+  useLocalizedAttributeName,
+} from '@/lib/i18n/attribute-translations';
 import { findDefaultVariation } from '@/lib/products/variation-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
@@ -44,6 +49,8 @@ interface VariationSelectorProps {
   onVariationChange?: (variation: Variation) => void;
   externalSelectedVariationId?: string | null;
   defaultAttributes?: { name: string; value: string }[];
+  /** Parent product name, used to build a localized "Selected: …" label. */
+  productName?: string;
 }
 
 const DESCRIPTION_CLAMP_LINES = 4;
@@ -92,11 +99,26 @@ export default function VariationSelector({
   onVariationChange,
   externalSelectedVariationId,
   defaultAttributes,
+  productName,
 }: VariationSelectorProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('variations');
+  const localizeColorName = useLocalizedColorName();
+  const localizeMaterialName = useLocalizedMaterialName();
+  const localizeAttributeName = useLocalizedAttributeName();
+
+  // Localize an option value for color/material attributes via the slug
+  // dictionaries; other attribute values (size, style, …) stay as-is.
+  const localizeValue = (attrName: string, value: string) => {
+    const an = attrName.toLowerCase().replace(/^pa_/, '');
+    const slug = value.toLowerCase().replace(/\s+/g, '-');
+    const formatted = formatAttributeValue(value);
+    if (an === 'color') return localizeColorName(slug, formatted);
+    if (an === 'material') return localizeMaterialName(slug, formatted);
+    return formatted;
+  };
 
   // Get all unique attribute names and their possible values
   const attributeOptions = useMemo(() => {
@@ -270,7 +292,7 @@ export default function VariationSelector({
       {attributeOptions.map(({ name, values }) => (
         <div key={name} className='flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3'>
           <label className='text-lg sm:text-xl font-semibold text-foreground whitespace-nowrap'>
-            {formatAttributeName(name)}:
+            {localizeAttributeName(name, formatAttributeName(name))}:
           </label>
           <div className='flex flex-wrap gap-2'>
             {values.map((value) => {
@@ -291,7 +313,7 @@ export default function VariationSelector({
                     ${!isAvailable ? 'opacity-70' : ''}
                   `}
                 >
-                  <span>{formatAttributeValue(value)}</span>
+                  <span>{localizeValue(name, value)}</span>
                   {!isAvailable && (
                     <span className='block text-[10px] leading-tight text-destructive'>{t('outOfStockTag')}</span>
                   )}
@@ -310,7 +332,13 @@ export default function VariationSelector({
             <div>
               <p className='text-sm text-muted-foreground'>{t('selectedLabel')}</p>
               <p className='font-semibold text-foreground text-sm sm:text-base'>
-                {selectedVariation.name}
+                {/* Rebuild as "{product} - {localized attribute values}" so the
+                    variation part localizes; fall back to the stored name. */}
+                {productName && selectedVariation.attributes.length > 0
+                  ? `${productName} - ${selectedVariation.attributes
+                      .map((attr) => localizeValue(attr.name, attr.value))
+                      .join(', ')}`
+                  : selectedVariation.name}
               </p>
             </div>
             <div className='sm:text-right'>
@@ -417,7 +445,7 @@ export default function VariationSelector({
                       key={attr.name}
                       className='px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider'
                     >
-                      {formatAttributeName(attr.name)}
+                      {localizeAttributeName(attr.name, formatAttributeName(attr.name))}
                     </th>
                   ))}
                   <th className='px-3 py-2.5 text-left text-xs font-semibold text-foreground uppercase tracking-wider'>
@@ -447,7 +475,7 @@ export default function VariationSelector({
                           className='px-3 py-2.5 text-foreground'
                         >
                           {attrValue !== '-'
-                            ? formatAttributeValue(attrValue)
+                            ? localizeValue(attr.name, attrValue)
                             : '-'}
                         </td>
                       );

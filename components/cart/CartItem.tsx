@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { useLocalizedVariationAttribute } from '@/lib/i18n/attribute-translations';
 import { CartItem as CartItemType } from '@/lib/types/cart';
 import { useCartStore } from '@/lib/store/cart-store';
 import { formatPrice, calculateSavings } from '@/lib/utils/cart-helpers';
@@ -28,6 +29,7 @@ interface CartItemProps {
 
 export default function CartItem({ item }: CartItemProps) {
   const t = useTranslations('cart');
+  const localizeVariationAttribute = useLocalizedVariationAttribute();
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -91,11 +93,14 @@ export default function CartItem({ item }: CartItemProps) {
           {/* Variation Attributes */}
           {item.attributes && Object.keys(item.attributes).length > 0 && (
             <div className="text-sm text-muted-foreground mt-1">
-              {Object.entries(item.attributes).map(([key, value]) => (
-                <span key={key} className="mr-3">
-                  <span className="font-medium">{key}:</span> {value}
-                </span>
-              ))}
+              {Object.entries(item.attributes).map(([key, value]) => {
+                const a = localizeVariationAttribute(key, value);
+                return (
+                  <span key={key} className="mr-3">
+                    <span className="font-medium">{a.name}:</span> {a.value}
+                  </span>
+                );
+              })}
             </div>
           )}
 

@@ -7,6 +7,8 @@ import { formatAttributeName, formatAttributeValue } from '@/lib/utils/woocommer
 export interface ProductSpecificationLink {
   text: string;
   url: string;
+  /** Term slug — used to localize category link text at render time. */
+  slug?: string;
 }
 
 export interface ProductSpecification {
@@ -70,6 +72,7 @@ export function extractSpecifications(product: SpecificationInput, isVariable: b
       links: product.categories.map((c) => ({
         text: c.name,
         url: `/sex-toys/${c.slug}`,
+        slug: c.slug,
       })),
     });
   }
@@ -142,6 +145,7 @@ export function extractSpecifications(product: SpecificationInput, isVariable: b
             links: flattenedOptions.map((opt) => ({
               text: formatAttributeValue(opt),
               url: `/shop?${filterParam}=${opt.toLowerCase().replace(/\s+/g, '-')}`,
+              slug: opt.toLowerCase().replace(/\s+/g, '-'),
             })),
           });
         } else {

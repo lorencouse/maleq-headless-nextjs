@@ -1,10 +1,21 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
 
 export interface BreadcrumbItem {
   label: string;
   href?: string;
+  /**
+   * Optional full i18n key (e.g. 'productSlugPage.breadcrumbShop') for static
+   * segments. When set, the label is resolved client-side in the active locale
+   * — so breadcrumbs on English-pinned content-root pages still localize when
+   * the user switches language via the chrome cookie.
+   */
+  labelKey?: string;
+  /** Optional product-category slug — localizes the label via the category dictionary. */
+  categorySlug?: string;
 }
 
 interface BreadcrumbsProps {
@@ -14,6 +25,8 @@ interface BreadcrumbsProps {
 }
 
 export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsProps) {
+  const t = useTranslations();
+  const localizeCategoryName = useLocalizedCategoryName();
   const isLight = variant === 'light';
 
   const linkClass = isLight
@@ -26,14 +39,27 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
     ? 'text-white/40'
     : 'text-muted-foreground/40';
 
-  // Build all breadcrumb parts including Home
-  const allItems = [{ label: 'Home', href: '/' }, ...items];
+  // Build all breadcrumb parts including Home (localized via common.home).
+  const allItems: BreadcrumbItem[] = [
+    { label: 'Home', labelKey: 'common.home', href: '/' },
+    ...items,
+  ];
+
+  // Resolve each item's display label in the active locale: category dictionary
+  // → i18n key → raw label fallback.
+  const displayLabel = (item: BreadcrumbItem) =>
+    item.categorySlug
+      ? localizeCategoryName(item.categorySlug, item.label)
+      : item.labelKey
+        ? t(item.labelKey)
+        : item.label;
 
   return (
     <nav aria-label="Breadcrumb" className="mb-2 sm:mb-4">
       <ol className="flex items-baseline overflow-hidden leading-none">
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;
+          const label = displayLabel(item);
 
           return (
             <li
@@ -44,13 +70,13 @@ export default function Breadcrumbs({ items, variant = 'default' }: BreadcrumbsP
                 <span
                   className={`${currentClass} ${isLast ? 'truncate' : ''}`}
                   aria-current={isLast ? 'page' : undefined}
-                  title={isLast ? item.label : undefined}
+                  title={isLast ? label : undefined}
                 >
-                  {item.label}
+                  {label}
                 </span>
               ) : (
                 <Link href={item.href} className={`${linkClass} whitespace-nowrap`}>
-                  {item.label}
+                  {label}
                 </Link>
               )}
               {!isLast && (

@@ -225,9 +225,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {/* Breadcrumb */}
       <Breadcrumbs
         items={[
-          { label: t('breadcrumbShop'), href: '/shop' },
+          { label: t('breadcrumbShop'), labelKey: 'productSlugPage.breadcrumbShop', href: '/shop' },
           ...(primaryCategory
-            ? [{ label: primaryCategory.name, href: `/sex-toys/${primaryCategory.slug}` }]
+            ? [{
+                label: primaryCategory.name,
+                categorySlug: primaryCategory.slug,
+                href: `/sex-toys/${primaryCategory.slug}`,
+              }]
             : []),
           { label: product.name },
         ]}

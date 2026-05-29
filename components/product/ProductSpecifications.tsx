@@ -3,6 +3,12 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ProductSpecification } from '@/lib/products/product-service';
+import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
+import {
+  useLocalizedColorName,
+  useLocalizedMaterialName,
+  useLocalizedAttributeName,
+} from '@/lib/i18n/attribute-translations';
 
 interface ProductSpecificationsProps {
   specifications: ProductSpecification[];
@@ -31,22 +37,39 @@ const AVAILABILITY_VALUE_KEY: Record<string, string> = {
 };
 
 // Client component so it localizes via ChromeLocaleProvider on the language
-// switch, even though the product page is server-pinned to English. Labels and
-// the Availability value localize; data values (brands, categories, tags,
-// attributes, dimensions) stay English.
+// switch, even though the product page is server-pinned to English. Labels, the
+// Availability value, and category/color/material names (via the slug
+// dictionaries) localize; other data values (brands, tags, dimensions, and
+// other attribute values) stay English.
 export default function ProductSpecifications({
   specifications,
 }: ProductSpecificationsProps) {
   const t = useTranslations('productRelated');
   const tProduct = useTranslations('product');
+  const localizeCategoryName = useLocalizedCategoryName();
+  const localizeColorName = useLocalizedColorName();
+  const localizeMaterialName = useLocalizedMaterialName();
+  const localizeAttributeName = useLocalizedAttributeName();
 
   if (!specifications || specifications.length === 0) {
     return null;
   }
 
+  // Fixed labels use the productRelated catalog keys; dynamic attribute labels
+  // (Color, Material, Size, …) localize via the attribute-name dictionary.
   const labelText = (label: string) => {
     const key = LABEL_KEY[label];
-    return key && t.has(key) ? t(key) : label;
+    if (key && t.has(key)) return t(key);
+    return localizeAttributeName(label, label);
+  };
+
+  // Link text localization by row: categories / colors / materials use their
+  // slug dictionaries; everything else (brands, etc.) stays as-is.
+  const linkText = (specLabel: string, link: { text: string; slug?: string }) => {
+    if (specLabel === 'Categories') return localizeCategoryName(link.slug, link.text);
+    if (specLabel === 'Color') return localizeColorName(link.slug, link.text);
+    if (specLabel === 'Material') return localizeMaterialName(link.slug, link.text);
+    return link.text;
   };
 
   const valueText = (spec: ProductSpecification) => {
@@ -78,7 +101,7 @@ export default function ProductSpecifications({
                           href={link.url}
                           className='link-animated'
                         >
-                          {link.text}
+                          {linkText(spec.label, link)}
                         </Link>
                       </span>
                     ))

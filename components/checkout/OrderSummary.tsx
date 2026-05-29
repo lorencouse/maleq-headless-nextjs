@@ -10,6 +10,7 @@ import {
 } from '@/lib/store/cart-store';
 import { formatPrice, getFreeShippingProgress, calculateAutoDiscount, FREE_SHIPPING_THRESHOLD } from '@/lib/utils/cart-helpers';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
+import { useLocalizedVariationAttribute } from '@/lib/i18n/attribute-translations';
 
 export default function OrderSummary() {
   // Shared cart strings (subtotal, shipping, free, autoDiscount, coupon,
@@ -18,6 +19,7 @@ export default function OrderSummary() {
   // image aria-label) live under checkout.orderSummary.
   const t = useTranslations('checkout.orderSummary');
   const tCart = useTranslations('cart');
+  const localizeVariationAttribute = useLocalizedVariationAttribute();
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
   const total = useCartTotal();
@@ -36,7 +38,7 @@ export default function OrderSummary() {
   return (
     <div className='bg-muted/30 rounded-lg border border-border sticky top-24'>
       {/* Header */}
-      <div className='p-4 border-b border-border flex items-center justify-between'>
+      <div className='p-4 border-b border-border flex flex-col items-start gap-1'>
         <h2 className='text-lg font-semibold text-foreground'>{t('heading')}</h2>
         <Link
           href='/cart'
@@ -100,7 +102,10 @@ export default function OrderSummary() {
                 {item.attributes && Object.keys(item.attributes).length > 0 && (
                   <p className='text-xs text-muted-foreground mt-0.5'>
                     {Object.entries(item.attributes)
-                      .map(([key, value]) => `${key}: ${value}`)
+                      .map(([key, value]) => {
+                        const a = localizeVariationAttribute(key, value);
+                        return `${a.name}: ${a.value}`;
+                      })
                       .join(', ')}
                   </p>
                 )}

@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "Produits pour adultes haut de gamme"
+    "siteTagline": "Produits pour adultes haut de gamme",
+    "home": "Accueil"
   },
   "language": {
     "switchLabel": "Langue",
@@ -267,7 +268,36 @@
     "shippingLink": "Livraison et retours",
     "formSectionTitle": "Envoyez-nous un message",
     "offlineQueued": "Vous semblez être hors ligne. Votre message a été mis en file d'attente et sera envoyé dès votre reconnexion.",
-    "sendFailed": "Échec de l'envoi du message. Veuillez réessayer."
+    "sendFailed": "Échec de l'envoi du message. Veuillez réessayer.",
+    "form": {
+      "nameLabel": "Nom",
+      "namePlaceholder": "Votre nom",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "votre@email.com",
+      "subjectLabel": "Sujet",
+      "subjectSelect": "Sélectionnez un sujet",
+      "subjectGeneral": "Demande générale",
+      "subjectOrderStatus": "Statut de commande",
+      "subjectReturns": "Retours & remboursements",
+      "subjectProduct": "Question sur un produit",
+      "subjectTechnical": "Assistance technique",
+      "subjectFeedback": "Commentaires",
+      "subjectOther": "Autre",
+      "orderInfoPrompt": "Veuillez fournir au moins l’un des éléments suivants pour nous aider à localiser votre commande :",
+      "orderNumberLabel": "Numéro de commande",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "Nom de famille",
+      "orderLastNamePlaceholder": "Nom de famille sur la commande",
+      "orderEmailLabel": "E-mail de commande",
+      "orderEmailPlaceholder": "E-mail utilisé pour la commande",
+      "messageLabel": "Message",
+      "messagePlaceholder": "Comment pouvons-nous vous aider ?",
+      "sending": "Envoi en cours...",
+      "send": "Envoyer le message",
+      "successHeading": "Message envoyé !",
+      "successBody": "Merci de nous avoir contactés. Nous vous répondrons dès que possible.",
+      "sendAnother": "Envoyer un autre message"
+    }
   },
   "filters": {
     "panelHeading": "Filtres",

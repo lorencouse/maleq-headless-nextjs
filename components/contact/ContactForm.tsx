@@ -62,7 +62,7 @@ export default function ContactForm() {
         showError(result?.message || t('sendFailed'));
       }
     } catch {
-      showError('Failed to send message. Please try again.');
+      showError(t('sendFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -76,15 +76,15 @@ export default function ContactForm() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold text-foreground mb-2">Message Sent!</h3>
+        <h3 className="text-xl font-semibold text-foreground mb-2">{t('form.successHeading')}</h3>
         <p className="text-muted-foreground mb-6">
-          Thank you for reaching out. We&apos;ll get back to you as soon as possible.
+          {t('form.successBody')}
         </p>
         <button
           onClick={() => setSubmitted(false)}
           className="px-4 py-2.5 min-h-[44px] text-primary hover:bg-primary/10 rounded-lg transition-colors"
         >
-          Send another message
+          {t('form.sendAnother')}
         </button>
       </div>
     );
@@ -108,7 +108,7 @@ export default function ContactForm() {
       <div className="grid md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-            Name <span className="text-destructive">*</span>
+            {t('form.nameLabel')} <span className="text-destructive">*</span>
           </label>
           <input
             type="text"
@@ -117,7 +117,7 @@ export default function ContactForm() {
             className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
               errors.name ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="Your name"
+            placeholder={t('form.namePlaceholder')}
           />
           {errors.name && (
             <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>
@@ -126,7 +126,7 @@ export default function ContactForm() {
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-            Email <span className="text-destructive">*</span>
+            {t('form.emailLabel')} <span className="text-destructive">*</span>
           </label>
           <input
             type="email"
@@ -135,7 +135,7 @@ export default function ContactForm() {
             className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary ${
               errors.email ? 'border-destructive' : 'border-input'
             }`}
-            placeholder="your@email.com"
+            placeholder={t('form.emailPlaceholder')}
           />
           {errors.email && (
             <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
@@ -145,7 +145,7 @@ export default function ContactForm() {
 
       <div>
         <label htmlFor="subject" className="block text-sm font-medium text-foreground mb-2">
-          Subject <span className="text-destructive">*</span>
+          {t('form.subjectLabel')} <span className="text-destructive">*</span>
         </label>
         <select
           id="subject"
@@ -154,14 +154,15 @@ export default function ContactForm() {
             errors.subject ? 'border-destructive' : 'border-input'
           }`}
         >
-          <option value="">Select a subject</option>
-          <option value="General Inquiry">General Inquiry</option>
-          <option value="Order Status">Order Status</option>
-          <option value="Returns & Refunds">Returns & Refunds</option>
-          <option value="Product Question">Product Question</option>
-          <option value="Technical Support">Technical Support</option>
-          <option value="Feedback">Feedback</option>
-          <option value="Other">Other</option>
+          {/* Option values stay English — they are submitted to /api/contact. */}
+          <option value="">{t('form.subjectSelect')}</option>
+          <option value="General Inquiry">{t('form.subjectGeneral')}</option>
+          <option value="Order Status">{t('form.subjectOrderStatus')}</option>
+          <option value="Returns & Refunds">{t('form.subjectReturns')}</option>
+          <option value="Product Question">{t('form.subjectProduct')}</option>
+          <option value="Technical Support">{t('form.subjectTechnical')}</option>
+          <option value="Feedback">{t('form.subjectFeedback')}</option>
+          <option value="Other">{t('form.subjectOther')}</option>
         </select>
         {errors.subject && (
           <p className="mt-1 text-sm text-destructive">{errors.subject.message}</p>
@@ -171,43 +172,43 @@ export default function ContactForm() {
       {selectedSubject === 'Order Status' && (
         <div className="space-y-4 p-4 bg-muted/50 border border-border rounded-lg">
           <p className="text-sm text-muted-foreground">
-            Please provide at least one of the following to help us locate your order:
+            {t('form.orderInfoPrompt')}
           </p>
           <div className="grid md:grid-cols-3 gap-4">
             <div>
               <label htmlFor="orderNumber" className="block text-sm font-medium text-foreground mb-2">
-                Order Number
+                {t('form.orderNumberLabel')}
               </label>
               <input
                 type="text"
                 id="orderNumber"
                 {...register('orderNumber')}
                 className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="#12345"
+                placeholder={t('form.orderNumberPlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="orderLastName" className="block text-sm font-medium text-foreground mb-2">
-                Last Name
+                {t('form.orderLastNameLabel')}
               </label>
               <input
                 type="text"
                 id="orderLastName"
                 {...register('orderLastName')}
                 className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="Last name on order"
+                placeholder={t('form.orderLastNamePlaceholder')}
               />
             </div>
             <div>
               <label htmlFor="orderEmail" className="block text-sm font-medium text-foreground mb-2">
-                Order Email
+                {t('form.orderEmailLabel')}
               </label>
               <input
                 type="email"
                 id="orderEmail"
                 {...register('orderEmail')}
                 className="w-full px-4 py-3 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="Email used for order"
+                placeholder={t('form.orderEmailPlaceholder')}
               />
             </div>
           </div>
@@ -219,7 +220,7 @@ export default function ContactForm() {
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-foreground mb-2">
-          Message <span className="text-destructive">*</span>
+          {t('form.messageLabel')} <span className="text-destructive">*</span>
         </label>
         <textarea
           id="message"
@@ -228,7 +229,7 @@ export default function ContactForm() {
           className={`w-full px-4 py-3 border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none ${
             errors.message ? 'border-destructive' : 'border-input'
           }`}
-          placeholder="How can we help you?"
+          placeholder={t('form.messagePlaceholder')}
         />
         {errors.message && (
           <p className="mt-1 text-sm text-destructive">{errors.message.message}</p>
@@ -246,14 +247,14 @@ export default function ContactForm() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            Sending...
+            {t('form.sending')}
           </>
         ) : (
           <>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
-            Send Message
+            {t('form.send')}
           </>
         )}
       </button>

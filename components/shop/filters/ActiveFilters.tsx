@@ -5,6 +5,7 @@ import { FilterState } from './FilterPanel';
 import { HierarchicalCategory } from './CategoryFilter';
 import { findCategoryBySlug } from '@/lib/utils/category-helpers';
 import { useLocalizedCategoryName } from '@/lib/i18n/category-translations';
+import { useLocalizedColorName, useLocalizedMaterialName } from '@/lib/i18n/attribute-translations';
 import { FilterOption } from '@/lib/products/combined-service';
 
 interface ActiveFiltersProps {
@@ -46,6 +47,8 @@ export default function ActiveFilters({
 }: ActiveFiltersProps) {
   const t = useTranslations('filters');
   const localizeCategoryName = useLocalizedCategoryName();
+  const localizeColorName = useLocalizedColorName();
+  const localizeMaterialName = useLocalizedMaterialName();
   const activeFilters: { key: keyof FilterState; label: string }[] = [];
 
   if (filters.category) {
@@ -88,12 +91,12 @@ export default function ActiveFilters({
   }
 
   if (filters.color) {
-    const colorName = getOptionName(colors, filters.color);
+    const colorName = localizeColorName(filters.color, getOptionName(colors, filters.color));
     activeFilters.push({ key: 'color', label: t('activeColorPill', { name: colorName }) });
   }
 
   if (filters.material) {
-    const materialName = getOptionName(materials, filters.material);
+    const materialName = localizeMaterialName(filters.material, getOptionName(materials, filters.material));
     activeFilters.push({ key: 'material', label: t('activeMaterialPill', { name: materialName }) });
   }
 

@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "Productos Premium para Adultos"
+    "siteTagline": "Productos Premium para Adultos",
+    "home": "Inicio"
   },
   "language": {
     "switchLabel": "Idioma",
@@ -267,7 +268,36 @@
     "shippingLink": "Envíos y devoluciones",
     "formSectionTitle": "Envíanos un mensaje",
     "offlineQueued": "Parece que estás sin conexión. Tu mensaje se ha puesto en cola y se enviará cuando vuelvas a conectarte.",
-    "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo."
+    "sendFailed": "No se pudo enviar el mensaje. Inténtalo de nuevo.",
+    "form": {
+      "nameLabel": "Nombre",
+      "namePlaceholder": "Tu nombre",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "tu@email.com",
+      "subjectLabel": "Asunto",
+      "subjectSelect": "Selecciona un asunto",
+      "subjectGeneral": "Consulta general",
+      "subjectOrderStatus": "Estado del pedido",
+      "subjectReturns": "Devoluciones y reembolsos",
+      "subjectProduct": "Pregunta sobre un producto",
+      "subjectTechnical": "Soporte técnico",
+      "subjectFeedback": "Comentarios",
+      "subjectOther": "Otro",
+      "orderInfoPrompt": "Proporciona al menos uno de los siguientes datos para ayudarnos a localizar tu pedido:",
+      "orderNumberLabel": "Número de pedido",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "Apellido",
+      "orderLastNamePlaceholder": "Apellido del pedido",
+      "orderEmailLabel": "Correo del pedido",
+      "orderEmailPlaceholder": "Correo usado para el pedido",
+      "messageLabel": "Mensaje",
+      "messagePlaceholder": "¿Cómo podemos ayudarte?",
+      "sending": "Enviando...",
+      "send": "Enviar mensaje",
+      "successHeading": "¡Mensaje enviado!",
+      "successBody": "Gracias por contactarnos. Te responderemos lo antes posible.",
+      "sendAnother": "Enviar otro mensaje"
+    }
   },
   "filters": {
     "panelHeading": "Filtros",

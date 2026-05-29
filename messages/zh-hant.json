@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "頂級成人用品"
+    "siteTagline": "頂級成人用品",
+    "home": "首頁"
   },
   "language": {
     "switchLabel": "語言",
@@ -267,7 +268,36 @@
     "shippingLink": "運送與退貨",
     "formSectionTitle": "傳送訊息給我們",
     "offlineQueued": "您目前似乎已離線。您的訊息已排入佇列，將在重新連線後送出。",
-    "sendFailed": "訊息傳送失敗，請再試一次。"
+    "sendFailed": "訊息傳送失敗，請再試一次。",
+    "form": {
+      "nameLabel": "姓名",
+      "namePlaceholder": "您的姓名",
+      "emailLabel": "電子郵件",
+      "emailPlaceholder": "your@email.com",
+      "subjectLabel": "主旨",
+      "subjectSelect": "選擇主旨",
+      "subjectGeneral": "一般諮詢",
+      "subjectOrderStatus": "訂單狀態",
+      "subjectReturns": "退貨與退款",
+      "subjectProduct": "商品問題",
+      "subjectTechnical": "技術支援",
+      "subjectFeedback": "意見回饋",
+      "subjectOther": "其他",
+      "orderInfoPrompt": "請至少提供以下其中一項，以協助我們找到您的訂單：",
+      "orderNumberLabel": "訂單編號",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "姓氏",
+      "orderLastNamePlaceholder": "訂單上的姓氏",
+      "orderEmailLabel": "訂單電子郵件",
+      "orderEmailPlaceholder": "下單時使用的電子郵件",
+      "messageLabel": "訊息",
+      "messagePlaceholder": "我們能為您提供什麼協助？",
+      "sending": "傳送中...",
+      "send": "傳送訊息",
+      "successHeading": "訊息已傳送！",
+      "successBody": "感謝您的聯絡。我們會盡快回覆您。",
+      "sendAnother": "傳送另一則訊息"
+    }
   },
   "filters": {
     "panelHeading": "篩選條件",

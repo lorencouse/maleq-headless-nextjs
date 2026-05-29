@@ -1,7 +1,8 @@
 {
   "common": {
     "siteName": "Male Q",
-    "siteTagline": "顶级成人用品"
+    "siteTagline": "顶级成人用品",
+    "home": "首页"
   },
   "language": {
     "switchLabel": "语言",
@@ -267,7 +268,36 @@
     "shippingLink": "运送与退货",
     "formSectionTitle": "传送讯息给我们",
     "offlineQueued": "您目前似乎已离线。您的讯息已排入伫列，将在重新连线后送出。",
-    "sendFailed": "讯息传送失败，请再试一次。"
+    "sendFailed": "讯息传送失败，请再试一次。",
+    "form": {
+      "nameLabel": "姓名",
+      "namePlaceholder": "您的姓名",
+      "emailLabel": "电子邮件",
+      "emailPlaceholder": "your@email.com",
+      "subjectLabel": "主旨",
+      "subjectSelect": "选择主旨",
+      "subjectGeneral": "一般咨询",
+      "subjectOrderStatus": "订单状态",
+      "subjectReturns": "退货与退款",
+      "subjectProduct": "商品问题",
+      "subjectTechnical": "技术支援",
+      "subjectFeedback": "意见回馈",
+      "subjectOther": "其他",
+      "orderInfoPrompt": "请至少提供以下其中一项，以协助我们找到您的订单：",
+      "orderNumberLabel": "订单编号",
+      "orderNumberPlaceholder": "#12345",
+      "orderLastNameLabel": "姓氏",
+      "orderLastNamePlaceholder": "订单上的姓氏",
+      "orderEmailLabel": "订单电子邮件",
+      "orderEmailPlaceholder": "下单时使用的电子邮件",
+      "messageLabel": "讯息",
+      "messagePlaceholder": "我们能为您提供什么协助？",
+      "sending": "传送中...",
+      "send": "传送讯息",
+      "successHeading": "讯息已传送！",
+      "successBody": "感谢您的联络。我们会尽快回复您。",
+      "sendAnother": "传送另一则讯息"
+    }
   },
   "filters": {
     "panelHeading": "筛选条件",
