@@ -51,12 +51,30 @@
 
 - **When creating a new mu-plugin**, always update `docs/DEPLOYMENT_GUIDE.md` to add the plugin to the Required Plugins table and installation steps
 
+## Attribute Data Hygiene (Imports)
+
+To prevent re-dirtying the cleaned attribute schema, **any code that creates product attribute terms MUST route + canonicalize values through `scripts/lib/attribute-sanitizer.ts`** — never map a source attribute name directly to `pa_<name>` with a raw slug.
+- `classifyAttributeValue(value, {colorVocab, flavorVocab, materialVocab})` → routes by VALUE (a "Size" attr holding `Black`→`pa_color`, `2 Oz`→`pa_volume`, `8in`→`pa_length`/`8-in`, `Sm`→`pa_size`/`s`) and returns the canonical `{taxonomy, slug, name}`. Pass live DB vocab so multi-word values (`hot-pink`, `mojito`) match existing terms.
+- `resolveAxis(attrName, values, vocab)` → the taxonomy for a whole variation axis (pure→that dim; mixed→source taxonomy + warning).
+- `findDuplicateVariationCombos(variations)` → catches the "lost axis" bug (multiple variations sharing one value because e.g. color was never wired in).
+- Canonical taxonomies: `pa_color`, `pa_size` (apparel), `pa_volume` (oz/ml/g), `pa_length` (in/cm/mm/ft), `pa_flavor`, `pa_material`, `pa_pack` (counts). Do NOT dump mixed values into `pa_size`/`pa_style`/`pa_variant`.
+- Already wired into `import-products-direct.ts` (loads vocab on connect, routes the variation axis, warns on mixed/junk/duplicate-combo). The full cleanup history is in memory: size/attribute/variation cleanups.
+
+**Category → attribute rules** (`scripts/lib/attribute-rules.ts`): which attribute dimensions a product's category may have. Enforced at import (warns) and auditable (`scripts/_audit-attr-rules.ts`):
+- **Lubes / cleaners / oils / creams / lotions / sprays / gels / hygiene / douches** → **volume, flavor** only.
+- **Condoms** → **count, flavor** only.
+- **Apparel / lingerie / costumes** → **apparel-size, color, material, count**.
+- **Everything else (toys: dildos, anal, cock-rings, plugs, vibes, masturbators, extensions…)** → **length, color, material, apparel, count**.
+- **GLOBAL restrictions:** `volume` only on lube/topical; `flavor` only on lube/topical + condoms. So a FLAVOR on a toy is almost always a mislabeled skin-tone (vanilla/chocolate/caramel → should be `pa_color`); a VOLUME on a non-lube is junk. `reconcileWithCategory()` auto-corrects skin-tone flavor→color and flags the rest.
+- Add new rules by extending `CATEGORY_RULES` / `RESTRICTED`.
+
 ## Available Scripts & CLI Tools
 
 Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.ts` for MySQL connections.
 
 **Shared Modules** (`scripts/lib/`):
 - `db.ts` - Shared MySQL connection config (`getConnection()` and `config` exports)
+- `attribute-sanitizer.ts` - Route + canonicalize attribute values at import (see Attribute Data Hygiene above)
 
 **Data Import/Export:**
 - `import-products-direct.ts` - Import products directly to database

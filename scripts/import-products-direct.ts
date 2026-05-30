@@ -21,6 +21,11 @@ import { join } from 'path';
 import { XMLParser, XMLProduct, VariationGroup } from '../lib/import/xml-parser';
 import { readFileSync, writeFileSync } from 'fs';
 import { getConnection } from './lib/db';
+import { resolveAxis, findDuplicateVariationCombos, type SanitizeOpts } from './lib/attribute-sanitizer';
+import { isDimAllowed, type AttrDim } from './lib/attribute-rules';
+
+// pa_* taxonomy -> rule dimension
+const TAX_TO_DIM: Record<string, AttrDim> = { pa_color: 'color', pa_size: 'apparel', pa_volume: 'volume', pa_length: 'length', pa_flavor: 'flavor', pa_material: 'material', pa_pack: 'count' };
 
 // Import configuration
 const PRICE_MULTIPLIER = 3;
@@ -308,6 +313,26 @@ class DirectProductImporter {
 
     // Initialize product_type taxonomy terms
     await this.initProductTypeTerms();
+    // Load existing color/flavor/material vocab so the sanitizer matches new
+    // values to canonical terms (esp. multi-word ones like "hot-pink").
+    await this.loadAttributeVocab();
+  }
+
+  /** Live pa_color / pa_flavor / pa_material slug vocab for the sanitizer. */
+  private vocab: SanitizeOpts = {};
+  private async loadAttributeVocab(): Promise<void> {
+    if (!this.connection) return;
+    const [rows] = await this.connection.execute(
+      `SELECT t.slug, tt.taxonomy FROM wp_term_taxonomy tt JOIN wp_terms t ON t.term_id=tt.term_id WHERE tt.taxonomy IN ('pa_color','pa_flavor','pa_material')`
+    );
+    const color = new Set<string>(), flavor = new Set<string>(), material = new Set<string>();
+    for (const r of rows as any[]) {
+      if (r.taxonomy === 'pa_color') color.add(r.slug);
+      else if (r.taxonomy === 'pa_flavor') flavor.add(r.slug);
+      else material.add(r.slug);
+    }
+    this.vocab = { colorVocab: color, flavorVocab: flavor, materialVocab: material };
+    console.log(`✓ Loaded attribute vocab: ${color.size} colors, ${flavor.size} flavors, ${material.size} materials\n`);
   }
 
   /**
@@ -645,10 +670,11 @@ class DirectProductImporter {
   /**
    * Get or create a term for an attribute value
    */
-  async getOrCreateTerm(termName: string, taxonomy: string): Promise<{ termId: number; termTaxonomyId: number; slug: string }> {
+  async getOrCreateTerm(termName: string, taxonomy: string, explicitSlug?: string): Promise<{ termId: number; termTaxonomyId: number; slug: string }> {
     if (!this.connection) throw new Error('Not connected');
 
-    const slug = termName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 200);
+    // Prefer the caller's canonical slug (e.g. apparel "Small" -> "s"); else derive.
+    const slug = (explicitSlug || termName.toLowerCase().replace(/[^a-z0-9]+/g, '-')).replace(/-+/g, '-').replace(/^-|-$/g, '').substring(0, 200);
 
     // Check if term exists
     const [existing] = await this.connection.execute(
@@ -941,23 +967,42 @@ class DirectProductImporter {
         [`http://maleq-local.local/?post_type=product&p=${parentId}`, parentId]
       );
 
-      // Get or create the attribute
-      await this.getOrCreateAttribute(attrName);
-      const taxonomy = `pa_${attrName.toLowerCase()}`;
+      // Sanitize + route the variation axis: value-driven taxonomy (a "Size" axis
+      // holding oz values -> pa_volume, colors -> pa_color, etc.) with canonical
+      // slugs (6in->6-in, Sm->s). Prevents re-dirtying pa_size/pa_style/pa_variant.
+      const axis = resolveAxis(attrName, variationOptions, this.vocab);
+      const taxonomy = axis.taxonomy;
+      if (!axis.pure && axis.warning) console.warn(`   ⚠️  ${group.baseName}: ${axis.warning}`);
+      if (axis.junkValues.length) console.warn(`   ⚠️  ${group.baseName}: ${axis.junkValues.length} junk variation value(s) (product-name strings) — review`);
 
-      // Create terms for each variation option and link to parent
-      // Store term slugs for use in variations
+      // Category→attribute rule check (CLAUDE.md "Attribute Data Hygiene"): e.g. a
+      // FLAVOR/VOLUME axis on a toy, or LENGTH on a lube, signals mis-categorized data.
+      const catStrings = this.getCategoriesWithFallback(firstProduct).map((c) => c.name.toLowerCase());
+      const axisDim = TAX_TO_DIM[taxonomy];
+      if (axisDim && catStrings.length && !isDimAllowed(axisDim, catStrings)) {
+        console.warn(`   ⚠️  ${group.baseName}: "${axisDim}" axis violates category rules for [${catStrings[0]}] — review (e.g. skin-tone mislabeled as flavor, or stray volume)`);
+      }
+
+      // Register the ROUTED attribute (e.g. pa_volume -> "volume"), not pa_<source name>
+      const routedAttrName = taxonomy.replace(/^pa_/, '');
+      await this.getOrCreateAttribute(routedAttrName);
+
+      // Create terms for each variation option (canonical slug+name) and link to parent
       const termSlugs: string[] = [];
       for (const option of variationOptions) {
-        const { termId, termTaxonomyId, slug } = await this.getOrCreateTerm(option, taxonomy);
+        const c = axis.perValue.get(option)!;
+        const { termTaxonomyId, slug } = await this.getOrCreateTerm(c.name || option, taxonomy, c.slug || undefined);
         termSlugs.push(slug);
-
-        // Link term to parent product
         await this.connection.execute(
           `INSERT IGNORE INTO wp_term_relationships (object_id, term_taxonomy_id, term_order) VALUES (?, ?, 0)`,
           [parentId, termTaxonomyId]
         );
       }
+
+      // Guard: duplicate variation combos = a lost distinguishing axis (the
+      // RealRock missing-color bug). Warn so it's caught at import, not in prod.
+      const dup = findDuplicateVariationCombos(termSlugs.map((s) => ({ attributes: { [taxonomy]: s } })));
+      if (dup.hasDuplicates) console.warn(`   ⚠️  ${group.baseName}: ${dup.total - dup.distinct} duplicate variation(s) on single axis "${taxonomy}" — a distinguishing axis (e.g. color) may be missing`);
 
       // Parent product meta
       const parentMeta: [number, string, string][] = [
