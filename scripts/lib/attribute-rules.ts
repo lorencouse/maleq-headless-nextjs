@@ -30,6 +30,8 @@ export const CATEGORY_RULES: CategoryRule[] = [
   },
   // Condoms
   { name: 'condom', cat: /condom/i, allow: ['count', 'flavor'] },
+  // Edible / oral / scented — legitimately flavored/scented (not just lubes)
+  { name: 'edible/oral/scented', cat: /oral|edible|candy|erotic-food|\bfood\b|candle|kissable|lickable|nipple|massage-candle/i, allow: ['flavor', 'volume', 'count'] },
   // Apparel / lingerie / costumes
   {
     name: 'apparel',
@@ -46,7 +48,7 @@ export const DEFAULT_ALLOW: AttrDim[] = ['length', 'color', 'material', 'apparel
 const LUBE_CAT = /lubric|\blubes?\b|cleaner|\boils?\b|oil-based|\blotions?\b|\bsprays?\b|hygiene|douche|enema|moistur|erotic-body|\bgels?\b|\bcreams?\b|flavored\b/i;
 export const RESTRICTED: Partial<Record<AttrDim, RegExp>> = {
   volume: LUBE_CAT,                              // volume only on lube/topical
-  flavor: new RegExp(LUBE_CAT.source + '|condom', 'i'), // flavor only on lube/topical + condoms
+  flavor: new RegExp(LUBE_CAT.source + '|condom|oral|edible|candy|erotic-food|\\bfood\\b|candle|kissable|lickable|nipple', 'i'), // lube/topical + condoms + edible/oral/scented
 };
 
 /** Union of allowed dims for a product given its category slugs. */
