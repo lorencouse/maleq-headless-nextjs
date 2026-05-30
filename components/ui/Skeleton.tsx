@@ -40,38 +40,50 @@ export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
+/**
+ * Skeleton for the product image-gallery + details grid. Mirrors the layout of
+ * `ProductDetailsWrapper` (same grid/gap classes, aspect-square gallery) so it can
+ * stand in without shifting layout — used both by the route `loading.tsx` and as
+ * the <Suspense> fallback wrapping ProductDetailsWrapper on the product page.
+ */
+export function ProductDetailsGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12">
+      {/* Image Gallery */}
+      <div className="space-y-4">
+        <Skeleton className="aspect-square w-full rounded-lg" />
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="w-20 h-20 rounded-lg" />
+          ))}
+        </div>
+      </div>
+
+      {/* Product Info */}
+      <div className="space-y-6">
+        <Skeleton className="h-5 w-24" />
+        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-6 w-24" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-4/6" />
+        </div>
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetailSkeleton() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* Breadcrumb */}
       <Skeleton className="h-4 w-48 mb-8" />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Image Gallery */}
-        <div className="space-y-4">
-          <Skeleton className="aspect-square w-full rounded-lg" />
-          <div className="flex gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="w-20 h-20 rounded-lg" />
-            ))}
-          </div>
-        </div>
-
-        {/* Product Info */}
-        <div className="space-y-6">
-          <Skeleton className="h-5 w-24" />
-          <Skeleton className="h-10 w-3/4" />
-          <Skeleton className="h-8 w-32" />
-          <Skeleton className="h-6 w-24" />
-          <div className="space-y-2">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-4 w-4/6" />
-          </div>
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
-      </div>
+      <ProductDetailsGridSkeleton />
     </div>
   );
 }

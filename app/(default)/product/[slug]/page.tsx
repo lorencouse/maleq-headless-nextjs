@@ -9,6 +9,7 @@ import { Suspense } from 'react';
 import dynamic from 'next/dynamic';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import ProductDetailsWrapper from '@/components/product/ProductDetailsWrapper';
+import { ProductDetailsGridSkeleton } from '@/components/ui/Skeleton';
 import ProductSpecifications from '@/components/product/ProductSpecifications';
 import LocalizedText from '@/components/i18n/LocalizedText';
 import RelatedProducts from '@/components/product/RelatedProducts';
@@ -237,8 +238,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         ]}
       />
 
-      {/* Product Details with Image Gallery */}
-      <Suspense>
+      {/* Product Details with Image Gallery.
+          The fallback matches the grid layout so that if anything inside ever
+          re-suspends (e.g. a client navigation reading useSearchParams), the
+          block degrades to a skeleton instead of collapsing to nothing. */}
+      <Suspense fallback={<ProductDetailsGridSkeleton />}>
         <ProductDetailsWrapper product={product} />
       </Suspense>
 
