@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
+import { getGoogleLocale } from '@/lib/auth/google-locale';
 
 interface GoogleCredentialResponse {
   credential?: string;
@@ -161,7 +162,7 @@ export default function GoogleSignInButton({ returnTo, text = 'continue_with' }:
           shape: 'rectangular',
           logo_alignment: 'left',
           width: 320,
-          locale,
+          locale: getGoogleLocale(locale),
         });
       })
       .catch(() => {
