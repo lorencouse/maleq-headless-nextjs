@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   formatAttributeName,
@@ -107,7 +107,6 @@ export default function VariationSelector({
   productName,
 }: VariationSelectorProps) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('variations');
   const localizeColorName = useLocalizedColorName();
@@ -253,8 +252,18 @@ export default function VariationSelector({
     }
   }, [externalSelectedVariationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update URL params to reflect current selection
+  // Update URL params to reflect current selection.
+  //
+  // We deliberately use the History API instead of router.replace(): this page's
+  // server component does NOT read searchParams, so a router navigation would
+  // refetch the RSC payload for no benefit AND re-suspend the (fallback-less)
+  // <Suspense> wrapping ProductDetailsWrapper in page.tsx — blanking the whole
+  // gallery/details block on the first selection of each variation (worse on
+  // products with many variations, where the refetch is slow enough to see).
+  // history.replaceState updates the URL for shareable links while staying in
+  // sync with useSearchParams, with no navigation and no flicker.
   const updateUrlParams = (attrs: Record<string, string>) => {
+    if (typeof window === 'undefined') return;
     const params = new URLSearchParams(searchParams.toString());
     // Remove old attribute_ params
     for (const key of Array.from(params.keys())) {
@@ -265,7 +274,8 @@ export default function VariationSelector({
       const paramKey = `attribute_${name.toLowerCase().replace(/\s+/g, '-')}`;
       params.set(paramKey, value);
     }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${pathname}${qs ? `?${qs}` : ''}`);
   };
 
   // Handle attribute selection
