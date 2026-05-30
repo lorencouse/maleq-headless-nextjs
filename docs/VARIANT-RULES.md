@@ -31,9 +31,14 @@ Check sources in this order. Higher-priority sources override lower ones.
 
 ## 2. Core Variation Rules
 
-### Single Attribute Only
+### Up to Two Attributes (UPDATED 2026-05-30)
 
-All variable products must have exactly **one** variation attribute. No product may have a two-level variation selector (e.g., no "Size + Color" dropdowns). Pick the most meaningful attribute per the category rules below.
+A variable product may have **up to two** variation attributes — typically **size/length × color** (e.g. a RealRock dildo offered in 7–12 in × tan/vanilla/clear is ONE variable product with a Length dropdown AND a Color dropdown). This supersedes the former single-attribute rule (now that the attribute taxonomies are cleaned + split into pa_color/pa_size/pa_volume/pa_length/pa_flavor/pa_material).
+
+- Pick the axes by the category rules below. The two axes must be **orthogonal** (size × color, not size × size).
+- Every variation must be uniquely identified by its combination of axis values (no duplicate combos — see §7).
+- Apparel/lube/condom lines are usually still single-axis; toys (dildos, plugs, etc.) are commonly size/length × color.
+- Allowed taxonomies as variation axes: `pa_color`, `pa_size`, `pa_volume`, `pa_length`, `pa_flavor`, `pa_material`, `pa_pack` — bounded by the category→attribute rules (`scripts/lib/attribute-rules.ts`).
 
 ### WooCommerce Meta
 
