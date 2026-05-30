@@ -1,16 +1,18 @@
 # Deployment Guide
 
-This guide covers deploying the Maleq headless e-commerce store to Vercel.
+This guide covers deploying the Maleq headless e-commerce store to **Coolify** (self-hosted, on the Coolify VPS at `46.224.227.119`). The Next.js app is built from the GitHub repo via Nixpacks (no `Dockerfile` in the repo) and served behind Coolify's bundled Traefik reverse proxy.
+
+> **Note:** This project is deployed on a self-hosted Coolify instance, **not** Vercel. There is no `vercel.json` and no Vercel-managed cron or analytics — the equivalents are handled by Coolify (build variables, scheduled tasks) and Traefik (TLS), as described below.
 
 ---
 
 ## Prerequisites
 
-- Vercel account
-- GitHub repository connected to Vercel
+- Access to the Coolify dashboard for the project (Coolify VPS `46.224.227.119`; SSH access is `deploy@46.224.227.119`, **not** root)
+- GitHub repository connected to the Coolify application (deploys from `main`)
 - WooCommerce/WordPress backend set up
 - Stripe account (production keys for live)
-- Domain name configured
+- Domain name configured (DNS pointed at the Coolify VPS; TLS issued automatically by Traefik/Let's Encrypt)
 
 ---
 
@@ -130,13 +132,15 @@ NEXT_PUBLIC_IMAGE_BASE_URL=http://maleq-local.local
 ```
 
 **Production:**
-Either set `NEXT_PUBLIC_IMAGE_BASE_URL=https://www.maleq.com` in Vercel, or omit it (defaults to `https://www.maleq.com`)
+Either set `NEXT_PUBLIC_IMAGE_BASE_URL=https://www.maleq.com` in Coolify, or omit it (defaults to `https://www.maleq.com`). Because this is a `NEXT_PUBLIC_*` variable it is inlined at build time — set it as a **build variable** in Coolify, not a runtime-only env var (see [Environment Variables](#environment-variables)).
 
 ---
 
 ## Environment Variables
 
-Configure these environment variables in Vercel Dashboard > Project Settings > Environment Variables.
+Configure these in the Coolify dashboard → your application → **Environment Variables**.
+
+> **Build-time vs runtime (important on Coolify):** any variable prefixed `NEXT_PUBLIC_` is inlined into the client bundle during `bun run build`. In Coolify these must be marked as **Build Variables** (available as build args), otherwise they will be empty in the browser even if set as runtime env vars. Server-only secrets (e.g. `STRIPE_SECRET_KEY`, `MALEQ_GOOGLE_AUTH_SECRET`, `WOOCOMMERCE_CONSUMER_SECRET`) only need to be runtime variables. After changing any build variable you must **trigger a new deploy** so it gets baked in.
 
 ### Required Variables
 
@@ -159,7 +163,7 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
 | `NEXT_PUBLIC_SENTRY_DSN` | Sentry error tracking DSN | `https://xxx@xxx.ingest.sentry.io/xxx` |
 | `REVALIDATION_SECRET` | Secret for cache revalidation webhook (must match `MALEQ_REVALIDATION_SECRET` in wp-config.php) | Random string |
 | `ADMIN_API_KEY` | Admin API key for protected endpoints (must match `MALEQ_ADMIN_KEY` in wp-config.php) | Random string |
-| `CRON_SECRET` | Vercel cron secret for automated jobs (set in Vercel dashboard) | Random string |
+| `CRON_SECRET` | Secret for automated cron jobs hitting `/api/cron/*` (used by the Coolify scheduled task / external cron; falls back to `ADMIN_API_KEY` for manual triggers) | Random string |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | Google OAuth 2.0 Web client ID for "Sign in with Google" (public; used by the GIS button and to verify ID tokens server-side) | `xxxx.apps.googleusercontent.com` |
 | `MALEQ_GOOGLE_AUTH_SECRET` | Shared secret protecting the `maleq/v1/google-auth` WP endpoint (must match `MALEQ_GOOGLE_AUTH_SECRET` in wp-config.php) | Random 32+ char string |
 
@@ -171,8 +175,10 @@ Configure these environment variables in Vercel Dashboard > Project Settings > E
    - `http://maleq-local.local` (Local by Flywheel)
    - `http://localhost:3000` (dev)
    (Google Identity Services uses JavaScript origins, not redirect URIs.)
-3. Copy the client ID into `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (Vercel + `.env.local`).
-4. Generate a random secret and set it **identically** in both `MALEQ_GOOGLE_AUTH_SECRET` (Vercel env) and `wp-config.php` (`define('MALEQ_GOOGLE_AUTH_SECRET', '...')`).
+3. Copy the client ID into `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (Coolify **build variable** + `.env.local`). Since it is `NEXT_PUBLIC_*` it must be present at build time — set it as a build variable and redeploy, or the button will not render in production.
+4. Generate a random secret and set it **identically** in both `MALEQ_GOOGLE_AUTH_SECRET` (Coolify runtime env) and `wp-config.php` (`define('MALEQ_GOOGLE_AUTH_SECRET', '...')`).
+
+> The Google **client secret** is **not** used by this integration — it uses the Google Identity Services (GIS) ID-token flow, which verifies the signed ID token server-side using only the client ID. Only the client ID is needed from Google Cloud Console.
 
 ### WordPress wp-config.php Constants
 
@@ -183,24 +189,26 @@ define('MALEQ_FRONTEND_URL', 'https://your-frontend-domain.com');
 define('MALEQ_REVALIDATION_SECRET', 'your-revalidation-secret-here');
 define('MALEQ_GOOGLE_AUTH_SECRET', 'your-google-auth-shared-secret-here');
 ```
-- `MALEQ_ADMIN_KEY` must match the `ADMIN_API_KEY` env var in Vercel.
+- `MALEQ_ADMIN_KEY` must match the `ADMIN_API_KEY` env var in Coolify.
 - `MALEQ_FRONTEND_URL` is the production URL of your Next.js site (e.g., `https://maleq.com`).
-- `MALEQ_REVALIDATION_SECRET` must match the `REVALIDATION_SECRET` env var in Vercel.
-- `MALEQ_GOOGLE_AUTH_SECRET` must match the `MALEQ_GOOGLE_AUTH_SECRET` env var in Vercel.
+- `MALEQ_REVALIDATION_SECRET` must match the `REVALIDATION_SECRET` env var in Coolify.
+- `MALEQ_GOOGLE_AUTH_SECRET` must match the `MALEQ_GOOGLE_AUTH_SECRET` env var in Coolify.
 
 ### Daily Stock Sync (Cron)
 
-A Vercel cron job runs daily at 6:00 AM UTC to sync stock from STC and Williams Trading:
+A daily job at 6:00 AM UTC syncs stock from STC and Williams Trading:
 - **Endpoint**: `/api/cron/stock-sync`
-- **Schedule**: `0 6 * * *` (configured in `vercel.json`)
-- **Auth**: Uses `CRON_SECRET` (Vercel cron) or `ADMIN_API_KEY` (manual trigger)
+- **Schedule**: `0 6 * * *`
+- **Auth**: Uses `CRON_SECRET` (scheduled task) or `ADMIN_API_KEY` (manual trigger)
 - **What it does**:
   1. Fetches STC inventory CSV (combined stock) and updates `_stock` for all matched products
   2. Fetches Williams Trading active products and stores `wt_stock_count` meta for fulfillment prioritization
 
+> **Scheduling on Coolify:** there is no `vercel.json` cron in this project. Schedule the job with a **Coolify Scheduled Task** on the application (command: `curl -fsS https://maleq.com/api/cron/stock-sync -H "Authorization: Bearer $CRON_SECRET"`, frequency `0 6 * * *`), or with any external cron (system crontab, GitHub Actions schedule, UptimeRobot heartbeat URL). The endpoint is idempotent and safe to re-run.
+
 **Manual trigger**:
 ```bash
-curl https://your-site.com/api/cron/stock-sync -H "Authorization: Bearer $ADMIN_API_KEY"
+curl https://maleq.com/api/cron/stock-sync -H "Authorization: Bearer $ADMIN_API_KEY"
 ```
 
 **Requires**: `maleq-stock-sync.php` mu-plugin installed on WordPress
@@ -209,40 +217,41 @@ curl https://your-site.com/api/cron/stock-sync -H "Authorization: Bearer $ADMIN_
 
 ## Deployment Steps
 
-### 1. Connect Repository to Vercel
+### 1. Connect Repository in Coolify
 
-1. Go to [vercel.com](https://vercel.com)
-2. Click "Add New Project"
-3. Import your GitHub repository
-4. Select the `initial-setup` branch (or `main`)
+1. In the Coolify dashboard, create (or open) the application for this project.
+2. Source: the connected GitHub repository.
+3. Branch: `main`.
+4. Build pack: **Nixpacks** (auto-detects the Bun + Next.js project — there is no `Dockerfile` in the repo).
 
 ### 2. Configure Build Settings
 
-Vercel should auto-detect Next.js. Verify these settings:
+Coolify/Nixpacks auto-detects Next.js. Verify:
 
-- **Framework Preset**: Next.js
-- **Build Command**: `bun run build`
 - **Install Command**: `bun install`
-- **Output Directory**: `.next`
+- **Build Command**: `bun run build`
+- **Start Command**: `bun run start` (Next.js production server)
+- **Port**: `3000`
 
 ### 3. Add Environment Variables
 
-1. Go to Project Settings > Environment Variables
-2. Add all required variables from the table above
-3. Set appropriate environments (Production, Preview, Development)
+1. Open the application → **Environment Variables**.
+2. Add all required variables from the table above.
+3. Mark every `NEXT_PUBLIC_*` variable as a **Build Variable** so it is available during `bun run build` (otherwise it will be empty in the browser).
 
-### 4. Configure Domain
+### 4. Configure Domain & TLS
 
-1. Go to Project Settings > Domains
-2. Add your custom domain (e.g., `maleq.com`)
-3. Follow DNS configuration instructions
-4. SSL is automatic with Vercel
+1. Set the application's domain (e.g., `https://maleq.com`) in Coolify.
+2. Point the domain's DNS at the Coolify VPS (`46.224.227.119`).
+3. TLS is issued automatically by Coolify's bundled **Traefik** via Let's Encrypt (certs stored in `acme.json`). No manual certificate steps are needed.
 
 ### 5. Deploy
 
-1. Push to the connected branch
-2. Vercel automatically deploys
-3. Monitor build logs for errors
+1. Push to `main`.
+2. Coolify deploys via its GitHub webhook. **Note:** the webhook can be flaky — if a push doesn't trigger a build, open the application in Coolify and click **Deploy** (a manual deploy pulls the current `main` HEAD).
+3. Monitor the build logs in Coolify.
+
+> **Build memory caveat:** the Coolify VPS has 8 GB RAM and **no swap**. The Next.js build loads the ~35k-product index per worker, so builds occasionally OOM/get killed transiently. If a build dies with no clear error, just retry the deploy.
 
 ---
 
@@ -250,15 +259,13 @@ Vercel should auto-detect Next.js. Verify these settings:
 
 ### Setup
 
-1. Create a separate Vercel project or use Preview deployments
+1. Create a **separate Coolify application** pointed at the same repo but a staging branch (or `main` with a staging domain).
 2. Use separate environment variables:
    - `NEXT_PUBLIC_SITE_URL`: `https://staging.maleq.com`
    - Use Stripe test keys
-   - Point to staging WordPress instance
+   - Point to a staging WordPress instance
 
-### Preview Deployments
-
-Every PR automatically gets a preview URL. Configure preview-specific variables if needed.
+> Coolify does not provide per-PR preview deployments like Vercel. For pre-merge checks, rely on the GitHub Actions CI (lint/test/build) below, or manually deploy a feature branch to the staging application.
 
 ---
 
@@ -285,7 +292,7 @@ Every PR automatically gets a preview URL. Configure preview-specific variables 
 
 After your first production deploy, verify the cache revalidation pipeline is working:
 
-1. **Set Vercel env var**: Ensure `REVALIDATION_SECRET` is set in Vercel > Project Settings > Environment Variables
+1. **Set the env var**: Ensure `REVALIDATION_SECRET` is set in Coolify → application → Environment Variables
 2. **Set WordPress constants**: Add `MALEQ_FRONTEND_URL` and `MALEQ_REVALIDATION_SECRET` to production `wp-config.php` (see [WordPress wp-config.php Constants](#wordpress-wp-configphp-constants) above)
 3. **Install the mu-plugin**: Copy `maleq-cache-revalidation.php` to production `wp-content/mu-plugins/`
 4. **Test revalidation**: Edit and save any product in WooCommerce, then verify the change appears on the frontend within a few seconds
@@ -301,7 +308,7 @@ After your first production deploy, verify the cache revalidation pipeline is wo
 ### Performance Checks
 
 - [ ] Run Lighthouse audit (target >80)
-- [ ] Check Core Web Vitals in Vercel Analytics
+- [ ] Check Core Web Vitals (the app reports Web Vitals via `components/analytics/WebVitals.tsx` → GA4; review in Google Analytics / PageSpeed Insights)
 - [ ] Verify caching headers (`Cache-Control: public, s-maxage=300` on `/api/products` responses)
 
 ### SEO Checks
@@ -315,12 +322,11 @@ After your first production deploy, verify the cache revalidation pipeline is wo
 
 ## Monitoring
 
-### Vercel Analytics
+### Analytics & Web Vitals
 
-Enable Vercel Analytics for:
-- Page views
-- Core Web Vitals
-- Audience insights
+There is no Vercel Analytics on Coolify. This project uses:
+- **Google Analytics 4** (`NEXT_PUBLIC_GA_ID`) for page views and audience insights (`components/analytics/GoogleAnalytics.tsx`)
+- **Web Vitals → GA4** for Core Web Vitals (`components/analytics/WebVitals.tsx`)
 
 ### Error Monitoring
 
@@ -330,10 +336,7 @@ Enable Vercel Analytics for:
 
 ### Uptime Monitoring
 
-Consider using:
-- Vercel's built-in monitoring
-- UptimeRobot
-- Pingdom
+A self-hosted **Uptime Kuma** instance already runs on the WP VPS (port 3001). Use it, or any external monitor (UptimeRobot, Pingdom), to watch the production URL and the `/api/cron/stock-sync` heartbeat.
 
 ---
 
@@ -341,11 +344,11 @@ Consider using:
 
 If issues occur after deployment:
 
-### Using Vercel Dashboard
+### Using the Coolify Dashboard
 
-1. Go to Deployments tab
-2. Find the last working deployment
-3. Click "..." menu > "Promote to Production"
+1. Open the application → **Deployments**.
+2. Find the last known-good deployment.
+3. Use **Redeploy** on that commit/build to roll back to it.
 
 ### Using Git
 
@@ -402,9 +405,11 @@ jobs:
 
 ### Build Failures
 
-1. Check build logs in Vercel
-2. Verify all environment variables are set
+1. Check the build logs in Coolify (application → Deployments → the failed build)
+2. Verify all environment variables are set, and that `NEXT_PUBLIC_*` vars are marked as **build variables**
 3. Test build locally: `bun run build`
+4. If the build was killed with no clear error, suspect a transient OOM (8 GB VPS, no swap, ~35k-product index loaded per worker) — simply retry the deploy
+5. If a push didn't trigger a build, the GitHub webhook may have been missed — click **Deploy** manually (pulls current `main` HEAD)
 
 ### API Connection Issues
 
@@ -429,6 +434,6 @@ jobs:
 ## Support
 
 For deployment issues:
-- Vercel Documentation: https://vercel.com/docs
+- Coolify Documentation: https://coolify.io/docs
 - Next.js Documentation: https://nextjs.org/docs
 - Project Issues: [GitHub Issues URL]
