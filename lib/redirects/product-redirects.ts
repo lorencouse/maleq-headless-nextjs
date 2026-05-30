@@ -4,6 +4,9 @@
 
 /** Map of old V1 product slug → new V2 product slug */
 export const productRedirectMap: Record<string, string> = {
+  // singles merged into variable parents (variation consolidation, 2026-05-30)
+  "realrock-straight-w-balls-9-vanilla": "realrock-straight-w-balls",
+  "realrock-straight-w-balls-10-vanilla": "realrock-straight-w-balls",
   "gun-oil-silicone": "gun-oil-lubricant",
   "dr-joel-kaplan-anal-dilator-kit": "d-dr-joel-anal-dilator-kit",
   "lube-tube-2-pack-clear": "lube",
