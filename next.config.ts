@@ -419,7 +419,7 @@ const nextConfig: NextConfig = {
               "media-src 'self' https://*.maleq.com https://*.maleq.org",
               "font-src 'self' data:",
               "connect-src 'self' https://*.stripe.com https://www.google-analytics.com https://*.google-analytics.com https://analytics.google.com https://*.maleq.com https://*.maleq.org https://www.googletagmanager.com https://cloudflareinsights.com https://accounts.google.com/gsi/",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com/gsi/",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://accounts.google.com/gsi/ https://www.instagram.com https://platform.twitter.com https://www.tiktok.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com",
               "object-src 'none'",
               "worker-src 'self'",
               "base-uri 'self'",
