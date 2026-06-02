@@ -123,6 +123,10 @@ export async function publishDraft(
     for (const tag of drafted.tags.slice(0, 5)) {
       const tslug = slugify(tag);
       if (!tslug) continue;
+      // Never tag with a slug that collides with the News category — a term used
+      // as both category and post_tag becomes a WP "shared term" and breaks
+      // category assignment in the admin (see docs).
+      if (tslug === NEWS_CATEGORY.slug) continue;
       ttIds.push(await resolveTerm(db, 'post_tag', tag, tslug));
     }
     for (const ttid of [...new Set(ttIds)]) {
