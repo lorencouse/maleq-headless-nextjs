@@ -212,8 +212,11 @@ async function main() {
     return;
   }
 
+  // BRANDFETCH_API holds the Brand Data API key in this project, so it's used
+  // for the Brand API (Bearer) AND as the Search client id (?c=). A dedicated
+  // BRANDFETCH_BRAND_API_KEY, if set, takes precedence for the Bearer tier.
   const keys: ApiKeys = {
-    brandApi: process.env.BRANDFETCH_BRAND_API_KEY,
+    brandApi: process.env.BRANDFETCH_BRAND_API_KEY || process.env.BRANDFETCH_API,
     search: process.env.BRANDFETCH_API_KEY || process.env.BRANDFETCH_API,
   };
   const tiers = [
