@@ -1,0 +1,194 @@
+/**
+ * scrape-brand-logos.ts — download, normalize, and stage brand logos.
+ *
+ * Source: Brandfetch Brand API (if BRANDFETCH_API_KEY is set) → manufacturer
+ * homepage scrape fallback. Each logo is trimmed, resized, and written as WebP
+ * to public/brand-logos/<slug>.webp. Then a contact sheet + report are written
+ * to scripts/output/ for human review BEFORE the logos are wired into the UI.
+ *
+ * Usage:
+ *   bun run scripts/scrape-brand-logos.ts                 # fetch all missing
+ *   bun run scripts/scrape-brand-logos.ts --only doc-johnson-novelties,lelo
+ *   bun run scripts/scrape-brand-logos.ts --limit 5       # first 5 (smoke test)
+ *   bun run scripts/scrape-brand-logos.ts --force         # re-fetch existing
+ *   bun run scripts/scrape-brand-logos.ts --finalize      # AFTER review: build
+ *                                                         # lib/brand-logos.ts
+ *                                                         # from approved files
+ *
+ * Review flow: run (no --finalize) → open scripts/output/brand-logos-review.html
+ * → DELETE any bad public/brand-logos/*.webp → run --finalize → commit.
+ */
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, rmSync } from 'fs';
+import { join } from 'path';
+import sharp from 'sharp';
+import {
+  domainOf,
+  brandfetchCandidates,
+  scrapeCandidates,
+  fetchImageBuffer,
+  type LogoCandidate,
+} from './lib/logo-fetch';
+
+const ROOT = join(import.meta.dir ?? __dirname, '..');
+const INPUT = join(ROOT, 'scripts/brand-websites.json');
+const OUT_DIR = join(ROOT, 'public/brand-logos');
+const REPORT_DIR = join(ROOT, 'scripts/output');
+const MANIFEST_TS = join(ROOT, 'lib/brand-logos.ts');
+
+// Display target: logo sits on a white tile in BrandHero at ~80px tall.
+// Render at 2x for retina, cap width so wide wordmarks stay reasonable.
+const TARGET_H = 160;
+const MAX_W = 520;
+const MIN_USABLE_W = 48;
+const WEBP_QUALITY = 90;
+
+interface BrandEntry { slug: string; name?: string; website: string; verified?: boolean }
+interface Report {
+  slug: string;
+  name: string;
+  domain: string;
+  status: 'ok' | 'failed' | 'skipped';
+  source?: string;
+  sourceUrl?: string;
+  w?: number;
+  h?: number;
+  note?: string;
+}
+
+function parseArgs() {
+  const a = process.argv.slice(2);
+  const get = (flag: string) => {
+    const i = a.indexOf(flag);
+    return i >= 0 ? a[i + 1] : undefined;
+  };
+  return {
+    finalize: a.includes('--finalize'),
+    force: a.includes('--force'),
+    limit: get('--limit') ? parseInt(get('--limit')!, 10) : undefined,
+    only: get('--only')?.split(',').map((s) => s.trim()).filter(Boolean),
+  };
+}
+
+/** Decode (rasterizing SVG crisply), trim borders, fit to target, encode WebP. */
+async function processToWebp(buf: Buffer, isSvg: boolean): Promise<{ out: Buffer; w: number; h: number } | null> {
+  try {
+    const input = isSvg ? sharp(buf, { density: 384 }) : sharp(buf);
+    const pipeline = input
+      .trim() // strip uniform border (whitespace / solid bg)
+      .resize({ height: TARGET_H, width: MAX_W, fit: 'inside', withoutEnlargement: !isSvg })
+      .webp({ quality: WEBP_QUALITY });
+    const out = await pipeline.toBuffer();
+    const meta = await sharp(out).metadata();
+    if (!meta.width || meta.width < MIN_USABLE_W) return null;
+    return { out, w: meta.width, h: meta.height ?? TARGET_H };
+  } catch {
+    return null;
+  }
+}
+
+function isSvgCandidate(c: LogoCandidate, contentType: string): boolean {
+  return /svg/i.test(contentType) || /\.svg(\?|$)/i.test(c.url);
+}
+
+async function fetchOneBrand(brand: BrandEntry, apiKey: string | undefined): Promise<Report> {
+  const name = brand.name ?? brand.slug;
+  const domain = domainOf(brand.website);
+  const base: Report = { slug: brand.slug, name, domain, status: 'failed' };
+
+  const candidates: LogoCandidate[] = [];
+  if (apiKey) {
+    try { candidates.push(...(await brandfetchCandidates(domain, apiKey))); } catch { /* fall through */ }
+  }
+  try { candidates.push(...(await scrapeCandidates(brand.website))); } catch { /* none */ }
+
+  for (const c of candidates) {
+    const dl = await fetchImageBuffer(c.url);
+    if (!dl) continue;
+    if (/text\/html/i.test(dl.contentType)) continue; // got an error page, not an image
+    const processed = await processToWebp(dl.buf, isSvgCandidate(c, dl.contentType));
+    if (!processed) continue;
+    writeFileSync(join(OUT_DIR, `${brand.slug}.webp`), processed.out);
+    return { ...base, status: 'ok', source: c.source, sourceUrl: c.url, w: processed.w, h: processed.h, note: c.note };
+  }
+  return { ...base, note: candidates.length ? 'no candidate decoded' : 'no candidates found' };
+}
+
+function writeContactSheet(reports: Report[]) {
+  const ok = reports.filter((r) => r.status === 'ok');
+  const failed = reports.filter((r) => r.status === 'failed');
+  const card = (r: Report) => `
+    <div style="border:1px solid #ddd;border-radius:8px;padding:10px;width:220px;font:13px sans-serif">
+      <div style="background:#fff;height:90px;display:flex;align-items:center;justify-content:center;border:1px solid #eee;border-radius:6px">
+        <img src="../../public/brand-logos/${r.slug}.webp" style="max-height:72px;max-width:200px;object-fit:contain" alt="${r.name}">
+      </div>
+      <div style="margin-top:8px;font-weight:600">${r.name}</div>
+      <div style="color:#666">${r.slug} · ${r.w}×${r.h}</div>
+      <div style="color:#999;font-size:11px">${r.source} · ${r.note ?? ''}</div>
+      <a href="${r.sourceUrl}" style="font-size:11px;word-break:break-all" target="_blank">${r.sourceUrl}</a>
+    </div>`;
+  const html = `<!doctype html><meta charset="utf-8"><title>Brand logos review</title>
+    <body style="font:14px sans-serif;padding:20px;background:#f7f7f7">
+    <h1>Brand logo review</h1>
+    <p>${ok.length} fetched · ${failed.length} failed. <b>Delete any bad <code>public/brand-logos/*.webp</code></b>, then run <code>--finalize</code>.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:14px">${ok.map(card).join('')}</div>
+    <h2 style="margin-top:30px">Failed (${failed.length})</h2>
+    <ul>${failed.map((r) => `<li>${r.name} (${r.slug}) — ${r.note}</li>`).join('')}</ul>`;
+  writeFileSync(join(REPORT_DIR, 'brand-logos-review.html'), html);
+  writeFileSync(join(REPORT_DIR, 'brand-logos.report.json'), JSON.stringify(reports, null, 2));
+}
+
+/** Rebuild lib/brand-logos.ts from whatever WebP files survive review. */
+async function finalize() {
+  const files = existsSync(OUT_DIR) ? readdirSync(OUT_DIR).filter((f) => f.endsWith('.webp')) : [];
+  const entries: string[] = [];
+  for (const f of files.sort()) {
+    const slug = f.replace(/\.webp$/, '');
+    const meta = await sharp(join(OUT_DIR, f)).metadata();
+    entries.push(`  ${JSON.stringify(slug)}: { w: ${meta.width}, h: ${meta.height} },`);
+  }
+  const ts = `// AUTO-GENERATED by scripts/scrape-brand-logos.ts --finalize. Do not edit by hand.
+// Maps a product_brand slug to its logo dimensions; the asset is
+// public/brand-logos/<slug>.webp. Presence here = approved for display.
+export const BRAND_LOGOS: Record<string, { w: number; h: number }> = {
+${entries.join('\n')}
+};
+`;
+  writeFileSync(MANIFEST_TS, ts);
+  console.log(`Finalized: ${files.length} logo(s) → lib/brand-logos.ts`);
+}
+
+async function main() {
+  const args = parseArgs();
+  mkdirSync(OUT_DIR, { recursive: true });
+  mkdirSync(REPORT_DIR, { recursive: true });
+
+  if (args.finalize) {
+    await finalize();
+    return;
+  }
+
+  const apiKey = process.env.BRANDFETCH_API_KEY;
+  console.log(apiKey ? 'Brandfetch key found → API first, scrape fallback.' : 'No BRANDFETCH_API_KEY → scrape-only mode.');
+
+  const raw = JSON.parse(readFileSync(INPUT, 'utf8')) as { brands: BrandEntry[] };
+  let brands = raw.brands.filter((b) => b.slug && b.website);
+  if (args.only) brands = brands.filter((b) => args.only!.includes(b.slug));
+  if (!args.force) brands = brands.filter((b) => !existsSync(join(OUT_DIR, `${b.slug}.webp`)));
+  if (args.limit) brands = brands.slice(0, args.limit);
+
+  console.log(`Processing ${brands.length} brand(s)...`);
+  const reports: Report[] = [];
+  for (const b of brands) {
+    const r = await fetchOneBrand(b, apiKey);
+    reports.push(r);
+    console.log(`  ${r.status === 'ok' ? '✓' : '✗'} ${r.slug}${r.status === 'ok' ? ` (${r.source}, ${r.w}×${r.h})` : ` — ${r.note}`}`);
+  }
+
+  writeContactSheet(reports);
+  const ok = reports.filter((r) => r.status === 'ok').length;
+  console.log(`\nDone: ${ok}/${reports.length} fetched.`);
+  console.log(`Review: open scripts/output/brand-logos-review.html, delete bad public/brand-logos/*.webp, then run:`);
+  console.log(`  bun run scripts/scrape-brand-logos.ts --finalize`);
+}
+
+main();

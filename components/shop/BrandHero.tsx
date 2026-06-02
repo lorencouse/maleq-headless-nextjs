@@ -1,9 +1,11 @@
 'use client';
 
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Brand } from '@/lib/products/combined-service';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
+import { BRAND_LOGOS } from '@/lib/brand-logos';
 
 interface BrandHeroProps {
   brand: Brand;
@@ -12,6 +14,7 @@ interface BrandHeroProps {
 
 export default function BrandHero({ brand, productCount }: BrandHeroProps) {
   const t = useTranslations('brandHero');
+  const logo = BRAND_LOGOS[brand.slug];
   return (
     <section className="mb-8 select-none">
       {/* Hero Banner */}
@@ -26,12 +29,25 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
         {/* Content */}
         <div className="relative px-6 py-8 sm:px-8 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            {/* Brand Icon */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0 text-white flex items-center justify-center">
-              <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-            </div>
+            {/* Brand logo (on a white tile) when available, else generic icon */}
+            {logo ? (
+              <div className="h-16 sm:h-20 px-4 bg-white rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center">
+                <Image
+                  src={`/brand-logos/${brand.slug}.webp`}
+                  alt={`${brand.name} logo`}
+                  width={logo.w}
+                  height={logo.h}
+                  className="h-10 sm:h-12 w-auto object-contain"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className="w-16 h-16 sm:w-20 sm:h-20 p-4 bg-white/20 rounded-2xl backdrop-blur-sm flex-shrink-0 text-white flex items-center justify-center">
+                <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
+            )}
 
             {/* Text Content */}
             <div className="flex-1">
