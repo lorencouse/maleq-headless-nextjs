@@ -1,5 +1,5 @@
 {
-  "_comment": "Maps product_brand term slug -> manufacturer official website. Consumed by scripts/gen-brand-websites.ts to UPSERT termmeta `maleq_brand_website`. `verified` = domain confirmed via web search (2026-06). Add/edit entries then re-run the generator. Slugs must match wp_terms.slug for taxonomy product_brand. Brands intentionally omitted (no single clean official site / ambiguous catch-all): cousins-group, kink-labs, sportfucker, sugar-sak, trojan, electric-hustler-lingerie, savage-lingerie, ozze-creations, doctor-love, rascal-toys, ball-and-chain, and the 'Assorted *'/single-letter catch-alls.",
+  "_comment": "Maps product_brand term slug -> manufacturer official website. Consumed by scripts/gen-brand-websites.ts to UPSERT termmeta `maleq_brand_website`. `verified` = domain confirmed via web search (2026-06; second pass added odin-novelties..ozze-creations). Add/edit entries then re-run the generator. Slugs must match wp_terms.slug for taxonomy product_brand. Brands intentionally omitted (no single clean official site / parent-only / retailer / catch-all): cousins-group, kink-labs, sugar-sak, electric-hustler-lingerie, savage-lingerie, doctor-love, ball-and-chain, erotic-chocolates, novum-llc, picture-brite, sinclair-products (defunct), olivias-boudoir, emotion-lotion, georges-funfactory, line-one-condoms, male-rose, simpli-trading, romantic-depot (retailer), touche/peekaboo/fukuoku-therapeutic-vibes (parent-only, no own site), and the 'Assorted *'/single-letter catch-alls.",
   "brands": [
     { "slug": "california-exotic-novelties", "name": "California Exotic Novelties", "website": "https://calexotics.com", "verified": true },
     { "slug": "xr-brands", "name": "XR Brands", "website": "https://xrbrands.com", "verified": true },
@@ -92,6 +92,32 @@
     { "slug": "g-world-intimates", "name": "G World Intimates", "website": "https://gworldintimates.com", "verified": true },
     { "slug": "slippery-stuff-lubes", "name": "Slippery Stuff Lubes", "website": "https://slipperystuff.org", "verified": true },
     { "slug": "thank-me-now", "name": "Thank Me Now (Shibari)", "website": "https://shopshibari.com", "verified": true },
-    { "slug": "california-fantasies", "name": "California Fantasies", "website": "https://californiafantasies.com", "verified": true }
+    { "slug": "california-fantasies", "name": "California Fantasies", "website": "https://californiafantasies.com", "verified": true },
+
+    { "slug": "odin-novelties", "name": "Odin Novelties", "website": "https://odinnovelties.com", "verified": true },
+    { "slug": "beverly-hills-naughty-girl", "name": "Beverly Hills Naughty Girl", "website": "https://beverlyhillsnaughtygirl.com", "verified": true },
+    { "slug": "fashioncraft", "name": "Fashioncraft", "website": "https://www.fashioncraft.com", "verified": true },
+    { "slug": "edc-wholesale", "name": "EDC Wholesale", "website": "https://www.edc.nl", "verified": true },
+    { "slug": "forplay-lubricants", "name": "Forplay Lubricants", "website": "https://forplaysensuals.com", "verified": true },
+    { "slug": "empire-smoke-distributor", "name": "Empire Smoke Distributor", "website": "https://empiresmokedist.com", "verified": true },
+    { "slug": "helmet-grease", "name": "Helmet Grease", "website": "https://helmetgrease.com", "verified": true },
+    { "slug": "our-erotic-journey", "name": "Our Erotic Journey", "website": "https://www.oureroticjourney.com", "verified": true },
+    { "slug": "astrocaps", "name": "Astrocaps", "website": "https://astrocapsny.com", "verified": true },
+    { "slug": "kalan", "name": "Kalan", "website": "https://www.kalanlp.com", "verified": true },
+    { "slug": "trustex-condoms", "name": "TRUSTEX CONDOMS", "website": "https://www.globalprotection.com", "verified": true },
+    { "slug": "flintts-mints", "name": "FLINTTS MINTS", "website": "https://www.flintts.com", "verified": true },
+    { "slug": "liquid-latex-fashions", "name": "Liquid Latex Fashions", "website": "https://www.liquidlatexfashions.com", "verified": true },
+    { "slug": "cock-oil", "name": "Cock Oil", "website": "https://cockoil.com", "verified": true },
+    { "slug": "perfect-dimensions", "name": "Perfect Dimensions", "website": "https://www.perfectdimensionsllc.com", "verified": true },
+    { "slug": "dr-joel-pumps", "name": "Dr. Joel Pumps", "website": "https://doctorjoelkaplan.com", "verified": true },
+    { "slug": "sport-lube", "name": "Sport Lube", "website": "https://www.sportlube.com", "verified": true },
+    { "slug": "trojan", "name": "Trojan", "website": "https://www.trojancondoms.com", "verified": true },
+    { "slug": "sportfucker", "name": "Sportfucker", "website": "https://www.665leather.com", "verified": true },
+    { "slug": "rascal-toys", "name": "Rascal Toys", "website": "https://www.channel1releasing.com", "verified": true },
+
+    { "slug": "candy-prints", "name": "Candy Prints", "website": "https://shop.candyprints.com", "verified": false },
+    { "slug": "nori-fields-magic-gel", "name": "Nori Fields Magic Gel", "website": "https://magicgel.com", "verified": false },
+    { "slug": "dr-clockworks", "name": "Dr Clockworks", "website": "https://drclockwork.com", "verified": false },
+    { "slug": "ozze-creations", "name": "Ozze Creations", "website": "https://www.ozze.biz", "verified": false }
   ]
 }
