@@ -1309,7 +1309,8 @@
     "breadcrumbShop": "Shop",
     "breadcrumbBrands": "Marken",
     "productCount": "{count, plural, =1 {# Produkt} other {# Produkte}}",
-    "browseProducts": "Produkte ansehen"
+    "browseProducts": "Produkte ansehen",
+    "officialWebsite": "Offizielle Website"
   },
   "shopPage": {
     "filtersHeading": "Filter",

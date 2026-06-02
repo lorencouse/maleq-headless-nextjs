@@ -869,6 +869,10 @@ export interface Brand {
   slug: string;
   count: number;
   description?: string | null;
+  /** Manufacturer homepage URL (termmeta `maleq_brand_website`). */
+  website?: string | null;
+  /** Manufacturer product-URL template with a `{sku}` placeholder. */
+  productUrlTemplate?: string | null;
 }
 
 /**

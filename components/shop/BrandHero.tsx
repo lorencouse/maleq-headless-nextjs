@@ -68,6 +68,19 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
                   </svg>
                   {t('productCount', { count: productCount })}
                 </span>
+                {brand.website && (
+                  <a
+                    href={brand.website}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer"
+                    className="flex items-center gap-1.5 underline-offset-2 hover:underline"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M3.6 9h16.8M3.6 15h16.8M12 3a15 15 0 010 18 15 15 0 010-18z" />
+                    </svg>
+                    {t('officialWebsite')}
+                  </a>
+                )}
               </div>
             </div>
 

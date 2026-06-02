@@ -1309,7 +1309,8 @@
     "breadcrumbShop": "ショップ",
     "breadcrumbBrands": "ブランド",
     "productCount": "{count, plural, =1 {#点の商品} other {#点の商品}}",
-    "browseProducts": "商品を見る"
+    "browseProducts": "商品を見る",
+    "officialWebsite": "公式サイト"
   },
   "shopPage": {
     "filtersHeading": "絞り込み",
