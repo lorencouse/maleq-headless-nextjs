@@ -95,6 +95,11 @@ export function sanitizeHtml(html: string): string {
       'youtube.com',
       'youtu.be',
       'player.vimeo.com',
+      // Social embeds inserted by the news agent (iframe /embed endpoints — no token).
+      'www.instagram.com',
+      'instagram.com',
+      'platform.twitter.com',
+      'www.tiktok.com',
       'www.maleq.com',
       'maleq.com',
       'wp.maleq.com',

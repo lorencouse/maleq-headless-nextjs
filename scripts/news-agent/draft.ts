@@ -1,0 +1,186 @@
+/**
+ * Drafting: turn a clustered story (one primary + optional same-event sources from
+ * other outlets) into an ORIGINAL short news piece via Claude.
+ *
+ * Hard rules baked into the system prompt:
+ *  - Never reproduce source articles. Write a fresh, synthesized piece.
+ *  - Use additional sources ONLY if they cover the same event; otherwise rely on
+ *    the primary. The model reports which sources it actually used (sourcesUsed),
+ *    and we attribute exactly those — so an over-eager cluster can't conflate stories.
+ *  - Stay factual; no invented quotes, stats, or names.
+ *
+ * Uses the same messages.parse + zodOutputFormat pattern as scripts/gen-guide.ts.
+ */
+import Anthropic from '@anthropic-ai/sdk';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import { z } from 'zod';
+import sanitizeHtml from 'sanitize-html';
+import { DRAFT_MODEL } from './config';
+import type { NewsItem } from './rss';
+import type { StoryCluster } from './cluster';
+import { gatherMaterial, extractEmbeds } from './extract';
+
+const DraftSchema = z.object({
+  title: z.string().describe('Rewritten, original headline (60–80 chars). Not copied from any source.'),
+  slug: z.string().describe('URL slug: lowercase, words separated by hyphens, no punctuation.'),
+  excerpt: z.string().describe('One- or two-sentence dek summarizing the story.'),
+  seoDescription: z.string().describe('SEO meta description, max 155 characters.'),
+  bodyHtml: z.string().describe(
+    'A 400–550 word original news piece in HTML. Structure: a 1–2 sentence lede <p>, ' +
+    'then 2–3 sections each introduced by an <h2> subheading followed by 1–2 <p> paragraphs. ' +
+    'Synthesize the sources actually used. Allowed tags only: <p>, <h2>, <strong>, <em>, <ul>, <li>. ' +
+    'Do NOT include a "Sources:" line — that is appended automatically.',
+  ),
+  tags: z.array(z.string()).describe('3–5 lowercase topic tags.'),
+  coverQuery: z.string().describe(
+    'A concrete, LITERAL stock-photo search phrase (3–6 words) for a cover image: ' +
+    'photographable scenes, objects or settings — NOT named people, brands, or specific ' +
+    'events (stock sites have none of those). Capture the story\'s subject matter. ' +
+    'E.g. "man lifting weights gym", "courthouse steps exterior", "person voting ballot box", ' +
+    '"two grooms wedding". Avoid vague identity-only terms like "lgbtq" or "pride" alone, ' +
+    'which return generic flag/parade photos — only use them if the story is literally about that.',
+  ),
+  sourcesUsed: z.array(z.string()).describe(
+    'The IDs (e.g. "S1","S2") of ALL sources that report the SAME event as your piece. ALWAYS ' +
+    'include "S1". Include EVERY additional source that covers the same event — even if it only ' +
+    'corroborates and adds no new fact. Omit a source ONLY if it is about a genuinely different story.',
+  ),
+  publishable: z.boolean().describe('false if the story is off-topic, unverifiable, defamatory, or unsuitable for an LGBTQ+ retail blog.'),
+  skipReason: z.string().nullable().describe('If publishable is false, a short reason; otherwise null.'),
+});
+
+export type DraftedPost = z.infer<typeof DraftSchema> & {
+  /** bodyHtml + the deterministic attribution block (links to the sources actually used). */
+  contentHtml: string;
+  /** Primary item — drives slug fallback, dedupe URL, image, primary outlet. */
+  item: NewsItem;
+  /** Canonical URLs actually cited (primary + validated additional). Stored for dedupe. */
+  usedSourceUrls: string[];
+};
+
+const SYSTEM_PROMPT = `You are the news editor for Male Q, an LGBTQ+ sexual-wellness and lifestyle retailer's blog.
+
+Your job: given source material about an LGBTQ+ news story — a PRIMARY source and sometimes ADDITIONAL sources from other outlets — write a SHORT, ORIGINAL news piece for our audience.
+
+USING MULTIPLE SOURCES:
+- The additional sources MAY cover the same event as the primary, or may have been grouped by mistake.
+- Decide which additional sources report the SAME specific event. Ignore any that are about a different story.
+- When two or more sources cover the same event, treat the others as corroboration: synthesize across them, weave in any extra detail they add, and your piece should clearly draw on more than one. If sources conflict on a fact, note the discrepancy neutrally rather than picking one.
+- In "sourcesUsed", list the IDs of EVERY same-event source (always include S1) — not just the one you leaned on most. This is how readers see the story was corroborated.
+
+WRITING RULES:
+- Aim for 400–550 words WHEN the material supports it. Never invent or pad to hit a length — if the material is genuinely thin, a tight 250–300 word piece is correct. Write in your own words — NEVER copy sentences or distinctive phrasing from any source.
+- Structure it like a real short news piece: a 1–2 sentence lede paragraph, then 2–3 sections each led by an <h2> subheading. Good subheads describe the angle (e.g. "What happened", "The reaction", "Why it matters") — adapt to the story, don't use those verbatim every time.
+- Be factual and neutral-to-supportive. Do not invent quotes, statistics, names, dates, or outcomes. If sources are thin, write a shorter piece rather than padding with speculation.
+- No defamation, no outing of private individuals, no medical or legal advice.
+- Voice: warm, community-minded, plain-spoken. Brief editorial commentary is welcome but clearly distinct from the factual reporting.
+- Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
+- bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line.
+- Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
+
+const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li'];
+
+export function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/['’"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+}
+
+/** Resolve the model's sourcesUsed IDs (S1, S2…) against the ordered source list. */
+function resolveUsedSources(ordered: NewsItem[], usedIds: string[]): NewsItem[] {
+  const used: NewsItem[] = [ordered[0]]; // primary (S1) always included
+  const seen = new Set([0]);
+  for (const id of usedIds) {
+    const m = /^S(\d+)$/i.exec(id.trim());
+    if (!m) continue;
+    const idx = parseInt(m[1], 10) - 1;
+    if (idx > 0 && ordered[idx] && !seen.has(idx)) { seen.add(idx); used.push(ordered[idx]); }
+  }
+  return used;
+}
+
+/** Attribution block linking exactly the sources actually used. */
+function attribution(used: NewsItem[]): string {
+  const links = used
+    .map((s) => `<a href="${s.url.replace(/"/g, '%22')}" target="_blank" rel="nofollow noopener">${s.sourceName}</a>`)
+    .join(', ');
+  const label = used.length > 1 ? 'Sources' : 'Source';
+  return `<p class="news-source"><em>${label}: ${links}</em></p>`;
+}
+
+export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Promise<DraftedPost> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not set. Export it before running the news agent.');
+  }
+  const client = new Anthropic({ apiKey });
+
+  // Fetch article text for every source in parallel, then make the source with the
+  // MOST material the primary (S1) — feed length is a poor proxy (e.g. them. has a
+  // thin feed but full article text). The model is told to always use S1.
+  const initial = [cluster.primary, ...cluster.sources.filter((s) => s.url !== cluster.primary.url)];
+  const fetched = await Promise.all(initial.map((s) => gatherMaterial(s, 4000)));
+  const ranked = initial
+    .map((s, i) => ({ s, mat: fetched[i] }))
+    .sort((a, b) => b.mat.length - a.mat.length);
+  const ordered = ranked.map((r) => r.s);
+  const materials = ranked.map((r) => r.mat);
+
+  const block = (s: NewsItem, i: number, material: string) =>
+    `[S${i + 1}] ${i === 0 ? 'PRIMARY SOURCE' : 'ADDITIONAL SOURCE (may or may not be the same event)'}\n` +
+    `OUTLET: ${s.sourceName}\n` +
+    `HEADLINE: ${s.title}\n` +
+    `PUBLISHED: ${s.publishedAt?.toISOString() ?? 'unknown'}\n` +
+    `CANONICAL URL: ${s.url}\n` +
+    `MATERIAL (context only — do not copy):\n${material}`;
+
+  const userContent = ordered.map((s, i) => block(s, i, materials[i])).join('\n\n');
+
+  const response = await client.messages.parse({
+    model,
+    max_tokens: 4000,
+    system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
+    output_config: { format: zodOutputFormat(DraftSchema) },
+    messages: [{ role: 'user', content: userContent }],
+  });
+
+  if (response.stop_reason === 'refusal') {
+    throw new Error('Claude refused to draft this story.');
+  }
+  const parsed = response.parsed_output;
+  if (!parsed) {
+    throw new Error('Claude returned no parseable structured output (possibly truncated).');
+  }
+
+  const cleanBody = sanitizeHtml(parsed.bodyHtml, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {},
+  });
+
+  const used = resolveUsedSources(ordered, parsed.sourcesUsed || []);
+
+  // Pull social/video embeds from the sources we actually used and insert them
+  // between the article body and the source credit. Appended raw (post-sanitize)
+  // — the iframes are ours; the frontend sanitizer gates them by hostname.
+  const embedLists = await Promise.all(used.map((s) => extractEmbeds(s.url, 3)));
+  const seen = new Set<string>();
+  const embedHtml = embedLists
+    .flat()
+    .filter((e) => (seen.has(e.html) ? false : (seen.add(e.html), true)))
+    .slice(0, 3)
+    .map((e) => e.html)
+    .join('\n');
+
+  const body = embedHtml ? `${cleanBody}\n${embedHtml}` : cleanBody;
+
+  return {
+    ...parsed,
+    slug: slugify(parsed.slug || parsed.title),
+    contentHtml: `${body}\n${attribution(used)}`,
+    item: ordered[0],
+    usedSourceUrls: used.map((s) => s.url),
+  };
+}

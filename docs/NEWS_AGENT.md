@@ -1,0 +1,201 @@
+# LGBTQ News Agent
+
+Automated LGBTQ news monitoring → original news drafts → (later) social sharing.
+
+Lives in `scripts/news-agent/`. Phase 1 (this doc) covers discovery, drafting, and
+publishing **as drafts** for human approval. Phases 2–3 add social sharing and a
+one-tap approval loop.
+
+## Pipeline
+
+```
+RSS feeds ──▶ discover.ts ──▶ dedupe.ts ──▶ draft.ts (Claude) ──▶ publish.ts ──▶ WP draft
+(config.ts)   freshness +     skip already   original summary +    insert wp_posts   "LGBTQ+ News"
+              cross-feed       posted (by      commentary, slug,    + meta + terms     category,
+              de-dupe          source URL)     tags, SEO, HTML       (status=draft)    status=draft
+```
+
+Nothing is published live and nothing is shared to social in Phase 1. Every story
+becomes a **draft** in the `LGBTQ+ News` category, flagged `_maleq_news_pending_review=1`,
+for you to review and publish in WP admin.
+
+## Files
+
+| File | Role |
+|------|------|
+| `config.ts`   | Sources (RSS feeds), category, model, freshness window, per-run cap, meta keys |
+| `rss.ts`      | Fetch + parse RSS/Atom (via `xml2js`) → normalized `NewsItem[]` |
+| `discover.ts` | Pull all feeds, drop stale/dupe items, sort newest-first |
+| `dedupe.ts`   | Drop stories already posted (matched on `_maleq_news_source_url(s)`) |
+| `cluster.ts`  | Group same-event coverage across outlets (IDF-weighted headline overlap) → one post can cite several sources |
+| `extract.ts`  | Fetch the article page and pull paragraph text (feed summaries are often headline-only); falls back to feed content |
+| `draft.ts`    | Claude `messages.parse` + Zod schema → 400–550-word piece with `<h2>` subheadings, synthesizing the clustered sources |
+| `publish.ts`  | Insert `wp_posts` draft + `wp_postmeta` + category/tag `term_relationships` |
+| `images.ts`   | Pexels search + download/resize/WebP conversion (via `sharp`) |
+| `attach-covers.ts` | Pick a Pexels cover per post, import as featured image (WebP, slug-named), set alt + credit |
+| `run.ts`      | Orchestrator + CLI flags + approval digest |
+
+## Usage
+
+Requires `ANTHROPIC_API_KEY`. DB target follows `scripts/lib/db.ts` (prod by default; `--local` for Local by Flywheel).
+
+```bash
+# 1. Check which feeds are reachable (no Claude calls, no DB writes)
+ANTHROPIC_API_KEY=… bun run scripts/news-agent/run.ts --local --check-feeds
+
+# 2. Dry run — discover, dedupe, draft, and PRINT what would be created (no DB writes)
+ANTHROPIC_API_KEY=… bun run scripts/news-agent/run.ts --local
+
+# 3. Write drafts to local WP
+ANTHROPIC_API_KEY=… bun run scripts/news-agent/run.ts --local --write
+
+# 4. Write drafts to PROD (create a DB backup first per CLAUDE.md; --yes required)
+ANTHROPIC_API_KEY=… bun run scripts/news-agent/run.ts --write --yes
+```
+
+Flags: `--local`, `--write`, `--yes` (prod safety), `--check-feeds`, `--limit N`, `--model NAME`.
+
+## Length, headings & multiple sources
+
+- Pieces target **400–550 words** with **2–3 `<h2>` subheadings**, but the model is told to
+  never pad or invent — thin stories (e.g. a photo-gallery post) stay short on purpose.
+- **Article text is fetched** (`extract.ts`) so the model writes from real material, not the
+  headline-only feed blurb. Fetch success is per-outlet: PinkNews / them. / Washington Blade /
+  LGBTQ Nation fetch well; **The Advocate and GLAAD block scrapers** (fall back to feed text,
+  so those stories run shorter). Update the source list in `config.ts` if a feed degrades.
+- **Multiple sources:** `cluster.ts` groups outlets covering the same event; `draft.ts` passes
+  all of them (each labelled S1, S2…), the model confirms which are truly the same story and
+  returns their IDs, and attribution renders "Sources: A, B". Clustering only *proposes* — the
+  model rejects bad merges, so an over-eager cluster can't conflate two stories. Genuine
+  multi-source posts depend on ≥2 fetchable outlets covering the same event in the time window.
+
+## Cover images (Pexels)
+
+Legal, free cover images via the **Pexels API** (commercial-use license). Source-article
+photos are copyrighted and never used. Needs `PEXELS_API_KEY` in the env; `sharp` is a
+dependency on the server for image processing.
+
+`attach-covers.ts` runs in the cron right after drafting, so covers land before you review:
+
+```bash
+bun run scripts/news-agent/attach-covers.ts --local              # DRY RUN (shows picks)
+bun run scripts/news-agent/attach-covers.ts --local --write --yes # attach (local)
+bun run scripts/news-agent/attach-covers.ts --write --yes         # attach (PROD)
+```
+
+For each News post with no featured image, it: uses the drafter's concrete `coverQuery`
+(a literal photographable phrase like "man lifting weights gym" — falls back to tags/title) →
+picks a landscape Pexels photo → **downloads, resizes to ≤1200px, converts to WebP (q80)**,
+names the file after the **article slug** (SEO), imports it as the **featured image** via
+`wp media import` (WP regenerates WebP thumbnail sizes), sets **alt text to the article
+title**, and appends a small *"Cover photo: Name / Pexels"* credit line. Marked
+`_maleq_news_cover_done` so each post is attempted once (failed imports retry next run).
+
+wp-cli location is configurable via `WP_CLI` / `WP_PATH` (default the server's `wp` +
+`/home/maleq-wp/htdocs/wp.maleq.com`). Stock photos are thematic, not the literal event —
+the trade-off for legally publishable imagery.
+
+## Editorial / legal guardrails
+
+- The drafter is instructed to **summarize in original words + brief commentary**, never
+  reproduce source text, never invent facts/quotes, and to attribute + link the canonical
+  source (appended deterministically in `draft.ts`, `rel="nofollow"`).
+- Claude can mark a story `publishable=false` (off-topic, clickbait, unverifiable,
+  unsuitable) — those are skipped with a logged reason.
+- HTML is sanitized with `sanitize-html` before storage.
+- **You** are the publish gate: drafts never go live automatically.
+
+## Tuning the source list
+
+Edit `SOURCES` in `config.ts`. Current defaults: PinkNews, The Advocate, them., GLAAD,
+Washington Blade, Out. Run `--check-feeds` after editing — any feed that 404s or blocks
+scrapers is reported and skipped (never fatal). Swap its URL for a working feed path.
+
+## Dedupe
+
+Each draft stores its source URL in `wp_postmeta._maleq_news_source_url`. Re-runs skip any
+story whose URL is already present, so the agent is safe to run repeatedly (e.g. 3×/day).
+
+## Scheduling — DEPLOYED on the prod WP VPS
+
+The agent runs on the **Hetzner WP VPS** (`ssh hetzner`) as the `maleq-wp` user, on a
+system cron, **3×/day at 7am / 12pm / 5pm America/Los_Angeles**.
+
+**Layout on the server** (`/home/maleq-wp/news-agent/`):
+- The agent code (rsynced subset: `scripts/news-agent/`, `scripts/lib/db.ts`, `lib/db/local-runtime.ts`).
+- `package.json` (only the 5 runtime deps) + `node_modules` (Bun at `~/.bun/bin/bun`).
+- `.env` (chmod 600): API key + social creds + `REMOTE_MYSQL_PORT=3306` (connects to the
+  local prod MySQL directly — no SSH tunnel; user/pass/db come from `db.ts` defaults).
+  `MALEQ_WP_URL=https://wp.maleq.com`, `MALEQ_SITE_URL=https://maleq.com`.
+- `cron-run.sh` — draft → attach cover images → share approved → `wp cache flush`; logs to `logs/run-*.log` (30-day retention).
+
+**DST-safe timing.** This host's cron (Debian 3.0pl1) has no `CRON_TZ`, and the server is
+UTC. So cron fires **hourly** (`0 * * * *`) and `cron-run.sh` gates on the local PT hour —
+it runs only at 07/12/17 PT and silently no-ops otherwise. This auto-tracks PST↔PDT.
+Override hours with `NEWS_AGENT_HOURS="07 12 17"`, draft count with `NEWS_AGENT_LIMIT`.
+
+**Manage it:**
+```bash
+ssh hetzner 'sudo -u maleq-wp crontab -l'                              # view schedule
+ssh hetzner 'tail -40 "$(ls -t /home/maleq-wp/news-agent/logs/run-*.log | head -1)"'  # latest run log
+# Manual run now (any hour), 2 drafts:
+ssh hetzner 'sudo -u maleq-wp -H bash -lc "cd /home/maleq-wp/news-agent && NEWS_AGENT_HOURS=\$(TZ=America/Los_Angeles date +%H) NEWS_AGENT_LIMIT=2 ./cron-run.sh"'
+```
+
+**Updating the code on the server** — re-rsync the changed files from this repo, e.g.:
+```bash
+rsync -azR scripts/news-agent scripts/lib/db.ts lib/db/local-runtime.ts hetzner:/home/maleq-wp/news-agent/
+ssh hetzner 'chown -R maleq-wp:maleq-wp /home/maleq-wp/news-agent'
+```
+(The server `.env` is not in the repo — edit it in place on the server when creds change.)
+
+## Sharing approved posts (Phase 2)
+
+Social adapters live in `scripts/news-agent/social/` (`bluesky.ts`, `mastodon.ts`; Meta is
+deferred). `share.ts` fans out to whichever platforms have credentials in `.env.local`.
+
+```bash
+# Credential check (read-only, posts nothing)
+bun run scripts/news-agent/share.ts --verify
+
+# One-off public test post to all configured platforms
+bun run scripts/news-agent/share.ts --test [--only bluesky,mastodon]
+```
+
+**Approval → auto-share.** You approve a story by **publishing the draft in WP admin**.
+`sync-shares.ts` then finds published-but-unshared News posts and shares each once:
+
+```bash
+bun run scripts/news-agent/sync-shares.ts --local              # DRY RUN — show what would share
+bun run scripts/news-agent/sync-shares.ts --local --write --yes # share approved local posts
+bun run scripts/news-agent/sync-shares.ts --write --yes         # share approved PROD posts
+```
+
+- Shared posts link to your site at **`{MALEQ_SITE_URL}/guides/<slug>`** (default
+  `https://maleq.com`), not the source — the source is credited inside the post body.
+- **Idempotent + per-platform safe**: each post records `_maleq_news_share_urls` (a
+  `platform→url` map); a re-run only retries platforms that failed and never double-posts.
+  A post is marked `_maleq_news_shared_at` once every configured platform succeeded.
+- `--write` posts publicly, so `--yes` is always required with it.
+
+The end-to-end loop, hands-off except for your approval click:
+
+```
+run.ts (3×/day)  →  WP drafts  →  YOU publish the keepers  →  sync-shares.ts  →  Bluesky + Mastodon
+   discover/draft     pending        (approval)                 (3×/day)          link → maleq.com/guides/<slug>
+```
+
+Schedule `run.ts --write --yes` and `sync-shares.ts --write --yes` together on each tick.
+
+## Roadmap
+
+- **Meta (Facebook → Instagram)** — `social/facebook.ts` then `social/instagram.ts`
+  (IG needs the featured-image import below). Credentials gathering paused by request.
+- **Phase 1.5** — one-tap approval (secured mu-plugin endpoint + push/email digest) so you
+  can approve from your phone instead of WP admin.
+- **Featured-image import** — download lead image → WP attachment → `_thumbnail_id`
+  (required before Instagram, which can't post text-only).
+- **Event-driven sharing (optional)** — instead of the `sync-shares.ts` poll, a mu-plugin
+  `transition_post_status` hook → Next.js `/api/news/share` route for instant on-publish
+  sharing. The poll is simpler and rides the existing schedule; upgrade only if you want
+  sub-batch latency.
