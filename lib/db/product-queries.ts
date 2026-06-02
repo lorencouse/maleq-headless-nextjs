@@ -321,6 +321,9 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
     })
     .filter((img): img is NonNullable<typeof img> => img !== null);
 
+  // Featured image often also appears in gallery_ids; dedupe by attachment id
+  // (keeping the primary first) so the gallery doesn't render the same image —
+  // and the same React key — twice.
   const gallery = [
     ...(primaryImage ? [{ id: primaryImage.id, url: primaryImage.url, altText: primaryImage.altText, isPrimary: true }] : []),
     ...galleryIds
@@ -330,7 +333,7 @@ export async function getProductBySlugFromDB(slug: string): Promise<EnhancedProd
         return { id: encodeId('post', att.ID), url: getProductionImageUrl(att.guid), altText: att.post_excerpt || att.post_title || product.post_title, isPrimary: false };
       })
       .filter((img): img is NonNullable<typeof img> => img !== null),
-  ];
+  ].filter((img, i, arr) => arr.findIndex(o => o.id === img.id) === i);
 
   // Attributes
   const parsedAttrs = meta.attributes_ser ? parseProductAttributes(meta.attributes_ser) : [];
