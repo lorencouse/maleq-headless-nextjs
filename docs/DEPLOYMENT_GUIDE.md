@@ -48,6 +48,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-post-product-relations.php` | Adds a "Related Products & Categories" meta box to the post editor; stores ordered-CSV relations in post meta (`_maleq_related_products`, `_maleq_related_product_cats`) that the frontend reads via SQL. Requires WooCommerce. | `wordpress/mu-plugins/maleq-post-product-relations.php` |
 | `maleq-post-translations.php` | Adds a "Translations" meta box to the post editor to link a guide to its sibling-language versions (English ⇄ Español ⇄ 中文 ⇄ 日本語). Stores a symmetric CSV in post meta (`_maleq_translations`) that the frontend reads via SQL to render a language switcher + hreflang tags. Language is derived from the post's top-level language category (`en`/`espanol`/`cn`/`日本語-japanese`). | `wordpress/mu-plugins/maleq-post-translations.php` |
 | `maleq-brand-meta.php` | Adds a manufacturer website URL + product-URL template to the `product_brand` taxonomy edit screen (termmeta `maleq_brand_website`, `maleq_brand_product_url_template`) and a per-product manufacturer-page override field on the WooCommerce product editor (postmeta `_maleq_mfr_url`). The frontend reads these via SQL to show the brand's "Official website" link and a per-SKU "View on manufacturer's site" link. Requires WooCommerce. | `wordpress/mu-plugins/maleq-brand-meta.php` |
+| `maleq-news-autoshare.php` | Event-driven social sharing for the LGBTQ news agent. When a news-agent draft is **published** (your approval), it shares the post once to Bluesky + Mastodon — fires only for `post`s in the `news` category carrying the `_maleq_news_source_url` marker, so hand-written guides/products never share. Mirrors `scripts/news-agent/social/*` and reuses the same `_maleq_news_share_urls` / `_maleq_news_shared_at` postmeta, so `sync-shares.ts` stays a compatible manual fallback. Requires the credential constants below. | `wordpress/mu-plugins/maleq-news-autoshare.php` |
 
 ### Installation Steps
 
@@ -73,7 +74,13 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-post-product-relations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-product-relations.php
    cp wordpress/mu-plugins/maleq-post-translations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-translations.php
    cp wordpress/mu-plugins/maleq-brand-meta.php /path/to/wordpress/wp-content/mu-plugins/maleq-brand-meta.php
+   cp wordpress/mu-plugins/maleq-news-autoshare.php /path/to/wordpress/wp-content/mu-plugins/maleq-news-autoshare.php
    ```
+
+   > **News auto-share credentials:** `maleq-news-autoshare.php` needs the Bluesky/Mastodon
+   > constants from the [wp-config.php Constants](#wordpress-wp-configphp-constants) section below.
+   > Without them it safely no-ops (logs "No social credentials configured" and skips). The values
+   > live in the project's `.env.local` (`BLUESKY_*`, `MASTODON_*`).
 
    > **Backfilling existing translations:** after installing `maleq-post-translations.php`, run
    > `bun run scripts/backfill-post-translations.ts --local` to propose original↔translation
@@ -190,11 +197,19 @@ define('MALEQ_ADMIN_KEY', 'your-admin-api-key-here');
 define('MALEQ_FRONTEND_URL', 'https://your-frontend-domain.com');
 define('MALEQ_REVALIDATION_SECRET', 'your-revalidation-secret-here');
 define('MALEQ_GOOGLE_AUTH_SECRET', 'your-google-auth-shared-secret-here');
+
+// News auto-share (maleq-news-autoshare.php) — values come from the project .env.local
+define('MALEQ_BLUESKY_HANDLE',        'mqnews.bsky.social');       // BLUESKY_HANDLE
+define('MALEQ_BLUESKY_APP_PASSWORD',  'xxxx-xxxx-xxxx-xxxx');      // BLUESKY_APP_PASSWORD (app password, not main password)
+define('MALEQ_MASTODON_INSTANCE_URL', 'https://mastodon.social'); // MASTODON_INSTANCE_URL
+define('MALEQ_MASTODON_ACCESS_TOKEN', 'your-mastodon-token');     // MASTODON_CLIENT_ACCESS_TOKEN (scope: write:statuses)
+// define('MALEQ_SITE_URL', 'https://maleq.com'); // optional; this is the default. Posts link to /guides/<slug>.
 ```
 - `MALEQ_ADMIN_KEY` must match the `ADMIN_API_KEY` env var in Coolify.
 - `MALEQ_FRONTEND_URL` is the production URL of your Next.js site (e.g., `https://maleq.com`).
 - `MALEQ_REVALIDATION_SECRET` must match the `REVALIDATION_SECRET` env var in Coolify.
 - `MALEQ_GOOGLE_AUTH_SECRET` must match the `MALEQ_GOOGLE_AUTH_SECRET` env var in Coolify.
+- `MALEQ_BLUESKY_*` / `MALEQ_MASTODON_*` power news auto-share; set them via `wp config set <NAME> '<value>' --type=constant`. They are read by constant first, then `getenv()`. Each value mirrors the matching `.env.local` var.
 
 ### Daily Stock Sync (Cron)
 

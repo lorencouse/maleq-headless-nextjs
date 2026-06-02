@@ -29,6 +29,13 @@ export const SOURCES: NewsSource[] = [
   { name: 'Metro Weekly',     feed: 'https://www.metroweekly.com/feed/',              site: 'https://www.metroweekly.com' },
   { name: 'Autostraddle',     feed: 'https://www.autostraddle.com/feed/',             site: 'https://www.autostraddle.com' },
   { name: 'Gay Times',        feed: 'https://www.gaytimes.com/feed/',                 site: 'https://www.gaytimes.com' },
+  { name: 'Pride',            feed: 'https://www.pride.com/rss.xml',                  site: 'https://www.pride.com' },
+  // NOTE: Los Angeles Blade is intentionally NOT here — its WAF 403s the Hetzner VPS
+  // datacenter IP where the cron discovers feeds (works from a home IP). Same reason it
+  // was dropped before. Don't re-add without confirming `curl` 200 from `ssh hetzner`.
+  // Mainstream outlets — topical LGBTQ sections only (the pipeline trusts each feed to be on-topic).
+  { name: 'The Guardian',     feed: 'https://www.theguardian.com/world/lgbt-rights/rss', site: 'https://www.theguardian.com/world/lgbt-rights' },
+  { name: 'HuffPost',         feed: 'https://www.huffpost.com/section/queer-voices/feed', site: 'https://www.huffpost.com/voices/queer-voices' },
 ];
 
 /** WordPress category the drafts are filed under (slug must already exist; created if missing). */

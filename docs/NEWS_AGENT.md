@@ -91,8 +91,10 @@ names the file after the **article slug** (SEO), imports it as the **featured im
 title**, and appends a small *"Cover photo: Name / Pexels"* credit line. Marked
 `_maleq_news_cover_done` so each post is attempted once (failed imports retry next run).
 
-wp-cli location is configurable via `WP_CLI` / `WP_PATH` (default the server's `wp` +
-`/home/maleq-wp/htdocs/wp.maleq.com`). Stock photos are thematic, not the literal event —
+wp-cli location is configurable via `WP_CLI` / `WP_PATH`. **`WP_CLI` must be an absolute
+path** (e.g. `/usr/bin/wp`) in the server `.env` — cron's minimal PATH doesn't resolve a
+bare `wp`, which silently fails every cover import. (`attach-covers` is the only step that
+shells out to wp-cli; drafting and sharing are pure SQL.) Stock photos are thematic, not the literal event —
 the trade-off for legally publishable imagery.
 
 ## Editorial / legal guardrails
@@ -162,8 +164,19 @@ bun run scripts/news-agent/share.ts --verify
 bun run scripts/news-agent/share.ts --test [--only bluesky,mastodon]
 ```
 
-**Approval → auto-share.** You approve a story by **publishing the draft in WP admin**.
-`sync-shares.ts` then finds published-but-unshared News posts and shares each once:
+**Approval → auto-share (event-driven, LIVE).** You approve a story by **publishing the
+draft in WP admin**. The `maleq-news-autoshare.php` mu-plugin fires on the publish
+transition and shares the post to Bluesky + Mastodon **within the same request** — no
+script, schedule, or SSH tunnel needed. It fires only for `post`s in the `news` category
+carrying the `_maleq_news_source_url` marker (so a hand-written guide/product never shares),
+and uses the same `_maleq_news_share_urls` / `_maleq_news_shared_at` postmeta for
+idempotency. Requires the `MALEQ_BLUESKY_*` / `MALEQ_MASTODON_*` wp-config constants
+(see DEPLOYMENT_GUIDE.md → wp-config.php Constants); without them it safely no-ops.
+
+**`sync-shares.ts` — manual fallback / retry.** The same logic as a CLI poll: finds
+published-but-unshared News posts and shares each once. Use it to mop up a platform that
+failed in the event-driven path, or to share a backlog. Per-platform safe — it only retries
+platforms missing from `_maleq_news_share_urls` and never double-posts.
 
 ```bash
 bun run scripts/news-agent/sync-shares.ts --local              # DRY RUN — show what would share
@@ -181,11 +194,12 @@ bun run scripts/news-agent/sync-shares.ts --write --yes         # share approved
 The end-to-end loop, hands-off except for your approval click:
 
 ```
-run.ts (3×/day)  →  WP drafts  →  YOU publish the keepers  →  sync-shares.ts  →  Bluesky + Mastodon
-   discover/draft     pending        (approval)                 (3×/day)          link → maleq.com/guides/<slug>
+run.ts (3×/day)  →  WP drafts  →  YOU publish the keepers  →  maleq-news-autoshare.php  →  Bluesky + Mastodon
+   discover/draft     pending        (approval)                 (on-publish, instant)        link → maleq.com/guides/<slug>
 ```
 
-Schedule `run.ts --write --yes` and `sync-shares.ts --write --yes` together on each tick.
+Only `run.ts --write --yes` needs scheduling (drafting). Sharing is now event-driven on
+publish — no share tick required. `sync-shares.ts` remains available for manual retries.
 
 ## Roadmap
 
@@ -195,7 +209,6 @@ Schedule `run.ts --write --yes` and `sync-shares.ts --write --yes` together on e
   can approve from your phone instead of WP admin.
 - **Featured-image import** — download lead image → WP attachment → `_thumbnail_id`
   (required before Instagram, which can't post text-only).
-- **Event-driven sharing (optional)** — instead of the `sync-shares.ts` poll, a mu-plugin
-  `transition_post_status` hook → Next.js `/api/news/share` route for instant on-publish
-  sharing. The poll is simpler and rides the existing schedule; upgrade only if you want
-  sub-batch latency.
+- ~~**Event-driven sharing**~~ — **DONE.** Shipped as the `maleq-news-autoshare.php`
+  mu-plugin (`transition_post_status` → share on `shutdown`, after `fastcgi_finish_request`).
+  Self-contained PHP — no Next.js route or SSH tunnel; shares the instant you publish.

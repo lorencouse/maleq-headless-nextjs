@@ -168,6 +168,11 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={`${dmSans.variable} ${outfit.variable} antialiased flex flex-col min-h-screen`}>
+        {/* Mastodon profile verification: an invisible rel="me" backlink to
+            @mqnews@mastodon.social. React hoists this <link> into <head>; the
+            Mastodon custom-field verifier follows the site URL and looks for a
+            rel="me" link pointing back to the profile. No visible UI. */}
+        <link rel="me" href="https://mastodon.social/@mqnews" />
         <ServiceWorkerRegistration />
         <RouteScrollManager />
         <OfflineIndicator />
