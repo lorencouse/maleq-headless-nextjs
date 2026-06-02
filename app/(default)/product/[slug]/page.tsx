@@ -1,7 +1,9 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
 import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { stripHtml } from '@/lib/utils/text-utils';
-import { getFilteredProducts } from '@/lib/products/combined-service';
+import { getFilteredProducts, getBrandBySlug } from '@/lib/products/combined-service';
+import { buildManufacturerUrl } from '@/lib/products/manufacturer-url';
+import ManufacturerLink from '@/components/product/ManufacturerLink';
 import { renderProductDescriptionHtml } from '@/lib/product/description-html';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
@@ -187,6 +189,22 @@ export default async function ProductPage({ params }: ProductPageProps) {
   // Check if SKU looks like a UPC/EAN barcode (12-13 digits)
   const productGtin = product.sku && /^\d{12,13}$/.test(product.sku) ? product.sku : undefined;
 
+  // Resolve the manufacturer's product-page URL: explicit per-product override
+  // (_maleq_mfr_url) first, else build it from the brand's URL template + SKU.
+  let manufacturerUrl: string | null = product.manufacturerUrl ?? null;
+  const primaryBrand = product.brands?.[0];
+  if (!manufacturerUrl && product.sku && primaryBrand?.slug) {
+    try {
+      const brand = await getBrandBySlug(primaryBrand.slug);
+      manufacturerUrl = buildManufacturerUrl({
+        sku: product.sku,
+        template: brand?.productUrlTemplate,
+      });
+    } catch (error) {
+      console.error('Error resolving manufacturer URL:', error);
+    }
+  }
+
   return (
     <>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
@@ -263,6 +281,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       {product.specifications && product.specifications.length > 0 && (
         <ProductSpecifications specifications={product.specifications} />
       )}
+
+      {/* Link to the product on the manufacturer's site (per-SKU mapping) */}
+      <ManufacturerLink url={manufacturerUrl} brandName={productBrand} />
 
       {/* Product Reviews */}
       <ProductReviews

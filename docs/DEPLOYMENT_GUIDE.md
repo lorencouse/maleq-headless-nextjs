@@ -47,6 +47,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-product-video.php` | Adds MP4 video meta field to WooCommerce products (media library picker) | `wordpress/mu-plugins/maleq-product-video.php` |
 | `maleq-post-product-relations.php` | Adds a "Related Products & Categories" meta box to the post editor; stores ordered-CSV relations in post meta (`_maleq_related_products`, `_maleq_related_product_cats`) that the frontend reads via SQL. Requires WooCommerce. | `wordpress/mu-plugins/maleq-post-product-relations.php` |
 | `maleq-post-translations.php` | Adds a "Translations" meta box to the post editor to link a guide to its sibling-language versions (English ⇄ Español ⇄ 中文 ⇄ 日本語). Stores a symmetric CSV in post meta (`_maleq_translations`) that the frontend reads via SQL to render a language switcher + hreflang tags. Language is derived from the post's top-level language category (`en`/`espanol`/`cn`/`日本語-japanese`). | `wordpress/mu-plugins/maleq-post-translations.php` |
+| `maleq-brand-meta.php` | Adds a manufacturer website URL + product-URL template to the `product_brand` taxonomy edit screen (termmeta `maleq_brand_website`, `maleq_brand_product_url_template`) and a per-product manufacturer-page override field on the WooCommerce product editor (postmeta `_maleq_mfr_url`). The frontend reads these via SQL to show the brand's "Official website" link and a per-SKU "View on manufacturer's site" link. Requires WooCommerce. | `wordpress/mu-plugins/maleq-brand-meta.php` |
 
 ### Installation Steps
 
@@ -71,6 +72,7 @@ Copy these files to: `wp-content/mu-plugins/`
    cp wordpress/mu-plugins/maleq-product-video.php /path/to/wordpress/wp-content/mu-plugins/maleq-product-video.php
    cp wordpress/mu-plugins/maleq-post-product-relations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-product-relations.php
    cp wordpress/mu-plugins/maleq-post-translations.php /path/to/wordpress/wp-content/mu-plugins/maleq-post-translations.php
+   cp wordpress/mu-plugins/maleq-brand-meta.php /path/to/wordpress/wp-content/mu-plugins/maleq-brand-meta.php
    ```
 
    > **Backfilling existing translations:** after installing `maleq-post-translations.php`, run

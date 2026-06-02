@@ -73,6 +73,12 @@ export interface EnhancedProduct extends UnifiedProduct {
   buttonText?: string | null;
   defaultAttributes?: { name: string; value: string }[];
   videoUrl?: string | null;
+  /**
+   * Explicit per-product manufacturer page URL (`_maleq_mfr_url`). When unset,
+   * the page derives a link from the brand's product-URL template + SKU via
+   * lib/products/manufacturer-url.ts.
+   */
+  manufacturerUrl?: string | null;
 }
 
 

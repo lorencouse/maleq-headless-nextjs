@@ -1277,7 +1277,8 @@
     "breadcrumbShop": "Shop",
     "breadcrumbBrands": "Brands",
     "productCount": "{count, plural, =1 {# product} other {# products}}",
-    "browseProducts": "Browse Products"
+    "browseProducts": "Browse Products",
+    "officialWebsite": "Official website"
   },
   "shopPage": {
     "filtersHeading": "Filters",

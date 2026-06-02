@@ -1309,7 +1309,8 @@
     "breadcrumbShop": "商店",
     "breadcrumbBrands": "品牌",
     "productCount": "{count, plural, =1 {# 件商品} other {# 件商品}}",
-    "browseProducts": "瀏覽商品"
+    "browseProducts": "瀏覽商品",
+    "officialWebsite": "官方網站"
   },
   "shopPage": {
     "filtersHeading": "篩選條件",
