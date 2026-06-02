@@ -102,6 +102,34 @@ function resolveUsedSources(ordered: NewsItem[], usedIds: string[]): NewsItem[] 
   return used;
 }
 
+/**
+ * Distribute embeds through the body — one after each <h2> section's paragraphs,
+ * in order — instead of clumping them at the end. Extras (more embeds than
+ * sections) trail the last section; if the body has no headings, all go at the end.
+ * Exported so the one-off migration of existing posts can reuse the exact logic.
+ */
+export function interleaveEmbeds(bodyHtml: string, embeds: string[]): string {
+  if (!embeds.length) return bodyHtml;
+  // Split before each <h2>; segment[0] is the lede before the first heading.
+  const segments = bodyHtml.split(/(?=<h2[\s>])/i);
+  const sectionIdx = segments
+    .map((s, i) => (/^<h2[\s>]/i.test(s) ? i : -1))
+    .filter((i) => i >= 0);
+  if (sectionIdx.length === 0) return `${bodyHtml}\n${embeds.join('\n')}`;
+
+  let e = 0;
+  for (const idx of sectionIdx) {
+    if (e >= embeds.length) break;
+    segments[idx] = `${segments[idx]}\n${embeds[e++]}`;
+  }
+  // Any leftover embeds trail the final section.
+  if (e < embeds.length) {
+    const last = sectionIdx[sectionIdx.length - 1];
+    segments[last] = `${segments[last]}\n${embeds.slice(e).join('\n')}`;
+  }
+  return segments.join('');
+}
+
 /** Attribution block linking exactly the sources actually used. */
 function attribution(used: NewsItem[]): string {
   const links = used
@@ -167,14 +195,13 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
   // — the iframes are ours; the frontend sanitizer gates them by hostname.
   const embedLists = await Promise.all(used.map((s) => extractEmbeds(s.url, 3)));
   const seen = new Set<string>();
-  const embedHtml = embedLists
+  const embeds = embedLists
     .flat()
     .filter((e) => (seen.has(e.html) ? false : (seen.add(e.html), true)))
     .slice(0, 3)
-    .map((e) => e.html)
-    .join('\n');
+    .map((e) => e.html);
 
-  const body = embedHtml ? `${cleanBody}\n${embedHtml}` : cleanBody;
+  const body = interleaveEmbeds(cleanBody, embeds);
 
   return {
     ...parsed,
