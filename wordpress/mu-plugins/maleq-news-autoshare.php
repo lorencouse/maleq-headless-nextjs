@@ -141,11 +141,24 @@ function maleq_news_share_post($post_id) {
     if (!$excerpt) {
         $excerpt = (string) get_post_meta($post_id, 'rank_math_description', true);
     }
+
+    // Cover image for the social card. Prefer the post's featured image (the Pexels
+    // cover attach-covers.ts sets) read straight off disk — no HTTP, exact bytes.
+    // Fall back to the feed lead image (_maleq_news_image_url) by URL.
+    $thumb_id   = get_post_thumbnail_id($post_id);
+    $image_path = $thumb_id ? get_attached_file($thumb_id) : '';
+    $image_mime = $thumb_id ? get_post_mime_type($thumb_id) : '';
+    $image_url  = $thumb_id
+        ? (wp_get_attachment_image_url($thumb_id, 'full') ?: '')
+        : (string) get_post_meta($post_id, MALEQ_NEWS_IMAGE_URL_KEY, true);
+
     $input = [
-        'title'    => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-        'excerpt'  => html_entity_decode($excerpt, ENT_QUOTES, 'UTF-8'),
-        'url'      => maleq_news_post_url($post->post_name),
-        'imageUrl' => (string) get_post_meta($post_id, MALEQ_NEWS_IMAGE_URL_KEY, true),
+        'title'     => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
+        'excerpt'   => html_entity_decode($excerpt, ENT_QUOTES, 'UTF-8'),
+        'url'       => maleq_news_post_url($post->post_name),
+        'imageUrl'  => $image_url,
+        'imagePath' => $image_path ?: '',
+        'imageMime' => $image_mime ?: '',
     ];
 
     foreach ($platforms as $platform) {
@@ -199,6 +212,56 @@ function maleq_news_enabled_platforms() {
  * Bluesky (AT Protocol) — mirrors social/bluesky.ts.
  * createSession with an app password, then createRecord with an external embed.
  * ──────────────────────────────────────────────────────────────────────── */
+/**
+ * Upload the cover image to the user's Bluesky repo and return the blob object
+ * for embedding as a link-card thumbnail. Returns null on any miss (no image,
+ * >1MB, fetch/upload error) so the caller posts an imageless card instead of
+ * failing the whole share. bsky.social caps image blobs at ~1MB.
+ */
+function maleq_news_bluesky_upload_thumb($service, $jwt, $input) {
+    $bytes = '';
+    $mime  = $input['imageMime'] ?? '';
+
+    if (!empty($input['imagePath']) && is_readable($input['imagePath'])) {
+        $bytes = (string) file_get_contents($input['imagePath']);
+    } elseif (!empty($input['imageUrl'])) {
+        $r = wp_remote_get($input['imageUrl'], ['timeout' => 15]);
+        if (!is_wp_error($r) && wp_remote_retrieve_response_code($r) < 300) {
+            $bytes = (string) wp_remote_retrieve_body($r);
+            if (!$mime) {
+                $mime = (string) wp_remote_retrieve_header($r, 'content-type');
+            }
+        }
+    }
+
+    if ($bytes === '') {
+        return null;
+    }
+    if (strlen($bytes) > 1000000) {
+        error_log('[maleq-news-autoshare] cover image >1MB — skipping Bluesky thumb');
+        return null;
+    }
+    if (!$mime) {
+        $mime = 'image/jpeg';
+    }
+
+    $res = wp_remote_post("$service/xrpc/com.atproto.repo.uploadBlob", [
+        'timeout' => 20,
+        'headers' => [
+            'Content-Type'  => $mime,
+            'Authorization' => "Bearer $jwt",
+        ],
+        'body' => $bytes,
+    ]);
+    if (is_wp_error($res) || wp_remote_retrieve_response_code($res) >= 300) {
+        $err = is_wp_error($res) ? $res->get_error_message() : wp_remote_retrieve_body($res);
+        error_log('[maleq-news-autoshare] uploadBlob failed: ' . $err);
+        return null;
+    }
+    $body = json_decode(wp_remote_retrieve_body($res), true);
+    return $body['blob'] ?? null;
+}
+
 function maleq_news_share_bluesky($input) {
     $service = maleq_news_cfg('MALEQ_BLUESKY_SERVICE', 'BLUESKY_SERVICE') ?: 'https://bsky.social';
     $handle  = maleq_news_cfg('MALEQ_BLUESKY_HANDLE', 'BLUESKY_HANDLE');
@@ -220,6 +283,19 @@ function maleq_news_share_bluesky($input) {
     $did = $sbody['did'] ?? '';
     $sess_handle = $sbody['handle'] ?? $handle;
 
+    // Bluesky does not crawl the URL for an OG image — upload the cover ourselves
+    // and reference it as the link-card thumbnail. Null (no/oversized image or a
+    // failed upload) just yields an imageless card; the post still goes out.
+    $external = [
+        'uri'         => $input['url'],
+        'title'       => maleq_news_truncate($input['title'], 200),
+        'description' => maleq_news_truncate($input['excerpt'] ?? '', 280),
+    ];
+    $thumb = maleq_news_bluesky_upload_thumb($service, $jwt, $input);
+    if ($thumb) {
+        $external['thumb'] = $thumb;
+    }
+
     $record = [
         '$type'     => 'app.bsky.feed.post',
         'text'      => maleq_news_truncate($input['title'], 300),
@@ -227,11 +303,7 @@ function maleq_news_share_bluesky($input) {
         'langs'     => ['en'],
         'embed'     => [
             '$type'    => 'app.bsky.embed.external',
-            'external' => [
-                'uri'         => $input['url'],
-                'title'       => maleq_news_truncate($input['title'], 200),
-                'description' => maleq_news_truncate($input['excerpt'] ?? '', 280),
-            ],
+            'external' => $external,
         ],
     ];
 
