@@ -109,12 +109,14 @@ export async function extractEmbeds(url: string, max = 3): Promise<Embed[]> {
 
     collect('instagram', /instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/gi);
     collect('youtube', /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/gi);
-    collect('twitter', /(?:twitter|x)\.com\/[A-Za-z0-9_]+\/status\/(\d+)/gi);
     collect('tiktok', /tiktok\.com\/@[A-Za-z0-9_.]+\/video\/(\d+)/gi);
     collect('vimeo', /(?:player\.)?vimeo\.com\/(?:video\/)?(\d{6,})/gi);
+    // X/Twitter intentionally omitted: its only supported embed is the widgets.js
+    // script (blocked by our sanitizer/CSP), and the bare-iframe endpoint renders
+    // "not found" unreliably. Re-add if a script-free embed path becomes viable.
 
     // Round-robin across platforms up to `max`.
-    const order = ['instagram', 'youtube', 'twitter', 'tiktok', 'vimeo'];
+    const order = ['instagram', 'youtube', 'tiktok', 'vimeo'];
     const out: Embed[] = [];
     for (let i = 0; out.length < max; i++) {
       let added = false;
