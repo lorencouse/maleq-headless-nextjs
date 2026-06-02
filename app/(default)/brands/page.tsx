@@ -1,8 +1,10 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import { getBrands } from '@/lib/products/combined-service';
 import ShopSearch from '@/components/shop/ShopSearch';
+import { BRAND_LOGOS } from '@/lib/brand-logos';
 
 export const metadata: Metadata = {
   title: 'Shop by Brand',
@@ -93,23 +95,52 @@ export default async function BrandsPage() {
               </span>
               <div className="flex-1 h-px bg-border" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {groupedBrands[letter].map((brand) => (
-                <Link
-                  key={brand.id}
-                  href={`/brand/${brand.slug}`}
-                  className="group p-4 rounded-lg bg-card border border-border hover:border-primary hover:shadow-md transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-foreground group-hover:text-primary transition-colors">
-                      {brand.name}
-                    </span>
-                    <span className="text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                      {brand.count}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {groupedBrands[letter].map((brand) => {
+                const logo = BRAND_LOGOS[brand.slug];
+                return (
+                  <Link
+                    key={brand.id}
+                    href={`/brand/${brand.slug}`}
+                    className="group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary hover:shadow-md transition-all"
+                  >
+                    {/* Logo / monogram tile. Dark-ink logos (theme 'light') sit
+                        on white; light-ink logos (theme 'dark') need a dark tile. */}
+                    <div
+                      className={`flex items-center justify-center h-24 px-5 py-4 ${
+                        logo
+                          ? logo.theme === 'dark'
+                            ? 'bg-neutral-800'
+                            : 'bg-white'
+                          : 'bg-muted/40'
+                      }`}
+                    >
+                      {logo ? (
+                        <Image
+                          src={`/brand-logos/${brand.slug}.webp`}
+                          alt={`${brand.name} logo`}
+                          width={logo.w}
+                          height={logo.h}
+                          className="max-h-12 w-auto object-contain"
+                        />
+                      ) : (
+                        <span className="text-4xl font-bold text-muted-foreground/40 group-hover:text-primary/60 transition-colors">
+                          {brand.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    {/* Name + product count */}
+                    <div className="flex items-center justify-between gap-2 px-4 py-3 border-t border-border">
+                      <span className="font-medium text-sm text-foreground group-hover:text-primary transition-colors truncate">
+                        {brand.name}
+                      </span>
+                      <span className="flex-shrink-0 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        {brand.count}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         ))}
