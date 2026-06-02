@@ -23,6 +23,7 @@ import { join } from 'path';
 import sharp from 'sharp';
 import {
   domainOf,
+  brandApiCandidates,
   brandfetchCandidates,
   scrapeCandidates,
   fetchImageBuffer,
@@ -122,14 +123,21 @@ function isSvgCandidate(c: LogoCandidate, contentType: string): boolean {
   return /svg/i.test(contentType) || /\.svg(\?|$)/i.test(c.url);
 }
 
-async function fetchOneBrand(brand: BrandEntry, apiKey: string | undefined): Promise<Report> {
+interface ApiKeys { brandApi?: string; search?: string }
+
+async function fetchOneBrand(brand: BrandEntry, keys: ApiKeys): Promise<Report> {
   const name = brand.name ?? brand.slug;
   const domain = domainOf(brand.website);
   const base: Report = { slug: brand.slug, name, domain, status: 'failed' };
 
+  // Tier 1: Brand API (Bearer) — best quality. Tier 2: Search API (client id).
+  // Tier 3: homepage scrape.
   const candidates: LogoCandidate[] = [];
-  if (apiKey) {
-    try { candidates.push(...(await brandfetchCandidates(domain, apiKey, name))); } catch { /* fall through */ }
+  if (keys.brandApi) {
+    try { candidates.push(...(await brandApiCandidates(domain, keys.brandApi))); } catch { /* fall through */ }
+  }
+  if (keys.search) {
+    try { candidates.push(...(await brandfetchCandidates(domain, keys.search, name))); } catch { /* fall through */ }
   }
   try { candidates.push(...(await scrapeCandidates(brand.website))); } catch { /* none */ }
 
@@ -204,8 +212,16 @@ async function main() {
     return;
   }
 
-  const apiKey = process.env.BRANDFETCH_API_KEY || process.env.BRANDFETCH_API;
-  console.log(apiKey ? 'Brandfetch key found → API first, scrape fallback.' : 'No BRANDFETCH_API_KEY/BRANDFETCH_API → scrape-only mode.');
+  const keys: ApiKeys = {
+    brandApi: process.env.BRANDFETCH_BRAND_API_KEY,
+    search: process.env.BRANDFETCH_API_KEY || process.env.BRANDFETCH_API,
+  };
+  const tiers = [
+    keys.brandApi && 'Brand API (Bearer)',
+    keys.search && 'Search API (client id)',
+    'homepage scrape',
+  ].filter(Boolean);
+  console.log(`Logo sources, in order: ${tiers.join(' → ')}.`);
 
   const raw = JSON.parse(readFileSync(INPUT, 'utf8')) as { brands: BrandEntry[] };
   let brands = raw.brands.filter((b) => b.slug && b.website);
@@ -216,7 +232,7 @@ async function main() {
   console.log(`Processing ${brands.length} brand(s)...`);
   const reports: Report[] = [];
   for (const b of brands) {
-    const r = await fetchOneBrand(b, apiKey);
+    const r = await fetchOneBrand(b, keys);
     reports.push(r);
     console.log(`  ${r.status === 'ok' ? '✓' : '✗'} ${r.slug}${r.status === 'ok' ? ` (${r.source}, ${r.w}×${r.h})` : ` — ${r.note}`}`);
   }

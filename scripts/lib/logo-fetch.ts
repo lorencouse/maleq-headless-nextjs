@@ -60,6 +60,53 @@ export async function fetchImageBuffer(
   return { buf: Buffer.from(ab), contentType };
 }
 
+/* ─── Brandfetch Brand API (Bearer key) ─────────────────────────────────────
+ * GET https://api.brandfetch.io/v2/brands/{domain}  (Authorization: Bearer)
+ * Returns { logos: [{ type, theme, formats: [{ src, format, width, height }] }] }.
+ * High-quality source (real transparent SVG/PNG wordmarks). Requires a Brand
+ * API key — NOT the Search/Logo-Link client id. Preference: type logo > symbol
+ * > icon; svg > largest raster. Tile theme is decided downstream by luminance. */
+export async function brandApiCandidates(
+  domain: string,
+  bearerKey: string
+): Promise<LogoCandidate[]> {
+  const res = await timedFetch(`https://api.brandfetch.io/v2/brands/${domain}`, 12000);
+  if (!res || !res.ok) return [];
+  let data: any;
+  try {
+    data = await res.json();
+  } catch {
+    return [];
+  }
+  const logos: any[] = Array.isArray(data?.logos) ? data.logos : [];
+  const typeRank: Record<string, number> = { logo: 0, symbol: 1, icon: 2 };
+
+  const scored = logos
+    .flatMap((l) =>
+      (Array.isArray(l.formats) ? l.formats : []).map((f: any) => ({
+        url: f.src as string,
+        format: f.format as string,
+        area: (Number(f.width) || 0) * (Number(f.height) || 0),
+        typeR: typeRank[l.type] ?? 3,
+        type: l.type,
+      }))
+    )
+    .filter((x) => typeof x.url === 'string' && x.url.startsWith('http'))
+    .sort((a, b) => {
+      if (a.typeR !== b.typeR) return a.typeR - b.typeR;
+      const aSvg = a.format === 'svg' ? 1 : 0;
+      const bSvg = b.format === 'svg' ? 1 : 0;
+      if (aSvg !== bSvg) return bSvg - aSvg;
+      return b.area - a.area;
+    });
+
+  return scored.map((s) => ({
+    url: s.url,
+    source: 'brandfetch' as const,
+    note: `brand-api/${s.type}/${s.format}`,
+  }));
+}
+
 /* ─── Brandfetch Search API ─────────────────────────────────────────────────
  * GET https://api.brandfetch.io/v2/search/{query}?c={clientId}
  * Returns [{ brandId, domain, name, icon }]. The `icon` is a CDN URL signed
