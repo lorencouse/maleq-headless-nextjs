@@ -79,6 +79,12 @@ interface RawTaxonomy extends RowDataPacket {
   slug: string;
 }
 
+interface RawVariationPrice extends RowDataPacket {
+  product_id: number;
+  var_min: number | null;
+  var_max: number | null;
+}
+
 const STOCK_MAP: Record<string, string> = {
   instock: 'IN_STOCK',
   outofstock: 'OUT_OF_STOCK',
@@ -97,7 +103,7 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
 
   const PRODUCT_FILTER = `p.post_type = 'product' AND p.post_status = 'publish'`;
 
-  const [productsResult, postmetaResult, taxonomiesResult] = await Promise.all([
+  const [productsResult, postmetaResult, taxonomiesResult, variationPriceResult] = await Promise.all([
     pool.query<RawProduct[]>(`
       SELECT
         p.ID,
@@ -130,11 +136,35 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
       WHERE ${PRODUCT_FILTER}
         AND tt.taxonomy IN ('product_cat','product_brand','product_material','pa_color','pa_volume','pa_length','product_type')
     `),
+    // True per-variation price range. The wp_wc_product_meta_lookup min/max is
+    // frequently stale for variable products (collapses to a single variation's
+    // price), so derive the real lowest/highest active variation price directly
+    // from the variation _price postmeta. Only variable products have children
+    // here, so this is naturally scoped to them.
+    pool.query<RawVariationPrice[]>(`
+      SELECT child.post_parent AS product_id,
+             MIN(CAST(pm.meta_value AS DECIMAL(12,4))) AS var_min,
+             MAX(CAST(pm.meta_value AS DECIMAL(12,4))) AS var_max
+      FROM wp_posts child
+      JOIN wp_postmeta pm ON pm.post_id = child.ID AND pm.meta_key = '_price'
+      WHERE child.post_type = 'product_variation'
+        AND child.post_status = 'publish'
+        AND pm.meta_value <> ''
+      GROUP BY child.post_parent
+    `),
   ]);
 
   const products = productsResult[0];
   const postmetaRows = postmetaResult[0];
   const taxonomies = taxonomiesResult[0];
+
+  // Map parent product id -> true {min,max} active variation price
+  const variationPriceByParent = new Map<number, { min: number | null; max: number | null }>();
+  for (const row of variationPriceResult[0]) {
+    const min = row.var_min !== null ? Number(row.var_min) || null : null;
+    const max = row.var_max !== null ? Number(row.var_max) || null : null;
+    variationPriceByParent.set(row.product_id, { min, max });
+  }
 
   // Pivot postmeta to per-product scalar lookup
   type PostmetaScalars = {
@@ -253,8 +283,19 @@ export async function loadProductIndex(): Promise<ProductIndexEntry[]> {
     const totalSales = Number(p.total_sales) || 0;
 
     // MySQL DECIMAL comes back as string — coerce to number
-    const minPrice = p.min_price !== null ? Number(p.min_price) || null : null;
-    const maxPrice = p.max_price !== null ? Number(p.max_price) || null : null;
+    let minPrice = p.min_price !== null ? Number(p.min_price) || null : null;
+    let maxPrice = p.max_price !== null ? Number(p.max_price) || null : null;
+
+    // For variable products, prefer the true variation price range computed from
+    // variation _price postmeta (the lookup table is often stale and collapses
+    // min == max). This makes cards show "lowest - highest" correctly.
+    if (productType === 'VARIABLE') {
+      const varRange = variationPriceByParent.get(p.ID);
+      if (varRange && varRange.min !== null) {
+        minPrice = varRange.min;
+        maxPrice = varRange.max !== null ? varRange.max : varRange.min;
+      }
+    }
     const regPrice = meta?.regularPrice ? parseFloat(meta.regularPrice) : null;
     const salPrice = meta?.salePrice ? parseFloat(meta.salePrice) : null;
 
