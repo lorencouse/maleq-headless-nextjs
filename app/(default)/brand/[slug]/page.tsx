@@ -16,7 +16,7 @@ import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
-import { BreadcrumbSchema } from '@/components/seo/StructuredData';
+import { BreadcrumbSchema, BrandSchema } from '@/components/seo/StructuredData';
 
 interface BrandPageProps {
   params: Promise<{ slug: string }>;
@@ -169,6 +169,15 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           { name: 'Brands', url: `${SITE_URL}/brands` },
           { name: brand.name, url: `${SITE_URL}/brand/${slug}` },
         ]}
+      />
+
+      {/* Brand entity schema — sameAs links the manufacturer's official site
+          so search engines can disambiguate the brand (Knowledge Graph). */}
+      <BrandSchema
+        name={brand.name}
+        url={`${SITE_URL}/brand/${slug}`}
+        sameAs={brand.website ? [brand.website] : undefined}
+        description={brand.description ? stripHtml(brand.description).slice(0, 300) : undefined}
       />
 
       {/* Brand Hero */}

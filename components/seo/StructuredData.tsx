@@ -71,6 +71,44 @@ export function WebSiteSchema({ name, url, searchUrl }: WebSiteProps) {
   );
 }
 
+interface BrandSchemaProps {
+  /** Brand display name. */
+  name: string;
+  /** Canonical URL of the brand page on this site. */
+  url: string;
+  /** Manufacturer's official website + any other authoritative profiles. */
+  sameAs?: string[];
+  /** Plain-text brand description (HTML should be stripped by the caller). */
+  description?: string;
+  logo?: string;
+}
+
+/**
+ * Brand entity for a brand archive page. The `sameAs` link to the
+ * manufacturer's official site helps search engines disambiguate which
+ * real-world brand this page represents (Knowledge Graph), without passing
+ * link equity the way a visible <a> would.
+ */
+export function BrandSchema({ name, url, sameAs, description, logo }: BrandSchemaProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Brand',
+    name,
+    url,
+    ...(description && { description }),
+    ...(logo && { logo }),
+    ...(sameAs && sameAs.length > 0 && { sameAs }),
+  };
+
+  return (
+    <Script
+      id="brand-schema"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
 interface ProductSchemaProps {
   name: string;
   description: string;
