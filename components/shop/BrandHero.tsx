@@ -29,9 +29,15 @@ export default function BrandHero({ brand, productCount }: BrandHeroProps) {
         {/* Content */}
         <div className="relative px-6 py-8 sm:px-8 sm:py-12">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-            {/* Brand logo (on a white tile) when available, else generic icon */}
+            {/* Brand logo when available, else generic icon. Dark-ink logos sit
+                on a white tile; light/white-ink logos use a translucent dark
+                tile so they read against the gradient hero. */}
             {logo ? (
-              <div className="h-16 sm:h-20 px-4 bg-white rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center">
+              <div
+                className={`h-16 sm:h-20 px-4 rounded-2xl shadow-sm flex-shrink-0 flex items-center justify-center ${
+                  logo.theme === 'dark' ? 'bg-white/10 backdrop-blur-sm' : 'bg-white'
+                }`}
+              >
                 <Image
                   src={`/brand-logos/${brand.slug}.webp`}
                   alt={`${brand.name} logo`}

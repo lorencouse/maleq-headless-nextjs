@@ -42,6 +42,10 @@ const MAX_W = 520;
 const MIN_USABLE_W = 48;
 const WEBP_QUALITY = 90;
 
+// 'light' = dark ink (sits on a white tile); 'dark' = light/white ink (needs a
+// dark tile, rendered on the hero gradient).
+type LogoTheme = 'light' | 'dark';
+
 interface BrandEntry { slug: string; name?: string; website: string; verified?: boolean }
 interface Report {
   slug: string;
@@ -52,6 +56,7 @@ interface Report {
   sourceUrl?: string;
   w?: number;
   h?: number;
+  theme?: LogoTheme;
   note?: string;
 }
 
@@ -69,18 +74,45 @@ function parseArgs() {
   };
 }
 
+/**
+ * Decide which tile background a logo needs. The failure mode we guard against
+ * is a near-white logo vanishing on a white tile — but a mean-luminance test
+ * misfires on thin/antialiased DARK logos (their soft gray edges read light).
+ * So we use the dark tile ONLY when the logo has essentially no dark ink:
+ * fraction of opaque pixels darker than ~110 luma is below 4%. Any logo with
+ * real dark ink stays on the white tile (where dark ink reads correctly).
+ */
+async function computeTheme(img: sharp.Sharp): Promise<LogoTheme> {
+  const { data, info } = await img.ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+  let opaque = 0;
+  let dark = 0;
+  for (let i = 0; i < data.length; i += ch) {
+    const a = ch === 4 ? data[i + 3] : 255;
+    if (a < 40) continue; // ignore (near-)transparent pixels
+    opaque++;
+    const lum = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    if (lum < 110) dark++;
+  }
+  if (opaque === 0) return 'light';
+  return dark / opaque < 0.04 ? 'dark' : 'light';
+}
+
 /** Decode (rasterizing SVG crisply), trim borders, fit to target, encode WebP. */
-async function processToWebp(buf: Buffer, isSvg: boolean): Promise<{ out: Buffer; w: number; h: number } | null> {
+async function processToWebp(
+  buf: Buffer,
+  isSvg: boolean
+): Promise<{ out: Buffer; w: number; h: number; theme: LogoTheme } | null> {
   try {
     const input = isSvg ? sharp(buf, { density: 384 }) : sharp(buf);
-    const pipeline = input
+    const fitted = input
       .trim() // strip uniform border (whitespace / solid bg)
-      .resize({ height: TARGET_H, width: MAX_W, fit: 'inside', withoutEnlargement: !isSvg })
-      .webp({ quality: WEBP_QUALITY });
-    const out = await pipeline.toBuffer();
+      .resize({ height: TARGET_H, width: MAX_W, fit: 'inside', withoutEnlargement: !isSvg });
+    const out = await fitted.clone().webp({ quality: WEBP_QUALITY }).toBuffer();
     const meta = await sharp(out).metadata();
     if (!meta.width || meta.width < MIN_USABLE_W) return null;
-    return { out, w: meta.width, h: meta.height ?? TARGET_H };
+    const theme = await computeTheme(fitted.clone());
+    return { out, w: meta.width, h: meta.height ?? TARGET_H, theme };
   } catch {
     return null;
   }
@@ -108,7 +140,7 @@ async function fetchOneBrand(brand: BrandEntry, apiKey: string | undefined): Pro
     const processed = await processToWebp(dl.buf, isSvgCandidate(c, dl.contentType));
     if (!processed) continue;
     writeFileSync(join(OUT_DIR, `${brand.slug}.webp`), processed.out);
-    return { ...base, status: 'ok', source: c.source, sourceUrl: c.url, w: processed.w, h: processed.h, note: c.note };
+    return { ...base, status: 'ok', source: c.source, sourceUrl: c.url, w: processed.w, h: processed.h, theme: processed.theme, note: c.note };
   }
   return { ...base, note: candidates.length ? 'no candidate decoded' : 'no candidates found' };
 }
@@ -116,13 +148,15 @@ async function fetchOneBrand(brand: BrandEntry, apiKey: string | undefined): Pro
 function writeContactSheet(reports: Report[]) {
   const ok = reports.filter((r) => r.status === 'ok');
   const failed = reports.filter((r) => r.status === 'failed');
+  // Preview each logo on the tile background it will actually use, so the
+  // reviewer sees what visitors see (white-ink logos on a dark tile).
   const card = (r: Report) => `
     <div style="border:1px solid #ddd;border-radius:8px;padding:10px;width:220px;font:13px sans-serif">
-      <div style="background:#fff;height:90px;display:flex;align-items:center;justify-content:center;border:1px solid #eee;border-radius:6px">
+      <div style="background:${r.theme === 'dark' ? '#4a2a52' : '#fff'};height:90px;display:flex;align-items:center;justify-content:center;border:1px solid #eee;border-radius:6px">
         <img src="../../public/brand-logos/${r.slug}.webp" style="max-height:72px;max-width:200px;object-fit:contain" alt="${r.name}">
       </div>
       <div style="margin-top:8px;font-weight:600">${r.name}</div>
-      <div style="color:#666">${r.slug} · ${r.w}×${r.h}</div>
+      <div style="color:#666">${r.slug} · ${r.w}×${r.h} · ${r.theme}</div>
       <div style="color:#999;font-size:11px">${r.source} · ${r.note ?? ''}</div>
       <a href="${r.sourceUrl}" style="font-size:11px;word-break:break-all" target="_blank">${r.sourceUrl}</a>
     </div>`;
@@ -143,13 +177,16 @@ async function finalize() {
   const entries: string[] = [];
   for (const f of files.sort()) {
     const slug = f.replace(/\.webp$/, '');
-    const meta = await sharp(join(OUT_DIR, f)).metadata();
-    entries.push(`  ${JSON.stringify(slug)}: { w: ${meta.width}, h: ${meta.height} },`);
+    const path = join(OUT_DIR, f);
+    const meta = await sharp(path).metadata();
+    const theme = await computeTheme(sharp(path));
+    entries.push(`  ${JSON.stringify(slug)}: { w: ${meta.width}, h: ${meta.height}, theme: ${JSON.stringify(theme)} },`);
   }
   const ts = `// AUTO-GENERATED by scripts/scrape-brand-logos.ts --finalize. Do not edit by hand.
-// Maps a product_brand slug to its logo dimensions; the asset is
+// Maps a product_brand slug to its logo dimensions + tile theme; the asset is
 // public/brand-logos/<slug>.webp. Presence here = approved for display.
-export const BRAND_LOGOS: Record<string, { w: number; h: number }> = {
+// theme 'light' = dark ink on a white tile; 'dark' = light ink on the dark hero tile.
+export const BRAND_LOGOS: Record<string, { w: number; h: number; theme: 'light' | 'dark' }> = {
 ${entries.join('\n')}
 };
 `;
