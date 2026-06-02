@@ -129,7 +129,7 @@ async function fetchOneBrand(brand: BrandEntry, apiKey: string | undefined): Pro
 
   const candidates: LogoCandidate[] = [];
   if (apiKey) {
-    try { candidates.push(...(await brandfetchCandidates(domain, apiKey))); } catch { /* fall through */ }
+    try { candidates.push(...(await brandfetchCandidates(domain, apiKey, name))); } catch { /* fall through */ }
   }
   try { candidates.push(...(await scrapeCandidates(brand.website))); } catch { /* none */ }
 
@@ -204,8 +204,8 @@ async function main() {
     return;
   }
 
-  const apiKey = process.env.BRANDFETCH_API_KEY;
-  console.log(apiKey ? 'Brandfetch key found → API first, scrape fallback.' : 'No BRANDFETCH_API_KEY → scrape-only mode.');
+  const apiKey = process.env.BRANDFETCH_API_KEY || process.env.BRANDFETCH_API;
+  console.log(apiKey ? 'Brandfetch key found → API first, scrape fallback.' : 'No BRANDFETCH_API_KEY/BRANDFETCH_API → scrape-only mode.');
 
   const raw = JSON.parse(readFileSync(INPUT, 'utf8')) as { brands: BrandEntry[] };
   let brands = raw.brands.filter((b) => b.slug && b.website);

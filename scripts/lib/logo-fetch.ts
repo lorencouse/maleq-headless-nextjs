@@ -60,55 +60,54 @@ export async function fetchImageBuffer(
   return { buf: Buffer.from(ab), contentType };
 }
 
-/* ─── Brandfetch Brand API ─────────────────────────────────────────────────
- * GET https://api.brandfetch.io/v2/brands/{domain}  (Bearer apiKey)
- * Returns { logos: [{ type, theme, formats: [{ src, format, width, height }] }] }
- * Preference: type logo > symbol > icon; theme light/null (dark ink, sits on a
- * white tile in BrandHero); format svg > largest raster. */
+/* ─── Brandfetch Search API ─────────────────────────────────────────────────
+ * GET https://api.brandfetch.io/v2/search/{query}?c={clientId}
+ * Returns [{ brandId, domain, name, icon }]. The `icon` is a CDN URL signed
+ * with a transient client id that fetches server-side. We match the result to
+ * our brand by normalized domain (then name) to avoid grabbing the wrong brand,
+ * and request a larger render by bumping the icon URL's width/height.
+ *
+ * NOTE: the user's client ID authorizes Search (and the returned icon URLs),
+ * but NOT the general Logo Link CDN (those are Referer/domain-restricted). */
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 export async function brandfetchCandidates(
   domain: string,
-  apiKey: string
+  apiKey: string,
+  name?: string
 ): Promise<LogoCandidate[]> {
-  const res = await timedFetch(`https://api.brandfetch.io/v2/brands/${domain}`, 12000);
+  const query = name || domain;
+  const res = await timedFetch(
+    `https://api.brandfetch.io/v2/search/${encodeURIComponent(query)}?c=${encodeURIComponent(apiKey)}`,
+    12000
+  );
   if (!res || !res.ok) return [];
-  let data: any;
+  let results: any[];
   try {
-    data = await res.json();
+    results = await res.json();
   } catch {
     return [];
   }
-  const logos: any[] = Array.isArray(data?.logos) ? data.logos : [];
+  if (!Array.isArray(results) || results.length === 0) return [];
 
-  const typeRank: Record<string, number> = { logo: 0, symbol: 1, icon: 2 };
-  const themeRank = (t: string | null) => (t === 'light' || t == null ? 0 : 1);
+  const dNorm = norm(domain);
+  const nNorm = name ? norm(name) : '';
+  // Match on normalized DOMAIN only (e.g. doc-johnson.com == docjohnson.com),
+  // with exact normalized-name equality as a strict secondary. Fuzzy name
+  // matching is intentionally NOT used — it grabbed wrong brands (Lovehoney →
+  // a fried-chicken shop, Pretty Love → "Pretty Lovely", etc.).
+  const match =
+    results.find((r) => r.domain && norm(r.domain) === dNorm) ||
+    (nNorm ? results.find((r) => r.name && norm(r.name) === nNorm) : undefined);
+  if (!match || typeof match.icon !== 'string') return [];
 
-  const scored = logos
-    .flatMap((l) =>
-      (Array.isArray(l.formats) ? l.formats : []).map((f: any) => ({
-        url: f.src as string,
-        format: f.format as string,
-        area: (Number(f.width) || 0) * (Number(f.height) || 0),
-        typeR: typeRank[l.type] ?? 3,
-        themeR: themeRank(l.theme ?? null),
-        type: l.type,
-        theme: l.theme ?? 'any',
-      }))
-    )
-    .filter((x) => typeof x.url === 'string' && x.url.startsWith('http'))
-    .sort((a, b) => {
-      if (a.typeR !== b.typeR) return a.typeR - b.typeR;
-      if (a.themeR !== b.themeR) return a.themeR - b.themeR;
-      // svg beats raster; otherwise larger raster wins
-      const aSvg = a.format === 'svg' ? 1 : 0;
-      const bSvg = b.format === 'svg' ? 1 : 0;
-      if (aSvg !== bSvg) return bSvg - aSvg;
-      return b.area - a.area;
-    });
-
-  return scored.map((s) => ({
-    url: s.url,
+  // Request a larger render than the default 128px when the URL exposes it.
+  const big = match.icon.replace('/w/128/h/128/', '/w/512/h/512/');
+  const urls = big !== match.icon ? [big, match.icon] : [match.icon];
+  return urls.map((url) => ({
+    url,
     source: 'brandfetch' as const,
-    note: `${s.type}/${s.theme}/${s.format}`,
+    note: `${match.name}/${match.domain}`,
   }));
 }
 
