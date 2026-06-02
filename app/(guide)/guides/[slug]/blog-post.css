@@ -1277,3 +1277,21 @@ figure.wp-block-video.aligncenter {
   border: 0;
   border-radius: 8px;
 }
+
+/* Video embeds (YouTube, Vimeo) are 16:9 landscape, not portrait social posts —
+   let them span the full content column and size by aspect ratio rather than the
+   narrow 540px cap + fixed height. Targeted by iframe src so it also fixes posts
+   already published (no re-generation needed). */
+.entry-content .news-embed:has(iframe[src*="youtube"]),
+.entry-content .news-embed:has(iframe[src*="vimeo"]) {
+  /* Override the generic `figure { display: table }` shrink-to-fit so the
+     figure actually spans the content column. */
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+.entry-content .news-embed iframe[src*="youtube"],
+.entry-content .news-embed iframe[src*="vimeo"] {
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
