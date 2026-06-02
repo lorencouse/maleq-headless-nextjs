@@ -78,8 +78,11 @@ const BUILDERS: Record<string, (id: string) => string> = {
 
 /**
  * Find social/video embeds in a source article and return ready-to-insert iframe
- * HTML. Scans the <article> region (falls back to whole doc) to avoid sidebar/footer
- * links, matches only post-specific URLs (not profile pages), dedupes, caps to `max`.
+ * HTML. Scans the WHOLE document (embeds often sit outside any <article> tag, and
+ * post-specific social URLs only appear in real embed widgets — teaser/nav links
+ * point at the outlet's own articles, not at instagram/x/tiktok posts). Matches
+ * post-specific URLs (not profile pages), dedupes, then interleaves platforms so a
+ * capped result shows variety (e.g. one IG + one X + one TikTok) rather than all IG.
  */
 export async function extractEmbeds(url: string, max = 3): Promise<Embed[]> {
   try {
@@ -90,17 +93,17 @@ export async function extractEmbeds(url: string, max = 3): Promise<Embed[]> {
     });
     if (!res.ok) return [];
     const html = await res.text();
-    const region = (html.match(/<article[\s\S]*?<\/article>/i) || [html])[0];
 
-    const out: Embed[] = [];
+    const byPlatform: Record<string, Embed[]> = {};
     const seen = new Set<string>();
     const collect = (platform: string, re: RegExp) => {
-      for (const m of region.matchAll(re)) {
+      const arr: Embed[] = (byPlatform[platform] = []);
+      for (const m of html.matchAll(re)) {
         const id = m[1];
         const key = `${platform}:${id}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        out.push({ platform, html: BUILDERS[platform](id) });
+        arr.push({ platform, html: BUILDERS[platform](id) });
       }
     };
 
@@ -110,7 +113,18 @@ export async function extractEmbeds(url: string, max = 3): Promise<Embed[]> {
     collect('tiktok', /tiktok\.com\/@[A-Za-z0-9_.]+\/video\/(\d+)/gi);
     collect('vimeo', /(?:player\.)?vimeo\.com\/(?:video\/)?(\d{6,})/gi);
 
-    return out.slice(0, max);
+    // Round-robin across platforms up to `max`.
+    const order = ['instagram', 'youtube', 'twitter', 'tiktok', 'vimeo'];
+    const out: Embed[] = [];
+    for (let i = 0; out.length < max; i++) {
+      let added = false;
+      for (const p of order) {
+        const e = byPlatform[p]?.[i];
+        if (e) { out.push(e); added = true; if (out.length >= max) break; }
+      }
+      if (!added) break;
+    }
+    return out;
   } catch {
     return [];
   }
