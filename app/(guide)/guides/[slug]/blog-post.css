@@ -1261,3 +1261,19 @@ figure.wp-block-video.aligncenter {
     break-inside: avoid;
   }
 }
+
+/* ── News-agent social/video embeds (Instagram, YouTube, X, TikTok, Vimeo) ──
+   Emitted by the news agent as <figure class="wp-block-embed news-embed"> with a
+   fixed-height <iframe>. The sanitizer strips inline styles, so responsiveness is
+   handled here: constrain width and let the iframe fill it (height stays fixed). */
+.entry-content .news-embed {
+  margin: 1.5rem auto;
+  max-width: 540px;
+}
+.entry-content .news-embed iframe {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border: 0;
+  border-radius: 8px;
+}
