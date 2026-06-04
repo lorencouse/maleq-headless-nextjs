@@ -19,6 +19,7 @@ import { DRAFT_MODEL } from './config';
 import type { NewsItem } from './rss';
 import type { StoryCluster } from './cluster';
 import { gatherMaterial, extractEmbeds } from './extract';
+import { addEntityLinks } from './entity-links';
 
 const DraftSchema = z.object({
   title: z.string().describe('Rewritten, original headline (60–80 chars). Not copied from any source.'),
@@ -29,7 +30,21 @@ const DraftSchema = z.object({
     'A 400–550 word original news piece in HTML. Structure: a 1–2 sentence lede <p>, ' +
     'then 2–3 sections each introduced by an <h2> subheading followed by 1–2 <p> paragraphs. ' +
     'Synthesize the sources actually used. Allowed tags only: <p>, <h2>, <strong>, <em>, <ul>, <li>. ' +
-    'Do NOT include a "Sources:" line — that is appended automatically.',
+    'Do NOT include a "Sources:" line — that is appended automatically. Do NOT add any ' +
+    'links yourself; instead list notable entities in "entityLinks" and we add verified links.',
+  ),
+  entityLinks: z.array(z.object({
+    text: z.string().describe('The anchor phrase EXACTLY as it appears in bodyHtml (a verbatim substring, same casing).'),
+    query: z.string().describe('The entity\'s name for a Wikipedia lookup — the article title when you know it (e.g. "Heartstopper (TV series)", "Stonewall Inn", "GLAAD").'),
+  })).describe(
+    'Notable, real-world entities mentioned in bodyHtml that a professional outlet would ' +
+    'hyperlink: books, TV shows, films, plays, albums, places/venues, organizations, laws, ' +
+    'events, and public figures that have a Wikipedia article. For EACH, give the exact ' +
+    'anchor text from your body and a Wikipedia lookup term. Rules: only genuinely notable, ' +
+    'unambiguous entities (skip generic terms like "the court", "activists", "the community"); ' +
+    'pick the FIRST mention of each; do NOT repeat an entity; 0 to 6 items — return an empty ' +
+    'array if the piece has no linkworthy entities. We verify each against Wikipedia and only ' +
+    'link the ones that resolve, so favor precision over quantity.',
   ),
   tags: z.array(z.string()).describe('3–5 lowercase topic tags.'),
   socialText: z.string().describe(
@@ -97,7 +112,8 @@ WRITING RULES:
 - No defamation, no outing of private individuals, no medical or legal advice.
 - Voice: warm, community-minded, plain-spoken. Brief editorial commentary is welcome but clearly distinct from the factual reporting.
 - Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
-- bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line.
+- bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line. Do NOT write <a> tags or URLs yourself — links are added for you from entityLinks.
+- entityLinks: like a professional outlet, flag the notable real-world things you mention so we can link them — books, TV shows, films, albums, plays, places/venues, organizations, laws, named events, and public figures that have a Wikipedia article. For each, give the exact anchor text as it appears in bodyHtml plus a Wikipedia lookup term. Be selective and precise: only unambiguous, genuinely notable entities, first mention only, no duplicates, none for generic phrases. Return an empty array when nothing qualifies. We verify each against Wikipedia and silently drop any that don't resolve, so wrong guesses cost nothing but vague ones waste a slot.
 - Never use em-dashes (—) in ANY field — not the body, title, excerpt, seoDescription, socialText, or coverHeadline. Use commas, periods, colons, or parentheses instead.
 - coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
 - socialText: the conversational one-sentence hook that becomes the BODY of the social post (the headline is already shown in the link card, so don't repeat it). Give people a reason to click — an angle or stake — without clickbait or anything the story doesn't support.
@@ -241,7 +257,11 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     .slice(0, 3)
     .map((e) => e.html);
 
-  const body = interleaveEmbeds(cleanBody, embeds);
+  // Add verified contextual links (Wikipedia) for notable entities the model
+  // flagged — books, shows, places, orgs, public figures — before interleaving
+  // embeds. We resolve every URL ourselves, so nothing hallucinated gets through.
+  const { html: linkedBody } = await addEntityLinks(cleanBody, parsed.entityLinks);
+  const body = interleaveEmbeds(linkedBody, embeds);
 
   return {
     ...parsed,
