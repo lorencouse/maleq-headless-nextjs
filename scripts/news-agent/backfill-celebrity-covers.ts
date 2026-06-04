@@ -48,10 +48,16 @@ const WP_ENV = { ...process.env, PATH: `${SYSTEM_PATH}:${process.env.PATH || ''}
 
 const PersonSchema = z.object({
   coverPerson: z.string().nullable().describe(
-    'If the story is CENTRALLY about ONE specific public figure (their name is the ' +
-    'subject — a celebrity, athlete, politician, artist), their full name EXACTLY as ' +
-    'it would title their Wikipedia article. Null if it is about an event, a group, ' +
-    'or several people rather than one identifiable individual.',
+    'The single public figure the story most centers on. STRONG RULE: if a named public ' +
+    'figure (celebrity, athlete, politician, artist, public official) appears in the HEADLINE ' +
+    'and is the main actor or subject, return THAT person — even when the story also discusses ' +
+    'a group, an issue, or other people they are acting on or reacting to. For "Trump Rants ' +
+    'About Trans Athletes to Kids", the figure is "Donald Trump" (NOT null). Give their full ' +
+    'name EXACTLY as it titles their Wikipedia article (e.g. "Donald Trump", "Pedro Pascal", ' +
+    '"Kamala Harris"). Return null ONLY when there is genuinely no single dominant individual — ' +
+    'an institution acts ("Supreme Court rules…", "WHO announces…"), or a group/event with no ' +
+    'central named person ("Pride parade draws thousands"). When two-plus people share the ' +
+    'spotlight equally, pick the one named first in the headline.',
   ),
 });
 
@@ -123,7 +129,7 @@ async function derivePerson(client: Anthropic, c: Candidate): Promise<string | n
   const res = await client.messages.parse({
     model: MODEL,
     max_tokens: 200,
-    system: [{ type: 'text', text: 'You identify whether an LGBTQ news headline is centrally about one specific named public figure.' }],
+    system: [{ type: 'text', text: 'You identify the single public figure an LGBTQ news headline centers on. If a named person is the main actor in the headline, return them even when the story also involves a group or issue; return null only when no single named individual dominates (an institution acts, or a group/event with no central person).' }],
     output_config: { format: zodOutputFormat(PersonSchema) },
     messages: [{ role: 'user', content: `HEADLINE: ${c.title}\nDEK: ${c.excerpt}` }],
   });
