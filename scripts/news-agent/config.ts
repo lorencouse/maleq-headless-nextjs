@@ -75,6 +75,9 @@ export const META = {
   pending: '_maleq_news_pending_review',
   /** Rank Math SEO description (matches existing posts). */
   seoDescription: 'rank_math_description',
+  /** Set once contextual entity links (IMDb/Goodreads/Wikipedia/…) have been added
+   * to the body — idempotency for the one-off backfill of pre-existing posts. */
+  linksDone: '_maleq_news_links_done',
   /** ISO timestamp the post was shared to social (absence = not yet shared). */
   sharedAt: '_maleq_news_shared_at',
   /** JSON map of platform → posted-URL, for per-platform idempotency. */

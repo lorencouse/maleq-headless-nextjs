@@ -11,12 +11,19 @@
  *      its Wikidata QID.
  *   2. Read that entity's external-ID properties from Wikidata and pick the best
  *      target for its kind:
- *        film / tv    → IMDb (P345) → Rotten Tomatoes (P1258) → Wikipedia
- *        person       → IMDb name page (P345 nm…) → Wikipedia
+ *        film / tv    → IMDb (P345) → Rotten Tomatoes (P1258) → Metacritic (P1712) → Wikipedia
+ *        person       → IMDb name page (P345 nm…) → AllMusic artist (P1728) → Wikipedia
  *        organization → official website (P856) → Wikipedia
  *        place        → official website (P856) → Wikipedia
- *        everything else (book, law, event, …) → Wikipedia
+ *        book         → Goodreads (P2969 book → P8383 work) → Wikipedia
+ *        music        → AllMusic album (P1729) → Metacritic (P1712) → Wikipedia
+ *        game         → Steam (P1733) → Metacritic (P1712) → Wikipedia
+ *        other (law, event, …) → Wikipedia
  * An entity that doesn't resolve to a real article isn't linked at all.
+ *
+ * The IMDb URL is built by ID prefix (tt/nm/co); every other site uses the exact
+ * formatter URL Wikidata publishes for that property (verified against P1630), so
+ * the path scheme can't drift.
  *
  * Injection is deterministic and conservative: each entity is linked at most once
  * (first occurrence), only inside body text (never inside an existing <a> or an
@@ -28,7 +35,7 @@ const WP_API = 'https://en.wikipedia.org/w/api.php';
 const WD_API = 'https://www.wikidata.org/w/api.php';
 const UA = 'MaleQ-NewsAgent/1.0 (https://maleq.com; editorial entity links)';
 
-export type EntityKind = 'film' | 'tv' | 'person' | 'organization' | 'place' | 'book' | 'other';
+export type EntityKind = 'film' | 'tv' | 'person' | 'organization' | 'place' | 'book' | 'music' | 'game' | 'other';
 
 /** What the model proposes per entity (it provides no URL — we resolve it). */
 export interface EntityLinkRequest {
@@ -40,11 +47,13 @@ export interface EntityLinkRequest {
   kind: EntityKind;
 }
 
+type LinkSource = 'imdb' | 'rottentomatoes' | 'metacritic' | 'goodreads' | 'allmusic' | 'steam' | 'official' | 'wikipedia';
+
 interface ResolvedEntity {
   text: string;
   url: string;
   /** Which site the link points to — for logging/inspection. */
-  source: 'imdb' | 'rottentomatoes' | 'official' | 'wikipedia';
+  source: LinkSource;
 }
 
 async function api(base: string, params: Record<string, string>): Promise<any> {
@@ -60,7 +69,7 @@ function tokens(s: string): string[] {
 }
 
 /** Build an IMDb URL from a P345 value by its prefix (title / name / company). */
-function imdbUrl(id: string | null): string | null {
+function imdbUrl(id: string | null | undefined): string | null {
   if (!id) return null;
   if (id.startsWith('tt')) return `https://www.imdb.com/title/${id}/`;
   if (id.startsWith('nm')) return `https://www.imdb.com/name/${id}/`;
@@ -68,8 +77,44 @@ function imdbUrl(id: string | null): string | null {
   return null;
 }
 
+/**
+ * The authoritative external IDs we route to. Every URL template below was
+ * verified against the property's Wikidata formatter URL (P1630) on 2026-06-04,
+ * so the path scheme matches what Wikidata itself publishes.
+ */
+interface ExternalIds {
+  imdb: string | null;        // P345  (tt… / nm… / co…)
+  rt: string | null;          // P1258 — value already includes "m/" or "tv/"
+  metacritic: string | null;  // P1712 — value already includes "movie/" / "music/" / "tv/"
+  site: string | null;        // P856  — a full URL
+  goodreadsBook: string | null; // P2969
+  goodreadsWork: string | null; // P8383
+  allmusicAlbum: string | null; // P1729
+  allmusicArtist: string | null;// P1728
+  steam: string | null;       // P1733
+  occupations: string[];      // P106  — occupation QIDs (drives person routing)
+}
+
+const EXTERNAL_PROPS: Record<Exclude<keyof ExternalIds, 'occupations'>, string> = {
+  imdb: 'P345', rt: 'P1258', metacritic: 'P1712', site: 'P856',
+  goodreadsBook: 'P2969', goodreadsWork: 'P8383',
+  allmusicAlbum: 'P1729', allmusicArtist: 'P1728', steam: 'P1733',
+};
+
+/**
+ * Wikidata occupation QIDs (P106) that mean "entertainer" — the only people we
+ * send to IMDb. Anyone else (politicians, activists, executives, athletes, …)
+ * links to Wikipedia, which reads far more professionally than an IMDb page.
+ */
+const ENTERTAINER_OCCUPATIONS = new Set([
+  'Q33999', 'Q10800557', 'Q10798782', 'Q2405480', 'Q2259451', // actor (+ film/TV/voice/stage)
+  'Q2526255', 'Q3455803', 'Q28389', 'Q3282637',               // film director, director, screenwriter, film producer
+  'Q177220', 'Q639669', 'Q488205', 'Q753110', 'Q855091', 'Q36834', 'Q183945', // singer, musician, singer-songwriter, songwriter, guitarist, composer, record producer
+  'Q245068', 'Q947873', 'Q4610556', 'Q3357567', 'Q1141526', 'Q5716684', // comedian, TV presenter, model, drag queen (x2), dancer
+]);
+
 /** Pull the authoritative external IDs we care about from a Wikidata entity. */
-async function wikidataIds(qid: string): Promise<{ imdb: string | null; rt: string | null; site: string | null } | null> {
+async function wikidataIds(qid: string): Promise<ExternalIds | null> {
   try {
     const data = await api(WD_API, { action: 'wbgetentities', ids: qid, props: 'claims' });
     const claims = data?.entities?.[qid]?.claims || {};
@@ -77,34 +122,59 @@ async function wikidataIds(qid: string): Promise<{ imdb: string | null; rt: stri
       const v = claims[p]?.[0]?.mainsnak?.datavalue?.value;
       return typeof v === 'string' ? v : null;
     };
-    return { imdb: val('P345'), rt: val('P1258'), site: val('P856') };
+    const out = { occupations: [] as string[] } as ExternalIds;
+    for (const [key, prop] of Object.entries(EXTERNAL_PROPS)) out[key as keyof ExternalIds] = val(prop) as any;
+    out.occupations = (claims.P106 || [])
+      .map((c: any) => c?.mainsnak?.datavalue?.value?.id)
+      .filter((id: any): id is string => typeof id === 'string');
+    return out;
   } catch {
     return null;
   }
 }
 
 /** Choose the most authoritative URL for a kind, falling back to Wikipedia. */
-function bestUrl(
-  kind: EntityKind,
-  ids: { imdb: string | null; rt: string | null; site: string | null } | null,
-  wikiUrl: string,
-): { url: string; source: ResolvedEntity['source'] } {
-  const imdb = imdbUrl(ids?.imdb || null);
+function bestUrl(kind: EntityKind, ids: ExternalIds | null, wikiUrl: string): { url: string; source: LinkSource } {
+  const imdb = imdbUrl(ids?.imdb);
   const rt = ids?.rt ? `https://www.rottentomatoes.com/${ids.rt}` : null;
+  const mc = ids?.metacritic ? `https://www.metacritic.com/${ids.metacritic}` : null;
   const site = ids?.site && /^https?:\/\//i.test(ids.site) ? ids.site : null;
+  const goodreads = ids?.goodreadsBook
+    ? `https://www.goodreads.com/book/show/${ids.goodreadsBook}`
+    : ids?.goodreadsWork ? `https://www.goodreads.com/work/editions/${ids.goodreadsWork}` : null;
+  const allmusicAlbum = ids?.allmusicAlbum ? `https://www.allmusic.com/album/${ids.allmusicAlbum}` : null;
+  const allmusicArtist = ids?.allmusicArtist ? `https://www.allmusic.com/artist/${ids.allmusicArtist}` : null;
+  const steam = ids?.steam ? `https://store.steampowered.com/app/${ids.steam}/` : null;
+
   switch (kind) {
     case 'film':
     case 'tv':
       if (imdb) return { url: imdb, source: 'imdb' };
       if (rt) return { url: rt, source: 'rottentomatoes' };
+      if (mc) return { url: mc, source: 'metacritic' };
       break;
-    case 'person':
-      // Only a true IMDb name page (nm…) — don't send a person to a title page.
-      if (ids?.imdb?.startsWith('nm')) return { url: imdbUrl(ids.imdb)!, source: 'imdb' };
+    case 'person': {
+      // Only ENTERTAINERS go to IMDb/AllMusic — a politician or activist linking to
+      // IMDb reads as unprofessional, so non-entertainers fall through to Wikipedia.
+      const entertainer = ids?.occupations?.some((q) => ENTERTAINER_OCCUPATIONS.has(q));
+      if (entertainer && ids?.imdb?.startsWith('nm')) return { url: imdbUrl(ids.imdb)!, source: 'imdb' };
+      if (entertainer && allmusicArtist) return { url: allmusicArtist, source: 'allmusic' };
       break;
+    }
     case 'organization':
     case 'place':
       if (site) return { url: site, source: 'official' };
+      break;
+    case 'book':
+      if (goodreads) return { url: goodreads, source: 'goodreads' };
+      break;
+    case 'music':
+      if (allmusicAlbum) return { url: allmusicAlbum, source: 'allmusic' };
+      if (mc) return { url: mc, source: 'metacritic' };
+      break;
+    case 'game':
+      if (steam) return { url: steam, source: 'steam' };
+      if (mc) return { url: mc, source: 'metacritic' };
       break;
     default:
       break;
@@ -118,7 +188,7 @@ function bestUrl(
  * title to share a significant token with the query so a search miss can't link
  * to a wildly wrong page (e.g. a band when we meant a book).
  */
-export async function resolveEntity(query: string, kind: EntityKind): Promise<{ url: string; source: ResolvedEntity['source'] } | null> {
+export async function resolveEntity(query: string, kind: EntityKind): Promise<{ url: string; source: LinkSource } | null> {
   const q = (query || '').trim();
   if (!q) return null;
   try {
@@ -142,8 +212,9 @@ export async function resolveEntity(query: string, kind: EntityKind): Promise<{ 
     if (qt.size && !tokens(title).some((t) => qt.has(t))) return null;
 
     const qid: string | undefined = page?.pageprops?.wikibase_item;
-    // Kinds we never upgrade (Wikipedia is the right home) — skip the extra call.
-    if (!qid || kind === 'book' || kind === 'other') return { url: wikiUrl, source: 'wikipedia' };
+    // 'other' (laws, events, generic topics) always lives on Wikipedia — skip the
+    // extra call. Every other kind has a more authoritative home worth checking.
+    if (!qid || kind === 'other') return { url: wikiUrl, source: 'wikipedia' };
 
     const ids = await wikidataIds(qid);
     return bestUrl(kind, ids, wikiUrl);
@@ -228,25 +299,49 @@ export async function addEntityLinks(
 ): Promise<{ html: string; linked: ResolvedEntity[] }> {
   if (!html || !requests?.length) return { html, linked: [] };
 
-  // De-dupe by anchor text (keep first), drop entities whose anchor text isn't
-  // actually present in the body (the model occasionally paraphrases).
-  const seen = new Set<string>();
-  const candidates = requests.filter((r) => {
-    const t = (r?.text || '').trim();
-    if (!t || seen.has(t.toLowerCase()) || !html.includes(t)) return false;
-    seen.add(t.toLowerCase());
-    return true;
-  });
+  // Clean the anchor: drop a trailing possessive ("Tom Holland's" → "Tom Holland")
+  // and any leading/trailing punctuation, so we link the name, not the apostrophe-s.
+  const clean = (t: string) =>
+    (t || '')
+      .trim()
+      .replace(/[’']s$/i, '')
+      .replace(/^[^A-Za-z0-9(]+/, '')
+      .replace(/[^A-Za-z0-9)]+$/, '')
+      .trim();
 
+  // De-dupe anchors, dropping entities whose anchor text isn't actually in the body
+  // (the model occasionally paraphrases) and sub-phrases of an anchor we already
+  // kept ("Karamo" when we have "Karamo Brown"). Longer anchors are considered
+  // first so the full name wins over a bare first/last name.
+  const accepted: { text: string; words: Set<string> }[] = [];
+  const wordsOf = (t: string) => new Set(t.toLowerCase().match(/[a-z0-9]+/g) || []);
+  const isSubsetOf = (a: Set<string>, b: Set<string>) => a.size > 0 && [...a].every((w) => b.has(w));
+  const candidates = requests
+    .map((r) => ({ ...r, text: clean(r?.text || '') }))
+    .filter((r) => r.text && html.includes(r.text))
+    .sort((a, b) => b.text.length - a.text.length)
+    .filter((r) => {
+      const w = wordsOf(r.text);
+      // Skip exact repeats and any anchor whose words are wholly contained in an
+      // already-kept anchor (same entity referred to more briefly).
+      if (accepted.some((a) => a.text.toLowerCase() === r.text.toLowerCase() || isSubsetOf(w, a.words))) return false;
+      accepted.push({ text: r.text, words: w });
+      return true;
+    });
+
+  // Resolve in parallel, then de-dupe by destination URL so the same entity
+  // referred to two ways ("Karamo Brown" + "Karamo") isn't linked twice.
+  const seenUrl = new Set<string>();
   const resolved = (
     await Promise.all(
       candidates.map(async (r) => {
         const hit = await resolveEntity(r.query || r.text, r.kind || 'other');
-        return hit ? { text: r.text.trim(), url: hit.url, source: hit.source } : null;
+        return hit ? { text: r.text, url: hit.url, source: hit.source } : null;
       }),
     )
   )
     .filter((x): x is ResolvedEntity => x !== null)
+    .filter((x) => (seenUrl.has(x.url) ? false : (seenUrl.add(x.url), true)))
     .slice(0, max);
 
   if (!resolved.length) return { html, linked: [] };
