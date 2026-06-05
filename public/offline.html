@@ -45,10 +45,10 @@
 </head>
 <body>
   <div class="container">
-    <div class="icon">📡</div>
-    <h1>You're Offline</h1>
-    <p class="description">
-      It looks like you've lost your internet connection. Check your connection and try again.
+    <div class="icon" id="icon">⏳</div>
+    <h1 id="title">Having trouble loading this page</h1>
+    <p class="description" id="description">
+      The page is taking longer than usual to respond. We'll retry automatically — or you can try again now.
     </p>
     <div class="buttons">
       <button class="btn btn-primary" onclick="window.location.reload()">
@@ -59,8 +59,59 @@
       </a>
     </div>
     <div class="divider">
-      <p class="hint">This page is available offline. Other pages will load once you're back online.</p>
+      <p class="hint" id="hint">Retrying shortly…</p>
     </div>
   </div>
+  <script>
+    // This page is served by the service worker when a navigation fails OR the
+    // server is too slow to respond. Distinguish the two cases so we don't tell
+    // an ONLINE user they're "offline" (the server was just slow/down).
+    (function () {
+      var icon = document.getElementById('icon');
+      var title = document.getElementById('title');
+      var description = document.getElementById('description');
+      var hint = document.getElementById('hint');
+
+      function render() {
+        if (navigator.onLine === false) {
+          icon.textContent = '📡';
+          title.textContent = "You're offline";
+          description.textContent =
+            "It looks like you've lost your internet connection. We'll reload this page automatically once you're back online.";
+          hint.textContent = 'Waiting for your connection to return…';
+        } else {
+          icon.textContent = '⏳';
+          title.textContent = 'Having trouble loading this page';
+          description.textContent =
+            "The page is taking longer than usual to respond. We'll retry automatically — or you can try again now.";
+          hint.textContent = 'Retrying shortly…';
+        }
+      }
+
+      render();
+
+      // Reload the instant the connection comes back.
+      window.addEventListener('online', function () { window.location.reload(); });
+      window.addEventListener('offline', render);
+
+      // When the user is online but the server was slow/down, auto-retry on a
+      // backoff so the real page loads as soon as the server recovers — without
+      // hammering it. 5s, then 10s, then every 20s.
+      var delays = [5000, 10000, 20000];
+      var attempt = 0;
+      function scheduleRetry() {
+        var delay = delays[Math.min(attempt, delays.length - 1)];
+        attempt++;
+        setTimeout(function () {
+          if (navigator.onLine !== false) {
+            window.location.reload();
+          } else {
+            scheduleRetry();
+          }
+        }, delay);
+      }
+      scheduleRetry();
+    })();
+  </script>
 </body>
 </html>

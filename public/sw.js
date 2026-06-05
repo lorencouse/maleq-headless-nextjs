@@ -1,5 +1,5 @@
 // ─── Cache Configuration ────────────────────────────────────────────
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_PREFIX = 'maleq';
 
 const CACHES = {
@@ -23,19 +23,38 @@ const OFFLINE_FALLBACK_HTML = `<!doctype html>
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Offline | Male Q</title>
+  <title>Loading… | Male Q</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 0; padding: 2rem; color: #111; background: #fff; }
     main { max-width: 560px; margin: 10vh auto 0; }
     h1 { margin-bottom: .5rem; }
     p { color: #444; line-height: 1.5; }
+    button { margin-top: 1rem; padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; }
+    @media (prefers-color-scheme: dark) { body { background: #0a0a0a; color: #fafafa; } p { color: #bbb; } }
   </style>
 </head>
 <body>
   <main>
-    <h1>You're offline</h1>
-    <p>We couldn't load this page right now. Reconnect and try again.</p>
+    <h1 id="t">Having trouble loading this page</h1>
+    <p id="d">The page is taking longer than usual to respond. We'll retry automatically.</p>
+    <button onclick="location.reload()">Try again</button>
   </main>
+  <script>
+    // Don't claim the user is offline when they're online and the server was
+    // just slow/down. Reload as soon as connectivity returns, and auto-retry.
+    (function () {
+      function render() {
+        if (navigator.onLine === false) {
+          document.getElementById('t').textContent = "You're offline";
+          document.getElementById('d').textContent = "Check your connection — we'll reload automatically once you're back online.";
+        }
+      }
+      render();
+      addEventListener('online', function () { location.reload(); });
+      addEventListener('offline', render);
+      setTimeout(function () { if (navigator.onLine !== false) location.reload(); }, 8000);
+    })();
+  </script>
 </body>
 </html>`;
 
@@ -278,22 +297,35 @@ self.addEventListener('fetch', (event) => {
 
   // ── Navigation requests (HTML pages) ──
   if (request.mode === 'navigate') {
+    // Serve the last-good cached page (or the retry/offline fallback) when the
+    // network fails OR the server is slow/erroring. The fallback NEVER claims
+    // the user is offline unless they actually are — a slow/down server is a
+    // server problem, not a connectivity problem.
+    const fallback = () =>
+      caches.match(request).then((cached) =>
+        cached || caches.match('/offline.html')
+      );
+
     event.respondWith(
-      fetchWithTimeout(request, 8000)
+      // 15s (was 8s) — gives a genuinely-slow render time to finish before we
+      // give up, so transient SSR slowness doesn't flash a fallback screen.
+      fetchWithTimeout(request, 15000)
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHES.pages).then((cache) => {
               cache.put(request, clone);
             });
+            return response;
+          }
+          // Server reachable but erroring (5xx/opaque). Prefer a previously
+          // cached copy of this page over showing the user an error.
+          if (response.status >= 500) {
+            return caches.match(request).then((cached) => cached || response);
           }
           return response;
         })
-        .catch(() =>
-          caches.match(request).then((cached) =>
-            cached || caches.match('/offline.html')
-          )
-        )
+        .catch(fallback)
     );
     return;
   }

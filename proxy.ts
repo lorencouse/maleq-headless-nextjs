@@ -71,6 +71,24 @@ function getClientIp(request: NextRequest): string {
 export function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
 
+  // --- Reject malformed / abusive URLs cheaply, before any render or DB hit ---
+  // Crawlers follow self-referential links whose URL-encoding doubles on every
+  // hop (%20 → %2520 → %252520 → …), producing an ever-growing path. Each hit
+  // used to run a full dynamic render + DB lookup and then crash Next's
+  // prerender-cache writer with `ENAMETOOLONG: mkdir`. Reject them here:
+  //   - `%25` in the path is an ENCODED percent sign — a sign of double-encoding.
+  //     Real product/guide/category slugs never contain a literal `%`. (Encoded
+  //     non-ASCII slug chars use %C3/%E2/etc., never %25, so locale slugs are
+  //     safe.) Query strings are not checked.
+  //   - No legitimate slug is anywhere near 512 chars.
+  // 410 Gone (not 404) tells crawlers to drop the URL permanently.
+  if (pathname.length > 512 || pathname.includes('%25')) {
+    return new NextResponse('Gone', {
+      status: 410,
+      headers: { 'X-Robots-Tag': 'noindex', 'Cache-Control': 'no-store' },
+    });
+  }
+
   // --- Redirect old WordPress query-param URLs ---
 
   // /?s=search+term → /search?q=search+term

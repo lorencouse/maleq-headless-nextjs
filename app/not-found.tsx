@@ -1,5 +1,7 @@
 import { Suspense } from 'react';
+import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
+import { routing } from '@/i18n/routing';
 import Log404 from '@/components/analytics/Log404';
 import NotFoundSuggestions from '@/components/analytics/NotFoundSuggestions';
 import SearchAutocomplete from '@/components/search/SearchAutocomplete';
@@ -12,6 +14,13 @@ import SearchAutocomplete from '@/components/search/SearchAutocomplete';
 // not-found render path skips the client Header's SSR output, leaving a Footer
 // with no Header, which looks worse than a clean standalone page.)
 export default function NotFound() {
+  // Seed next-intl's per-request locale cache with a static literal so any
+  // next-intl resolution in this subtree reads the cached default instead of
+  // falling back to headers(). Reading headers() forces this 404 to render
+  // DYNAMICALLY ("changed from static to dynamic at runtime, reason: headers"),
+  // which means a full SSR per crawler 404 hit — a major source of load.
+  setRequestLocale(routing.defaultLocale);
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <Log404 />
