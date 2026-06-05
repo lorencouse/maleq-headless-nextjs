@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Male Q News Auto-Share
- * Description: Event-driven social sharing for the LGBTQ news agent. When a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback.
- * Version: 1.0.0
+ * Description: Social sharing for the LGBTQ news agent. (1) AUTO-SHARE: when a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback. (2) MANUAL X/THREADS: a post-editor meta box with pre-composed, editable text (the same socialText hook + _maleq_news_hashtags used by the adapters) and Share-via-intent + Copy buttons, for the two platforms that have no script-free auto-post path.
+ * Version: 1.1.0
  *
  * Fires only for posts that are unmistakably news-agent articles:
  *   - post_type = 'post'
@@ -37,7 +37,13 @@ const MALEQ_NEWS_IMAGE_URL_KEY  = '_maleq_news_image_url';
 const MALEQ_NEWS_SHARED_AT_KEY  = '_maleq_news_shared_at';
 const MALEQ_NEWS_SHARE_URLS_KEY = '_maleq_news_share_urls';
 const MALEQ_NEWS_PENDING_KEY    = '_maleq_news_pending_review';
+const MALEQ_NEWS_SOCIAL_TEXT_KEY = '_maleq_news_social_text';
+const MALEQ_NEWS_HASHTAGS_KEY    = '_maleq_news_hashtags';
 const MALEQ_NEWS_CATEGORY_SLUG  = 'news';
+
+/* Per-platform hashtag caps — mirror social/bluesky.ts + social/mastodon.ts. */
+const MALEQ_NEWS_BLUESKY_MAX_TAGS  = 4;
+const MALEQ_NEWS_MASTODON_MAX_TAGS = 4;
 
 /** Pull a config value from a constant first, then the environment. */
 function maleq_news_cfg($const, $env) {
@@ -58,6 +64,35 @@ function maleq_news_post_url($slug) {
     return maleq_news_site_url() . '/guides/' . $slug;
 }
 
+/**
+ * Warm the headless /guides/<slug> page before posting to crawl-based platforms.
+ * Mastodon builds its link-preview card by fetching the URL server-side. The share
+ * fires the instant the post is published — usually BEFORE Next.js has generated
+ * the page via ISR — so without this Mastodon crawls a not-ready page, finds no
+ * og: tags, and caches an EMPTY card (Bluesky is immune: we upload its thumb).
+ * We GET the URL until it returns a fully-rendered page (200 containing og:title),
+ * which both triggers ISR generation and confirms it finished, then let the post
+ * go out. Runs on shutdown (after fastcgi_finish_request) so it never blocks the
+ * editor. Best-effort: gives up after ~tries*delay seconds and shares anyway.
+ */
+function maleq_news_warm_url($url, $tries = 10, $delay = 3) {
+    for ($i = 0; $i < $tries; $i++) {
+        $r = wp_remote_get($url, [
+            'timeout'     => 15,
+            'redirection' => 3,
+            'user-agent'  => 'MaleQ-NewsAgent/1.0 (+https://maleq.com; card warm)',
+        ]);
+        if (!is_wp_error($r)
+            && (int) wp_remote_retrieve_response_code($r) === 200
+            && strpos((string) wp_remote_retrieve_body($r), 'og:title') !== false) {
+            return true;
+        }
+        sleep($delay);
+    }
+    error_log('[maleq-news-autoshare] page warm timed out for ' . $url);
+    return false;
+}
+
 /** Grapheme-ish truncate with trailing ellipsis — mirrors social/types.ts truncate(). */
 function maleq_news_truncate($s, $max) {
     $s = (string) $s;
@@ -65,6 +100,56 @@ function maleq_news_truncate($s, $max) {
         return $s;
     }
     return rtrim(mb_substr($s, 0, $max - 1)) . '…';
+}
+
+/** Strip hashtags to letters/digits only + de-dupe + cap — mirrors types.ts cleanHashtags(). */
+function maleq_news_clean_hashtags($tags, $max = 4) {
+    if (!is_array($tags)) {
+        return [];
+    }
+    $out = [];
+    foreach ($tags as $raw) {
+        $t = preg_replace('/[^A-Za-z0-9]/', '', preg_replace('/^#+/', '', (string) $raw));
+        if ($t === '') {
+            continue;
+        }
+        $dup = false;
+        foreach ($out as $x) {
+            if (strcasecmp($x, $t) === 0) { $dup = true; break; }
+        }
+        if (!$dup) {
+            $out[] = $t;
+        }
+        if (count($out) >= $max) {
+            break;
+        }
+    }
+    return $out;
+}
+
+/**
+ * Build Bluesky richtext #tag facets — mirrors types.ts buildTagFacets(). A bare
+ * "#foo" isn't a clickable/searchable tag on Bluesky without a facet mapping its
+ * UTF-8 byte range to a tag feature. $byte_offset = byte length of text BEFORE the
+ * hashtag line. PHP strings are byte arrays, so strlen() gives the right offsets.
+ */
+function maleq_news_tag_facets($clean_tags, $byte_offset) {
+    $facets = [];
+    $pos = (int) $byte_offset;
+    foreach (array_values($clean_tags) as $i => $tag) {
+        if ($i > 0) {
+            $pos += 1; // single-space separator
+        }
+        $token = '#' . $tag;
+        $start = $pos;
+        $end   = $pos + strlen($token);
+        $facets[] = [
+            'index'    => ['byteStart' => $start, 'byteEnd' => $end],
+            'features' => [['$type' => 'app.bsky.richtext.facet#tag', 'tag' => $tag]],
+        ];
+        $pos = $end;
+    }
+    return $facets;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -152,14 +237,31 @@ function maleq_news_share_post($post_id) {
         ? (wp_get_attachment_image_url($thumb_id, 'full') ?: '')
         : (string) get_post_meta($post_id, MALEQ_NEWS_IMAGE_URL_KEY, true);
 
+    // Social hook + hashtags (drafted by Claude). Absent on legacy posts → adapters
+    // fall back to the title, exactly like the TS path.
+    $social_text  = (string) get_post_meta($post_id, MALEQ_NEWS_SOCIAL_TEXT_KEY, true);
+    $hashtags_raw = get_post_meta($post_id, MALEQ_NEWS_HASHTAGS_KEY, true);
+    $hashtags     = $hashtags_raw ? json_decode($hashtags_raw, true) : [];
+    if (!is_array($hashtags)) {
+        $hashtags = [];
+    }
+
     $input = [
-        'title'     => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
-        'excerpt'   => html_entity_decode($excerpt, ENT_QUOTES, 'UTF-8'),
-        'url'       => maleq_news_post_url($post->post_name),
-        'imageUrl'  => $image_url,
-        'imagePath' => $image_path ?: '',
-        'imageMime' => $image_mime ?: '',
+        'title'      => html_entity_decode($post->post_title, ENT_QUOTES, 'UTF-8'),
+        'excerpt'    => html_entity_decode($excerpt, ENT_QUOTES, 'UTF-8'),
+        'url'        => maleq_news_post_url($post->post_name),
+        'imageUrl'   => $image_url,
+        'imagePath'  => $image_path ?: '',
+        'imageMime'  => $image_mime ?: '',
+        'socialText' => html_entity_decode($social_text, ENT_QUOTES, 'UTF-8'),
+        'hashtags'   => $hashtags,
     ];
+
+    // Ensure the article page is live before posting to Mastodon (it crawls the URL
+    // for its preview card). Only worth waiting if Mastodon is actually pending.
+    if (in_array('mastodon', $platforms, true) && empty($share_urls['mastodon'])) {
+        maleq_news_warm_url($input['url']);
+    }
 
     foreach ($platforms as $platform) {
         if (!empty($share_urls[$platform])) {
@@ -296,9 +398,19 @@ function maleq_news_share_bluesky($input) {
         $external['thumb'] = $thumb;
     }
 
+    // Post text = original hook (NOT the headline — it's already in the card) + up to
+    // 4 clickable hashtags. Mirrors social/bluesky.ts.
+    $hook     = trim($input['socialText'] ?? '') !== '' ? trim($input['socialText']) : $input['title'];
+    $bs_tags  = maleq_news_clean_hashtags($input['hashtags'] ?? [], MALEQ_NEWS_BLUESKY_MAX_TAGS);
+    $tag_line = implode(' ', array_map(function ($t) { return '#' . $t; }, $bs_tags));
+    $reserve  = $tag_line !== '' ? mb_strlen($tag_line) + 2 : 0; // "\n\n" + tags
+    $head     = maleq_news_truncate($hook, 300 - $reserve);
+    $text     = $tag_line !== '' ? $head . "\n\n" . $tag_line : $head;
+    $facets   = $tag_line !== '' ? maleq_news_tag_facets($bs_tags, strlen($head . "\n\n")) : [];
+
     $record = [
         '$type'     => 'app.bsky.feed.post',
-        'text'      => maleq_news_truncate($input['title'], 300),
+        'text'      => $text,
         'createdAt' => gmdate('c'),
         'langs'     => ['en'],
         'embed'     => [
@@ -306,6 +418,9 @@ function maleq_news_share_bluesky($input) {
             'external' => $external,
         ],
     ];
+    if (!empty($facets)) {
+        $record['facets'] = $facets;
+    }
 
     $rec = wp_remote_post("$service/xrpc/com.atproto.repo.createRecord", [
         'timeout' => 15,
@@ -343,9 +458,14 @@ function maleq_news_share_mastodon($input) {
     $token    = maleq_news_cfg('MALEQ_MASTODON_ACCESS_TOKEN', 'MASTODON_ACCESS_TOKEN')
         ?: maleq_news_cfg('MALEQ_MASTODON_CLIENT_ACCESS_TOKEN', 'MASTODON_CLIENT_ACCESS_TOKEN');
 
-    $reserve = mb_strlen($input['url']) + 2;
-    $head    = maleq_news_truncate($input['title'], 500 - $reserve);
-    $status  = $head . "\n\n" . $input['url'];
+    // Original hook (NOT the headline — already in the card) + auto-linked hashtags +
+    // the URL Mastodon renders as a card. Mirrors social/mastodon.ts.
+    $hook     = trim($input['socialText'] ?? '') !== '' ? trim($input['socialText']) : $input['title'];
+    $md_tags  = maleq_news_clean_hashtags($input['hashtags'] ?? [], MALEQ_NEWS_MASTODON_MAX_TAGS);
+    $tag_line = implode(' ', array_map(function ($t) { return '#' . $t; }, $md_tags));
+    $reserve  = mb_strlen($input['url']) + 2 + ($tag_line !== '' ? mb_strlen($tag_line) + 2 : 0);
+    $head     = maleq_news_truncate($hook, 500 - $reserve);
+    $status   = implode("\n\n", array_filter([$head, $tag_line !== '' ? $tag_line : null, $input['url']]));
 
     $res = wp_remote_post("$instance/api/v1/statuses", [
         'timeout' => 15,
@@ -367,4 +487,159 @@ function maleq_news_share_mastodon($input) {
         return ['ok' => false, 'error' => ($body['error'] ?? 'statuses HTTP ' . wp_remote_retrieve_response_code($res))];
     }
     return ['ok' => true, 'url' => ($body['url'] ?? '')];
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Manual X / Threads share — post-editor meta box.
+ *
+ * X (Twitter) and Threads have no reliable script-free auto-post path — posting
+ * requires API approval (developer account, app review, OAuth, often paid). So
+ * instead of auto-firing on publish like Bluesky/Mastodon, we render a meta box
+ * on the news-post editor with pre-composed, EDITABLE text plus:
+ *   - "Share to X" / "Share to Threads"  → opens the platform's web compose
+ *     window (intent URL) pre-filled with the box text; you review + post manually.
+ *   - "Copy for X" / "Copy for Threads"  → copies the box text to the clipboard.
+ *
+ * Composition is IDENTICAL to the Mastodon adapter above — the same socialText
+ * "hook" (NOT the headline; the headline is already in the link card) + the same
+ * cleaned _maleq_news_hashtags + the trailing URL the platform renders as a card.
+ * This keeps X/Threads consistent with what actually goes out on Bluesky/Mastodon.
+ *
+ * The one thing intents can't do that the real API could: pre-attach an image.
+ * The trailing URL still auto-generates a link-card preview on both platforms.
+ * ──────────────────────────────────────────────────────────────────────── */
+
+const MALEQ_NEWS_X_LIMIT       = 280;  // X post limit
+const MALEQ_NEWS_THREADS_LIMIT = 500;  // Threads post limit
+const MALEQ_NEWS_URL_WEIGHT    = 23;   // X counts every URL as 23 chars (t.co)
+
+/**
+ * Compose "hook\n\n#tags\n\nURL", trimming the hook so the whole thing fits
+ * $limit. $url_weight is how many chars the URL "costs" toward the limit — 23 on
+ * X (t.co), its real length on Threads. Mirrors maleq_news_share_mastodon().
+ */
+function maleq_news_compose_manual($input, $limit, $url_weight) {
+    $hook     = trim($input['socialText'] ?? '') !== '' ? trim($input['socialText']) : $input['title'];
+    $tags     = maleq_news_clean_hashtags($input['hashtags'] ?? [], 4);
+    $tag_line = implode(' ', array_map(function ($t) { return '#' . $t; }, $tags));
+    $reserve  = $url_weight + 2 + ($tag_line !== '' ? mb_strlen($tag_line) + 2 : 0);
+    $head     = maleq_news_truncate($hook, max(10, $limit - $reserve));
+    return implode("\n\n", array_filter([$head, $tag_line !== '' ? $tag_line : null, $input['url']]));
+}
+
+/** Register the meta box only on News-category posts (same surface as auto-share). */
+add_action('add_meta_boxes', function ($post_type, $post) {
+    if ($post_type !== 'post' || !$post) {
+        return;
+    }
+    if (!has_category(MALEQ_NEWS_CATEGORY_SLUG, $post)) {
+        return;
+    }
+    add_meta_box(
+        'maleq-news-manual-share',
+        'Share to X / Threads (manual)',
+        'maleq_news_manual_share_box',
+        'post',
+        'side',
+        'high'
+    );
+}, 10, 2);
+
+/** Render the meta box: two editable boxes + Share/Copy buttons, with live counts. */
+function maleq_news_manual_share_box($post) {
+    $social_text  = (string) get_post_meta($post->ID, MALEQ_NEWS_SOCIAL_TEXT_KEY, true);
+    $hashtags_raw = get_post_meta($post->ID, MALEQ_NEWS_HASHTAGS_KEY, true);
+    $hashtags     = $hashtags_raw ? json_decode($hashtags_raw, true) : [];
+    if (!is_array($hashtags)) {
+        $hashtags = [];
+    }
+
+    $input = [
+        'title'      => html_entity_decode(get_the_title($post), ENT_QUOTES, 'UTF-8'),
+        'url'        => maleq_news_post_url($post->post_name),
+        'socialText' => html_entity_decode($social_text, ENT_QUOTES, 'UTF-8'),
+        'hashtags'   => $hashtags,
+    ];
+
+    $x_text       = maleq_news_compose_manual($input, MALEQ_NEWS_X_LIMIT, MALEQ_NEWS_URL_WEIGHT);
+    $threads_text = maleq_news_compose_manual($input, MALEQ_NEWS_THREADS_LIMIT, mb_strlen($input['url']));
+
+    $is_published = ($post->post_status === 'publish');
+    $no_hook      = (trim($social_text) === '');
+    ?>
+    <div id="maleq-news-share-box" style="font-size:12px;">
+        <?php if (!$is_published) : ?>
+            <p style="margin:0 0 8px;color:#996800;background:#fcf9e8;border:1px solid #f0e6b8;padding:6px 8px;border-radius:3px;">
+                Not published yet — the link won't resolve until you publish. Bluesky &amp;
+                Mastodon auto-share on publish; X &amp; Threads are manual, below.
+            </p>
+        <?php endif; ?>
+        <?php if ($no_hook) : ?>
+            <p style="margin:0 0 8px;color:#646970;">
+                No drafted social hook (<code>_maleq_news_social_text</code>) on this post —
+                using the headline instead. Edit the text below before posting if you like.
+            </p>
+        <?php endif; ?>
+
+        <p style="margin:0 0 4px;font-weight:600;">𝕏 (Twitter)</p>
+        <textarea id="maleq-x-text" rows="5" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($x_text); ?></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px;">
+            <span><a href="#" id="maleq-x-share" class="button button-primary button-small">Share to X</a>
+                  <a href="#" id="maleq-x-copy" class="button button-small">Copy for X</a></span>
+            <span id="maleq-x-count" style="color:#646970;"></span>
+        </div>
+
+        <p style="margin:0 0 4px;font-weight:600;">Threads</p>
+        <textarea id="maleq-threads-text" rows="6" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($threads_text); ?></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 0;">
+            <span><a href="#" id="maleq-threads-share" class="button button-primary button-small">Share to Threads</a>
+                  <a href="#" id="maleq-threads-copy" class="button button-small">Copy for Threads</a></span>
+            <span id="maleq-threads-count" style="color:#646970;"></span>
+        </div>
+    </div>
+    <script>
+    (function () {
+        // X counts every URL as 23 chars (t.co wrapping); Threads counts raw length.
+        function xLen(t) {
+            var re = /https?:\/\/[^\s]+/g;
+            var urls = t.match(re) || [];
+            return t.replace(re, '').length + urls.length * 23;
+        }
+        function bind(prefix, limit, weighted, intentBase) {
+            var ta    = document.getElementById(prefix + '-text');
+            var count = document.getElementById(prefix + '-count');
+            var share = document.getElementById(prefix + '-share');
+            var copy  = document.getElementById(prefix + '-copy');
+            if (!ta) { return; }
+            function update() {
+                var n = weighted ? xLen(ta.value) : ta.value.length;
+                count.textContent = n + ' / ' + limit;
+                count.style.color = n > limit ? '#d63638' : '#646970';
+            }
+            ta.addEventListener('input', update);
+            update();
+            share.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.open(intentBase + encodeURIComponent(ta.value), '_blank', 'noopener');
+            });
+            copy.addEventListener('click', function (e) {
+                e.preventDefault();
+                var btn = e.currentTarget;
+                var done = function () {
+                    var orig = btn.textContent;
+                    btn.textContent = 'Copied!';
+                    setTimeout(function () { btn.textContent = orig; }, 1500);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+                } else {
+                    ta.select(); document.execCommand('copy'); done();
+                }
+            });
+        }
+        bind('maleq-x',       <?php echo (int) MALEQ_NEWS_X_LIMIT; ?>,       true,  'https://twitter.com/intent/tweet?text=');
+        bind('maleq-threads', <?php echo (int) MALEQ_NEWS_THREADS_LIMIT; ?>, false, 'https://www.threads.net/intent/post?text=');
+    })();
+    </script>
+    <?php
 }
