@@ -29,15 +29,19 @@ const OFFLINE_FALLBACK_HTML = `<!doctype html>
     main { max-width: 560px; margin: 10vh auto 0; }
     h1 { margin-bottom: .5rem; }
     p { color: #444; line-height: 1.5; }
-    button { margin-top: 1rem; padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; }
-    @media (prefers-color-scheme: dark) { body { background: #0a0a0a; color: #fafafa; } p { color: #bbb; } }
+    .actions { margin-top: 1rem; display: flex; gap: .75rem; flex-wrap: wrap; }
+    button, a.home { padding: .6rem 1.2rem; font-size: 1rem; cursor: pointer; border-radius: .4rem; text-decoration: none; border: 1px solid #ccc; background: #fff; color: #111; }
+    @media (prefers-color-scheme: dark) { body { background: #0a0a0a; color: #fafafa; } p { color: #bbb; } button, a.home { background: #1a1a1a; color: #fafafa; border-color: #333; } }
   </style>
 </head>
 <body>
   <main>
     <h1 id="t">Having trouble loading this page</h1>
     <p id="d">The page is taking longer than usual to respond. We'll retry automatically.</p>
-    <button onclick="location.reload()">Try again</button>
+    <div class="actions">
+      <button onclick="location.reload()">Try again</button>
+      <a class="home" href="/">Go home</a>
+    </div>
   </main>
   <script>
     // Don't claim the user is offline when they're online and the server was
@@ -226,22 +230,17 @@ async function cacheUrl(cache, url) {
 }
 
 async function cacheCriticalResources(cache) {
-  for (const url of CRITICAL_PRECACHE) {
-    try {
-      await cacheUrl(cache, url);
-    } catch {
-      if (url === '/offline.html') {
-        await cache.put(
-          '/offline.html',
-          new Response(OFFLINE_FALLBACK_HTML, {
-            headers: { 'Content-Type': 'text/html; charset=utf-8' },
-          })
-        );
-      } else {
-        throw new Error(`Critical precache failed for ${url}`);
-      }
-    }
-  }
+  // Seed the offline fallback from the inline constant directly — do NOT fetch
+  // /offline.html. A next.config redirect strips `.html` (/offline.html → 308
+  // → /offline), so fetching it would cache a 404 page (or the redirect) as the
+  // "offline" screen. Owning the bytes here guarantees a correct fallback and
+  // makes install resilient to any routing/network state.
+  await cache.put(
+    '/offline.html',
+    new Response(OFFLINE_FALLBACK_HTML, {
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    })
+  );
 }
 
 async function cacheOptionalResources(cache) {
