@@ -111,6 +111,8 @@ export async function publishDraft(
     if (drafted.item.imageUrl) meta.push([META.imageUrl, drafted.item.imageUrl]);
     if (drafted.coverQuery) meta.push([META.coverQuery, drafted.coverQuery]);
     if (drafted.coverHeadline) meta.push([META.coverHeadline, drafted.coverHeadline]);
+    if (drafted.socialText) meta.push([META.socialText, drafted.socialText]);
+    if (drafted.hashtags?.length) meta.push([META.hashtags, JSON.stringify(drafted.hashtags)]);
     for (const [k, v] of meta) {
       await db.execute(
         `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, ?, ?)`,

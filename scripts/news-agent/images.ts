@@ -65,6 +65,11 @@ const CARD_H = 630;
 /** Below this width/height ratio a source image is treated as "vertical". */
 const VERTICAL_ASPECT = 0.9;
 
+/** Portrait pin size for Pinterest / Instagram (2:5… actually 4:5 — the platform sweet spot). */
+const PIN_W = 1080;
+const PIN_H = 1350;
+const PIN_JPEG_QUALITY = 85;
+
 export const imagesEnabled = Boolean(KEY);
 
 export interface Cover {
@@ -231,6 +236,71 @@ async function composeRightImageLeftText(input: Buffer, headline: string): Promi
     ])
     .webp({ quality: WEBP_QUALITY })
     .toBuffer();
+}
+
+/**
+ * Compose a portrait social PIN (1080×1350) for Pinterest / Instagram from any source
+ * image: a blurred, darkened full-bleed background, the crisp photo as a top "card",
+ * and the headline over a bottom scrim. The blurred background means a landscape cover
+ * composes cleanly without harsh cropping, so pins reuse the same Pexels cover source.
+ * Returns a JPEG buffer (Pinterest/IG don't accept WebP).
+ */
+export async function composePin(source: Buffer, headline?: string): Promise<Buffer> {
+  // Blurred, darkened background fills the whole pin.
+  const bg = await sharp(source)
+    .rotate()
+    .resize({ width: PIN_W, height: PIN_H, fit: 'cover' })
+    .blur(40)
+    .modulate({ brightness: 0.5 })
+    .toBuffer();
+
+  // Crisp photo occupies the top ~60% as a full-bleed card.
+  const photoH = Math.round(PIN_H * 0.6);
+  const photo = await sharp(source)
+    .rotate()
+    .resize({ width: PIN_W, height: photoH, fit: 'cover' })
+    .toBuffer();
+
+  const composites: sharp.OverlayOptions[] = [{ input: photo, top: 0, left: 0 }];
+
+  const text = (headline || '').trim().toUpperCase();
+  if (text) {
+    // Scrim fading up from the bottom so the headline (sat in the lower third) reads.
+    const scrim = Buffer.from(
+      `<svg width="${PIN_W}" height="${PIN_H}" xmlns="http://www.w3.org/2000/svg">` +
+        `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">` +
+        `<stop offset="0.5" stop-color="#000" stop-opacity="0"/>` +
+        `<stop offset="0.72" stop-color="#000" stop-opacity="0.55"/>` +
+        `<stop offset="1" stop-color="#000" stop-opacity="0.85"/>` +
+        `</linearGradient></defs><rect width="${PIN_W}" height="${PIN_H}" fill="url(#g)"/></svg>`,
+    );
+    const pad = Math.round(PIN_W * 0.06);
+    const fontPx = Math.round(PIN_W * 0.078);
+    const txt = await renderText(text, fontPx, PIN_W - pad * 2, 'left');
+    composites.push({ input: scrim, top: 0, left: 0 });
+    composites.push({ input: txt.data, top: Math.max(0, PIN_H - txt.height - pad), left: pad });
+  }
+
+  return sharp(bg).composite(composites).jpeg({ quality: PIN_JPEG_QUALITY }).toBuffer();
+}
+
+/**
+ * Fetch an image URL and compose a portrait pin from it. Returns the JPEG buffer (and
+ * its mime) ready to upload, or null on any fetch/compose failure.
+ */
+export async function renderPinFromUrl(
+  url: string,
+  headline?: string,
+): Promise<{ data: Buffer; mime: string } | null> {
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    if (!res.ok) return null;
+    const source = Buffer.from(await res.arrayBuffer());
+    const data = await composePin(source, headline);
+    return { data, mime: 'image/jpeg' };
+  } catch {
+    return null;
+  }
 }
 
 /**

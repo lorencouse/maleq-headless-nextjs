@@ -32,6 +32,19 @@ const DraftSchema = z.object({
     'Do NOT include a "Sources:" line — that is appended automatically.',
   ),
   tags: z.array(z.string()).describe('3–5 lowercase topic tags.'),
+  socialText: z.string().describe(
+    'A natural-language social-post HOOK (one sentence, ~12–25 words, ≤200 chars) used as the ' +
+    'BODY of the Bluesky/Mastodon/X/Threads post. This is NOT the article headline (the headline ' +
+    'already shows in the auto-generated link card) and NOT the ALL-CAPS image overlay — write a ' +
+    'fresh, conversational line that makes someone want to tap through: a sharp angle, a stake, or ' +
+    'an open loop. Plain sentence case, no hashtags, no emoji, no quotation marks, no trailing URL.',
+  ),
+  hashtags: z.array(z.string()).describe(
+    '3–5 social discovery hashtags WITHOUT the leading # and WITHOUT spaces — letters/digits only, ' +
+    'CamelCase for multi-word (e.g. "LGBTQ", "QueerNews", "TransRights", "MarriageEquality"). Pick ' +
+    'tags people actually browse on Bluesky/Mastodon, mixing one or two broad community tags with ' +
+    'specific topical ones. These drive reach, so favor established tags over niche inventions.',
+  ),
   coverHeadline: z.string().describe(
     'A SHORT, punchy social-media hook to overlay on the cover image — built to stop a thumb ' +
     'scrolling a feed. 2–6 words, ideally 3–5. NOT the article title verbatim: sharper, more ' +
@@ -86,6 +99,8 @@ WRITING RULES:
 - Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
 - bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line.
 - coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
+- socialText: the conversational one-sentence hook that becomes the BODY of the social post (the headline is already shown in the link card, so don't repeat it). Give people a reason to click — an angle or stake — without clickbait or anything the story doesn't support.
+- hashtags: 3–5 discovery hashtags (no #, CamelCase for multi-word) that real people browse, for reach on Bluesky/Mastodon/X/Threads.
 - Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
 
 const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li'];

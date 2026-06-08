@@ -7,12 +7,13 @@
  *
  * Env: BLUESKY_HANDLE, BLUESKY_APP_PASSWORD
  */
-import { truncate, type ShareInput, type ShareResult, type SocialAdapter, type VerifyResult } from './types';
+import { truncate, cleanHashtags, buildTagFacets, type ShareInput, type ShareResult, type SocialAdapter, type VerifyResult } from './types';
 
 const SERVICE = process.env.BLUESKY_SERVICE || 'https://bsky.social';
 const HANDLE = process.env.BLUESKY_HANDLE || '';
 const APP_PASSWORD = process.env.BLUESKY_APP_PASSWORD || '';
 const POST_LIMIT = 300; // graphemes; we approximate with string length
+const MAX_TAGS = 4; // mirrors MALEQ_NEWS_BLUESKY_MAX_TAGS in the autoshare plugin
 
 async function createSession(): Promise<{ accessJwt: string; did: string; handle: string }> {
   const res = await fetch(`${SERVICE}/xrpc/com.atproto.server.createSession`, {
@@ -69,7 +70,6 @@ export const bluesky: SocialAdapter = {
   async share(input: ShareInput): Promise<ShareResult> {
     try {
       const session = await createSession();
-      const text = truncate(input.title, POST_LIMIT);
 
       const external: Record<string, unknown> = {
         uri: input.url,
@@ -81,6 +81,16 @@ export const bluesky: SocialAdapter = {
         if (thumb) external.thumb = thumb;
       }
 
+      // Post text = conversational hook (NOT the headline — it's already in the card)
+      // + up to 4 clickable hashtags. Mirrors maleq_news_share_bluesky() in the plugin.
+      const hook = (input.socialText || '').trim() || input.title;
+      const tags = cleanHashtags(input.hashtags, MAX_TAGS);
+      const tagLine = tags.map((t) => `#${t}`).join(' ');
+      const reserve = tagLine ? tagLine.length + 2 : 0; // "\n\n" + tags
+      const head = truncate(hook, POST_LIMIT - reserve);
+      const text = tagLine ? `${head}\n\n${tagLine}` : head;
+      const facets = tagLine ? buildTagFacets(tags, Buffer.byteLength(`${head}\n\n`, 'utf8')) : [];
+
       const record: Record<string, unknown> = {
         $type: 'app.bsky.feed.post',
         text,
@@ -91,6 +101,7 @@ export const bluesky: SocialAdapter = {
           external,
         },
       };
+      if (facets.length) record.facets = facets;
 
       const res = await fetch(`${SERVICE}/xrpc/com.atproto.repo.createRecord`, {
         method: 'POST',

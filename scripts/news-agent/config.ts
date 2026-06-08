@@ -67,6 +67,10 @@ export const META = {
   coverQuery: '_maleq_news_cover_query',
   /** Short punchy social hook the drafter writes — overlaid on the cover image. */
   coverHeadline: '_maleq_news_cover_headline',
+  /** Conversational social-post hook (post body). Consumed by the autoshare plugin + TS adapters. */
+  socialText: '_maleq_news_social_text',
+  /** JSON array of discovery hashtags (no #). Consumed by the autoshare plugin + TS adapters. */
+  hashtags: '_maleq_news_hashtags',
   /** Marks the post as machine-drafted and awaiting human approval. */
   pending: '_maleq_news_pending_review',
   /** Rank Math SEO description (matches existing posts). */

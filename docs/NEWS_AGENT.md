@@ -178,6 +178,39 @@ bun run scripts/news-agent/share.ts --verify
 bun run scripts/news-agent/share.ts --test [--only bluesky,mastodon]
 ```
 
+**Social copy — drafted hook + hashtags (one source of truth).** The drafter writes two
+extra fields per story: `socialText` (a conversational one-sentence hook for the post BODY —
+the headline is already in the link card, so it isn't repeated) and `hashtags` (3–5 discovery
+tags). They're stored as `_maleq_news_social_text` and `_maleq_news_hashtags`. Both share
+paths compose identically from these: hook + up to 4 clickable hashtags (Bluesky gets
+richtext `#tag` facets; Mastodon/X/Threads get an auto-linked tag line) + the link. The PHP
+plugin (`maleq_news_clean_hashtags`/`maleq_news_tag_facets`) and the TS adapters
+(`social/types.ts` `cleanHashtags`/`buildTagFacets`) are deliberate mirrors — **change both
+together.** Legacy posts without the fields fall back to the headline + no hashtags.
+
+**Pinterest (credential-gated, off by default).** `social/pinterest.ts` composes a portrait
+**pin** (1080×1350) on the fly from the post's Pexels cover with the `coverHeadline` overlaid
+(`images.ts` `composePin`), and creates a pin linking to the clean `/guides/<slug>` article.
+Pinterest is a visual search engine, so it's a strong evergreen-reach channel for the covers.
+It activates only when `PINTEREST_ACCESS_TOKEN` + `PINTEREST_BOARD_ID` are set, and runs via
+the TS share path (`share.ts`/`sync-shares.ts`), not the live PHP plugin. **Policy/ban note:**
+Pinterest restricts adult content — pins and their destination must stay clean editorial news
+(never adult product imagery or product links), and you must claim `maleq.com` in Pinterest
+settings. Untested against the live API until credentials are added — verify with
+`share.ts --verify --only pinterest`.
+
+**Tumblr (credential-gated, off by default).** `social/tumblr.ts` posts the cover + drafted
+hook + a link block back to the `/guides/<slug>` article, with the hashtags as native Tumblr
+tags. Tumblr's strong LGBTQ audience + reblog reach make it a good engagement channel. Auth is
+OAuth 1.0a (consumer key/secret + token/token-secret from `tumblr.com/oauth/apps` — tokens
+don't expire, no refresh logic). Activates only when `TUMBLR_CONSUMER_KEY` /
+`TUMBLR_CONSUMER_SECRET` / `TUMBLR_TOKEN` / `TUMBLR_TOKEN_SECRET` / `TUMBLR_BLOG_IDENTIFIER` are
+set, via the TS share path. Mature LGBTQ content is allowed but explicit imagery is banned — we
+only post clean news. Untested against the live API until creds are added (`share.ts --verify
+--only tumblr`). **Not** Reddit: Reddit ranks well + drives real traffic, but auto-posting gets
+shadowbanned — it only works as genuine manual community participation, so it's deliberately
+not an adapter.
+
 **Approval → auto-share (event-driven, LIVE).** You approve a story by **publishing the
 draft in WP admin**. The `maleq-news-autoshare.php` mu-plugin fires on the publish
 transition and shares the post to Bluesky + Mastodon **within the same request** — no

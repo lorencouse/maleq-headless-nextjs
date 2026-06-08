@@ -7,12 +7,13 @@
  *
  * Env: MASTODON_INSTANCE_URL, MASTODON_ACCESS_TOKEN | MASTODON_CLIENT_ACCESS_TOKEN
  */
-import { truncate, type ShareInput, type ShareResult, type SocialAdapter, type VerifyResult } from './types';
+import { truncate, cleanHashtags, type ShareInput, type ShareResult, type SocialAdapter, type VerifyResult } from './types';
 
 const INSTANCE = (process.env.MASTODON_INSTANCE_URL || '').replace(/\/+$/, '');
 const TOKEN = process.env.MASTODON_ACCESS_TOKEN || process.env.MASTODON_CLIENT_ACCESS_TOKEN || '';
 // Default instance limit is 500 chars; leave room for the URL + spacing.
 const STATUS_LIMIT = 500;
+const MAX_TAGS = 4; // mirrors MALEQ_NEWS_MASTODON_MAX_TAGS in the autoshare plugin
 
 function authHeaders() {
   return { Authorization: `Bearer ${TOKEN}` };
@@ -37,10 +38,14 @@ export const mastodon: SocialAdapter = {
 
   async share(input: ShareInput): Promise<ShareResult> {
     try {
-      // Reserve space for "\n\n<url>" so the headline never pushes us over.
-      const reserve = input.url.length + 2;
-      const head = truncate(input.title, STATUS_LIMIT - reserve);
-      const status = `${head}\n\n${input.url}`;
+      // Conversational hook (NOT the headline — it's already in the card) + auto-linked
+      // hashtags + the URL Mastodon renders as a card. Mirrors maleq_news_share_mastodon().
+      const hook = (input.socialText || '').trim() || input.title;
+      const tags = cleanHashtags(input.hashtags, MAX_TAGS);
+      const tagLine = tags.map((t) => `#${t}`).join(' ');
+      const reserve = input.url.length + 2 + (tagLine ? tagLine.length + 2 : 0);
+      const head = truncate(hook, STATUS_LIMIT - reserve);
+      const status = [head, tagLine || null, input.url].filter(Boolean).join('\n\n');
 
       const form = new URLSearchParams();
       form.set('status', status);

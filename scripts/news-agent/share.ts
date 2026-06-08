@@ -11,10 +11,13 @@
  */
 import { bluesky } from './social/bluesky';
 import { mastodon } from './social/mastodon';
+import { pinterest } from './social/pinterest';
+import { tumblr } from './social/tumblr';
 import type { ShareInput, ShareResult, SocialAdapter, VerifyResult } from './social/types';
 
-// Meta intentionally omitted for now (Phase 2b).
-const ADAPTERS: SocialAdapter[] = [bluesky, mastodon];
+// Pinterest + Tumblr are credential-gated (off until their *_ env creds are set).
+// Meta/IG intentionally omitted for now (Phase 2b — needs the Graph API + business account).
+const ADAPTERS: SocialAdapter[] = [bluesky, mastodon, pinterest, tumblr];
 
 function selected(onlyArg?: string): SocialAdapter[] {
   const enabled = ADAPTERS.filter((a) => a.enabled);
@@ -62,6 +65,8 @@ async function main() {
       title: flag('--message') || 'Male Q news feed test post — automated setup check. 🏳️‍🌈',
       excerpt: 'Verifying our automated LGBTQ news posting. Thanks for your patience!',
       url: flag('--url') || 'https://maleq.com',
+      socialText: flag('--message') || 'Testing our automated LGBTQ news feed — back to your regularly scheduled headlines shortly.',
+      hashtags: ['LGBTQ', 'QueerNews'],
     };
     console.log(`Posting TEST to: ${selected(only).map((a) => a.platform).join(', ') || '(none)'}\n`);
     const results = await shareToSocial(input, only);
