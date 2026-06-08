@@ -40,7 +40,7 @@ const LIMIT = flag('--limit') ? parseInt(flag('--limit')!, 10) : 10;
 const WP_CLI = process.env.WP_CLI || 'wp';
 const WP_PATH = process.env.WP_PATH || '/home/maleq-wp/htdocs/wp.maleq.com';
 
-interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; }
+interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; headline: string; }
 
 async function upsertMeta(db: any, postId: number, key: string, value: string) {
   const [rows] = await db.query<RowDataPacket[]>(
@@ -81,12 +81,17 @@ async function findNeedingCover(db: any): Promise<Candidate[]> {
       `SELECT meta_value v FROM wp_postmeta WHERE post_id = ? AND meta_key = ? LIMIT 1`,
       [r.ID, META.coverQuery],
     ) as any;
+    const [[hl]] = await db.query<RowDataPacket[]>(
+      `SELECT meta_value v FROM wp_postmeta WHERE post_id = ? AND meta_key = ? LIMIT 1`,
+      [r.ID, META.coverHeadline],
+    ) as any;
     candidates.push({
       id: Number(r.ID),
       title: String(r.post_title),
       slug: String(r.post_name),
       tags: tagRows.map((x) => String(x.name)),
       coverQuery: cq?.v ? String(cq.v) : '',
+      headline: hl?.v ? String(hl.v) : '',
     });
   }
   return candidates;
@@ -137,6 +142,8 @@ async function main() {
       : c.tags.length ? c.tags : c.title.split(/\s+/).filter((w) => w.length > 3);
     const cover = await pickCover(keywords);
     const label = `#${c.id} "${c.title.slice(0, 50)}"`;
+    // Overlay text: the drafter's punchy hook, falling back to the article title.
+    const overlay = (c.headline || c.title).slice(0, 70);
 
     if (!cover) {
       console.log(`  ⊘ ${label} — no image found for [${keywords.slice(0, 3).join(', ')}]`);
@@ -145,12 +152,12 @@ async function main() {
     }
 
     if (!WRITE) {
-      console.log(`  • ${label}\n      → ${cover.url}\n      will save as ${c.slug}.webp (≤1200px, webp q80), credit: ${cover.credit} / Pexels  (query: ${keywords.slice(0, 3).join(' ')})`);
+      console.log(`  • ${label}\n      → ${cover.url}\n      will save as ${c.slug}.webp (≤1200px, webp q80), credit: ${cover.credit} / Pexels  (query: ${keywords.slice(0, 3).join(' ')})\n      overlay: "${overlay.toUpperCase()}"${c.headline ? '' : ' (from title — no hook meta)'}`);
       continue;
     }
 
-    // Download → resize → WebP, named after the article slug (SEO).
-    const file = await downloadWebp(cover.url, c.slug);
+    // Download → resize → overlay headline → WebP, named after the article slug (SEO).
+    const file = await downloadWebp(cover.url, c.slug, overlay);
     if (!file) {
       console.log(`  ✗ ${label} — image download/convert failed; will retry next run`);
       continue;

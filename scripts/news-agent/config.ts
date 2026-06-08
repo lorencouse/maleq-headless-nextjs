@@ -65,6 +65,8 @@ export const META = {
   coverCredit: '_maleq_news_cover_credit',
   /** Concrete image-search phrase produced by the drafter (drives cover relevance). */
   coverQuery: '_maleq_news_cover_query',
+  /** Short punchy social hook the drafter writes — overlaid on the cover image. */
+  coverHeadline: '_maleq_news_cover_headline',
   /** Marks the post as machine-drafted and awaiting human approval. */
   pending: '_maleq_news_pending_review',
   /** Rank Math SEO description (matches existing posts). */

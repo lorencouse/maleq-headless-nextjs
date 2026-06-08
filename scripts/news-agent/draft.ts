@@ -32,6 +32,15 @@ const DraftSchema = z.object({
     'Do NOT include a "Sources:" line — that is appended automatically.',
   ),
   tags: z.array(z.string()).describe('3–5 lowercase topic tags.'),
+  coverHeadline: z.string().describe(
+    'A SHORT, punchy social-media hook to overlay on the cover image — built to stop a thumb ' +
+    'scrolling a feed. 2–6 words, ideally 3–5. NOT the article title verbatim: sharper, more ' +
+    'active, emotionally charged. Skimmable at a glance. No end punctuation, no hashtags, no ' +
+    'quotation marks, no emoji. It will be rendered in ALL CAPS, so keep it tight enough to fit ' +
+    'two short lines. E.g. title "Supreme Court Declines to Hear Marriage Equality Challenge" → ' +
+    '"MARRIAGE EQUALITY SURVIVES"; title "New Study Finds LGBTQ Youth Face Higher Risks" → ' +
+    '"THE NUMBERS WE CAN\'T IGNORE".',
+  ),
   coverQuery: z.string().describe(
     'A concrete, LITERAL stock-photo search phrase (3–6 words) for a cover image: ' +
     'photographable scenes, objects or settings — NOT named people, brands, or specific ' +
@@ -76,6 +85,7 @@ WRITING RULES:
 - Voice: warm, community-minded, plain-spoken. Brief editorial commentary is welcome but clearly distinct from the factual reporting.
 - Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
 - bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line.
+- coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
 - Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
 
 const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li'];

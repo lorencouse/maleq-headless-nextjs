@@ -110,6 +110,7 @@ export async function publishDraft(
     ];
     if (drafted.item.imageUrl) meta.push([META.imageUrl, drafted.item.imageUrl]);
     if (drafted.coverQuery) meta.push([META.coverQuery, drafted.coverQuery]);
+    if (drafted.coverHeadline) meta.push([META.coverHeadline, drafted.coverHeadline]);
     for (const [k, v] of meta) {
       await db.execute(
         `INSERT INTO wp_postmeta (post_id, meta_key, meta_value) VALUES (?, ?, ?)`,

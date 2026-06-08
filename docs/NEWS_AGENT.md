@@ -72,8 +72,10 @@ Flags: `--local`, `--write`, `--yes` (prod safety), `--check-feeds`, `--limit N`
 ## Cover images (Pexels)
 
 Legal, free cover images via the **Pexels API** (commercial-use license). Source-article
-photos are copyrighted and never used. Needs `PEXELS_API_KEY` in the env; `sharp` is a
-dependency on the server for image processing.
+photos are copyrighted and never used. Needs `PEXELS_API_KEY` in the env; `sharp` and
+`opentype.js` are dependencies on the server for image processing and text rendering (run
+`bun install` on deploy). The overlay font (`scripts/news-agent/assets/Anton-Regular.ttf`,
+OFL-licensed) is committed and must be present on the server.
 
 `attach-covers.ts` runs in the cron right after drafting, so covers land before you review:
 
@@ -90,6 +92,18 @@ names the file after the **article slug** (SEO), imports it as the **featured im
 `wp media import` (WP regenerates WebP thumbnail sizes), sets **alt text to the article
 title**, and appends a small *"Cover photo: Name / Pexels"* credit line. Marked
 `_maleq_news_cover_done` so each post is attempted once (failed imports retry next run).
+
+**Text overlay (social engagement):** before WebP conversion, a short punchy headline is
+composited onto the cover to boost feed engagement. The text is the drafter's
+`coverHeadline` — a scroll-stopping hook distinct from the article title (`_maleq_news_cover_headline`;
+falls back to the title for posts drafted before this field existed). Two layouts are chosen
+automatically by source aspect ratio: **landscape/square** → headline over a dark bottom
+scrim; **vertical/portrait** → photo pushed flush-right with the headline in the empty left
+column over a blurred copy of the photo. Text is drawn from the bundled Anton font as vector
+outlines (via `opentype.js`) rather than through libvips/fontconfig, so it renders identically
+on the dev Mac and the Linux cron. If the overlay step ever throws, it falls back to the plain
+(text-free) cover so cover attachment is never blocked. Note Pexels is currently queried
+`orientation=landscape`, so the vertical layout only triggers for non-landscape sources.
 
 wp-cli location is configurable via `WP_CLI` / `WP_PATH`. **`WP_CLI` must be an absolute
 path** (e.g. `/usr/bin/wp`) in the server `.env` — cron's minimal PATH doesn't resolve a
