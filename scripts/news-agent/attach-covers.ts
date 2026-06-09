@@ -22,7 +22,9 @@ import { unlink } from 'node:fs/promises';
 import type { RowDataPacket } from 'mysql2/promise';
 import { getConnection } from '../lib/db';
 import { META, NEWS_CATEGORY } from './config';
-import { pickCover, downloadWebp, imagesEnabled } from './images';
+import { pickCover, downloadWebp, imagesEnabled, type Cover } from './images';
+import { pickCommonsPortrait } from './commons';
+import { pickOpenverseCC } from './openverse';
 
 const execFileP = promisify(execFile);
 
@@ -47,7 +49,7 @@ const WP_PATH = process.env.WP_PATH || '/home/maleq-wp/htdocs/wp.maleq.com';
 const WP_EXTRA_PATH = process.env.WP_CLI_EXTRA_PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
 const WP_ENV = { ...process.env, PATH: `${WP_EXTRA_PATH}:${process.env.PATH || ''}` };
 
-interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; headline: string; }
+interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; coverPerson: string; headline: string; }
 
 async function upsertMeta(db: any, postId: number, key: string, value: string) {
   const [rows] = await db.query<RowDataPacket[]>(
@@ -84,21 +86,20 @@ async function findNeedingCover(db: any): Promise<Candidate[]> {
         WHERE tr.object_id = ?`,
       [r.ID],
     );
-    const [[cq]] = await db.query<RowDataPacket[]>(
-      `SELECT meta_value v FROM wp_postmeta WHERE post_id = ? AND meta_key = ? LIMIT 1`,
-      [r.ID, META.coverQuery],
-    ) as any;
-    const [[hl]] = await db.query<RowDataPacket[]>(
-      `SELECT meta_value v FROM wp_postmeta WHERE post_id = ? AND meta_key = ? LIMIT 1`,
-      [r.ID, META.coverHeadline],
-    ) as any;
+    const [metaRows] = await db.query<RowDataPacket[]>(
+      `SELECT meta_key, meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key IN (?, ?, ?)`,
+      [r.ID, META.coverQuery, META.coverPerson, META.coverHeadline],
+    );
+    const m = new Map<string, string>();
+    for (const x of metaRows) m.set(String(x.meta_key), String(x.meta_value));
     candidates.push({
       id: Number(r.ID),
       title: String(r.post_title),
       slug: String(r.post_name),
       tags: tagRows.map((x) => String(x.name)),
-      coverQuery: cq?.v ? String(cq.v) : '',
-      headline: hl?.v ? String(hl.v) : '',
+      coverQuery: m.get(META.coverQuery) || '',
+      coverPerson: m.get(META.coverPerson) || '',
+      headline: m.get(META.coverHeadline) || '',
     });
   }
   return candidates;
@@ -120,10 +121,51 @@ async function wpMediaImport(file: string, postId: number, title: string): Promi
   }
 }
 
-function creditLine(credit: string, creditUrl: string): string {
-  const url = creditUrl.replace(/"/g, '%22');
-  const name = credit.replace(/</g, '').replace(/>/g, '');
-  return `<p class="image-credit"><em>Cover photo: <a href="${url}" target="_blank" rel="nofollow noopener">${name}</a> / Pexels</em></p>`;
+function link(href: string | undefined, text: string): string {
+  const name = text.replace(/[<>]/g, '');
+  if (!href) return name;
+  return `<a href="${href.replace(/"/g, '%22')}" target="_blank" rel="nofollow noopener">${name}</a>`;
+}
+
+/**
+ * Source/license-aware credit line. Pexels needs no license (its license requires
+ * no attribution, but we credit anyway); Commons/Openverse CC require author +
+ * license + link to satisfy CC-BY / CC-BY-SA terms.
+ */
+function creditLine(cover: Cover): string {
+  if (cover.source === 'pexels') {
+    return `<p class="image-credit"><em>Cover photo: ${link(cover.creditUrl, cover.credit)} / Pexels</em></p>`;
+  }
+  const platform = cover.source === 'commons' ? 'Wikimedia Commons' : 'Openverse';
+  const lic = cover.licenseName ? `, ${link(cover.licenseUrl, cover.licenseName)}` : '';
+  return `<p class="image-credit"><em>Cover photo: ${link(cover.creditUrl, cover.credit)}${lic}, via ${platform}</em></p>`;
+}
+
+/** Plain-text credit (for logs + the coverCredit meta) mirroring the on-post credit line. */
+function creditText(cover: Cover): string {
+  if (cover.source === 'pexels') return `${cover.credit} / Pexels`;
+  const platform = cover.source === 'commons' ? 'Wikimedia Commons' : 'Openverse';
+  return `${cover.credit}${cover.licenseName ? `, ${cover.licenseName}` : ''} via ${platform}`;
+}
+
+/**
+ * Choose the best legal cover: a real licensed PORTRAIT (Wikimedia Commons, then
+ * Openverse CC) when the story is about one named person, otherwise thematic Pexels
+ * stock. Falls through each source on a miss. Whatever it returns is run through the
+ * same headline-overlay pipeline in downloadWebp().
+ */
+async function selectCover(c: Candidate): Promise<Cover | null> {
+  if (c.coverPerson) {
+    const commons = await pickCommonsPortrait(c.coverPerson);
+    if (commons) return commons;
+    const openverse = await pickOpenverseCC(c.coverPerson);
+    if (openverse) return openverse;
+  }
+  // Thematic stock fallback (also used when there's no named subject).
+  const keywords = c.coverQuery
+    ? [c.coverQuery]
+    : c.tags.length ? c.tags : c.title.split(/\s+/).filter((w) => w.length > 3);
+  return pickCover(keywords);
 }
 
 async function main() {
@@ -143,23 +185,22 @@ async function main() {
   console.log(`${candidates.length} News post(s) need a cover.\n`);
 
   for (const c of candidates) {
-    // Prefer the drafter's concrete image phrase; fall back to tags, then title.
-    const keywords = c.coverQuery
-      ? [c.coverQuery]
-      : c.tags.length ? c.tags : c.title.split(/\s+/).filter((w) => w.length > 3);
-    const cover = await pickCover(keywords);
+    // Prefer a real licensed portrait when the story is about a named person;
+    // otherwise thematic Pexels stock from the drafter's phrase / tags / title.
+    const cover = await selectCover(c);
     const label = `#${c.id} "${c.title.slice(0, 50)}"`;
     // Overlay text: the drafter's punchy hook, falling back to the article title.
     const overlay = (c.headline || c.title).slice(0, 70);
+    const origin = cover ? (cover.source === 'pexels' ? 'stock' : `portrait:${cover.source}`) : '';
 
     if (!cover) {
-      console.log(`  ⊘ ${label} — no image found for [${keywords.slice(0, 3).join(', ')}]`);
+      console.log(`  ⊘ ${label} — no image found${c.coverPerson ? ` for "${c.coverPerson}"` : ''}`);
       if (WRITE) await upsertMeta(db, c.id, META.coverDone, '1'); // don't retry forever
       continue;
     }
 
     if (!WRITE) {
-      console.log(`  • ${label}\n      → ${cover.url}\n      will save as ${c.slug}.webp (≤1200px, webp q80), credit: ${cover.credit} / Pexels  (query: ${keywords.slice(0, 3).join(' ')})\n      overlay: "${overlay.toUpperCase()}"${c.headline ? '' : ' (from title — no hook meta)'}`);
+      console.log(`  • ${label} [${origin}]\n      → ${cover.url}\n      will save as ${c.slug}.webp (≤1200px, webp q80), credit: ${creditText(cover)}\n      overlay: "${overlay.toUpperCase()}"${c.headline ? '' : ' (from title — no hook meta)'}`);
       continue;
     }
 
@@ -178,15 +219,15 @@ async function main() {
     }
 
     // Alt text (article-relevant) on the attachment + credit line on the post + reference meta.
-    await upsertMeta(db, attId, '_wp_attachment_image_alt', c.title.slice(0, 125));
+    await upsertMeta(db, attId, '_wp_attachment_image_alt', (cover.alt || c.title).slice(0, 125));
     await db.execute(`UPDATE wp_posts SET post_content = CONCAT(post_content, '\n', ?) WHERE ID = ?`, [
-      creditLine(cover.credit, cover.creditUrl),
+      creditLine(cover),
       c.id,
     ]);
     await upsertMeta(db, c.id, META.coverUrl, cover.url);
-    await upsertMeta(db, c.id, META.coverCredit, `${cover.credit} / Pexels`);
+    await upsertMeta(db, c.id, META.coverCredit, creditText(cover));
     await upsertMeta(db, c.id, META.coverDone, '1');
-    console.log(`  ✓ ${label} → attachment #${attId} (${cover.credit} / Pexels)`);
+    console.log(`  ✓ ${label} → attachment #${attId} [${origin}] (${creditText(cover)})`);
   }
 
   await db.end();

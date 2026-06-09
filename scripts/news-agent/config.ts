@@ -60,11 +60,15 @@ export const META = {
   generatedAt: '_maleq_news_generated_at',
   /** Set once cover-image selection has been attempted (success or miss) — idempotency. */
   coverDone: '_maleq_news_cover_done',
-  /** Chosen cover image URL (Pexels) and credit, for reference. */
+  /** Chosen cover image URL and credit, for reference (Pexels stock or a CC portrait). */
   coverUrl: '_maleq_news_cover_url',
   coverCredit: '_maleq_news_cover_credit',
   /** Concrete image-search phrase produced by the drafter (drives cover relevance). */
   coverQuery: '_maleq_news_cover_query',
+  /** Full name of the public figure the story centrally concerns — drives a real
+   * licensed portrait (Wikimedia Commons / Openverse CC) instead of generic stock.
+   * Empty when the story isn't about one named person. */
+  coverPerson: '_maleq_news_cover_person',
   /** Short punchy social hook the drafter writes — overlaid on the cover image. */
   coverHeadline: '_maleq_news_cover_headline',
   /** Conversational social-post hook (post body). Consumed by the autoshare plugin + TS adapters. */

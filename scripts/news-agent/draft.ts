@@ -82,7 +82,22 @@ const DraftSchema = z.object({
     'events (stock sites have none of those). Capture the story\'s subject matter. ' +
     'E.g. "man lifting weights gym", "courthouse steps exterior", "person voting ballot box", ' +
     '"two grooms wedding". Avoid vague identity-only terms like "lgbtq" or "pride" alone, ' +
-    'which return generic flag/parade photos — only use them if the story is literally about that.',
+    'which return generic flag/parade photos — only use them if the story is literally about that. ' +
+    'Always provide this even when coverPerson is set — it is the fallback when no licensed portrait is found.',
+  ),
+  coverPerson: z.string().nullable().describe(
+    'The single public figure the story most centers on, as a real licensed portrait of them ' +
+    'will be the cover. STRONG RULE: if a named public figure (celebrity, athlete, politician, ' +
+    'artist, public official) appears in the HEADLINE and is the main actor or subject, return ' +
+    'THAT person — even when the story also discusses a group, an issue, or other people they ' +
+    'are acting on or reacting to. For "Trump Rants About Trans Athletes to Kids", the figure is ' +
+    '"Donald Trump" (NOT null — the trans athletes and kids are the topic he is acting on, not ' +
+    'co-equal subjects). Give their common full name EXACTLY as it titles their Wikipedia article ' +
+    '(e.g. "Donald Trump", "Pedro Pascal", "Kamala Harris", "Aron Piper"). Return null ONLY when ' +
+    'there is genuinely no single dominant individual — e.g. an institution acts ("Supreme Court ' +
+    'rules…", "WHO announces…"), or the story is about a group/event with no central named person ' +
+    '("Pride parade draws thousands"). When two-plus people share the spotlight equally, pick the ' +
+    'one named first in the headline.',
   ),
   sourcesUsed: z.array(z.string()).describe(
     'The IDs (e.g. "S1","S2") of ALL sources that report the SAME event as your piece. ALWAYS ' +

@@ -110,6 +110,7 @@ export async function publishDraft(
     ];
     if (drafted.item.imageUrl) meta.push([META.imageUrl, drafted.item.imageUrl]);
     if (drafted.coverQuery) meta.push([META.coverQuery, drafted.coverQuery]);
+    if (drafted.coverPerson) meta.push([META.coverPerson, drafted.coverPerson]);
     if (drafted.coverHeadline) meta.push([META.coverHeadline, drafted.coverHeadline]);
     if (drafted.socialText) meta.push([META.socialText, drafted.socialText]);
     if (drafted.hashtags?.length) meta.push([META.hashtags, JSON.stringify(drafted.hashtags)]);

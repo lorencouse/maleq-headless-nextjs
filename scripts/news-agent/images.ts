@@ -74,12 +74,18 @@ export const imagesEnabled = Boolean(KEY);
 
 export interface Cover {
   url: string;
-  /** Photographer name for the credit line. */
+  /** Author/photographer name for the credit line. */
   credit: string;
-  /** Photographer's Pexels profile URL. */
+  /** Link for the credit — author profile (Pexels/Openverse) or file page (Commons). */
   creditUrl: string;
   /** Alt text. */
   alt: string;
+  /** Where the image came from — selects the credit-line wording. */
+  source: 'pexels' | 'commons' | 'openverse';
+  /** License label, e.g. "CC BY-SA 4.0" / "Public domain" (omitted for Pexels). */
+  licenseName?: string;
+  /** Link to the license deed (omitted for Pexels / when unknown). */
+  licenseUrl?: string;
 }
 
 /** Thematic fallbacks when a tag-based search returns nothing. */
@@ -103,6 +109,7 @@ async function search(query: string): Promise<Cover | null> {
       credit: String(p.photographer || 'Pexels'),
       creditUrl: String(p.photographer_url || 'https://www.pexels.com'),
       alt: String(p.alt || query),
+      source: 'pexels',
     };
   } catch {
     return null;
