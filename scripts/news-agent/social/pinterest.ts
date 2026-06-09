@@ -14,7 +14,9 @@
  *    products. Keep it that way.
  *  - You must CLAIM maleq.com in Pinterest (Settings → Claimed accounts) for the
  *    pins to attribute and rank, and the destination must resolve publicly.
- *  - The token needs the `pins:write` + `boards:read` (+ `user_accounts:read`) scopes.
+ *  - The token needs scopes: user_accounts:read, boards:read, boards:write, pins:read,
+ *    pins:write. (Creating a pin requires boards:write + pins:read too — pins:write alone
+ *    fails with "Missing: ['boards:write', 'pins:read']".)
  *
  * Auth — TWO modes (refresh preferred, set-and-forget):
  *  1. REFRESH TOKEN (recommended): set PINTEREST_APP_ID + PINTEREST_APP_SECRET +
