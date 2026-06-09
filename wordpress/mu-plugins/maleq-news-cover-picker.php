@@ -111,12 +111,14 @@ function maleq_cover_reroll(WP_REST_Request $req) {
         return ['ok' => false, 'message' => 'No new image found from the sources — try the Browse links above.'];
     }
     return [
-        'ok'        => true,
-        'url'       => (string) $data['url'],
-        'credit'    => (string) ($data['credit'] ?? ''),
-        'creditUrl' => (string) ($data['creditUrl'] ?? ''),
-        'source'    => (string) ($data['source'] ?? ''),
-        'alt'       => (string) ($data['alt'] ?? ''),
+        'ok'          => true,
+        'url'         => (string) $data['url'],
+        'credit'      => (string) ($data['credit'] ?? ''),
+        'creditUrl'   => (string) ($data['creditUrl'] ?? ''),
+        'source'      => (string) ($data['source'] ?? ''),
+        'licenseName' => (string) ($data['licenseName'] ?? ''),
+        'licenseUrl'  => (string) ($data['licenseUrl'] ?? ''),
+        'alt'         => (string) ($data['alt'] ?? ''),
     ];
 }
 
@@ -132,10 +134,13 @@ function maleq_cover_set(WP_REST_Request $req) {
     if ($url === '' || !preg_match('#^https?://#i', $url)) {
         return new WP_Error('bad_url', 'Provide a valid image URL (http/https).', ['status' => 400]);
     }
-    $overlay    = filter_var($req->get_param('overlay'), FILTER_VALIDATE_BOOLEAN);
-    $credit     = sanitize_text_field((string) $req->get_param('credit'));
-    $credit_url = esc_url_raw(trim((string) $req->get_param('credit_url')));
-    $m          = maleq_cover_meta_keys();
+    $overlay     = filter_var($req->get_param('overlay'), FILTER_VALIDATE_BOOLEAN);
+    $source      = sanitize_text_field((string) $req->get_param('source'));        // pexels|commons|openverse|tmdb|'' (manual)
+    $credit      = sanitize_text_field((string) $req->get_param('credit'));
+    $credit_url  = esc_url_raw(trim((string) $req->get_param('credit_url')));
+    $license     = sanitize_text_field((string) $req->get_param('license_name'));
+    $license_url = esc_url_raw(trim((string) $req->get_param('license_url')));
+    $m           = maleq_cover_meta_keys();
 
     require_once ABSPATH . 'wp-admin/includes/media.php';
     require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -179,15 +184,16 @@ function maleq_cover_set(WP_REST_Request $req) {
     set_post_thumbnail($post_id, $att_id);
     update_post_meta($att_id, '_wp_attachment_image_alt', wp_strip_all_tags(get_the_title($post_id)));
 
-    // Credit line: replace any existing image-credit paragraph; append the new one if given.
-    $content = preg_replace('#\s*<p class="image-credit">.*?</p>#is', '', (string) $post->post_content);
-    if ($credit !== '') {
-        $anchor = $credit_url
-            ? '<a href="' . esc_url($credit_url) . '" target="_blank" rel="nofollow noopener">' . esc_html($credit) . '</a>'
-            : esc_html($credit);
-        $content = rtrim($content) . "\n" . '<p class="image-credit"><em>Cover image: ' . $anchor . '</em></p>';
+    // Credit line: build a source-correct attribution (matching the auto covers).
+    // Only rewrite the body when we actually have a replacement credit — otherwise
+    // leave the post's existing credit line untouched.
+    $content = (string) $post->post_content;
+    $line    = maleq_cover_credit_line($source, $credit, $credit_url, $license, $license_url);
+    if ($line !== '') {
+        $content = preg_replace('#\s*<p class="image-credit">.*?</p>#is', '', $content);
+        $content = rtrim($content) . "\n" . $line;
+        wp_update_post(['ID' => $post_id, 'post_content' => $content]);
     }
-    wp_update_post(['ID' => $post_id, 'post_content' => $content]);
 
     update_post_meta($post_id, $m['url'], $url);
     update_post_meta($post_id, $m['credit'], $credit);
@@ -203,6 +209,44 @@ function maleq_cover_set(WP_REST_Request $req) {
         'overlay'     => $applied_overlay,
         'deleted_old' => $deleted_old,
     ];
+}
+
+/**
+ * Build the on-post credit line, matching scripts/news-agent/attach-covers.ts so a
+ * manually-set cover reads exactly like an auto one. Source-aware:
+ *   pexels   → "Cover photo: <author> / Pexels"
+ *   tmdb     → "Poster via The Movie Database (TMDB)"
+ *   commons  → "Cover photo: <author>, <license>, via Wikimedia Commons"
+ *   openverse→ "Cover photo: <author>, <license>, via Openverse"
+ *   (other / manual) → "Cover image: <credit>"
+ * Returns '' when there's no credit to write (caller then leaves the body alone).
+ */
+function maleq_cover_credit_line(string $source, string $credit, string $credit_url, string $license, string $license_url): string {
+    if ($credit === '') {
+        return '';
+    }
+    $a = function (string $url, string $text): string {
+        $t = esc_html($text);
+        return $url !== '' ? '<a href="' . esc_url($url) . '" target="_blank" rel="nofollow noopener">' . $t . '</a>' : $t;
+    };
+    $creditA = $a($credit_url, $credit);
+    switch ($source) {
+        case 'pexels':
+            $body = 'Cover photo: ' . $creditA . ' / Pexels';
+            break;
+        case 'tmdb':
+            $body = 'Poster via ' . $creditA;
+            break;
+        case 'commons':
+        case 'openverse':
+            $platform = $source === 'commons' ? 'Wikimedia Commons' : 'Openverse';
+            $lic = $license !== '' ? ', ' . $a($license_url, $license) : '';
+            $body = 'Cover photo: ' . $creditA . $lic . ', via ' . $platform;
+            break;
+        default:
+            $body = 'Cover image: ' . $creditA;
+    }
+    return '<p class="image-credit"><em>' . $body . '</em></p>';
 }
 
 /**
@@ -313,6 +357,7 @@ function maleq_news_cover_box($post) {
         var status = document.getElementById('maleq-cover-status');
         var preview = document.getElementById('maleq-cover-preview');
         var shown = [];
+        var last = {}; // last re-rolled candidate {url, source, licenseName, licenseUrl}
 
         function setStatus(t, busy) { status.textContent = t; status.style.color = busy ? '#646970' : (t.indexOf('✓') === 0 ? '#008a20' : '#646970'); }
         function showPreview() {
@@ -337,6 +382,7 @@ function maleq_news_cover_box($post) {
                 if (!j.ok) { setStatus(j.message || 'No image found.'); return; }
                 urlIn.value = j.url; showPreview(); shown.push(j.url);
                 credit.value = j.credit || ''; creditUrl.value = j.creditUrl || '';
+                last = { url: j.url, source: j.source || '', licenseName: j.licenseName || '', licenseUrl: j.licenseUrl || '' };
                 setStatus('Suggested a ' + (j.source || 'new') + ' image — review, then Set as cover.');
             }).catch(function () { setStatus('Re-roll failed.'); });
         });
@@ -346,10 +392,16 @@ function maleq_news_cover_box($post) {
             var u = urlIn.value.trim();
             if (!u) { setStatus('Paste an image URL first (or Re-roll).'); return; }
             setStatus('Importing…', true);
-            api('cover/set', {
+            var body = {
                 post_id: POST, image_url: u, overlay: overlay.checked,
                 credit: credit.value.trim(), credit_url: creditUrl.value.trim()
-            }).then(function (res) {
+            };
+            // Carry the source/license through ONLY when the URL is still the one we
+            // re-rolled (so source-correct attribution applies; a hand-pasted URL stays generic).
+            if (last.url && last.url === u) {
+                body.source = last.source; body.license_name = last.licenseName; body.license_url = last.licenseUrl;
+            }
+            api('cover/set', body).then(function (res) {
                 var j = res.j || {};
                 if (!res.ok || !j.ok) { setStatus((j && j.message) || 'Import failed.'); return; }
                 if (j.thumb) {
