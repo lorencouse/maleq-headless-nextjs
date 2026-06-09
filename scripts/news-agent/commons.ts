@@ -12,6 +12,7 @@
 import type { Cover } from './images';
 
 const WP_API = 'https://en.wikipedia.org/w/api.php';
+const COMMONS_API = 'https://commons.wikimedia.org/w/api.php';
 const UA = 'MaleQ-NewsAgent/1.0 (https://maleq.com; editorial cover images)';
 
 async function api(base: string, params: Record<string, string>): Promise<any> {
@@ -24,6 +25,23 @@ async function api(base: string, params: Record<string, string>): Promise<any> {
 /** Strip HTML and collapse whitespace — Commons "Artist" is an HTML fragment. */
 function plain(html: string): string {
   return html.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Stable identity for a Commons image regardless of rendition, so the lead-portrait
+ * full-res URL and a MediaSearch 1200px thumb of the SAME file dedupe/exclude as one.
+ * Wikimedia URLs are:  …/commons/<a>/<ab>/<File>  (original)  and
+ *                      …/commons/thumb/<a>/<ab>/<File>/<width>px-<File>  (thumb).
+ * The <File> name uniquely identifies the file on Commons.
+ */
+export function commonsFileKey(url: string): string {
+  try {
+    const segs = new URL(url).pathname.split('/').filter(Boolean);
+    const name = segs.includes('thumb') ? segs[segs.length - 2] : segs[segs.length - 1];
+    return decodeURIComponent(name || url).toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
 }
 
 /**
@@ -40,6 +58,60 @@ function licenseOk(code: string, short: string): boolean {
   if (/cc0|cc-zero|public[\s-]?domain|\bpd\b|cc-pd|government work/.test(c)) return true;
   if (/cc[-\s]?by/.test(c)) return true; // cc-by / cc-by-sa (NC/ND already excluded)
   return false;
+}
+
+/**
+ * Full-text search of Wikimedia Commons File pages — the same results as the site's
+ * Special:MediaSearch — returning MANY license-clean candidates in relevance order.
+ * Each is verified with licenseOk() (commercial reuse + modification), so NC/ND/
+ * non-free files are dropped. SVGs are skipped so covers stay photographic.
+ *
+ * pickCommonsPortrait returns only the one Wikipedia lead portrait; this is what the
+ * cover-picker's "Wikimedia Commons" re-roll uses so it can cycle through real
+ * search results for a keyword (e.g. a drag performer with no enwiki lead image).
+ */
+export async function searchCommonsImages(query: string, limit = 24): Promise<Cover[]> {
+  const clean = (query || '').trim();
+  if (!clean) return [];
+  try {
+    const data = await api(COMMONS_API, {
+      action: 'query',
+      generator: 'search',
+      gsrsearch: clean,
+      gsrnamespace: '6', // File:
+      gsrlimit: String(Math.min(Math.max(limit, 1), 50)),
+      prop: 'imageinfo',
+      iiprop: 'url|mime|extmetadata',
+      iiurlwidth: '1200', // gives a 1200px-wide thumburl alongside the full-res url
+      iiextmetadatafilter: 'LicenseShortName|License|Artist|LicenseUrl|UsageTerms|Credit',
+    });
+    const pages: any[] = data?.query?.pages || [];
+    pages.sort((a, b) => (a.index ?? 0) - (b.index ?? 0)); // preserve search relevance order
+    const covers: Cover[] = [];
+    for (const page of pages) {
+      const ii = page?.imageinfo?.[0];
+      if (!ii) continue;
+      const mime = String(ii.mime || '');
+      if (!mime.startsWith('image/') || mime === 'image/svg+xml') continue; // photos only
+      const meta = ii.extmetadata || {};
+      if (!licenseOk(String(meta.License?.value || ''), String(meta.LicenseShortName?.value || ''))) continue;
+      const url = String(ii.thumburl || ii.url || ''); // 1200px thumb when available
+      if (!url) continue;
+      const artist = plain(String(meta.Artist?.value || meta.Credit?.value || '')) || 'Unknown author';
+      covers.push({
+        url,
+        credit: artist,
+        creditUrl: `https://commons.wikimedia.org/wiki/${encodeURIComponent(String(page.title || ''))}`,
+        alt: clean,
+        source: 'commons',
+        licenseName: String(meta.LicenseShortName?.value || '') || 'see file page',
+        licenseUrl: String(meta.LicenseUrl?.value || '') || undefined,
+      });
+    }
+    return covers;
+  } catch {
+    return [];
+  }
 }
 
 /**

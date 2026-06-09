@@ -16,7 +16,7 @@
  * auto priority (portrait → poster → stock) is used.
  */
 import { pickCoverExcluding, type Cover } from './images';
-import { pickCommonsPortrait } from './commons';
+import { pickCommonsPortrait, searchCommonsImages, commonsFileKey } from './commons';
 import { pickOpenverseCC } from './openverse';
 import { pickTmdbPoster } from './tmdb';
 
@@ -37,7 +37,23 @@ const fresh = (c: Cover | null): Cover | null => (c && !exclude.has(c.url) ? c :
 async function pickFromSource(src: string): Promise<Cover | null> {
   const term = query || person || work;
   switch (src) {
-    case 'commons':   return fresh(await pickCommonsPortrait(term));
+    case 'commons': {
+      // Lead portrait first (usually the best single shot), then full MediaSearch
+      // results so re-roll can cycle through many images; first one not yet shown.
+      const lead = await pickCommonsPortrait(term);
+      const candidates = [...(lead ? [lead] : []), ...(await searchCommonsImages(term))];
+      // Dedupe/exclude by the underlying Commons FILE, not the exact URL — the lead
+      // portrait and a search thumb of the same photo are different URLs.
+      const excludedKeys = new Set([...exclude].map(commonsFileKey));
+      const seen = new Set<string>();
+      for (const c of candidates) {
+        const key = commonsFileKey(c.url);
+        if (excludedKeys.has(key) || seen.has(key)) continue;
+        seen.add(key);
+        return c;
+      }
+      return null;
+    }
     case 'openverse': return fresh(await pickOpenverseCC(term));
     case 'tmdb':      return fresh(await pickTmdbPoster(work || query, workKind)); // self-gated; null if TMDB off
     case 'pexels':    return pickCoverExcluding(term ? [term] : [], exclude);
