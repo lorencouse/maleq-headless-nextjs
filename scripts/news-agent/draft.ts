@@ -98,12 +98,25 @@ WRITING RULES:
 - Voice: warm, community-minded, plain-spoken. Brief editorial commentary is welcome but clearly distinct from the factual reporting.
 - Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
 - bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line.
+- Never use em-dashes (—) in ANY field — not the body, title, excerpt, seoDescription, socialText, or coverHeadline. Use commas, periods, colons, or parentheses instead.
 - coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
 - socialText: the conversational one-sentence hook that becomes the BODY of the social post (the headline is already shown in the link card, so don't repeat it). Give people a reason to click — an angle or stake — without clickbait or anything the story doesn't support.
 - hashtags: 3–5 discovery hashtags (no #, CamelCase for multi-word) that real people browse, for reach on Bluesky/Mastodon/X/Threads.
 - Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
 
 const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li'];
+
+/**
+ * Strip em-dashes from generated copy. Claude is told not to use them, but this is the
+ * deterministic guarantee that none reach articles, social posts, or the cover overlay
+ * (all of which derive from these fields). A spaced clause-break dash becomes a comma;
+ * any remaining (compound) dash becomes a hyphen. Covers em-dash (—) and horizontal bar (―).
+ */
+export function stripEmDashes(s: string): string {
+  return s
+    .replace(/\s+[—―]\s+/g, ', ')
+    .replace(/\s*[—―]\s*/g, '-');
+}
 
 export function slugify(s: string): string {
   return s
@@ -208,10 +221,12 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     throw new Error('Claude returned no parseable structured output (possibly truncated).');
   }
 
-  const cleanBody = sanitizeHtml(parsed.bodyHtml, {
-    allowedTags: ALLOWED_TAGS,
-    allowedAttributes: {},
-  });
+  const cleanBody = stripEmDashes(
+    sanitizeHtml(parsed.bodyHtml, {
+      allowedTags: ALLOWED_TAGS,
+      allowedAttributes: {},
+    }),
+  );
 
   const used = resolveUsedSources(ordered, parsed.sourcesUsed || []);
 
@@ -230,6 +245,11 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
 
   return {
     ...parsed,
+    title: stripEmDashes(parsed.title),
+    excerpt: stripEmDashes(parsed.excerpt),
+    seoDescription: stripEmDashes(parsed.seoDescription),
+    coverHeadline: stripEmDashes(parsed.coverHeadline),
+    socialText: stripEmDashes(parsed.socialText),
     slug: slugify(parsed.slug || parsed.title),
     contentHtml: `${body}\n${attribution(used)}`,
     item: ordered[0],

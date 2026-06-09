@@ -65,7 +65,7 @@ async function main() {
       title: flag('--message') || 'Male Q news feed test post — automated setup check. 🏳️‍🌈',
       excerpt: 'Verifying our automated LGBTQ news posting. Thanks for your patience!',
       url: flag('--url') || 'https://maleq.com',
-      socialText: flag('--message') || 'Testing our automated LGBTQ news feed — back to your regularly scheduled headlines shortly.',
+      socialText: flag('--message') || 'Testing our automated LGBTQ news feed, back to your regularly scheduled headlines shortly.',
       hashtags: ['LGBTQ', 'QueerNews'],
     };
     console.log(`Posting TEST to: ${selected(only).map((a) => a.platform).join(', ') || '(none)'}\n`);
