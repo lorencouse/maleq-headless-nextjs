@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Male Q News Auto-Share
  * Description: Social sharing for the LGBTQ news agent. (1) AUTO-SHARE: when a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback. (2) MANUAL X/THREADS: a post-editor meta box with pre-composed, editable text (the same socialText hook + _maleq_news_hashtags used by the adapters) and Share-via-intent + Copy buttons, for the two platforms that have no script-free auto-post path.
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Fires only for posts that are unmistakably news-agent articles:
  *   - post_type = 'post'
@@ -536,7 +536,7 @@ add_action('add_meta_boxes', function ($post_type, $post) {
     }
     add_meta_box(
         'maleq-news-manual-share',
-        'Share to X / Threads (manual)',
+        'Share to X / Threads',
         'maleq_news_manual_share_box',
         'post',
         'side',
@@ -580,6 +580,14 @@ function maleq_news_manual_share_box($post) {
             </p>
         <?php endif; ?>
 
+        <p style="margin:0 0 8px;">
+            <label><input type="checkbox" id="maleq-autoshare-onpublish" checked> Auto-open X &amp; Threads when I publish this post</label>
+        </p>
+        <p id="maleq-autoshare-note" style="margin:0 0 10px;color:#646970;">
+            First publish, your browser may block the two tabs — choose <em>Always allow pop-ups</em> for this
+            site and they'll open by themselves on every publish after that.
+        </p>
+
         <p style="margin:0 0 4px;font-weight:600;">𝕏 (Twitter)</p>
         <textarea id="maleq-x-text" rows="5" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($x_text); ?></textarea>
         <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px;">
@@ -604,7 +612,18 @@ function maleq_news_manual_share_box($post) {
             var urls = t.match(re) || [];
             return t.replace(re, '').length + urls.length * 23;
         }
-        function bind(prefix, limit, weighted, intentBase) {
+        var INTENTS = {
+            'maleq-x':       'https://twitter.com/intent/tweet?text=',
+            'maleq-threads': 'https://www.threads.net/intent/post?text='
+        };
+        // Open one platform's compose window from its textarea. Returns the window (or null
+        // if the browser blocked the pop-up).
+        function openShare(prefix) {
+            var ta = document.getElementById(prefix + '-text');
+            if (!ta) { return null; }
+            return window.open(INTENTS[prefix] + encodeURIComponent(ta.value), '_blank', 'noopener');
+        }
+        function bind(prefix, limit, weighted) {
             var ta    = document.getElementById(prefix + '-text');
             var count = document.getElementById(prefix + '-count');
             var share = document.getElementById(prefix + '-share');
@@ -617,10 +636,7 @@ function maleq_news_manual_share_box($post) {
             }
             ta.addEventListener('input', update);
             update();
-            share.addEventListener('click', function (e) {
-                e.preventDefault();
-                window.open(intentBase + encodeURIComponent(ta.value), '_blank', 'noopener');
-            });
+            share.addEventListener('click', function (e) { e.preventDefault(); openShare(prefix); });
             copy.addEventListener('click', function (e) {
                 e.preventDefault();
                 var btn = e.currentTarget;
@@ -636,8 +652,54 @@ function maleq_news_manual_share_box($post) {
                 }
             });
         }
-        bind('maleq-x',       <?php echo (int) MALEQ_NEWS_X_LIMIT; ?>,       true,  'https://twitter.com/intent/tweet?text=');
-        bind('maleq-threads', <?php echo (int) MALEQ_NEWS_THREADS_LIMIT; ?>, false, 'https://www.threads.net/intent/post?text=');
+        bind('maleq-x',       <?php echo (int) MALEQ_NEWS_X_LIMIT; ?>,       true);
+        bind('maleq-threads', <?php echo (int) MALEQ_NEWS_THREADS_LIMIT; ?>, false);
+
+        // ── Auto-open on publish ──────────────────────────────────────────────
+        // Open both compose tabs the moment the post is published, so you don't have to
+        // click the buttons. Browsers block non-click pop-ups, so the first publish may be
+        // blocked until you "Always allow pop-ups" for this site (see note above). A toggle
+        // (persisted per browser) lets you turn it off.
+        var LSKEY  = 'maleqAutoShareOnPublish';
+        var toggle = document.getElementById('maleq-autoshare-onpublish');
+        var note   = document.getElementById('maleq-autoshare-note');
+        function syncNote() { if (note) { note.style.display = (toggle && toggle.checked) ? '' : 'none'; } }
+        if (toggle) {
+            var saved = null;
+            try { saved = localStorage.getItem(LSKEY); } catch (e) {}
+            toggle.checked = (saved === null) ? true : (saved === '1');
+            syncNote();
+            toggle.addEventListener('change', function () {
+                try { localStorage.setItem(LSKEY, toggle.checked ? '1' : '0'); } catch (e) {}
+                syncNote();
+            });
+        }
+        var fired = false;
+        function autoOpen() {
+            if (fired || (toggle && !toggle.checked)) { return; }
+            fired = true;
+            openShare('maleq-x');
+            openShare('maleq-threads');
+        }
+
+        if (window.wp && wp.data && wp.data.select('core/editor')) {
+            // Block editor (Gutenberg): fire on the draft/pending → published transition.
+            var wasPublished = wp.data.select('core/editor').isCurrentPostPublished();
+            var sawSave = false;
+            wp.data.subscribe(function () {
+                var sel = wp.data.select('core/editor');
+                if (sel.isSavingPost() && !sel.isAutosavingPost()) { sawSave = true; return; }
+                if (sawSave && !sel.isSavingPost()) {
+                    sawSave = false;
+                    var pub = sel.isCurrentPostPublished();
+                    if (pub && !wasPublished) { autoOpen(); }
+                    wasPublished = pub;
+                }
+            });
+        } else if (/[?&]message=6(&|$)/.test(window.location.search)) {
+            // Classic editor: WP reloads with message=6 ("Post published.") after publishing.
+            autoOpen();
+        }
     })();
     </script>
     <?php
