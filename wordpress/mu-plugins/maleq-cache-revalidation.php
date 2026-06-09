@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Male Q Cache Revalidation
- * Description: Triggers Next.js cache revalidation when products are created, updated, or deleted.
- * Version: 1.0.0
+ * Description: Triggers Next.js cache revalidation when products OR posts (News/blog) are created, updated, or deleted.
+ * Version: 1.1.0
  */
 
 if (!defined('ABSPATH')) exit;
@@ -83,3 +83,28 @@ function maleq_on_stock_change($product) {
 }
 add_action('woocommerce_product_set_stock', 'maleq_on_stock_change');
 add_action('woocommerce_variation_set_stock', 'maleq_on_stock_change');
+
+/**
+ * Revalidate the Next.js guide page when a regular post (News/blog) is created or
+ * updated. Posts render at /guides/{slug}, which is statically cached for ~30 days
+ * (`export const revalidate` on that route) and only refreshes on this webhook — so
+ * without it, cover/credit/content edits (cover picker, editor saves, cron) never
+ * appear on the live post. The /api/revalidate route already handles type 'post'.
+ */
+function maleq_on_post_save($post_id) {
+    if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) return;
+    if (get_post_type($post_id) !== 'post') return;
+    if (get_post_status($post_id) !== 'publish') return; // drafts aren't on the live site
+    maleq_revalidate_frontend_cache($post_id, 'post');
+}
+add_action('save_post_post', 'maleq_on_post_save');
+
+/**
+ * Revalidate the guides index when a post is trashed/deleted so it drops off listings.
+ */
+function maleq_on_post_delete($post_id) {
+    if (get_post_type($post_id) !== 'post') return;
+    maleq_revalidate_frontend_cache($post_id, 'post');
+}
+add_action('before_delete_post', 'maleq_on_post_delete');
+add_action('trashed_post', 'maleq_on_post_delete');

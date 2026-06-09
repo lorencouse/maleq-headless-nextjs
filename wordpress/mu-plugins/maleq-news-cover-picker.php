@@ -200,10 +200,12 @@ function maleq_cover_set(WP_REST_Request $req) {
     // leave the post's existing credit line untouched.
     $content = (string) $post->post_content;
     $line    = maleq_cover_credit_line($source, $credit, $credit_url, $license, $license_url);
+    $content_updated = false;
     if ($line !== '') {
         $content = preg_replace('#\s*<p class="image-credit">.*?</p>#is', '', $content);
         $content = rtrim($content) . "\n" . $line;
         wp_update_post(['ID' => $post_id, 'post_content' => $content]);
+        $content_updated = true;
     }
 
     update_post_meta($post_id, $m['url'], $url);
@@ -214,11 +216,15 @@ function maleq_cover_set(WP_REST_Request $req) {
     $deleted_old = maleq_cover_delete_old($old_thumb, $att_id, $post_id, $content);
 
     return [
-        'ok'          => true,
-        'att_id'      => $att_id,
-        'thumb'       => get_the_post_thumbnail_url($post_id, 'medium'),
-        'overlay'     => $applied_overlay,
-        'deleted_old' => $deleted_old,
+        'ok'              => true,
+        'att_id'          => $att_id,
+        'thumb'           => get_the_post_thumbnail_url($post_id, 'medium'),
+        'overlay'         => $applied_overlay,
+        'deleted_old'     => $deleted_old,
+        // When we rewrote the body, hand the new content back so the open block editor
+        // can re-sync — otherwise its stale copy overwrites our credit line on Update.
+        'content_updated' => $content_updated,
+        'content'         => $content_updated ? $content : '',
     ];
 }
 
@@ -441,7 +447,18 @@ function maleq_news_cover_box($post) {
                 if (j.att_id && window.wp && wp.data && wp.data.dispatch && wp.data.select('core/editor')) {
                     try { wp.data.dispatch('core/editor').editPost({ featured_media: parseInt(j.att_id, 10) }); } catch (e) {}
                 }
-                setStatus('✓ Cover updated' + (j.overlay ? ' (with overlay)' : ' (raw image)') + (j.deleted_old ? '; old cover removed.' : '.'));
+                // Same for the body: we rewrote the credit line server-side, so push the new
+                // content into the editor's blocks — otherwise the editor's stale copy clobbers
+                // the credit line the moment the user clicks Update.
+                if (j.content_updated && j.content && window.wp && wp.data && wp.blocks && wp.data.dispatch('core/editor')) {
+                    try {
+                        var blocks = wp.blocks.parse(j.content);
+                        var ed = wp.data.dispatch('core/editor');
+                        if (ed.resetEditorBlocks) { ed.resetEditorBlocks(blocks); }
+                        else if (wp.data.dispatch('core/block-editor')) { wp.data.dispatch('core/block-editor').resetBlocks(blocks); }
+                    } catch (e) {}
+                }
+                setStatus('✓ Cover updated' + (j.overlay ? ' (with overlay)' : ' (raw image)') + (j.content_updated ? '; credit line set' : '') + (j.deleted_old ? '; old cover removed.' : '.'));
             }).catch(function () { setStatus('Import failed.'); });
         });
     })();
