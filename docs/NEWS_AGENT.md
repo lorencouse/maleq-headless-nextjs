@@ -192,8 +192,13 @@ together.** Legacy posts without the fields fall back to the headline + no hasht
 **pin** (1080×1350) on the fly from the post's Pexels cover with the `coverHeadline` overlaid
 (`images.ts` `composePin`), and creates a pin linking to the clean `/guides/<slug>` article.
 Pinterest is a visual search engine, so it's a strong evergreen-reach channel for the covers.
-It activates only when `PINTEREST_ACCESS_TOKEN` + `PINTEREST_BOARD_ID` are set, and runs via
-the TS share path (`share.ts`/`sync-shares.ts`), not the live PHP plugin. **Policy/ban note:**
+It activates when `PINTEREST_BOARD_ID` plus a token mode are set, and runs via the TS share
+path (`share.ts`/`sync-shares.ts`), not the live PHP plugin. **Token modes:** preferred is
+refresh-token (`PINTEREST_APP_ID` + `PINTEREST_APP_SECRET` + `PINTEREST_REFRESH_TOKEN`) — a
+fresh access token is minted at run time, and Pinterest refresh tokens last ~1 year and don't
+rotate by default, so it's set-and-forget (don't enable Pinterest "continuous refresh", whose
+rotating tokens we don't persist). A static `PINTEREST_ACCESS_TOKEN` also works but expires in
+weeks; refresh wins if both are set. **Policy/ban note:**
 Pinterest restricts adult content — pins and their destination must stay clean editorial news
 (never adult product imagery or product links), and you must claim `maleq.com` in Pinterest
 settings. Untested against the live API until credentials are added — verify with
