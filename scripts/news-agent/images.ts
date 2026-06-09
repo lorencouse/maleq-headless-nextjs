@@ -17,6 +17,15 @@ import { fileURLToPath } from 'node:url';
 
 const KEY = process.env.PEXELS_API_KEY || '';
 
+/**
+ * Descriptive User-Agent for image downloads. Wikimedia (upload.wikimedia.org) and
+ * some Openverse-hosted CDNs ENFORCE their UA policy and reject the default Bun/Node
+ * agent with 403/429 — which silently turned every Commons portrait download into a
+ * null cover (auto covers never attached; the picker fell back to the raw image with
+ * no overlay). Mirrors the UA in commons.ts.
+ */
+const FETCH_UA = 'MaleQ-NewsAgent/1.0 (https://maleq.com; editorial cover images)';
+
 /** Max cover width in px; covers are downscaled (never upscaled) to this. */
 const COVER_WIDTH = 1200;
 const WEBP_QUALITY = 80;
@@ -62,8 +71,13 @@ function wrapLines(font: opentype.Font, text: string, fontPx: number, maxWidth: 
 /** Fixed card size used for the vertical (portrait-source) split layout — standard OG ratio. */
 const CARD_W = 1200;
 const CARD_H = 630;
-/** Below this width/height ratio a source image is treated as "vertical". */
-const VERTICAL_ASPECT = 0.9;
+/**
+ * At/below this width/height ratio a source image gets the split layout (photo
+ * pushed right, headline in the blank space on the left) so the cover is always a
+ * 16:9 card. 1.0 means anything square (1:1) or taller-than-wide (portrait) — only
+ * genuinely landscape sources (wider than square) get the bottom-scrim layout.
+ */
+const VERTICAL_ASPECT = 1.0;
 
 /** Portrait pin size for Pinterest / Instagram (2:5… actually 4:5 — the platform sweet spot). */
 const PIN_W = 1080;
@@ -326,7 +340,7 @@ export async function renderPinFromUrl(
   headline?: string,
 ): Promise<{ data: Buffer; mime: string } | null> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    const res = await fetch(url, { headers: { 'User-Agent': FETCH_UA }, signal: AbortSignal.timeout(20_000) });
     if (!res.ok) return null;
     const source = Buffer.from(await res.arrayBuffer());
     const data = await composePin(source, headline);
@@ -350,7 +364,7 @@ export async function renderPinFromUrl(
  */
 export async function downloadWebp(url: string, slug: string, headline?: string): Promise<string | null> {
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
+    const res = await fetch(url, { headers: { 'User-Agent': FETCH_UA }, signal: AbortSignal.timeout(20_000) });
     if (!res.ok) return null;
     const input = Buffer.from(await res.arrayBuffer());
     const safe = (slug || 'cover').replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').slice(0, 80) || 'cover';
@@ -368,13 +382,16 @@ export async function downloadWebp(url: string, slug: string, headline?: string)
       try {
         const aspect = info.width / info.height;
         const composed =
-          aspect < VERTICAL_ASPECT
+          aspect <= VERTICAL_ASPECT
             ? await composeRightImageLeftText(input, text)
             : await composeBottomScrim(baseBuf, info.width, info.height, text);
         await sharp(composed).toFile(out);
         return out;
       } catch (e) {
-        console.log(`      overlay render failed, using plain cover: ${(e as Error).message?.slice(0, 120)}`);
+        // stderr, NOT stdout: compose-cover.ts emits the temp path on stdout and the
+        // PHP cover-picker reads stdout verbatim as that path — a stray log here would
+        // corrupt it and force the raw-image fallback.
+        console.error(`      overlay render failed, using plain cover: ${(e as Error).message?.slice(0, 120)}`);
       }
     }
 
