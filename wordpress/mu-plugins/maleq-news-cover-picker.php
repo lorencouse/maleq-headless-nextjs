@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Male Q News — Cover Picker
- * Description: Editor tool to replace a News post's auto-selected cover. A "Cover image" meta box on News posts with: the current cover, pre-filled Browse links to the image sources (Pexels / TMDB / Wikimedia Commons / Openverse) seeded from the post's own cover keywords, a "Re-roll" button (auto-picks a different candidate from the same sources), and a paste-a-URL field with a "Set as cover" button that imports the image as the featured image — optionally through the same headline-overlay pipeline the auto covers use (toggle, default on; falls back to the raw image if compositing is unavailable). Reuses scripts/news-agent (compose-cover.ts / pick-cover.ts) via Bun.
+ * Description: Editor tool to replace a News post's auto-selected cover. A "Cover image" meta box on News posts with: the current cover, pre-filled Browse links to the image sources (Pexels / TMDB / Wikimedia Commons / Openverse) seeded from the post's own cover keywords, a "Re-roll" control (pick a source — Auto/Pexels/Commons/Openverse/TMDB — and edit the keyword, then auto-picks a candidate), and a paste-a-URL field with a "Set as cover" button that imports the image as the featured image — optionally through the same headline-overlay pipeline the auto covers use (toggle, default on; falls back to the raw image if compositing is unavailable). Reuses scripts/news-agent (compose-cover.ts / pick-cover.ts) via Bun.
  * Version: 1.0
  */
 
@@ -90,11 +90,22 @@ function maleq_cover_reroll(WP_REST_Request $req) {
         $exclude[] = $current;
     }
 
-    $query = (string) get_post_meta($post_id, $m['query'], true);
+    // Editor can override the keyword for this roll; otherwise use the stored query.
+    $query = trim((string) $req->get_param('query'));
+    if ($query === '') {
+        $query = (string) get_post_meta($post_id, $m['query'], true);
+    }
     if ($query === '') {
         $query = maleq_cover_keywords_fallback($post_id);
     }
     $args = ['--query', $query, '--exclude', implode(',', array_values(array_unique($exclude)))];
+
+    // Editor can pin the roll to one source; blank = auto priority (portrait→poster→stock).
+    $allowed_sources = ['pexels', 'commons', 'openverse', 'tmdb'];
+    $source = strtolower(sanitize_text_field((string) $req->get_param('source')));
+    if (in_array($source, $allowed_sources, true)) {
+        $args[] = '--source'; $args[] = $source;
+    }
 
     $person = (string) get_post_meta($post_id, $m['person'], true);
     if ($person !== '') { $args[] = '--person'; $args[] = $person; }
@@ -319,13 +330,23 @@ function maleq_news_cover_box($post) {
             </div>
             <div style="flex:1 1 320px;min-width:300px;">
                 <p style="margin:0 0 6px;font-weight:600;">Browse a different image</p>
-                <p style="margin:0 0 10px;">
+                <p style="margin:0 0 8px;">
                     <a href="<?php echo esc_url($pexels); ?>" <?php echo $btn; ?>>Pexels (stock)</a>
                     <a href="<?php echo esc_url($tmdb); ?>" <?php echo $btn; ?>>TMDB (film/TV)</a>
                     <a href="<?php echo esc_url($commons); ?>" <?php echo $btn; ?>>Wikimedia Commons</a>
                     <a href="<?php echo esc_url($openvers); ?>" <?php echo $btn; ?>>Openverse</a>
-                    <a href="#" id="maleq-cover-reroll" class="button button-small">↻ Re-roll (auto-pick)</a>
                 </p>
+                <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+                    <select id="maleq-cover-source" style="flex:0 0 auto;">
+                        <option value="">Auto (best match)</option>
+                        <option value="pexels">Pexels (stock)</option>
+                        <option value="commons">Wikimedia Commons</option>
+                        <option value="openverse">Openverse</option>
+                        <option value="tmdb">TMDB (film/TV)</option>
+                    </select>
+                    <input type="text" id="maleq-cover-keyword" value="<?php echo esc_attr($query); ?>" placeholder="re-roll keyword" style="flex:1 1 auto;">
+                    <a href="#" id="maleq-cover-reroll" class="button button-small" style="flex:0 0 auto;white-space:nowrap;">↻ Re-roll</a>
+                </div>
                 <p style="margin:0 0 4px;">Image URL</p>
                 <input type="url" id="maleq-cover-url" placeholder="https://… paste an image URL, or use Re-roll" style="width:100%;margin-bottom:8px;">
                 <div style="display:flex;gap:8px;margin-bottom:8px;">
@@ -351,6 +372,8 @@ function maleq_news_cover_box($post) {
         var POST  = box.getAttribute('data-post');
         var NONCE = box.getAttribute('data-nonce');
         var urlIn = document.getElementById('maleq-cover-url');
+        var sourceSel = document.getElementById('maleq-cover-source');
+        var keyword = document.getElementById('maleq-cover-keyword');
         var credit = document.getElementById('maleq-cover-credit');
         var creditUrl = document.getElementById('maleq-cover-credit-url');
         var overlay = document.getElementById('maleq-cover-overlay');
@@ -374,10 +397,14 @@ function maleq_news_cover_box($post) {
             }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
         }
 
+        // Changing the source or keyword starts a fresh search, so forget what we've shown.
+        sourceSel.addEventListener('change', function () { shown = []; });
+        keyword.addEventListener('input', function () { shown = []; });
+
         document.getElementById('maleq-cover-reroll').addEventListener('click', function (e) {
             e.preventDefault();
             setStatus('Finding another image…', true);
-            api('cover/reroll', { post_id: POST, exclude: shown }).then(function (res) {
+            api('cover/reroll', { post_id: POST, exclude: shown, query: keyword.value.trim(), source: sourceSel.value }).then(function (res) {
                 var j = res.j || {};
                 if (!j.ok) { setStatus(j.message || 'No image found.'); return; }
                 urlIn.value = j.url; showPreview(); shown.push(j.url);
