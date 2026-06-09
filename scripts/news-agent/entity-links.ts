@@ -63,9 +63,31 @@ async function api(base: string, params: Record<string, string>): Promise<any> {
   return res.json();
 }
 
-/** Significant (3+ char) lowercase tokens, for a loose query↔title match check. */
+/** Significant (3+ char) lowercase tokens, for a query↔title match check. */
 function tokens(s: string): string[] {
   return (s.toLowerCase().match(/[a-z0-9]+/g) || []).filter((t) => t.length >= 3);
+}
+
+/** Drop "(...)" disambiguation suffixes so they don't skew token comparison. */
+function stripParens(s: string): string {
+  return s.replace(/\([^)]*\)/g, ' ');
+}
+
+/**
+ * Does `title` denote the same entity as `query`? Compares significant tokens
+ * (ignoring any parenthetical disambiguation on either side) and accepts ONLY when
+ * one token set contains the other. A single shared common word is NOT enough — so
+ * "Blue Film" no longer matches "Blue Beetle" (they only share "blue"), while
+ * "Heartstopper" still matches "Heartstopper (TV series)" and a query that adds a
+ * descriptor ("Wicked film") still matches the article "Wicked".
+ */
+function titleMatchesQuery(query: string, title: string): boolean {
+  const qt = new Set(tokens(stripParens(query)));
+  const tt = new Set(tokens(stripParens(title)));
+  if (!qt.size || !tt.size) return false;
+  const qSubsetT = [...qt].every((t) => tt.has(t));
+  const tSubsetQ = [...tt].every((t) => qt.has(t));
+  return qSubsetT || tSubsetQ;
 }
 
 /** Build an IMDb URL from a P345 value by its prefix (title / name / company). */
@@ -183,10 +205,12 @@ function bestUrl(kind: EntityKind, ids: ExternalIds | null, wikiUrl: string): { 
 }
 
 /**
- * Resolve an entity to the best authoritative URL, or null if it has no real
- * Wikipedia article (our existence + sanity gate). We require the matched article
- * title to share a significant token with the query so a search miss can't link
- * to a wildly wrong page (e.g. a band when we meant a book).
+ * Resolve an entity to the best authoritative URL, or null if no real Wikipedia
+ * article denotes it (our existence + sanity gate). We fetch the top few search
+ * hits and pick the highest-ranked one whose title actually MATCHES the query
+ * (set-containment, not a single shared word) — so when the obvious search hit is
+ * a more famous near-namesake ("Blue Beetle" for "Blue Film"), we skip it and use
+ * the correct lower-ranked article instead of linking to the wrong page.
  */
 export async function resolveEntity(query: string, kind: EntityKind): Promise<{ url: string; source: LinkSource } | null> {
   const q = (query || '').trim();
@@ -196,20 +220,23 @@ export async function resolveEntity(query: string, kind: EntityKind): Promise<{ 
       action: 'query',
       generator: 'search',
       gsrsearch: q,
-      gsrlimit: '1',
+      gsrlimit: '5',
       gsrnamespace: '0',
       prop: 'info|pageprops',
       inprop: 'url',
       ppprop: 'wikibase_item|disambiguation',
     });
-    const page = data?.query?.pages?.[0];
-    const title: string | undefined = page?.title;
-    const wikiUrl: string | undefined = page?.fullurl;
-    if (!title || !wikiUrl) return null;
-    // Reject disambiguation landing pages — they're not a real target.
-    if (/\(disambiguation\)/i.test(title) || page?.pageprops?.disambiguation !== undefined) return null;
-    const qt = new Set(tokens(q));
-    if (qt.size && !tokens(title).some((t) => qt.has(t))) return null;
+    const pages: any[] = (data?.query?.pages || []).slice().sort((a, b) => (a?.index ?? 0) - (b?.index ?? 0));
+    // Highest-ranked search hit that is a real article AND whose title denotes our entity.
+    const page = pages.find((p) => {
+      const title: string | undefined = p?.title;
+      if (!title || !p?.fullurl) return false;
+      // Reject disambiguation landing pages — they're not a real target.
+      if (/\(disambiguation\)/i.test(title) || p?.pageprops?.disambiguation !== undefined) return false;
+      return titleMatchesQuery(q, title);
+    });
+    if (!page) return null;
+    const wikiUrl: string = page.fullurl;
 
     const qid: string | undefined = page?.pageprops?.wikibase_item;
     // 'other' (laws, events, generic topics) always lives on Wikipedia — skip the
