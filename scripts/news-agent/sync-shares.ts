@@ -79,10 +79,15 @@ async function findApprovedUnshared(db: any): Promise<Candidate[]> {
   // Pinterest/Tumblr. Instead we select the newest posts and decide per-platform from
   // `share_urls` in main() — so this path completes whatever the plugin couldn't. The LIMIT
   // bounds the scan to recent posts (older fully-shared ones simply fall out of the window).
+  // The social image is the post's FEATURED image — our licensed Pexels cover with the
+  // text overlay (the attachment `wp media import` set). We deliberately do NOT use
+  // `_maleq_news_image_url` (the source outlet's copyrighted feed photo): that image is
+  // never licensed for us to republish, so it must not appear on our social accounts.
+  // If a post has no featured cover, imageUrl is null and the post shares without an image.
   const [rows] = await db.query<RowDataPacket[]>(
     `SELECT p.ID, p.post_title, p.post_name, p.post_excerpt,
             src.meta_value     AS source_url,
-            img.meta_value     AS image_url,
+            att.guid           AS image_url,
             shared.meta_value  AS shared_at,
             urls.meta_value    AS share_urls,
             soc.meta_value     AS social_text,
@@ -94,7 +99,8 @@ async function findApprovedUnshared(db: any): Promise<Candidate[]> {
        JOIN wp_term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'category'
        JOIN wp_terms t ON t.term_id = tt.term_id AND t.slug = ?
        JOIN wp_postmeta src ON src.post_id = p.ID AND src.meta_key = ?
-       LEFT JOIN wp_postmeta img    ON img.post_id = p.ID    AND img.meta_key = ?
+       LEFT JOIN wp_postmeta thumb ON thumb.post_id = p.ID AND thumb.meta_key = '_thumbnail_id'
+       LEFT JOIN wp_posts att      ON att.ID = thumb.meta_value AND att.post_type = 'attachment'
        LEFT JOIN wp_postmeta shared ON shared.post_id = p.ID AND shared.meta_key = ?
        LEFT JOIN wp_postmeta urls   ON urls.post_id = p.ID   AND urls.meta_key = ?
        LEFT JOIN wp_postmeta soc    ON soc.post_id = p.ID    AND soc.meta_key = ?
@@ -104,7 +110,7 @@ async function findApprovedUnshared(db: any): Promise<Candidate[]> {
       WHERE p.post_type = 'post' AND p.post_status = 'publish'
       ORDER BY p.post_date DESC
       LIMIT ?`,
-    [NEWS_CATEGORY.slug, META.sourceUrl, META.imageUrl, META.sharedAt, META.shareUrls, META.socialText, META.hashtags, META.coverUrl, META.coverHeadline, LIMIT],
+    [NEWS_CATEGORY.slug, META.sourceUrl, META.sharedAt, META.shareUrls, META.socialText, META.hashtags, META.coverUrl, META.coverHeadline, LIMIT],
   );
   return rows.map((r) => ({
     id: Number(r.ID),

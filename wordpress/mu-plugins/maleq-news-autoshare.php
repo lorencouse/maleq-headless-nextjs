@@ -227,15 +227,14 @@ function maleq_news_share_post($post_id) {
         $excerpt = (string) get_post_meta($post_id, 'rank_math_description', true);
     }
 
-    // Cover image for the social card. Prefer the post's featured image (the Pexels
-    // cover attach-covers.ts sets) read straight off disk — no HTTP, exact bytes.
-    // Fall back to the feed lead image (_maleq_news_image_url) by URL.
+    // Cover image for the social card: ONLY the post's featured image — our licensed
+    // Pexels cover (attach-covers.ts), read straight off disk (no HTTP, exact bytes).
+    // We never fall back to the source outlet's feed photo (_maleq_news_image_url): it's
+    // copyrighted and not licensed for us to republish. No cover → imageless card.
     $thumb_id   = get_post_thumbnail_id($post_id);
     $image_path = $thumb_id ? get_attached_file($thumb_id) : '';
     $image_mime = $thumb_id ? get_post_mime_type($thumb_id) : '';
-    $image_url  = $thumb_id
-        ? (wp_get_attachment_image_url($thumb_id, 'full') ?: '')
-        : (string) get_post_meta($post_id, MALEQ_NEWS_IMAGE_URL_KEY, true);
+    $image_url  = $thumb_id ? (wp_get_attachment_image_url($thumb_id, 'full') ?: '') : '';
 
     // Social hook + hashtags (drafted by Claude). Absent on legacy posts → adapters
     // fall back to the title, exactly like the TS path.
