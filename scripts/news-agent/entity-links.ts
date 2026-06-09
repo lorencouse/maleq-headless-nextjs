@@ -63,9 +63,13 @@ async function api(base: string, params: Record<string, string>): Promise<any> {
   return res.json();
 }
 
-/** Significant (3+ char) lowercase tokens, for a query↔title match check. */
-function tokens(s: string): string[] {
-  return (s.toLowerCase().match(/[a-z0-9]+/g) || []).filter((t) => t.length >= 3);
+/**
+ * Significant (3+ char) lowercase tokens, for a query↔title match check. Diacritics
+ * are folded (é→e) so "René Lavan" and "Rene Lavan" compare equal.
+ */
+export function tokens(s: string): string[] {
+  const folded = s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  return (folded.match(/[a-z0-9]+/g) || []).filter((t) => t.length >= 3);
 }
 
 /** Drop "(...)" disambiguation suffixes so they don't skew token comparison. */
@@ -81,7 +85,7 @@ function stripParens(s: string): string {
  * "Heartstopper" still matches "Heartstopper (TV series)" and a query that adds a
  * descriptor ("Wicked film") still matches the article "Wicked".
  */
-function titleMatchesQuery(query: string, title: string): boolean {
+export function titleMatchesQuery(query: string, title: string): boolean {
   const qt = new Set(tokens(stripParens(query)));
   const tt = new Set(tokens(stripParens(title)));
   if (!qt.size || !tt.size) return false;
