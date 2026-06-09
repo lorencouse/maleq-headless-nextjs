@@ -50,6 +50,33 @@ function loadFont(): opentype.Font {
   return _font;
 }
 
+/** Named HTML entities WordPress titles commonly carry (numeric ones decode generically). */
+const NAMED_ENTITIES: Record<string, string> = {
+  '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'", '&nbsp;': ' ',
+  '&hellip;': '…', '&mdash;': '—', '&ndash;': '–',
+  '&rsquo;': '’', '&lsquo;': '‘', '&ldquo;': '“', '&rdquo;': '”',
+};
+
+/**
+ * Decode HTML entities and fold smart punctuation to ASCII for the overlay headline.
+ * WordPress stores titles with entities (e.g. `&#8217;` for ’), which the glyph
+ * renderer would otherwise draw literally ("WALTERS&#8217;"). We decode them, then
+ * fold curly quotes / dashes / ellipsis to plain ASCII so the result never depends
+ * on the display font having those glyphs (Anton's set is limited). Named entities
+ * are decoded before numeric so a double-encoded `&amp;#8217;` resolves in one pass.
+ */
+function cleanHeadline(s: string): string {
+  if (!s) return s;
+  let out = s.replace(/&(?:amp|lt|gt|quot|apos|nbsp|hellip|mdash|ndash|rsquo|lsquo|ldquo|rdquo);/g, (m) => NAMED_ENTITIES[m] || m);
+  out = out.replace(/&#(\d+);/g, (m, n) => { try { return String.fromCodePoint(parseInt(n, 10)); } catch { return m; } });
+  out = out.replace(/&#x([0-9a-fA-F]+);/g, (m, n) => { try { return String.fromCodePoint(parseInt(n, 16)); } catch { return m; } });
+  return out
+    .replace(/[‘’‚‛]/g, "'") // ‘ ’ ‚ ‛ → '
+    .replace(/[“”„‟]/g, '"') // “ ” „ ‟ → "
+    .replace(/[–—]/g, '-')              // – — → -
+    .replace(/…/g, '...');                   // … → ...
+}
+
 /** Greedy word-wrap to a max pixel width, measuring with the actual font metrics. */
 function wrapLines(font: opentype.Font, text: string, fontPx: number, maxWidth: number): string[] {
   const words = text.split(/\s+/).filter(Boolean);
@@ -188,7 +215,7 @@ async function renderText(
   align: 'left' | 'centre',
 ): Promise<{ data: Buffer; width: number; height: number }> {
   const font = loadFont();
-  const lines = wrapLines(font, text, fontPx, maxWidth);
+  const lines = wrapLines(font, cleanHeadline(text), fontPx, maxWidth);
   const scale = fontPx / font.unitsPerEm;
   const ascent = font.ascender * scale;
   const descent = -font.descender * scale;
