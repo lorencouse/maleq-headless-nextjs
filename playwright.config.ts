@@ -16,6 +16,13 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
+    // When running UAT against the Cloudflare-fronted production site, send a
+    // secret header that a Cloudflare WAF "skip managed challenge" rule matches,
+    // so the bot challenge doesn't intercept the smoke tests. No-op locally
+    // (the var is unset) and harmless against envs without the rule.
+    ...(process.env.UAT_BYPASS_SECRET
+      ? { extraHTTPHeaders: { 'X-UAT-Bypass': process.env.UAT_BYPASS_SECRET } }
+      : {}),
   },
 
   projects: [

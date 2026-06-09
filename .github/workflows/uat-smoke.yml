@@ -16,6 +16,9 @@ jobs:
       PLAYWRIGHT_SKIP_WEBSERVER: '1'
       PLAYWRIGHT_TEST_BASE_URL: 'https://maleq.com'
       CI: 'true'
+      # Secret header matched by a Cloudflare WAF "skip managed challenge" rule
+      # so the bot challenge does not intercept these smoke tests against prod.
+      UAT_BYPASS_SECRET: ${{ secrets.UAT_BYPASS_SECRET }}
 
     steps:
       - name: Checkout
