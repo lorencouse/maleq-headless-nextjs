@@ -31,8 +31,9 @@ import StarRatingEnhancer from '@/components/blog/StarRatingEnhancer';
 import CheckmarkEnhancer from '@/components/blog/CheckmarkEnhancer';
 import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import RecommendedProducts from '@/components/blog/RecommendedProducts';
+import BuyersGuide from '@/components/blog/buyers-guide/BuyersGuide';
 import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
-import { loadPostRecommendations } from '@/lib/db/post-relations';
+import { loadPostRecommendations, loadGuide, type ResolvedGuide } from '@/lib/db/post-relations';
 import { loadPostTranslations, type PostTranslation } from '@/lib/db/post-translations';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
 import { toWpPostName } from '@/lib/utils/wp-slug';
@@ -51,6 +52,28 @@ import TableOfContents from '@/components/blog/TableOfContents';
 import './blog-post.css';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
+
+/**
+ * For roundup ("Best [X]") guides, decide where the programmatic <BuyersGuide>
+ * block sits within the prose. Editors place a `[buyers_guide]` marker (it stays
+ * literal in the HTML since it's not a registered shortcode, optionally wrapped
+ * in its own <p>). Falls back to right after the first <h2> (the intro), then to
+ * the very top. The list itself is never authored in Gutenberg — only its
+ * position. See docs/BUYERS_GUIDE_SYSTEM.md.
+ */
+function splitGuideContent(html: string): { before: string; after: string } {
+  const marker = /(?:<p>\s*)?\[buyers_guide\](?:\s*<\/p>)?/i;
+  const m = marker.exec(html);
+  if (m) {
+    return { before: html.slice(0, m.index), after: html.slice(m.index + m[0].length) };
+  }
+  const h2 = /<\/h2>/i.exec(html);
+  if (h2) {
+    const cut = h2.index + h2[0].length;
+    return { before: html.slice(0, cut), after: html.slice(cut) };
+  }
+  return { before: '', after: html };
+}
 
 // Open Graph locale tags per guide language (zh = Traditional / Taiwan).
 const OG_LOCALE: Record<string, string> = {
@@ -373,6 +396,23 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     }
   } catch {}
 
+  // Roundup ("Best [X]") guide data — type:null for normal articles (no-op).
+  let guide: ResolvedGuide = { type: null, entries: [], faq: [], columns: [], meta: {} };
+  try {
+    const { isMySQLConfigured } = await import('@/lib/db/pool');
+    if (isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql') {
+      guide = await loadGuide(post.databaseId);
+    }
+  } catch {}
+  const isRoundup = guide.type === 'roundup';
+
+  // Sanitize + URL-rewrite once; for roundups, split the prose around the
+  // programmatic <BuyersGuide> block (intro before, conclusion/advice after).
+  const contentHtml = sanitizeHtml(rewriteWordPressUrls(post.content));
+  const { before: introHtml, after: outroHtml } = isRoundup
+    ? splitGuideContent(contentHtml)
+    : { before: contentHtml, after: '' };
+
   // Other-language versions of this guide (meta-box driven), for the switcher.
   const translations = await loadGuideTranslations(post);
 
@@ -493,13 +533,26 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Mobile Table of Contents */}
       <TableOfContents variant="mobile" />
 
-      {/* Content */}
+      {/* Content (intro prose; for roundups this is the part before the
+          [buyers_guide] marker, else the full body) */}
       <div
         className='entry-content prose prose-lg max-w-none mb-12 blog-content'
-        dangerouslySetInnerHTML={{
-          __html: sanitizeHtml(rewriteWordPressUrls(post.content)),
-        }}
+        dangerouslySetInnerHTML={{ __html: introHtml }}
       />
+
+      {/* Programmatic "Best [X]" roundup: comparison table, ranked cards, FAQ,
+          and ItemList/FAQPage schema — driven by the post ⇄ product relations
+          + editorial overlay. Renders nothing for non-roundup posts. */}
+      {isRoundup && <BuyersGuide guide={guide} title={post.title} />}
+
+      {/* Conclusion / buying-advice prose (roundups only: the part after the
+          marker). */}
+      {isRoundup && outroHtml && (
+        <div
+          className='entry-content prose prose-lg max-w-none mb-12 blog-content'
+          dangerouslySetInnerHTML={{ __html: outroHtml }}
+        />
+      )}
 
       {/* Enable lazy loading autoplay for videos */}
       <VideoAutoplay />

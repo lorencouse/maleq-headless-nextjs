@@ -286,3 +286,112 @@ export function BreadcrumbSchema({ items }: { items: BreadcrumbItem[] }) {
     />
   );
 }
+
+// ─── Roundup ("Best [X]") guide schema ───────────────────────────────────────
+// Emitted by the programmatic buyer's-guide layout. The ItemList expresses the
+// ranking (so search/AI engines read "ranked list of N products"); each item is
+// a nested Product with live offer + aggregateRating. The FAQ block feeds
+// FAQPage. See docs/BUYERS_GUIDE_SYSTEM.md.
+
+export interface ItemListProductItem {
+  position: number;          // 1-based ranking
+  name: string;
+  url: string;               // canonical product URL
+  image?: string;
+  description?: string;
+  brand?: string;
+  sku?: string;
+  price?: number;            // numeric offer price (sale price if on sale)
+  priceCurrency?: string;
+  availability?: 'InStock' | 'OutOfStock' | 'PreOrder';
+  ratingValue?: number;
+  reviewCount?: number;
+}
+
+const AVAILABILITY_URL = {
+  InStock: 'https://schema.org/InStock',
+  OutOfStock: 'https://schema.org/OutOfStock',
+  PreOrder: 'https://schema.org/PreOrder',
+} as const;
+
+export function ItemListSchema({
+  items,
+  name,
+}: {
+  items: ItemListProductItem[];
+  name?: string;
+}) {
+  if (!items.length) return null;
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    ...(name && { name }),
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    numberOfItems: items.length,
+    itemListElement: items.map((it) => ({
+      '@type': 'ListItem',
+      position: it.position,
+      item: {
+        '@type': 'Product',
+        name: it.name,
+        url: it.url,
+        ...(it.image && { image: it.image }),
+        ...(it.description && { description: it.description }),
+        ...(it.sku && { sku: it.sku }),
+        ...(it.brand && { brand: { '@type': 'Brand', name: it.brand } }),
+        ...(typeof it.price === 'number' && {
+          offers: {
+            '@type': 'Offer',
+            price: it.price.toFixed(2),
+            priceCurrency: it.priceCurrency ?? 'USD',
+            availability: AVAILABILITY_URL[it.availability ?? 'InStock'],
+            itemCondition: 'https://schema.org/NewCondition',
+            url: it.url,
+          },
+        }),
+        ...(it.ratingValue &&
+          it.reviewCount && {
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: Number(it.ratingValue).toFixed(1),
+              reviewCount: it.reviewCount,
+            },
+          }),
+      },
+    })),
+  };
+
+  return (
+    <Script
+      id="itemlist-schema"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+export function FaqSchema({ faqs }: { faqs: { q: string; a: string }[] }) {
+  if (!faqs.length) return null;
+
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: f.a,
+      },
+    })),
+  };
+
+  return (
+    <Script
+      id="faq-schema"
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

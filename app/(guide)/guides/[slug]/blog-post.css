@@ -1295,3 +1295,259 @@ figure.wp-block-video.aligncenter {
   height: auto;
   aspect-ratio: 16 / 9;
 }
+
+/* ============================================================================
+   BUYER'S GUIDE ("Best [X]" roundup) — programmatic layout
+   Driven by <BuyersGuide>. See docs/BUYERS_GUIDE_SYSTEM.md. Uses the same
+   design tokens as the rest of blog-post.css; prefixed `guide-` to avoid any
+   collision with Gutenberg/prose classes.
+   ============================================================================ */
+
+.guide-roundup {
+  margin: var(--space-8) 0;
+}
+
+/* --- Top Picks summary (answer-first) --- */
+.guide-toppicks {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin: var(--space-6) 0 var(--space-8);
+  box-shadow: var(--shadow-sm);
+}
+.guide-toppicks__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.guide-toppicks__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.guide-toppicks__list a {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--primary);
+}
+.guide-toppicks__list a:hover { text-decoration: underline; }
+.guide-toppicks__award { color: var(--foreground); }
+
+/* --- Award badge --- */
+.guide-award {
+  display: inline-block;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* --- Star rating (overlay technique, 0–5) --- */
+.guide-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  line-height: 1;
+}
+.guide-stars__track,
+.guide-stars__fill {
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+.guide-stars__track { position: relative; color: var(--border); }
+.guide-stars__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #f5a623; /* star gold — intentional brand-neutral accent */
+}
+.guide-stars > .guide-stars__track { display: inline-block; }
+.guide-stars__num {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.guide-stars__count { color: var(--muted-foreground); font-weight: 400; }
+/* track is the positioning context for the fill overlay */
+.guide-stars { position: relative; }
+.guide-stars__track { display: inline-block; }
+
+/* --- Price --- */
+.guide-price { display: inline-flex; align-items: baseline; gap: 0.4rem; }
+.guide-price__now { font-weight: 700; color: var(--foreground); }
+.guide-price__was {
+  text-decoration: line-through;
+  color: var(--muted-foreground);
+  font-size: 0.85em;
+}
+.guide-price--na { color: var(--muted-foreground); }
+
+/* --- CTA button --- */
+.guide-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-md, 0.5rem);
+  transition: opacity 0.2s ease;
+}
+.guide-cta:hover { opacity: 0.9; }
+.guide-cta--sm { padding: 0.35rem 0.75rem; font-size: 0.85rem; }
+
+/* --- Comparison table --- */
+.guide-table-wrap {
+  overflow-x: auto;
+  margin: var(--space-6) 0 var(--space-8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+.guide-table th,
+.guide-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+.guide-table thead th {
+  background: var(--card);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.guide-table tbody tr:last-child th,
+.guide-table tbody tr:last-child td { border-bottom: none; }
+.guide-table__rank { font-weight: 800; color: var(--muted-foreground); }
+.guide-table__product { font-weight: 600; }
+.guide-table__product a { text-decoration: none; color: var(--foreground); }
+.guide-table__product a:hover { color: var(--primary); }
+.guide-table__thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: var(--radius-md, 0.5rem);
+  background: #fff;
+  margin-right: 0.6rem;
+  vertical-align: middle;
+  display: inline-block;
+}
+
+/* --- Ranked product cards --- */
+.guide-cards { display: grid; gap: var(--space-6); }
+.guide-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  scroll-margin-top: 6rem; /* anchor offset under sticky chrome */
+}
+.guide-card__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.guide-card__rank {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+.guide-card__title { margin: 0; font-size: 1.4rem; font-weight: 700; flex: 1 1 auto; }
+.guide-card__title a { text-decoration: none; color: var(--foreground); }
+.guide-card__title a:hover { color: var(--primary); }
+.guide-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
+  gap: var(--space-6);
+}
+@media (max-width: 640px) {
+  .guide-card__body { grid-template-columns: 1fr; }
+}
+.guide-card__media {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+}
+.guide-card__img {
+  width: 100%;
+  height: auto;
+  max-width: 260px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: var(--radius-md, 0.5rem);
+}
+.guide-card__bestfor {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.guide-card__verdict { font-size: 1rem; line-height: 1.7; margin: 0 0 1rem; }
+.guide-card__specs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+}
+.guide-card__spec dt {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+.guide-card__spec dd { margin: 0.15rem 0 0; font-weight: 600; }
+
+/* --- FAQ (native details) --- */
+.guide-faq { margin: var(--space-8) 0; }
+.guide-faq > h2 { margin-bottom: 1rem; }
+.guide-faq__item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: 0 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--card);
+}
+.guide-faq__item summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 1rem 0;
+  list-style: none;
+}
+.guide-faq__item summary::-webkit-details-marker { display: none; }
+.guide-faq__item summary::after { content: '+'; float: right; color: var(--muted-foreground); }
+.guide-faq__item[open] summary::after { content: '−'; }
+.guide-faq__item p { margin: 0 0 1rem; line-height: 1.7; }
+
+/* --- Methodology --- */
+.guide-method {
+  margin: var(--space-8) 0;
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+.guide-method__updated {
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+  font-style: italic;
+}

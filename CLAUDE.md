@@ -98,6 +98,10 @@ Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.t
 - `remove-review-labels.ts` - Clean review formatting
 - `remove-review-linebreaks.ts` - Fix review line breaks
 
+**Buyer's Guides ("Best of" roundups):**
+- `gen-guide.ts` - Generate the editorial overlay for a roundup post (rule-based awards + Claude-drafted verdict/pros/cons/FAQ/methodology) → writes `_maleq_guide_*` meta. Dry-run by default; needs `ANTHROPIC_API_KEY`. See `docs/BUYERS_GUIDE_SYSTEM.md`.
+- `backfill-post-product-relations.ts` - Backfill `_maleq_related_products` from products embedded in existing posts.
+
 **Product Updates:**
 - `update-prices.ts` - Bulk price updates
 - `update-brand-name.ts` - Update brand names
