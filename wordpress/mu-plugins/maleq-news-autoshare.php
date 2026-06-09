@@ -721,12 +721,20 @@ function maleq_news_manual_share_box($post) {
             revealFallback(blocked);
         }
 
-        if (window.wp && wp.data && wp.data.select('core/editor')) {
-            // Block editor (Gutenberg): fire on the draft/pending → published transition.
-            var wasPublished = wp.data.select('core/editor').isCurrentPostPublished();
+        // Attach a watcher that fires autoOpen() on the draft/pending → published
+        // transition. CRUCIAL: this inline script runs at initial HTML parse, BEFORE
+        // Gutenberg registers its core/editor data store — so a synchronous check
+        // here finds nothing and the watcher never attaches (nothing ever opens).
+        // Poll until the store exists, then subscribe.
+        function watchForPublish() {
+            if (!(window.wp && wp.data && typeof wp.data.select === 'function')) { return false; }
+            var sel0 = wp.data.select('core/editor');
+            if (!sel0 || typeof sel0.isCurrentPostPublished !== 'function') { return false; }
+            var wasPublished = sel0.isCurrentPostPublished();
             var sawSave = false;
             wp.data.subscribe(function () {
                 var sel = wp.data.select('core/editor');
+                if (!sel || typeof sel.isSavingPost !== 'function') { return; }
                 if (sel.isSavingPost() && !sel.isAutosavingPost()) { sawSave = true; return; }
                 if (sawSave && !sel.isSavingPost()) {
                     sawSave = false;
@@ -735,9 +743,18 @@ function maleq_news_manual_share_box($post) {
                     wasPublished = pub;
                 }
             });
-        } else if (/[?&]message=6(&|$)/.test(window.location.search)) {
+            return true;
+        }
+
+        if (/[?&]message=6(&|$)/.test(window.location.search)) {
             // Classic editor: WP reloads with message=6 ("Post published.") after publishing.
             autoOpen();
+        } else if (!watchForPublish()) {
+            // Block editor store not ready at parse time — poll for it (up to ~15s).
+            var _aoTries = 0;
+            var _aoIv = setInterval(function () {
+                if (watchForPublish() || ++_aoTries > 60) { clearInterval(_aoIv); }
+            }, 250);
         }
     })();
     </script>
