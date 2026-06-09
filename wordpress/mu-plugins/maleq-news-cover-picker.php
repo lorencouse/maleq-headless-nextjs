@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Male Q News — Cover Picker
- * Description: Editor tool to replace a News post's auto-selected cover. A "Cover image" meta box on News posts with: the current cover, pre-filled Browse links to the image sources (Pexels / TMDB / Wikimedia Commons / Openverse) seeded from the post's own cover keywords, a "Re-roll" control (pick a source — Auto/Pexels/Commons/Openverse/TMDB — and edit the keyword, then auto-picks a candidate), and a paste-a-URL field with a "Set as cover" button that imports the image as the featured image — optionally through the same headline-overlay pipeline the auto covers use (toggle, default on; falls back to the raw image if compositing is unavailable). Reuses scripts/news-agent (compose-cover.ts / pick-cover.ts) via Bun.
+ * Description: Editor tool to replace a News post's auto-selected cover. A "Cover image" meta box on News posts with: the current cover, pre-filled Browse links to the image sources (Pexels / TMDB / Wikimedia Commons / Openverse) seeded from the post's own cover keywords, a "Re-roll" control (pick a source — Auto/Pexels/Commons/Openverse/TMDB — and edit the keyword, then auto-picks a candidate), and a paste-a-URL field, an editable "Overlay text" field (the headline drawn over the image, pre-filled from the cover headline/title), and a "Set as cover" button that imports the image as the featured image — optionally through the same headline-overlay pipeline the auto covers use (toggle, default on; falls back to the raw image if compositing is unavailable). Reuses scripts/news-agent (compose-cover.ts / pick-cover.ts) via Bun.
  * Version: 1.0
  */
 
@@ -146,6 +146,7 @@ function maleq_cover_set(WP_REST_Request $req) {
         return new WP_Error('bad_url', 'Provide a valid image URL (http/https).', ['status' => 400]);
     }
     $overlay     = filter_var($req->get_param('overlay'), FILTER_VALIDATE_BOOLEAN);
+    $headline_in = sanitize_text_field((string) $req->get_param('headline')); // editor's overlay text override
     $source      = sanitize_text_field((string) $req->get_param('source'));        // pexels|commons|openverse|tmdb|'' (manual)
     $credit      = sanitize_text_field((string) $req->get_param('credit'));
     $credit_url  = esc_url_raw(trim((string) $req->get_param('credit_url')));
@@ -161,9 +162,14 @@ function maleq_cover_set(WP_REST_Request $req) {
     $att_id  = 0;
     $applied_overlay = false;
 
+    // Persist the editor's overlay-text override so it sticks (and re-rolls reuse it).
+    if ($headline_in !== '') {
+        update_post_meta($post_id, $m['headline'], $headline_in);
+    }
+
     // 1) Try the overlay pipeline (Bun): compose a webp to a temp file, then sideload it.
     if ($overlay) {
-        $headline = (string) get_post_meta($post_id, $m['headline'], true);
+        $headline = $headline_in !== '' ? $headline_in : (string) get_post_meta($post_id, $m['headline'], true);
         if ($headline === '') {
             $headline = (string) get_the_title($post_id);
         }
@@ -319,6 +325,15 @@ function maleq_news_cover_box($post) {
     $thumb    = get_the_post_thumbnail_url($post->ID, 'medium');
     $nonce    = wp_create_nonce('wp_rest');
 
+    // Overlay text: the saved cover headline, else the title. Decode entities so the
+    // field shows clean text (e.g. ' not &#8217;) — the renderer also decodes, but the
+    // editor should never see raw entities.
+    $headline = (string) get_post_meta($post->ID, $m['headline'], true);
+    if ($headline === '') {
+        $headline = $title;
+    }
+    $headline = html_entity_decode($headline, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
     // Source search links, each seeded with the most relevant keyword we have.
     $pexels   = 'https://www.pexels.com/search/' . rawurlencode($query) . '/';
     $tmdb     = 'https://www.themoviedb.org/search?query=' . rawurlencode($work !== '' ? $work : $title);
@@ -359,6 +374,9 @@ function maleq_news_cover_box($post) {
                     <input type="text" id="maleq-cover-credit" placeholder="Credit (optional)" style="flex:1 1 50%;">
                     <input type="url" id="maleq-cover-credit-url" placeholder="Credit link (optional)" style="flex:1 1 50%;">
                 </div>
+                <p style="margin:0 0 4px;">Overlay text <span style="color:#646970;font-weight:400;">(drawn over the image)</span></p>
+                <input type="text" id="maleq-cover-headline" value="<?php echo esc_attr($headline); ?>" maxlength="70"
+                       placeholder="Headline to overlay on the cover" style="width:100%;margin-bottom:8px;">
                 <p style="margin:0 0 8px;">
                     <label><input type="checkbox" id="maleq-cover-overlay" checked> Add the headline overlay (like the auto covers)</label>
                 </p>
@@ -382,6 +400,7 @@ function maleq_news_cover_box($post) {
         var keyword = document.getElementById('maleq-cover-keyword');
         var credit = document.getElementById('maleq-cover-credit');
         var creditUrl = document.getElementById('maleq-cover-credit-url');
+        var headlineIn = document.getElementById('maleq-cover-headline');
         var overlay = document.getElementById('maleq-cover-overlay');
         var status = document.getElementById('maleq-cover-status');
         var preview = document.getElementById('maleq-cover-preview');
@@ -394,6 +413,15 @@ function maleq_news_cover_box($post) {
             if (u) { preview.src = u; preview.style.display = ''; } else { preview.style.display = 'none'; }
         }
         urlIn.addEventListener('input', showPreview);
+
+        // The overlay text only matters when the overlay is on — disable it otherwise.
+        function syncHeadlineEnabled() {
+            if (!headlineIn) { return; }
+            headlineIn.disabled = !overlay.checked;
+            headlineIn.style.opacity = overlay.checked ? '' : '0.5';
+        }
+        overlay.addEventListener('change', syncHeadlineEnabled);
+        syncHeadlineEnabled();
 
         function api(path, body) {
             return fetch('/wp-json/maleq/v1/' + path, {
@@ -427,7 +455,8 @@ function maleq_news_cover_box($post) {
             setStatus('Importing…', true);
             var body = {
                 post_id: POST, image_url: u, overlay: overlay.checked,
-                credit: credit.value.trim(), credit_url: creditUrl.value.trim()
+                credit: credit.value.trim(), credit_url: creditUrl.value.trim(),
+                headline: headlineIn ? headlineIn.value.trim() : ''
             };
             // Carry the source/license through ONLY when the URL is still the one we
             // re-rolled (so source-correct attribution applies; a hand-pasted URL stays generic).
