@@ -194,6 +194,7 @@ function maleq_cover_set(WP_REST_Request $req) {
 
     return [
         'ok'      => true,
+        'att_id'  => $att_id,
         'thumb'   => get_the_post_thumbnail_url($post_id, 'medium'),
         'overlay' => $applied_overlay,
     ];
@@ -319,6 +320,10 @@ function maleq_news_cover_box($post) {
                     img.src = j.thumb + (j.thumb.indexOf('?') > -1 ? '&' : '?') + 't=' + Date.now();
                     img.style.display = '';
                     document.getElementById('maleq-cover-none').style.display = 'none';
+                }
+                // Sync the editor's featured-image state so a later "Update" doesn't revert it.
+                if (j.att_id && window.wp && wp.data && wp.data.dispatch && wp.data.select('core/editor')) {
+                    try { wp.data.dispatch('core/editor').editPost({ featured_media: parseInt(j.att_id, 10) }); } catch (e) {}
                 }
                 setStatus('✓ Cover updated' + (j.overlay ? ' (with overlay).' : ' (raw image).'));
             }).catch(function () { setStatus('Import failed.'); });
