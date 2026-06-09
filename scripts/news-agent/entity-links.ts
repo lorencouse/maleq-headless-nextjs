@@ -12,7 +12,9 @@
  *   2. Read that entity's external-ID properties from Wikidata and pick the best
  *      target for its kind:
  *        film / tv    → IMDb (P345) → Rotten Tomatoes (P1258) → Metacritic (P1712) → Wikipedia
- *        person       → IMDb name page (P345 nm…) → AllMusic artist (P1728) → Wikipedia
+ *        person       → politician/office-holder: official site (P856) → Wikipedia;
+ *                       entertainer: IMDb name page (P345 nm…) → AllMusic artist (P1728) → Wikipedia;
+ *                       everyone else → Wikipedia
  *        organization → official website (P856) → Wikipedia
  *        place        → official website (P856) → Wikipedia
  *        book         → Goodreads (P2969 book → P8383 work) → Wikipedia
@@ -119,6 +121,7 @@ interface ExternalIds {
   allmusicArtist: string | null;// P1728
   steam: string | null;       // P1733
   occupations: string[];      // P106  — occupation QIDs (drives person routing)
+  positionsHeld: number;      // P39   — count of public offices held (politician signal)
 }
 
 const EXTERNAL_PROPS: Record<Exclude<keyof ExternalIds, 'occupations'>, string> = {
@@ -139,6 +142,19 @@ const ENTERTAINER_OCCUPATIONS = new Set([
   'Q245068', 'Q947873', 'Q4610556', 'Q3357567', 'Q1141526', 'Q5716684', // comedian, TV presenter, model, drag queen (x2), dancer
 ]);
 
+/**
+ * Occupations that mean "public/political figure". These take PRECEDENCE over the
+ * entertainer check, because many politicians also carry an entertainer occupation
+ * in Wikidata (Trump → TV presenter; Reagan, Schwarzenegger, Zelensky → actor) and
+ * would otherwise be sent to IMDb. A politician links to their official site, else
+ * Wikipedia — never IMDb. Holding any public office (P39) is treated the same way.
+ */
+const POLITICIAN_OCCUPATIONS = new Set([
+  'Q82955',  // politician
+  'Q372436', // statesperson
+  'Q193391', // diplomat
+]);
+
 /** Pull the authoritative external IDs we care about from a Wikidata entity. */
 async function wikidataIds(qid: string): Promise<ExternalIds | null> {
   try {
@@ -148,11 +164,12 @@ async function wikidataIds(qid: string): Promise<ExternalIds | null> {
       const v = claims[p]?.[0]?.mainsnak?.datavalue?.value;
       return typeof v === 'string' ? v : null;
     };
-    const out = { occupations: [] as string[] } as ExternalIds;
+    const out = { occupations: [] as string[], positionsHeld: 0 } as ExternalIds;
     for (const [key, prop] of Object.entries(EXTERNAL_PROPS)) out[key as keyof ExternalIds] = val(prop) as any;
     out.occupations = (claims.P106 || [])
       .map((c: any) => c?.mainsnak?.datavalue?.value?.id)
       .filter((id: any): id is string => typeof id === 'string');
+    out.positionsHeld = Array.isArray(claims.P39) ? claims.P39.length : 0; // P39 = position held
     return out;
   } catch {
     return null;
@@ -180,8 +197,17 @@ function bestUrl(kind: EntityKind, ids: ExternalIds | null, wikiUrl: string): { 
       if (mc) return { url: mc, source: 'metacritic' };
       break;
     case 'person': {
-      // Only ENTERTAINERS go to IMDb/AllMusic — a politician or activist linking to
-      // IMDb reads as unprofessional, so non-entertainers fall through to Wikipedia.
+      // Politicians / public-office holders FIRST — they take precedence over the
+      // entertainer check (many carry an entertainer occupation too: Trump → TV
+      // presenter, Reagan/Schwarzenegger/Zelensky → actor). They link to their
+      // official site if known, else Wikipedia — never IMDb.
+      const politician = ids?.occupations?.some((q) => POLITICIAN_OCCUPATIONS.has(q)) || (ids?.positionsHeld ?? 0) > 0;
+      if (politician) {
+        if (site) return { url: site, source: 'official' };
+        break; // → Wikipedia
+      }
+      // Otherwise only ENTERTAINERS go to IMDb/AllMusic; everyone else (activists,
+      // executives, athletes, …) falls through to Wikipedia, which reads better.
       const entertainer = ids?.occupations?.some((q) => ENTERTAINER_OCCUPATIONS.has(q));
       if (entertainer && ids?.imdb?.startsWith('nm')) return { url: imdbUrl(ids.imdb)!, source: 'imdb' };
       if (entertainer && allmusicArtist) return { url: allmusicArtist, source: 'allmusic' };
