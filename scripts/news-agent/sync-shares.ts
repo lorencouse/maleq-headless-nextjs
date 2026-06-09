@@ -52,6 +52,7 @@ interface Candidate {
   socialText: string;
   hashtags: string[];
   shareUrls: Record<string, string>;
+  sharedAt: string;
 }
 
 /** Insert-or-update a single postmeta row (wp_postmeta has no natural unique key). */
@@ -72,7 +73,12 @@ async function deleteMeta(db: any, postId: number, key: string) {
 }
 
 async function findApprovedUnshared(db: any): Promise<Candidate[]> {
-  // Published News posts that are ours and not yet fully shared.
+  // Published News posts that are ours, newest first. We deliberately do NOT filter on
+  // `_maleq_news_shared_at`: the maleq-news-autoshare.php plugin sets that flag on publish
+  // based only on ITS platforms (Bluesky + Mastodon), which would hide posts still needing
+  // Pinterest/Tumblr. Instead we select the newest posts and decide per-platform from
+  // `share_urls` in main() — so this path completes whatever the plugin couldn't. The LIMIT
+  // bounds the scan to recent posts (older fully-shared ones simply fall out of the window).
   const [rows] = await db.query<RowDataPacket[]>(
     `SELECT p.ID, p.post_title, p.post_name, p.post_excerpt,
             src.meta_value     AS source_url,
@@ -96,7 +102,6 @@ async function findApprovedUnshared(db: any): Promise<Candidate[]> {
        LEFT JOIN wp_postmeta cov    ON cov.post_id = p.ID    AND cov.meta_key = ?
        LEFT JOIN wp_postmeta hl     ON hl.post_id = p.ID     AND hl.meta_key = ?
       WHERE p.post_type = 'post' AND p.post_status = 'publish'
-        AND shared.meta_value IS NULL
       ORDER BY p.post_date DESC
       LIMIT ?`,
     [NEWS_CATEGORY.slug, META.sourceUrl, META.imageUrl, META.sharedAt, META.shareUrls, META.socialText, META.hashtags, META.coverUrl, META.coverHeadline, LIMIT],
@@ -112,6 +117,7 @@ async function findApprovedUnshared(db: any): Promise<Candidate[]> {
     socialText: r.social_text ? String(r.social_text) : '',
     hashtags: r.hashtags ? safeJsonArray(String(r.hashtags)) : [],
     shareUrls: r.share_urls ? safeJson(String(r.share_urls)) : {},
+    sharedAt: r.shared_at ? String(r.shared_at) : '',
   }));
 }
 
@@ -157,8 +163,12 @@ async function main() {
     const label = `#${c.id} "${c.title.slice(0, 55)}"`;
 
     if (todo.length === 0) {
-      console.log(`  ⤳ ${label} — already shared everywhere; marking done.`);
-      if (WRITE) await upsertMeta(db, c.id, META.sharedAt, new Date().toISOString());
+      // Fully shared to every enabled platform. We re-scan recent posts each run, so stay
+      // quiet unless this is the moment it becomes complete (shared_at not yet stamped).
+      if (WRITE && !c.sharedAt) {
+        await upsertMeta(db, c.id, META.sharedAt, new Date().toISOString());
+        console.log(`  ⤳ ${label} — shared everywhere; marked done.`);
+      }
       continue;
     }
 
