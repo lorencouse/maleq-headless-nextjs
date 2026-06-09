@@ -165,6 +165,14 @@ ssh hetzner 'chown -R maleq-wp:maleq-wp /home/maleq-wp/news-agent'
 ```
 (The server `.env` is not in the repo — edit it in place on the server when creds change.)
 
+`cron-run.sh` is version-controlled at `scripts/news-agent/cron-run.sh`, but on the server it
+lives at the app **root** (`/home/maleq-wp/news-agent/cron-run.sh`), not under `scripts/`. The
+`-azR` command above would place it under `scripts/news-agent/`, so deploy it explicitly:
+```bash
+rsync -az scripts/news-agent/cron-run.sh hetzner:/home/maleq-wp/news-agent/cron-run.sh
+```
+(`maleq-news-autoshare.php` is also deployed separately — into the WP install's `wp-content/mu-plugins/`.)
+
 ## Sharing approved posts (Phase 2)
 
 Social adapters live in `scripts/news-agent/social/` (`bluesky.ts`, `mastodon.ts`; Meta is
