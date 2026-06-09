@@ -1,0 +1,8957 @@
+[
+  {
+    "term_id": 1811,
+    "name": "Black",
+    "slug": "black",
+    "products": 1678,
+    "variations": 1302,
+    "action": "KEEP",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 1908,
+    "name": "Pink",
+    "slug": "pink",
+    "products": 1058,
+    "variations": 969,
+    "action": "KEEP",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 1922,
+    "name": "Purple",
+    "slug": "purple",
+    "products": 908,
+    "variations": 831,
+    "action": "KEEP",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 1862,
+    "name": "Red",
+    "slug": "red",
+    "products": 752,
+    "variations": 600,
+    "action": "KEEP",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 1892,
+    "name": "Blue",
+    "slug": "blue",
+    "products": 651,
+    "variations": 577,
+    "action": "KEEP",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 1812,
+    "name": "White",
+    "slug": "white",
+    "products": 303,
+    "variations": 267,
+    "action": "KEEP",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 1813,
+    "name": "Clear",
+    "slug": "clear",
+    "products": 264,
+    "variations": 235,
+    "action": "KEEP",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 2073,
+    "name": "Brown",
+    "slug": "brown",
+    "products": 196,
+    "variations": 159,
+    "action": "KEEP",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 1909,
+    "name": "Green",
+    "slug": "green",
+    "products": 175,
+    "variations": 156,
+    "action": "KEEP",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 2692,
+    "name": "Beige",
+    "slug": "beige",
+    "products": 170,
+    "variations": 140,
+    "action": "KEEP",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 1907,
+    "name": "Silver",
+    "slug": "silver",
+    "products": 119,
+    "variations": 99,
+    "action": "KEEP",
+    "colors": [
+      "silver"
+    ],
+    "variationValue": "silver"
+  },
+  {
+    "term_id": 2306,
+    "name": "Tan",
+    "slug": "tan",
+    "products": 117,
+    "variations": 91,
+    "action": "KEEP",
+    "colors": [
+      "tan"
+    ],
+    "variationValue": "tan"
+  },
+  {
+    "term_id": 2037,
+    "name": "Teal",
+    "slug": "teal",
+    "products": 75,
+    "variations": 66,
+    "action": "KEEP",
+    "colors": [
+      "teal"
+    ],
+    "variationValue": "teal"
+  },
+  {
+    "term_id": 1921,
+    "name": "Orange",
+    "slug": "orange",
+    "products": 74,
+    "variations": 61,
+    "action": "KEEP",
+    "colors": [
+      "orange"
+    ],
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 1911,
+    "name": "Gray",
+    "slug": "gray",
+    "products": 73,
+    "variations": 54,
+    "action": "KEEP",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 8128,
+    "name": "Sm",
+    "slug": "sm",
+    "products": 63,
+    "variations": 77,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Sm",
+    "note": "size"
+  },
+  {
+    "term_id": 2290,
+    "name": "Beige, Light Skin Tone",
+    "slug": "beige-light-skin-tone",
+    "products": 59,
+    "variations": 45,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 1910,
+    "name": "Yellow",
+    "slug": "yellow",
+    "products": 56,
+    "variations": 50,
+    "action": "KEEP",
+    "colors": [
+      "yellow"
+    ],
+    "variationValue": "yellow"
+  },
+  {
+    "term_id": 2118,
+    "name": "Gold",
+    "slug": "gold",
+    "products": 54,
+    "variations": 49,
+    "action": "KEEP",
+    "colors": [
+      "gold"
+    ],
+    "variationValue": "gold"
+  },
+  {
+    "term_id": 4729,
+    "name": "Turquoise",
+    "slug": "turquoise",
+    "products": 52,
+    "variations": 50,
+    "action": "KEEP",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 8144,
+    "name": "Lxl",
+    "slug": "lxl",
+    "products": 46,
+    "variations": 58,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Lxl",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 2697,
+    "name": "Light Skin Tone, Beige",
+    "slug": "light-skin-tone-beige",
+    "products": 41,
+    "variations": 32,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 1914,
+    "name": "Burgundy",
+    "slug": "burgundy",
+    "products": 34,
+    "variations": 23,
+    "action": "KEEP",
+    "colors": [
+      "burgundy"
+    ],
+    "variationValue": "burgundy"
+  },
+  {
+    "term_id": 2457,
+    "name": "Hot Pink",
+    "slug": "hot-pink",
+    "products": 31,
+    "variations": 23,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 2283,
+    "name": "Flesh",
+    "slug": "flesh",
+    "products": 29,
+    "variations": 23,
+    "action": "KEEP",
+    "colors": [
+      "flesh"
+    ],
+    "variationValue": "flesh"
+  },
+  {
+    "term_id": 1956,
+    "name": "Rose",
+    "slug": "rose",
+    "products": 28,
+    "variations": 21,
+    "action": "KEEP",
+    "colors": [
+      "rose"
+    ],
+    "variationValue": "rose"
+  },
+  {
+    "term_id": 2047,
+    "name": "Coral",
+    "slug": "coral",
+    "products": 27,
+    "variations": 9,
+    "action": "KEEP",
+    "colors": [
+      "coral"
+    ],
+    "variationValue": "coral"
+  },
+  {
+    "term_id": 2288,
+    "name": "Tan, Medium Skin Tone",
+    "slug": "tan-medium-skin-tone",
+    "products": 27,
+    "variations": 21,
+    "action": "COLOR",
+    "colors": [
+      "tan"
+    ],
+    "variationValue": "tan"
+  },
+  {
+    "term_id": 2519,
+    "name": "Navy",
+    "slug": "navy",
+    "products": 27,
+    "variations": 21,
+    "action": "KEEP",
+    "colors": [
+      "navy"
+    ],
+    "variationValue": "navy"
+  },
+  {
+    "term_id": 1997,
+    "name": "Smoke",
+    "slug": "smoke",
+    "products": 26,
+    "variations": 22,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 3259,
+    "name": "Ivory",
+    "slug": "ivory",
+    "products": 25,
+    "variations": 21,
+    "action": "KEEP",
+    "colors": [
+      "ivory"
+    ],
+    "variationValue": "ivory"
+  },
+  {
+    "term_id": 2271,
+    "name": "Brown, Medium Skin Tone",
+    "slug": "brown-medium-skin-tone",
+    "products": 24,
+    "variations": 19,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2454,
+    "name": "Neon Pink",
+    "slug": "neon-pink",
+    "products": 24,
+    "variations": 22,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 3156,
+    "name": "Flesh White, Beige",
+    "slug": "flesh-white-beige",
+    "products": 24,
+    "variations": 25,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "white",
+      "beige"
+    ],
+    "variationValue": "flesh / white / beige"
+  },
+  {
+    "term_id": 2034,
+    "name": "Lavender",
+    "slug": "lavender",
+    "products": 23,
+    "variations": 22,
+    "action": "KEEP",
+    "colors": [
+      "lavender"
+    ],
+    "variationValue": "lavender"
+  },
+  {
+    "term_id": 2515,
+    "name": "Teal Green",
+    "slug": "teal-green",
+    "products": 23,
+    "variations": 21,
+    "action": "COLOR",
+    "colors": [
+      "teal",
+      "green"
+    ],
+    "variationValue": "teal / green"
+  },
+  {
+    "term_id": 2710,
+    "name": "Beige, Light",
+    "slug": "beige-light",
+    "products": 23,
+    "variations": 18,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 2168,
+    "name": "Assorted",
+    "slug": "assorted",
+    "products": 22,
+    "variations": 21,
+    "action": "COLOR",
+    "colors": [
+      "multicolor"
+    ],
+    "variationValue": "multicolor"
+  },
+  {
+    "term_id": 2458,
+    "name": "Nude",
+    "slug": "nude",
+    "products": 21,
+    "variations": 17,
+    "action": "KEEP",
+    "colors": [
+      "nude"
+    ],
+    "variationValue": "nude"
+  },
+  {
+    "term_id": 2709,
+    "name": "Brown, Dark Skin Tone",
+    "slug": "brown-dark-skin-tone",
+    "products": 21,
+    "variations": 14,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2779,
+    "name": "Medium",
+    "slug": "medium",
+    "products": 20,
+    "variations": 29,
+    "action": "COLOR",
+    "colors": [
+      "tan"
+    ],
+    "variationValue": "tan"
+  },
+  {
+    "term_id": 2992,
+    "name": "Magenta",
+    "slug": "magenta",
+    "products": 20,
+    "variations": 16,
+    "action": "KEEP",
+    "colors": [
+      "magenta"
+    ],
+    "variationValue": "magenta"
+  },
+  {
+    "term_id": 2127,
+    "name": "Rose Gold",
+    "slug": "rose-gold",
+    "products": 19,
+    "variations": 15,
+    "action": "COLOR",
+    "colors": [
+      "rose",
+      "gold"
+    ],
+    "variationValue": "rose / gold"
+  },
+  {
+    "term_id": 7246,
+    "name": "Violet",
+    "slug": "violet",
+    "products": 18,
+    "variations": 16,
+    "action": "KEEP",
+    "colors": [
+      "violet"
+    ],
+    "variationValue": "violet"
+  },
+  {
+    "term_id": 8047,
+    "name": "L",
+    "slug": "l",
+    "products": 18,
+    "variations": 33,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "L",
+    "note": "size"
+  },
+  {
+    "term_id": 8113,
+    "name": "S",
+    "slug": "s",
+    "products": 17,
+    "variations": 30,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "S",
+    "note": "size"
+  },
+  {
+    "term_id": 8150,
+    "name": "Ml",
+    "slug": "ml",
+    "products": 17,
+    "variations": 23,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Ml",
+    "note": "bare-unit"
+  },
+  {
+    "term_id": 8224,
+    "name": "Large",
+    "slug": "large",
+    "products": 17,
+    "variations": 23,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Large",
+    "note": "size"
+  },
+  {
+    "term_id": 2698,
+    "name": "Dark Skin Tone, Brown",
+    "slug": "dark-skin-tone-brown",
+    "products": 16,
+    "variations": 15,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 8147,
+    "name": "Os",
+    "slug": "os",
+    "products": 16,
+    "variations": 20,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Os",
+    "note": "size"
+  },
+  {
+    "term_id": 8528,
+    "name": "Small",
+    "slug": "small",
+    "products": 16,
+    "variations": 25,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Small",
+    "note": "size"
+  },
+  {
+    "term_id": 2502,
+    "name": "S/m",
+    "slug": "s-m",
+    "products": 15,
+    "variations": 23,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "S/m",
+    "note": "size"
+  },
+  {
+    "term_id": 2691,
+    "name": "Mocha, Medium Skin Tone",
+    "slug": "mocha-medium-skin-tone",
+    "products": 15,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 7243,
+    "name": "Neon Green",
+    "slug": "neon-green",
+    "products": 15,
+    "variations": 22,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 2049,
+    "name": "Black, Red",
+    "slug": "black-red",
+    "products": 14,
+    "variations": 12,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "red"
+    ],
+    "variationValue": "black / red"
+  },
+  {
+    "term_id": 2216,
+    "name": "Black, Silver",
+    "slug": "black-silver",
+    "products": 14,
+    "variations": 13,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "silver"
+    ],
+    "variationValue": "black / silver"
+  },
+  {
+    "term_id": 3001,
+    "name": "Rainbow",
+    "slug": "rainbow",
+    "products": 14,
+    "variations": 14,
+    "action": "KEEP",
+    "colors": [
+      "rainbow"
+    ],
+    "variationValue": "rainbow"
+  },
+  {
+    "term_id": 8148,
+    "name": "Queen",
+    "slug": "queen",
+    "products": 14,
+    "variations": 16,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Queen",
+    "note": "size"
+  },
+  {
+    "term_id": 2139,
+    "name": "Multi-color",
+    "slug": "multi-color",
+    "products": 13,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "multicolor"
+    ],
+    "variationValue": "multicolor"
+  },
+  {
+    "term_id": 2682,
+    "name": "Fuchsia",
+    "slug": "fuchsia",
+    "products": 13,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 3007,
+    "name": "Multi-colors",
+    "slug": "multi-colors",
+    "products": 13,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "multicolor"
+    ],
+    "variationValue": "multicolor"
+  },
+  {
+    "term_id": 8112,
+    "name": "L Xl",
+    "slug": "l-xl",
+    "products": 13,
+    "variations": 21,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "L Xl",
+    "note": "size"
+  },
+  {
+    "term_id": 2702,
+    "name": "Dark Brown",
+    "slug": "dark-brown",
+    "products": 12,
+    "variations": 10,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2991,
+    "name": "Magenta, Pink",
+    "slug": "magenta-pink",
+    "products": 12,
+    "variations": 12,
+    "action": "COLOR",
+    "colors": [
+      "magenta",
+      "pink"
+    ],
+    "variationValue": "magenta / pink"
+  },
+  {
+    "term_id": 3112,
+    "name": "Flesh Beige",
+    "slug": "flesh-beige",
+    "products": 12,
+    "variations": 7,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "beige"
+    ],
+    "variationValue": "flesh / beige"
+  },
+  {
+    "term_id": 5572,
+    "name": "Wine",
+    "slug": "wine",
+    "products": 12,
+    "variations": 11,
+    "action": "KEEP",
+    "colors": [
+      "wine"
+    ],
+    "variationValue": "wine"
+  },
+  {
+    "term_id": 7252,
+    "name": "Neon Orange",
+    "slug": "neon-orange",
+    "products": 12,
+    "variations": 10,
+    "action": "COLOR",
+    "colors": [
+      "orange"
+    ],
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 2726,
+    "name": "Neon Purple",
+    "slug": "neon-purple",
+    "products": 11,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 3244,
+    "name": "Kiwi Green",
+    "slug": "kiwi-green",
+    "products": 11,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 8111,
+    "name": "Xl",
+    "slug": "xl",
+    "products": 11,
+    "variations": 13,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Xl",
+    "note": "size"
+  },
+  {
+    "term_id": 2072,
+    "name": "Cobalt Blue",
+    "slug": "cobalt-blue",
+    "products": 10,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 2463,
+    "name": "Black, White",
+    "slug": "black-white",
+    "products": 10,
+    "variations": 7,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "variationValue": "black / white"
+  },
+  {
+    "term_id": 2503,
+    "name": "Royal Blue",
+    "slug": "royal-blue",
+    "products": 10,
+    "variations": 9,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 2721,
+    "name": "Light, Beige",
+    "slug": "light-beige",
+    "products": 10,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 3067,
+    "name": "Black, Beige",
+    "slug": "black-beige",
+    "products": 10,
+    "variations": 9,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "beige"
+    ],
+    "variationValue": "black / beige"
+  },
+  {
+    "term_id": 3462,
+    "name": "Light",
+    "slug": "light",
+    "products": 10,
+    "variations": 11,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 5571,
+    "name": "Light Pink",
+    "slug": "light-pink",
+    "products": 10,
+    "variations": 9,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 2727,
+    "name": "Neon Blue",
+    "slug": "neon-blue",
+    "products": 9,
+    "variations": 7,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 3088,
+    "name": "Peach Orange",
+    "slug": "peach-orange",
+    "products": 9,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "orange"
+    ],
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 3128,
+    "name": "Lavender, Purple",
+    "slug": "lavender-purple",
+    "products": 9,
+    "variations": 10,
+    "action": "COLOR",
+    "colors": [
+      "lavender",
+      "purple"
+    ],
+    "variationValue": "lavender / purple"
+  },
+  {
+    "term_id": 3210,
+    "name": "2",
+    "slug": "2",
+    "products": 9,
+    "variations": 14,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 3438,
+    "name": "Turquoise Green",
+    "slug": "turquoise-green",
+    "products": 9,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "turquoise",
+      "green"
+    ],
+    "variationValue": "turquoise / green"
+  },
+  {
+    "term_id": 8327,
+    "name": "Qs",
+    "slug": "qs",
+    "products": 9,
+    "variations": 10,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Qs",
+    "note": "size"
+  },
+  {
+    "term_id": 4345,
+    "name": "Sky Blue",
+    "slug": "sky-blue",
+    "products": 8,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 2119,
+    "name": "(net)",
+    "slug": "net",
+    "products": 7,
+    "variations": 8,
+    "action": "DELETE",
+    "note": "garbage"
+  },
+  {
+    "term_id": 2143,
+    "name": "Red, Black",
+    "slug": "red-black",
+    "products": 7,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "black"
+    ],
+    "variationValue": "red / black"
+  },
+  {
+    "term_id": 2284,
+    "name": "Caramel Tan",
+    "slug": "caramel-tan",
+    "products": 7,
+    "variations": 7,
+    "action": "COLOR",
+    "colors": [
+      "brown",
+      "tan"
+    ],
+    "variationValue": "brown / tan"
+  },
+  {
+    "term_id": 2730,
+    "name": "Flesh White",
+    "slug": "flesh-white",
+    "products": 7,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "white"
+    ],
+    "variationValue": "flesh / white"
+  },
+  {
+    "term_id": 3066,
+    "name": "Black, Clear",
+    "slug": "black-clear",
+    "products": 7,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "clear"
+    ],
+    "variationValue": "black / clear"
+  },
+  {
+    "term_id": 3287,
+    "name": "Ivory, Beige",
+    "slug": "ivory-beige",
+    "products": 7,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "ivory",
+      "beige"
+    ],
+    "variationValue": "ivory / beige"
+  },
+  {
+    "term_id": 3313,
+    "name": "Silver, Pink",
+    "slug": "silver-pink",
+    "products": 7,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "pink"
+    ],
+    "variationValue": "silver / pink"
+  },
+  {
+    "term_id": 3352,
+    "name": "Ivory, Beige, Light Skin",
+    "slug": "ivory-beige-light-skin",
+    "products": 7,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "ivory",
+      "beige"
+    ],
+    "variationValue": "ivory / beige"
+  },
+  {
+    "term_id": 4362,
+    "name": "Light Blue",
+    "slug": "light-blue",
+    "products": 7,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7254,
+    "name": "Plum",
+    "slug": "plum",
+    "products": 7,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 8009,
+    "name": "8",
+    "slug": "8",
+    "products": 7,
+    "variations": 7,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "8",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2215,
+    "name": "Silver/black",
+    "slug": "silver-black",
+    "products": 6,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "black"
+    ],
+    "variationValue": "silver / black"
+  },
+  {
+    "term_id": 2285,
+    "name": "Chocolate Brown",
+    "slug": "chocolate-brown",
+    "products": 6,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2289,
+    "name": "Caramel",
+    "slug": "caramel",
+    "products": 6,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2459,
+    "name": "O/s",
+    "slug": "o-s",
+    "products": 6,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "O/s",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 2530,
+    "name": "Q/s",
+    "slug": "q-s",
+    "products": 6,
+    "variations": 5,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Q/s",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 2701,
+    "name": "Beige, White",
+    "slug": "beige-white",
+    "products": 6,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "white"
+    ],
+    "variationValue": "beige / white"
+  },
+  {
+    "term_id": 2968,
+    "name": "Clear, Purple",
+    "slug": "clear-purple",
+    "products": 6,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "purple"
+    ],
+    "variationValue": "clear / purple"
+  },
+  {
+    "term_id": 3069,
+    "name": "Navy Blue",
+    "slug": "navy-blue",
+    "products": 6,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "navy",
+      "blue"
+    ],
+    "variationValue": "navy / blue"
+  },
+  {
+    "term_id": 3129,
+    "name": "Aqua Green",
+    "slug": "aqua-green",
+    "products": 6,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "teal",
+      "green"
+    ],
+    "variationValue": "teal / green"
+  },
+  {
+    "term_id": 3186,
+    "name": "Clear, Pink",
+    "slug": "clear-pink",
+    "products": 6,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "pink"
+    ],
+    "variationValue": "clear / pink"
+  },
+  {
+    "term_id": 3187,
+    "name": "Black, Brown",
+    "slug": "black-brown",
+    "products": 6,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "brown"
+    ],
+    "variationValue": "black / brown"
+  },
+  {
+    "term_id": 3248,
+    "name": "Lilac, Purple",
+    "slug": "lilac-purple",
+    "products": 6,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 3409,
+    "name": "1",
+    "slug": "1",
+    "products": 6,
+    "variations": 11,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 3439,
+    "name": "Transparent, Clear",
+    "slug": "transparent-clear",
+    "products": 6,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 3486,
+    "name": "Pink, Silver",
+    "slug": "pink-silver",
+    "products": 6,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "silver"
+    ],
+    "variationValue": "pink / silver"
+  },
+  {
+    "term_id": 3500,
+    "name": "Black, Gold",
+    "slug": "black-gold",
+    "products": 6,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "gold"
+    ],
+    "variationValue": "black / gold"
+  },
+  {
+    "term_id": 4128,
+    "name": "Copper",
+    "slug": "copper",
+    "products": 6,
+    "variations": 4,
+    "action": "KEEP",
+    "colors": [
+      "copper"
+    ],
+    "variationValue": "copper"
+  },
+  {
+    "term_id": 7260,
+    "name": "Forest Green",
+    "slug": "forest-green",
+    "products": 6,
+    "variations": 9,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 7262,
+    "name": "Neon",
+    "slug": "neon",
+    "products": 6,
+    "variations": 3,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8046,
+    "name": "2xl",
+    "slug": "2xl",
+    "products": 6,
+    "variations": 8,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2xl",
+    "note": "size"
+  },
+  {
+    "term_id": 8048,
+    "name": "M",
+    "slug": "m",
+    "products": 6,
+    "variations": 10,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "M",
+    "note": "size"
+  },
+  {
+    "term_id": 2076,
+    "name": "Animal Print",
+    "slug": "animal-print",
+    "products": 5,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 2212,
+    "name": "Natural",
+    "slug": "natural",
+    "products": 5,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 2286,
+    "name": "Flesh Vanilla",
+    "slug": "flesh-vanilla",
+    "products": 5,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "beige"
+    ],
+    "variationValue": "flesh / beige"
+  },
+  {
+    "term_id": 2504,
+    "name": "Blue, Black",
+    "slug": "blue-black",
+    "products": 5,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "black"
+    ],
+    "variationValue": "blue / black"
+  },
+  {
+    "term_id": 2708,
+    "name": "Dark Skin Tone, Black",
+    "slug": "dark-skin-tone-black",
+    "products": 5,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 2728,
+    "name": "Aqua Blue",
+    "slug": "aqua-blue",
+    "products": 5,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "teal",
+      "blue"
+    ],
+    "variationValue": "teal / blue"
+  },
+  {
+    "term_id": 2960,
+    "name": "Glow-in-the-dark",
+    "slug": "glow-in-the-dark",
+    "products": 5,
+    "variations": 5,
+    "action": "KEEP",
+    "colors": [
+      "glow-in-the-dark"
+    ],
+    "variationValue": "glow-in-the-dark"
+  },
+  {
+    "term_id": 3005,
+    "name": "Light Skin Beige, Flesh",
+    "slug": "light-skin-beige-flesh",
+    "products": 5,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "flesh"
+    ],
+    "variationValue": "beige / flesh"
+  },
+  {
+    "term_id": 3015,
+    "name": "Black, Purple",
+    "slug": "black-purple",
+    "products": 5,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "purple"
+    ],
+    "variationValue": "black / purple"
+  },
+  {
+    "term_id": 3041,
+    "name": "Red, White",
+    "slug": "red-white",
+    "products": 5,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "white"
+    ],
+    "variationValue": "red / white"
+  },
+  {
+    "term_id": 3068,
+    "name": "Black, Pink",
+    "slug": "black-pink",
+    "products": 5,
+    "variations": 5,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "pink"
+    ],
+    "variationValue": "black / pink"
+  },
+  {
+    "term_id": 4242,
+    "name": "Yellow, Green",
+    "slug": "yellow-green",
+    "products": 5,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "yellow",
+      "green"
+    ],
+    "variationValue": "yellow / green"
+  },
+  {
+    "term_id": 4860,
+    "name": "Black, Green",
+    "slug": "black-green",
+    "products": 5,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "green"
+    ],
+    "variationValue": "black / green"
+  },
+  {
+    "term_id": 7251,
+    "name": "Midnight",
+    "slug": "midnight",
+    "products": 5,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 8142,
+    "name": "7",
+    "slug": "7",
+    "products": 5,
+    "variations": 6,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8166,
+    "name": "Queen Size",
+    "slug": "queen-size",
+    "products": 5,
+    "variations": 9,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Queen Size",
+    "note": "size"
+  },
+  {
+    "term_id": 2246,
+    "name": "Violet Purple",
+    "slug": "violet-purple",
+    "products": 4,
+    "variations": 6,
+    "action": "COLOR",
+    "colors": [
+      "violet",
+      "purple"
+    ],
+    "variationValue": "violet / purple"
+  },
+  {
+    "term_id": 2531,
+    "name": "White, Blue",
+    "slug": "white-blue",
+    "products": 4,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "blue"
+    ],
+    "variationValue": "white / blue"
+  },
+  {
+    "term_id": 2700,
+    "name": "Medium Color Skin Tan",
+    "slug": "medium-color-skin-tan",
+    "products": 4,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "tan"
+    ],
+    "variationValue": "tan"
+  },
+  {
+    "term_id": 2777,
+    "name": "Blue, Clear",
+    "slug": "blue-clear",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "clear"
+    ],
+    "variationValue": "blue / clear"
+  },
+  {
+    "term_id": 2778,
+    "name": "Vanilla, Light Skin Tone",
+    "slug": "vanilla-light-skin-tone",
+    "products": 4,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 2918,
+    "name": "3",
+    "slug": "3",
+    "products": 4,
+    "variations": 4,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "3",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 3008,
+    "name": "Coral Orange",
+    "slug": "coral-orange",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "coral",
+      "orange"
+    ],
+    "variationValue": "coral / orange"
+  },
+  {
+    "term_id": 3076,
+    "name": "Teal Blue",
+    "slug": "teal-blue",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "teal",
+      "blue"
+    ],
+    "variationValue": "teal / blue"
+  },
+  {
+    "term_id": 3108,
+    "name": "Gunmetal Gray",
+    "slug": "gunmetal-gray",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 3125,
+    "name": "Aqua",
+    "slug": "aqua",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "teal"
+    ],
+    "variationValue": "teal"
+  },
+  {
+    "term_id": 3166,
+    "name": "Clear, Blue",
+    "slug": "clear-blue",
+    "products": 4,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "blue"
+    ],
+    "variationValue": "clear / blue"
+  },
+  {
+    "term_id": 3465,
+    "name": "Light Purple",
+    "slug": "light-purple",
+    "products": 4,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 3468,
+    "name": "Plum Purple",
+    "slug": "plum-purple",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 3474,
+    "name": "Pink, White",
+    "slug": "pink-white",
+    "products": 4,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "white"
+    ],
+    "variationValue": "pink / white"
+  },
+  {
+    "term_id": 3489,
+    "name": "Silver, Red",
+    "slug": "silver-red",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "red"
+    ],
+    "variationValue": "silver / red"
+  },
+  {
+    "term_id": 4364,
+    "name": "Light Green",
+    "slug": "light-green",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 4365,
+    "name": "Dark Green",
+    "slug": "dark-green",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 4787,
+    "name": "\"",
+    "slug": "",
+    "products": 4,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "garbage"
+  },
+  {
+    "term_id": 5310,
+    "name": "Grey",
+    "slug": "grey",
+    "products": 4,
+    "variations": 14,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 5754,
+    "name": "Cherry",
+    "slug": "cherry",
+    "products": 4,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 7255,
+    "name": "Indigo",
+    "slug": "indigo",
+    "products": 4,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7344,
+    "name": "Latte, Medium Skin Tone",
+    "slug": "latte-medium-skin-tone",
+    "products": 4,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 7721,
+    "name": "Silver, Blue",
+    "slug": "silver-blue",
+    "products": 4,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "blue"
+    ],
+    "variationValue": "silver / blue"
+  },
+  {
+    "term_id": 8141,
+    "name": "6",
+    "slug": "6",
+    "products": 4,
+    "variations": 4,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2048,
+    "name": "Coral Pink",
+    "slug": "coral-pink",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "coral",
+      "pink"
+    ],
+    "variationValue": "coral / pink"
+  },
+  {
+    "term_id": 2074,
+    "name": "Caramel Brown",
+    "slug": "caramel-brown",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2077,
+    "name": "Jet Black",
+    "slug": "jet-black",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 2142,
+    "name": "Smoke, Gray",
+    "slug": "smoke-gray",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 2251,
+    "name": "Translucent",
+    "slug": "translucent",
+    "products": 3,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 2279,
+    "name": "White, Silver",
+    "slug": "white-silver",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "silver"
+    ],
+    "variationValue": "white / silver"
+  },
+  {
+    "term_id": 2693,
+    "name": "Chocolate, Dark Brown",
+    "slug": "chocolate-dark-brown",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2729,
+    "name": "Periwinkle",
+    "slug": "periwinkle",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 2744,
+    "name": "Black, Blue",
+    "slug": "black-blue",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "blue"
+    ],
+    "variationValue": "black / blue"
+  },
+  {
+    "term_id": 2755,
+    "name": "Strawberry",
+    "slug": "strawberry",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 2988,
+    "name": "Berry",
+    "slug": "berry",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 2990,
+    "name": "Charcoal",
+    "slug": "charcoal",
+    "products": 3,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 3014,
+    "name": "Silver, Purple",
+    "slug": "silver-purple",
+    "products": 3,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "purple"
+    ],
+    "variationValue": "silver / purple"
+  },
+  {
+    "term_id": 3077,
+    "name": "Tiffany Blue",
+    "slug": "tiffany-blue",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 3097,
+    "name": "Multicolor",
+    "slug": "multicolor",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "multicolor"
+    ],
+    "variationValue": "multicolor"
+  },
+  {
+    "term_id": 3380,
+    "name": "Clear, Yellow",
+    "slug": "clear-yellow",
+    "products": 3,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "yellow"
+    ],
+    "variationValue": "clear / yellow"
+  },
+  {
+    "term_id": 3445,
+    "name": "12in/ 30cm",
+    "slug": "12in-30cm",
+    "products": 3,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "12in/ 30cm",
+    "note": "size"
+  },
+  {
+    "term_id": 4095,
+    "name": "Vanilla",
+    "slug": "vanilla",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 4349,
+    "name": "Electric Blue",
+    "slug": "electric-blue",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 4518,
+    "name": "White, Green",
+    "slug": "white-green",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "green"
+    ],
+    "variationValue": "white / green"
+  },
+  {
+    "term_id": 7257,
+    "name": "Midnight Blue",
+    "slug": "midnight-blue",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7259,
+    "name": "Dark Purple",
+    "slug": "dark-purple",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 7263,
+    "name": "Neon Yellow",
+    "slug": "neon-yellow",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "yellow"
+    ],
+    "variationValue": "yellow"
+  },
+  {
+    "term_id": 7383,
+    "name": "2x Blac",
+    "slug": "2x-blac",
+    "products": 3,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 7548,
+    "name": "Lime Green",
+    "slug": "lime-green",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 7556,
+    "name": "Black Licorice",
+    "slug": "black-licorice",
+    "products": 3,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Black Licorice",
+    "note": "flavor"
+  },
+  {
+    "term_id": 7557,
+    "name": "Bubblegum Pink",
+    "slug": "bubblegum-pink",
+    "products": 3,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7709,
+    "name": "Plaid, Red, Black",
+    "slug": "plaid-red-black",
+    "products": 3,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "red",
+      "black"
+    ],
+    "variationValue": "multicolor / red / black"
+  },
+  {
+    "term_id": 8072,
+    "name": "10",
+    "slug": "10",
+    "products": 3,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "10",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8130,
+    "name": "Lg",
+    "slug": "lg",
+    "products": 3,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Lg",
+    "note": "size"
+  },
+  {
+    "term_id": 8154,
+    "name": "40",
+    "slug": "40",
+    "products": 3,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "40",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8155,
+    "name": "42",
+    "slug": "42",
+    "products": 3,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "42",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8156,
+    "name": "44",
+    "slug": "44",
+    "products": 3,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "44",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8158,
+    "name": "36",
+    "slug": "36",
+    "products": 3,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "36",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8273,
+    "name": "Leopard",
+    "slug": "leopard",
+    "products": 3,
+    "variations": 3,
+    "action": "KEEP",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 8584,
+    "name": "Heart",
+    "slug": "heart",
+    "products": 3,
+    "variations": 5,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2035,
+    "name": "Ocean Blue",
+    "slug": "ocean-blue",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 2075,
+    "name": "Animal Print - Leopard",
+    "slug": "animal-print-leopard",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 2122,
+    "name": "Large 30ml",
+    "slug": "large-30ml",
+    "products": 2,
+    "variations": 8,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Large 30ml",
+    "note": "size"
+  },
+  {
+    "term_id": 2125,
+    "name": "10ml",
+    "slug": "10ml",
+    "products": 2,
+    "variations": 8,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "10ml",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2148,
+    "name": "Bronze",
+    "slug": "bronze",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "colors": [
+      "bronze"
+    ],
+    "variationValue": "bronze"
+  },
+  {
+    "term_id": 2179,
+    "name": "Set",
+    "slug": "set",
+    "products": 2,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2204,
+    "name": "Peach 2 Oz",
+    "slug": "peach-2-oz",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Peach 2 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2272,
+    "name": "Mint Green",
+    "slug": "mint-green",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 2278,
+    "name": "Red, Silver",
+    "slug": "red-silver",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "silver"
+    ],
+    "variationValue": "red / silver"
+  },
+  {
+    "term_id": 2455,
+    "name": "Nude Light Tan",
+    "slug": "nude-light-tan",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "nude",
+      "tan"
+    ],
+    "variationValue": "nude / tan"
+  },
+  {
+    "term_id": 2456,
+    "name": "Espresso Dark Brown",
+    "slug": "espresso-dark-brown",
+    "products": 2,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2460,
+    "name": "Orange, White",
+    "slug": "orange-white",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "orange",
+      "white"
+    ],
+    "variationValue": "orange / white"
+  },
+  {
+    "term_id": 2492,
+    "name": "Golden",
+    "slug": "golden",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "gold"
+    ],
+    "variationValue": "gold"
+  },
+  {
+    "term_id": 2501,
+    "name": "Burgundy, Red",
+    "slug": "burgundy-red",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "burgundy",
+      "red"
+    ],
+    "variationValue": "burgundy / red"
+  },
+  {
+    "term_id": 2681,
+    "name": "Fuchsia Pink",
+    "slug": "fuchsia-pink",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 2733,
+    "name": "Dark Flesh, Brown",
+    "slug": "dark-flesh-brown",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "brown"
+    ],
+    "variationValue": "flesh / brown"
+  },
+  {
+    "term_id": 2735,
+    "name": "Leopard Print",
+    "slug": "leopard-print",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 2736,
+    "name": "Mocha Tan",
+    "slug": "mocha-tan",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown",
+      "tan"
+    ],
+    "variationValue": "brown / tan"
+  },
+  {
+    "term_id": 2756,
+    "name": "Watermelon",
+    "slug": "watermelon",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 2784,
+    "name": "Clear, Black",
+    "slug": "clear-black",
+    "products": 2,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "black"
+    ],
+    "variationValue": "clear / black"
+  },
+  {
+    "term_id": 2967,
+    "name": "Crystal",
+    "slug": "crystal",
+    "products": 2,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3078,
+    "name": "Turquoise, Blue",
+    "slug": "turquoise-blue",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "turquoise",
+      "blue"
+    ],
+    "variationValue": "turquoise / blue"
+  },
+  {
+    "term_id": 3093,
+    "name": "White, Beige",
+    "slug": "white-beige",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "beige"
+    ],
+    "variationValue": "white / beige"
+  },
+  {
+    "term_id": 3100,
+    "name": "Gold, Clear",
+    "slug": "gold-clear",
+    "products": 2,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "gold",
+      "clear"
+    ],
+    "variationValue": "gold / clear"
+  },
+  {
+    "term_id": 3102,
+    "name": "Gold, White",
+    "slug": "gold-white",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "gold",
+      "white"
+    ],
+    "variationValue": "gold / white"
+  },
+  {
+    "term_id": 3167,
+    "name": "Flesh, Beige, Black",
+    "slug": "flesh-beige-black",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "beige",
+      "black"
+    ],
+    "variationValue": "flesh / beige / black"
+  },
+  {
+    "term_id": 3172,
+    "name": "Black, Dark Skin Tone",
+    "slug": "black-dark-skin-tone",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 3201,
+    "name": "Ight",
+    "slug": "ight",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3202,
+    "name": "Beige, Light Skin Tone, Black",
+    "slug": "beige-light-skin-tone-black",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "black"
+    ],
+    "variationValue": "beige / black"
+  },
+  {
+    "term_id": 3258,
+    "name": "N Pi",
+    "slug": "n-pi",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3262,
+    "name": "Ouche",
+    "slug": "ouche",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3278,
+    "name": "Clear, Silver",
+    "slug": "clear-silver",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "silver"
+    ],
+    "variationValue": "clear / silver"
+  },
+  {
+    "term_id": 3310,
+    "name": "Ivory, Gray",
+    "slug": "ivory-gray",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "ivory",
+      "gray"
+    ],
+    "variationValue": "ivory / gray"
+  },
+  {
+    "term_id": 3343,
+    "name": "Reddish Brown",
+    "slug": "reddish-brown",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 3454,
+    "name": "Gunmetal Gray, Purple",
+    "slug": "gunmetal-gray-purple",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "gray",
+      "purple"
+    ],
+    "variationValue": "gray / purple"
+  },
+  {
+    "term_id": 3460,
+    "name": "Purple, Black",
+    "slug": "purple-black",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "black"
+    ],
+    "variationValue": "purple / black"
+  },
+  {
+    "term_id": 3473,
+    "name": "Green Mint",
+    "slug": "green-mint",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 3505,
+    "name": "16 Oz",
+    "slug": "16-oz",
+    "products": 2,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "16 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 3506,
+    "name": "8 Oz",
+    "slug": "8-oz",
+    "products": 2,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "8 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 4351,
+    "name": "Ultra Violet, Purple",
+    "slug": "ultra-violet-purple",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "violet"
+    ],
+    "variationValue": "purple / violet"
+  },
+  {
+    "term_id": 4363,
+    "name": "Dark Blue",
+    "slug": "dark-blue",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 4422,
+    "name": "Blue, Multi-color",
+    "slug": "blue-multi-color",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 4440,
+    "name": "White, Clear",
+    "slug": "white-clear",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "clear"
+    ],
+    "variationValue": "white / clear"
+  },
+  {
+    "term_id": 4533,
+    "name": "Purple, Silver",
+    "slug": "purple-silver",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "silver"
+    ],
+    "variationValue": "purple / silver"
+  },
+  {
+    "term_id": 4566,
+    "name": "Silver, Clear",
+    "slug": "silver-clear",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "clear"
+    ],
+    "variationValue": "silver / clear"
+  },
+  {
+    "term_id": 4660,
+    "name": "Orange, Green",
+    "slug": "orange-green",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "orange",
+      "green"
+    ],
+    "variationValue": "orange / green"
+  },
+  {
+    "term_id": 4661,
+    "name": "Red, Blue",
+    "slug": "red-blue",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "blue"
+    ],
+    "variationValue": "red / blue"
+  },
+  {
+    "term_id": 4725,
+    "name": "Silver, Rainbow",
+    "slug": "silver-rainbow",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "rainbow"
+    ],
+    "variationValue": "silver / rainbow"
+  },
+  {
+    "term_id": 4784,
+    "name": "Tan, Medium Skin Tone, Brown",
+    "slug": "tan-medium-skin-tone-brown",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "tan",
+      "brown"
+    ],
+    "variationValue": "tan / brown"
+  },
+  {
+    "term_id": 4785,
+    "name": "Plug",
+    "slug": "plug",
+    "products": 2,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 4901,
+    "name": "Red, Blue, Purple, Green",
+    "slug": "red-blue-purple-green",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "blue",
+      "purple",
+      "green"
+    ],
+    "variationValue": "red / blue / purple / green"
+  },
+  {
+    "term_id": 5247,
+    "name": "Brown/chocolate",
+    "slug": "brown-chocolate",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 7258,
+    "name": "Maroon",
+    "slug": "maroon",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 7291,
+    "name": "Amethyst Purple",
+    "slug": "amethyst-purple",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 7294,
+    "name": "Pearl White",
+    "slug": "pearl-white",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 7329,
+    "name": "Pearl",
+    "slug": "pearl",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 7345,
+    "name": "Berry Ice Blue",
+    "slug": "berry-ice-blue",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7350,
+    "name": "O W/ Balls Vanilla",
+    "slug": "o-w-balls-vanilla",
+    "products": 2,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 7388,
+    "name": "N Bx",
+    "slug": "n-bx",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7389,
+    "name": "To Bx",
+    "slug": "to-bx",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7390,
+    "name": "STRYKER REALISTIC COCK VIBRATING BX",
+    "slug": "stryker-realistic-cock-vibrating-bx",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 7515,
+    "name": "Cerise",
+    "slug": "cerise",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7517,
+    "name": "Cerise Pink",
+    "slug": "cerise-pink",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7518,
+    "name": "Rose Pink",
+    "slug": "rose-pink",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "rose",
+      "pink"
+    ],
+    "variationValue": "rose / pink"
+  },
+  {
+    "term_id": 7558,
+    "name": "Colbalt Blue",
+    "slug": "colbalt-blue",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7559,
+    "name": "Alt L/xl",
+    "slug": "alt-l-xl",
+    "products": 2,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Alt L/xl",
+    "note": "size"
+  },
+  {
+    "term_id": 7615,
+    "name": "Ong Flesh",
+    "slug": "ong-flesh",
+    "products": 2,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "flesh"
+    ],
+    "variationValue": "flesh"
+  },
+  {
+    "term_id": 7676,
+    "name": "Fuschia Pink",
+    "slug": "fuschia-pink",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7720,
+    "name": "Plug Medium",
+    "slug": "plug-medium",
+    "products": 2,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8054,
+    "name": "9.5",
+    "slug": "9.5",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "9.5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8055,
+    "name": "75",
+    "slug": "75",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "75",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8145,
+    "name": "Greenwhite",
+    "slug": "greenwhite",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "green",
+      "white"
+    ],
+    "variationValue": "green / white"
+  },
+  {
+    "term_id": 8146,
+    "name": "Redwhite",
+    "slug": "redwhite",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "white"
+    ],
+    "variationValue": "red / white"
+  },
+  {
+    "term_id": 8157,
+    "name": "34",
+    "slug": "34",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "34",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8159,
+    "name": "32",
+    "slug": "32",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "32",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8160,
+    "name": "38",
+    "slug": "38",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "38",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8188,
+    "name": "Mediu",
+    "slug": "mediu",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Mediu",
+    "note": "size"
+  },
+  {
+    "term_id": 8583,
+    "name": "Gem",
+    "slug": "gem",
+    "products": 2,
+    "variations": 4,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8619,
+    "name": "Night",
+    "slug": "night",
+    "products": 2,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8640,
+    "name": "9",
+    "slug": "9",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "9",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9574,
+    "name": "30mm",
+    "slug": "30mm",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "30mm",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9609,
+    "name": "24",
+    "slug": "24",
+    "products": 2,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "24",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9842,
+    "name": "1xl 2xl",
+    "slug": "1xl-2xl",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1xl 2xl",
+    "note": "size"
+  },
+  {
+    "term_id": 9843,
+    "name": "3xl 4xl",
+    "slug": "3xl-4xl",
+    "products": 2,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "3xl 4xl",
+    "note": "size"
+  },
+  {
+    "term_id": 9907,
+    "name": "Eggplant",
+    "slug": "eggplant",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 9908,
+    "name": "Taupe",
+    "slug": "taupe",
+    "products": 2,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 1904,
+    "name": "Blue, White",
+    "slug": "blue-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "white"
+    ],
+    "variationValue": "blue / white"
+  },
+  {
+    "term_id": 2036,
+    "name": "Violet Dust Purple",
+    "slug": "violet-dust-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "violet",
+      "purple"
+    ],
+    "variationValue": "violet / purple"
+  },
+  {
+    "term_id": 2146,
+    "name": "Bronze, Gold",
+    "slug": "bronze-gold",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "bronze",
+      "gold"
+    ],
+    "variationValue": "bronze / gold"
+  },
+  {
+    "term_id": 2147,
+    "name": "White Ice, Clear",
+    "slug": "white-ice-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "clear"
+    ],
+    "variationValue": "white / clear"
+  },
+  {
+    "term_id": 2149,
+    "name": "Black, Tar Ice",
+    "slug": "black-tar-ice",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 2199,
+    "name": "Cherry Vanilla 4.2oz",
+    "slug": "cherry-vanilla-4-2oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Cherry Vanilla 4.2oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2200,
+    "name": "Pina Colada 4.2 Oz",
+    "slug": "pina-colada-4-2-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Pina Colada 4.2 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2201,
+    "name": "4.2 Oz",
+    "slug": "4-2-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "4.2 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2202,
+    "name": "Peach 4.2 Oz",
+    "slug": "peach-4-2-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Peach 4.2 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2203,
+    "name": "2 Oz",
+    "slug": "2-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2250,
+    "name": "Thin 3 Pack",
+    "slug": "thin-3-pack",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Thin 3 Pack",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2277,
+    "name": "TENGA ORIGINAL VACUUM CUP STRONG",
+    "slug": "tenga-original-vacuum-cup-strong",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 2287,
+    "name": "Vanilla White",
+    "slug": "vanilla-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "white"
+    ],
+    "variationValue": "beige / white"
+  },
+  {
+    "term_id": 2461,
+    "name": "Pink, Rose Quartz",
+    "slug": "pink-rose-quartz",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "rose"
+    ],
+    "variationValue": "pink / rose"
+  },
+  {
+    "term_id": 2462,
+    "name": "Rose Quartz, Elastic",
+    "slug": "rose-quartz-elastic",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "rose"
+    ],
+    "variationValue": "rose"
+  },
+  {
+    "term_id": 2500,
+    "name": "Periwinkle Purple",
+    "slug": "periwinkle-purple",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 2680,
+    "name": "White, Flesh",
+    "slug": "white-flesh",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "flesh"
+    ],
+    "variationValue": "white / flesh"
+  },
+  {
+    "term_id": 2696,
+    "name": "Mocha",
+    "slug": "mocha",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 2734,
+    "name": "TEMPTASIA BEGINNER CUFFS LEOPARD",
+    "slug": "temptasia-beginner-cuffs-leopard",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 2739,
+    "name": "Glows in the Dark",
+    "slug": "glows-in-the-dark",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 2754,
+    "name": "Grape",
+    "slug": "grape",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 2757,
+    "name": "COCK ROCKETS FRUIT PUNCH",
+    "slug": "cock-rockets-fruit-punch",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "COCK ROCKETS FRUIT PUNCH",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2788,
+    "name": "SIMPLY SWEET RAINBOW SILICONE BUTT PLUG SET",
+    "slug": "simply-sweet-rainbow-silicone-butt-plug-set",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "rainbow"
+    ],
+    "variationValue": "rainbow"
+  },
+  {
+    "term_id": 2829,
+    "name": "White, Light Beige",
+    "slug": "white-light-beige",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "beige"
+    ],
+    "variationValue": "white / beige"
+  },
+  {
+    "term_id": 2843,
+    "name": "Strawberry 4 Oz",
+    "slug": "strawberry-4-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Strawberry 4 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2844,
+    "name": "Watermelon 4 Oz",
+    "slug": "watermelon-4-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Watermelon 4 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2845,
+    "name": "Cotton Candy 4 Oz",
+    "slug": "cotton-candy-4-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Cotton Candy 4 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2846,
+    "name": "Watermelon 4 Oz (bulk)",
+    "slug": "watermelon-4-oz-bulk",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Watermelon 4 Oz (bulk)",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2847,
+    "name": "Cotton Candy 4 Oz (bulk)",
+    "slug": "cotton-candy-4-oz-bulk",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Cotton Candy 4 Oz (bulk)",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2848,
+    "name": "Nch Vanilla (bulk)",
+    "slug": "nch-vanilla-bulk",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 2849,
+    "name": "Cotton Candy 48 Pcs 0.24 Oz",
+    "slug": "cotton-candy-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Cotton Candy 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2850,
+    "name": "Strawberry 48 Pcs 0.24 Oz",
+    "slug": "strawberry-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Strawberry 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2851,
+    "name": "Watermelon 48 Pcs 0.24 Oz",
+    "slug": "watermelon-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Watermelon 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2852,
+    "name": "Chocolate Mint 48 Pcs 0.24 Oz",
+    "slug": "chocolate-mint-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Chocolate Mint 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2853,
+    "name": "Mint 48 Pcs 0.24 Oz",
+    "slug": "mint-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Mint 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2854,
+    "name": "Peach 48 Pcs 0.24 Oz",
+    "slug": "peach-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Peach 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2855,
+    "name": "Passion Fruit 48 Pcs 0.24 Oz",
+    "slug": "passion-fruit-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Passion Fruit 48 Pcs 0.24 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2856,
+    "name": "6 Pack",
+    "slug": "6-pack",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6 Pack",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2878,
+    "name": "Watermelon 2 Oz",
+    "slug": "watermelon-2-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Watermelon 2 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2879,
+    "name": "Cherry 2 Oz",
+    "slug": "cherry-2-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Cherry 2 Oz",
+    "note": "flavor"
+  },
+  {
+    "term_id": 2883,
+    "name": "Frosted",
+    "slug": "frosted",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 2908,
+    "name": "ROCK SOLID MEGA RING TRANSLUCENT",
+    "slug": "rock-solid-mega-ring-translucent",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 2919,
+    "name": "ROCK SOLID EZ TOP",
+    "slug": "rock-solid-ez-top",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 2982,
+    "name": "KINK COLLECTION FURRY HANDCUFF ZEBRA",
+    "slug": "kink-collection-furry-handcuff-zebra",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 2983,
+    "name": "KINK COLLECTION FURRY HANDCUFF LEOPARD",
+    "slug": "kink-collection-furry-handcuff-leopard",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 2987,
+    "name": "PETITES LIL LASSIE G SPOT VIBRATOR",
+    "slug": "petites-lil-lassie-g-spot-vibrator",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 2989,
+    "name": "Lion",
+    "slug": "lion",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3002,
+    "name": "XMAS PECKER BITES",
+    "slug": "xmas-pecker-bites",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 3004,
+    "name": "Balls",
+    "slug": "balls",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3009,
+    "name": "Gold, Black",
+    "slug": "gold-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gold",
+      "black"
+    ],
+    "variationValue": "gold / black"
+  },
+  {
+    "term_id": 3016,
+    "name": "THE 9'S S FINGER VIBE PPURPLE",
+    "slug": "the-9-s-s-finger-vibe-ppurple",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 3019,
+    "name": "Pale Green",
+    "slug": "pale-green",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 3030,
+    "name": "DRINK IF TABOO",
+    "slug": "drink-if-taboo",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 3040,
+    "name": "BIRTHDAY CAKE EDIBLE PASTIES",
+    "slug": "birthday-cake-edible-pasties",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 3044,
+    "name": "White, Gold, Silver",
+    "slug": "white-gold-silver",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "gold",
+      "silver"
+    ],
+    "variationValue": "white / gold / silver"
+  },
+  {
+    "term_id": 3083,
+    "name": "Agne",
+    "slug": "agne",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3089,
+    "name": "Azalea, Pink",
+    "slug": "azalea-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 3090,
+    "name": "FANTASIA PHOENIX ORCHID",
+    "slug": "fantasia-phoenix-orchid",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 3094,
+    "name": "Black, Clear, Red, Rainbow",
+    "slug": "black-clear-red-rainbow",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "clear",
+      "red",
+      "rainbow"
+    ],
+    "variationValue": "black / clear / red / rainbow"
+  },
+  {
+    "term_id": 3095,
+    "name": "Dark Teal Green",
+    "slug": "dark-teal-green",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "teal",
+      "green"
+    ],
+    "variationValue": "teal / green"
+  },
+  {
+    "term_id": 3096,
+    "name": "Multicolor, Clear",
+    "slug": "multicolor-clear",
+    "products": 1,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "clear"
+    ],
+    "variationValue": "multicolor / clear"
+  },
+  {
+    "term_id": 3098,
+    "name": "Multicolor, Rainbow",
+    "slug": "multicolor-rainbow",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "rainbow"
+    ],
+    "variationValue": "multicolor / rainbow"
+  },
+  {
+    "term_id": 3099,
+    "name": "Multicolor, Pink",
+    "slug": "multicolor-pink",
+    "products": 1,
+    "variations": 3,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "pink"
+    ],
+    "variationValue": "multicolor / pink"
+  },
+  {
+    "term_id": 3101,
+    "name": "Gold, Pink",
+    "slug": "gold-pink",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "gold",
+      "pink"
+    ],
+    "variationValue": "gold / pink"
+  },
+  {
+    "term_id": 3103,
+    "name": "Gold, Red",
+    "slug": "gold-red",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "gold",
+      "red"
+    ],
+    "variationValue": "gold / red"
+  },
+  {
+    "term_id": 3117,
+    "name": "Black, Flesh",
+    "slug": "black-flesh",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "flesh"
+    ],
+    "variationValue": "black / flesh"
+  },
+  {
+    "term_id": 3124,
+    "name": "White, Beige, Light Skin Tone",
+    "slug": "white-beige-light-skin-tone",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "beige"
+    ],
+    "variationValue": "white / beige"
+  },
+  {
+    "term_id": 3155,
+    "name": "PASTEASE STAR GLOW IN THE DARK NEON TURQUOISE",
+    "slug": "pastease-star-glow-in-the-dark-neon-turquoise",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "glow-in-the-dark",
+      "turquoise"
+    ],
+    "variationValue": "glow-in-the-dark / turquoise"
+  },
+  {
+    "term_id": 3157,
+    "name": "Light Skin Tone, Flesh, Beige",
+    "slug": "light-skin-tone-flesh-beige",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "beige"
+    ],
+    "variationValue": "flesh / beige"
+  },
+  {
+    "term_id": 3194,
+    "name": "Light Skin Tone, Flesh, White",
+    "slug": "light-skin-tone-flesh-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "flesh",
+      "white"
+    ],
+    "variationValue": "flesh / white"
+  },
+  {
+    "term_id": 3209,
+    "name": "Brown, Black",
+    "slug": "brown-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown",
+      "black"
+    ],
+    "variationValue": "brown / black"
+  },
+  {
+    "term_id": 3220,
+    "name": "Black, Light Skin Tone",
+    "slug": "black-light-skin-tone",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 3221,
+    "name": "Black, Tan",
+    "slug": "black-tan",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "tan"
+    ],
+    "variationValue": "black / tan"
+  },
+  {
+    "term_id": 3226,
+    "name": "As Shown",
+    "slug": "as-shown",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3235,
+    "name": "Ice Clear",
+    "slug": "ice-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 3240,
+    "name": "Blush, Pink",
+    "slug": "blush-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 3247,
+    "name": "Strawberry Pink",
+    "slug": "strawberry-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 3249,
+    "name": "Blueberry, Blue",
+    "slug": "blueberry-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 3255,
+    "name": "FIRST TIME RECHARGEABLE TRAVEL TEASER KIT",
+    "slug": "first-time-rechargeable-travel-teaser-kit",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 3277,
+    "name": "Mini",
+    "slug": "mini",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 3279,
+    "name": "Clear, Gold",
+    "slug": "clear-gold",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "gold"
+    ],
+    "variationValue": "clear / gold"
+  },
+  {
+    "term_id": 3299,
+    "name": "Black, Smoke",
+    "slug": "black-smoke",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "gray"
+    ],
+    "variationValue": "black / gray"
+  },
+  {
+    "term_id": 3314,
+    "name": "Silver, Smoke",
+    "slug": "silver-smoke",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "gray"
+    ],
+    "variationValue": "silver / gray"
+  },
+  {
+    "term_id": 3315,
+    "name": "Silver, Green",
+    "slug": "silver-green",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "green"
+    ],
+    "variationValue": "silver / green"
+  },
+  {
+    "term_id": 3327,
+    "name": "Ivory, White",
+    "slug": "ivory-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "ivory",
+      "white"
+    ],
+    "variationValue": "ivory / white"
+  },
+  {
+    "term_id": 3344,
+    "name": "Pewter, Silver",
+    "slug": "pewter-silver",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver"
+    ],
+    "variationValue": "silver"
+  },
+  {
+    "term_id": 3345,
+    "name": "Reddish Bronze",
+    "slug": "reddish-bronze",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown",
+      "bronze"
+    ],
+    "variationValue": "brown / bronze"
+  },
+  {
+    "term_id": 3365,
+    "name": "RECHARGEABLE ROCKIN RABBIT ENHANCER",
+    "slug": "rechargeable-rockin-rabbit-enhancer",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 3408,
+    "name": "OUCH! HEAVY DUTY FLUFFY HANDCUFFS - BURGUNDY",
+    "slug": "ouch-heavy-duty-fluffy-handcuffs-burgundy",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "burgundy"
+    ],
+    "variationValue": "burgundy"
+  },
+  {
+    "term_id": 3410,
+    "name": "OUCH! HEAVY DUTY FLUFFY HANDCUFFS SNOW LEOPARD",
+    "slug": "ouch-heavy-duty-fluffy-handcuffs-snow-leopard",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "leopard"
+    ],
+    "variationValue": "white / leopard"
+  },
+  {
+    "term_id": 3411,
+    "name": "OUCH! HEAVY DUTY FLUFFY HANDCUFFS TIGER",
+    "slug": "ouch-heavy-duty-fluffy-handcuffs-tiger",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 3436,
+    "name": "PUMPED BASIC PUMP 1 TRANSPARENT",
+    "slug": "pumped-basic-pump-1-transparent",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 3437,
+    "name": "PUMPED BASIC PUMP 2 TRANSPARENT",
+    "slug": "pumped-basic-pump-2-transparent",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 3440,
+    "name": "Translucent Clear",
+    "slug": "translucent-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 3446,
+    "name": "XKIN RAW THE GRIP TPE S FLESH",
+    "slug": "xkin-raw-the-grip-tpe-s-flesh",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "flesh"
+    ],
+    "variationValue": "flesh"
+  },
+  {
+    "term_id": 3451,
+    "name": "Crimson Red",
+    "slug": "crimson-red",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 3452,
+    "name": "Berry, Purple",
+    "slug": "berry-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "purple"
+    ],
+    "variationValue": "blue / purple"
+  },
+  {
+    "term_id": 3453,
+    "name": "Gunmetal Gray, Teal",
+    "slug": "gunmetal-gray-teal",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gray",
+      "teal"
+    ],
+    "variationValue": "gray / teal"
+  },
+  {
+    "term_id": 3455,
+    "name": "VEDO LASSO BULLET VIBE RECHARGEABLE TURQUOISE",
+    "slug": "vedo-lasso-bullet-vibe-rechargeable-turquoise",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 3456,
+    "name": "VEDO NITRO RECHARG BULLET 16/PCS ASSORTED",
+    "slug": "vedo-nitro-recharg-bullet-16-pcs-assorted",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "VEDO NITRO RECHARG BULLET 16/PCS ASSORTED",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 3457,
+    "name": "Mocha, Tan, Medium Skin Tone",
+    "slug": "mocha-tan-medium-skin-tone",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown",
+      "tan"
+    ],
+    "variationValue": "brown / tan"
+  },
+  {
+    "term_id": 3475,
+    "name": "Purple, White",
+    "slug": "purple-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "white"
+    ],
+    "variationValue": "purple / white"
+  },
+  {
+    "term_id": 3493,
+    "name": "Black, Blonde",
+    "slug": "black-blonde",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 3494,
+    "name": "Peach Orange Brown",
+    "slug": "peach-orange-brown",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "orange",
+      "brown"
+    ],
+    "variationValue": "orange / brown"
+  },
+  {
+    "term_id": 3497,
+    "name": "Light Color Skin Tone, Beige",
+    "slug": "light-color-skin-tone-beige",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 3945,
+    "name": "Red, Orange, Yellow",
+    "slug": "red-orange-yellow",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "orange",
+      "yellow"
+    ],
+    "variationValue": "red / orange / yellow"
+  },
+  {
+    "term_id": 3950,
+    "name": "Blue Camo",
+    "slug": "blue-camo",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "green"
+    ],
+    "variationValue": "blue / green"
+  },
+  {
+    "term_id": 3951,
+    "name": "Green Camo",
+    "slug": "green-camo",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 3957,
+    "name": "GLITTERATI GOLDEN GLITTER PENIS CANDLE",
+    "slug": "glitterati-golden-glitter-penis-candle",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "gold"
+    ],
+    "variationValue": "gold"
+  },
+  {
+    "term_id": 3958,
+    "name": "White, Pink",
+    "slug": "white-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "pink"
+    ],
+    "variationValue": "white / pink"
+  },
+  {
+    "term_id": 3959,
+    "name": "White, Multi-colors",
+    "slug": "white-multi-colors",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 3981,
+    "name": "Clear, Brass",
+    "slug": "clear-brass",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 4005,
+    "name": "Swirl Pink",
+    "slug": "swirl-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 4088,
+    "name": "MAIN SQUEEZE ARIANA MARIE",
+    "slug": "main-squeeze-ariana-marie",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4089,
+    "name": "MAIN SQUEEZE KATRINA JADE",
+    "slug": "main-squeeze-katrina-jade",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4090,
+    "name": "MAIN SQUEEZE CHANTAL DANIELLE",
+    "slug": "main-squeeze-chantal-danielle",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4091,
+    "name": "MAIN SQUEEZE ALEXIS TAE",
+    "slug": "main-squeeze-alexis-tae",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4092,
+    "name": "MAIN SQUEEZE ALLIE NICOLE",
+    "slug": "main-squeeze-allie-nicole",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4093,
+    "name": "MAIN SQUEEZE SUKI SIN",
+    "slug": "main-squeeze-suki-sin",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4094,
+    "name": "MAIN SQUEEZE KILEY CORRUPT",
+    "slug": "main-squeeze-kiley-corrupt",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 4124,
+    "name": "White, Bronze",
+    "slug": "white-bronze",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "bronze"
+    ],
+    "variationValue": "white / bronze"
+  },
+  {
+    "term_id": 4127,
+    "name": "White, Chrome",
+    "slug": "white-chrome",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 4132,
+    "name": "Medium Tone",
+    "slug": "medium-tone",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 4163,
+    "name": "Dark Brown, Black",
+    "slug": "dark-brown-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown",
+      "black"
+    ],
+    "variationValue": "brown / black"
+  },
+  {
+    "term_id": 4218,
+    "name": "10pk",
+    "slug": "10pk",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 4223,
+    "name": "Beige, Red",
+    "slug": "beige-red",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "red"
+    ],
+    "variationValue": "beige / red"
+  },
+  {
+    "term_id": 4241,
+    "name": "Blue, Purple",
+    "slug": "blue-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "purple"
+    ],
+    "variationValue": "blue / purple"
+  },
+  {
+    "term_id": 4243,
+    "name": "Blue, Pink",
+    "slug": "blue-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "pink"
+    ],
+    "variationValue": "blue / pink"
+  },
+  {
+    "term_id": 4244,
+    "name": "Purple, Blue, Yellow, Glitter",
+    "slug": "purple-blue-yellow-glitter",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "blue",
+      "yellow"
+    ],
+    "variationValue": "purple / blue / yellow"
+  },
+  {
+    "term_id": 4258,
+    "name": "COUTURE CLIPS SHIMMER & CHIC LUXURY NIPPLE CLAMPS",
+    "slug": "couture-clips-shimmer-chic-luxury-nipple-clamps",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 4306,
+    "name": "Beige, Pink",
+    "slug": "beige-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "pink"
+    ],
+    "variationValue": "beige / pink"
+  },
+  {
+    "term_id": 4322,
+    "name": "Multiple Colors",
+    "slug": "multiple-colors",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "multicolor"
+    ],
+    "variationValue": "multicolor"
+  },
+  {
+    "term_id": 4346,
+    "name": "Pastel Pink",
+    "slug": "pastel-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 4350,
+    "name": "Emerald Green",
+    "slug": "emerald-green",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 4370,
+    "name": "Ash Gray",
+    "slug": "ash-gray",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 4371,
+    "name": "Fog Gray",
+    "slug": "fog-gray",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 4372,
+    "name": "Black, Rainbow",
+    "slug": "black-rainbow",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "rainbow"
+    ],
+    "variationValue": "black / rainbow"
+  },
+  {
+    "term_id": 4399,
+    "name": "Coral Red",
+    "slug": "coral-red",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "coral",
+      "red"
+    ],
+    "variationValue": "coral / red"
+  },
+  {
+    "term_id": 4400,
+    "name": "Black, Light Brown",
+    "slug": "black-light-brown",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "brown"
+    ],
+    "variationValue": "black / brown"
+  },
+  {
+    "term_id": 4409,
+    "name": "GODDESS DIAMOND BLOOM FUSCHIA",
+    "slug": "goddess-diamond-bloom-fuschia",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 4423,
+    "name": "Black, Black",
+    "slug": "black-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 4424,
+    "name": "Black, Gray",
+    "slug": "black-gray",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "gray"
+    ],
+    "variationValue": "black / gray"
+  },
+  {
+    "term_id": 4425,
+    "name": "Purple, Green",
+    "slug": "purple-green",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "green"
+    ],
+    "variationValue": "purple / green"
+  },
+  {
+    "term_id": 4426,
+    "name": "Red, White, Blue",
+    "slug": "red-white-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "white",
+      "blue"
+    ],
+    "variationValue": "red / white / blue"
+  },
+  {
+    "term_id": 4427,
+    "name": "Yellow, Brown",
+    "slug": "yellow-brown",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "yellow",
+      "brown"
+    ],
+    "variationValue": "yellow / brown"
+  },
+  {
+    "term_id": 4428,
+    "name": "White, Red, Black",
+    "slug": "white-red-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "red",
+      "black"
+    ],
+    "variationValue": "white / red / black"
+  },
+  {
+    "term_id": 4429,
+    "name": "Rainbow, Black",
+    "slug": "rainbow-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "rainbow",
+      "black"
+    ],
+    "variationValue": "rainbow / black"
+  },
+  {
+    "term_id": 4437,
+    "name": "Deep Rose Pink",
+    "slug": "deep-rose-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "rose",
+      "pink"
+    ],
+    "variationValue": "rose / pink"
+  },
+  {
+    "term_id": 4448,
+    "name": "Blonde, Beige",
+    "slug": "blonde-beige",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 4449,
+    "name": "(w/o Retail Box)",
+    "slug": "w-o-retail-box",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 4496,
+    "name": "Red, Clear",
+    "slug": "red-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "clear"
+    ],
+    "variationValue": "red / clear"
+  },
+  {
+    "term_id": 4500,
+    "name": "OPAL TICKLER MASSAGER",
+    "slug": "opal-tickler-massager",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 4517,
+    "name": "GLOW STICK HEART",
+    "slug": "glow-stick-heart",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "glow-in-the-dark"
+    ],
+    "variationValue": "glow-in-the-dark"
+  },
+  {
+    "term_id": 4532,
+    "name": "Orange, Silver.",
+    "slug": "orange-silver",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "orange"
+    ],
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 4539,
+    "name": "Black, Yellow",
+    "slug": "black-yellow",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "yellow"
+    ],
+    "variationValue": "black / yellow"
+  },
+  {
+    "term_id": 4544,
+    "name": "JACK RABBIT ELITE ROCKING RABBIT",
+    "slug": "jack-rabbit-elite-rocking-rabbit",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 4561,
+    "name": "Purple, Clear",
+    "slug": "purple-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "clear"
+    ],
+    "variationValue": "purple / clear"
+  },
+  {
+    "term_id": 4567,
+    "name": "Silver, Grey",
+    "slug": "silver-grey",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "gray"
+    ],
+    "variationValue": "silver / gray"
+  },
+  {
+    "term_id": 4592,
+    "name": "Beige-caucasian",
+    "slug": "beige-caucasian",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 4673,
+    "name": "Blue, Silver",
+    "slug": "blue-silver",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "silver"
+    ],
+    "variationValue": "blue / silver"
+  },
+  {
+    "term_id": 4696,
+    "name": "Onyx Black",
+    "slug": "onyx-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 4697,
+    "name": "Malachite Blue",
+    "slug": "malachite-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 4698,
+    "name": "Sapphire Blue",
+    "slug": "sapphire-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 4707,
+    "name": "Silver, White",
+    "slug": "silver-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "white"
+    ],
+    "variationValue": "silver / white"
+  },
+  {
+    "term_id": 4719,
+    "name": "Gunmetal Gray, Pink",
+    "slug": "gunmetal-gray-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gray",
+      "pink"
+    ],
+    "variationValue": "gray / pink"
+  },
+  {
+    "term_id": 4724,
+    "name": "Silver, Iridescent",
+    "slug": "silver-iridescent",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver"
+    ],
+    "variationValue": "silver"
+  },
+  {
+    "term_id": 4726,
+    "name": "Silver, Clear, Iridescent",
+    "slug": "silver-clear-iridescent",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "clear"
+    ],
+    "variationValue": "silver / clear"
+  },
+  {
+    "term_id": 4740,
+    "name": "Gold Glitter",
+    "slug": "gold-glitter",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gold"
+    ],
+    "variationValue": "gold"
+  },
+  {
+    "term_id": 4764,
+    "name": "Blue, Gold",
+    "slug": "blue-gold",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "gold"
+    ],
+    "variationValue": "blue / gold"
+  },
+  {
+    "term_id": 4765,
+    "name": "Burnt Orange",
+    "slug": "burnt-orange",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "orange"
+    ],
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 4824,
+    "name": "Fuzzy Navel",
+    "slug": "fuzzy-navel",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Fuzzy Navel",
+    "note": "flavor"
+  },
+  {
+    "term_id": 4825,
+    "name": "Sex on the Beach",
+    "slug": "sex-on-the-beach",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Sex on the Beach",
+    "note": "flavor"
+  },
+  {
+    "term_id": 4836,
+    "name": "36pc Display",
+    "slug": "36pc-display",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "36pc Display",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 4841,
+    "name": "Ishbowl",
+    "slug": "ishbowl",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 4863,
+    "name": "12 Pc Display",
+    "slug": "12-pc-display",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "12 Pc Display",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 5297,
+    "name": "Realrock Ultra - 9.5 Inches Silicone Dildo with Balls",
+    "slug": "realrock-ultra-9-5-inches-silicone-dildo-with-balls",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 5340,
+    "name": "Lilac",
+    "slug": "lilac",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 5512,
+    "name": "Cosmic Blue",
+    "slug": "cosmic-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 5513,
+    "name": "Crave Coral",
+    "slug": "crave-coral",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "coral"
+    ],
+    "variationValue": "coral"
+  },
+  {
+    "term_id": 5514,
+    "name": "Cosmic Pink",
+    "slug": "cosmic-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "pink"
+    ],
+    "variationValue": "blue / pink"
+  },
+  {
+    "term_id": 5673,
+    "name": "Lime S/m",
+    "slug": "lime-s-m",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 5674,
+    "name": "Lime L/xl",
+    "slug": "lime-l-xl",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 5684,
+    "name": "Eden's Penis Candle Eggplant",
+    "slug": "eden-s-penis-candle-eggplant",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 5685,
+    "name": "Eden's Penis Candle Taupe",
+    "slug": "eden-s-penis-candle-taupe",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 5686,
+    "name": "Eden's Vagina Candle Eggplant",
+    "slug": "eden-s-vagina-candle-eggplant",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 5687,
+    "name": "Eden's Vagina Candle Taupe",
+    "slug": "eden-s-vagina-candle-taupe",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 5734,
+    "name": "Liberator Bonbon Microvelvet-flame",
+    "slug": "liberator-bonbon-microvelvet-flame",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 5739,
+    "name": "Rouge Cock Strap Blk/blu",
+    "slug": "rouge-cock-strap-blk-blu",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "blue"
+    ],
+    "variationValue": "black / blue"
+  },
+  {
+    "term_id": 5753,
+    "name": "Lavender O/s",
+    "slug": "lavender-o-s",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "lavender"
+    ],
+    "variationValue": "lavender"
+  },
+  {
+    "term_id": 5934,
+    "name": "Loveline Traveler G-spot Silicone Rechargeable Splashproof Burgundy",
+    "slug": "loveline-traveler-g-spot-silicone-rechargeable-splashproof-burgundy",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "burgundy"
+    ],
+    "variationValue": "burgundy"
+  },
+  {
+    "term_id": 6047,
+    "name": "Get Lucky Mr. Lavender 7.5\" Dual Layer Dong",
+    "slug": "get-lucky-mr-lavender-7-5-dual-layer-dong",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "lavender"
+    ],
+    "variationValue": "lavender"
+  },
+  {
+    "term_id": 7242,
+    "name": "Baby Pink",
+    "slug": "baby-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7248,
+    "name": "Dark Red",
+    "slug": "dark-red",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 7253,
+    "name": "Midnight Black",
+    "slug": "midnight-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "black"
+    ],
+    "variationValue": "blue / black"
+  },
+  {
+    "term_id": 7256,
+    "name": "Deep Purple",
+    "slug": "deep-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 7261,
+    "name": "Black Ice",
+    "slug": "black-ice",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 7264,
+    "name": "Neon Red",
+    "slug": "neon-red",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 7266,
+    "name": "Dusty Pink",
+    "slug": "dusty-pink",
+    "products": 1,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7314,
+    "name": "Gging O/s",
+    "slug": "gging-o-s",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Gging O/s",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 7322,
+    "name": "Penny Copper",
+    "slug": "penny-copper",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "copper"
+    ],
+    "variationValue": "copper"
+  },
+  {
+    "term_id": 7335,
+    "name": "Rator",
+    "slug": "rator",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7346,
+    "name": "Cherry Ice Pink",
+    "slug": "cherry-ice-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "pink"
+    ],
+    "variationValue": "red / pink"
+  },
+  {
+    "term_id": 7347,
+    "name": "Licone Do Grape",
+    "slug": "licone-do-grape",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 7361,
+    "name": "Black, Animal Print",
+    "slug": "black-animal-print",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 7362,
+    "name": "Black, Leopard Print Tops",
+    "slug": "black-leopard-print-tops",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "leopard"
+    ],
+    "variationValue": "black / leopard"
+  },
+  {
+    "term_id": 7363,
+    "name": "Espresso",
+    "slug": "espresso",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 7367,
+    "name": "Rim Garnet O/s Queen",
+    "slug": "rim-garnet-o-s-queen",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Rim Garnet O/s Queen",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 7377,
+    "name": "Peacock Green, Black",
+    "slug": "peacock-green-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green",
+      "black"
+    ],
+    "variationValue": "green / black"
+  },
+  {
+    "term_id": 7378,
+    "name": "Green, Black",
+    "slug": "green-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green",
+      "black"
+    ],
+    "variationValue": "green / black"
+  },
+  {
+    "term_id": 7379,
+    "name": "Peony Pink",
+    "slug": "peony-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 7380,
+    "name": "Daffodil Yellow",
+    "slug": "daffodil-yellow",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "yellow"
+    ],
+    "variationValue": "yellow"
+  },
+  {
+    "term_id": 7381,
+    "name": "Red, Beet",
+    "slug": "red-beet",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 7382,
+    "name": "Beet",
+    "slug": "beet",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 7406,
+    "name": "Mint",
+    "slug": "mint",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 7408,
+    "name": "Sky Mint",
+    "slug": "sky-mint",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "green"
+    ],
+    "variationValue": "blue / green"
+  },
+  {
+    "term_id": 7411,
+    "name": "Kyn Vanilla",
+    "slug": "kyn-vanilla",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 7423,
+    "name": "Cd",
+    "slug": "cd",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7430,
+    "name": "Dark Teal",
+    "slug": "dark-teal",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "teal"
+    ],
+    "variationValue": "teal"
+  },
+  {
+    "term_id": 7444,
+    "name": "Medium, Tan, Mocha",
+    "slug": "medium-tan-mocha",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "tan",
+      "brown"
+    ],
+    "variationValue": "tan / brown"
+  },
+  {
+    "term_id": 7447,
+    "name": "Pink, Clear",
+    "slug": "pink-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "clear"
+    ],
+    "variationValue": "pink / clear"
+  },
+  {
+    "term_id": 7450,
+    "name": "Eddy Peach O/s",
+    "slug": "eddy-peach-o-s",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "orange"
+    ],
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 7451,
+    "name": "Peach Orange, Pink",
+    "slug": "peach-orange-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "orange",
+      "pink"
+    ],
+    "variationValue": "orange / pink"
+  },
+  {
+    "term_id": 7452,
+    "name": "Ildo Mini",
+    "slug": "ildo-mini",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7453,
+    "name": "Purple/blue",
+    "slug": "purple-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "blue"
+    ],
+    "variationValue": "purple / blue"
+  },
+  {
+    "term_id": 7454,
+    "name": "Purple = Pink",
+    "slug": "purple-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "pink"
+    ],
+    "variationValue": "purple / pink"
+  },
+  {
+    "term_id": 7485,
+    "name": "Stud Lavender",
+    "slug": "stud-lavender",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "lavender"
+    ],
+    "variationValue": "lavender"
+  },
+  {
+    "term_id": 7486,
+    "name": "Snake",
+    "slug": "snake",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 7497,
+    "name": "Berry Sorbet",
+    "slug": "berry-sorbet",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7498,
+    "name": "Tropical Violet",
+    "slug": "tropical-violet",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "violet"
+    ],
+    "variationValue": "purple / violet"
+  },
+  {
+    "term_id": 7513,
+    "name": "Pink, Blue",
+    "slug": "pink-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "blue"
+    ],
+    "variationValue": "pink / blue"
+  },
+  {
+    "term_id": 7514,
+    "name": "Se (n",
+    "slug": "se-n",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7516,
+    "name": "Deep Rose",
+    "slug": "deep-rose",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "rose"
+    ],
+    "variationValue": "rose"
+  },
+  {
+    "term_id": 7519,
+    "name": "Hot P S/m",
+    "slug": "hot-p-s-m",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Hot P S/m",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 7522,
+    "name": "Opal",
+    "slug": "opal",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7549,
+    "name": "Purple, Lavender",
+    "slug": "purple-lavender",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple",
+      "lavender"
+    ],
+    "variationValue": "purple / lavender"
+  },
+  {
+    "term_id": 7550,
+    "name": "Raven Black",
+    "slug": "raven-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 7572,
+    "name": "Eeper",
+    "slug": "eeper",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7581,
+    "name": "Vibe Mini Lavender",
+    "slug": "vibe-mini-lavender",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "lavender"
+    ],
+    "variationValue": "lavender"
+  },
+  {
+    "term_id": 7594,
+    "name": "Eggplant, Purplish",
+    "slug": "eggplant-purplish",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 7636,
+    "name": "Dress Q/s",
+    "slug": "dress-q-s",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Dress Q/s",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 7637,
+    "name": "Ngria Q/s",
+    "slug": "ngria-q-s",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Ngria Q/s",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 7642,
+    "name": "Orted",
+    "slug": "orted",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7643,
+    "name": "Wow 6 Pack",
+    "slug": "wow-6-pack",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Wow 6 Pack",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 7675,
+    "name": "Fuchsia Purple",
+    "slug": "fuchsia-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "purple"
+    ],
+    "variationValue": "pink / purple"
+  },
+  {
+    "term_id": 7677,
+    "name": "Fuschia Purple",
+    "slug": "fuschia-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "purple"
+    ],
+    "variationValue": "pink / purple"
+  },
+  {
+    "term_id": 7687,
+    "name": "Transparent",
+    "slug": "transparent",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 7700,
+    "name": "Wine, Silver",
+    "slug": "wine-silver",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "wine",
+      "silver"
+    ],
+    "variationValue": "wine / silver"
+  },
+  {
+    "term_id": 7701,
+    "name": "Azure Blue",
+    "slug": "azure-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 7710,
+    "name": "Plaid, Green, Red, Black",
+    "slug": "plaid-green-red-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "green",
+      "red",
+      "black"
+    ],
+    "variationValue": "multicolor / green / red / black"
+  },
+  {
+    "term_id": 7711,
+    "name": "Plaid, Green, Black",
+    "slug": "plaid-green-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "green",
+      "black"
+    ],
+    "variationValue": "multicolor / green / black"
+  },
+  {
+    "term_id": 7712,
+    "name": "Red, Black, White",
+    "slug": "red-black-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red",
+      "black",
+      "white"
+    ],
+    "variationValue": "red / black / white"
+  },
+  {
+    "term_id": 7713,
+    "name": "Y Set S/m",
+    "slug": "y-set-s-m",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Y Set S/m",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 7714,
+    "name": "Plaid, Green, Black, White",
+    "slug": "plaid-green-black-white",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "multicolor",
+      "green",
+      "black",
+      "white"
+    ],
+    "variationValue": "multicolor / green / black / white"
+  },
+  {
+    "term_id": 7730,
+    "name": "Natural Undyed",
+    "slug": "natural-undyed",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 7755,
+    "name": "Blue, Green",
+    "slug": "blue-green",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue",
+      "green"
+    ],
+    "variationValue": "blue / green"
+  },
+  {
+    "term_id": 7756,
+    "name": "Pink, Purple",
+    "slug": "pink-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "purple"
+    ],
+    "variationValue": "pink / purple"
+  },
+  {
+    "term_id": 7760,
+    "name": "Multicolors",
+    "slug": "multicolors",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "multicolor"
+    ],
+    "variationValue": "multicolor"
+  },
+  {
+    "term_id": 7785,
+    "name": "Duo G",
+    "slug": "duo-g",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7798,
+    "name": "Charcoal Black",
+    "slug": "charcoal-black",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gray",
+      "black"
+    ],
+    "variationValue": "gray / black"
+  },
+  {
+    "term_id": 7804,
+    "name": "R Bx",
+    "slug": "r-bx",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7891,
+    "name": "Light Brown",
+    "slug": "light-brown",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 7921,
+    "name": "Pink, Rose Blush",
+    "slug": "pink-rose-blush",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "rose"
+    ],
+    "variationValue": "pink / rose"
+  },
+  {
+    "term_id": 7952,
+    "name": "Ffin",
+    "slug": "ffin",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 7977,
+    "name": "Cocoa",
+    "slug": "cocoa",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 7978,
+    "name": "Cream",
+    "slug": "cream",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 7989,
+    "name": "Gold, Silver",
+    "slug": "gold-silver",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gold",
+      "silver"
+    ],
+    "variationValue": "gold / silver"
+  },
+  {
+    "term_id": 7996,
+    "name": "Beige, Clear",
+    "slug": "beige-clear",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige",
+      "clear"
+    ],
+    "variationValue": "beige / clear"
+  },
+  {
+    "term_id": 7997,
+    "name": "Clear, Beige",
+    "slug": "clear-beige",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear",
+      "beige"
+    ],
+    "variationValue": "clear / beige"
+  },
+  {
+    "term_id": 8000,
+    "name": "Black, Multicolor Lights",
+    "slug": "black-multicolor-lights",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "multicolor"
+    ],
+    "variationValue": "black / multicolor"
+  },
+  {
+    "term_id": 8001,
+    "name": "Red, Multi-colors",
+    "slug": "red-multi-colors",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 8006,
+    "name": "Rimmer Indigo Medium",
+    "slug": "rimmer-indigo-medium",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 8007,
+    "name": "Indigo Blue",
+    "slug": "indigo-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 8008,
+    "name": "9.75",
+    "slug": "9.75",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "9.75",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8015,
+    "name": "Patent Leather",
+    "slug": "patent-leather",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8016,
+    "name": "Beginners",
+    "slug": "beginners",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8030,
+    "name": "Sensual",
+    "slug": "sensual",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8056,
+    "name": "79",
+    "slug": "79",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "79",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8057,
+    "name": "05",
+    "slug": "05",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "05",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8058,
+    "name": "08",
+    "slug": "08",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "08",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8075,
+    "name": "X 5 Beads",
+    "slug": "x-5-beads",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8076,
+    "name": "X 6 Beads",
+    "slug": "x-6-beads",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8077,
+    "name": "Tight",
+    "slug": "tight",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8078,
+    "name": "Juicy",
+    "slug": "juicy",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8082,
+    "name": "Sexagon",
+    "slug": "sexagon",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8085,
+    "name": "Advanced",
+    "slug": "advanced",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8086,
+    "name": "2.75",
+    "slug": "2.75",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.75",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8090,
+    "name": "Gold Collection",
+    "slug": "gold-collection",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gold"
+    ],
+    "variationValue": "gold"
+  },
+  {
+    "term_id": 8098,
+    "name": "Maxi",
+    "slug": "maxi",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Maxi",
+    "note": "size"
+  },
+  {
+    "term_id": 8120,
+    "name": "6 7 In",
+    "slug": "6-7-in",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6 7 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8126,
+    "name": "19.70",
+    "slug": "19.70",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "19.70",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8127,
+    "name": "11.80",
+    "slug": "11.80",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "11.80",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8129,
+    "name": "White Md",
+    "slug": "white-md",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 8131,
+    "name": "9 In",
+    "slug": "9-in",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "9 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8136,
+    "name": "Black Md",
+    "slug": "black-md",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 8161,
+    "name": "White 3x 4x",
+    "slug": "white-3x-4x",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 8162,
+    "name": "White 1x 2x",
+    "slug": "white-1x-2x",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 8172,
+    "name": "Red 1x 2x",
+    "slug": "red-1x-2x",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 8173,
+    "name": "Red 3x 4x",
+    "slug": "red-3x-4x",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 8176,
+    "name": "X Large",
+    "slug": "x-large",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "X Large",
+    "note": "size"
+  },
+  {
+    "term_id": 8186,
+    "name": "Me",
+    "slug": "me",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Me",
+    "note": "size"
+  },
+  {
+    "term_id": 8187,
+    "name": "Lar",
+    "slug": "lar",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Lar",
+    "note": "size"
+  },
+  {
+    "term_id": 8189,
+    "name": "Sma",
+    "slug": "sma",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Sma",
+    "note": "size"
+  },
+  {
+    "term_id": 8190,
+    "name": "2x",
+    "slug": "2x",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2x",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8191,
+    "name": "7.75 I",
+    "slug": "7.75-i",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8192,
+    "name": "Silico 8.25",
+    "slug": "silico-8.25",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8193,
+    "name": "Silico 10.5",
+    "slug": "silico-10.5",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8196,
+    "name": "Black 2xl",
+    "slug": "black-2xl",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 8197,
+    "name": "B Lxl",
+    "slug": "b-lxl",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "B Lxl",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 8198,
+    "name": "6.5",
+    "slug": "6.5",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6.5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8199,
+    "name": "7.5",
+    "slug": "7.5",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7.5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8200,
+    "name": "Teardrop",
+    "slug": "teardrop",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8201,
+    "name": "Beaded",
+    "slug": "beaded",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8202,
+    "name": "Slim",
+    "slug": "slim",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8203,
+    "name": "Glider",
+    "slug": "glider",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8204,
+    "name": "Merlot",
+    "slug": "merlot",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 8205,
+    "name": "Cabernet",
+    "slug": "cabernet",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 8209,
+    "name": "Taurus",
+    "slug": "taurus",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8210,
+    "name": "Virgo",
+    "slug": "virgo",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8211,
+    "name": "Capricorn",
+    "slug": "capricorn",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8212,
+    "name": "Gemini",
+    "slug": "gemini",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8213,
+    "name": "Libra",
+    "slug": "libra",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8214,
+    "name": "Aquarius",
+    "slug": "aquarius",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8215,
+    "name": "Cancer",
+    "slug": "cancer",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8216,
+    "name": "Scorpio",
+    "slug": "scorpio",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8217,
+    "name": "Pisces",
+    "slug": "pisces",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8218,
+    "name": "Aries",
+    "slug": "aries",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8219,
+    "name": "Sagittarius Light",
+    "slug": "sagittarius-light",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "zodiac"
+  },
+  {
+    "term_id": 8283,
+    "name": "Fruit Punch",
+    "slug": "fruit-punch",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Fruit Punch",
+    "note": "flavor"
+  },
+  {
+    "term_id": 8339,
+    "name": "3pc Hosiery S",
+    "slug": "3pc-hosiery-s",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8340,
+    "name": "Asymmetrical Opaque",
+    "slug": "asymmetrical-opaque",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8341,
+    "name": "Gloved",
+    "slug": "gloved",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8342,
+    "name": "Gloved Qs",
+    "slug": "gloved-qs",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Gloved Qs",
+    "note": "size-signal"
+  },
+  {
+    "term_id": 8343,
+    "name": "Geometric Sage",
+    "slug": "geometric-sage",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "green"
+    ],
+    "variationValue": "green"
+  },
+  {
+    "term_id": 8344,
+    "name": "Rhinestone Poinsettia",
+    "slug": "rhinestone-poinsettia",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8348,
+    "name": "Strapless Bodystock Queen",
+    "slug": "strapless-bodystock-queen",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8386,
+    "name": "Top",
+    "slug": "top",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8459,
+    "name": "Zebra",
+    "slug": "zebra",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 8477,
+    "name": "Ppurple",
+    "slug": "ppurple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 8486,
+    "name": "Taboo",
+    "slug": "taboo",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8529,
+    "name": "X",
+    "slug": "x",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "X",
+    "note": "size"
+  },
+  {
+    "term_id": 8543,
+    "name": "Blackwhite",
+    "slug": "blackwhite",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "white"
+    ],
+    "variationValue": "black / white"
+  },
+  {
+    "term_id": 8558,
+    "name": "Orchid",
+    "slug": "orchid",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 8578,
+    "name": "Heart Small",
+    "slug": "heart-small",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8579,
+    "name": "Heart Medium",
+    "slug": "heart-medium",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8580,
+    "name": "Gem Trainer Kit",
+    "slug": "gem-trainer-kit",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8581,
+    "name": "Heart Trainer Kit",
+    "slug": "heart-trainer-kit",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8599,
+    "name": "Blackflesh",
+    "slug": "blackflesh",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "flesh"
+    ],
+    "variationValue": "black / flesh"
+  },
+  {
+    "term_id": 8621,
+    "name": "Hazard",
+    "slug": "hazard",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8641,
+    "name": "7 Wballs",
+    "slug": "7-wballs",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8642,
+    "name": "10 Wballs",
+    "slug": "10-wballs",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8648,
+    "name": "11",
+    "slug": "11",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "11",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8649,
+    "name": "6 Vibrating",
+    "slug": "6-vibrating",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8650,
+    "name": "9 Vibrating",
+    "slug": "9-vibrating",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8654,
+    "name": "Green Apple",
+    "slug": "green-apple",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Green Apple",
+    "note": "flavor"
+  },
+  {
+    "term_id": 8681,
+    "name": "Smmed",
+    "slug": "smmed",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Smmed",
+    "note": "size"
+  },
+  {
+    "term_id": 8795,
+    "name": "Snow Leopard",
+    "slug": "snow-leopard",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "leopard"
+    ],
+    "variationValue": "white / leopard"
+  },
+  {
+    "term_id": 8796,
+    "name": "Tiger",
+    "slug": "tiger",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "leopard"
+    ],
+    "variationValue": "leopard"
+  },
+  {
+    "term_id": 8807,
+    "name": "1 Transparent",
+    "slug": "1-transparent",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 8808,
+    "name": "2 Transparent",
+    "slug": "2-transparent",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "clear"
+    ],
+    "variationValue": "clear"
+  },
+  {
+    "term_id": 8817,
+    "name": "Strawberry Pomegranate",
+    "slug": "strawberry-pomegranate",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Strawberry Pomegranate",
+    "note": "flavor"
+  },
+  {
+    "term_id": 8818,
+    "name": "Blackberry",
+    "slug": "blackberry",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "blue"
+    ],
+    "variationValue": "black / blue"
+  },
+  {
+    "term_id": 8823,
+    "name": "1.5",
+    "slug": "1.5",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1.5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8824,
+    "name": "1.75",
+    "slug": "1.75",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1.75",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8825,
+    "name": "Blue 2",
+    "slug": "blue-2",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 8826,
+    "name": "Silverblack",
+    "slug": "silverblack",
+    "products": 1,
+    "variations": 4,
+    "action": "COLOR",
+    "colors": [
+      "silver",
+      "black"
+    ],
+    "variationValue": "silver / black"
+  },
+  {
+    "term_id": 8855,
+    "name": "Strong",
+    "slug": "strong",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8856,
+    "name": "Sd Gentle",
+    "slug": "sd-gentle",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8857,
+    "name": "U.S.",
+    "slug": "u.s.",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8858,
+    "name": "16 Pcs Assorted",
+    "slug": "16-pcs-assorted",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "16 Pcs Assorted",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8883,
+    "name": "Hot",
+    "slug": "hot",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 8922,
+    "name": "Sofia",
+    "slug": "sofia",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 8923,
+    "name": "Isabella",
+    "slug": "isabella",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 8929,
+    "name": "Golden Glitter Penis Candle",
+    "slug": "golden-glitter-penis-candle",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "gold"
+    ],
+    "variationValue": "gold"
+  },
+  {
+    "term_id": 8971,
+    "name": "Brittany",
+    "slug": "brittany",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 8972,
+    "name": "Ashley",
+    "slug": "ashley",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 8973,
+    "name": "Maddie",
+    "slug": "maddie",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 8974,
+    "name": "Emily",
+    "slug": "emily",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9040,
+    "name": "Ariana Marie",
+    "slug": "ariana-marie",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9041,
+    "name": "Katrina Jade",
+    "slug": "katrina-jade",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9042,
+    "name": "Chantal Danielle",
+    "slug": "chantal-danielle",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9043,
+    "name": "Alexis Tae",
+    "slug": "alexis-tae",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9044,
+    "name": "Allie Nicole",
+    "slug": "allie-nicole",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9045,
+    "name": "Suki Sin",
+    "slug": "suki-sin",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9046,
+    "name": "Kiley Corrupt",
+    "slug": "kiley-corrupt",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "model-name"
+  },
+  {
+    "term_id": 9170,
+    "name": "Shimmer Chic Luxury Nipple Clamps",
+    "slug": "shimmer-chic-luxury-nipple-clamps",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 9277,
+    "name": "Bloom Fuschia",
+    "slug": "bloom-fuschia",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 9300,
+    "name": "Pussy",
+    "slug": "pussy",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9301,
+    "name": "Anal",
+    "slug": "anal",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9330,
+    "name": "Usb Finger Vibrator",
+    "slug": "usb-finger-vibrator",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9331,
+    "name": "Elite Supercharged Rotating Rabbit",
+    "slug": "elite-supercharged-rotating-rabbit",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 9380,
+    "name": "Rocking Rabbit",
+    "slug": "rocking-rabbit",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9447,
+    "name": "Shiny",
+    "slug": "shiny",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9448,
+    "name": "Glamour",
+    "slug": "glamour",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9492,
+    "name": "Street",
+    "slug": "street",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9493,
+    "name": "Dance",
+    "slug": "dance",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9502,
+    "name": "Original Vacuum",
+    "slug": "original-vacuum",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9503,
+    "name": "Soft Case",
+    "slug": "soft-case",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9536,
+    "name": "Gagged",
+    "slug": "gagged",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9537,
+    "name": "Bound",
+    "slug": "bound",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9541,
+    "name": "03",
+    "slug": "03",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "03",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9542,
+    "name": "04",
+    "slug": "04",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "04",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9575,
+    "name": "40mm",
+    "slug": "40mm",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "40mm",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9598,
+    "name": "8 Turquoise",
+    "slug": "8-turquoise",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 9599,
+    "name": "10 Turquoise",
+    "slug": "10-turquoise",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 9600,
+    "name": "10 Purple",
+    "slug": "10-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 9601,
+    "name": "11 Blue",
+    "slug": "11-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 9602,
+    "name": "11 Purple",
+    "slug": "11-purple",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 9603,
+    "name": "11 Turquoise",
+    "slug": "11-turquoise",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 9604,
+    "name": "6 Blue",
+    "slug": "6-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 9605,
+    "name": "6 Turquoise",
+    "slug": "6-turquoise",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 9606,
+    "name": "8 Blue",
+    "slug": "8-blue",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 9607,
+    "name": "9 Turquoise",
+    "slug": "9-turquoise",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 9610,
+    "name": "39 40",
+    "slug": "39-40",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "39 40",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9625,
+    "name": "Pink Rose",
+    "slug": "pink-rose",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "pink",
+      "rose"
+    ],
+    "variationValue": "pink / rose"
+  },
+  {
+    "term_id": 9636,
+    "name": "14mm",
+    "slug": "14mm",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "14mm",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9637,
+    "name": "20mm",
+    "slug": "20mm",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "20mm",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9646,
+    "name": "Md",
+    "slug": "md",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Md",
+    "note": "size"
+  },
+  {
+    "term_id": 9649,
+    "name": "Blk Blu",
+    "slug": "blk-blu",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "blue"
+    ],
+    "variationValue": "black / blue"
+  },
+  {
+    "term_id": 9660,
+    "name": "5",
+    "slug": "5",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9711,
+    "name": "Extra Hangi",
+    "slug": "extra-hangi",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9712,
+    "name": "Hanging",
+    "slug": "hanging",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9725,
+    "name": "Dark",
+    "slug": "dark",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 9730,
+    "name": "6 5",
+    "slug": "6-5",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6 5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9731,
+    "name": "7 8",
+    "slug": "7-8",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7 8",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9804,
+    "name": "67",
+    "slug": "67",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "67",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9805,
+    "name": "72",
+    "slug": "72",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "72",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9824,
+    "name": "3xl",
+    "slug": "3xl",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "3xl",
+    "note": "size"
+  },
+  {
+    "term_id": 9825,
+    "name": "1xl",
+    "slug": "1xl",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1xl",
+    "note": "size"
+  },
+  {
+    "term_id": 9879,
+    "name": "18",
+    "slug": "18",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "18",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9901,
+    "name": "4 5",
+    "slug": "4-5",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "4 5",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9918,
+    "name": "Blackyellow",
+    "slug": "blackyellow",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black",
+      "yellow"
+    ],
+    "variationValue": "black / yellow"
+  },
+  {
+    "term_id": 9919,
+    "name": "4",
+    "slug": "4",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "4",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9943,
+    "name": "Kink By Doc Johnson Power Play",
+    "slug": "kink-by-doc-johnson-power-play",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 9944,
+    "name": "Optimale Vibrating Warming Stroker",
+    "slug": "optimale-vibrating-warming-stroker",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 9979,
+    "name": "Wballs Cho",
+    "slug": "wballs-cho",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 9980,
+    "name": "Chocolate",
+    "slug": "chocolate",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 9990,
+    "name": "Trainer",
+    "slug": "trainer",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10033,
+    "name": "Lxl L Onyx",
+    "slug": "lxl-l-onyx",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 10034,
+    "name": "Front Zip Large",
+    "slug": "front-zip-large",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10038,
+    "name": "Med",
+    "slug": "med",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Med",
+    "note": "size"
+  },
+  {
+    "term_id": 10041,
+    "name": "Llg",
+    "slug": "llg",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Llg",
+    "note": "size"
+  },
+  {
+    "term_id": 10043,
+    "name": "Flower",
+    "slug": "flower",
+    "products": 1,
+    "variations": 3,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10045,
+    "name": "Spiked Vibrating Brown",
+    "slug": "spiked-vibrating-brown",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "brown"
+    ],
+    "variationValue": "brown"
+  },
+  {
+    "term_id": 10099,
+    "name": "Haze",
+    "slug": "haze",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10100,
+    "name": "Super Soft Midnight",
+    "slug": "super-soft-midnight",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "blue"
+    ],
+    "variationValue": "blue"
+  },
+  {
+    "term_id": 10129,
+    "name": "Super 8",
+    "slug": "super-8",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10130,
+    "name": "Ragin 7.5",
+    "slug": "ragin-7.5",
+    "products": 1,
+    "variations": 2,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10143,
+    "name": "Vanilla Dreams",
+    "slug": "vanilla-dreams",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "beige"
+    ],
+    "variationValue": "beige"
+  },
+  {
+    "term_id": 10144,
+    "name": "White Flower Stain",
+    "slug": "white-flower-stain",
+    "products": 1,
+    "variations": 1,
+    "action": "COLOR",
+    "colors": [
+      "white"
+    ],
+    "variationValue": "white"
+  },
+  {
+    "term_id": 10147,
+    "name": "Kitty",
+    "slug": "kitty",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10148,
+    "name": "Teddy",
+    "slug": "teddy",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10173,
+    "name": "Sparkle",
+    "slug": "sparkle",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10174,
+    "name": "Elegance",
+    "slug": "elegance",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10177,
+    "name": "I",
+    "slug": "i",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 10178,
+    "name": "Iv",
+    "slug": "iv",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 1951,
+    "name": "Gel Plus 1.25 Oz (bulk)",
+    "slug": "gel-plus-1-25-oz-bulk",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Gel Plus 1.25 Oz (bulk)",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 1952,
+    "name": "Gel 1.25 Oz (bulk)",
+    "slug": "gel-1-25-oz-bulk",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Gel 1.25 Oz (bulk)",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 2090,
+    "name": "Titanium Silver",
+    "slug": "titanium-silver",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "silver"
+    ],
+    "variationValue": "silver"
+  },
+  {
+    "term_id": 2115,
+    "name": "Kangaroo Pink",
+    "slug": "kangaroo-pink",
+    "products": 0,
+    "variations": 2,
+    "action": "COLOR",
+    "colors": [
+      "pink"
+    ],
+    "variationValue": "pink"
+  },
+  {
+    "term_id": 2121,
+    "name": "Plus Large 30ml",
+    "slug": "plus-large-30ml",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2123,
+    "name": "Plus 10ml",
+    "slug": "plus-10ml",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2124,
+    "name": "Plus",
+    "slug": "plus",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2144,
+    "name": "Cherry Ice",
+    "slug": "cherry-ice",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 2145,
+    "name": "Ice",
+    "slug": "ice",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2249,
+    "name": "Ainer",
+    "slug": "ainer",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2270,
+    "name": "Lotion",
+    "slug": "lotion",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 2520,
+    "name": "TEACHER'S PET SCHOOLGIRL SKIRT WINE Q/S",
+    "slug": "teacher-s-pet-schoolgirl-skirt-wine-q-s",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "wine"
+    ],
+    "variationValue": "wine"
+  },
+  {
+    "term_id": 2521,
+    "name": "TEACHER'S PET SCHOOLGIRL SKIRT RAINBOW Q/S",
+    "slug": "teacher-s-pet-schoolgirl-skirt-rainbow-q-s",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "rainbow"
+    ],
+    "variationValue": "rainbow"
+  },
+  {
+    "term_id": 3227,
+    "name": "White, Red",
+    "slug": "white-red",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "white",
+      "red"
+    ],
+    "variationValue": "white / red"
+  },
+  {
+    "term_id": 4131,
+    "name": "GLAS 6.5 FULL TIP TEXTURED GLASS DILDO \"",
+    "slug": "glas-6-5-full-tip-textured-glass-dildo",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-fragment"
+  },
+  {
+    "term_id": 4281,
+    "name": "Slate",
+    "slug": "slate",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "gray"
+    ],
+    "variationValue": "gray"
+  },
+  {
+    "term_id": 4833,
+    "name": "Chocolate 15pc Display",
+    "slug": "chocolate-15pc-display",
+    "products": 0,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_flavor",
+    "value": "Chocolate 15pc Display",
+    "note": "flavor"
+  },
+  {
+    "term_id": 4834,
+    "name": "1pk (6 Pcs)",
+    "slug": "1pk-6-pcs",
+    "products": 0,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1pk (6 Pcs)",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 4835,
+    "name": "12pc",
+    "slug": "12pc",
+    "products": 0,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-non-color"
+  },
+  {
+    "term_id": 4898,
+    "name": "30pc Display",
+    "slug": "30pc-display",
+    "products": 0,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "30pc Display",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8345,
+    "name": "0.5 Oz",
+    "slug": "0.5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "0.5 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8346,
+    "name": "0.75 Oz",
+    "slug": "0.75-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "0.75 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8540,
+    "name": "0.25 Oz",
+    "slug": "0.25-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "0.25 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8568,
+    "name": "2.8 Long 1.65 Dia 5.39 Tall",
+    "slug": "2.8-long-1.65-dia-5.39-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.8 Long 1.65 Dia 5.39 Tall",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8569,
+    "name": "2.99 Long 1.65 Dia 5.94 Tall",
+    "slug": "2.99-long-1.65-dia-5.94-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.99 Long 1.65 Dia 5.94 Tall",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8570,
+    "name": "2.83 Long 1.61 Dia 5.31 Tall",
+    "slug": "2.83-long-1.61-dia-5.31-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.83 Long 1.61 Dia 5.31 Tall",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8571,
+    "name": "2.99 Long 1.61 Dia 5.91 Tall",
+    "slug": "2.99-long-1.61-dia-5.91-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.99 Long 1.61 Dia 5.91 Tall",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8572,
+    "name": "2.8 Long 1.61 Dia 5.31 Tall",
+    "slug": "2.8-long-1.61-dia-5.31-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.8 Long 1.61 Dia 5.31 Tall",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8582,
+    "name": "0.15 Oz",
+    "slug": "0.15-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "0.15 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8643,
+    "name": "6 In",
+    "slug": "6-in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8644,
+    "name": "7 In",
+    "slug": "7-in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8645,
+    "name": "8 In",
+    "slug": "8-in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "8 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8646,
+    "name": "10 In",
+    "slug": "10-in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "10 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8647,
+    "name": "5 In",
+    "slug": "5-in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "5 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8651,
+    "name": "11 In",
+    "slug": "11-in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "11 In",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8881,
+    "name": "0.3 Oz",
+    "slug": "0.3-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "0.3 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8975,
+    "name": "2.25 Oz",
+    "slug": "2.25-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.25 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 8976,
+    "name": "2.5 Oz",
+    "slug": "2.5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "2.5 Oz",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9608,
+    "name": "Shots In. Black",
+    "slug": "shots-in.-black",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "black"
+    ],
+    "variationValue": "black"
+  },
+  {
+    "term_id": 9858,
+    "name": "1x",
+    "slug": "1x",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1x",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9923,
+    "name": "Thong Red",
+    "slug": "thong-red",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "red"
+    ],
+    "variationValue": "red"
+  },
+  {
+    "term_id": 9924,
+    "name": "Thong Turquoise",
+    "slug": "thong-turquoise",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "turquoise"
+    ],
+    "variationValue": "turquoise"
+  },
+  {
+    "term_id": 9925,
+    "name": "Thong Purple",
+    "slug": "thong-purple",
+    "products": 0,
+    "variations": 0,
+    "action": "COLOR",
+    "colors": [
+      "purple"
+    ],
+    "variationValue": "purple"
+  },
+  {
+    "term_id": 9981,
+    "name": "6in",
+    "slug": "6in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6in",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9982,
+    "name": "7in",
+    "slug": "7in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7in",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 9983,
+    "name": "8in",
+    "slug": "8in",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "8in",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 10083,
+    "name": "3.94 Long 1.97 Dia 7.87 Tall",
+    "slug": "3.94-long-1.97-dia-7.87-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "3.94 Long 1.97 Dia 7.87 Tall",
+    "note": "numeric/unit"
+  },
+  {
+    "term_id": 10084,
+    "name": "3.54 Long 2.36 Dia 13.19 Tall",
+    "slug": "3.54-long-2.36-dia-13.19-tall",
+    "products": 0,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "3.54 Long 2.36 Dia 13.19 Tall",
+    "note": "numeric/unit"
+  }
+]

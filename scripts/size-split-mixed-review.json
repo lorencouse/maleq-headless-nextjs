@@ -1,0 +1,888 @@
+[
+  {
+    "parent": 187841,
+    "dims": [
+      "volume",
+      "count"
+    ],
+    "values": [
+      "1-oz",
+      "50-display"
+    ]
+  },
+  {
+    "parent": 187845,
+    "dims": [
+      "volume",
+      "count"
+    ],
+    "values": [
+      "1-oz",
+      "50-display"
+    ]
+  },
+  {
+    "parent": 188663,
+    "dims": [
+      "volume",
+      "length",
+      "apparel"
+    ],
+    "values": [
+      "0.75-oz",
+      "0.65-oz",
+      "10-long-10.85-dia-2.6-tall",
+      "1.1-oz",
+      "1.25-oz",
+      "xl"
+    ]
+  },
+  {
+    "parent": 188890,
+    "dims": [
+      "length",
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "5.125-long-1-dia-10.75-tall",
+      "queen",
+      "0.4-oz"
+    ]
+  },
+  {
+    "parent": 189051,
+    "dims": [
+      "apparel",
+      "length"
+    ],
+    "values": [
+      "m",
+      "l",
+      "9-in"
+    ]
+  },
+  {
+    "parent": 190077,
+    "dims": [
+      "apparel",
+      "count"
+    ],
+    "values": [
+      "m",
+      "2-pk"
+    ]
+  },
+  {
+    "parent": 190192,
+    "dims": [
+      "length",
+      "apparel"
+    ],
+    "values": [
+      "8-in",
+      "l"
+    ]
+  },
+  {
+    "parent": 190987,
+    "dims": [
+      "count",
+      "volume"
+    ],
+    "values": [
+      "24-display",
+      "10-ml",
+      "5-oz"
+    ]
+  },
+  {
+    "parent": 190994,
+    "dims": [
+      "volume",
+      "count"
+    ],
+    "values": [
+      "10-ml",
+      "1-pk",
+      "2-oz"
+    ]
+  },
+  {
+    "parent": 191649,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "2-pk",
+      "l-xl",
+      "s-m"
+    ]
+  },
+  {
+    "parent": 191653,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "2-pk",
+      "l-xl",
+      "s-m"
+    ]
+  },
+  {
+    "parent": 191657,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "2-pk",
+      "l-xl",
+      "s-m"
+    ]
+  },
+  {
+    "parent": 191661,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "2-pk",
+      "l-xl",
+      "s-m"
+    ]
+  },
+  {
+    "parent": 191665,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "2-pk",
+      "l-xl",
+      "s-m"
+    ]
+  },
+  {
+    "parent": 191928,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "20-display",
+      "2xl"
+    ]
+  },
+  {
+    "parent": 192098,
+    "dims": [
+      "volume",
+      "apparel"
+    ],
+    "values": [
+      "30-ml",
+      "10-ml",
+      "plus"
+    ]
+  },
+  {
+    "parent": 195387,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "4-in",
+      "1-oz",
+      "4-oz"
+    ]
+  },
+  {
+    "parent": 196597,
+    "dims": [
+      "other",
+      "apparel",
+      "length"
+    ],
+    "values": [
+      "light",
+      "m",
+      "5-1-in"
+    ]
+  },
+  {
+    "parent": 443036,
+    "dims": [
+      "length",
+      "apparel"
+    ],
+    "values": [
+      "11-in",
+      "king"
+    ]
+  },
+  {
+    "parent": 443074,
+    "dims": [
+      "apparel",
+      "length"
+    ],
+    "values": [
+      "one-size",
+      "11-in"
+    ]
+  },
+  {
+    "parent": 481771,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "l-xl",
+      "thong-black-ml",
+      "thong-white-m-l",
+      "s-m"
+    ]
+  },
+  {
+    "parent": 461170,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "3-pk",
+      "queen"
+    ]
+  },
+  {
+    "parent": 542516,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "l",
+      "m",
+      "0.12-oz",
+      "0.2-oz"
+    ]
+  },
+  {
+    "parent": 543220,
+    "dims": [
+      "length",
+      "apparel"
+    ],
+    "values": [
+      "7-in",
+      "mini"
+    ]
+  },
+  {
+    "parent": 543326,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "3-pk",
+      "queen"
+    ]
+  },
+  {
+    "parent": 543516,
+    "dims": [
+      "length",
+      "apparel"
+    ],
+    "values": [
+      "3-5-in",
+      "m"
+    ]
+  },
+  {
+    "parent": 544589,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "3-pk",
+      "s"
+    ]
+  },
+  {
+    "parent": 545181,
+    "dims": [
+      "length",
+      "apparel",
+      "other"
+    ],
+    "values": [
+      "15-long-5-dia-11.5-tall",
+      "queen",
+      "size",
+      "3-long-5.75-dia-8.75-tall"
+    ]
+  },
+  {
+    "parent": 546119,
+    "dims": [
+      "count",
+      "volume"
+    ],
+    "values": [
+      "6-pk",
+      "13-oz"
+    ]
+  },
+  {
+    "parent": 188108,
+    "dims": [
+      "apparel",
+      "length"
+    ],
+    "values": [
+      "s",
+      "m",
+      "5.5-long-4.72-dia-2.4-tall"
+    ]
+  },
+  {
+    "parent": 188546,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "s",
+      "l",
+      "0.3-oz"
+    ]
+  },
+  {
+    "parent": 194320,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "5.75-long-1.75-dia-8.5-tall",
+      "0.25-oz"
+    ]
+  },
+  {
+    "parent": 194388,
+    "dims": [
+      "apparel",
+      "length"
+    ],
+    "values": [
+      "s",
+      "l",
+      "5.25-long-3.25-dia-1.25-tall"
+    ]
+  },
+  {
+    "parent": 594402,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "s",
+      "m-l",
+      "0.22-oz"
+    ]
+  },
+  {
+    "parent": 470872,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "s",
+      "l-xl",
+      "0.13-oz"
+    ]
+  },
+  {
+    "parent": 470881,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "s",
+      "l-xl",
+      "0.1-oz"
+    ]
+  },
+  {
+    "parent": 594488,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "s",
+      "l-xl",
+      "0.11-oz"
+    ]
+  },
+  {
+    "parent": 594494,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "one-size",
+      "1x",
+      "0.18-oz"
+    ]
+  },
+  {
+    "parent": 474588,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "one-size",
+      "1x",
+      "0.18-oz"
+    ]
+  },
+  {
+    "parent": 594520,
+    "dims": [
+      "apparel",
+      "count"
+    ],
+    "values": [
+      "l-xl",
+      "s",
+      "2-pk"
+    ]
+  },
+  {
+    "parent": 594541,
+    "dims": [
+      "apparel",
+      "volume"
+    ],
+    "values": [
+      "2xl",
+      "l-xl",
+      "0.2-oz"
+    ]
+  },
+  {
+    "parent": 187858,
+    "dims": [
+      "volume",
+      "count"
+    ],
+    "values": [
+      "0.2-oz",
+      "50-pk"
+    ]
+  },
+  {
+    "parent": 187939,
+    "dims": [
+      "volume",
+      "length",
+      "other"
+    ],
+    "values": [
+      "0.08-oz",
+      "0.25-oz",
+      "3-5-in",
+      "3.5in"
+    ]
+  },
+  {
+    "parent": 188126,
+    "dims": [
+      "volume",
+      "length",
+      "other"
+    ],
+    "values": [
+      "0.75-oz",
+      "8-in",
+      "7-5-in",
+      "7-in",
+      "8-5-in",
+      "8in",
+      "7.5in",
+      "8.5in"
+    ]
+  },
+  {
+    "parent": 188500,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "12.75-long-6.65-dia-1.4-tall",
+      "0.5-oz"
+    ]
+  },
+  {
+    "parent": 188767,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "4-long-1-dia-5-tall",
+      "0.25-oz"
+    ]
+  },
+  {
+    "parent": 188855,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "5.125-long-0.375-dia-10.75-tall",
+      "5-long-0.5-dia-10.75-tall",
+      "5.35-long-10.8-dia-0.7-tall",
+      "0.25-oz",
+      "0.3-oz"
+    ]
+  },
+  {
+    "parent": 188933,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.3-oz",
+      "5.85-long-11.3-dia-1.9-tall"
+    ]
+  },
+  {
+    "parent": 189009,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.25-oz",
+      "6.3-long-3.85-dia-1.75-tall"
+    ]
+  },
+  {
+    "parent": 189161,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "2-long-1.75-dia-6.25-tall",
+      "2-oz"
+    ]
+  },
+  {
+    "parent": 189608,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "3.1-long-7.95-dia-2.8-tall",
+      "1-oz"
+    ]
+  },
+  {
+    "parent": 190625,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "2-long-2-dia-7.5-tall",
+      "2-oz"
+    ]
+  },
+  {
+    "parent": 191043,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "4.05-long-8-dia-1.15-tall",
+      "8-long-4.05-dia-1.1-tall",
+      "0.25-oz"
+    ]
+  },
+  {
+    "parent": 191294,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.25-oz",
+      "14.4-long-8.8-dia-1.2-tall"
+    ]
+  },
+  {
+    "parent": 192248,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "4.15-long-2.85-dia-0.65-tall",
+      "4.2-long-7.3-dia-0.65-tall",
+      "2.8-long-0.6-dia-4.1-tall",
+      "2.85-long-4.2-dia-0.65-tall",
+      "0.25-oz"
+    ]
+  },
+  {
+    "parent": 193563,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.2-oz",
+      "5.45-long-8.55-dia-0.65-tall"
+    ]
+  },
+  {
+    "parent": 193841,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "3-long-0.5-dia-4-tall",
+      "0.1-oz",
+      "3.5-long-5.1-dia-0.45-tall",
+      "2.25-long-0.25-dia-4.25-tall",
+      "4.25-long-0.5-dia-5.5-tall",
+      "5.1-long-3.55-dia-0.65-tall",
+      "3-long-0.25-dia-4-tall",
+      "3.5-long-5.05-dia-0.45-tall"
+    ]
+  },
+  {
+    "parent": 193983,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "3.5-long-5.25-dia-13-tall",
+      "0.29-oz"
+    ]
+  },
+  {
+    "parent": 194043,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "4-long-3-dia-10.5-tall",
+      "0.425-oz"
+    ]
+  },
+  {
+    "parent": 194179,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "5.5-long-1.75-dia-11-tall",
+      "2.15-long-7.65-dia-2-tall",
+      "1.5-long-5.25-dia-11-tall",
+      "4-long-1.5-dia-11.5-tall",
+      "3-long-1.5-dia-8.5-tall",
+      "4.75-long-2-dia-10.25-tall",
+      "5.25-long-1.75-dia-11-tall",
+      "0.25-oz",
+      "3-long-1.5-dia-8-tall",
+      "7.8-long-3-dia-1.5-tall",
+      "4-long-2.5-dia-10.5-tall",
+      "3-long-1.7-dia-8.3-tall"
+    ]
+  },
+  {
+    "parent": 194807,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "3.625-long-2.75-dia-8.5-tall",
+      "0.41-oz"
+    ]
+  },
+  {
+    "parent": 195984,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "3.25-long-6.8-dia-1.6-tall",
+      "3.6-long-7.75-dia-1.7-tall",
+      "8.6-long-4.15-dia-1.95-tall",
+      "0.33-oz",
+      "3.6-long-7.7-dia-1.75-tall",
+      "3.4-long-6.8-dia-1.6-tall",
+      "3.6-long-8.4-dia-1.65-tall",
+      "4.2-long-8.55-dia-1.95-tall"
+    ]
+  },
+  {
+    "parent": 196052,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "11.4-long-13.85-dia-2.85-tall",
+      "1.15-oz",
+      "13.65-long-12-dia-2.8-tall",
+      "13.1-long-13.45-dia-3.1-tall",
+      "1.34-oz"
+    ]
+  },
+  {
+    "parent": 198807,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.23-oz",
+      "9.75-long-5.1-dia-1.6-tall"
+    ]
+  },
+  {
+    "parent": 445034,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.58-oz",
+      "8.0-long"
+    ]
+  },
+  {
+    "parent": 454389,
+    "dims": [
+      "volume",
+      "apparel"
+    ],
+    "values": [
+      "0.25-oz",
+      "one-size"
+    ]
+  },
+  {
+    "parent": 456155,
+    "dims": [
+      "count",
+      "apparel"
+    ],
+    "values": [
+      "3-pk",
+      "m-l"
+    ]
+  },
+  {
+    "parent": 541890,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.5-oz",
+      "0.25-oz",
+      "3.25-long-3.25-dia-8.25-tall"
+    ]
+  },
+  {
+    "parent": 543726,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.5-oz",
+      "6.25-long-14.05-dia-1.75-tall",
+      "6.1-long-14.15-dia-1.6-tall",
+      "8.7-long-14.25-dia-1.65-tall"
+    ]
+  },
+  {
+    "parent": 544648,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "11.2-long-19.15-dia-0.7-tall",
+      "0.2-oz",
+      "6.65-long-10.3-dia-0.75-tall"
+    ]
+  },
+  {
+    "parent": 545103,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.27-oz",
+      "3.54-long-0.79-dia-8.86-tall"
+    ]
+  },
+  {
+    "parent": 545343,
+    "dims": [
+      "volume",
+      "length"
+    ],
+    "values": [
+      "0.9-oz",
+      "4.1-long-2.6-dia-6.05-tall"
+    ]
+  },
+  {
+    "parent": 545425,
+    "dims": [
+      "length",
+      "volume"
+    ],
+    "values": [
+      "9.72-long-1.18-dia-13.5-tall",
+      "0.25-oz"
+    ]
+  }
+]

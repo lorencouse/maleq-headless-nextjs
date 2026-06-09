@@ -1,0 +1,1808 @@
+[
+  {
+    "term_id": 1822,
+    "name": "Strawberry",
+    "slug": "strawberry",
+    "products": 85,
+    "variations": 80,
+    "action": "KEEP",
+    "flavor": "strawberry",
+    "variationValue": "strawberry"
+  },
+  {
+    "term_id": 1897,
+    "name": "Vanilla",
+    "slug": "vanilla",
+    "products": 60,
+    "variations": 54,
+    "action": "KEEP",
+    "flavor": "vanilla",
+    "variationValue": "vanilla"
+  },
+  {
+    "term_id": 2928,
+    "name": "Caramel",
+    "slug": "caramel",
+    "products": 36,
+    "variations": 29,
+    "action": "KEEP",
+    "flavor": "caramel",
+    "variationValue": "caramel"
+  },
+  {
+    "term_id": 2138,
+    "name": "Chocolate",
+    "slug": "chocolate",
+    "products": 35,
+    "variations": 32,
+    "action": "KEEP",
+    "flavor": "chocolate",
+    "variationValue": "chocolate"
+  },
+  {
+    "term_id": 1895,
+    "name": "Watermelon",
+    "slug": "watermelon",
+    "products": 34,
+    "variations": 34,
+    "action": "KEEP",
+    "flavor": "watermelon",
+    "variationValue": "watermelon"
+  },
+  {
+    "term_id": 1900,
+    "name": "Cherry",
+    "slug": "cherry",
+    "products": 31,
+    "variations": 31,
+    "action": "KEEP",
+    "flavor": "cherry",
+    "variationValue": "cherry"
+  },
+  {
+    "term_id": 1825,
+    "name": "Mint",
+    "slug": "mint",
+    "products": 29,
+    "variations": 27,
+    "action": "KEEP",
+    "flavor": "mint",
+    "variationValue": "mint"
+  },
+  {
+    "term_id": 1901,
+    "name": "Grape",
+    "slug": "grape",
+    "products": 18,
+    "variations": 19,
+    "action": "KEEP",
+    "flavor": "grape",
+    "variationValue": "grape"
+  },
+  {
+    "term_id": 2040,
+    "name": "Cotton Candy",
+    "slug": "cotton-candy",
+    "products": 12,
+    "variations": 12,
+    "action": "KEEP",
+    "flavor": "cotton-candy",
+    "variationValue": "cotton-candy"
+  },
+  {
+    "term_id": 2033,
+    "name": "Mango",
+    "slug": "mango",
+    "products": 12,
+    "variations": 11,
+    "action": "KEEP",
+    "flavor": "mango",
+    "variationValue": "mango"
+  },
+  {
+    "term_id": 2760,
+    "name": "Apple",
+    "slug": "apple",
+    "products": 11,
+    "variations": 9,
+    "action": "KEEP",
+    "flavor": "apple",
+    "variationValue": "apple"
+  },
+  {
+    "term_id": 2078,
+    "name": "Blueberry",
+    "slug": "blueberry",
+    "products": 11,
+    "variations": 12,
+    "action": "KEEP",
+    "flavor": "blueberry",
+    "variationValue": "blueberry"
+  },
+  {
+    "term_id": 1966,
+    "name": "Peach",
+    "slug": "peach",
+    "products": 11,
+    "variations": 11,
+    "action": "KEEP",
+    "flavor": "peach",
+    "variationValue": "peach"
+  },
+  {
+    "term_id": 2038,
+    "name": "Coconut",
+    "slug": "coconut",
+    "products": 10,
+    "variations": 10,
+    "action": "KEEP",
+    "flavor": "coconut",
+    "variationValue": "coconut"
+  },
+  {
+    "term_id": 1965,
+    "name": "Raspberry",
+    "slug": "raspberry",
+    "products": 10,
+    "variations": 10,
+    "action": "KEEP",
+    "flavor": "raspberry",
+    "variationValue": "raspberry"
+  },
+  {
+    "term_id": 2861,
+    "name": "Cinnamon",
+    "slug": "cinnamon",
+    "products": 8,
+    "variations": 6,
+    "action": "KEEP",
+    "flavor": "cinnamon",
+    "variationValue": "cinnamon"
+  },
+  {
+    "term_id": 2703,
+    "name": "Mocha",
+    "slug": "mocha",
+    "products": 8,
+    "variations": 8,
+    "action": "KEEP",
+    "flavor": "mocha",
+    "variationValue": "mocha"
+  },
+  {
+    "term_id": 1967,
+    "name": "Banana",
+    "slug": "banana",
+    "products": 7,
+    "variations": 7,
+    "action": "KEEP",
+    "flavor": "banana",
+    "variationValue": "banana"
+  },
+  {
+    "term_id": 2758,
+    "name": "Lemon",
+    "slug": "lemon",
+    "products": 7,
+    "variations": 9,
+    "action": "KEEP",
+    "flavor": "lemon",
+    "variationValue": "lemon"
+  },
+  {
+    "term_id": 1815,
+    "name": "Piña Colada",
+    "slug": "pi-a-colada",
+    "products": 7,
+    "variations": 7,
+    "action": "MERGE",
+    "flavor": "pina-colada",
+    "variationValue": "pina-colada",
+    "note": "alias"
+  },
+  {
+    "term_id": 2759,
+    "name": "Blue Raspberry",
+    "slug": "blue-raspberry",
+    "products": 6,
+    "variations": 4,
+    "action": "KEEP",
+    "flavor": "blue-raspberry",
+    "variationValue": "blue-raspberry"
+  },
+  {
+    "term_id": 4101,
+    "name": "Lavender",
+    "slug": "lavender",
+    "products": 6,
+    "variations": 4,
+    "action": "KEEP",
+    "flavor": "lavender",
+    "variationValue": "lavender"
+  },
+  {
+    "term_id": 1974,
+    "name": "Passion Fruit",
+    "slug": "passion-fruit",
+    "products": 6,
+    "variations": 6,
+    "action": "KEEP",
+    "flavor": "passion-fruit",
+    "variationValue": "passion-fruit"
+  },
+  {
+    "term_id": 1896,
+    "name": "Green Apple",
+    "slug": "green-apple",
+    "products": 5,
+    "variations": 5,
+    "action": "KEEP",
+    "flavor": "green-apple",
+    "variationValue": "green-apple"
+  },
+  {
+    "term_id": 1973,
+    "name": "Wild Cherry",
+    "slug": "wild-cherry",
+    "products": 5,
+    "variations": 3,
+    "action": "KEEP",
+    "flavor": "wild-cherry",
+    "variationValue": "wild-cherry"
+  },
+  {
+    "term_id": 3151,
+    "name": "Chocolate Mint",
+    "slug": "chocolate-mint",
+    "products": 4,
+    "variations": 4,
+    "action": "KEEP",
+    "flavor": "chocolate-mint",
+    "variationValue": "chocolate-mint"
+  },
+  {
+    "term_id": 5677,
+    "name": "7 In. Pink",
+    "slug": "7-in-pink",
+    "products": 3,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7 In. Pink",
+    "note": "size"
+  },
+  {
+    "term_id": 10396,
+    "name": "Black Licorice",
+    "slug": "black-licorice",
+    "products": 3,
+    "variations": 0,
+    "action": "KEEP",
+    "flavor": "black-licorice",
+    "variationValue": "black-licorice"
+  },
+  {
+    "term_id": 1821,
+    "name": "Butter Rum",
+    "slug": "butter-rum",
+    "products": 3,
+    "variations": 3,
+    "action": "KEEP",
+    "flavor": "butter-rum",
+    "variationValue": "butter-rum"
+  },
+  {
+    "term_id": 3987,
+    "name": "Floral",
+    "slug": "floral",
+    "products": 3,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "floral",
+    "variationValue": "floral"
+  },
+  {
+    "term_id": 4827,
+    "name": "Honey",
+    "slug": "honey",
+    "products": 3,
+    "variations": 4,
+    "action": "KEEP",
+    "flavor": "honey",
+    "variationValue": "honey"
+  },
+  {
+    "term_id": 2880,
+    "name": "Spray",
+    "slug": "spray",
+    "products": 3,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "spray",
+    "variationValue": "spray"
+  },
+  {
+    "term_id": 9424,
+    "name": "Aphrodisia Roses",
+    "slug": "aphrodisia-roses",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "aphrodisia-roses",
+    "variationValue": "aphrodisia-roses"
+  },
+  {
+    "term_id": 2039,
+    "name": "Bubble Gum",
+    "slug": "bubble-gum",
+    "products": 2,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "bubble-gum",
+    "variationValue": "bubble-gum"
+  },
+  {
+    "term_id": 9422,
+    "name": "Exotic Fruits",
+    "slug": "exotic-fruits",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "exotic-fruits",
+    "variationValue": "exotic-fruits"
+  },
+  {
+    "term_id": 4102,
+    "name": "Fresh",
+    "slug": "fresh",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "fresh",
+    "variationValue": "fresh"
+  },
+  {
+    "term_id": 3052,
+    "name": "Gel",
+    "slug": "gel",
+    "products": 2,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "gel",
+    "variationValue": "gel"
+  },
+  {
+    "term_id": 4142,
+    "name": "Lime",
+    "slug": "lime",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "lime",
+    "variationValue": "lime"
+  },
+  {
+    "term_id": 2584,
+    "name": "Lotion",
+    "slug": "lotion",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "lotion",
+    "variationValue": "lotion"
+  },
+  {
+    "term_id": 1816,
+    "name": "Mango Passion",
+    "slug": "mango-passion",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "mango-passion",
+    "variationValue": "mango-passion"
+  },
+  {
+    "term_id": 10404,
+    "name": "Peach 2 Oz",
+    "slug": "peach-2-oz",
+    "products": 2,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "peach",
+    "variationValue": "peach",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 5665,
+    "name": "Pina Colada",
+    "slug": "pina-colada",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "pina-colada",
+    "variationValue": "pina-colada"
+  },
+  {
+    "term_id": 8375,
+    "name": "Sex On The Beach",
+    "slug": "sex-on-the-beach",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "sex-on-the-beach",
+    "variationValue": "sex-on-the-beach"
+  },
+  {
+    "term_id": 2581,
+    "name": "Tropical",
+    "slug": "tropical",
+    "products": 2,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "tropical",
+    "variationValue": "tropical"
+  },
+  {
+    "term_id": 4622,
+    "name": "1 Oz",
+    "slug": "1-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1 Oz",
+    "note": "size"
+  },
+  {
+    "term_id": 8163,
+    "name": "10 In",
+    "slug": "10-in",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "10 In",
+    "note": "size"
+  },
+  {
+    "term_id": 3934,
+    "name": "1pc",
+    "slug": "1pc",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "1pc",
+    "note": "size"
+  },
+  {
+    "term_id": 4853,
+    "name": "36 Pcs",
+    "slug": "36-pcs",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "36 Pcs",
+    "note": "size"
+  },
+  {
+    "term_id": 9912,
+    "name": "5",
+    "slug": "5",
+    "products": 1,
+    "variations": 4,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "5",
+    "note": "size"
+  },
+  {
+    "term_id": 9909,
+    "name": "5 With Balls",
+    "slug": "5-with-balls",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "5 With Balls",
+    "note": "size"
+  },
+  {
+    "term_id": 4625,
+    "name": "5.5 Oz",
+    "slug": "5-5-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "5.5 Oz",
+    "note": "size"
+  },
+  {
+    "term_id": 4620,
+    "name": "5.7 Oz",
+    "slug": "5-7-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "5.7 Oz",
+    "note": "size"
+  },
+  {
+    "term_id": 8179,
+    "name": "6",
+    "slug": "6",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6",
+    "note": "size"
+  },
+  {
+    "term_id": 8164,
+    "name": "6 In",
+    "slug": "6-in",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6 In",
+    "note": "size"
+  },
+  {
+    "term_id": 5678,
+    "name": "6 In. Pink",
+    "slug": "6-in-pink",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6 In. Pink",
+    "note": "size"
+  },
+  {
+    "term_id": 8180,
+    "name": "6.5",
+    "slug": "6.5",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "6.5",
+    "note": "size"
+  },
+  {
+    "term_id": 9913,
+    "name": "7",
+    "slug": "7",
+    "products": 1,
+    "variations": 4,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7",
+    "note": "size"
+  },
+  {
+    "term_id": 9910,
+    "name": "7 With Balls",
+    "slug": "7-with-balls",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "7 With Balls",
+    "note": "size"
+  },
+  {
+    "term_id": 8177,
+    "name": "8",
+    "slug": "8",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "8",
+    "note": "size"
+  },
+  {
+    "term_id": 8178,
+    "name": "8.5",
+    "slug": "8.5",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "8.5",
+    "note": "size"
+  },
+  {
+    "term_id": 9914,
+    "name": "9",
+    "slug": "9",
+    "products": 1,
+    "variations": 3,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "9",
+    "note": "size"
+  },
+  {
+    "term_id": 9911,
+    "name": "9 With Balls",
+    "slug": "9-with-balls",
+    "products": 1,
+    "variations": 2,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "9 With Balls",
+    "note": "size"
+  },
+  {
+    "term_id": 9430,
+    "name": "Almond Sweetness",
+    "slug": "almond-sweetness",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "almond-sweetness",
+    "variationValue": "almond-sweetness"
+  },
+  {
+    "term_id": 9435,
+    "name": "Aqua",
+    "slug": "aqua",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_color",
+    "value": "aqua",
+    "note": "color"
+  },
+  {
+    "term_id": 4106,
+    "name": "Bag 2023",
+    "slug": "bag-2023",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "non-flavor-descriptor"
+  },
+  {
+    "term_id": 1820,
+    "name": "Banana Cream",
+    "slug": "banana-cream",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "banana-cream",
+    "variationValue": "banana-cream"
+  },
+  {
+    "term_id": 2103,
+    "name": "Berry",
+    "slug": "berry",
+    "products": 1,
+    "variations": 2,
+    "action": "KEEP",
+    "flavor": "berry",
+    "variationValue": "berry"
+  },
+  {
+    "term_id": 8908,
+    "name": "Birthday",
+    "slug": "birthday",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "non-flavor-descriptor"
+  },
+  {
+    "term_id": 9288,
+    "name": "Bloom Large D Cup",
+    "slug": "bloom-large-d-cup",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 7753,
+    "name": "Cake",
+    "slug": "cake",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "non-flavor-descriptor"
+  },
+  {
+    "term_id": 10435,
+    "name": "Cherry 2 Oz",
+    "slug": "cherry-2-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "cherry",
+    "variationValue": "cherry",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 1817,
+    "name": "Cherry Lemonade",
+    "slug": "cherry-lemonade",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "cherry-lemonade",
+    "variationValue": "cherry-lemonade"
+  },
+  {
+    "term_id": 2834,
+    "name": "Cherry Vanilla",
+    "slug": "cherry-vanilla",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "cherry-vanilla",
+    "variationValue": "cherry-vanilla"
+  },
+  {
+    "term_id": 10416,
+    "name": "Cherry Vanilla 4.2oz",
+    "slug": "cherry-vanilla-4-2oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "cherry-vanilla",
+    "variationValue": "cherry-vanilla",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10429,
+    "name": "Chocolate Mint 48 Pcs 0.24 Oz",
+    "slug": "chocolate-mint-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "chocolate-mint",
+    "variationValue": "chocolate-mint",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 8455,
+    "name": "Cinnamon Ginger",
+    "slug": "cinnamon-ginger",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "cinnamon-ginger",
+    "variationValue": "cinnamon-ginger"
+  },
+  {
+    "term_id": 9052,
+    "name": "Classic",
+    "slug": "classic",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "non-flavor-descriptor"
+  },
+  {
+    "term_id": 10420,
+    "name": "COCK ROCKETS FRUIT PUNCH",
+    "slug": "cock-rockets-fruit-punch",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "fruit-punch",
+    "variationValue": "fruit-punch",
+    "note": "alias"
+  },
+  {
+    "term_id": 9483,
+    "name": "Condoms Cola",
+    "slug": "condoms-cola",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "cola",
+    "variationValue": "cola",
+    "note": "alias"
+  },
+  {
+    "term_id": 7503,
+    "name": "Cool Mint",
+    "slug": "cool-mint",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "cool-mint",
+    "variationValue": "cool-mint"
+  },
+  {
+    "term_id": 4851,
+    "name": "Cooling",
+    "slug": "cooling",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "cooling",
+    "variationValue": "cooling"
+  },
+  {
+    "term_id": 10423,
+    "name": "Cotton Candy 4 Oz",
+    "slug": "cotton-candy-4-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "cotton-candy",
+    "variationValue": "cotton-candy",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10425,
+    "name": "Cotton Candy 4 Oz (bulk)",
+    "slug": "cotton-candy-4-oz-bulk",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "cotton-candy",
+    "variationValue": "cotton-candy",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10426,
+    "name": "Cotton Candy 48 Pcs 0.24 Oz",
+    "slug": "cotton-candy-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "cotton-candy",
+    "variationValue": "cotton-candy",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 4621,
+    "name": "Cream",
+    "slug": "cream",
+    "products": 1,
+    "variations": 0,
+    "action": "KEEP",
+    "flavor": "cream",
+    "variationValue": "cream"
+  },
+  {
+    "term_id": 3065,
+    "name": "Desensitizing",
+    "slug": "desensitizing",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "desensitizing",
+    "variationValue": "desensitizing"
+  },
+  {
+    "term_id": 8907,
+    "name": "Dreamsicle",
+    "slug": "dreamsicle",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "dreamsicle",
+    "variationValue": "dreamsicle"
+  },
+  {
+    "term_id": 4852,
+    "name": "Ensitizer Unflavored 10ml",
+    "slug": "ensitizer-unflavored-10ml",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "unflavored",
+    "variationValue": "unflavored",
+    "note": "alias"
+  },
+  {
+    "term_id": 4100,
+    "name": "Eucalyptus",
+    "slug": "eucalyptus",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "eucalyptus",
+    "variationValue": "eucalyptus"
+  },
+  {
+    "term_id": 4433,
+    "name": "EVERYDAY SILICONE NIPPLE COVER REUSABLE BLOOM LARGE D+ CUP",
+    "slug": "everyday-silicone-nipple-cover-reusable-bloom-large-d-cup",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 4434,
+    "name": "EVERYDAY SILICONE NIPPLE COVER REUSABLE FUCHSIA LARGE D+ CUP",
+    "slug": "everyday-silicone-nipple-cover-reusable-fuchsia-large-d-cup",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 4432,
+    "name": "EVERYDAY SILICONE NIPPLE COVER REUSABLE SAND LARGE D+ CUP",
+    "slug": "everyday-silicone-nipple-cover-reusable-sand-large-d-cup",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 1824,
+    "name": "French Lavender",
+    "slug": "french-lavender",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "french-lavender",
+    "variationValue": "french-lavender"
+  },
+  {
+    "term_id": 10461,
+    "name": "Fruit Punch",
+    "slug": "fruit-punch",
+    "products": 1,
+    "variations": 0,
+    "action": "KEEP",
+    "flavor": "fruit-punch",
+    "variationValue": "fruit-punch"
+  },
+  {
+    "term_id": 9428,
+    "name": "Fruits",
+    "slug": "fruits",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "fruits",
+    "variationValue": "fruits"
+  },
+  {
+    "term_id": 9289,
+    "name": "Fuchsia Large D Cup",
+    "slug": "fuchsia-large-d-cup",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 10437,
+    "name": "Fuzzy Navel",
+    "slug": "fuzzy-navel",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "fuzzy-navel",
+    "variationValue": "fuzzy-navel"
+  },
+  {
+    "term_id": 2881,
+    "name": "GOODHEAD SLICK HEAD GLIDE",
+    "slug": "goodhead-slick-head-glide",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 9053,
+    "name": "Grapefruit",
+    "slug": "grapefruit",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "grapefruit",
+    "variationValue": "grapefruit"
+  },
+  {
+    "term_id": 7754,
+    "name": "Ides",
+    "slug": "ides",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "non-flavor-descriptor"
+  },
+  {
+    "term_id": 9427,
+    "name": "Island Blossoms",
+    "slug": "island-blossoms",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "island-blossoms",
+    "variationValue": "island-blossoms"
+  },
+  {
+    "term_id": 10114,
+    "name": "Juicy Apple",
+    "slug": "juicy-apple",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "juicy-apple",
+    "variationValue": "juicy-apple"
+  },
+  {
+    "term_id": 1819,
+    "name": "Key Lime",
+    "slug": "key-lime",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "key-lime",
+    "variationValue": "key-lime"
+  },
+  {
+    "term_id": 2699,
+    "name": "KOOL VIBES - RECHARGEABLE MINI BULLET - TANGERINE",
+    "slug": "kool-vibes-rechargeable-mini-bullet-tangerine",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 9425,
+    "name": "Libido Exotic Fruits",
+    "slug": "libido-exotic-fruits",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "exotic-fruits",
+    "variationValue": "exotic-fruits",
+    "note": "alias"
+  },
+  {
+    "term_id": 9431,
+    "name": "Libido Fruits",
+    "slug": "libido-fruits",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "fruits",
+    "variationValue": "fruits",
+    "note": "alias"
+  },
+  {
+    "term_id": 9437,
+    "name": "Lustful Litchee",
+    "slug": "lustful-litchee",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "lustful-litchee",
+    "variationValue": "lustful-litchee"
+  },
+  {
+    "term_id": 7502,
+    "name": "M Bl 3.5 Oz",
+    "slug": "m-bl-3-5-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-review"
+  },
+  {
+    "term_id": 4315,
+    "name": "MASSAGE CANDLE MEDITERRANEAN ALMOND",
+    "slug": "massage-candle-mediterranean-almond",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "mediterranean-almond",
+    "variationValue": "mediterranean-almond",
+    "note": "alias"
+  },
+  {
+    "term_id": 9214,
+    "name": "Mediterranean Almond",
+    "slug": "mediterranean-almond",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "mediterranean-almond",
+    "variationValue": "mediterranean-almond"
+  },
+  {
+    "term_id": 9423,
+    "name": "Midnight Sorbet",
+    "slug": "midnight-sorbet",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "midnight-sorbet",
+    "variationValue": "midnight-sorbet"
+  },
+  {
+    "term_id": 10430,
+    "name": "Mint 48 Pcs 0.24 Oz",
+    "slug": "mint-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "mint",
+    "variationValue": "mint",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 8376,
+    "name": "Mojito",
+    "slug": "mojito",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "mojito",
+    "variationValue": "mojito"
+  },
+  {
+    "term_id": 1814,
+    "name": "Natural Aloe",
+    "slug": "natural-aloe",
+    "products": 1,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "unrecognized-review"
+  },
+  {
+    "term_id": 2582,
+    "name": "Oil-Based",
+    "slug": "oil-based",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "oil-based",
+    "variationValue": "oil-based"
+  },
+  {
+    "term_id": 5664,
+    "name": "Orange",
+    "slug": "orange",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "orange",
+    "variationValue": "orange"
+  },
+  {
+    "term_id": 1818,
+    "name": "Orange Cream",
+    "slug": "orange-cream",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "orange-cream",
+    "variationValue": "orange-cream"
+  },
+  {
+    "term_id": 8175,
+    "name": "Os",
+    "slug": "os",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Os",
+    "note": "size"
+  },
+  {
+    "term_id": 10432,
+    "name": "Passion Fruit 48 Pcs 0.24 Oz",
+    "slug": "passion-fruit-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "passion-fruit",
+    "variationValue": "passion-fruit",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10418,
+    "name": "Peach 4.2 Oz",
+    "slug": "peach-4-2-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "peach",
+    "variationValue": "peach",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10431,
+    "name": "Peach 48 Pcs 0.24 Oz",
+    "slug": "peach-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "peach",
+    "variationValue": "peach",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 9436,
+    "name": "Pear Exotic Green Tea",
+    "slug": "pear-exotic-green-tea",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "pear-green-tea",
+    "variationValue": "pear-green-tea",
+    "note": "alias"
+  },
+  {
+    "term_id": 9429,
+    "name": "Pear Green Tea",
+    "slug": "pear-green-tea",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "pear-green-tea",
+    "variationValue": "pear-green-tea"
+  },
+  {
+    "term_id": 10417,
+    "name": "Pina Colada 4.2 Oz",
+    "slug": "pina-colada-4-2-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "pina-colada",
+    "variationValue": "pina-colada",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 8373,
+    "name": "Pineapple",
+    "slug": "pineapple",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "pineapple",
+    "variationValue": "pineapple"
+  },
+  {
+    "term_id": 10115,
+    "name": "Pineapple Sag",
+    "slug": "pineapple-sag",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "pineapple-sage",
+    "variationValue": "pineapple-sage",
+    "note": "alias"
+  },
+  {
+    "term_id": 8456,
+    "name": "Purple",
+    "slug": "purple",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_color",
+    "value": "purple",
+    "note": "color"
+  },
+  {
+    "term_id": 8174,
+    "name": "Qn",
+    "slug": "qn",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "Qn",
+    "note": "size"
+  },
+  {
+    "term_id": 7283,
+    "name": "Root Beer",
+    "slug": "root-beer",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "root-beer",
+    "variationValue": "root-beer"
+  },
+  {
+    "term_id": 9287,
+    "name": "Sand Large D Cup",
+    "slug": "sand-large-d-cup",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 8457,
+    "name": "Sour Tangerine",
+    "slug": "sour-tangerine",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "sour-tangerine",
+    "variationValue": "sour-tangerine"
+  },
+  {
+    "term_id": 8374,
+    "name": "Strawb Champagne",
+    "slug": "strawb-champagne",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "strawberry-champagne",
+    "variationValue": "strawberry-champagne",
+    "note": "alias"
+  },
+  {
+    "term_id": 10421,
+    "name": "Strawberry 4 Oz",
+    "slug": "strawberry-4-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "strawberry",
+    "variationValue": "strawberry",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10427,
+    "name": "Strawberry 48 Pcs 0.24 Oz",
+    "slug": "strawberry-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "strawberry",
+    "variationValue": "strawberry",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 1972,
+    "name": "Strawberry Banana",
+    "slug": "strawberry-banana",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "strawberry-banana",
+    "variationValue": "strawberry-banana"
+  },
+  {
+    "term_id": 10464,
+    "name": "Strawberry Pomegranate",
+    "slug": "strawberry-pomegranate",
+    "products": 1,
+    "variations": 0,
+    "action": "KEEP",
+    "flavor": "strawberry-pomegranate",
+    "variationValue": "strawberry-pomegranate"
+  },
+  {
+    "term_id": 4810,
+    "name": "Sweet Nectar 4 Fl Oz",
+    "slug": "sweet-nectar-4-fl-oz",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "unrecognized-review"
+  },
+  {
+    "term_id": 1823,
+    "name": "Tahitian Vanilla",
+    "slug": "tahitian-vanilla",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "tahitian-vanilla",
+    "variationValue": "tahitian-vanilla"
+  },
+  {
+    "term_id": 8239,
+    "name": "Tangerine",
+    "slug": "tangerine",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "tangerine",
+    "variationValue": "tangerine"
+  },
+  {
+    "term_id": 4695,
+    "name": "TRUSTEX CONDOMS-COLA",
+    "slug": "trustex-condoms-cola",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "cola",
+    "variationValue": "cola",
+    "note": "alias"
+  },
+  {
+    "term_id": 4850,
+    "name": "Unflavored",
+    "slug": "unflavored",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "unflavored",
+    "variationValue": "unflavored"
+  },
+  {
+    "term_id": 4826,
+    "name": "Unscented 8.5oz",
+    "slug": "unscented-8-5oz",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "unflavored",
+    "variationValue": "unflavored",
+    "note": "alias"
+  },
+  {
+    "term_id": 4103,
+    "name": "Warm Vanilla",
+    "slug": "warm-vanilla",
+    "products": 1,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "warm-vanilla",
+    "variationValue": "warm-vanilla"
+  },
+  {
+    "term_id": 4619,
+    "name": "Warming",
+    "slug": "warming",
+    "products": 1,
+    "variations": 0,
+    "action": "KEEP",
+    "flavor": "warming",
+    "variationValue": "warming"
+  },
+  {
+    "term_id": 10434,
+    "name": "Watermelon 2 Oz",
+    "slug": "watermelon-2-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "watermelon",
+    "variationValue": "watermelon",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10422,
+    "name": "Watermelon 4 Oz",
+    "slug": "watermelon-4-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "watermelon",
+    "variationValue": "watermelon",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10424,
+    "name": "Watermelon 4 Oz (bulk)",
+    "slug": "watermelon-4-oz-bulk",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "watermelon",
+    "variationValue": "watermelon",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 10428,
+    "name": "Watermelon 48 Pcs 0.24 Oz",
+    "slug": "watermelon-48-pcs-0-24-oz",
+    "products": 1,
+    "variations": 0,
+    "action": "MERGE",
+    "flavor": "watermelon",
+    "variationValue": "watermelon",
+    "note": "strip-size"
+  },
+  {
+    "term_id": 8909,
+    "name": "Wedding",
+    "slug": "wedding",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "non-flavor-descriptor"
+  },
+  {
+    "term_id": 2032,
+    "name": "WEEKENDER KIT VIBE PREPACK",
+    "slug": "weekender-kit-vibe-prepack",
+    "products": 1,
+    "variations": 1,
+    "action": "DELETE",
+    "note": "product-name-garbage"
+  },
+  {
+    "term_id": 8454,
+    "name": "Yellow",
+    "slug": "yellow",
+    "products": 1,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_color",
+    "value": "yellow",
+    "note": "color"
+  },
+  {
+    "term_id": 9426,
+    "name": "Zenitude Exotic Green Tea",
+    "slug": "zenitude-exotic-green-tea",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "green-tea",
+    "variationValue": "green-tea",
+    "note": "alias"
+  },
+  {
+    "term_id": 9432,
+    "name": "Zenitude Green Tea",
+    "slug": "zenitude-green-tea",
+    "products": 1,
+    "variations": 1,
+    "action": "MERGE",
+    "flavor": "green-tea",
+    "variationValue": "green-tea",
+    "note": "alias"
+  },
+  {
+    "term_id": 1807,
+    "name": "2.0 Water 1.2 Oz",
+    "slug": "2-0-water-1-2-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 4838,
+    "name": "24pc Display",
+    "slug": "24pc-display",
+    "products": 0,
+    "variations": 1,
+    "action": "MOVE",
+    "taxonomy": "pa_size",
+    "value": "24pc Display",
+    "note": "size"
+  },
+  {
+    "term_id": 3988,
+    "name": "4 Fl Oz",
+    "slug": "4-fl-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1798,
+    "name": "Banana Cream 2.5 Oz",
+    "slug": "banana-cream-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1799,
+    "name": "Butter Rum 2.5 Oz",
+    "slug": "butter-rum-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1795,
+    "name": "Cherry Lemonade 2.5 Oz",
+    "slug": "cherry-lemonade-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 10483,
+    "name": "Chocolate 15pc Display",
+    "slug": "chocolate-15pc-display",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 3111,
+    "name": "Coffee",
+    "slug": "coffee",
+    "products": 0,
+    "variations": 1,
+    "action": "KEEP",
+    "flavor": "coffee",
+    "variationValue": "coffee"
+  },
+  {
+    "term_id": 1802,
+    "name": "French Lavender 2.5 Oz",
+    "slug": "french-lavender-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 4837,
+    "name": "GOLD LION PILL SINGLE",
+    "slug": "gold-lion-pill-single",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1806,
+    "name": "Gp Free 2.5 Oz",
+    "slug": "gp-free-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1797,
+    "name": "Key Lime 2.5 Oz",
+    "slug": "key-lime-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1794,
+    "name": "Mango Passion 2.5 Oz",
+    "slug": "mango-passion-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 4822,
+    "name": "Melon",
+    "slug": "melon",
+    "products": 0,
+    "variations": 0,
+    "action": "KEEP",
+    "flavor": "melon",
+    "variationValue": "melon"
+  },
+  {
+    "term_id": 1792,
+    "name": "Natural Aloe 2.5 Oz",
+    "slug": "natural-aloe-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1796,
+    "name": "Orange Cream 2.5 Oz",
+    "slug": "orange-cream-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1803,
+    "name": "Peppermint 2.5 Oz",
+    "slug": "peppermint-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1793,
+    "name": "Pina Colada 2.5oz",
+    "slug": "pina-colada-2-5oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1809,
+    "name": "Silicone 2.5 Oz",
+    "slug": "silicone-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1810,
+    "name": "Silicone Gel 3 Oz",
+    "slug": "silicone-gel-3-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 4823,
+    "name": "Spun Sugar 3g",
+    "slug": "spun-sugar-3g",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1800,
+    "name": "Strawberry 2.5 Oz",
+    "slug": "strawberry-2-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1801,
+    "name": "Tahitian Vanilla 2.5oz",
+    "slug": "tahitian-vanilla-2-5oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1808,
+    "name": "Water Gel Tube 4 Oz",
+    "slug": "water-gel-tube-4-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1805,
+    "name": "Water Liquid 2.5",
+    "slug": "water-liquid-2-5",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  },
+  {
+    "term_id": 1804,
+    "name": "Water Liquid 5.oz",
+    "slug": "water-liquid-5-oz",
+    "products": 0,
+    "variations": 0,
+    "action": "DELETE",
+    "note": "orphan-no-products"
+  }
+]
