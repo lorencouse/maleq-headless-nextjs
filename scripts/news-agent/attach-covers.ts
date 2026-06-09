@@ -40,6 +40,13 @@ const LIMIT = flag('--limit') ? parseInt(flag('--limit')!, 10) : 10;
 const WP_CLI = process.env.WP_CLI || 'wp';
 const WP_PATH = process.env.WP_PATH || '/home/maleq-wp/htdocs/wp.maleq.com';
 
+// `wp` is a PHP script (`#!/usr/bin/env php`). Under cron the inherited PATH is minimal
+// and can omit /usr/bin, so `env php` fails ("php: No such file or directory") and every
+// `wp media import` silently dies → posts get no cover. Augment PATH for the wp subprocess
+// so php always resolves. Override the dirs with WP_CLI_EXTRA_PATH if php lives elsewhere.
+const WP_EXTRA_PATH = process.env.WP_CLI_EXTRA_PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
+const WP_ENV = { ...process.env, PATH: `${WP_EXTRA_PATH}:${process.env.PATH || ''}` };
+
 interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; headline: string; }
 
 async function upsertMeta(db: any, postId: number, key: string, value: string) {
@@ -103,7 +110,7 @@ async function wpMediaImport(file: string, postId: number, title: string): Promi
     const { stdout } = await execFileP(
       WP_CLI,
       ['media', 'import', file, `--post_id=${postId}`, '--featured_image', `--title=${title}`, '--porcelain', `--path=${WP_PATH}`],
-      { timeout: 90_000 },
+      { timeout: 90_000, env: WP_ENV },
     );
     const id = parseInt(stdout.trim().split('\n').pop() || '', 10);
     return Number.isNaN(id) ? null : id;
