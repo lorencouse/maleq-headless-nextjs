@@ -91,29 +91,47 @@ export interface Cover {
 /** Thematic fallbacks when a tag-based search returns nothing. */
 const FALLBACK_QUERIES = ['LGBTQ pride flag', 'rainbow pride community', 'pride parade celebration'];
 
-async function search(query: string): Promise<Cover | null> {
+/** All candidate covers for a query (up to 15, in Pexels relevance order). */
+async function searchAll(query: string): Promise<Cover[]> {
   const url =
     'https://api.pexels.com/v1/search?orientation=landscape&size=large&per_page=15&query=' +
     encodeURIComponent(query);
   try {
     const res = await fetch(url, { headers: { Authorization: KEY }, signal: AbortSignal.timeout(12_000) });
-    if (!res.ok) return null;
+    if (!res.ok) return [];
     const data: any = await res.json();
     const photos: any[] = data.photos || [];
-    if (!photos.length) return null;
-    const p = photos[0]; // Pexels returns by relevance
-    const src = p.src?.large2x || p.src?.large || p.src?.original;
-    if (!src) return null;
-    return {
-      url: src,
-      credit: String(p.photographer || 'Pexels'),
-      creditUrl: String(p.photographer_url || 'https://www.pexels.com'),
-      alt: String(p.alt || query),
-      source: 'pexels',
-    };
+    return photos
+      .map((p) => {
+        const src = p.src?.large2x || p.src?.large || p.src?.original;
+        return src
+          ? {
+              url: String(src),
+              credit: String(p.photographer || 'Pexels'),
+              creditUrl: String(p.photographer_url || 'https://www.pexels.com'),
+              alt: String(p.alt || query),
+              source: 'pexels' as const,
+            }
+          : null;
+      })
+      .filter((c): c is Cover => c !== null);
   } catch {
-    return null;
+    return [];
   }
+}
+
+async function search(query: string): Promise<Cover | null> {
+  return (await searchAll(query))[0] ?? null;
+}
+
+/** The query ladder for a post: combined top keywords, the top one, then themes. */
+function coverQueries(keywords: string[]): string[] {
+  const clean = keywords.map((k) => k.trim()).filter(Boolean);
+  const queries: string[] = [];
+  if (clean.length) queries.push(clean.slice(0, 3).join(' '));
+  if (clean.length) queries.push(clean[0]);
+  queries.push(...FALLBACK_QUERIES);
+  return queries;
 }
 
 /**
@@ -122,15 +140,23 @@ async function search(query: string): Promise<Cover | null> {
  */
 export async function pickCover(keywords: string[]): Promise<Cover | null> {
   if (!imagesEnabled) return null;
-  const queries: string[] = [];
-  const clean = keywords.map((k) => k.trim()).filter(Boolean);
-  if (clean.length) queries.push(clean.slice(0, 3).join(' '));
-  if (clean.length) queries.push(clean[0]);
-  queries.push(...FALLBACK_QUERIES);
-
-  for (const q of queries) {
+  for (const q of coverQueries(keywords)) {
     const cover = await search(q);
     if (cover) return cover;
+  }
+  return null;
+}
+
+/**
+ * Like pickCover, but returns the first candidate whose URL isn't in `exclude` —
+ * so a "re-roll" can keep handing back a fresh Pexels photo it hasn't shown yet.
+ */
+export async function pickCoverExcluding(keywords: string[], exclude: Set<string>): Promise<Cover | null> {
+  if (!imagesEnabled) return null;
+  for (const q of coverQueries(keywords)) {
+    const candidates = await searchAll(q);
+    const fresh = candidates.find((c) => !exclude.has(c.url));
+    if (fresh) return fresh;
   }
   return null;
 }
