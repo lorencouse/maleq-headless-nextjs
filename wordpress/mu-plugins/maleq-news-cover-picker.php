@@ -127,6 +127,7 @@ function maleq_cover_set(WP_REST_Request $req) {
     if (!$post) {
         return new WP_Error('no_post', 'Post not found', ['status' => 404]);
     }
+    $old_thumb = (int) get_post_thumbnail_id($post_id); // capture before we replace it
     $url = esc_url_raw(trim((string) $req->get_param('image_url')));
     if ($url === '' || !preg_match('#^https?://#i', $url)) {
         return new WP_Error('bad_url', 'Provide a valid image URL (http/https).', ['status' => 400]);
@@ -192,12 +193,48 @@ function maleq_cover_set(WP_REST_Request $req) {
     update_post_meta($post_id, $m['credit'], $credit);
     update_post_meta($post_id, $m['done'], '1');
 
+    // Delete the previous cover from the library so replaced covers don't pile up.
+    $deleted_old = maleq_cover_delete_old($old_thumb, $att_id, $post_id, $content);
+
     return [
-        'ok'      => true,
-        'att_id'  => $att_id,
-        'thumb'   => get_the_post_thumbnail_url($post_id, 'medium'),
-        'overlay' => $applied_overlay,
+        'ok'          => true,
+        'att_id'      => $att_id,
+        'thumb'       => get_the_post_thumbnail_url($post_id, 'medium'),
+        'overlay'     => $applied_overlay,
+        'deleted_old' => $deleted_old,
     ];
+}
+
+/**
+ * Permanently delete the prior cover attachment — but ONLY when it's safe: it must
+ * be a real attachment, different from the new one, dedicated to THIS post
+ * (post_parent == this post, as our imports set it), not used as any other post's
+ * featured image, and not still referenced in this post's body. Returns true if
+ * it deleted something.
+ */
+function maleq_cover_delete_old(int $old_id, int $new_id, int $post_id, string $content): bool {
+    if ($old_id <= 0 || $old_id === $new_id) {
+        return false;
+    }
+    $old = get_post($old_id);
+    if (!$old || $old->post_type !== 'attachment' || (int) $old->post_parent !== $post_id) {
+        return false; // not a dedicated cover for this post — leave it alone
+    }
+    // Don't delete if another post uses it as its featured image.
+    global $wpdb;
+    $used_elsewhere = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = '_thumbnail_id' AND meta_value = %d AND post_id <> %d",
+        $old_id, $post_id
+    ));
+    if ($used_elsewhere > 0) {
+        return false;
+    }
+    // Don't delete if the image is still embedded in this post's body.
+    $old_url = wp_get_attachment_url($old_id);
+    if ($old_url && strpos($content, preg_replace('#^https?:#', '', $old_url)) !== false) {
+        return false;
+    }
+    return (bool) wp_delete_attachment($old_id, true); // true = bypass trash, remove files
 }
 
 /* ───────────────────────────── Meta box ───────────────────────────── */
@@ -325,7 +362,7 @@ function maleq_news_cover_box($post) {
                 if (j.att_id && window.wp && wp.data && wp.data.dispatch && wp.data.select('core/editor')) {
                     try { wp.data.dispatch('core/editor').editPost({ featured_media: parseInt(j.att_id, 10) }); } catch (e) {}
                 }
-                setStatus('✓ Cover updated' + (j.overlay ? ' (with overlay).' : ' (raw image).'));
+                setStatus('✓ Cover updated' + (j.overlay ? ' (with overlay)' : ' (raw image)') + (j.deleted_old ? '; old cover removed.' : '.'));
             }).catch(function () { setStatus('Import failed.'); });
         });
     })();
