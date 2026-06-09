@@ -584,9 +584,16 @@ function maleq_news_manual_share_box($post) {
             <label><input type="checkbox" id="maleq-autoshare-onpublish" checked> Auto-open X &amp; Threads when I publish this post</label>
         </p>
         <p id="maleq-autoshare-note" style="margin:0 0 10px;color:#646970;">
-            First publish, your browser may block the two tabs — choose <em>Always allow pop-ups</em> for this
-            site and they'll open by themselves on every publish after that.
+            On publish I'll try to open both compose tabs automatically. Browsers (especially Safari)
+            block tabs that aren't opened by a click, so if that happens you'll see one-click buttons here instead.
         </p>
+        <div id="maleq-autoshare-fallback" style="display:none;margin:0 0 12px;padding:8px 10px;background:#edfaef;border:1px solid #a7e3b0;border-radius:3px;">
+            <strong>Published.</strong> <span id="maleq-autoshare-fallback-msg">Your browser blocked the auto-open — click to open compose:</span>
+            <span style="display:block;margin-top:6px;">
+                <a href="#" id="maleq-x-open2" class="button button-primary button-small" style="display:none;">Open 𝕏 compose ↗</a>
+                <a href="#" id="maleq-threads-open2" class="button button-primary button-small" style="display:none;">Open Threads compose ↗</a>
+            </span>
+        </div>
 
         <p style="margin:0 0 4px;font-weight:600;">𝕏 (Twitter)</p>
         <textarea id="maleq-x-text" rows="5" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($x_text); ?></textarea>
@@ -656,10 +663,15 @@ function maleq_news_manual_share_box($post) {
         bind('maleq-threads', <?php echo (int) MALEQ_NEWS_THREADS_LIMIT; ?>, false);
 
         // ── Auto-open on publish ──────────────────────────────────────────────
-        // Open both compose tabs the moment the post is published, so you don't have to
-        // click the buttons. Browsers block non-click pop-ups, so the first publish may be
-        // blocked until you "Always allow pop-ups" for this site (see note above). A toggle
-        // (persisted per browser) lets you turn it off.
+        // Try to open both compose tabs the moment the post is published. The publish
+        // save is asynchronous, so by the time it completes there is no longer a user
+        // "gesture" on the stack — and browsers (Safari most strictly) refuse to open a
+        // new tab without one, silently. Browsers also allow only ONE such open per
+        // gesture, so two-at-once loses the second even when allowed. We therefore TRY
+        // the direct open (works on Chrome/Firefox with pop-ups allowed) and, for any
+        // tab the browser blocked, reveal a one-click button — that click is a fresh
+        // gesture, so it opens reliably everywhere including Safari. A toggle (persisted
+        // per browser) lets you turn the whole thing off.
         var LSKEY  = 'maleqAutoShareOnPublish';
         var toggle = document.getElementById('maleq-autoshare-onpublish');
         var note   = document.getElementById('maleq-autoshare-note');
@@ -674,12 +686,39 @@ function maleq_news_manual_share_box($post) {
                 syncNote();
             });
         }
+
+        // Wire the fallback (one-click) buttons once; each click is its own user gesture.
+        var fallback = document.getElementById('maleq-autoshare-fallback');
+        (function () {
+            var pairs = [['maleq-x-open2', 'maleq-x'], ['maleq-threads-open2', 'maleq-threads']];
+            pairs.forEach(function (p) {
+                var btn = document.getElementById(p[0]);
+                if (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openShare(p[1]); }); }
+            });
+        })();
+
+        // A pop-up was opened successfully iff window.open returned a live window.
+        function opened(w) { return !!w && !w.closed; }
+        // Reveal the fallback banner with a button for each platform we couldn't open.
+        function revealFallback(blocked) {
+            if (!fallback || !blocked.length) { return; }
+            blocked.forEach(function (prefix) {
+                var btn = document.getElementById(prefix + '-open2');
+                if (btn) { btn.style.display = ''; }
+            });
+            fallback.style.display = '';
+        }
+
         var fired = false;
         function autoOpen() {
             if (fired || (toggle && !toggle.checked)) { return; }
             fired = true;
-            openShare('maleq-x');
-            openShare('maleq-threads');
+            var blocked = [];
+            if (!opened(openShare('maleq-x'))) { blocked.push('maleq-x'); }
+            // Only the first gesture-less open tends to succeed, so the second is the most
+            // likely to be blocked — the fallback button covers it either way.
+            if (!opened(openShare('maleq-threads'))) { blocked.push('maleq-threads'); }
+            revealFallback(blocked);
         }
 
         if (window.wp && wp.data && wp.data.select('core/editor')) {
