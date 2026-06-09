@@ -81,7 +81,7 @@ export interface Cover {
   /** Alt text. */
   alt: string;
   /** Where the image came from — selects the credit-line wording. */
-  source: 'pexels' | 'commons' | 'openverse';
+  source: 'pexels' | 'commons' | 'openverse' | 'tmdb';
   /** License label, e.g. "CC BY-SA 4.0" / "Public domain" (omitted for Pexels). */
   licenseName?: string;
   /** Link to the license deed (omitted for Pexels / when unknown). */

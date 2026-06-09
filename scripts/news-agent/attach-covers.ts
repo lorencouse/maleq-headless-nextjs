@@ -25,6 +25,7 @@ import { META, NEWS_CATEGORY } from './config';
 import { pickCover, downloadWebp, imagesEnabled, type Cover } from './images';
 import { pickCommonsPortrait } from './commons';
 import { pickOpenverseCC } from './openverse';
+import { pickTmdbPoster } from './tmdb';
 
 const execFileP = promisify(execFile);
 
@@ -49,7 +50,7 @@ const WP_PATH = process.env.WP_PATH || '/home/maleq-wp/htdocs/wp.maleq.com';
 const WP_EXTRA_PATH = process.env.WP_CLI_EXTRA_PATH || '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
 const WP_ENV = { ...process.env, PATH: `${WP_EXTRA_PATH}:${process.env.PATH || ''}` };
 
-interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; coverPerson: string; headline: string; }
+interface Candidate { id: number; title: string; slug: string; tags: string[]; coverQuery: string; coverPerson: string; coverWork: string; coverWorkKind: string; headline: string; }
 
 async function upsertMeta(db: any, postId: number, key: string, value: string) {
   const [rows] = await db.query<RowDataPacket[]>(
@@ -87,8 +88,8 @@ async function findNeedingCover(db: any): Promise<Candidate[]> {
       [r.ID],
     );
     const [metaRows] = await db.query<RowDataPacket[]>(
-      `SELECT meta_key, meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key IN (?, ?, ?)`,
-      [r.ID, META.coverQuery, META.coverPerson, META.coverHeadline],
+      `SELECT meta_key, meta_value FROM wp_postmeta WHERE post_id = ? AND meta_key IN (?, ?, ?, ?, ?)`,
+      [r.ID, META.coverQuery, META.coverPerson, META.coverWork, META.coverWorkKind, META.coverHeadline],
     );
     const m = new Map<string, string>();
     for (const x of metaRows) m.set(String(x.meta_key), String(x.meta_value));
@@ -99,6 +100,8 @@ async function findNeedingCover(db: any): Promise<Candidate[]> {
       tags: tagRows.map((x) => String(x.name)),
       coverQuery: m.get(META.coverQuery) || '',
       coverPerson: m.get(META.coverPerson) || '',
+      coverWork: m.get(META.coverWork) || '',
+      coverWorkKind: m.get(META.coverWorkKind) || '',
       headline: m.get(META.coverHeadline) || '',
     });
   }
@@ -136,6 +139,10 @@ function creditLine(cover: Cover): string {
   if (cover.source === 'pexels') {
     return `<p class="image-credit"><em>Cover photo: ${link(cover.creditUrl, cover.credit)} / Pexels</em></p>`;
   }
+  if (cover.source === 'tmdb') {
+    // Promotional poster (studio copyright, editorial use); credit + link TMDB per their terms.
+    return `<p class="image-credit"><em>Poster via ${link(cover.creditUrl, 'The Movie Database (TMDB)')}</em></p>`;
+  }
   const platform = cover.source === 'commons' ? 'Wikimedia Commons' : 'Openverse';
   const lic = cover.licenseName ? `, ${link(cover.licenseUrl, cover.licenseName)}` : '';
   return `<p class="image-credit"><em>Cover photo: ${link(cover.creditUrl, cover.credit)}${lic}, via ${platform}</em></p>`;
@@ -144,15 +151,20 @@ function creditLine(cover: Cover): string {
 /** Plain-text credit (for logs + the coverCredit meta) mirroring the on-post credit line. */
 function creditText(cover: Cover): string {
   if (cover.source === 'pexels') return `${cover.credit} / Pexels`;
+  if (cover.source === 'tmdb') return 'Poster via The Movie Database (TMDB)';
   const platform = cover.source === 'commons' ? 'Wikimedia Commons' : 'Openverse';
   return `${cover.credit}${cover.licenseName ? `, ${cover.licenseName}` : ''} via ${platform}`;
 }
 
 /**
- * Choose the best legal cover: a real licensed PORTRAIT (Wikimedia Commons, then
- * Openverse CC) when the story is about one named person, otherwise thematic Pexels
- * stock. Falls through each source on a miss. Whatever it returns is run through the
- * same headline-overlay pipeline in downloadWebp().
+ * Choose the best legal cover, in priority order:
+ *   1. a real licensed PORTRAIT (Wikimedia Commons → Openverse CC) when the story
+ *      centers on one named person;
+ *   2. the official film/TV POSTER (TMDB) when the story centers on one title —
+ *      only if TMDB is enabled (key + opt-in flag); editorial fair use;
+ *   3. thematic Pexels stock otherwise.
+ * Falls through each source on a miss. Whatever it returns is run through the same
+ * headline-overlay pipeline in downloadWebp().
  */
 async function selectCover(c: Candidate): Promise<Cover | null> {
   if (c.coverPerson) {
@@ -160,6 +172,11 @@ async function selectCover(c: Candidate): Promise<Cover | null> {
     if (commons) return commons;
     const openverse = await pickOpenverseCC(c.coverPerson);
     if (openverse) return openverse;
+  }
+  if (c.coverWork) {
+    const kind = c.coverWorkKind === 'tv' ? 'tv' : c.coverWorkKind === 'film' ? 'film' : undefined;
+    const poster = await pickTmdbPoster(c.coverWork, kind); // self-gated: null unless TMDB enabled
+    if (poster) return poster;
   }
   // Thematic stock fallback (also used when there's no named subject).
   const keywords = c.coverQuery
@@ -191,7 +208,11 @@ async function main() {
     const label = `#${c.id} "${c.title.slice(0, 50)}"`;
     // Overlay text: the drafter's punchy hook, falling back to the article title.
     const overlay = (c.headline || c.title).slice(0, 70);
-    const origin = cover ? (cover.source === 'pexels' ? 'stock' : `portrait:${cover.source}`) : '';
+    const origin = cover
+      ? cover.source === 'pexels' ? 'stock'
+        : cover.source === 'tmdb' ? 'poster:tmdb'
+        : `portrait:${cover.source}`
+      : '';
 
     if (!cover) {
       console.log(`  ⊘ ${label} — no image found${c.coverPerson ? ` for "${c.coverPerson}"` : ''}`);

@@ -69,6 +69,11 @@ export const META = {
    * licensed portrait (Wikimedia Commons / Openverse CC) instead of generic stock.
    * Empty when the story isn't about one named person. */
   coverPerson: '_maleq_news_cover_person',
+  /** Title of the single film/TV show the story centrally concerns — drives an
+   * official poster cover (TMDB) when no coverPerson is set. Empty otherwise. */
+  coverWork: '_maleq_news_cover_work',
+  /** 'film' or 'tv' for coverWork (picks the TMDB media type). */
+  coverWorkKind: '_maleq_news_cover_work_kind',
   /** Short punchy social hook the drafter writes — overlaid on the cover image. */
   coverHeadline: '_maleq_news_cover_headline',
   /** Conversational social-post hook (post body). Consumed by the autoshare plugin + TS adapters. */

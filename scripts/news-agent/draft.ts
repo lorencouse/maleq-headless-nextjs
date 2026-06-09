@@ -99,6 +99,16 @@ const DraftSchema = z.object({
     '("Pride parade draws thousands"). When two-plus people share the spotlight equally, pick the ' +
     'one named first in the headline.',
   ),
+  coverWork: z.object({
+    title: z.string().describe('The work\'s title, as it would appear on IMDb/TMDB (e.g. "Heartstopper", "Blue Film").'),
+    kind: z.enum(['film', 'tv']).describe('"film" for a movie, "tv" for a series/show.'),
+  }).nullable().describe(
+    'The single FILM or TV SHOW the story is centrally about — used to fetch its official poster ' +
+    'as the cover. Set this when the piece is essentially ABOUT one movie or series (a review, a ' +
+    'trailer/casting/release story, an episode recap). Return null when there is no single dominant ' +
+    'title, or when the story centers on a PERSON instead (use coverPerson for that — do not set ' +
+    'both; prefer coverPerson when a named individual is the real subject).',
+  ),
   sourcesUsed: z.array(z.string()).describe(
     'The IDs (e.g. "S1","S2") of ALL sources that report the SAME event as your piece. ALWAYS ' +
     'include "S1". Include EVERY additional source that covers the same event — even if it only ' +
