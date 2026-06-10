@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import SearchAutocomplete from '@/components/search/SearchAutocomplete';
@@ -85,9 +86,12 @@ export default function HomeHero() {
             </Link>
           </div>
 
-          {/* Search */}
+          {/* Search — Suspense-wrapped because SearchAutocomplete reads
+              useSearchParams(); unwrapped it fails the static home build. */}
           <div className='mt-6 max-w-xl'>
-            <SearchAutocomplete />
+            <Suspense fallback={<div className='h-[42px] rounded-lg bg-white/10 animate-pulse' />}>
+              <SearchAutocomplete />
+            </Suspense>
           </div>
 
           {/* Trust indicators */}
