@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { isChunkLoadError, recoverFromStaleChunks } from '@/lib/utils/chunk-reload';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -10,6 +11,9 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
+    // A ChunkLoadError here means a stale app shell hit a deploy that deleted its
+    // chunks — recover by reloading onto the live build (guarded against loops).
+    if (isChunkLoadError(error) && recoverFromStaleChunks()) return;
     // Log the error to an error reporting service
     console.error('Application error:', error);
   }, [error]);

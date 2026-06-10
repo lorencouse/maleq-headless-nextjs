@@ -99,7 +99,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('facebook')}
-          className="p-2 text-muted-foreground hover:text-[#1877F2] transition-colors"
+          className="p-2 text-[#1877F2] hover:text-muted-foreground transition-colors"
           aria-label={t('shareFacebook')}
           title={t('shareFacebook')}
         >
@@ -110,7 +110,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('twitter')}
-          className="p-2 text-muted-foreground hover:text-[#1DA1F2] transition-colors"
+          className="p-2 text-[#1DA1F2] hover:text-muted-foreground transition-colors"
           aria-label={t('shareTwitter')}
           title={t('shareTwitter')}
         >
@@ -121,7 +121,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('threads')}
-          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          className="p-2 text-foreground hover:text-muted-foreground transition-colors"
           aria-label={t('shareThreads')}
           title={t('shareThreads')}
         >
@@ -132,7 +132,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('bluesky')}
-          className="p-2 text-muted-foreground hover:text-[#1185FE] transition-colors"
+          className="p-2 text-[#1185FE] hover:text-muted-foreground transition-colors"
           aria-label={t('shareBluesky')}
           title={t('shareBluesky')}
         >
@@ -143,7 +143,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('mastodon')}
-          className="p-2 text-muted-foreground hover:text-[#6364FF] transition-colors"
+          className="p-2 text-[#6364FF] hover:text-muted-foreground transition-colors"
           aria-label={t('shareMastodon')}
           title={t('shareMastodon')}
         >
@@ -154,7 +154,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('reddit')}
-          className="p-2 text-muted-foreground hover:text-[#FF4500] transition-colors"
+          className="p-2 text-[#FF4500] hover:text-muted-foreground transition-colors"
           aria-label={t('shareReddit')}
           title={t('shareReddit')}
         >
@@ -165,7 +165,7 @@ export default function SocialShare({
 
         <button
           onClick={() => handleShare('whatsapp')}
-          className="p-2 text-muted-foreground hover:text-[#25D366] transition-colors"
+          className="p-2 text-[#25D366] hover:text-muted-foreground transition-colors"
           aria-label={t('shareWhatsapp')}
           title={t('shareWhatsapp')}
         >
@@ -301,7 +301,7 @@ export default function SocialShare({
     <div className={`flex items-center gap-1 ${className}`}>
       <button
         onClick={() => handleShare('facebook')}
-        className="p-1.5 text-muted-foreground hover:text-[#1877F2] transition-colors"
+        className="p-1.5 text-[#1877F2] hover:text-muted-foreground transition-colors"
         aria-label={t('shareFacebook')}
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -311,7 +311,7 @@ export default function SocialShare({
 
       <button
         onClick={() => handleShare('twitter')}
-        className="p-1.5 text-muted-foreground hover:text-[#1DA1F2] transition-colors"
+        className="p-1.5 text-[#1DA1F2] hover:text-muted-foreground transition-colors"
         aria-label={t('shareTwitter')}
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -321,7 +321,7 @@ export default function SocialShare({
 
       <button
         onClick={() => handleShare('bluesky')}
-        className="p-1.5 text-muted-foreground hover:text-[#1185FE] transition-colors"
+        className="p-1.5 text-[#1185FE] hover:text-muted-foreground transition-colors"
         aria-label={t('shareBluesky')}
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">

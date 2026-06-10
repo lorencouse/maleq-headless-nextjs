@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
+import { isChunkLoadError, recoverFromStaleChunks } from '@/lib/utils/chunk-reload';
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -8,6 +10,11 @@ interface GlobalErrorProps {
 }
 
 export default function GlobalError({ error, reset }: GlobalErrorProps) {
+  useEffect(() => {
+    // Stale app shell vs. a fresh deploy → reload onto the live build once.
+    if (isChunkLoadError(error)) recoverFromStaleChunks();
+  }, [error]);
+
   return (
     <html lang="en">
       <body className="bg-background">

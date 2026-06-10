@@ -16,6 +16,7 @@ import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import WebVitals from "@/components/analytics/WebVitals";
 import QueryProvider from "@/components/providers/QueryProvider";
 import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
+import ChunkErrorReload from "@/components/pwa/ChunkErrorReload";
 import OfflineIndicator from "@/components/pwa/OfflineIndicator";
 import AppBadge from "@/components/pwa/AppBadge";
 import RouteScrollManager from "@/components/navigation/RouteScrollManager";
@@ -173,6 +174,7 @@ export default async function RootLayout({
             Mastodon custom-field verifier follows the site URL and looks for a
             rel="me" link pointing back to the profile. No visible UI. */}
         <link rel="me" href="https://mastodon.social/@mqnews" />
+        <ChunkErrorReload />
         <ServiceWorkerRegistration />
         <RouteScrollManager />
         <OfflineIndicator />
