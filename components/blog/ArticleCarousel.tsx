@@ -10,6 +10,8 @@ interface ArticleCarouselProps {
   posts: Post[];
   title: string;
   viewAllLink?: string;
+  /** Overrides the default "View all" link text. */
+  viewAllText?: string;
   minItemsForArrows?: number;
 }
 
@@ -21,6 +23,7 @@ export default function ArticleCarousel({
   posts,
   title,
   viewAllLink,
+  viewAllText,
   minItemsForArrows = 3,
 }: ArticleCarouselProps) {
   const t = useTranslations('blog');
@@ -42,7 +45,7 @@ export default function ArticleCarousel({
             href={viewAllLink}
             className="flex-shrink-0 text-sm font-medium text-primary hover:text-primary-hover inline-flex items-center gap-1"
           >
-            {t('viewAllSection')}
+            {viewAllText ?? t('viewAllSection')}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

@@ -893,6 +893,10 @@
       "femaleDescription": "為女性提供的深入指南，涵蓋情趣用品、愉悅與保健。誠實的評價，助您自信地探索。",
       "viewFemaleAll": "查看所有女性指南",
       "comingSoon": "指南即將推出..."
+    },
+    "newsStrip": {
+      "heading": "最新新聞",
+      "viewAll": "查看所有新聞"
     }
   },
   "account": {

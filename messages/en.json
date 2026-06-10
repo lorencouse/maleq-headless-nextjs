@@ -879,6 +879,10 @@
       "femaleDescription": "In-depth guides for women on toys, pleasure, and wellness. Honest reviews to help you explore confidently.",
       "viewFemaleAll": "View All Female Guides",
       "comingSoon": "Guides coming soon..."
+    },
+    "newsStrip": {
+      "heading": "Latest News",
+      "viewAll": "View all news"
     }
   },
   "account": {

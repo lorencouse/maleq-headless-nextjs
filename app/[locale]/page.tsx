@@ -11,6 +11,8 @@ import { queryProductIndex } from '@/lib/products/product-index';
 import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 import { getBlogPosts } from '@/lib/blog/blog-service';
 import BlogCard from '@/components/blog/BlogCard';
+import NewsTicker from '@/components/blog/NewsTicker';
+import ArticleHero from '@/components/blog/ArticleHero';
 import HomeHero from '@/components/home/HomeHero';
 import HomeBenefits from '@/components/home/HomeBenefits';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
@@ -77,9 +79,13 @@ export default async function Home({ params }: Props) {
 
   // Fetch data in parallel — blog listing uses SQL via blog-service (no
   // post body rendering needed for grid cards, so no GraphQL/do_blocks).
-  const [postsResult, productsResult, categories, trendingProducts] =
+  const [postsResult, newsResult, productsResult, categories, trendingProducts] =
     await Promise.all([
-      getBlogPosts({ first: 6 }).catch(() => ({
+      getBlogPosts({ first: 6, excludeCategorySlugs: ['news', 'espanol', 'cn'] }).catch(() => ({
+        posts: [] as Post[],
+        pageInfo: { hasNextPage: false, endCursor: null },
+      })),
+      getBlogPosts({ categorySlug: 'news', first: 12 }).catch(() => ({
         posts: [] as Post[],
         pageInfo: { hasNextPage: false, endCursor: null },
       })),
@@ -89,6 +95,7 @@ export default async function Home({ params }: Props) {
     ]);
 
   const posts = postsResult.posts;
+  const newsPosts = newsResult.posts;
   const products = sortProductsByPriority(productsResult.products);
 
   return (
@@ -195,6 +202,30 @@ export default async function Home({ params }: Props) {
 
       {/* Testimonials */}
       <TestimonialsSection />
+
+      {/* Latest News */}
+      {newsPosts.length > 0 && (
+        <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
+          <div className='mb-8 flex items-end justify-between gap-4'>
+            <h2 className='text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary'>
+              {t('newsStrip.heading')}
+            </h2>
+            <Link
+              href='/news'
+              className='flex-shrink-0 text-sm font-medium text-primary hover:text-primary-hover inline-flex items-center gap-1'
+            >
+              {t('newsStrip.viewAll')}
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+              </svg>
+            </Link>
+          </div>
+          <ArticleHero posts={newsPosts} />
+          <div className='mt-8'>
+            <NewsTicker posts={newsPosts.slice(0, 6)} />
+          </div>
+        </section>
+      )}
 
       {/* Social Media / YouTube Section */}
       <SocialSection />

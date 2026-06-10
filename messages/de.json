@@ -893,6 +893,10 @@
       "femaleDescription": "Ausführliche Ratgeber für Frauen zu Toys, Lust und Wohlbefinden. Ehrliche Bewertungen, damit Sie selbstbewusst auf Entdeckungsreise gehen.",
       "viewFemaleAll": "Alle Frauen-Ratgeber ansehen",
       "comingSoon": "Ratgeber folgen in Kürze..."
+    },
+    "newsStrip": {
+      "heading": "Neueste Nachrichten",
+      "viewAll": "Alle Nachrichten ansehen"
     }
   },
   "account": {

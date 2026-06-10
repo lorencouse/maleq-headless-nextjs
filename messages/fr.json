@@ -893,6 +893,10 @@
       "femaleDescription": "Des guides approfondis pour femmes sur les jouets, le plaisir et le bien-être. Des avis honnêtes pour vous aider à explorer en toute confiance.",
       "viewFemaleAll": "Voir tous les guides pour femmes",
       "comingSoon": "Guides bientôt disponibles..."
+    },
+    "newsStrip": {
+      "heading": "Dernières actualités",
+      "viewAll": "Voir toutes les actualités"
     }
   },
   "account": {

@@ -893,6 +893,10 @@
       "femaleDescription": "トイ、快感、ウェルネスに関する女性向けの詳しいガイド。自信を持って探求できる正直なレビュー。",
       "viewFemaleAll": "女性向けガイドをすべて見る",
       "comingSoon": "ガイドは近日公開..."
+    },
+    "newsStrip": {
+      "heading": "最新ニュース",
+      "viewAll": "すべてのニュースを見る"
     }
   },
   "account": {

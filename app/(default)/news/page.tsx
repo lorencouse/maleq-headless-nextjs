@@ -10,7 +10,7 @@ import NewsTicker from '@/components/blog/NewsTicker';
 import TopicChips from '@/components/blog/TopicChips';
 import FeatureSpotlight from '@/components/blog/FeatureSpotlight';
 import TrendingList from '@/components/blog/TrendingList';
-import FollowUs from '@/components/blog/FollowUs';
+import SocialSection from '@/components/home/SocialSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
 
@@ -111,12 +111,10 @@ export default async function NewsPage() {
             </div>
           </section>
         )}
-
-        {/* Follow us */}
-        <div className="mt-12 lg:mt-16">
-          <FollowUs heading={t('followHeading')} subtitle={t('followSubtitle')} />
-        </div>
       </div>
+
+      {/* Follow us (full-bleed) */}
+      <SocialSection />
 
       {/* Newsletter band (full-bleed) */}
       <NewsletterSection heading={t('newsletterHeading')} subtitle={t('newsletterSubtitle')} />
