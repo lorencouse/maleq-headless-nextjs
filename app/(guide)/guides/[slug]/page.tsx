@@ -33,6 +33,7 @@ import AddToCartEnhancer from '@/components/blog/AddToCartEnhancer';
 import RecommendedProducts from '@/components/blog/RecommendedProducts';
 import BuyersGuide from '@/components/blog/buyers-guide/BuyersGuide';
 import LanguageSwitcher from '@/components/blog/LanguageSwitcher';
+import SocialShare from '@/components/product/SocialShare';
 import { loadPostRecommendations, loadGuide, type ResolvedGuide } from '@/lib/db/post-relations';
 import { loadPostTranslations, type PostTranslation } from '@/lib/db/post-translations';
 import { getGuideLocaleBySlug } from '@/lib/db/guide-locale';
@@ -517,6 +518,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Other-language versions of this guide */}
       <LanguageSwitcher translations={translations} locale={locale} />
 
+      {/* Share buttons (top) */}
+      <div className='border-y border-border py-3 mb-8'>
+        <SocialShare
+          url={`/guides/${slug}`}
+          title={post.title}
+          description={post.excerpt ? stripHtml(post.excerpt).slice(0, 200) : ''}
+          image={
+            post.featuredImage?.node?.sourceUrl
+              ? getProductionImageUrl(post.featuredImage.node.sourceUrl)
+              : ''
+          }
+          variant='icons'
+        />
+      </div>
+
       {/* Featured Image */}
       {post.featuredImage?.node && (
         <div className='entry-img relative w-full mb-8 rounded-lg overflow-hidden' style={{ aspectRatio: '16 / 9' }}>
@@ -572,6 +588,21 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         categories={recommendations.categories}
         locale={locale}
       />
+
+      {/* Share buttons (bottom) */}
+      <div className='border-t border-border pt-6 mb-12'>
+        <SocialShare
+          url={`/guides/${slug}`}
+          title={post.title}
+          description={post.excerpt ? stripHtml(post.excerpt).slice(0, 200) : ''}
+          image={
+            post.featuredImage?.node?.sourceUrl
+              ? getProductionImageUrl(post.featuredImage.node.sourceUrl)
+              : ''
+          }
+          variant='icons'
+        />
+      </div>
 
       {/* Tags */}
       {post.tags?.nodes && post.tags.nodes.length > 0 && (
