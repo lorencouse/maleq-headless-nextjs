@@ -462,7 +462,9 @@
       "popularHeading": "人気のガイド",
       "popularBeginner": "初心者向けトイガイド",
       "popularLube": "ローションガイド",
-      "popularCouples": "カップルの遊び方"
+      "popularCouples": "カップルの遊び方",
+      "topicsNews": "LGBTQ+ ニュース",
+      "topicsNewsDesc": "最新の見出し"
     },
     "help": {
       "heading": "ヘルプ",
@@ -1587,7 +1589,11 @@
     "tagMetaDescription": "Male Q のブログで「{name}」のタグが付いた記事をご覧ください。{count, plural, =1 {#件の投稿} other {#件の投稿}}をご用意。",
     "tagBreadcrumbSchemaName": "タグ",
     "tagArticleCount": "「{name}」のタグが付いた{count, plural, =1 {#件の記事} other {#件の記事}}",
-    "breadcrumbHome": "ホーム"
+    "breadcrumbHome": "ホーム",
+    "viewAllSection": "すべて見る",
+    "scrollLeftAria": "左へスクロール",
+    "scrollRightAria": "右へスクロール",
+    "moreStoriesHeading": "もっと見る"
   },
   "blogComments": {
     "thankYouHeading": "コメントありがとうございます！",
@@ -1956,5 +1962,27 @@
     "minutesAgo": "{count}分前",
     "hoursAgo": "{count}時間前",
     "daysAgo": "{count}日前"
+  },
+  "news": {
+    "pageTitle": "LGBTQ+ ニュース",
+    "pageSubtitle": "コミュニティ全体からの最新ニュース、カルチャー、ストーリー",
+    "breadcrumb": "ニュース",
+    "metaTitle": "LGBTQ+ ニュース | Male Q",
+    "metaDescription": "Male Q が厳選する最新の LGBTQ+ ニュース、政治、カルチャー、エンタメ。",
+    "fromTheGuides": "ガイドから",
+    "moreNews": "もっとニュースを見る",
+    "exploreTopics": "トピックを見る",
+    "latestLabel": "最新",
+    "justNow": "たった今",
+    "minutesAgo": "{count}分前",
+    "hoursAgo": "{count}時間前",
+    "daysAgo": "{count}日前",
+    "featuredLabel": "注目",
+    "trending": "トレンド",
+    "readStory": "記事を読む",
+    "newsletterHeading": "最新のLGBTQ+ニュースをあなたの受信箱へ",
+    "newsletterSubtitle": "注目記事・カルチャー・見出しを毎週お届けします。",
+    "followHeading": "Male Q News をフォロー",
+    "followSubtitle": "お好きなプラットフォームで最新情報をチェック。"
   }
 }

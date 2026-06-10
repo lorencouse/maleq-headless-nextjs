@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLocale, useTranslations } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
 import { getProductionImageUrl } from '@/lib/utils/image';
 
@@ -11,29 +10,14 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
-  const locale = useLocale();
-  const t = useTranslations('blog');
-  // Map next-intl locale → BCP-47 tag for Intl date formatting
-  const intlLocale =
-    ({ es: 'es-ES', de: 'de-DE', fr: 'fr-FR', zh: 'zh-CN', 'zh-hant': 'zh-TW', ja: 'ja-JP' } as Record<string, string>)[
-      locale
-    ] ?? 'en-US';
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(intlLocale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      // Pin to UTC so server (UTC in prod) and browser render the same string —
-      // otherwise a timezone-shifted date triggers a hydration mismatch (#418).
-      timeZone: 'UTC',
-    });
-  };
-
   return (
     <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group'>
       {/* Featured Image */}
       <Link href={`/guides/${post.slug}`} className='blog-card-link'>
-        <div className='relative h-48 w-full bg-muted'>
+        <div
+          className='relative w-full bg-muted'
+          style={{ aspectRatio: '16 / 9' }}
+        >
           {post.featuredImage?.node ? (
             <Image
               src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
@@ -62,32 +46,24 @@ export default function BlogCard({ post }: BlogCardProps) {
         </div>
       </Link>
 
-      <div className='p-6'>
-        {/* Categories & Date */}
-        <div className='flex flex-row justify-between items-center mb-6'>
-          {post.categories?.nodes && post.categories.nodes.length > 0 && (
-            <div className='flex gap-2 h-1'>
-              {post.categories.nodes.slice(0, 2).map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/guides/category/${category.slug}`}
-                  className='text-xs font-medium text-primary hover:text-primary-hover'
-                >
-                  {category.name}
-                </Link>
-              ))}
-            </div>
-          )}
-          <time
-            dateTime={post.date}
-            className='text-xs text-muted-foreground h-1'
-          >
-            {formatDate(post.date)}
-          </time>
-        </div>
+      <div className='p-4'>
+        {/* Categories — single line; long names truncate instead of wrapping */}
+        {post.categories?.nodes && post.categories.nodes.length > 0 && (
+          <div className='flex min-w-0 gap-2 mb-2'>
+            {post.categories.nodes.slice(0, 2).map((category) => (
+              <Link
+                key={category.id}
+                href={`/guides/category/${category.slug}`}
+                className='min-w-0 shrink truncate text-xs font-medium text-primary hover:text-primary-hover'
+              >
+                {category.name}
+              </Link>
+            ))}
+          </div>
+        )}
 
         {/* Title */}
-        <div className='relative pb-2 mb-2'>
+        <div className='relative pb-2'>
           <h2 className='heading-plain text-xl font-bold text-foreground line-clamp-2'>
             <Link
               href={`/guides/${post.slug}`}
@@ -101,37 +77,6 @@ export default function BlogCard({ post }: BlogCardProps) {
           {/* Black underline (expands on hover) */}
           <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
         </div>
-
-        {/* Excerpt */}
-        {/* <div
-          className='text-muted-foreground text-sm mb-4 line-clamp-3'
-          dangerouslySetInnerHTML={{ __html: post.excerpt }}
-        /> */}
-
-        {/* Meta Info */}
-        <div className='flex items-center justify-between text-sm text-muted-foreground mt-3'>
-          <div className='flex items-center space-x-2'>
-            {post.author?.node?.avatar?.url && (
-              <Image
-                src='/images/Mr-Q-profile.png'
-                alt={post.author.node.name}
-                width={24}
-                height={24}
-                className='rounded-full'
-              />
-            )}
-            <span>{post.author?.node?.name}</span>
-          </div>
-          {post.commentCount !== undefined && post.commentCount > 0 && (
-            <div className=' '>
-              <span className='text-xs text-muted-foreground'>
-                {t('commentCount', { count: post.commentCount })}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Comment Count */}
       </div>
     </article>
   );

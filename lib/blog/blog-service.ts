@@ -532,6 +532,167 @@ export async function getBlogSearchSuggestions(
   return { posts: postSuggestions, categories: matchingCategories, suggestions };
 }
 
+// ─── Landing pages (magazine + news hub) ───
+
+/** A titled group of posts (topic category or tag) shown as one section. */
+export interface LandingSection {
+  name: string;
+  slug: string;
+  posts: Post[];
+}
+
+export interface GuidesLanding {
+  hero: Post[];
+  sections: LandingSection[];
+}
+
+export interface NewsLanding {
+  hero: Post[];
+  /** Top news tags for the topic chip bar (more than the rails use). */
+  topics: { name: string; slug: string }[];
+  /** One standout story for the full-bleed feature beat. */
+  spotlight: Post | null;
+  /** Editor-curated picks (falls back to recent) for the numbered list. */
+  trending: Post[];
+  tagSections: LandingSection[];
+  fromGuides: Post[];
+}
+
+/** Minimum posts a section needs to render (avoids sad, near-empty rails). */
+const MIN_SECTION_POSTS = 3;
+
+/**
+ * Magazine landing for /guides: a hero of the latest English stories plus
+ * auto-derived topic sections (top English categories), each holding the
+ * latest posts for that category. Hero stories are excluded from the sections.
+ * Degrades to a flat latest-posts list when MySQL is unavailable.
+ */
+export async function getGuidesLanding(): Promise<GuidesLanding> {
+  if (await isMySQLAvailable()) {
+    try {
+      const {
+        resolveNonEnglishCategoryIds,
+        loadTopEnglishCategories,
+        loadLatestPostsPerCategory,
+        loadBlogPosts,
+      } = await import('@/lib/db/blog-loader');
+
+      const nonEnIds = await resolveNonEnglishCategoryIds();
+      const topCats = await loadTopEnglishCategories({ denySlugs: ['en', 'news'], limit: 6 });
+
+      const heroResult = await loadBlogPosts({
+        first: 5,
+        excludeCategoryIds: nonEnIds.length ? nonEnIds : undefined,
+        skipCount: true,
+      });
+      const hero = heroResult.posts;
+      const heroIds = hero.map(p => p.databaseId);
+
+      const perCategory = await loadLatestPostsPerCategory({
+        categoryTermIds: topCats.map(c => c.termId),
+        perCategory: 8,
+        excludePostIds: heroIds,
+      });
+
+      const sections: LandingSection[] = topCats
+        .map(c => ({ name: c.name, slug: c.slug, posts: perCategory.get(c.termId) ?? [] }))
+        .filter(s => s.posts.length >= MIN_SECTION_POSTS);
+
+      return { hero, sections };
+    } catch (e) {
+      console.warn('getGuidesLanding: MySQL failed, falling back', e);
+    }
+  }
+
+  // Degraded fallback: flat latest posts, no topic sections
+  const result = await getBlogPosts({ first: 14, excludeCategorySlugs: ['espanol', 'cn'] });
+  return { hero: result.posts.slice(0, 5), sections: [] };
+}
+
+/**
+ * News hub for /news: a hero of the latest news stories, topic rails by the
+ * top tags within the news category, and a small "from the guides" set of the
+ * latest non-news English posts.
+ */
+export async function getNewsLanding(): Promise<NewsLanding> {
+  if (await isMySQLAvailable()) {
+    try {
+      const {
+        loadBlogPosts,
+        loadTopTagsForCategory,
+        loadNewsEditorPicks,
+        resolveNonEnglishCategoryIds,
+        resolveBlogCategoryIds,
+      } = await import('@/lib/db/blog-loader');
+
+      const heroResult = await loadBlogPosts({ categorySlug: 'news', first: 5, skipCount: true });
+      const hero = heroResult.posts;
+      const heroIds = hero.map(p => p.databaseId);
+
+      // Fetch enough tags for the chip bar; the rails use the strongest few.
+      const topTags = await loadTopTagsForCategory({
+        categorySlug: 'news',
+        denyTagSlugs: ['lgbtq', 'lgbtq-news', 'the-best', 'sex-toys', 'lubes', 'glass', 'reviews', 'hot', 'sex'],
+        limit: 12,
+      });
+      const topics = topTags.map(t => ({ name: t.name, slug: t.slug }));
+
+      const railTags = topTags.slice(0, 5);
+      const [railResults, recentPool, editorPicks] = await Promise.all([
+        Promise.all(
+          railTags.map(tag =>
+            loadBlogPosts({ categorySlug: 'news', tagSlug: tag.slug, first: 10, excludePostIds: heroIds, skipCount: true })
+          )
+        ),
+        // Recent news beyond the hero — powers trending fill + spotlight
+        loadBlogPosts({ categorySlug: 'news', first: 12, excludePostIds: heroIds, skipCount: true }),
+        loadNewsEditorPicks(6),
+      ]);
+
+      const tagSections: LandingSection[] = railTags
+        .map((tag, i) => ({ name: tag.name, slug: tag.slug, posts: railResults[i].posts }))
+        .filter(s => s.posts.length >= MIN_SECTION_POSTS);
+
+      // Trending: editor picks first, filled with recent news; never repeats the hero.
+      const seen = new Set<number>(heroIds);
+      const trending: Post[] = [];
+      for (const p of [...editorPicks, ...recentPool.posts]) {
+        if (trending.length >= 5) break;
+        if (seen.has(p.databaseId)) continue;
+        seen.add(p.databaseId);
+        trending.push(p);
+      }
+
+      // Spotlight: the next unused pick/recent story (distinct from hero + trending).
+      const spotlight = [...editorPicks, ...recentPool.posts].find(p => !seen.has(p.databaseId)) ?? null;
+
+      // "From the guides": latest English posts that are not news
+      const nonEnIds = await resolveNonEnglishCategoryIds();
+      const newsIds = await resolveBlogCategoryIds(['news']);
+      const fromResult = await loadBlogPosts({
+        first: 6,
+        excludeCategoryIds: [...nonEnIds, ...newsIds],
+        skipCount: true,
+      });
+
+      return { hero, topics, spotlight, trending, tagSections, fromGuides: fromResult.posts };
+    } catch (e) {
+      console.warn('getNewsLanding: MySQL failed, falling back', e);
+    }
+  }
+
+  // Degraded fallback: latest news posts, no rails/spotlight/trending
+  const result = await getBlogPosts({ categorySlug: 'news', first: 12 });
+  return {
+    hero: result.posts.slice(0, 5),
+    topics: [],
+    spotlight: null,
+    trending: [],
+    tagSections: [],
+    fromGuides: result.posts.slice(5, 11),
+  };
+}
+
 /**
  * Get all blog categories
  */

@@ -462,7 +462,9 @@
       "popularHeading": "Guías populares",
       "popularBeginner": "Guía para principiantes",
       "popularLube": "Guía de lubricantes",
-      "popularCouples": "Juego para parejas"
+      "popularCouples": "Juego para parejas",
+      "topicsNews": "Noticias LGBTQ+",
+      "topicsNewsDesc": "Últimos titulares"
     },
     "help": {
       "heading": "Ayuda",
@@ -1587,7 +1589,11 @@
     "tagMetaDescription": "Explora los artículos etiquetados con \"{name}\" en el blog de Male Q. {count, plural, one {# entrada disponible} other {# entradas disponibles}}.",
     "tagBreadcrumbSchemaName": "Etiqueta",
     "tagArticleCount": "{count, plural, one {# artículo etiquetado} other {# artículos etiquetados}} con \"{name}\"",
-    "breadcrumbHome": "Inicio"
+    "breadcrumbHome": "Inicio",
+    "viewAllSection": "Ver todo",
+    "scrollLeftAria": "Desplazar a la izquierda",
+    "scrollRightAria": "Desplazar a la derecha",
+    "moreStoriesHeading": "Más artículos"
   },
   "blogComments": {
     "thankYouHeading": "¡Gracias por tu comentario!",
@@ -1956,5 +1962,27 @@
     "minutesAgo": "hace {count} min",
     "hoursAgo": "hace {count} h",
     "daysAgo": "hace {count} d"
+  },
+  "news": {
+    "pageTitle": "Noticias LGBTQ+",
+    "pageSubtitle": "Los últimos titulares, cultura e historias de toda la comunidad",
+    "breadcrumb": "Noticias",
+    "metaTitle": "Noticias LGBTQ+ | Male Q",
+    "metaDescription": "Las últimas noticias, política, cultura y entretenimiento LGBTQ+, seleccionadas por Male Q.",
+    "fromTheGuides": "De las guías",
+    "moreNews": "Más noticias",
+    "exploreTopics": "Explorar temas",
+    "latestLabel": "Lo último",
+    "justNow": "ahora mismo",
+    "minutesAgo": "hace {count} min",
+    "hoursAgo": "hace {count} h",
+    "daysAgo": "hace {count} d",
+    "featuredLabel": "Destacado",
+    "trending": "Tendencias",
+    "readStory": "Leer artículo",
+    "newsletterHeading": "Las últimas noticias LGBTQ+ en tu correo",
+    "newsletterSubtitle": "Recibe nuestras mejores historias, cultura y titulares cada semana.",
+    "followHeading": "Sigue a Male Q News",
+    "followSubtitle": "Recibe lo último en tu plataforma favorita."
   }
 }

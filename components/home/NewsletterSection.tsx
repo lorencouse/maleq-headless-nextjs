@@ -3,7 +3,14 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-export default function NewsletterSection() {
+interface NewsletterSectionProps {
+  /** Override the default homepage heading (e.g. a news-specific CTA). */
+  heading?: string;
+  /** Override the default homepage subtitle. */
+  subtitle?: string;
+}
+
+export default function NewsletterSection({ heading, subtitle }: NewsletterSectionProps = {}) {
   const t = useTranslations('home.newsletter');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -52,10 +59,10 @@ export default function NewsletterSection() {
 
           {/* Content */}
           <h2 className="text-3xl font-bold text-foreground mb-4">
-            {t('heading')}
+            {heading ?? t('heading')}
           </h2>
           <p className="text-muted-foreground mb-8">
-            {t('subtitle')}
+            {subtitle ?? t('subtitle')}
           </p>
 
           {/* Form */}

@@ -273,8 +273,12 @@ export interface PostListOptions {
   categorySlug?: string;
   tagSlug?: string;
   excludeCategoryIds?: number[];
+  /** Drop specific post IDs (e.g. hero stories already shown above a rail). */
+  excludePostIds?: number[];
   search?: string;
   titleSearch?: string;
+  /** Skip the COUNT(DISTINCT) query — landing rails don't need a total. */
+  skipCount?: boolean;
 }
 
 export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
@@ -288,8 +292,10 @@ export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
     categorySlug,
     tagSlug,
     excludeCategoryIds,
+    excludePostIds,
     search,
     titleSearch,
+    skipCount = false,
   } = options;
 
   const pool = await getPoolAsync();
@@ -332,6 +338,12 @@ export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
     params.push(excludeCategoryIds);
   }
 
+  // Exclude specific post IDs (e.g. hero stories already shown above a rail)
+  if (excludePostIds && excludePostIds.length > 0) {
+    wheres.push(`p.ID NOT IN (?)`);
+    params.push(excludePostIds);
+  }
+
   // Title search
   if (titleSearch) {
     wheres.push(`p.post_title LIKE ?`);
@@ -347,12 +359,15 @@ export async function loadBlogPosts(options: PostListOptions = {}): Promise<{
   const whereClause = wheres.join(' AND ');
   const joinClause = joins.join('\n');
 
-  // Count total
-  const [countRows] = await pool.query<(RowDataPacket & { total: number })[]>(
-    `SELECT COUNT(DISTINCT p.ID) as total FROM wp_posts p ${joinClause} WHERE ${whereClause}`,
-    params
-  );
-  const total = countRows[0]?.total || 0;
+  // Count total (skippable — landing rails don't need a grand total)
+  let total = 0;
+  if (!skipCount) {
+    const [countRows] = await pool.query<(RowDataPacket & { total: number })[]>(
+      `SELECT COUNT(DISTINCT p.ID) as total FROM wp_posts p ${joinClause} WHERE ${whereClause}`,
+      params
+    );
+    total = countRows[0]?.total || 0;
+  }
 
   // Fetch posts (request one extra to detect hasNextPage)
   const fetchLimit = first + 1;
@@ -480,6 +495,221 @@ export async function resolveBlogCategoryIds(slugs: string[]): Promise<number[]>
     if (cat?.databaseId) ids.push(cat.databaseId);
   }
   return ids;
+}
+
+// ─── Landing-page loaders (magazine / news hub) ───
+
+/**
+ * Spanish-language category slugs. Blog categories are flat (no parent tree),
+ * so the non-English universe is enumerated rather than walked. Chinese
+ * categories use percent-encoded slugs and are matched by the '%' heuristic.
+ */
+const SPANISH_CAT_SLUGS = [
+  'espanol', 'sexo-es', 'mejores', 'juguetes-sexuales',
+  'lubricantes', 'resenas', 'sexo-anal', 'como-hacer',
+];
+
+/**
+ * Resolve the set of category term IDs that mark a post as non-English
+ * (Spanish + Chinese). Used to keep the English magazine/listing clean.
+ */
+export async function resolveNonEnglishCategoryIds(): Promise<number[]> {
+  const cacheKey = 'non-english-cat-ids';
+  const cached = getCached<number[]>(cacheKey);
+  if (cached) return cached;
+
+  const categories = await loadBlogCategories();
+  const ids = categories
+    .filter(c => c.slug === 'cn' || SPANISH_CAT_SLUGS.includes(c.slug) || c.slug.includes('%'))
+    .map(c => c.databaseId!)
+    .filter((id): id is number => typeof id === 'number');
+
+  setCache(cacheKey, ids);
+  return ids;
+}
+
+export interface TopCategory {
+  termId: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+/**
+ * Top English topic categories ranked by their post count within the English
+ * universe (posts not filed under any Spanish/Chinese category). Language
+ * roots and any structural slugs in `denySlugs` are excluded.
+ */
+export async function loadTopEnglishCategories(options: {
+  denySlugs?: string[];
+  limit?: number;
+} = {}): Promise<TopCategory[]> {
+  const { denySlugs = ['en', 'news'], limit = 6 } = options;
+  const cacheKey = `top-en-categories:${denySlugs.join(',')}:${limit}`;
+  const cached = getCached<TopCategory[]>(cacheKey);
+  if (cached) return cached;
+
+  const nonEnIds = await resolveNonEnglishCategoryIds();
+  const pool = await getPoolAsync();
+
+  // Build params: NOT-IN post subquery (non-EN ids), NOT-IN term ids, deny slugs, limit.
+  // Guard empty arrays with a [0] placeholder so the IN clause stays valid.
+  const nonEnParam = nonEnIds.length ? nonEnIds : [0];
+  const denyParam = denySlugs.length ? denySlugs : [''];
+
+  const [rows] = await pool.query<DbTerm[]>(`
+    SELECT t.term_id, t.name, t.slug, COUNT(DISTINCT p.ID) AS count
+    FROM wp_posts p
+    JOIN wp_term_relationships tr ON tr.object_id = p.ID
+    JOIN wp_term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'category'
+    JOIN wp_terms t ON t.term_id = tt.term_id
+    WHERE p.post_type = 'post' AND p.post_status = 'publish'
+      AND p.ID NOT IN (
+        SELECT tr_ne.object_id
+        FROM wp_term_relationships tr_ne
+        JOIN wp_term_taxonomy tt_ne ON tt_ne.term_taxonomy_id = tr_ne.term_taxonomy_id
+        WHERE tt_ne.taxonomy = 'category' AND tt_ne.term_id IN (?)
+      )
+      AND t.term_id NOT IN (?)
+      AND t.slug NOT IN (?)
+    GROUP BY t.term_id, t.name, t.slug
+    HAVING count > 0
+    ORDER BY count DESC
+    LIMIT ?
+  `, [nonEnParam, nonEnParam, denyParam, limit]);
+
+  const result: TopCategory[] = rows.map(r => ({
+    termId: r.term_id,
+    name: r.name,
+    slug: r.slug,
+    count: Number(r.count),
+  }));
+
+  setCache(cacheKey, result);
+  return result;
+}
+
+/**
+ * Latest N published posts per category in a single windowed query, then
+ * hydrated via loadBlogPostsByIds (preserves order + batches terms).
+ * Returns a Map keyed by category term_id.
+ */
+export async function loadLatestPostsPerCategory(options: {
+  categoryTermIds: number[];
+  perCategory?: number;
+  excludePostIds?: number[];
+}): Promise<Map<number, Post[]>> {
+  const { categoryTermIds, perCategory = 8, excludePostIds = [] } = options;
+  const result = new Map<number, Post[]>();
+  if (categoryTermIds.length === 0) return result;
+
+  const pool = await getPoolAsync();
+  const excludeParam = excludePostIds.length ? excludePostIds : [0];
+
+  const [rows] = await pool.query<(RowDataPacket & { ID: number; cat_id: number })[]>(`
+    WITH ranked AS (
+      SELECT p.ID, tt.term_id AS cat_id,
+             ROW_NUMBER() OVER (PARTITION BY tt.term_id ORDER BY p.post_date DESC) AS rn
+      FROM wp_posts p
+      JOIN wp_term_relationships tr ON tr.object_id = p.ID
+      JOIN wp_term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'category'
+      WHERE p.post_type = 'post' AND p.post_status = 'publish'
+        AND tt.term_id IN (?)
+        AND p.ID NOT IN (?)
+    )
+    SELECT ID, cat_id FROM ranked WHERE rn <= ?
+    ORDER BY cat_id, rn
+  `, [categoryTermIds, excludeParam, perCategory]);
+
+  // Hydrate the distinct post IDs once, then group by category preserving order.
+  const distinctIds = [...new Set(rows.map(r => r.ID))];
+  const posts = await loadBlogPostsByIds(distinctIds);
+  const byId = new Map(posts.map(p => [p.databaseId, p]));
+
+  for (const termId of categoryTermIds) result.set(termId, []);
+  for (const row of rows) {
+    const post = byId.get(row.ID);
+    if (post) result.get(row.cat_id)?.push(post);
+  }
+
+  return result;
+}
+
+export interface TopTag {
+  termId: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+/**
+ * Top post_tag terms counted only over posts in a given category (e.g. 'news'),
+ * so generic site-wide tags (lubes, sex-toys) don't dominate. `denyTagSlugs`
+ * filters out noise tags.
+ */
+export async function loadTopTagsForCategory(options: {
+  categorySlug: string;
+  denyTagSlugs?: string[];
+  limit?: number;
+}): Promise<TopTag[]> {
+  const { categorySlug, denyTagSlugs = [], limit = 6 } = options;
+  const cacheKey = `top-tags-for-cat:${categorySlug}:${denyTagSlugs.join(',')}:${limit}`;
+  const cached = getCached<TopTag[]>(cacheKey);
+  if (cached) return cached;
+
+  const pool = await getPoolAsync();
+  const denyParam = denyTagSlugs.length ? denyTagSlugs : [''];
+
+  const [rows] = await pool.query<DbTerm[]>(`
+    SELECT t.term_id, t.name, t.slug, COUNT(DISTINCT p.ID) AS count
+    FROM wp_posts p
+    JOIN wp_term_relationships tr ON tr.object_id = p.ID
+    JOIN wp_term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id AND tt.taxonomy = 'post_tag'
+    JOIN wp_terms t ON t.term_id = tt.term_id
+    WHERE p.post_type = 'post' AND p.post_status = 'publish'
+      AND p.ID IN (
+        SELECT tr_cat.object_id
+        FROM wp_term_relationships tr_cat
+        JOIN wp_term_taxonomy tt_cat ON tt_cat.term_taxonomy_id = tr_cat.term_taxonomy_id
+        JOIN wp_terms t_cat ON t_cat.term_id = tt_cat.term_id
+        WHERE tt_cat.taxonomy = 'category' AND t_cat.slug = ?
+      )
+      AND t.slug NOT IN (?)
+    GROUP BY t.term_id, t.name, t.slug
+    HAVING count > 0
+    ORDER BY count DESC
+    LIMIT ?
+  `, [categorySlug, denyParam, limit]);
+
+  const result: TopTag[] = rows.map(r => ({
+    termId: r.term_id,
+    name: r.name,
+    slug: r.slug,
+    count: Number(r.count),
+  }));
+
+  setCache(cacheKey, result);
+  return result;
+}
+
+/**
+ * Editor-curated "trending" picks: published posts flagged with the
+ * `_maleq_news_pick` postmeta. The meta value is an optional sort order
+ * (lower = first); ties and unset orders fall back to newest first.
+ * Returns [] when nothing is flagged — callers fill from recent posts.
+ */
+export async function loadNewsEditorPicks(limit = 5): Promise<Post[]> {
+  const pool = await getPoolAsync();
+  const [rows] = await pool.query<(RowDataPacket & { ID: number })[]>(`
+    SELECT p.ID
+    FROM wp_posts p
+    JOIN wp_postmeta pick ON pick.post_id = p.ID AND pick.meta_key = '_maleq_news_pick'
+    WHERE ${POST_BASE_WHERE}
+    ORDER BY CAST(pick.meta_value AS UNSIGNED) ASC, p.post_date DESC
+    LIMIT ?
+  `, [limit]);
+
+  return loadBlogPostsByIds(rows.map(r => r.ID));
 }
 
 // ─── Cache invalidation ───

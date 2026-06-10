@@ -462,7 +462,9 @@
       "popularHeading": "熱門指南",
       "popularBeginner": "新手玩具入門指南",
       "popularLube": "潤滑液指南",
-      "popularCouples": "情侶玩法"
+      "popularCouples": "情侶玩法",
+      "topicsNews": "LGBTQ+ 新聞",
+      "topicsNewsDesc": "最新頭條"
     },
     "help": {
       "heading": "協助",
@@ -1587,7 +1589,11 @@
     "tagMetaDescription": "在 Male Q 部落格瀏覽標記為「{name}」的文章，共有 {count, plural, =1 {# 篇文章} other {# 篇文章}}。",
     "tagBreadcrumbSchemaName": "標籤",
     "tagArticleCount": "標記為「{name}」的文章共有 {count, plural, =1 {# 篇文章} other {# 篇文章}}",
-    "breadcrumbHome": "首頁"
+    "breadcrumbHome": "首頁",
+    "viewAllSection": "查看全部",
+    "scrollLeftAria": "向左捲動",
+    "scrollRightAria": "向右捲動",
+    "moreStoriesHeading": "更多文章"
   },
   "blogComments": {
     "thankYouHeading": "感謝您的留言！",
@@ -1956,5 +1962,27 @@
     "minutesAgo": "{count} 分鐘前",
     "hoursAgo": "{count} 小時前",
     "daysAgo": "{count} 天前"
+  },
+  "news": {
+    "pageTitle": "LGBTQ+ 新聞",
+    "pageSubtitle": "來自整個社群的最新頭條、文化與故事",
+    "breadcrumb": "新聞",
+    "metaTitle": "LGBTQ+ 新聞 | Male Q",
+    "metaDescription": "由 Male Q 精選的最新 LGBTQ+ 新聞、政治、文化與娛樂。",
+    "fromTheGuides": "來自指南",
+    "moreNews": "更多新聞",
+    "exploreTopics": "瀏覽話題",
+    "latestLabel": "最新",
+    "justNow": "剛剛",
+    "minutesAgo": "{count}分鐘前",
+    "hoursAgo": "{count}小時前",
+    "daysAgo": "{count}天前",
+    "featuredLabel": "精選",
+    "trending": "熱門",
+    "readStory": "閱讀文章",
+    "newsletterHeading": "最新 LGBTQ+ 新聞直達你的信箱",
+    "newsletterSubtitle": "每週為你送上頭條故事、文化與要聞。",
+    "followHeading": "追蹤 Male Q News",
+    "followSubtitle": "在你喜歡的平台獲取最新動態。"
   }
 }

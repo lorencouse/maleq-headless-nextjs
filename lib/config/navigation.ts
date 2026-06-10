@@ -135,6 +135,7 @@ export const mainNavigation: NavSection[] = [
         labelKey: 'guides.topicsHeading',
         href: '/guides',
         children: [
+          { labelKey: 'guides.topicsNews', href: '/news', descriptionKey: 'guides.topicsNewsDesc', featured: true },
           { labelKey: 'guides.topicsSex', href: '/guides/category/sex', descriptionKey: 'guides.topicsSexDesc' },
           { labelKey: 'guides.topicsRelationships', href: '/guides/category/relationship', descriptionKey: 'guides.topicsRelationshipsDesc' },
           { labelKey: 'guides.topicsHealth', href: '/guides/category/health', descriptionKey: 'guides.topicsHealthDesc' },

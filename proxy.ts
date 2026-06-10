@@ -12,7 +12,7 @@ import { routing } from './i18n/routing';
  *   1. Legacy WordPress query-param redirects (`?s=`, `?p=`).
  *   2. V1 → V2 product slug redirects.
  *   3. Rate limiting for configured API routes.
- *   4. Content roots (sex-toys, brand, brands, shop, guides, admin) pass
+ *   4. Content roots (sex-toys, brand, brands, shop, guides, news, admin) pass
  *      through untouched — they render in English regardless of locale UI.
  *   5. Everything else flows through next-intl locale routing.
  *
@@ -34,6 +34,7 @@ const CONTENT_ROOT_PREFIXES = [
   '/brands',
   '/shop',
   '/guides',
+  '/news',
   '/admin',
 ];
 

@@ -462,7 +462,9 @@
       "popularHeading": "Guides populaires",
       "popularBeginner": "Guide du débutant pour les jouets",
       "popularLube": "Guide des lubrifiants",
-      "popularCouples": "Jeux de couple"
+      "popularCouples": "Jeux de couple",
+      "topicsNews": "Actualités LGBTQ+",
+      "topicsNewsDesc": "Derniers titres"
     },
     "help": {
       "heading": "Aide",
@@ -1587,7 +1589,11 @@
     "tagMetaDescription": "Parcourez les articles étiquetés « {name} » sur le blog Male Q. {count, plural, =1 {# article} other {# articles}} disponible(s).",
     "tagBreadcrumbSchemaName": "Étiquette",
     "tagArticleCount": "{count, plural, =1 {# article} other {# articles}} étiqueté(s) « {name} »",
-    "breadcrumbHome": "Accueil"
+    "breadcrumbHome": "Accueil",
+    "viewAllSection": "Voir tout",
+    "scrollLeftAria": "Défiler vers la gauche",
+    "scrollRightAria": "Défiler vers la droite",
+    "moreStoriesHeading": "Plus d'articles"
   },
   "blogComments": {
     "thankYouHeading": "Merci pour votre commentaire !",
@@ -1956,5 +1962,27 @@
     "minutesAgo": "il y a {count} min",
     "hoursAgo": "il y a {count} h",
     "daysAgo": "il y a {count} j"
+  },
+  "news": {
+    "pageTitle": "Actualités LGBTQ+",
+    "pageSubtitle": "Les dernières actualités, la culture et les histoires de toute la communauté",
+    "breadcrumb": "Actualités",
+    "metaTitle": "Actualités LGBTQ+ | Male Q",
+    "metaDescription": "Les dernières actualités, politique, culture et divertissement LGBTQ+ — sélectionnées par Male Q.",
+    "fromTheGuides": "Depuis les guides",
+    "moreNews": "Plus d'actualités",
+    "exploreTopics": "Explorer les sujets",
+    "latestLabel": "À la une",
+    "justNow": "à l'instant",
+    "minutesAgo": "il y a {count} min",
+    "hoursAgo": "il y a {count} h",
+    "daysAgo": "il y a {count} j",
+    "featuredLabel": "En vedette",
+    "trending": "Tendances",
+    "readStory": "Lire l'article",
+    "newsletterHeading": "L'actualité LGBTQ+ dans votre boîte mail",
+    "newsletterSubtitle": "Recevez chaque semaine nos meilleurs articles, culture et titres.",
+    "followHeading": "Suivez Male Q News",
+    "followSubtitle": "Retrouvez l'actualité sur votre plateforme préférée."
   }
 }

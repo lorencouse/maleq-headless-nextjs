@@ -462,7 +462,9 @@
       "popularHeading": "Popular Guides",
       "popularBeginner": "Beginner's Guide to Toys",
       "popularLube": "Lube Guide",
-      "popularCouples": "Couples Play"
+      "popularCouples": "Couples Play",
+      "topicsNews": "LGBTQ+ News",
+      "topicsNewsDesc": "Latest headlines"
     },
     "help": {
       "heading": "Help",
@@ -1529,7 +1531,11 @@
     "tagMetaDescription": "Browse articles tagged with \"{name}\" on the Male Q blog. {count, plural, =1 {# post} other {# posts}} available.",
     "tagBreadcrumbSchemaName": "Tag",
     "tagArticleCount": "{count, plural, =1 {# article} other {# articles}} tagged with \"{name}\"",
-    "breadcrumbHome": "Home"
+    "breadcrumbHome": "Home",
+    "viewAllSection": "View all",
+    "scrollLeftAria": "Scroll left",
+    "scrollRightAria": "Scroll right",
+    "moreStoriesHeading": "More Stories"
   },
   "blogComments": {
     "thankYouHeading": "Thank you for your comment!",
@@ -1718,5 +1724,27 @@
     "minutesAgo": "{count}m ago",
     "hoursAgo": "{count}h ago",
     "daysAgo": "{count}d ago"
+  },
+  "news": {
+    "pageTitle": "LGBTQ+ News",
+    "pageSubtitle": "The latest headlines, culture, and stories from across the community",
+    "breadcrumb": "News",
+    "metaTitle": "LGBTQ+ News | Male Q",
+    "metaDescription": "The latest LGBTQ+ news, politics, culture, and entertainment — curated by Male Q.",
+    "fromTheGuides": "From the Guides",
+    "moreNews": "More News",
+    "exploreTopics": "Explore topics",
+    "latestLabel": "Latest",
+    "justNow": "just now",
+    "minutesAgo": "{count}m ago",
+    "hoursAgo": "{count}h ago",
+    "daysAgo": "{count}d ago",
+    "featuredLabel": "Featured",
+    "trending": "Trending",
+    "readStory": "Read story",
+    "newsletterHeading": "The latest LGBTQ+ news in your inbox",
+    "newsletterSubtitle": "Get our top stories, culture, and headlines delivered weekly.",
+    "followHeading": "Follow Male Q News",
+    "followSubtitle": "Get the latest on your favorite platform."
   }
 }

@@ -462,7 +462,9 @@
       "popularHeading": "Beliebte Ratgeber",
       "popularBeginner": "Einsteigerratgeber für Toys",
       "popularLube": "Gleitmittel-Ratgeber",
-      "popularCouples": "Spiele für Paare"
+      "popularCouples": "Spiele für Paare",
+      "topicsNews": "LGBTQ+ Nachrichten",
+      "topicsNewsDesc": "Aktuelle Schlagzeilen"
     },
     "help": {
       "heading": "Hilfe",
@@ -1587,7 +1589,11 @@
     "tagMetaDescription": "Durchstöbern Sie Artikel mit dem Tag „{name}“ im Male-Q-Blog. {count, plural, =1 {# Beitrag} other {# Beiträge}} verfügbar.",
     "tagBreadcrumbSchemaName": "Tag",
     "tagArticleCount": "{count, plural, =1 {# Artikel} other {# Artikel}} mit dem Tag „{name}“",
-    "breadcrumbHome": "Startseite"
+    "breadcrumbHome": "Startseite",
+    "viewAllSection": "Alle ansehen",
+    "scrollLeftAria": "Nach links scrollen",
+    "scrollRightAria": "Nach rechts scrollen",
+    "moreStoriesHeading": "Weitere Artikel"
   },
   "blogComments": {
     "thankYouHeading": "Vielen Dank für Ihren Kommentar!",
@@ -1956,5 +1962,27 @@
     "minutesAgo": "vor {count} Min.",
     "hoursAgo": "vor {count} Std.",
     "daysAgo": "vor {count} T."
+  },
+  "news": {
+    "pageTitle": "LGBTQ+ Nachrichten",
+    "pageSubtitle": "Die neuesten Schlagzeilen, Kultur und Geschichten aus der Community",
+    "breadcrumb": "Nachrichten",
+    "metaTitle": "LGBTQ+ Nachrichten | Male Q",
+    "metaDescription": "Die neuesten LGBTQ+ Nachrichten, Politik, Kultur und Unterhaltung – kuratiert von Male Q.",
+    "fromTheGuides": "Aus den Ratgebern",
+    "moreNews": "Mehr Nachrichten",
+    "exploreTopics": "Themen entdecken",
+    "latestLabel": "Aktuell",
+    "justNow": "gerade eben",
+    "minutesAgo": "vor {count} Min.",
+    "hoursAgo": "vor {count} Std.",
+    "daysAgo": "vor {count} T.",
+    "featuredLabel": "Empfohlen",
+    "trending": "Im Trend",
+    "readStory": "Artikel lesen",
+    "newsletterHeading": "Die neuesten LGBTQ+ Nachrichten in deinem Postfach",
+    "newsletterSubtitle": "Erhalte wöchentlich unsere Top-Storys, Kultur und Schlagzeilen.",
+    "followHeading": "Folge Male Q News",
+    "followSubtitle": "Erhalte Neuigkeiten auf deiner Lieblingsplattform."
   }
 }

@@ -519,7 +519,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Featured Image */}
       {post.featuredImage?.node && (
-        <div className='entry-img relative w-full h-96 mb-8 rounded-lg overflow-hidden'>
+        <div className='entry-img relative w-full mb-8 rounded-lg overflow-hidden' style={{ aspectRatio: '16 / 9' }}>
           <Image
             src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
             alt={post.featuredImage.node.altText || post.title}
