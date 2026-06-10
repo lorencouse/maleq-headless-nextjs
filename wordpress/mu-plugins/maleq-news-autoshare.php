@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Male Q News Auto-Share
- * Description: Social sharing for the LGBTQ news agent. (1) AUTO-SHARE: when a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback. (2) MANUAL X/THREADS: a post-editor meta box with pre-composed, editable text (the same socialText hook + _maleq_news_hashtags used by the adapters) and Share-via-intent + Copy buttons, for the two platforms that have no script-free auto-post path.
+ * Description: Social sharing for the LGBTQ news agent. (1) AUTO-SHARE: when a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback. (2) MANUAL X/THREADS/FACEBOOK: a post-editor meta box with pre-composed, editable text (the same socialText hook + _maleq_news_hashtags used by the adapters) and Share-via-intent + Copy buttons, for the platforms that have no script-free auto-post path. (Facebook's sharer can't be pre-filled, so its button opens the share dialog with the article URL and Copy supplies the caption to paste.)
  * Version: 1.2.0
  *
  * Fires only for posts that are unmistakably news-agent articles:
@@ -100,6 +100,49 @@ function maleq_news_truncate($s, $max) {
         return $s;
     }
     return rtrim(mb_substr($s, 0, $max - 1)) . '…';
+}
+
+/**
+ * X (Twitter) weighted character cost — mirrors the twitter-text algorithm. Most
+ * code points cost 1, but CJK / emoji / symbols (anything above U+10FF, minus a few
+ * punctuation ranges) cost 2, so a single emoji or flag costs 2+ toward the 280
+ * limit. mb_strlen alone under-counts these and lets posts overflow on X. Keep this
+ * in sync with xLen() in the meta-box JS below.
+ */
+function maleq_news_x_char_cost($cp) {
+    if ($cp <= 0x10FF) return 1;
+    if ($cp >= 0x2000 && $cp <= 0x200D) return 1; // general punctuation (incl. ZWJ)
+    if ($cp >= 0x2010 && $cp <= 0x201F) return 1;
+    if ($cp >= 0x2032 && $cp <= 0x2037) return 1;
+    return 2;
+}
+
+/** Total X-weighted length of a string (URLs already count as 23 via t.co). */
+function maleq_news_x_weighted_len($s) {
+    $s = preg_replace('#https?://\S+#u', str_repeat('x', 23), (string) $s);
+    $len = 0;
+    foreach (preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+        $len += maleq_news_x_char_cost(mb_ord($ch, 'UTF-8'));
+    }
+    return $len;
+}
+
+/** Like maleq_news_truncate, but trims to an X-WEIGHTED budget (emoji-aware). */
+function maleq_news_truncate_weighted($s, $max) {
+    $s = (string) $s;
+    if (maleq_news_x_weighted_len($s) <= $max) {
+        return $s;
+    }
+    $ellipsis = maleq_news_x_char_cost(0x2026); // '…' is U+2026 → costs 2 in X weighting
+    $out = '';
+    $w = 0;
+    foreach (preg_split('//u', $s, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+        $cost = maleq_news_x_char_cost(mb_ord($ch, 'UTF-8'));
+        if ($w + $cost > $max - $ellipsis) break; // leave room for the trailing ellipsis
+        $out .= $ch;
+        $w += $cost;
+    }
+    return rtrim($out) . '…';
 }
 
 /** Strip hashtags to letters/digits only + de-dupe + cap — mirrors types.ts cleanHashtags(). */
@@ -489,15 +532,18 @@ function maleq_news_share_mastodon($input) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Manual X / Threads share — post-editor meta box.
+ * Manual X / Threads / Facebook share — post-editor meta box.
  *
- * X (Twitter) and Threads have no reliable script-free auto-post path — posting
- * requires API approval (developer account, app review, OAuth, often paid). So
- * instead of auto-firing on publish like Bluesky/Mastodon, we render a meta box
+ * X (Twitter), Threads and Facebook have no reliable script-free auto-post path —
+ * posting requires API approval (developer account, app review, OAuth, often paid).
+ * So instead of auto-firing on publish like Bluesky/Mastodon, we render a meta box
  * on the news-post editor with pre-composed, EDITABLE text plus:
  *   - "Share to X" / "Share to Threads"  → opens the platform's web compose
  *     window (intent URL) pre-filled with the box text; you review + post manually.
- *   - "Copy for X" / "Copy for Threads"  → copies the box text to the clipboard.
+ *   - "Share to Facebook"                → opens FB's sharer with the article URL.
+ *     FB's sharer IGNORES any prefilled caption (it builds the card from the page's
+ *     Open Graph tags), so the box text is for the Copy → paste-into-composer flow.
+ *   - "Copy for X / Threads / Facebook"  → copies the box text to the clipboard.
  *
  * Composition is IDENTICAL to the Mastodon adapter above — the same socialText
  * "hook" (NOT the headline; the headline is already in the link card) + the same
@@ -508,21 +554,26 @@ function maleq_news_share_mastodon($input) {
  * The trailing URL still auto-generates a link-card preview on both platforms.
  * ──────────────────────────────────────────────────────────────────────── */
 
-const MALEQ_NEWS_X_LIMIT       = 280;  // X post limit
-const MALEQ_NEWS_THREADS_LIMIT = 500;  // Threads post limit
-const MALEQ_NEWS_URL_WEIGHT    = 23;   // X counts every URL as 23 chars (t.co)
+const MALEQ_NEWS_X_LIMIT       = 280;    // X post limit
+const MALEQ_NEWS_THREADS_LIMIT = 500;    // Threads post limit
+const MALEQ_NEWS_FB_LIMIT      = 63206;  // Facebook post limit (effectively unlimited)
+const MALEQ_NEWS_URL_WEIGHT    = 23;     // X counts every URL as 23 chars (t.co)
 
 /**
  * Compose "hook\n\n#tags\n\nURL", trimming the hook so the whole thing fits
  * $limit. $url_weight is how many chars the URL "costs" toward the limit — 23 on
- * X (t.co), its real length on Threads. Mirrors maleq_news_share_mastodon().
+ * X (t.co), its real length on Threads. When $x_weighted is true the hook is
+ * trimmed by X's weighted length (emoji/CJK cost 2) so emoji posts can't overflow
+ * 280. Mirrors maleq_news_share_mastodon().
  */
-function maleq_news_compose_manual($input, $limit, $url_weight) {
+function maleq_news_compose_manual($input, $limit, $url_weight, $x_weighted = false) {
     $hook     = trim($input['socialText'] ?? '') !== '' ? trim($input['socialText']) : $input['title'];
     $tags     = maleq_news_clean_hashtags($input['hashtags'] ?? [], 4);
     $tag_line = implode(' ', array_map(function ($t) { return '#' . $t; }, $tags));
+    // Hashtags are letters/digits only, so their weighted length == mb_strlen.
     $reserve  = $url_weight + 2 + ($tag_line !== '' ? mb_strlen($tag_line) + 2 : 0);
-    $head     = maleq_news_truncate($hook, max(10, $limit - $reserve));
+    $budget   = max(10, $limit - $reserve);
+    $head     = $x_weighted ? maleq_news_truncate_weighted($hook, $budget) : maleq_news_truncate($hook, $budget);
     return implode("\n\n", array_filter([$head, $tag_line !== '' ? $tag_line : null, $input['url']]));
 }
 
@@ -536,7 +587,7 @@ add_action('add_meta_boxes', function ($post_type, $post) {
     }
     add_meta_box(
         'maleq-news-manual-share',
-        'Share to X / Threads',
+        'Share to X / Threads / Facebook',
         'maleq_news_manual_share_box',
         'post',
         'side',
@@ -560,8 +611,9 @@ function maleq_news_manual_share_box($post) {
         'hashtags'   => $hashtags,
     ];
 
-    $x_text       = maleq_news_compose_manual($input, MALEQ_NEWS_X_LIMIT, MALEQ_NEWS_URL_WEIGHT);
+    $x_text       = maleq_news_compose_manual($input, MALEQ_NEWS_X_LIMIT, MALEQ_NEWS_URL_WEIGHT, true);
     $threads_text = maleq_news_compose_manual($input, MALEQ_NEWS_THREADS_LIMIT, mb_strlen($input['url']));
+    $fb_text      = maleq_news_compose_manual($input, MALEQ_NEWS_FB_LIMIT, mb_strlen($input['url']));
 
     $is_published = ($post->post_status === 'publish');
     $no_hook      = (trim($social_text) === '');
@@ -581,10 +633,10 @@ function maleq_news_manual_share_box($post) {
         <?php endif; ?>
 
         <p style="margin:0 0 8px;">
-            <label><input type="checkbox" id="maleq-autoshare-onpublish" checked> Auto-open X &amp; Threads when I publish this post</label>
+            <label><input type="checkbox" id="maleq-autoshare-onpublish" checked> Auto-open X, Threads &amp; Facebook when I publish this post</label>
         </p>
         <p id="maleq-autoshare-note" style="margin:0 0 10px;color:#646970;">
-            On publish I'll try to open both compose tabs automatically. Browsers (especially Safari)
+            On publish I'll try to open the compose tabs automatically. Browsers (especially Safari)
             block tabs that aren't opened by a click, so if that happens you'll see one-click buttons here instead.
         </p>
         <div id="maleq-autoshare-fallback" style="display:none;margin:0 0 12px;padding:8px 10px;background:#edfaef;border:1px solid #a7e3b0;border-radius:3px;">
@@ -592,6 +644,7 @@ function maleq_news_manual_share_box($post) {
             <span style="display:block;margin-top:6px;">
                 <a href="#" id="maleq-x-open2" class="button button-primary button-small" style="display:none;">Open 𝕏 compose ↗</a>
                 <a href="#" id="maleq-threads-open2" class="button button-primary button-small" style="display:none;">Open Threads compose ↗</a>
+                <a href="#" id="maleq-facebook-open2" class="button button-primary button-small" style="display:none;">Open Facebook share ↗</a>
             </span>
         </div>
 
@@ -605,30 +658,78 @@ function maleq_news_manual_share_box($post) {
 
         <p style="margin:0 0 4px;font-weight:600;">Threads</p>
         <textarea id="maleq-threads-text" rows="6" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($threads_text); ?></textarea>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 12px;">
             <span><a href="#" id="maleq-threads-share" class="button button-primary button-small">Share to Threads</a>
                   <a href="#" id="maleq-threads-copy" class="button button-small">Copy for Threads</a></span>
             <span id="maleq-threads-count" style="color:#646970;"></span>
         </div>
+
+        <p style="margin:0 0 4px;font-weight:600;">Facebook</p>
+        <textarea id="maleq-facebook-text" rows="6" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($fb_text); ?></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 0;">
+            <span><a href="#" id="maleq-facebook-share" class="button button-primary button-small">Share to Facebook</a>
+                  <a href="#" id="maleq-facebook-copy" class="button button-small">Copy for Facebook</a></span>
+            <span id="maleq-facebook-count" style="color:#646970;"></span>
+        </div>
+        <p style="margin:6px 0 0;color:#646970;">
+            Facebook's share dialog can't be reliably pre-filled with a caption — it pulls
+            the headline, image &amp; description from the article itself. <em>Share to
+            Facebook</em> opens the dialog with the link card <strong>and copies this
+            caption to your clipboard</strong> — just paste (⌘/Ctrl-V) into the "Say
+            something" field. (<em>Copy for Facebook</em> copies it without opening.)
+        </p>
     </div>
     <script>
     (function () {
-        // X counts every URL as 23 chars (t.co wrapping); Threads counts raw length.
+        // X weighted length (mirrors maleq_news_x_weighted_len in PHP): URLs = 23 via
+        // t.co; emoji/CJK/symbols (> U+10FF, minus a few punctuation ranges) cost 2.
+        // Plain .length under-counts emoji and shows "under" when X says "over".
         function xLen(t) {
-            var re = /https?:\/\/[^\s]+/g;
-            var urls = t.match(re) || [];
-            return t.replace(re, '').length + urls.length * 23;
+            t = t.replace(/https?:\/\/[^\s]+/g, function () { var s = ''; for (var i = 0; i < 23; i++) { s += 'x'; } return s; });
+            var n = 0;
+            for (var ch of t) {
+                var cp = ch.codePointAt(0);
+                var one = cp <= 0x10FF || (cp >= 0x2000 && cp <= 0x200D) || (cp >= 0x2010 && cp <= 0x201F) || (cp >= 0x2032 && cp <= 0x2037);
+                n += one ? 1 : 2;
+            }
+            return n;
         }
+        var ARTICLE_URL = <?php echo wp_json_encode($input['url']); ?>;
         var INTENTS = {
-            'maleq-x':       'https://twitter.com/intent/tweet?text=',
-            'maleq-threads': 'https://www.threads.net/intent/post?text='
+            'maleq-x':        'https://twitter.com/intent/tweet?text=',
+            'maleq-threads':  'https://www.threads.net/intent/post?text=',
+            'maleq-facebook': 'https://www.facebook.com/sharer/sharer.php?u='
         };
         // Open one platform's compose window from its textarea. Returns the window (or null
         // if the browser blocked the pop-up).
+        // Best-effort clipboard write. Returns true if the (sync) request was issued;
+        // the actual write may still be rejected when there's no user gesture/focus.
+        function copyText(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
         function openShare(prefix) {
             var ta = document.getElementById(prefix + '-text');
             if (!ta) { return null; }
-            return window.open(INTENTS[prefix] + encodeURIComponent(ta.value), '_blank', 'noopener');
+            // Facebook's sharer builds its card from the article's Open Graph tags and
+            // takes the URL via ?u=. It also accepts a &quote= caption, but Facebook
+            // frequently IGNORES it (pre-filling a user's status violates their platform
+            // policy). So when opening FB we ALSO copy the caption to the clipboard —
+            // done BEFORE window.open (which moves focus and would block the write) so
+            // the composer is one ⌘/Ctrl-V away. We still pass quote in case FB honors it.
+            var url;
+            if (prefix === 'maleq-facebook') {
+                copyText(ta.value);
+                url = INTENTS[prefix] + encodeURIComponent(ARTICLE_URL) + '&quote=' + encodeURIComponent(ta.value);
+            } else {
+                url = INTENTS[prefix] + encodeURIComponent(ta.value);
+            }
+            return window.open(url, '_blank', 'noopener');
         }
         function bind(prefix, limit, weighted) {
             var ta    = document.getElementById(prefix + '-text');
@@ -659,8 +760,9 @@ function maleq_news_manual_share_box($post) {
                 }
             });
         }
-        bind('maleq-x',       <?php echo (int) MALEQ_NEWS_X_LIMIT; ?>,       true);
-        bind('maleq-threads', <?php echo (int) MALEQ_NEWS_THREADS_LIMIT; ?>, false);
+        bind('maleq-x',        <?php echo (int) MALEQ_NEWS_X_LIMIT; ?>,       true);
+        bind('maleq-threads',  <?php echo (int) MALEQ_NEWS_THREADS_LIMIT; ?>, false);
+        bind('maleq-facebook', <?php echo (int) MALEQ_NEWS_FB_LIMIT; ?>,      false);
 
         // ── Auto-open on publish ──────────────────────────────────────────────
         // Try to open both compose tabs the moment the post is published. The publish
@@ -690,7 +792,7 @@ function maleq_news_manual_share_box($post) {
         // Wire the fallback (one-click) buttons once; each click is its own user gesture.
         var fallback = document.getElementById('maleq-autoshare-fallback');
         (function () {
-            var pairs = [['maleq-x-open2', 'maleq-x'], ['maleq-threads-open2', 'maleq-threads']];
+            var pairs = [['maleq-x-open2', 'maleq-x'], ['maleq-threads-open2', 'maleq-threads'], ['maleq-facebook-open2', 'maleq-facebook']];
             pairs.forEach(function (p) {
                 var btn = document.getElementById(p[0]);
                 if (btn) { btn.addEventListener('click', function (e) { e.preventDefault(); openShare(p[1]); }); }
@@ -715,9 +817,10 @@ function maleq_news_manual_share_box($post) {
             fired = true;
             var blocked = [];
             if (!opened(openShare('maleq-x'))) { blocked.push('maleq-x'); }
-            // Only the first gesture-less open tends to succeed, so the second is the most
-            // likely to be blocked — the fallback button covers it either way.
+            // Only the first gesture-less open tends to succeed, so anything after it is
+            // likely to be blocked — the fallback button covers each one either way.
             if (!opened(openShare('maleq-threads'))) { blocked.push('maleq-threads'); }
+            if (!opened(openShare('maleq-facebook'))) { blocked.push('maleq-facebook'); }
             revealFallback(blocked);
         }
 

@@ -45,7 +45,7 @@ export default function FeatureSpotlight({ post }: FeatureSpotlightProps) {
 
         <div className="flex flex-col justify-center p-6 sm:p-10">
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary-foreground">
+            <span className="inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold uppercase leading-none tracking-wide text-primary-foreground">
               {t('featuredLabel')}
             </span>
             {category && (

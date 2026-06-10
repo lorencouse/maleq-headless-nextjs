@@ -1,38 +1,31 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import SearchAutocomplete from '@/components/search/SearchAutocomplete';
 
 export default function HomeHero() {
   const t = useTranslations('home.hero');
   return (
-    <section className='relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white overflow-hidden select-none'>
-      {/* Background pattern */}
-      <div className='absolute inset-0 opacity-5'>
-        <div
-          className='absolute inset-0'
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-      </div>
+    <section className='relative bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900 text-white select-none'>
+      {/* Decorative layers (clipped to the hero; kept separate so the search
+          autocomplete dropdown can overflow the section edge) */}
+      <div className='absolute inset-0 overflow-hidden pointer-events-none'>
+        {/* Background pattern */}
+        <div className='absolute inset-0 opacity-5'>
+          <div
+            className='absolute inset-0'
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        </div>
 
-      {/* Gradient overlays */}
-      <div className='absolute top-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2' />
-      <div className='absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2' />
+        {/* Gradient overlays */}
+        <div className='absolute top-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2' />
+        <div className='absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2' />
+      </div>
 
       <div className='relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24'>
         <div className='max-w-3xl'>
-          {/* Social proof badge */}
-          <div className='inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm mb-6'>
-            <div className='flex -space-x-1.5'>
-              {[...Array(5)].map((_, i) => (
-                <svg key={i} className='w-4 h-4 text-yellow-400' fill='currentColor' viewBox='0 0 20 20'>
-                  <path d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z' />
-                </svg>
-              ))}
-            </div>
-            <span className='text-white/90'>{t('socialProof')}</span>
-          </div>
-
           {/* Brand */}
           <h1 className='heading-plain mb-2'>
             <span className='text-primary font-bold text-5xl sm:text-6xl tracking-wide'>
@@ -47,9 +40,21 @@ export default function HomeHero() {
           </h2>
 
           {/* Subheading */}
-          <p className='text-lg sm:text-xl text-zinc-300 mb-8 max-w-2xl'>
+          <p className='text-lg sm:text-xl text-zinc-300 mb-6 max-w-2xl'>
             {t('subheading')}
           </p>
+
+          {/* Social proof badge */}
+          <div className='inline-flex items-center gap-3 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-sm mb-8'>
+            <div className='flex -space-x-1.5'>
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className='w-4 h-4 text-yellow-400' fill='currentColor' viewBox='0 0 20 20'>
+                  <path d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z' />
+                </svg>
+              ))}
+            </div>
+            <span className='text-white/90'>{t('socialProof')}</span>
+          </div>
 
           {/* CTAs */}
           <div className='flex flex-col sm:flex-row gap-4'>
@@ -78,6 +83,11 @@ export default function HomeHero() {
             >
               {t('exploreGuides')}
             </Link>
+          </div>
+
+          {/* Search */}
+          <div className='mt-6 max-w-xl'>
+            <SearchAutocomplete />
           </div>
 
           {/* Trust indicators */}

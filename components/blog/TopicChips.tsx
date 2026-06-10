@@ -22,7 +22,7 @@ export default function TopicChips({ topics, label }: TopicChipsProps) {
         <Link
           key={topic.slug}
           href={`/guides/tag/${topic.slug}`}
-          className="rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+          className="inline-flex items-center rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium leading-none text-foreground transition-colors hover:border-primary hover:text-primary"
         >
           {topic.name}
         </Link>
