@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Male Q News Auto-Share
- * Description: Social sharing for the LGBTQ news agent. (1) AUTO-SHARE: when a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback. (2) MANUAL X/THREADS/FACEBOOK: a post-editor meta box with pre-composed, editable text (the same socialText hook + _maleq_news_hashtags used by the adapters) and Share-via-intent + Copy buttons, for the platforms that have no script-free auto-post path. (Facebook's sharer can't be pre-filled, so its button opens the share dialog with the article URL and Copy supplies the caption to paste.)
- * Version: 1.2.0
+ * Description: Social sharing for the LGBTQ news agent. (1) AUTO-SHARE: when a News-agent draft is PUBLISHED (your approval), it is shared once to Bluesky + Mastodon. Mirrors scripts/news-agent/social/* exactly and reuses the same _maleq_news_* postmeta, so the sync-shares.ts poll stays a compatible manual fallback. (2) MANUAL X/THREADS/FACEBOOK: a post-editor meta box with pre-composed, editable text (the same socialText hook + _maleq_news_hashtags used by the adapters) and Share-via-intent + Copy buttons, for the platforms that have no script-free auto-post path. (Facebook's sharer freezes/fails and ignores pre-filled captions, so its button just copies the caption to the clipboard and opens a plain Facebook tab to paste into manually.)
+ * Version: 1.2.1
  *
  * Fires only for posts that are unmistakably news-agent articles:
  *   - post_type = 'post'
@@ -540,9 +540,9 @@ function maleq_news_share_mastodon($input) {
  * on the news-post editor with pre-composed, EDITABLE text plus:
  *   - "Share to X" / "Share to Threads"  → opens the platform's web compose
  *     window (intent URL) pre-filled with the box text; you review + post manually.
- *   - "Share to Facebook"                → opens FB's sharer with the article URL.
- *     FB's sharer IGNORES any prefilled caption (it builds the card from the page's
- *     Open Graph tags), so the box text is for the Copy → paste-into-composer flow.
+ *   - "Share to Facebook"                → copies the box text to the clipboard and
+ *     opens a plain Facebook tab to paste into. (FB's sharer freezes/fails and ignores
+ *     prefilled captions anyway, so we don't attempt to pre-populate a post.)
  *   - "Copy for X / Threads / Facebook"  → copies the box text to the clipboard.
  *
  * Composition is IDENTICAL to the Mastodon adapter above — the same socialText
@@ -644,7 +644,7 @@ function maleq_news_manual_share_box($post) {
             <span style="display:block;margin-top:6px;">
                 <a href="#" id="maleq-x-open2" class="button button-primary button-small" style="display:none;">Open 𝕏 compose ↗</a>
                 <a href="#" id="maleq-threads-open2" class="button button-primary button-small" style="display:none;">Open Threads compose ↗</a>
-                <a href="#" id="maleq-facebook-open2" class="button button-primary button-small" style="display:none;">Open Facebook share ↗</a>
+                <a href="#" id="maleq-facebook-open2" class="button button-primary button-small" style="display:none;">Copy &amp; open Facebook ↗</a>
             </span>
         </div>
 
@@ -667,16 +667,16 @@ function maleq_news_manual_share_box($post) {
         <p style="margin:0 0 4px;font-weight:600;">Facebook</p>
         <textarea id="maleq-facebook-text" rows="6" style="width:100%;font-size:12px;line-height:1.4;"><?php echo esc_textarea($fb_text); ?></textarea>
         <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 0;">
-            <span><a href="#" id="maleq-facebook-share" class="button button-primary button-small">Share to Facebook</a>
+            <span><a href="#" id="maleq-facebook-share" class="button button-primary button-small">Copy &amp; open Facebook</a>
                   <a href="#" id="maleq-facebook-copy" class="button button-small">Copy for Facebook</a></span>
             <span id="maleq-facebook-count" style="color:#646970;"></span>
         </div>
         <p style="margin:6px 0 0;color:#646970;">
-            Facebook's share dialog can't be reliably pre-filled with a caption — it pulls
-            the headline, image &amp; description from the article itself. <em>Share to
-            Facebook</em> opens the dialog with the link card <strong>and copies this
-            caption to your clipboard</strong> — just paste (⌘/Ctrl-V) into the "Say
-            something" field. (<em>Copy for Facebook</em> copies it without opening.)
+            Facebook's share dialog freezes and ignores pre-filled captions, so we don't
+            attempt it. <em>Copy &amp; open Facebook</em> <strong>copies this caption
+            (article link included) to your clipboard</strong> and opens a Facebook tab —
+            start a post and paste (⌘/Ctrl-V). (<em>Copy for Facebook</em> copies it
+            without opening.)
         </p>
     </div>
     <script>
@@ -695,11 +695,33 @@ function maleq_news_manual_share_box($post) {
             return n;
         }
         var ARTICLE_URL = <?php echo wp_json_encode($input['url']); ?>;
+        var URL_BASE    = <?php echo wp_json_encode(maleq_news_site_url() . '/guides/'); ?>;
+        // The server renders ARTICLE_URL from the post slug at editor-LOAD time. For a
+        // brand-new post that slug is still EMPTY — WordPress only assigns post_name on
+        // first publish — so ARTICLE_URL is ".../guides/" with no slug. Facebook's sharer
+        // then opens on a blank/invalid URL and HANGS until you reload. Re-derive the URL
+        // from the editor store at share time (autoOpen fires AFTER the publish save
+        // completes, so the freshly-assigned slug is present there) and fall back to the
+        // server value for already-published posts / when the store is unavailable.
+        function liveArticleUrl() {
+            try {
+                var sel = window.wp && wp.data && wp.data.select('core/editor');
+                if (sel) {
+                    var slug = (typeof sel.getEditedPostSlug === 'function' && sel.getEditedPostSlug())
+                            || ((sel.getCurrentPost && sel.getCurrentPost()) || {}).slug;
+                    if (slug) { return URL_BASE + slug; }
+                }
+            } catch (e) {}
+            return ARTICLE_URL;
+        }
         var INTENTS = {
             'maleq-x':        'https://twitter.com/intent/tweet?text=',
-            'maleq-threads':  'https://www.threads.net/intent/post?text=',
-            'maleq-facebook': 'https://www.facebook.com/sharer/sharer.php?u='
+            'maleq-threads':  'https://www.threads.net/intent/post?text='
         };
+        // Facebook's sharer/intent pre-fill route is unreliable — it freezes/fails and
+        // ignores the caption anyway. So FB is handled separately: copy the caption to the
+        // clipboard and open a plain Facebook tab to paste into manually.
+        var FACEBOOK_URL = 'https://www.facebook.com/';
         // Open one platform's compose window from its textarea. Returns the window (or null
         // if the browser blocked the pop-up).
         // Best-effort clipboard write. Returns true if the (sync) request was issued;
@@ -716,18 +738,21 @@ function maleq_news_manual_share_box($post) {
         function openShare(prefix) {
             var ta = document.getElementById(prefix + '-text');
             if (!ta) { return null; }
-            // Facebook's sharer builds its card from the article's Open Graph tags and
-            // takes the URL via ?u=. It also accepts a &quote= caption, but Facebook
-            // frequently IGNORES it (pre-filling a user's status violates their platform
-            // policy). So when opening FB we ALSO copy the caption to the clipboard —
-            // done BEFORE window.open (which moves focus and would block the write) so
-            // the composer is one ⌘/Ctrl-V away. We still pass quote in case FB honors it.
+            // Use the LIVE article URL (see liveArticleUrl) and patch any stale empty-slug
+            // URL the server baked into the pre-composed caption with it.
+            var liveUrl = liveArticleUrl();
+            var text = (ARTICLE_URL && liveUrl !== ARTICLE_URL)
+                ? ta.value.split(ARTICLE_URL).join(liveUrl)
+                : ta.value;
+            // Facebook: don't use the sharer (it freezes and ignores the caption). Copy the
+            // caption to the clipboard — BEFORE window.open, which moves focus and would
+            // block the write — then open a plain Facebook tab to paste (⌘/Ctrl-V) into.
             var url;
             if (prefix === 'maleq-facebook') {
-                copyText(ta.value);
-                url = INTENTS[prefix] + encodeURIComponent(ARTICLE_URL) + '&quote=' + encodeURIComponent(ta.value);
+                copyText(text);
+                url = FACEBOOK_URL;
             } else {
-                url = INTENTS[prefix] + encodeURIComponent(ta.value);
+                url = INTENTS[prefix] + encodeURIComponent(text);
             }
             return window.open(url, '_blank', 'noopener');
         }
