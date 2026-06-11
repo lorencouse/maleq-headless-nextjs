@@ -27,6 +27,7 @@
     "@stripe/react-stripe-js": "^5.4.1",
     "@stripe/stripe-js": "^8.6.3",
     "@tanstack/react-query": "^5.90.20",
+    "google-auth-library": "^10.7.0",
     "graphql": "^16.9.0",
     "graphql-request": "^7.4.0",
     "minisearch": "^7.2.0",
