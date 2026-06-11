@@ -122,7 +122,8 @@ export default function NotificationsPage() {
   }, []);
 
   const fetchServerNotifications = useCallback(async () => {
-    if (!user?.id || !token) {
+    // Auth is enforced server-side via the session cookie; gate on user only.
+    if (!user?.id) {
       setServerNotifications([]);
       setServerLoading(false);
       return;

@@ -4,6 +4,9 @@ import { revalidatePath } from 'next/cache';
 import type { RowDataPacket } from 'mysql2';
 
 export async function POST(request: NextRequest) {
+  // Dev-only browser tool (called from ProductImageGallery without a secret, so
+  // admin-key auth isn't applicable). NODE_ENV is forced to 'production' in any
+  // Next.js production build, so this never executes on a real deploy.
   if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }

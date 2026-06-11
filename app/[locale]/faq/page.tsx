@@ -5,6 +5,7 @@ import { ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
 import FaqAccordion from '@/components/faq/FaqAccordion';
+import { buildLocaleAlternates } from '@/i18n/seo-alternates';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -16,9 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: {
-      canonical: '/faq',
-    },
+    alternates: buildLocaleAlternates(locale, '/faq'),
   };
 }
 

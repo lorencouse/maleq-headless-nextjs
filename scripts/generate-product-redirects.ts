@@ -44,18 +44,26 @@ const execute = process.argv.includes('--execute');
 
 const tunnelBase = { host: '127.0.0.1', port: 3307 };
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required env var ${name} — set it in .env.local (never hardcode credentials).`);
+  }
+  return value;
+}
+
 const v1Config = {
   ...tunnelBase,
-  database: 'maleqdb',
-  user: 'maleqcom',
-  password: 'Snowdogs2@@',
+  database: process.env.MYSQL_V1_DB || 'maleqdb',
+  user: process.env.MYSQL_V1_USER || 'maleqcom',
+  password: requireEnv('MYSQL_V1_PASS'),
 };
 
 const v2Config = {
   ...tunnelBase,
-  database: 'maleq-wp',
-  user: 'maleq-wp',
-  password: 'S9meeDoehU8VPiHd1ByJ',
+  database: process.env.MYSQL_PROD_DB || 'maleq-wp',
+  user: process.env.MYSQL_PROD_USER || 'maleq-wp',
+  password: requireEnv('MYSQL_PROD_PASS'),
 };
 
 // Table prefixes

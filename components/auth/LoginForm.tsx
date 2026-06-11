@@ -67,7 +67,7 @@ export default function LoginForm() {
         throw new Error(result.error || t('login.failedGeneric'));
       }
 
-      login(result.user, result.token);
+      login(result.user);
       gtag.login('email');
       // Use replace to avoid back-button loops (login → redirect → back → login)
       router.replace(returnTo || '/account');

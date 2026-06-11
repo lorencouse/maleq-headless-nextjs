@@ -5,7 +5,7 @@ import ChromeLocaleProvider from '@/components/i18n/ChromeLocaleProvider';
 import NewsletterPopup from '@/components/newsletter/NewsletterPopup';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
 import PushNotificationPrompt from '@/components/pwa/PushNotificationPrompt';
-import ChatWidget from '@/components/chat/ChatWidget';
+import LazyChatWidget from '@/components/chat/LazyChatWidget';
 
 /**
  * The locale-aware storefront chrome: Header, Footer, and the floating
@@ -47,7 +47,7 @@ export default function StorefrontChrome({
         <InstallPrompt minVisits={2} />
         <PushNotificationPrompt minVisits={3} />
       </div>
-      <ChatWidget />
+      <LazyChatWidget />
     </ChromeLocaleProvider>
   );
 }

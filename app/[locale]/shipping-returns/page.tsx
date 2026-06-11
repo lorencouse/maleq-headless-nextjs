@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
+import { buildLocaleAlternates } from '@/i18n/seo-alternates';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -13,7 +14,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t('metaTitle'),
     description: t('metaDescription'),
-    alternates: { canonical: '/shipping-returns' },
+    alternates: buildLocaleAlternates(locale, '/shipping-returns'),
   };
 }
 

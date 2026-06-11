@@ -7,6 +7,7 @@ import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { parsePrice } from '@/lib/utils/woocommerce-format';
 import { UnifiedProduct } from '@/lib/products/combined-service';
+import { isPurchasableStock } from '@/lib/products/stock-status';
 
 interface QuickAddButtonProps {
   product: UnifiedProduct;
@@ -51,7 +52,7 @@ export default function QuickAddButton({ product }: QuickAddButtonProps) {
         image: product.image || undefined,
         stockQuantity: product.stockQuantity || undefined,
         maxQuantity: product.stockQuantity || 999,
-        inStock: product.stockStatus === 'IN_STOCK' || product.stockStatus === 'LOW_STOCK',
+        inStock: isPurchasableStock(product.stockStatus),
         type: product.type,
       });
 

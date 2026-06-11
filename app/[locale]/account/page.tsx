@@ -33,7 +33,9 @@ export default function AccountDashboard() {
 
   useEffect(() => {
     async function fetchRecentOrders() {
-      if (!user?.id || !token) {
+      // Auth is enforced server-side via the session cookie; gate on the
+      // persisted user only (the token no longer lives in JS state).
+      if (!user?.id) {
         setIsLoading(false);
         return;
       }

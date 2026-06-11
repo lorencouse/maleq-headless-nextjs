@@ -4,8 +4,16 @@ import { persist } from 'zustand/middleware';
 /**
  * Authentication State Management
  *
- * Manages user authentication state with localStorage persistence.
- * Works with WordPress/WooCommerce customer accounts.
+ * Manages user authentication state. The session TOKEN is NOT stored here or in
+ * localStorage — it lives in an httpOnly `maleq_session` cookie that the auth
+ * routes set and the browser sends automatically with same-origin requests, so
+ * an XSS can't read it. Only the non-sensitive `user` profile + `isAuthenticated`
+ * flag are persisted (for instant UI gating on reload); the cookie is the real
+ * source of truth, and any API call with an expired cookie returns 401.
+ *
+ * The `token` field is retained as always-null for backward compatibility with
+ * components that still read it (their `Authorization` headers are ignored
+ * server-side in favour of the cookie — see lib/api/auth-token.ts).
  */
 
 export interface User {
@@ -29,7 +37,7 @@ interface AuthState {
 interface AuthActions {
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
-  login: (user: User, token: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
@@ -59,23 +67,21 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       setToken: (token) => set({ token }),
 
-      login: (user, token) =>
+      // `token` param is accepted but ignored — the session token now lives in
+      // the httpOnly cookie set by the auth route, not in JS state.
+      login: (user) =>
         set({
           user,
-          token,
+          token: null,
           isAuthenticated: true,
           error: null,
         }),
 
       logout: () => {
-        // Fire-and-forget server-side token invalidation
-        const token = useAuthStore.getState().token;
-        if (token) {
-          fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}` },
-          }).catch(() => {});
-        }
+        // Fire-and-forget server-side invalidation. The cookie is sent
+        // automatically (same-origin), so no Authorization header is needed;
+        // the route clears the cookie + invalidates the WP token.
+        fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
         set({
           user: null,
           token: null,
@@ -94,9 +100,10 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     }),
     {
       name: 'auth-storage',
+      // NOTE: `token` is deliberately NOT persisted — it lives in the httpOnly
+      // cookie only. Persisting it would re-expose it to XSS via localStorage.
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {

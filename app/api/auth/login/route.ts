@@ -5,7 +5,7 @@ import {
   handleApiError,
   UserFacingError,
 } from '@/lib/api/response';
-import { encodeAuthToken } from '@/lib/api/auth-token';
+import { encodeAuthToken, setSessionCookie } from '@/lib/api/auth-token';
 import {
   clearAuthFailureState,
   recordAuthFailure,
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     clearAuthFailureState('login', guardResult.meta, normalizedIdentifier);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: customer.id,
@@ -97,8 +97,11 @@ export async function POST(request: NextRequest) {
         displayName: `${customer.first_name} ${customer.last_name}`,
         avatarUrl: customer.avatar_url,
       },
-      token: compositeToken,
     });
+    // Token goes in an httpOnly cookie (not the JSON body / localStorage), so
+    // an XSS can't read it. The server reads it back from the cookie.
+    setSessionCookie(response, compositeToken);
+    return response;
   } catch (error) {
     if (guardMeta) {
       await recordAuthFailure(

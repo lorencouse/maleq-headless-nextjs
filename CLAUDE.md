@@ -163,10 +163,15 @@ Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.t
 
 ### React Hooks (`lib/hooks/`)
 
-**useSearch.ts**:
-- `useProductSearch(query)` - React Query hook for product search
-- `useBlogSearch(query)` - React Query hook for blog search
-- `useDebounce(value, delay)` - Debounce hook for search inputs
+- `useHorizontalScroll` - shared carousel scroll/arrow state (ProductCarousel, ArticleCarousel)
+- `useHydrated` - SSR-safe "has hydrated" flag
+- `usePushSubscription` - Web Push subscription state
+- `useUnitSystem` - metric/imperial preference
+
+(Note: the older `useSearch`/`useAddToCart`/`useFormSubmit`/`useOnlineStatus` hooks were
+removed in the 2026-06-11 cleanup — they had zero consumers; search/add-to-cart logic lives
+inline in `SearchAutocomplete.tsx` and the cart store. Don't reintroduce them as "the API"
+without wiring them up.)
 
 ### Validation Schemas (`lib/validations/`)
 

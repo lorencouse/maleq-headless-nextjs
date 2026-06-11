@@ -84,7 +84,7 @@ export default function RegisterForm() {
         throw new Error(result.error || t('register.failedGeneric'));
       }
 
-      login(result.user, result.token);
+      login(result.user);
       gtag.signUp('email');
       router.replace(returnTo || '/account');
     } catch (err) {

@@ -43,12 +43,15 @@ const localConfig = {
   password: process.env.MYSQL_PASS || 'root',
 };
 
+const remotePassword =
+  process.env.REMOTE_MYSQL_PASS || process.env.MYSQL_PROD_PASS || process.env.MYSQL_PASS;
+
 const remoteConfig = {
-  host: process.env.REMOTE_MYSQL_HOST || process.env.MYSQL_HOST || '127.0.0.1',
-  port: parseInt(process.env.REMOTE_MYSQL_PORT || process.env.MYSQL_PORT || '3307', 10),
-  database: dbOverride || process.env.REMOTE_MYSQL_DB || process.env.MYSQL_DB || 'maleq-wp',
-  user: process.env.REMOTE_MYSQL_USER || process.env.MYSQL_USER || 'maleq-wp',
-  password: process.env.REMOTE_MYSQL_PASS || process.env.MYSQL_PASS || 'S9meeDoehU8VPiHd1ByJ',
+  host: process.env.REMOTE_MYSQL_HOST || process.env.MYSQL_PROD_HOST || process.env.MYSQL_HOST || '127.0.0.1',
+  port: parseInt(process.env.REMOTE_MYSQL_PORT || process.env.MYSQL_PROD_PORT || process.env.MYSQL_PORT || '3307', 10),
+  database: dbOverride || process.env.REMOTE_MYSQL_DB || process.env.MYSQL_PROD_DB || process.env.MYSQL_DB || 'maleq-wp',
+  user: process.env.REMOTE_MYSQL_USER || process.env.MYSQL_PROD_USER || process.env.MYSQL_USER || 'maleq-wp',
+  password: remotePassword,
   ssl: { rejectUnauthorized: false },
 };
 
@@ -56,6 +59,12 @@ const config = isLocal ? localConfig : remoteConfig;
 
 export async function getConnection() {
   if (!isLocal) {
+    if (!remotePassword) {
+      throw new Error(
+        'Missing remote DB password: set MYSQL_PROD_PASS (or REMOTE_MYSQL_PASS) in .env.local. ' +
+          'Credentials must never be hardcoded in this repo.'
+      );
+    }
     console.log(`🔗 Connecting to REMOTE database (${remoteConfig.host}:${remoteConfig.port}/${config.database})`);
     if (remoteConfig.host === '127.0.0.1' && remoteConfig.port === 3307) {
       console.log('   SSH tunnel required: ssh -L 3307:127.0.0.1:3306 root@159.69.220.162\n');

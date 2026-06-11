@@ -15,6 +15,15 @@ export const maxDuration = 120; // Allow up to 120s per segment
  * At runtime (ISR revalidation), MySQL is available and the full set is computed.
  */
 export async function generateSitemaps() {
+  // When static generation is disabled (GENERATE_ALL_PAGES=false), don't load
+  // the 31K product index at build time just to count segments — the build
+  // host CAN reach MySQL, so the catch below never fires and each build worker
+  // pays the full index load. Use the same estimate the catch path uses.
+  const { shouldLimitParams } = await import('@/lib/utils/static-params');
+  if (shouldLimitParams()) {
+    return Array.from({ length: 9 }, (_, i) => ({ id: i }));
+  }
+
   try {
     const { getAllIndexEntries } = await import('@/lib/products/product-index');
     const entries = await getAllIndexEntries();
@@ -44,6 +53,7 @@ export default async function sitemap(props: { id: Promise<string> }): Promise<M
       { url: SITE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
       { url: `${SITE_URL}/shop`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
       { url: `${SITE_URL}/guides`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+      { url: `${SITE_URL}/news`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.7 },
       { url: `${SITE_URL}/brands`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
       { url: `${SITE_URL}/about`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
       { url: `${SITE_URL}/contact`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },

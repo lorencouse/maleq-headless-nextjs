@@ -127,7 +127,7 @@ export default function GoogleSignInButton({ returnTo, text = 'continue_with' }:
         if (!res.ok) {
           throw new Error(result.error || t('google.failedGeneric'));
         }
-        login(result.user, result.token);
+        login(result.user);
         gtag.login('google');
         router.replace(returnTo || '/account');
       } catch (err) {

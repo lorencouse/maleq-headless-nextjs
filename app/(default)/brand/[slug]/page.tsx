@@ -8,8 +8,6 @@ import {
   getGlobalAttributes,
   getFilteredProducts,
 } from '@/lib/products/combined-service';
-import { isMySQLReachable } from '@/lib/db/pool';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 import { sortProductsByPriority } from '@/lib/utils/product-sort';
 import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
@@ -67,31 +65,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 // Data fetching uses unstable_cache and in-memory product index, so no perf penalty.
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  try {
-    if (await isMySQLReachable()) {
-      const { loadBrands } = await import('@/lib/db/taxonomy-loader');
-      const brands = await loadBrands();
-      const params = brands
-        .filter(b => b.count > 0)
-        .map(b => ({ slug: b.slug }));
-      return limitStaticParams(params, DEV_LIMITS.brands);
-    }
-  } catch {}
-
-  // GraphQL fallback
-  try {
-    const brands = await getBrands();
-    const params = brands
-      .filter(b => (b.count ?? 0) > 0)
-      .map(b => ({ slug: b.slug }));
-    return limitStaticParams(params, DEV_LIMITS.brands);
-  } catch (error) {
-    console.error('Error generating static params for brands:', error);
-    return [];
-  }
-}
+// No generateStaticParams: with force-dynamic nothing is prerendered, so
+// enumerating all brands at build time was pure wasted work on the build host.
 
 export default async function BrandPage({ params, searchParams }: BrandPageProps) {
   const { slug } = await params;

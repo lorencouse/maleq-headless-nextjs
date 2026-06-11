@@ -13,7 +13,7 @@ import {
   validateLength,
   validateRequired,
 } from '@/lib/api/validation';
-import { encodeAuthToken } from '@/lib/api/auth-token';
+import { encodeAuthToken, setSessionCookie } from '@/lib/api/auth-token';
 import {
   clearAuthFailureState,
   recordAuthFailure,
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     const compositeToken = encodeAuthToken(customer.id, rawToken);
     clearAuthFailureState('register', guardResult.meta, normalizedIdentifier);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: customer.id,
@@ -146,8 +146,9 @@ export async function POST(request: NextRequest) {
         displayName: `${customer.first_name} ${customer.last_name}`,
         avatarUrl: customer.avatar_url,
       },
-      token: compositeToken,
     });
+    setSessionCookie(response, compositeToken);
+    return response;
   } catch (error) {
     if (guardMeta) {
       await recordAuthFailure(

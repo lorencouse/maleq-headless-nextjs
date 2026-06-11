@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useParams } from 'next/navigation';
 import { useRouter, usePathname } from '@/i18n/navigation';
-import { type Locale } from '@/i18n/routing';
+import { routing, type Locale } from '@/i18n/routing';
 
 // UI locales offered by the toggle — all URL-routed (/, /es, /de, /fr, /ja,
 // /zh, /zh-hant). zh is Simplified, zh-hant Traditional. On content-root pages
 // (English-only ISR, outside [locale]) any selection falls back to the
-// cookie-driven in-place chrome switch.
-const UI_LOCALES = ['en', 'es', 'de', 'fr', 'ja', 'zh', 'zh-hant'] as const;
+// cookie-driven in-place chrome switch. Derived from routing.locales so adding
+// a locale needs only the routing config + a label below.
+const UI_LOCALES = routing.locales;
 const LOCALE_LABELS: Record<string, string> = {
   en: 'English',
   es: 'Español',
@@ -20,7 +21,7 @@ const LOCALE_LABELS: Record<string, string> = {
   zh: '简体中文',
   'zh-hant': '繁體中文',
 };
-const ROUTING_LOCALES = new Set(['en', 'es', 'de', 'fr', 'ja', 'zh', 'zh-hant']);
+const ROUTING_LOCALES = new Set<string>(routing.locales);
 
 /**
  * Language switcher dropdown.

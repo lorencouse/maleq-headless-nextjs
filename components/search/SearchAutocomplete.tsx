@@ -167,9 +167,15 @@ export default function SearchAutocomplete({
 
   // Load recent searches from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('recentSearches');
-    if (saved) {
-      setRecentSearches(JSON.parse(saved));
+    try {
+      const saved = localStorage.getItem('recentSearches');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) setRecentSearches(parsed);
+      }
+    } catch {
+      // Corrupted value — drop it so the header search keeps working.
+      localStorage.removeItem('recentSearches');
     }
   }, []);
 

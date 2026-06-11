@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { buildLocaleAlternates } from '@/i18n/seo-alternates';
 import {
   getFilteredProducts,
   getHierarchicalCategories,
@@ -45,9 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: t('ogTitle'),
       description: t('ogDescription'),
     },
-    alternates: {
-      canonical: '/',
-    },
+    alternates: buildLocaleAlternates(locale, '/'),
   };
 }
 

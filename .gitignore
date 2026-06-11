@@ -68,3 +68,4 @@ test-results/
 # local notes/artifacts
 gpt-enrich-products-script.rtf
 product-enrichment-reguirments-prompt.rtf
+package-lock.json

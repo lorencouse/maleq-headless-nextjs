@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { UnifiedProduct } from '@/lib/products/combined-service';
+import { isPurchasableStock } from '@/lib/products/stock-status';
 import { useCartStore } from '@/lib/store/cart-store';
 import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { formatPrice, parsePrice, calculatePercentOff } from '@/lib/utils/woocommerce-format';
@@ -77,7 +78,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
         image: product.image || undefined,
         stockQuantity: product.stockQuantity || undefined,
         maxQuantity: product.stockQuantity || 999,
-        inStock: displayStockStatus === 'IN_STOCK',
+        inStock: isPurchasableStock(displayStockStatus),
         type: product.type,
       });
 
@@ -319,7 +320,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   price={parsePrice(product.price || product.regularPrice)}
                   regularPrice={parsePrice(product.regularPrice)}
                   image={product.image || undefined}
-                  inStock={displayStockStatus === 'IN_STOCK'}
+                  inStock={isPurchasableStock(displayStockStatus)}
                   variant="button"
                   className="flex-1"
                 />

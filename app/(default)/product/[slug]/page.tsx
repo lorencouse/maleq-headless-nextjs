@@ -1,5 +1,5 @@
 import { getProductBySlug, getAllProductSlugs } from '@/lib/products/product-service';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
+import { shouldLimitParams } from '@/lib/utils/static-params';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { getFilteredProducts, getBrandBySlug } from '@/lib/products/combined-service';
 import { buildManufacturerUrl } from '@/lib/products/manufacturer-url';
@@ -110,12 +110,14 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 }
 
 // Generate static params for all products
-// In development, limits to DEV_LIMITS.products pages for faster builds
 export async function generateStaticParams() {
+  // Bail out BEFORE getAllProductSlugs(): it loads the full 31K product index
+  // per build worker, which OOMs the 8GB build host when the result is
+  // discarded anyway (GENERATE_ALL_PAGES=false / dev builds).
+  if (shouldLimitParams()) return [];
   try {
     const slugs = await getAllProductSlugs();
-    const params = slugs.map((slug) => ({ slug }));
-    return limitStaticParams(params, DEV_LIMITS.products);
+    return slugs.map((slug) => ({ slug }));
   } catch (error) {
     console.error('Error generating static params:', error);
     return [];

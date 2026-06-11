@@ -62,11 +62,24 @@ const RATE_LIMITED_ROUTES: Record<string, RateLimitConfig> = {
 };
 
 function getClientIp(request: NextRequest): string {
+  // Prefer the header set by the trusted edge (Cloudflare) — it can't be forged
+  // by the client through Cloudflare. The first `x-forwarded-for` entry is
+  // client-controlled (proxies append, they don't replace), so it's the LEAST
+  // trustworthy source and is used only as a last resort.
+  // NOTE: for cf-connecting-ip to be fully trustworthy, the origin must reject
+  // traffic that doesn't come from Cloudflare's IP ranges (firewall) — without
+  // that, an attacker hitting the origin directly can still forge it.
+  const cfIp = request.headers.get('cf-connecting-ip');
+  if (cfIp) return cfIp.trim();
+
+  const realIp = request.headers.get('x-real-ip');
+  if (realIp) return realIp.trim();
+
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  return request.headers.get('x-real-ip') || 'anonymous';
+  return 'anonymous';
 }
 
 export function proxy(request: NextRequest) {

@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
+import { limitStaticParams, DEV_LIMITS, shouldLimitParams } from '@/lib/utils/static-params';
 import { getBlogPosts } from '@/lib/blog/blog-service';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import { stripHtml } from '@/lib/utils/text-utils';
@@ -85,6 +85,8 @@ export async function generateMetadata({ params }: BlogTagPageProps): Promise<Me
 }
 
 export async function generateStaticParams() {
+  // Skip before querying anything when static generation is disabled
+  if (shouldLimitParams()) return [];
   // Try MySQL first
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');

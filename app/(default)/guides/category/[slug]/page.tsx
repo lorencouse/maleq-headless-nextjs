@@ -10,7 +10,6 @@ import BlogSearch from '@/components/blog/BlogSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { BreadcrumbSchema } from '@/components/seo/StructuredData';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -88,36 +87,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
 // Data fetching uses unstable_cache, so no perf penalty.
 export const dynamic = 'force-dynamic';
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  // Try MySQL first
-  try {
-    const { isMySQLReachable } = await import('@/lib/db/pool');
-    if (await isMySQLReachable()) {
-      const { loadBlogCategories } = await import('@/lib/db/blog-loader');
-      const cats = await loadBlogCategories();
-      const params = cats
-        .filter(cat => cat.count > 0)
-        .map(cat => ({ slug: cat.slug }));
-      return limitStaticParams(params, DEV_LIMITS.blogCategories);
-    }
-  } catch {}
-
-  // GraphQL fallback
-  try {
-    const { getClient } = await import('@/lib/apollo/client');
-    const { GET_ALL_CATEGORIES } = await import('@/lib/queries/posts');
-    const { data } = await getClient().query({ query: GET_ALL_CATEGORIES });
-    const cats: Array<{ slug: string; count: number }> = data?.categories?.nodes || [];
-    const params = cats
-      .filter(cat => cat.count > 0)
-      .map(cat => ({ slug: cat.slug }));
-    return limitStaticParams(params, DEV_LIMITS.blogCategories);
-  } catch (error) {
-    console.error('Error generating static params for blog categories:', error);
-    return [];
-  }
-}
+// No generateStaticParams: with force-dynamic nothing is prerendered, so
+// enumerating categories at build time was pure wasted work on the build host.
 
 export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;

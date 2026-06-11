@@ -68,12 +68,18 @@ async function ensureLoaded(): Promise<void> {
   if (loadPromise) return loadPromise;
 
   loadPromise = (async () => {
-    const start = performance.now();
-    const entries = await loadProductIndex();
-    buildLookups(entries);
-    const elapsed = (performance.now() - start).toFixed(0);
-    console.log(`[product-index] Loaded ${entries.length} products in ${elapsed}ms`);
-    loadPromise = null;
+    try {
+      const start = performance.now();
+      const entries = await loadProductIndex();
+      buildLookups(entries);
+      const elapsed = (performance.now() - start).toFixed(0);
+      console.log(`[product-index] Loaded ${entries.length} products in ${elapsed}ms`);
+    } finally {
+      // Always clear, even on failure — otherwise a single transient DB error
+      // (e.g. dropped SSH tunnel) caches the rejected promise forever and the
+      // index never recovers until the process restarts.
+      loadPromise = null;
+    }
   })();
 
   return loadPromise;

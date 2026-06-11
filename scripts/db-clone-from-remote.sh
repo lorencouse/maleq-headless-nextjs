@@ -37,7 +37,16 @@ REMOTE_HOST="159.69.220.162"
 REMOTE_USER="root"
 REMOTE_DB_NAME="maleq-wp"
 REMOTE_DB_USER="maleq-wp"
-REMOTE_DB_PASS="S9meeDoehU8VPiHd1ByJ"
+# Password comes from env or .env.local — never hardcode credentials in this repo
+ENV_FILE="$(cd "$(dirname "$0")/.." && pwd)/.env.local"
+if [ -z "${MYSQL_PROD_PASS:-}" ] && [ -f "$ENV_FILE" ]; then
+  MYSQL_PROD_PASS="$(grep -m1 '^MYSQL_PROD_PASS=' "$ENV_FILE" | cut -d= -f2-)"
+fi
+if [ -z "${MYSQL_PROD_PASS:-}" ]; then
+  echo "ERROR: MYSQL_PROD_PASS not set (export it or add it to .env.local)" >&2
+  exit 1
+fi
+REMOTE_DB_PASS="$MYSQL_PROD_PASS"
 
 # Local by Flywheel database
 LOCAL_SOCKET="${MYSQL_SOCKET:-$(detect_local_socket)}"

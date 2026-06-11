@@ -115,8 +115,8 @@ export async function GET(request: NextRequest) {
        WHERE created_at >= ?
          AND severity IN ('warning', 'error')
        ORDER BY id DESC
-       LIMIT ${errorLimit}`,
-      [cutoff]
+       LIMIT ?`,
+      [cutoff, errorLimit]
     );
 
     const [top404Rows] = await pool.query<TopPathRow[]>(

@@ -110,9 +110,17 @@ function maleq_stock_mapping(WP_REST_Request $request) {
  * }
  *
  * - "stock" updates: sets _stock, _stock_status, and wp_wc_product_meta_lookup
- * - "meta_key" updates: sets arbitrary post meta (for wt_stock_count etc.)
+ * - "meta_key" updates: sets whitelisted stock-related post meta (wt_stock_count)
  * - Max 500 updates per request
  */
+
+/**
+ * Meta keys the stock-update endpoint may write. Anything else is rejected so
+ * a leaked admin key can't be used to tamper with prices, templates, or other
+ * arbitrary postmeta.
+ */
+const MALEQ_STOCK_SYNC_ALLOWED_META_KEYS = ['wt_stock_count'];
+
 function maleq_stock_update(WP_REST_Request $request) {
     global $wpdb;
 
@@ -152,6 +160,14 @@ function maleq_stock_update(WP_REST_Request $request) {
             continue;
         }
 
+        // Only products and variations may be touched by this endpoint
+        $target_type = get_post_type($post_id);
+        if (!in_array($target_type, ['product', 'product_variation'], true)) {
+            $results['failed']++;
+            $results['errors'][] = "Post $post_id is not a product or variation";
+            continue;
+        }
+
         try {
             if (isset($update['stock'])) {
                 // Stock update: _stock + _stock_status + lookup table
@@ -174,8 +190,7 @@ function maleq_stock_update(WP_REST_Request $request) {
                 );
 
                 // If this is a variation, recalculate parent variable product stock status
-                $post_type = get_post_type($post_id);
-                if ($post_type === 'product_variation') {
+                if ($target_type === 'product_variation') {
                     $parent_id = wp_get_post_parent_id($post_id);
                     if ($parent_id) {
                         $parent_ids_to_sync[$parent_id] = true;
@@ -184,8 +199,13 @@ function maleq_stock_update(WP_REST_Request $request) {
 
                 $results['updated']++;
             } elseif (isset($update['meta_key']) && isset($update['meta_value'])) {
-                // Custom meta update (e.g., wt_stock_count)
-                update_post_meta($post_id, $update['meta_key'], $update['meta_value']);
+                // Custom meta update — whitelisted keys only
+                if (!in_array($update['meta_key'], MALEQ_STOCK_SYNC_ALLOWED_META_KEYS, true)) {
+                    $results['failed']++;
+                    $results['errors'][] = "Product $post_id: meta_key '{$update['meta_key']}' is not allowed";
+                    continue;
+                }
+                update_post_meta($post_id, $update['meta_key'], sanitize_text_field((string) $update['meta_value']));
                 $results['updated']++;
             } else {
                 $results['failed']++;

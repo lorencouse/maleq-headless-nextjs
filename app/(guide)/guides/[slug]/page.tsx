@@ -11,7 +11,8 @@ import {
 } from '@/lib/queries/posts';
 import RelatedPosts from '@/components/blog/RelatedPosts';
 import CommentForm from '@/components/blog/CommentForm';
-import { limitStaticParams, DEV_LIMITS } from '@/lib/utils/static-params';
+import { limitStaticParams, DEV_LIMITS, shouldLimitParams } from '@/lib/utils/static-params';
+import { formatPostDate } from '@/lib/utils/format-post-date';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -282,6 +283,8 @@ export async function generateMetadata({
 
 // Generate static params for all posts (paginated)
 export async function generateStaticParams() {
+  // Skip before querying anything when static generation is disabled
+  if (shouldLimitParams()) return [];
   // Try MySQL first (single query, no pagination loop)
   try {
     const { isMySQLReachable } = await import('@/lib/db/pool');
@@ -337,8 +340,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const locale = await getGuideLocaleBySlug(slug);
   setRequestLocale(staticRequestLocale(locale));
   const t = await getTranslations({ locale, namespace: 'blog' });
-  // BCP-47 tag for date/number formatting, matching the resolved guide locale.
-  const intlLocale = { en: 'en-US', es: 'es-ES', 'zh-hant': 'zh-TW', ja: 'ja-JP' }[locale];
 
   // SQL-first content render (deterministic), GraphQL do_blocks only as a
   // last resort for posts with dynamic blocks. See getGuidePost above.
@@ -417,19 +418,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   // Other-language versions of this guide (meta-box driven), for the switcher.
   const translations = await loadGuideTranslations(post);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(intlLocale, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      // Pin to UTC so SSR (server is UTC in prod) and the browser produce the
-      // SAME string. Without this, a post/comment date that lands on a
-      // different calendar day in the visitor's timezone causes a hydration
-      // text mismatch (React #418) that bails the tree — which strands the
-      // client-side add-to-cart enhancer (buttons vanish on some posts).
-      timeZone: 'UTC',
-    });
-  };
+  // Use the shared UTC-pinned formatter (covers all locales incl. de/fr/zh).
+  // The inline map this replaced was missing locales, so de/fr/zh fell back to
+  // the runtime default locale — a hydration-mismatch risk (React #418) that
+  // strands the client-side add-to-cart enhancer (buttons vanish on some posts).
+  const formatDate = (dateString: string) => formatPostDate(dateString, locale);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
