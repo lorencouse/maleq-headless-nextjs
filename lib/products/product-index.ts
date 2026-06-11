@@ -63,6 +63,18 @@ let byBrandSlug: Map<string, ProductIndexEntry[]> | null = null;
 let searchText: Map<number, { text: string; words: string[]; stemmed: string[] }> | null = null;
 let loadPromise: Promise<void> | null = null;
 
+/**
+ * Memo for queryProductIndex results. The category/brand listing pages are
+ * force-dynamic, so the (in-memory) filter+facet+sort work re-runs on every
+ * request — including every crawler hit on a plain `/sex-toys/<cat>` URL. This
+ * caches those results by query so repeated identical queries (the common
+ * no-filter case) are O(1). It is CLEARED on every index (re)load in
+ * buildLookups(), so it can never serve data that's out of sync with the index.
+ * Search queries are not memoized (effectively unbounded keyspace).
+ */
+let queryMemo: Map<string, IndexQueryResult> = new Map();
+const QUERY_MEMO_MAX = 1000;
+
 async function ensureLoaded(): Promise<void> {
   if (indexEntries) return;
   if (loadPromise) return loadPromise;
@@ -92,6 +104,8 @@ function buildLookups(entries: ProductIndexEntry[]): void {
   byCategorySlug = new Map();
   byBrandSlug = new Map();
   searchText = new Map();
+  // Drop memoized query results — they reference the previous index snapshot.
+  queryMemo = new Map();
 
   for (const entry of entries) {
     bySlug.set(entry.slug, entry);
@@ -177,6 +191,17 @@ export async function queryProductIndex(params: IndexQueryParams): Promise<Index
     offset = 0,
   } = params;
 
+  // Serve from the query memo when possible. Skip for search queries (unbounded
+  // keyspace). The memo is cleared whenever the index reloads, so a hit is
+  // always consistent with the current data.
+  const memoKey = search
+    ? null
+    : `${category ?? ''}|${brand ?? ''}|${material ?? ''}|${color ?? ''}|${volume ?? ''}|${length ?? ''}|${minPrice ?? ''}|${maxPrice ?? ''}|${inStock ? 1 : 0}|${onSale ? 1 : 0}|${productType ?? ''}|${sort}|${limit}|${offset}`;
+  if (memoKey) {
+    const cached = queryMemo.get(memoKey);
+    if (cached) return cached;
+  }
+
   // Start with the most selective lookup
   let candidates: ProductIndexEntry[];
   if (category && byCategorySlug?.has(category)) {
@@ -244,7 +269,16 @@ export async function queryProductIndex(params: IndexQueryParams): Promise<Index
   // Paginate
   const paginated = filtered.slice(offset, offset + limit);
 
-  return { products: paginated, total, facets };
+  const result: IndexQueryResult = { products: paginated, total, facets };
+
+  if (memoKey) {
+    // Simple bound: clear wholesale if it grows too large (cheap, and the hot
+    // no-filter keys get repopulated on the next request).
+    if (queryMemo.size >= QUERY_MEMO_MAX) queryMemo.clear();
+    queryMemo.set(memoKey, result);
+  }
+
+  return result;
 }
 
 // ─── Search API ───
