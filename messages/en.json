@@ -1010,6 +1010,8 @@
       "prefBackInStockDesc": "Get notified when products you want are available again",
       "prefPromotions": "Promotions and Deals",
       "prefPromotionsDesc": "Sales, special offers, and exclusive deals",
+      "prefNews": "LGBTQ News",
+      "prefNewsDesc": "Breaking LGBTQ+ news and stories from our newsroom",
       "accountHistory": "Account Notification History",
       "accountHistoryDesc": "Cross-device history for notifications linked to your account.",
       "accountLoading": "Loading account notifications...",

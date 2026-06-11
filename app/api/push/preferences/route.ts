@@ -64,12 +64,13 @@ export async function PUT(request: NextRequest) {
       return errorResponse('Invalid JSON body', 400);
     }
 
-    const { endpoint, ownershipToken, orderUpdates, backInStock, promotions } = body as {
+    const { endpoint, ownershipToken, orderUpdates, backInStock, promotions, news } = body as {
       endpoint?: string;
       ownershipToken?: string;
       orderUpdates?: unknown;
       backInStock?: unknown;
       promotions?: unknown;
+      news?: unknown;
     };
 
     if (!endpoint || typeof endpoint !== 'string') {
@@ -92,7 +93,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate preference values are booleans if provided
-    const prefs: { orderUpdates?: boolean; backInStock?: boolean; promotions?: boolean } = {};
+    const prefs: { orderUpdates?: boolean; backInStock?: boolean; promotions?: boolean; news?: boolean } = {};
     if (orderUpdates !== undefined) {
       if (typeof orderUpdates !== 'boolean') {
         return validationError({ orderUpdates: 'Must be a boolean' });
@@ -110,6 +111,12 @@ export async function PUT(request: NextRequest) {
         return validationError({ promotions: 'Must be a boolean' });
       }
       prefs.promotions = promotions;
+    }
+    if (news !== undefined) {
+      if (typeof news !== 'boolean') {
+        return validationError({ news: 'Must be a boolean' });
+      }
+      prefs.news = news;
     }
 
     if (Object.keys(prefs).length === 0) {

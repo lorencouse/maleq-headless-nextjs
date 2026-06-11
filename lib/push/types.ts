@@ -13,6 +13,8 @@ export interface NotificationPreferences {
   orderUpdates: boolean;
   backInStock: boolean;
   promotions: boolean;
+  /** LGBTQ news posts from the news agent. Opt-in (defaults off for existing subs). */
+  news: boolean;
 }
 
 export interface PushPayload {
@@ -25,7 +27,7 @@ export interface PushPayload {
   image?: string;
 }
 
-export type PushType = 'order_update' | 'back_in_stock' | 'promotion';
+export type PushType = 'order_update' | 'back_in_stock' | 'promotion' | 'news';
 
 export interface SendPushRequest {
   type: PushType;
@@ -63,4 +65,5 @@ export interface DBSubscription {
   pref_order_updates: number;
   pref_back_in_stock: number;
   pref_promotions: number;
+  pref_news: number;
 }

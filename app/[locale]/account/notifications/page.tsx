@@ -17,7 +17,7 @@ import {
 } from '@/lib/pwa/notification-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
 
-type PreferenceKey = 'orderUpdates' | 'backInStock' | 'promotions';
+type PreferenceKey = 'orderUpdates' | 'backInStock' | 'promotions' | 'news';
 
 interface ServerNotification {
   id: number;
@@ -323,6 +323,19 @@ export default function NotificationsPage() {
                 <div>
                   <span className="font-medium text-foreground">{t('prefPromotions')}</span>
                   <p className="text-sm text-muted-foreground">{t('prefPromotionsDesc')}</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={preferences.news}
+                  onChange={() => handleTogglePref('news')}
+                  className="w-5 h-5 rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
+                />
+                <div>
+                  <span className="font-medium text-foreground">{t('prefNews')}</span>
+                  <p className="text-sm text-muted-foreground">{t('prefNewsDesc')}</p>
                 </div>
               </label>
             </div>

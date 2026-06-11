@@ -287,10 +287,10 @@ export function usePushSubscription() {
         if (prefData.success && prefData.data) {
           setPreferences(prefData.data);
         } else {
-          setPreferences({ orderUpdates: true, backInStock: true, promotions: true });
+          setPreferences({ orderUpdates: true, backInStock: true, promotions: true, news: false });
         }
       } catch {
-        setPreferences({ orderUpdates: true, backInStock: true, promotions: true });
+        setPreferences({ orderUpdates: true, backInStock: true, promotions: true, news: false });
       }
 
       return true;

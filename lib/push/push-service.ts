@@ -40,7 +40,7 @@ export async function deleteSubscription(endpoint: string): Promise<void> {
 export async function getSubscriptionByEndpoint(endpoint: string): Promise<DBSubscription | null> {
   const pool = await getPoolAsync();
   const [rows] = await pool.execute<RowDataPacket[]>(
-    'SELECT id, endpoint, p256dh, auth, customer_id, email, pref_order_updates, pref_back_in_stock, pref_promotions FROM maleq_push_subscriptions WHERE endpoint = ? LIMIT 1',
+    'SELECT id, endpoint, p256dh, auth, customer_id, email, pref_order_updates, pref_back_in_stock, pref_promotions, pref_news FROM maleq_push_subscriptions WHERE endpoint = ? LIMIT 1',
     [endpoint]
   );
   return (rows[0] as DBSubscription) ?? null;
@@ -55,6 +55,7 @@ export async function getPreferences(endpoint: string): Promise<NotificationPref
     orderUpdates: sub.pref_order_updates === 1,
     backInStock: sub.pref_back_in_stock === 1,
     promotions: sub.pref_promotions === 1,
+    news: sub.pref_news === 1,
   };
 }
 
@@ -77,6 +78,10 @@ export async function updatePreferences(
   if (prefs.promotions !== undefined) {
     sets.push('pref_promotions = ?');
     values.push(prefs.promotions ? 1 : 0);
+  }
+  if (prefs.news !== undefined) {
+    sets.push('pref_news = ?');
+    values.push(prefs.news ? 1 : 0);
   }
 
   if (sets.length === 0) return true;
@@ -239,6 +244,7 @@ function getPrefColumn(type: PushType): string {
     case 'order_update': return 'pref_order_updates';
     case 'back_in_stock': return 'pref_back_in_stock';
     case 'promotion': return 'pref_promotions';
+    case 'news': return 'pref_news';
   }
 }
 

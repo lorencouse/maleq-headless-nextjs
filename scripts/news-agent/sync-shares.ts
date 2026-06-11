@@ -25,10 +25,16 @@ import { bluesky } from './social/bluesky';
 import { mastodon } from './social/mastodon';
 import { pinterest } from './social/pinterest';
 import { tumblr } from './social/tumblr';
+import { telegram } from './social/telegram';
+import { nostr } from './social/nostr';
+import { webpush } from './social/webpush';
 import { shareToSocial } from './share';
 import type { ShareInput } from './social/types';
 
-const ADAPTERS = [bluesky, mastodon, pinterest, tumblr];
+// Bluesky + Mastodon also fire instantly on publish via the maleq-news-autoshare.php
+// plugin; the rest are completed here on the next cron tick (per-platform idempotent
+// via _maleq_news_share_urls, so nothing double-posts).
+const ADAPTERS = [bluesky, mastodon, pinterest, tumblr, telegram, nostr, webpush];
 
 const argv = process.argv;
 const has = (f: string) => argv.includes(f);
