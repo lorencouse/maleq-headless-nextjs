@@ -33,6 +33,7 @@ const IS_LOCAL = has('--local') || process.env.MYSQL_LOCAL === '1';
 const WRITE = has('--write');
 const YES = has('--yes');
 const CHECK_FEEDS = has('--check-feeds');
+const SHOW_BODY = has('--show-body'); // dry-run only: print the full article body for review
 const LIMIT = flag('--limit') ? parseInt(flag('--limit')!, 10) : MAX_PER_RUN;
 const MODEL = flag('--model') || DRAFT_MODEL;
 
@@ -127,6 +128,9 @@ async function main() {
       console.log(`TAGS:     ${d.tags.join(', ')}`);
       console.log(`EXCERPT:  ${d.excerpt}`);
       console.log(`SEO:      ${d.seoDescription}`);
+      if (SHOW_BODY) {
+        console.log(`\nBODY:\n${d.bodyHtml}\n`);
+      }
     }
     console.log(`\nDRY RUN complete — ${drafts.length} draft(s) ready. Re-run with --write to create them.`);
     await db.end();

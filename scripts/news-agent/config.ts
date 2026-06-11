@@ -96,8 +96,15 @@ export const META = {
 /** Default author (WP user ID) for generated drafts. 6 = "Mr. Q" (login maleqorg). */
 export const DEFAULT_AUTHOR_ID = 6;
 
-/** Claude model for drafting. Haiku is plenty for short news rewrites and cheap. */
-export const DRAFT_MODEL = 'claude-haiku-4-5-20251001';
+/** Claude model for drafting + research. Sonnet 4.6 for noticeably more human prose,
+ * stronger multi-source synthesis, and the editorial "take". Volume is low (≤6 stories
+ * × a few runs/day), so the cost over Haiku is trivial. */
+export const DRAFT_MODEL = 'claude-sonnet-4-6';
+
+/** Whether the drafter runs a web-research pass (server-side web_search) to add real
+ * context/background the source coverage lacks. On by default; set NEWS_DISABLE_RESEARCH=1
+ * to skip it (faster/cheaper, source-synthesis only — e.g. for local testing). */
+export const ENABLE_RESEARCH = process.env.NEWS_DISABLE_RESEARCH !== '1';
 
 /** How far back (hours) a story may be published and still be considered fresh. */
 export const FRESHNESS_HOURS = 36;

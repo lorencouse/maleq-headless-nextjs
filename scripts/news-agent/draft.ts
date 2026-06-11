@@ -15,7 +15,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
-import { DRAFT_MODEL } from './config';
+import { DRAFT_MODEL, ENABLE_RESEARCH } from './config';
 import type { NewsItem } from './rss';
 import type { StoryCluster } from './cluster';
 import { gatherMaterial, extractEmbeds } from './extract';
@@ -27,10 +27,14 @@ const DraftSchema = z.object({
   excerpt: z.string().describe('One- or two-sentence dek summarizing the story.'),
   seoDescription: z.string().describe('SEO meta description, max 155 characters.'),
   bodyHtml: z.string().describe(
-    'A 400–550 word original news piece in HTML. Structure: a 1–2 sentence lede <p>, ' +
-    'then 2–3 sections each introduced by an <h2> subheading followed by 1–2 <p> paragraphs. ' +
-    'Synthesize the sources actually used. Allowed tags only: <p>, <h2>, <strong>, <em>, <ul>, <li>. ' +
-    'Do NOT include a "Sources:" line — that is appended automatically. Do NOT add any ' +
+    'A long-form, original news piece in HTML — typically 500–1000+ words, and AT LEAST as long ' +
+    'as the primary source (see the LENGTH TARGET in the user message). Structure: a 1–2 sentence ' +
+    'lede <p>, then several sections each introduced by an <h2> subheading. Mix factual-reporting ' +
+    'sections with ONE OR TWO clearly-labeled editorial/context sections (vary the heading per piece: ' +
+    '"MQ\'s Take", "More Context", "Worth Considering", "Why It Matters", "The Bigger Picture", ' +
+    '"Our Read", "What to Watch" — do NOT reuse the same label every article). Synthesize the sources ' +
+    'and fold in the research brief for depth. Allowed tags only: <p>, <h2>, <h3>, <strong>, <em>, ' +
+    '<ul>, <li>. Do NOT include a "Sources:" line — that is appended automatically. Do NOT add any ' +
     'links yourself; instead list notable entities in "entityLinks" and we add verified links.',
   ),
   entityLinks: z.array(z.object({
@@ -129,7 +133,7 @@ export type DraftedPost = z.infer<typeof DraftSchema> & {
 
 const SYSTEM_PROMPT = `You are the news editor for Male Q, an LGBTQ+ sexual-wellness and lifestyle retailer's blog.
 
-Your job: given source material about an LGBTQ+ news story — a PRIMARY source and sometimes ADDITIONAL sources from other outlets — write a SHORT, ORIGINAL news piece for our audience.
+Your job: given source material about an LGBTQ+ news story — a PRIMARY source, sometimes ADDITIONAL sources from other outlets, and often a verified RESEARCH BRIEF — write an ORIGINAL, SUBSTANTIAL news piece for our audience. The goal is NOT a quick rehash of the original: it should be deeper, more contextual, and more human than the source, and read like a real writer with a point of view wrote it.
 
 USING MULTIPLE SOURCES:
 - The additional sources MAY cover the same event as the primary, or may have been grouped by mistake.
@@ -137,14 +141,24 @@ USING MULTIPLE SOURCES:
 - When two or more sources cover the same event, treat the others as corroboration: synthesize across them, weave in any extra detail they add, and your piece should clearly draw on more than one. If sources conflict on a fact, note the discrepancy neutrally rather than picking one.
 - In "sourcesUsed", list the IDs of EVERY same-event source (always include S1) — not just the one you leaned on most. This is how readers see the story was corroborated.
 
-WRITING RULES:
-- Aim for 400–550 words WHEN the material supports it. Never invent or pad to hit a length — if the material is genuinely thin, a tight 250–300 word piece is correct. Write in your own words — NEVER copy sentences or distinctive phrasing from any source.
-- Structure it like a real short news piece: a 1–2 sentence lede paragraph, then 2–3 sections each led by an <h2> subheading. Good subheads describe the angle (e.g. "What happened", "The reaction", "Why it matters") — adapt to the story, don't use those verbatim every time.
-- Be factual and neutral-to-supportive. Do not invent quotes, statistics, names, dates, or outcomes. If sources are thin, write a shorter piece rather than padding with speculation.
+USING THE RESEARCH BRIEF:
+- When a RESEARCH BRIEF is provided, it contains verified background, history, prior related events, statistics, and broader context that the source coverage lacks. This is your raw material for adding genuine depth.
+- Fold its context into your piece so the reader understands not just WHAT happened but the history and stakes behind it. This is the main lever for being more valuable than the original.
+- It is still input, not gospel: only state what the brief or the sources actually support. Do NOT invent facts, quotes, or numbers, and do NOT claim certainty the brief flagged as uncertain.
+
+LENGTH:
+- Match or exceed the length of the primary source — see the LENGTH TARGET in the user message for the specific word count. A piece shorter than the original you're drawing on has failed the brief.
+- Hit the length by ADDING VALUE — context, background, the stakes, your editorial read — never by padding, repetition, or filler. If you genuinely cannot reach the target with real substance (very thin story, no useful research), write the most complete piece the material honestly supports and set publishable accordingly.
+
+STRUCTURE & VOICE:
+- Open with a 1–2 sentence lede <p> that lands the news, then build several sections, each led by an <h2> subheading.
+- Mix two kinds of sections: (1) FACTUAL REPORTING sections that tell the story and its context, and (2) ONE OR TWO EDITORIAL/CONTEXT sections that give Male Q's perspective. VARY the editorial heading every article — rotate among "MQ's Take", "More Context", "Worth Considering", "Why It Matters", "The Bigger Picture", "Our Read", "What to Watch", or similar. Never use the same formulaic "What happened / The reaction / Why it matters" skeleton every time; let the story shape the sections.
+- Write in your own words — NEVER copy sentences or distinctive phrasing from any source.
+- Voice: warm, community-minded, plain-spoken, and genuinely human — varied sentence length, a clear point of view, no wire-service flatness and no AI-template tics. Have an opinion in the editorial sections, but keep it grounded in the facts and clearly distinct from the straight reporting.
+- Be factual and neutral-to-supportive in the reporting. Do not invent quotes, statistics, names, dates, or outcomes.
 - No defamation, no outing of private individuals, no medical or legal advice.
-- Voice: warm, community-minded, plain-spoken. Brief editorial commentary is welcome but clearly distinct from the factual reporting.
 - Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
-- bodyHtml: valid HTML using only <p>, <h2>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line. Do NOT write <a> tags or URLs yourself — links are added for you from entityLinks.
+- bodyHtml: valid HTML using only <p>, <h2>, <h3>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line. Do NOT write <a> tags or URLs yourself — links are added for you from entityLinks.
 - entityLinks: like a professional outlet, flag the notable real-world things you mention so we can link them to the most authoritative site — films and TV shows (→ IMDb / Rotten Tomatoes), public figures incl. musicians (→ IMDb / Wikipedia), organizations and places (→ their official site / Wikipedia), books (→ Goodreads), albums or songs (→ AllMusic), video games (→ Steam), and laws, events, plays, generic topics (→ Wikipedia). For each, give the exact anchor text as it appears in bodyHtml, a lookup term, and its kind. Be selective and precise: only unambiguous, genuinely notable entities, first mention only, no duplicates, none for generic phrases. Return an empty array when nothing qualifies. We verify each against authoritative databases and silently drop any that don't resolve, so wrong guesses cost nothing but vague ones waste a slot.
 - Never use em-dashes (—) in ANY field — not the body, title, excerpt, seoDescription, socialText, or coverHeadline. Use commas, periods, colons, or parentheses instead.
 - coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
@@ -216,6 +230,70 @@ export function interleaveEmbeds(bodyHtml: string, embeds: string[]): string {
   return segments.join('');
 }
 
+/** Word count of a plain-text blob — used to set the per-article length target. */
+function wordCount(s: string): number {
+  return s.trim().split(/\s+/).filter(Boolean).length;
+}
+
+const RESEARCH_SYSTEM = `You are a researcher for Male Q, an LGBTQ+ news blog. You are given a news story we are about to write about. Use web search to find ADDITIONAL context the source coverage lacks: relevant background, history, prior related events, verifiable statistics, key players, and how this connects to broader issues affecting LGBTQ+ communities.
+
+Do NOT rewrite or summarize the story itself. Produce a tight RESEARCH BRIEF — short paragraphs or bullets — of verifiable, useful context our writer can fold in to make the article deeper than the original. Prefer authoritative sources. Flag clearly where something is well-established vs. uncertain or contested. Never invent facts or numbers. If you genuinely can't find anything beyond the source coverage, say so in one line.`;
+
+/**
+ * Best-effort web-research pass: a separate Sonnet call with the server-side web_search
+ * tool that returns a plain-text brief of background/context. Run BEFORE (and separate
+ * from) the structured draft call — structured outputs are incompatible with the citations
+ * that web results carry, so the two must not share one request. Returns '' on any failure
+ * (no key feature, refusal, network) so drafting degrades gracefully to source-only synthesis.
+ */
+async function gatherResearch(
+  client: Anthropic,
+  primary: NewsItem,
+  primaryMaterial: string,
+  model: string,
+): Promise<string> {
+  try {
+    const prompt =
+      `STORY HEADLINE: ${primary.title}\n` +
+      `OUTLET: ${primary.sourceName}\n` +
+      `PUBLISHED: ${primary.publishedAt?.toISOString() ?? 'unknown'}\n` +
+      `SOURCE MATERIAL (for grounding — do not just restate it):\n${primaryMaterial.slice(0, 3000)}`;
+
+    let messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
+    let res = await client.messages.create({
+      model,
+      max_tokens: 1500,
+      system: RESEARCH_SYSTEM,
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 4 }],
+      messages,
+    });
+
+    // web_search runs a server-side loop; if it hits the iteration cap it returns
+    // pause_turn — re-send to resume (bounded so a stuck search can't loop forever).
+    let guard = 0;
+    while (res.stop_reason === 'pause_turn' && guard++ < 3) {
+      messages.push({ role: 'assistant', content: res.content });
+      res = await client.messages.create({
+        model: DRAFT_MODEL,
+        max_tokens: 1500,
+        system: RESEARCH_SYSTEM,
+        tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 4 }],
+        messages,
+      });
+    }
+    if (res.stop_reason === 'refusal') return '';
+
+    return res.content
+      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+      .map((b) => b.text)
+      .join('\n')
+      .trim();
+  } catch (err) {
+    console.warn(`  ⚠️  research pass failed (${(err as Error).message}); drafting from sources only`);
+    return '';
+  }
+}
+
 /** Attribution block linking exactly the sources actually used. */
 function attribution(used: NewsItem[]): string {
   const links = used
@@ -236,12 +314,22 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
   // MOST material the primary (S1) — feed length is a poor proxy (e.g. them. has a
   // thin feed but full article text). The model is told to always use S1.
   const initial = [cluster.primary, ...cluster.sources.filter((s) => s.url !== cluster.primary.url)];
-  const fetched = await Promise.all(initial.map((s) => gatherMaterial(s, 4000)));
+  const fetched = await Promise.all(initial.map((s) => gatherMaterial(s, 8000)));
   const ranked = initial
     .map((s, i) => ({ s, mat: fetched[i] }))
     .sort((a, b) => b.mat.length - a.mat.length);
   const ordered = ranked.map((r) => r.s);
   const materials = ranked.map((r) => r.mat);
+
+  // Web-research pass (best-effort) for context/background the sources lack. Runs as its
+  // own call — kept out of the structured draft request because web results carry
+  // citations, which structured outputs reject.
+  const research = ENABLE_RESEARCH ? await gatherResearch(client, ordered[0], materials[0], model) : '';
+
+  // Length target: at least as long as the primary source, by adding context — not padding.
+  const originalWords = wordCount(materials[0] || '');
+  const minWords = Math.min(1100, Math.max(450, originalWords));
+  const maxWords = Math.min(1400, minWords + 250);
 
   const block = (s: NewsItem, i: number, material: string) =>
     `[S${i + 1}] ${i === 0 ? 'PRIMARY SOURCE' : 'ADDITIONAL SOURCE (may or may not be the same event)'}\n` +
@@ -251,11 +339,17 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     `CANONICAL URL: ${s.url}\n` +
     `MATERIAL (context only — do not copy):\n${material}`;
 
-  const userContent = ordered.map((s, i) => block(s, i, materials[i])).join('\n\n');
+  const sourcesBlock = ordered.map((s, i) => block(s, i, materials[i])).join('\n\n');
+  const researchBlock = research
+    ? `\n\n=== RESEARCH BRIEF (verified background gathered separately; fold it in for depth — but only state what it or the sources support) ===\n${research}`
+    : '';
+  const lengthBlock =
+    `\n\n=== LENGTH TARGET ===\nThe primary source runs about ${originalWords} words. Make your piece at least as long: write at least ${minWords} words (ideally ${minWords}–${maxWords}). Reach it by adding real context, history, stakes, and a clearly-labeled editorial section — never by padding or repetition.`;
+  const userContent = sourcesBlock + researchBlock + lengthBlock;
 
   const response = await client.messages.parse({
     model,
-    max_tokens: 4000,
+    max_tokens: 8000,
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     output_config: { format: zodOutputFormat(DraftSchema) },
     messages: [{ role: 'user', content: userContent }],
