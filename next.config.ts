@@ -24,6 +24,13 @@ const nextConfig: NextConfig = {
   // Optimize package imports
   experimental: {
     optimizePackageImports: ['graphql-request', 'zustand', 'react-hot-toast'],
+    // Cap static-generation workers. The build host is 8GB with NO swap, and
+    // each worker that renders an index-backed page (sitemap segments, home,
+    // shop) loads the full ~35K-product in-memory index (100MB+). With the
+    // default worker count (= CPU count, 9 on the Coolify host) the parallel
+    // index copies OOM-kill the build. 2 workers keeps peak memory safe; build
+    // time is unchanged because the index load dominates, not parallelism.
+    cpus: 2,
   },
 
   // Limit concurrent static page generation to avoid overwhelming WordPress
