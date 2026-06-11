@@ -1296,6 +1296,106 @@ figure.wp-block-video.aligncenter {
   aspect-ratio: 16 / 9;
 }
 
+/* ── News-agent editorial elements — pull quotes, key-takeaways box, stat callout ──
+   Emitted by the drafter (scripts/news-agent/draft.ts) to break up long articles.
+   The sanitizer keeps only `class`, so all styling lives here. Scoped under
+   .entry-content + element tag for specificity over Tailwind prose defaults
+   (prose's :where() rules have zero specificity, so these win cleanly). */
+
+/* Pull quote — a featured line lifted from the piece. */
+.entry-content blockquote.pullquote {
+  margin: var(--space-8) 0;
+  padding: var(--space-2) 0 var(--space-2) var(--space-6);
+  border-left: 4px solid var(--primary);
+  font-size: 1.5rem;
+  line-height: 1.4;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--foreground);
+  background: none;
+  quotes: none;
+}
+.entry-content blockquote.pullquote p {
+  margin: 0;
+  font-size: inherit;
+  line-height: inherit;
+}
+.entry-content blockquote.pullquote p::before { content: "\201C"; }
+.entry-content blockquote.pullquote p::after  { content: "\201D"; }
+.entry-content blockquote.pullquote cite {
+  display: block;
+  margin-top: var(--space-3);
+  font-size: 1rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+.entry-content blockquote.pullquote cite::before { content: "\2014\00a0"; }
+
+/* Key-takeaways box — skimmable summary near the top. */
+.entry-content aside.key-takeaways {
+  margin: var(--space-8) 0;
+  padding: var(--space-6);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.entry-content aside.key-takeaways h3 {
+  margin: 0 0 var(--space-4);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+}
+.entry-content aside.key-takeaways ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.entry-content aside.key-takeaways li {
+  position: relative;
+  margin: 0 0 var(--space-3);
+  padding-left: var(--space-6);
+  line-height: 1.5;
+}
+.entry-content aside.key-takeaways li:last-child { margin-bottom: 0; }
+.entry-content aside.key-takeaways li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+/* Stat callout — one striking number, used selectively. */
+.entry-content aside.stat-callout {
+  margin: var(--space-8) auto;
+  padding: var(--space-6);
+  max-width: 28rem;
+  text-align: center;
+  background: var(--primary-light);
+  border-radius: var(--radius-lg);
+}
+.entry-content aside.stat-callout .stat-number {
+  display: block;
+  font-size: 2.75rem;
+  line-height: 1.05;
+  font-weight: 800;
+  color: var(--primary);
+}
+.entry-content aside.stat-callout .stat-label {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 0.95rem;
+  color: var(--muted-foreground);
+}
+
 /* ============================================================================
    BUYER'S GUIDE ("Best [X]" roundup) — programmatic layout
    Driven by <BuyersGuide>. See docs/BUYERS_GUIDE_SYSTEM.md. Uses the same

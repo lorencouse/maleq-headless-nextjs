@@ -33,9 +33,12 @@ const DraftSchema = z.object({
     'sections with ONE OR TWO clearly-labeled editorial/context sections (vary the heading per piece: ' +
     '"MQ\'s Take", "More Context", "Worth Considering", "Why It Matters", "The Bigger Picture", ' +
     '"Our Read", "What to Watch" — do NOT reuse the same label every article). Synthesize the sources ' +
-    'and fold in the research brief for depth. Allowed tags only: <p>, <h2>, <h3>, <strong>, <em>, ' +
-    '<ul>, <li>. Do NOT include a "Sources:" line — that is appended automatically. Do NOT add any ' +
-    'links yourself; instead list notable entities in "entityLinks" and we add verified links.',
+    'and fold in the research brief for depth. Break up the text with styled elements: a ' +
+    '<aside class="key-takeaways"> box after the lede, 1–2 <blockquote class="pullquote"> pull ' +
+    'quotes, and (only when a striking real number exists) a <aside class="stat-callout"> — see ' +
+    'the system prompt for exact markup. Allowed tags only: <p>, <h2>, <h3>, <strong>, <em>, <ul>, ' +
+    '<li>, <blockquote>, <cite>, <aside>, <span>. Do NOT include a "Sources:" line — that is ' +
+    'appended automatically. Do NOT add any links yourself; list notable entities in "entityLinks".',
   ),
   entityLinks: z.array(z.object({
     text: z.string().describe('The anchor phrase EXACTLY as it appears in bodyHtml (a verbatim substring, same casing).'),
@@ -158,7 +161,13 @@ STRUCTURE & VOICE:
 - Be factual and neutral-to-supportive in the reporting. Do not invent quotes, statistics, names, dates, or outcomes.
 - No defamation, no outing of private individuals, no medical or legal advice.
 - Audience is 18+. Keep it tasteful; this is a news piece, not marketing. Do not push products.
-- bodyHtml: valid HTML using only <p>, <h2>, <h3>, <strong>, <em>, <ul>, <li>. No images, scripts, links, or inline styles. Do NOT add a sources line. Do NOT write <a> tags or URLs yourself — links are added for you from entityLinks.
+- bodyHtml: valid HTML using only <p>, <h2>, <h3>, <strong>, <em>, <ul>, <li>, <blockquote>, <cite>, <aside>, <span>. No images, scripts, or inline styles (use the class names below, never a style= attribute). Do NOT add a sources line. Do NOT write <a> tags or URLs yourself — links are added for you from entityLinks.
+
+VISUAL ELEMENTS (use these to break up the text — each renders as a styled callout; content in them must be factual, never invented):
+- KEY TAKEAWAYS box — include exactly ONE, immediately after the lede paragraph and before the first <h2>: <aside class="key-takeaways"><h3>The quick version</h3><ul><li>…</li><li>…</li><li>…</li></ul></aside>. 3–4 short, scannable bullets covering only the essential facts (who/what/why-it-matters). No fluff, no opinion.
+- PULL QUOTES — include 1–2, spaced apart and placed BETWEEN paragraphs (never two in a row, never right after a heading): <blockquote class="pullquote"><p>…</p><cite>Name</cite></blockquote>. Strongly prefer a real, verbatim quotation that appears in the sources, with the speaker in <cite>. Only if there is genuinely no quotable line may you feature one sharp sentence of your own that captures the stakes, and then omit <cite>. Keep each under ~30 words. NEVER invent a quote or put words in someone's mouth.
+- STAT CALLOUT — include AT MOST ONE, and ONLY if the story or research brief contains a genuinely striking standalone number or fact: <aside class="stat-callout"><span class="stat-number">7,000</span><span class="stat-label">miles between them</span></aside>. If there is no compelling real number, OMIT it entirely — do not manufacture a statistic.
+- These elements are IN ADDITION to the prose, not a replacement. Don't overdo it: a typical piece has the key-takeaways box plus 1–2 pull quotes, and a stat callout only when the facts truly warrant one.
 - entityLinks: like a professional outlet, flag the notable real-world things you mention so we can link them to the most authoritative site — films and TV shows (→ IMDb / Rotten Tomatoes), public figures incl. musicians (→ IMDb / Wikipedia), organizations and places (→ their official site / Wikipedia), books (→ Goodreads), albums or songs (→ AllMusic), video games (→ Steam), and laws, events, plays, generic topics (→ Wikipedia). For each, give the exact anchor text as it appears in bodyHtml, a lookup term, and its kind. Be selective and precise: only unambiguous, genuinely notable entities, first mention only, no duplicates, none for generic phrases. Return an empty array when nothing qualifies. We verify each against authoritative databases and silently drop any that don't resolve, so wrong guesses cost nothing but vague ones waste a slot.
 - Never use em-dashes (—) in ANY field — not the body, title, excerpt, seoDescription, socialText, or coverHeadline. Use commas, periods, colons, or parentheses instead.
 - coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
@@ -166,7 +175,11 @@ STRUCTURE & VOICE:
 - hashtags: 3–5 discovery hashtags (no #, CamelCase for multi-word) that real people browse, for reach on Bluesky/Mastodon/X/Threads.
 - Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
 
-const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li'];
+const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote', 'cite', 'aside', 'span'];
+// Only `class` survives — it carries our styled-element hooks (pullquote / key-takeaways /
+// stat-callout). The frontend sanitizer also allows class on these tags; everything else
+// (style, ids, etc.) is stripped.
+const ALLOWED_ATTRS = { '*': ['class'] };
 
 /**
  * Strip em-dashes from generated copy. Claude is told not to use them, but this is the
@@ -366,7 +379,7 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
   const cleanBody = stripEmDashes(
     sanitizeHtml(parsed.bodyHtml, {
       allowedTags: ALLOWED_TAGS,
-      allowedAttributes: {},
+      allowedAttributes: ALLOWED_ATTRS,
     }),
   );
 
