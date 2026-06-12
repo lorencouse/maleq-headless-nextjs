@@ -5,6 +5,10 @@ set -uo pipefail
 
 export HOME=/home/maleq-wp
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
+# Web-research pass: RE-ENABLED 2026-06-12 after the cost rework (draft.ts:
+# web_search max_uses 1, single pause_turn, 90s timeout) bounded it to
+# ~tens-of-k tokens/story. To kill it again in an emergency, uncomment:
+# export NEWS_DISABLE_RESEARCH=1
 BUN=/home/maleq-wp/.bun/bin/bun
 WP=/usr/bin/wp
 APP=/home/maleq-wp/news-agent

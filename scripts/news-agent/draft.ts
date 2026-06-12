@@ -27,8 +27,10 @@ const DraftSchema = z.object({
   excerpt: z.string().describe('One- or two-sentence dek summarizing the story.'),
   seoDescription: z.string().describe('SEO meta description, max 155 characters.'),
   bodyHtml: z.string().describe(
-    'A long-form, original news piece in HTML — typically 500–1000+ words, and AT LEAST as long ' +
-    'as the primary source (see the LENGTH TARGET in the user message). Structure: a 1–2 sentence ' +
+    'An original, tightly-written news piece in HTML — as long as the story genuinely warrants but ' +
+    'NEVER more than ~20% longer than the primary source (see the LENGTH CAP in the user message); ' +
+    'shorter is fine when the story is fully told. Quality over length: no fluff, hedging, or repetition. ' +
+    'Structure: a 1–2 sentence ' +
     'lede <p>, then several sections each introduced by an <h2> subheading. Mix factual-reporting ' +
     'sections with ONE OR TWO clearly-labeled editorial/context sections (vary the heading per piece: ' +
     '"MQ\'s Take", "More Context", "Worth Considering", "Why It Matters", "The Bigger Picture", ' +
@@ -149,9 +151,11 @@ USING THE RESEARCH BRIEF:
 - Fold its context into your piece so the reader understands not just WHAT happened but the history and stakes behind it. This is the main lever for being more valuable than the original.
 - It is still input, not gospel: only state what the brief or the sources actually support. Do NOT invent facts, quotes, or numbers, and do NOT claim certainty the brief flagged as uncertain.
 
-LENGTH:
-- Match or exceed the length of the primary source — see the LENGTH TARGET in the user message for the specific word count. A piece shorter than the original you're drawing on has failed the brief.
-- Hit the length by ADDING VALUE — context, background, the stakes, your editorial read — never by padding, repetition, or filler. If you genuinely cannot reach the target with real substance (very thin story, no useful research), write the most complete piece the material honestly supports and set publishable accordingly.
+LENGTH — QUALITY OVER WORD COUNT:
+- There is a HARD CAP in the user message (the LENGTH CAP): your piece MUST NOT exceed it. The cap is ~20% above the primary source's length — enough room to add real context and a point of view, not to pad.
+- Aim to cover the story completely and well, then STOP. A shorter, sharper piece is better than a longer, padded one. Never write to hit a number — write until the story is fully told, then end.
+- Cut ruthlessly: no fluff, no hedging, no throat-clearing, no restating the same point in different words, no filler transitions. Every sentence must add information, context, or a genuine point of view the previous sentences didn't.
+- If the story is thin and you'd have to repeat yourself to reach even the cap, DON'T — write the most complete honest piece the material supports and stop well under the cap.
 
 STRUCTURE & VOICE:
 - Open with a 1–2 sentence lede <p> that lands the news, then build several sections, each led by an <h2> subheading.
@@ -248,9 +252,9 @@ function wordCount(s: string): number {
   return s.trim().split(/\s+/).filter(Boolean).length;
 }
 
-const RESEARCH_SYSTEM = `You are a researcher for Male Q, an LGBTQ+ news blog. You are given a news story we are about to write about. Use web search to find ADDITIONAL context the source coverage lacks: relevant background, history, prior related events, verifiable statistics, key players, and how this connects to broader issues affecting LGBTQ+ communities.
+const RESEARCH_SYSTEM = `You are a researcher for Male Q, an LGBTQ+ news blog. You are given a news story we are about to write about. Run a SINGLE focused web search to find ADDITIONAL context the source coverage lacks: relevant background, history, prior related events, verifiable statistics, key players, and how this connects to broader issues affecting LGBTQ+ communities.
 
-Do NOT rewrite or summarize the story itself. Produce a tight RESEARCH BRIEF — short paragraphs or bullets — of verifiable, useful context our writer can fold in to make the article deeper than the original. Prefer authoritative sources. Flag clearly where something is well-established vs. uncertain or contested. Never invent facts or numbers. If you genuinely can't find anything beyond the source coverage, say so in one line.`;
+Use at most ONE search — make the query count. Do NOT chain follow-up searches. Do NOT rewrite or summarize the story itself. Produce a tight RESEARCH BRIEF (≤250 words) — short paragraphs or bullets — of verifiable, useful context our writer can fold in to make the article deeper than the original. Prefer authoritative sources. Flag clearly where something is well-established vs. uncertain or contested. Never invent facts or numbers. If you genuinely can't find anything beyond the source coverage, say so in one line.`;
 
 /**
  * Best-effort web-research pass: a separate Sonnet call with the server-side web_search
@@ -272,27 +276,45 @@ async function gatherResearch(
       `PUBLISHED: ${primary.publishedAt?.toISOString() ?? 'unknown'}\n` +
       `SOURCE MATERIAL (for grounding — do not just restate it):\n${primaryMaterial.slice(0, 3000)}`;
 
-    let messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
-    let res = await client.messages.create({
-      model,
-      max_tokens: 1500,
-      system: RESEARCH_SYSTEM,
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 4 }],
-      messages,
-    });
+    // Cost guardrails — the research pass was a token bomb (2026-06-12): web_search
+    // returns large page extracts, and re-sending the accumulated context on each
+    // pause_turn made cost grow quadratically (~500k tokens/story). Bound it hard:
+    //   • max_uses: 1   → at most ONE search (the result set can't multiply)
+    //   • guard < 1     → at most ONE pause_turn continuation (no re-send spiral)
+    //   • timeout/retry → a hung search bails in ~90s, not ~30min
+    // Worst case is now ~one search's results sent ~twice (~tens of k tokens), not 4×3×.
+    const MAX_SEARCHES = 1;
+    const researchOpts = { timeout: 90_000, maxRetries: 1 } as const;
+    const researchTools = [
+      { type: 'web_search_20260209', name: 'web_search', max_uses: MAX_SEARCHES },
+    ] as const;
 
-    // web_search runs a server-side loop; if it hits the iteration cap it returns
-    // pause_turn — re-send to resume (bounded so a stuck search can't loop forever).
-    let guard = 0;
-    while (res.stop_reason === 'pause_turn' && guard++ < 3) {
-      messages.push({ role: 'assistant', content: res.content });
-      res = await client.messages.create({
-        model: DRAFT_MODEL,
-        max_tokens: 1500,
+    let messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
+    let res = await client.messages.create(
+      {
+        model,
+        max_tokens: 1200,
         system: RESEARCH_SYSTEM,
-        tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 4 }],
+        tools: researchTools as any,
         messages,
-      });
+      },
+      researchOpts,
+    );
+
+    // If the single search still pauses mid-loop, resume exactly ONCE — never spiral.
+    let guard = 0;
+    while (res.stop_reason === 'pause_turn' && guard++ < 1) {
+      messages.push({ role: 'assistant', content: res.content });
+      res = await client.messages.create(
+        {
+          model: DRAFT_MODEL,
+          max_tokens: 1200,
+          system: RESEARCH_SYSTEM,
+          tools: researchTools as any,
+          messages,
+        },
+        researchOpts,
+      );
     }
     if (res.stop_reason === 'refusal') return '';
 
@@ -339,10 +361,11 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
   // citations, which structured outputs reject.
   const research = ENABLE_RESEARCH ? await gatherResearch(client, ordered[0], materials[0], model) : '';
 
-  // Length target: at least as long as the primary source, by adding context — not padding.
-  const originalWords = wordCount(materials[0] || '');
-  const minWords = Math.min(1100, Math.max(450, originalWords));
-  const maxWords = Math.min(1400, minWords + 250);
+  // Length CAP (not a target): never more than ~20% over the primary source — quality
+  // over length, no padding or repetition. Floor (350) stops thin/feed-only scrapes from
+  // forcing a stub; absolute ceiling (1500) guards a pathologically long source.
+  const sourceWords = wordCount(materials[0] || '');
+  const maxWords = Math.min(1500, Math.max(350, Math.round(sourceWords * 1.2)));
 
   const block = (s: NewsItem, i: number, material: string) =>
     `[S${i + 1}] ${i === 0 ? 'PRIMARY SOURCE' : 'ADDITIONAL SOURCE (may or may not be the same event)'}\n` +
@@ -357,7 +380,7 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     ? `\n\n=== RESEARCH BRIEF (verified background gathered separately; fold it in for depth — but only state what it or the sources support) ===\n${research}`
     : '';
   const lengthBlock =
-    `\n\n=== LENGTH TARGET ===\nThe primary source runs about ${originalWords} words. Make your piece at least as long: write at least ${minWords} words (ideally ${minWords}–${maxWords}). Reach it by adding real context, history, stakes, and a clearly-labeled editorial section — never by padding or repetition.`;
+    `\n\n=== LENGTH CAP ===\nThe primary source runs about ${sourceWords} words. Your piece MUST NOT exceed ${maxWords} words (~20% over the source). This is a hard ceiling, NOT a target to reach — cover the story completely and well, then stop. A shorter, sharper piece beats a longer, padded one. Never repeat a point or add filler to fill space.`;
   const userContent = sourcesBlock + researchBlock + lengthBlock;
 
   const response = await client.messages.parse({
