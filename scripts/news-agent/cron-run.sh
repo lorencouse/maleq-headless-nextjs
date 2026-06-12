@@ -16,9 +16,10 @@ WPPATH=/home/maleq-wp/htdocs/wp.maleq.com
 LOG_DIR="$APP/logs"
 
 # DST-safe scheduling: cron fires hourly (server is UTC; this host's cron has no
-# CRON_TZ). We gate on the user's local hour so the pipeline runs at 7am/12pm/5pm
-# America/Los_Angeles regardless of PST/PDT. Override hours with NEWS_AGENT_HOURS.
-RUN_HOURS="${NEWS_AGENT_HOURS:-07 12 17}"
+# CRON_TZ). We gate on the user's local hour so the pipeline runs 4×/day at
+# 7am/12pm/5pm/9pm America/Los_Angeles regardless of PST/PDT. With NEWS_AGENT_LIMIT=3
+# that's 12 stories/day. Override hours with NEWS_AGENT_HOURS.
+RUN_HOURS="${NEWS_AGENT_HOURS:-07 12 17 21}"
 LOCAL_HOUR="$(TZ=America/Los_Angeles date +%H)"
 case " $RUN_HOURS " in
   *" $LOCAL_HOUR "*) ;;     # a scheduled hour — proceed
@@ -32,7 +33,7 @@ LOG="$LOG_DIR/run-$(date +%Y%m%d_%H%M%S).log"
 {
   echo "==== news-agent run: $(date) ===="
   echo "--- draft new stories ---"
-  "$BUN" run scripts/news-agent/run.ts --write --yes --limit "${NEWS_AGENT_LIMIT:-6}"
+  "$BUN" run scripts/news-agent/run.ts --write --yes --limit "${NEWS_AGENT_LIMIT:-3}"
   echo "--- attach cover images ---"
   "$BUN" run scripts/news-agent/attach-covers.ts --write --yes
   echo "--- share approved (published) posts ---"
