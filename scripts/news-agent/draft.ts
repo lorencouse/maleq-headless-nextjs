@@ -15,7 +15,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
-import { DRAFT_MODEL, ENABLE_RESEARCH } from './config';
+import { DRAFT_MODEL, RESEARCH_MODEL, ENABLE_RESEARCH } from './config';
 import type { NewsItem } from './rss';
 import type { StoryCluster } from './cluster';
 import { gatherMaterial, extractEmbeds } from './extract';
@@ -277,20 +277,20 @@ async function gatherResearch(
       `SOURCE MATERIAL (for grounding — do not just restate it):\n${primaryMaterial.slice(0, 3000)}`;
 
     // Cost guardrails — the research pass was a token bomb (2026-06-12): web_search
-    // returns large page extracts, and re-sending the accumulated context on each
-    // pause_turn made cost grow quadratically (~500k tokens/story). Bound it hard:
-    //   • max_uses: 1   → at most ONE search (the result set can't multiply)
-    //   • guard < 1     → at most ONE pause_turn continuation (no re-send spiral)
-    //   • timeout/retry → a hung search bails in ~90s, not ~30min
-    // Worst case is now ~one search's results sent ~twice (~tens of k tokens), not 4×3×.
+    // returns large page extracts. Two levers keep it cheap (2026-06-13):
+    //   • RESEARCH_MODEL (Haiku 4.5) → ~3× cheaper input+output than the Sonnet draft
+    //   • max_uses: 1 + NO pause_turn re-send → the large search results are sent
+    //     ONCE, never re-sent. We take whatever the single search produced; if it
+    //     pauses mid-loop we just use the text gathered so far rather than paying to
+    //     resend the accumulated page extracts. A hung search bails in ~90s.
     const MAX_SEARCHES = 1;
     const researchOpts = { timeout: 90_000, maxRetries: 1 } as const;
     const researchTools = [
       { type: 'web_search_20260209', name: 'web_search', max_uses: MAX_SEARCHES },
     ] as const;
 
-    let messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
-    let res = await client.messages.create(
+    const messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
+    const res = await client.messages.create(
       {
         model,
         max_tokens: 1200,
@@ -301,21 +301,6 @@ async function gatherResearch(
       researchOpts,
     );
 
-    // If the single search still pauses mid-loop, resume exactly ONCE — never spiral.
-    let guard = 0;
-    while (res.stop_reason === 'pause_turn' && guard++ < 1) {
-      messages.push({ role: 'assistant', content: res.content });
-      res = await client.messages.create(
-        {
-          model: DRAFT_MODEL,
-          max_tokens: 1200,
-          system: RESEARCH_SYSTEM,
-          tools: researchTools as any,
-          messages,
-        },
-        researchOpts,
-      );
-    }
     if (res.stop_reason === 'refusal') return '';
 
     return res.content
@@ -359,7 +344,7 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
   // Web-research pass (best-effort) for context/background the sources lack. Runs as its
   // own call — kept out of the structured draft request because web results carry
   // citations, which structured outputs reject.
-  const research = ENABLE_RESEARCH ? await gatherResearch(client, ordered[0], materials[0], model) : '';
+  const research = ENABLE_RESEARCH ? await gatherResearch(client, ordered[0], materials[0], RESEARCH_MODEL) : '';
 
   // Length CAP (not a target): never more than ~20% over the primary source — quality
   // over length, no padding or repetition. Floor (350) stops thin/feed-only scrapes from
