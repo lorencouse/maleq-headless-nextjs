@@ -96,16 +96,17 @@ export const META = {
 /** Default author (WP user ID) for generated drafts. 6 = "Mr. Q" (login maleqorg). */
 export const DEFAULT_AUTHOR_ID = 6;
 
-/** Claude model for DRAFTING. Sonnet 4.6 for noticeably more human prose,
- * stronger multi-source synthesis, and the editorial "take". This is the
- * quality-critical call, so it stays on Sonnet. */
-export const DRAFT_MODEL = 'claude-sonnet-4-6';
+/** Claude model for DRAFTING. Moved Sonnet 4.6 → Haiku 4.5 (2026-06-13) for cost:
+ * Haiku is ~3× cheaper in+out ($1/$5 vs $3/$15 per MTok), bringing per-article
+ * cost to ~$0.04. Trade-off is less-polished prose than Sonnet — bump back to
+ * 'claude-sonnet-4-6' if article quality regresses too far. (Considered Gemini
+ * 3.5 Flash but at $1.50/$9 it's pricier than Haiku and would require a full
+ * rewrite of the structured-output + web_search machinery.) */
+export const DRAFT_MODEL = 'claude-haiku-4-5';
 
 /** Claude model for the web-RESEARCH pass. Haiku 4.5 — research is fact/context
- * gathering, not prose, so it doesn't need Sonnet. Haiku is ~3× cheaper on both
- * input and output ($1/$5 vs $3/$15 per MTok), and this pass was the bulk of the
- * per-article cost because web_search returns large page extracts. Keeping the
- * draft on Sonnet but the research on Haiku is the main cost lever (2026-06-13). */
+ * gathering, not prose, so it doesn't need a bigger model. (Same model as the
+ * draft now; kept as a separate constant so the two can diverge again later.) */
 export const RESEARCH_MODEL = 'claude-haiku-4-5';
 
 /** Whether the drafter runs a web-research pass (server-side web_search) to add real
