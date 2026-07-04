@@ -467,7 +467,7 @@ export default function ExpressCheckout() {
           appearance: {
             theme: 'stripe',
             variables: {
-              colorPrimary: '#2563eb',
+              colorPrimary: '#E63946',
               borderRadius: '8px',
             },
           },

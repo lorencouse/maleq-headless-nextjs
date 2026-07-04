@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { getLocale, getTranslations } from 'next-intl/server';
 import {
   getBrandBySlug,
   getBrands,
@@ -22,31 +23,33 @@ interface BrandPageProps {
 }
 
 export async function generateMetadata({ params }: BrandPageProps): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'brands' });
   try {
     const { slug } = await params;
     const brand = await getBrandBySlug(slug);
 
     if (!brand) {
       return {
-        title: 'Brand Not Found',
+        title: t('brandNotFound'),
       };
     }
 
     const description = brand.description
       ? stripHtml(brand.description).slice(0, 160)
-      : `Shop ${brand.name} products at Male Q. ${brand.count} products available with fast, discreet shipping.`;
+      : t('brandMetaDescriptionFallback', { name: brand.name, count: brand.count ?? 0 });
 
     return {
-      title: `${brand.name} | Shop by Brand`,
+      title: t('brandMetaTitle', { name: brand.name }),
       description,
       openGraph: {
-        title: `${brand.name} | Male Q`,
+        title: t('brandMetaOgTitle', { name: brand.name }),
         description,
         type: 'website',
       },
       twitter: {
         card: 'summary',
-        title: `${brand.name} | Male Q`,
+        title: t('brandMetaOgTitle', { name: brand.name }),
         description,
       },
       alternates: {
@@ -55,7 +58,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
     };
   } catch (error) {
     console.error('generateMetadata error for brand:', error);
-    return { title: 'Shop by Brand' };
+    return { title: t('metaTitle') };
   }
 }
 
@@ -71,6 +74,8 @@ export const dynamicParams = true;
 export default async function BrandPage({ params, searchParams }: BrandPageProps) {
   const { slug } = await params;
   const urlParams = await searchParams;
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'brands' });
 
   // Parse additional filter params from URL
   const category = typeof urlParams.category === 'string' ? urlParams.category : undefined;
@@ -168,10 +173,10 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           {saleProducts.length > 0 && (
             <FeaturedProducts
               products={saleProducts}
-              title={`${brand.name} on Sale`}
-              subtitle="Limited time deals from this brand"
+              title={t('onSaleTitle', { name: brand.name })}
+              subtitle={t('onSaleSubtitle')}
               viewAllHref={`/brand/${slug}?onSale=true`}
-              viewAllText="View All Deals"
+              viewAllText={t('viewAllDeals')}
             />
           )}
 
@@ -186,15 +191,16 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
       <div id="products" className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-1">
           <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-            {hasAdditionalFilters ? 'Filtered Results' : `All ${brand.name} Products`}
+            {hasAdditionalFilters ? t('filteredResults') : t('allBrandProducts', { name: brand.name })}
           </h2>
           <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
             <ShopSearch />
           </Suspense>
         </div>
         <p className="text-sm text-muted-foreground">
-          {displayedProductCount} {displayedProductCount === 1 ? 'product' : 'products'}
-          {hasAdditionalFilters ? ' matching your filters' : ' available'}
+          {hasAdditionalFilters
+            ? t('productCountFiltered', { count: displayedProductCount })
+            : t('productCountAvailable', { count: displayedProductCount })}
         </p>
       </div>
 

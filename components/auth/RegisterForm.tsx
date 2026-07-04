@@ -11,6 +11,7 @@ import { getRegisterSchema, type RegisterFormData } from '@/lib/validations/auth
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import Button from '@/components/ui/Button';
 
 const REGISTER_TIMEOUT_MS = 30_000;
 
@@ -232,10 +233,10 @@ export default function RegisterForm() {
                   className={`h-1 flex-1 rounded-full transition-colors ${
                     password.length >= threshold
                       ? password.length >= 20
-                        ? 'bg-green-500'
+                        ? 'bg-success'
                         : password.length >= 16
-                          ? 'bg-yellow-500'
-                          : 'bg-orange-500'
+                          ? 'bg-warning'
+                          : 'bg-destructive'
                       : 'bg-muted'
                   }`}
                 />
@@ -271,11 +272,7 @@ export default function RegisterForm() {
         )}
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" disabled={isLoading} size="lg" className="w-full">
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -287,7 +284,7 @@ export default function RegisterForm() {
         ) : (
           t('register.submit')
         )}
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-muted-foreground">
         {t('register.hasAccount')}{' '}

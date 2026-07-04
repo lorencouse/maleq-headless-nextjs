@@ -9,6 +9,7 @@ import {
 } from '@stripe/react-stripe-js';
 import { savePendingCheckout, type PendingOrderPayload } from '@/lib/checkout/pending-order';
 import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
+import Button from '@/components/ui/Button';
 
 interface PaymentFormProps {
   paymentIntentId?: string | null;
@@ -122,15 +123,16 @@ export default function PaymentForm({
       </div>
 
       {errorMessage && (
-        <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900 rounded-lg">
+        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
           <p className="text-sm text-destructive dark:text-destructive">{errorMessage}</p>
         </div>
       )}
 
-      <button
+      <Button
         type="submit"
         disabled={!stripe || isProcessing}
-        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        size="lg"
+        className="w-full"
       >
         {isProcessing ? (
           <>
@@ -160,7 +162,7 @@ export default function PaymentForm({
             {t('completeOrder')}
           </>
         )}
-      </button>
+      </Button>
 
       {/* Security Notice */}
       <p className="text-xs text-center text-muted-foreground">

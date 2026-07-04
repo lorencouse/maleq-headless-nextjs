@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { event as gaEvent } from '@/lib/analytics/gtag';
+import Button from '@/components/ui/Button';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -152,22 +153,19 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground mb-1">{title}</h3>
+          <h3 className="heading-plain font-semibold text-foreground mb-1">{title}</h3>
           <p className="text-sm text-muted-foreground mb-4">
             {description}
           </p>
           <div className="flex flex-wrap gap-3">
             {mode === 'prompt' && (
-              <button
-                onClick={handleInstall}
-                className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary-hover transition-colors"
-              >
+              <Button onClick={handleInstall} size="sm">
                 {t('installButton')}
-              </button>
+              </Button>
             )}
             <button
               onClick={handleDismiss}
-              className="px-4 py-2.5 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              className="px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             >
               {mode === 'prompt' ? t('notNow') : t('gotIt')}
             </button>

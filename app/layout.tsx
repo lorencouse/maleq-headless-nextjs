@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, Outfit } from "next/font/google";
+import { DM_Sans, Archivo, Source_Serif_4 } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { routing } from "@/i18n/routing";
 import { staticIntlProviderProps } from "@/i18n/static-intl-props";
@@ -30,10 +30,22 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
 });
 
-const outfit = Outfit({
+// Display face: variable Archivo with the width (wdth) axis so headings can
+// run condensed (font-stretch) — the "Newsstand" magazine look. Weight axis
+// is included by default for variable fonts (100–900).
+const archivo = Archivo({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-outfit",
+  variable: "--font-archivo",
+  axes: ["wdth"],
+});
+
+// Editorial serif: standfirsts, pull quotes, guide verdicts (mostly italic).
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-source-serif",
+  style: ["normal", "italic"],
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://maleq.com';
@@ -168,7 +180,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${dmSans.variable} ${outfit.variable} antialiased flex flex-col min-h-screen`}>
+      <body className={`${dmSans.variable} ${archivo.variable} ${sourceSerif.variable} antialiased flex flex-col min-h-screen`}>
         {/* Mastodon profile verification: an invisible rel="me" backlink to
             @mqnews@mastodon.social. React hoists this <link> into <head>; the
             Mastodon custom-field verifier follows the site URL and looks for a

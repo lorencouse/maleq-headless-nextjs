@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import Link from 'next/link';
+import Button, { ButtonLink } from '@/components/ui/Button';
 import { isChunkLoadError, recoverFromStaleChunks } from '@/lib/utils/chunk-reload';
 
 interface ErrorProps {
@@ -23,9 +24,9 @@ export default function Error({ error, reset }: ErrorProps) {
       <div className="text-center max-w-lg">
         {/* Error Icon */}
         <div className="mb-8">
-          <div className="w-24 h-24 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto">
+          <div className="w-24 h-24 bg-destructive/10 rounded-full flex items-center justify-center mx-auto">
             <svg
-              className="w-12 h-12 text-red-600 dark:text-red-400"
+              className="w-12 h-12 text-destructive"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -40,19 +41,16 @@ export default function Error({ error, reset }: ErrorProps) {
           </div>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <h1 className="heading-plain heading-display text-3xl md:text-4xl text-foreground mb-4">
           Something Went Wrong
         </h1>
         <p className="text-lg text-muted-foreground mb-8">
-          We encountered an unexpected error. Don&apos;t worry, your data is safe.
+          Something broke on our end. Try again — nothing on your side was lost.
         </p>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <button
-            onClick={reset}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-hover transition-colors"
-          >
+          <Button onClick={reset}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -62,11 +60,8 @@ export default function Error({ error, reset }: ErrorProps) {
               />
             </svg>
             Try Again
-          </button>
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors"
-          >
+          </Button>
+          <ButtonLink href="/" variant="ghost">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -76,7 +71,7 @@ export default function Error({ error, reset }: ErrorProps) {
               />
             </svg>
             Go Home
-          </Link>
+          </ButtonLink>
         </div>
 
         {/* Error Details (Development) */}
@@ -97,7 +92,7 @@ export default function Error({ error, reset }: ErrorProps) {
         {/* Help Section */}
         <div className="border-t border-border pt-8 mt-8">
           <p className="text-sm text-muted-foreground mb-4">
-            If the problem persists, please contact us
+            Still broken? Tell us and we&apos;ll fix it.
           </p>
           <Link href="/contact" className="text-sm text-primary hover:underline">
             Contact Support

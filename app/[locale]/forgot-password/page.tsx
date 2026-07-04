@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
+import Button, { ButtonLink } from '@/components/ui/Button';
 
 export default function ForgotPasswordPage() {
   const t = useTranslations('auth');
@@ -58,7 +59,7 @@ export default function ForgotPasswordPage() {
     return (
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md text-center">
-          <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-8">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
               <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -74,23 +75,22 @@ export default function ForgotPasswordPage() {
               {t('forgotPassword.successSpamHint')}
             </p>
             <div className="space-y-3">
-              <button
+              <Button
+                variant="ghost"
+                size="lg"
+                className="w-full"
                 onClick={() => {
                   setIsSubmitted(false);
                   setError(null);
                   setHoneypot('');
                   formStartTimeRef.current = Date.now();
                 }}
-                className="w-full py-3 px-4 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground"
               >
                 {t('forgotPassword.tryAnother')}
-              </button>
-              <Link
-                href="/login"
-                className="block w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center"
-              >
+              </Button>
+              <ButtonLink href="/login" size="lg" className="w-full">
                 {t('forgotPassword.backToSignIn')}
-              </Link>
+              </ButtonLink>
             </div>
           </div>
         </div>
@@ -111,11 +111,11 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                <p className="text-sm text-destructive">{error}</p>
               </div>
             )}
 
@@ -148,11 +148,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={isLoading} size="lg" className="w-full">
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -164,7 +160,7 @@ export default function ForgotPasswordPage() {
               ) : (
                 t('forgotPassword.submit')
               )}
-            </button>
+            </Button>
 
             <p className="text-center text-sm text-muted-foreground">
               {t('common.rememberPasswordPrompt')}{' '}

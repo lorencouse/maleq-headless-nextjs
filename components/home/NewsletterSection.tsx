@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import Button from '@/components/ui/Button';
 
 interface NewsletterSectionProps {
   /** Override the default homepage heading (e.g. a news-specific CTA). */
@@ -47,7 +48,7 @@ export default function NewsletterSection({ heading, subtitle }: NewsletterSecti
   };
 
   return (
-    <section className="py-8 sm:py-16 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent select-none">
+    <section className="py-8 sm:py-16 bg-muted/30 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto text-center">
           {/* Icon */}
@@ -67,7 +68,7 @@ export default function NewsletterSection({ heading, subtitle }: NewsletterSecti
 
           {/* Form */}
           {status === 'success' ? (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 text-center">
+            <div className="bg-success/10 border border-success/20 rounded-xl p-6 text-center">
               <svg className="w-12 h-12 text-success mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
@@ -83,13 +84,14 @@ export default function NewsletterSection({ heading, subtitle }: NewsletterSecti
                 required
                 className="flex-1 px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
               />
-              <button
+              <Button
                 type="submit"
+                size="lg"
                 disabled={status === 'loading'}
-                className="px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="whitespace-nowrap"
               >
                 {status === 'loading' ? t('submitting') : t('submit')}
-              </button>
+              </Button>
             </form>
           )}
 

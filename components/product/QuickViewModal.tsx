@@ -11,6 +11,7 @@ import { showAddedToCart, showError } from '@/lib/utils/toast';
 import { formatPrice, parsePrice, calculatePercentOff } from '@/lib/utils/woocommerce-format';
 import WishlistButton from '@/components/wishlist/WishlistButton';
 import StockStatusBadge from '@/components/ui/StockStatusBadge';
+import { ButtonLink } from '@/components/ui/Button';
 import { stripHtml } from '@/lib/utils/text-utils';
 
 interface QuickViewModalProps {
@@ -282,7 +283,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                   <button
                     onClick={handleAddToCart}
                     disabled={isAdding}
-                    className="flex-1 py-3 sm:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
+                    className="flex-1 py-3 sm:py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-sm font-bold uppercase tracking-[0.12em] disabled:opacity-50"
                   >
                     {isAdding ? t('adding') : t('addToCart')}
                   </button>
@@ -291,13 +292,14 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
               {/* Variable Product - Go to Product Page */}
               {isVariable && (
-                <Link
+                <ButtonLink
                   href={`/product/${product.slug}`}
                   onClick={onClose}
-                  className="w-full py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center mb-4"
+                  size="lg"
+                  className="w-full mb-4"
                 >
                   {t('selectOptions')}
-                </Link>
+                </ButtonLink>
               )}
 
               {/* Out of Stock - View Details */}
@@ -305,7 +307,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 <Link
                   href={`/product/${product.slug}`}
                   onClick={onClose}
-                  className="w-full py-3 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors font-semibold text-center mb-4"
+                  className="w-full py-3 bg-muted text-muted-foreground rounded-lg hover:bg-muted/80 transition-colors text-sm font-bold uppercase tracking-[0.12em] text-center mb-4"
                 >
                   {t('viewDetails')}
                 </Link>

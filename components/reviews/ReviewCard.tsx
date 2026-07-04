@@ -74,7 +74,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="font-medium text-foreground">{review.reviewer}</span>
             {review.verified && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-medium rounded-full">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-success/10 text-success text-xs font-medium rounded-full">
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"

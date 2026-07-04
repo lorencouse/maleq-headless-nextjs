@@ -100,7 +100,7 @@ export default function WriteReviewForm({
 
   if (success) {
     return (
-      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6 text-center">
+      <div className="bg-success/10 border border-success/30 rounded-lg p-6 text-center">
         <svg
           className="w-12 h-12 mx-auto mb-4 text-success"
           fill="none"
@@ -228,7 +228,7 @@ export default function WriteReviewForm({
 
         {/* Error */}
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-destructive dark:text-destructive text-sm">
+          <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive dark:text-destructive text-sm">
             {error}
           </div>
         )}
@@ -238,7 +238,7 @@ export default function WriteReviewForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-sm font-bold uppercase tracking-[0.12em] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? t('submitting') : t('submit')}
           </button>

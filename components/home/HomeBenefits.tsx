@@ -22,7 +22,6 @@ const benefits = [
         />
       </svg>
     ),
-    color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
   },
   {
     titleKey: 'secureCheckoutTitle' as const,
@@ -42,7 +41,6 @@ const benefits = [
         />
       </svg>
     ),
-    color: 'bg-green-500/10 text-green-600 dark:text-green-400',
   },
   {
     titleKey: 'fastShippingTitle' as const,
@@ -62,7 +60,6 @@ const benefits = [
         />
       </svg>
     ),
-    color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
   },
   {
     titleKey: 'qualityGuaranteedTitle' as const,
@@ -82,7 +79,6 @@ const benefits = [
         />
       </svg>
     ),
-    color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
   },
 ];
 
@@ -90,34 +86,26 @@ export default function HomeBenefits() {
   const t = useTranslations('home.benefits');
 
   return (
-    <section className='py-8 sm:py-16 bg-muted/30 select-none'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='text-center mb-12'>
-          <h2 className='text-3xl font-bold text-foreground mb-4'>
+    <section className='border-y border-border select-none'>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14'>
+        <div className='mb-8 sm:mb-10'>
+          <span className='kicker' aria-hidden='true'></span>
+          <h2 className='heading-plain heading-display mt-1 text-2xl sm:text-3xl text-foreground'>
             {t('title')}
           </h2>
-          <p className='text-muted-foreground max-w-2xl mx-auto'>
-            {t('subtitle')}
-          </p>
+          <p className='mt-2 text-sm text-muted-foreground max-w-2xl'>{t('subtitle')}</p>
         </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-8 gap-x-8 lg:gap-x-0 lg:divide-x lg:divide-border'>
           {benefits.map((benefit, index) => (
-            <div
-              key={index}
-              className='bg-card border border-border rounded-xl p-4 sm:p-6'
-            >
-              <div className='flex items-start gap-3 mb-3 '>
-                <div
-                  className={`w-12 h-12 sm:mt-1 sm:w-14 sm:h-14 rounded-xl ${benefit.color} flex items-center justify-center flex-shrink-0 [&>svg]:w-6 [&>svg]:h-6 sm:[&>svg]:w-8 sm:[&>svg]:h-8`}
-                >
-                  {benefit.icon}
-                </div>
-                <h3 className='text-base sm:mt-0 mt-1 sm:text-lg font-semibold text-foreground leading-tight'>
+            <div key={index} className='lg:px-8 lg:first:pl-0 lg:last:pr-0'>
+              <div className='flex items-center gap-2.5 mb-2.5 text-foreground [&>svg]:w-6 [&>svg]:h-6 [&>svg]:flex-shrink-0'>
+                {benefit.icon}
+                <h3 className='heading-plain text-xs font-bold uppercase tracking-[0.14em] text-foreground mb-0'>
                   {t(benefit.titleKey)}
                 </h3>
               </div>
-              <p className='text-sm text-muted-foreground leading-relaxed'>
+              <p className='text-sm text-muted-foreground leading-relaxed mb-0'>
                 {t(benefit.descKey)}
               </p>
             </div>

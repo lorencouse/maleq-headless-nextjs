@@ -37,9 +37,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
         />
       ) : (
         <>
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${config.gradient} transition-transform group-hover:scale-105`}
-          />
+          <div className='absolute inset-0 bg-zinc-900 transition-transform group-hover:scale-105' />
           {/* Pattern Overlay */}
           <div className='absolute inset-0 opacity-10'>
             <div

@@ -39,7 +39,7 @@ export default function FeatureSpotlight({ post }: FeatureSpotlightProps) {
               sizes="(max-width: 768px) 100vw, 50vw"
             />
           ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-muted to-border" />
+            <div className="absolute inset-0 bg-muted" />
           )}
         </Link>
 

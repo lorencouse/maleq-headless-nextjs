@@ -126,12 +126,12 @@ export default function AccountDashboard() {
             <Link
               key={link.href}
               href={link.href}
-              className="bg-card border border-border rounded-xl p-6 hover:border-primary hover:shadow-md transition-all group cursor-pointer"
+              className="bg-card border border-border rounded-xl p-6 hover:border-primary transition-colors group cursor-pointer"
             >
               <div className="text-primary mb-4 group-hover:scale-110 transition-transform">
                 {link.icon}
               </div>
-              <h3 className="font-semibold text-foreground mb-1">{tNav(link.titleKey)}</h3>
+              <h3 className="heading-plain font-semibold text-foreground mb-1">{tNav(link.titleKey)}</h3>
               <p className="text-sm text-muted-foreground">{t(link.descriptionKey)}</p>
             </Link>
           ))}
@@ -140,7 +140,7 @@ export default function AccountDashboard() {
         {/* Recent Orders Preview */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-6 border-b border-border flex justify-between items-center">
-            <h2 className="text-lg font-semibold text-foreground">{t('recentOrders')}</h2>
+            <h2 className="heading-plain text-lg font-semibold text-foreground">{t('recentOrders')}</h2>
             <Link
               href="/account/orders"
               className="text-sm text-primary hover:text-primary-hover font-medium"
@@ -167,7 +167,7 @@ export default function AccountDashboard() {
                         </span>
                         <span
                           className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${
-                            statusColors[order.status] || 'bg-gray-100 text-gray-800'
+                            statusColors[order.status] || 'bg-muted text-muted-foreground'
                           }`}
                         >
                           {tStatus.has(order.status) ? tStatus(order.status) : order.status.replace('-', ' ')}

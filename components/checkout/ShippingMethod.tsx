@@ -12,6 +12,7 @@ import {
   normalizeCountryCode,
   type ShippingOption,
 } from '@/lib/checkout/shipping-rates';
+import Button from '@/components/ui/Button';
 
 interface ShippingMethodProps {
   onComplete: () => void;
@@ -157,13 +158,14 @@ export default function ShippingMethod({ onComplete }: ShippingMethodProps) {
       )}
 
       {/* Continue Button */}
-      <button
+      <Button
         onClick={handleContinue}
         disabled={!isAddressComplete}
-        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed"
+        size="lg"
+        className="w-full"
       >
         {t('continueToPayment')}
-      </button>
+      </Button>
     </div>
   );
 }

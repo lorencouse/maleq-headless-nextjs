@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
 import BlogCard from './BlogCard';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { useHorizontalScroll } from '@/lib/hooks/useHorizontalScroll';
 
 interface ArticleCarouselProps {
@@ -36,22 +36,12 @@ export default function ArticleCarousel({
   return (
     <section>
       {/* Section header */}
-      <div className="mb-5 flex items-end justify-between gap-4">
-        <h2 className="relative text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary">
-          {title}
-        </h2>
-        {viewAllLink && (
-          <Link
-            href={viewAllLink}
-            className="flex-shrink-0 text-sm font-medium text-primary hover:text-primary-hover inline-flex items-center gap-1"
-          >
-            {viewAllText ?? t('viewAllSection')}
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
-        )}
-      </div>
+      <SectionHeader
+        title={title}
+        viewAllHref={viewAllLink}
+        viewAllLabel={viewAllText ?? t('viewAllSection')}
+        className="mb-5"
+      />
 
       <div className="relative">
         {showArrows && (

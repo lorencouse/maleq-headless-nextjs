@@ -1,10 +1,10 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
-import Link from 'next/link';
 import { ReactNode } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
 import FaqAccordion from '@/components/faq/FaqAccordion';
+import { ButtonLink } from '@/components/ui/Button';
 import { buildLocaleAlternates } from '@/i18n/seo-alternates';
 
 type Props = {
@@ -192,15 +192,12 @@ export default function FaqPage() {
           <p className="text-muted-foreground mb-6">
             {t('stillQuestionsBody')}
           </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-hover transition-colors"
-          >
+          <ButtonLink href="/contact" size="lg">
             {t('contactSupport')}
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
-          </Link>
+          </ButtonLink>
         </div>
       </div>
 

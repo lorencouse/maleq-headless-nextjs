@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
+import Button from '@/components/ui/Button';
 
 export default function AccountDetailsPage() {
   const t = useTranslations('account.details');
@@ -297,8 +298,8 @@ export default function AccountDetailsPage() {
           <div
             className={`p-4 rounded-lg ${
               message.type === 'success'
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
+                ? 'bg-success/10 border border-success/20 text-success'
+                : 'bg-destructive/10 border border-destructive/20 text-destructive'
             }`}
           >
             {message.text}
@@ -308,7 +309,7 @@ export default function AccountDetailsPage() {
         {/* Profile Information */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-4 border-b border-border flex justify-between items-center">
-            <h2 className="font-semibold text-foreground">{t('profileSection')}</h2>
+            <h2 className="heading-plain font-semibold text-foreground">{t('profileSection')}</h2>
             {!isEditingProfile && (
               <button
                 onClick={() => setIsEditingProfile(true)}
@@ -360,14 +361,11 @@ export default function AccountDetailsPage() {
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={isSaving}
-                    className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 cursor-pointer"
-                  >
+                  <Button onClick={handleSaveProfile} disabled={isSaving}>
                     {isSaving ? t('saving') : t('saveChanges')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       setIsEditingProfile(false);
                       setProfileData({
@@ -376,10 +374,9 @@ export default function AccountDetailsPage() {
                         email: user?.email || '',
                       });
                     }}
-                    className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground cursor-pointer"
                   >
                     {t('cancel')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -466,7 +463,7 @@ export default function AccountDetailsPage() {
         {/* Password */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="p-4 border-b border-border flex justify-between items-center">
-            <h2 className="font-semibold text-foreground">{t('passwordSection')}</h2>
+            <h2 className="heading-plain font-semibold text-foreground">{t('passwordSection')}</h2>
             {!isChangingPassword && (
               <button
                 onClick={() => setIsChangingPassword(true)}
@@ -489,11 +486,11 @@ export default function AccountDetailsPage() {
                     value={passwordData.currentPassword}
                     onChange={handlePasswordChange}
                     className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-                      passwordErrors.currentPassword ? 'border-red-500' : 'border-input'
+                      passwordErrors.currentPassword ? 'border-destructive' : 'border-input'
                     }`}
                   />
                   {passwordErrors.currentPassword && (
-                    <p className="mt-1 text-sm text-red-500">{passwordErrors.currentPassword}</p>
+                    <p className="mt-1 text-sm text-destructive">{passwordErrors.currentPassword}</p>
                   )}
                 </div>
                 <div>
@@ -506,12 +503,12 @@ export default function AccountDetailsPage() {
                     value={passwordData.newPassword}
                     onChange={handlePasswordChange}
                     className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-                      passwordErrors.newPassword ? 'border-red-500' : 'border-input'
+                      passwordErrors.newPassword ? 'border-destructive' : 'border-input'
                     }`}
                     placeholder={t('newPasswordPlaceholder')}
                   />
                   {passwordErrors.newPassword && (
-                    <p className="mt-1 text-sm text-red-500">{passwordErrors.newPassword}</p>
+                    <p className="mt-1 text-sm text-destructive">{passwordErrors.newPassword}</p>
                   )}
                 </div>
                 <div>
@@ -524,22 +521,19 @@ export default function AccountDetailsPage() {
                     value={passwordData.confirmPassword}
                     onChange={handlePasswordChange}
                     className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-                      passwordErrors.confirmPassword ? 'border-red-500' : 'border-input'
+                      passwordErrors.confirmPassword ? 'border-destructive' : 'border-input'
                     }`}
                   />
                   {passwordErrors.confirmPassword && (
-                    <p className="mt-1 text-sm text-red-500">{passwordErrors.confirmPassword}</p>
+                    <p className="mt-1 text-sm text-destructive">{passwordErrors.confirmPassword}</p>
                   )}
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={handleChangePassword}
-                    disabled={isSaving}
-                    className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 cursor-pointer"
-                  >
+                  <Button onClick={handleChangePassword} disabled={isSaving}>
                     {isSaving ? t('changing') : t('changePassword')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       setIsChangingPassword(false);
                       setPasswordData({
@@ -549,10 +543,9 @@ export default function AccountDetailsPage() {
                       });
                       setPasswordErrors({});
                     }}
-                    className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground cursor-pointer"
                   >
                     {t('cancel')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -564,15 +557,15 @@ export default function AccountDetailsPage() {
         </div>
 
         {/* Delete Account */}
-        <div className="bg-card border border-red-200 dark:border-red-800 rounded-xl overflow-hidden">
-          <div className="p-4 border-b border-red-200 dark:border-red-800">
-            <h2 className="font-semibold text-red-600 dark:text-red-400">{t('dangerZone')}</h2>
+        <div className="bg-card border border-destructive/20 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-destructive/20">
+            <h2 className="heading-plain font-semibold text-destructive">{t('dangerZone')}</h2>
           </div>
           <div className="p-6">
             {isDeletingAccount ? (
               <div className="space-y-4 max-w-md">
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                  <p className="text-sm text-red-600 dark:text-red-400 font-medium">
+                <div className="p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <p className="text-sm text-destructive font-medium">
                     {t('deleteWarning')}
                   </p>
                 </div>
@@ -585,12 +578,12 @@ export default function AccountDetailsPage() {
                     name="password"
                     value={deleteData.password}
                     onChange={handleDeleteChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-background text-foreground ${
-                      deleteErrors.password ? 'border-red-500' : 'border-input'
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive bg-background text-foreground ${
+                      deleteErrors.password ? 'border-destructive' : 'border-input'
                     }`}
                   />
                   {deleteErrors.password && (
-                    <p className="mt-1 text-sm text-red-500">{deleteErrors.password}</p>
+                    <p className="mt-1 text-sm text-destructive">{deleteErrors.password}</p>
                   )}
                 </div>
                 <div>
@@ -605,33 +598,33 @@ export default function AccountDetailsPage() {
                     name="confirmText"
                     value={deleteData.confirmText}
                     onChange={handleDeleteChange}
-                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-background text-foreground ${
-                      deleteErrors.confirmText ? 'border-red-500' : 'border-input'
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-destructive bg-background text-foreground ${
+                      deleteErrors.confirmText ? 'border-destructive' : 'border-input'
                     }`}
                     placeholder={t('typeDeletePlaceholder')}
                   />
                   {deleteErrors.confirmText && (
-                    <p className="mt-1 text-sm text-red-500">{deleteErrors.confirmText}</p>
+                    <p className="mt-1 text-sm text-destructive">{deleteErrors.confirmText}</p>
                   )}
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <button
+                  <Button
+                    variant="destructive"
                     onClick={handleDeleteAccount}
                     disabled={isSaving}
-                    className="px-6 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold disabled:opacity-50 cursor-pointer"
                   >
                     {isSaving ? t('deleting') : t('deleteMyAccount')}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => {
                       setIsDeletingAccount(false);
                       setDeleteData({ password: '', confirmText: '' });
                       setDeleteErrors({});
                     }}
-                    className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground cursor-pointer"
                   >
                     {t('cancel')}
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
@@ -641,7 +634,7 @@ export default function AccountDetailsPage() {
                 </p>
                 <button
                   onClick={() => setIsDeletingAccount(true)}
-                  className="px-6 py-2.5 border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors font-medium cursor-pointer"
+                  className="px-6 py-2.5 border border-destructive/40 text-destructive rounded-lg hover:bg-destructive/10 transition-colors text-xs font-bold uppercase tracking-[0.12em] cursor-pointer"
                 >
                   {t('deleteAccount')}
                 </button>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import {
@@ -11,6 +10,7 @@ import {
 } from '@/lib/store/cart-store';
 import { formatPrice, calculateAutoDiscount } from '@/lib/utils/cart-helpers';
 import MiniCartItem from './MiniCartItem';
+import { ButtonLink } from '@/components/ui/Button';
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -164,20 +164,23 @@ export default function MiniCart({ isOpen, onClose }: MiniCartProps) {
 
                 {/* Action Buttons */}
                 <div className='space-y-2 pb-4'>
-                  <Link
+                  <ButtonLink
                     href='/cart'
                     onClick={onClose}
-                    className='block w-full py-2.5 sm:py-3 px-4 text-center text-sm sm:text-base border border-border rounded-lg hover:bg-muted transition-colors font-medium'
+                    variant='ghost'
+                    size='lg'
+                    className='w-full'
                   >
                     {t('viewCart')}
-                  </Link>
-                  <Link
+                  </ButtonLink>
+                  <ButtonLink
                     href='/checkout'
                     onClick={onClose}
-                    className='block w-full py-2.5 sm:py-3 px-4 text-center text-sm sm:text-base bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium'
+                    size='lg'
+                    className='w-full'
                   >
                     {t('checkout')}
-                  </Link>
+                  </ButtonLink>
                 </div>
               </div>
             </>

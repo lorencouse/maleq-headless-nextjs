@@ -111,10 +111,10 @@ export default function CartRecoveryHandler() {
     <div
       className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
         isError
-          ? 'border-red-200 bg-red-50 text-red-700'
+          ? 'border-destructive/20 bg-destructive/10 text-destructive'
           : isLoading
-            ? 'border-blue-200 bg-blue-50 text-blue-700'
-            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+            ? 'border-info/20 bg-info/10 text-info'
+            : 'border-success/20 bg-success/10 text-success'
       }`}
     >
       {message}

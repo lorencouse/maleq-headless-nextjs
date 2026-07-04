@@ -161,7 +161,7 @@ export default function TrackingForm() {
 
       {/* Error Message */}
       {error && (
-        <div className="mt-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-6">
+        <div className="mt-6 bg-destructive/10 border border-destructive/20 rounded-xl p-6">
           <div className="flex items-center gap-3">
             <svg className="w-6 h-6 text-destructive flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -273,12 +273,12 @@ export default function TrackingForm() {
 
           {/* No tracking yet */}
           {order.tracking.length === 0 && (order.status === 'processing' || order.status === 'pending' || order.status === 'on-hold') && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6">
+            <div className="bg-info/10 border border-info/20 rounded-xl p-6">
               <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-info flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <p className="text-blue-800 dark:text-blue-200">
+                <p className="text-info">
                   {t('preparingOrder')}
                 </p>
               </div>

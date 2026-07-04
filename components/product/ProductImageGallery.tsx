@@ -235,7 +235,7 @@ export default function ProductImageGallery({
               handleSetDefault();
             }}
             disabled={isSettingDefault}
-            className="absolute bottom-2 left-2 z-10 px-3 py-1.5 text-xs font-medium rounded-full bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-colors disabled:opacity-50"
+            className="absolute bottom-2 left-2 z-10 px-3 py-1.5 text-xs font-medium rounded-full bg-foreground hover:opacity-80 text-background transition-opacity disabled:opacity-50"
           >
             {isSettingDefault ? t('settingDefault') : t('setAsDefault')}
           </button>

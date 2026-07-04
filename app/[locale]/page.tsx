@@ -12,6 +12,7 @@ import { queryProductIndex } from '@/lib/products/product-index';
 import { indexEntriesToUnifiedProducts } from '@/lib/products/index-to-unified';
 import { getBlogPosts } from '@/lib/blog/blog-service';
 import BlogCard from '@/components/blog/BlogCard';
+import SectionHeader from '@/components/ui/SectionHeader';
 import NewsTicker from '@/components/blog/NewsTicker';
 import ArticleHero from '@/components/blog/ArticleHero';
 import HomeHero from '@/components/home/HomeHero';
@@ -132,7 +133,7 @@ export default async function Home({ params }: Props) {
               title={t('trending.title')}
               subtitle={t('trending.subtitle')}
               badge={
-                <span className='inline-flex items-center gap-1 px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-xs font-semibold rounded-full'>
+                <span className='inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full'>
                   <svg
                     className='w-3 h-3'
                     fill='currentColor'
@@ -205,20 +206,12 @@ export default async function Home({ params }: Props) {
       {/* Latest News */}
       {newsPosts.length > 0 && (
         <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
-          <div className='mb-8 flex items-end justify-between gap-4'>
-            <h2 className='text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary'>
-              {t('newsStrip.heading')}
-            </h2>
-            <Link
-              href='/news'
-              className='flex-shrink-0 text-sm font-medium text-primary hover:text-primary-hover inline-flex items-center gap-1'
-            >
-              {t('newsStrip.viewAll')}
-              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-              </svg>
-            </Link>
-          </div>
+          <SectionHeader
+            title={t('newsStrip.heading')}
+            viewAllHref='/news'
+            viewAllLabel={t('newsStrip.viewAll')}
+            className='mb-8'
+          />
           <ArticleHero posts={newsPosts} />
           <div className='mt-8'>
             <NewsTicker posts={newsPosts.slice(0, 6)} />

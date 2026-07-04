@@ -58,7 +58,7 @@ function StarRating({ rating }: { rating: number }) {
       {[...Array(5)].map((_, i) => (
         <svg
           key={i}
-          className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}
+          className={`w-4 h-4 ${i < rating ? 'text-primary' : 'text-muted-foreground/40'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -110,7 +110,7 @@ export default function TestimonialsSection() {
               <div className="flex items-center justify-between mb-4">
                 <StarRating rating={testimonial.rating} />
                 {testimonial.verified && (
-                  <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                  <span className="flex items-center gap-1 text-xs text-success">
                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                       <path
                         fillRule="evenodd"
@@ -139,7 +139,7 @@ export default function TestimonialsSection() {
             <div className="flex items-center justify-between mb-4">
               <StarRating rating={testimonials[activeIndex].rating} />
               {testimonials[activeIndex].verified && (
-                <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
+                <span className="flex items-center gap-1 text-xs text-success">
                   <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                     <path
                       fillRule="evenodd"
@@ -164,7 +164,7 @@ export default function TestimonialsSection() {
           <div className="flex items-center justify-center gap-4 mt-6">
             <button
               onClick={prevTestimonial}
-              className="p-2 rounded-full border border-border hover:bg-muted transition-colors cursor-pointer"
+              className="p-2 rounded-md border border-border hover:bg-muted transition-colors cursor-pointer"
               aria-label={t('prevAriaLabel')}
             >
               <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +185,7 @@ export default function TestimonialsSection() {
             </div>
             <button
               onClick={nextTestimonial}
-              className="p-2 rounded-full border border-border hover:bg-muted transition-colors cursor-pointer"
+              className="p-2 rounded-md border border-border hover:bg-muted transition-colors cursor-pointer"
               aria-label={t('nextAriaLabel')}
             >
               <svg className="w-5 h-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">

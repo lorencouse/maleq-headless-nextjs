@@ -102,7 +102,7 @@ export default function ProductDetailsWrapper({
         )}
 
         {/* Product Name */}
-        <h1 className='text-xl sm:text-2xl lg:text-3xl'>{product.name}</h1>
+        <h1 className='heading-plain text-2xl sm:text-3xl lg:text-4xl'>{product.name}</h1>
 
         {/* Client-side interactive components */}
         <ProductPageClient

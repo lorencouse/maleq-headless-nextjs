@@ -13,6 +13,7 @@ import TrendingList from '@/components/blog/TrendingList';
 import SocialSection from '@/components/home/SocialSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 // News hub is editorial and has no searchParams → safe to statically render
 // and revalidate. News wants to stay fresh.
@@ -101,9 +102,7 @@ export default async function NewsPage() {
         {/* From the guides */}
         {fromGuides.length > 0 && (
           <section className="mt-12 lg:mt-16 border-t border-border pt-10">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary mb-6">
-              {t('fromTheGuides')}
-            </h2>
+            <SectionHeader title={t('fromTheGuides')} />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {fromGuides.slice(0, 4).map((post) => (
                 <BlogCard key={post.id} post={post} />
@@ -121,9 +120,7 @@ export default async function NewsPage() {
 
       {/* More news (infinite scroll) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary mb-6">
-          {t('moreNews')}
-        </h2>
+        <SectionHeader title={t('moreNews')} />
         <BlogPostsGrid
           initialPosts={newsTail.posts}
           initialPageInfo={{ hasNextPage: newsTail.pageInfo.hasNextPage, endCursor: newsTail.pageInfo.endCursor }}

@@ -12,16 +12,11 @@
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .blog-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  border-color: var(--muted-foreground);
 }
 
 /* Featured card variant with brand accent */
@@ -31,17 +26,11 @@
 
 /* Accent card with subtle brand tint */
 .blog-card--accent {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 57, 57, 0.03) 0%,
-    transparent 100%
-  );
-  border-color: rgba(255, 57, 57, 0.15);
+  border-color: rgba(230, 57, 70, 0.2);
 }
 
 .blog-card--accent:hover {
-  border-color: rgba(255, 57, 57, 0.3);
-  box-shadow: var(--shadow-primary);
+  border-color: rgba(230, 57, 70, 0.6);
 }
 
 /* ============================================================================
@@ -92,8 +81,9 @@ html {
 
 /* Bold black underline for h2 */
 .entry-content h2 {
-  font-family: var(--font-outfit), 'Outfit', sans-serif;
-  font-weight: 700;
+  font-family: var(--font-archivo), 'Archivo', sans-serif;
+  font-weight: 800;
+  font-stretch: 87.5%;
   font-style: normal;
   font-size: clamp(1.75rem, 4vw, 36px);
   border-bottom: 5px solid black;
@@ -125,9 +115,6 @@ html {
 .schema-how-to-description {
   background-color: var(--card);
   border: 1px solid var(--border);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.06);
   border-radius: 0.75rem 0.75rem 0 0;
   padding: 1.5rem;
   margin-bottom: 0;
@@ -272,7 +259,7 @@ html {
   margin-left: auto;
   margin-right: auto;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
 }
 
 /* Images with captions - flat bottom corners */
@@ -284,16 +271,13 @@ figure:has(figcaption) img,
 /* Hover effect only for linked images */
 .entry-content a img,
 .content-area a img {
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  transition: border-color 0.3s ease;
   cursor: pointer;
 }
 
 .entry-content a:hover img,
 .content-area a:hover img {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
+  border-color: var(--muted-foreground);
 }
 
 .single .entry-img {
@@ -334,7 +318,6 @@ figure.wp-block-video figcaption a,
   margin: var(--space-8) 0;
   overflow-x: auto;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
 }
 
 .wp-block-table table {
@@ -403,7 +386,6 @@ figure.wp-block-video figcaption a,
   margin: 0;
   padding: 1.25rem;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   background: var(--card);
   border: 1px solid var(--border);
   /* Responsive sizing */
@@ -509,16 +491,9 @@ figure.wp-block-video figcaption a,
   width: fit-content;
   margin: 2rem auto;
   padding: 1.5rem 3rem 0rem 3rem;
-  background: linear-gradient(
-    135deg,
-    rgba(34, 197, 94, 0.08) 0%,
-    rgba(74, 222, 128, 0.04) 100%
-  );
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 1rem;
-  box-shadow:
-    0 4px 6px -1px rgba(34, 197, 94, 0.15),
-    0 2px 4px -2px rgba(34, 197, 94, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -552,7 +527,7 @@ figure.wp-block-video figcaption a,
   font-size: 3rem !important;
   font-weight: 800 !important;
   line-height: 1;
-  color: var(--success);
+  color: var(--primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -571,12 +546,10 @@ figure.wp-block-video figcaption a,
   line-height: 1.7;
   background: var(--card);
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   color: var(--foreground);
 }
 
 .review:hover {
-  box-shadow: var(--shadow-md);
   border-left-color: var(--primary-hover);
 }
 
@@ -649,15 +622,10 @@ figure.wp-block-video figcaption a,
   justify-content: center;
   min-width: 2.5rem;
   height: 2.5rem;
-  background: linear-gradient(
-    135deg,
-    var(--primary) 0%,
-    var(--primary-hover) 100%
-  );
+  background: var(--primary);
   color: white;
   font-weight: 700;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-primary);
 }
 
 body {
@@ -678,7 +646,6 @@ p.product-specs,
 p.product-specs-cn {
   position: relative !important;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
-  box-shadow: var(--shadow-sm) !important;
   background: var(--card) !important;
   border: 1px solid var(--border) !important;
   border-top: 3px solid var(--primary) !important; /* Brand accent - red top border */
@@ -689,9 +656,7 @@ p.product-specs-cn {
   width: 100% !important;
   max-width: 100% !important;
   overflow: visible !important;
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .entry-content .product-specs:hover,
@@ -703,8 +668,7 @@ p.product-specs-cn {
 .product-table:hover,
 p.product-specs:hover,
 p.product-specs-cn:hover {
-  box-shadow: var(--shadow-md) !important;
-  transform: translateY(-1px);
+  border-color: var(--muted-foreground);
 }
 
 .entry-content .product-specs::before,
@@ -717,7 +681,7 @@ p.product-specs-cn:hover {
 .product-table::before,
 p.product-specs::before,
 p.product-specs-cn::before {
-  content: '📋 Product Specs' !important;
+  content: 'Product Specs' !important;
   position: absolute !important;
   top: 0 !important;
   left: 0 !important;
@@ -736,7 +700,7 @@ p.product-specs-cn::before {
 
 p.product-specs-cn::before,
 .product-specs-cn::before {
-  content: '📋 產品資訊';
+  content: '產品資訊';
 }
 
 /* Ensure tables inside product-table are full width */
@@ -807,12 +771,10 @@ p.product-specs-cn::before,
 
 .check-badge--success {
   background: var(--success);
-  box-shadow: 0 1px 3px rgba(34, 197, 94, 0.3);
 }
 
 .check-badge--error {
   background: var(--destructive);
-  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.3);
 }
 
 /* When product-specs contains child p elements */
@@ -855,7 +817,6 @@ p.product-specs-cn::before,
 
 .level-segment.filled {
   background: var(--info);
-  box-shadow: var(--shadow-info);
 }
 
 .level-segment.empty {
@@ -878,23 +839,17 @@ p.product-specs-cn::before,
 .schema-how-to-step,
 .howto-step {
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   background: var(--card);
   border: 1px solid var(--border);
   margin: var(--space-8) 0;
   padding: var(--space-6);
-  transition:
-    box-shadow 0.2s ease,
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .rounded-block:hover,
 .schema-faq-section:hover,
 .schema-how-to-step:hover,
 .howto-step:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
   border-color: var(--primary-light);
 }
 
@@ -987,7 +942,6 @@ p.product-specs-cn::before,
   border-radius: var(--radius-md);
   font-weight: 700;
   font-size: 0.875rem;
-  box-shadow: var(--shadow-primary);
 }
 
 /* ============================================================================
@@ -999,7 +953,6 @@ p.product-specs-cn::before,
   border: 1px solid var(--border);
   border-left: 4px solid var(--primary); /* Brand accent */
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: var(--space-6);
   margin: var(--space-8) 0;
 }
@@ -1069,7 +1022,6 @@ figure.wp-block-video,
   display: block;
   margin: 0 auto;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-md);
   /* Full width video */
   width: 100%;
   height: auto;
@@ -1161,18 +1113,6 @@ figure.wp-block-video.aligncenter {
   .pros-list,
   .cons-list {
     padding: 2rem;
-  }
-}
-
-/* Desktop and up - use hover media query for devices that support it */
-@media (min-width: 1024px) and (hover: hover) {
-  /* Enhanced hover effects for desktop */
-  .blog-card:hover,
-  .rounded-block:hover,
-  .schema-faq-section:hover,
-  .schema-how-to-step:hover,
-  .howto-step:hover {
-    box-shadow: var(--shadow-lg);
   }
 }
 
@@ -1340,7 +1280,6 @@ figure.wp-block-video.aligncenter {
   border: 1px solid var(--border);
   border-top: 3px solid var(--primary);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
 }
 .entry-content aside.key-takeaways h3 {
   margin: 0 0 var(--space-4);
@@ -1415,7 +1354,6 @@ figure.wp-block-video.aligncenter {
   border-radius: var(--radius-lg);
   padding: 1.5rem;
   margin: var(--space-6) 0 var(--space-8);
-  box-shadow: var(--shadow-sm);
 }
 .guide-toppicks__title {
   margin: 0 0 0.75rem;
@@ -1470,7 +1408,7 @@ figure.wp-block-video.aligncenter {
   left: 0;
   overflow: hidden;
   white-space: nowrap;
-  color: #f5a623; /* star gold — intentional brand-neutral accent */
+  color: var(--primary);
 }
 .guide-stars > .guide-stars__track { display: inline-block; }
 .guide-stars__num {
@@ -1500,7 +1438,10 @@ figure.wp-block-video.aligncenter {
   justify-content: center;
   background: var(--primary);
   color: var(--primary-foreground);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   text-decoration: none;
   padding: 0.6rem 1.25rem;
   border-radius: var(--radius-md, 0.5rem);
@@ -1556,7 +1497,6 @@ figure.wp-block-video.aligncenter {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   padding: 1.5rem;
   scroll-margin-top: 6rem; /* anchor offset under sticky chrome */
 }

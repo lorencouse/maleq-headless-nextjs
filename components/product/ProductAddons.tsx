@@ -257,7 +257,7 @@ export default function ProductAddons({ onAddonsChange }: ProductAddonsProps) {
                 <span className='text-xs text-muted-foreground line-through'>
                   ${regularPriceTotal.toFixed(2)}
                 </span>
-                <span className='text-xs font-semibold text-green-600 dark:text-green-400'>
+                <span className='text-xs font-semibold text-success'>
                   {t('saveAmount', { amount: (regularPriceTotal - ADDON_BUNDLE.price).toFixed(0) })}
                 </span>
               </div>
@@ -370,12 +370,12 @@ function AddonCheckbox({
               <span className='text-xs text-muted-foreground line-through'>
                 ${addon.regularPrice.toFixed(2)}
               </span>
-              <span className='text-xs text-green-600 dark:text-green-400 font-medium'>
+              <span className='text-xs text-success font-medium'>
                 {t('saveAmount', { amount: (addon.regularPrice - addon.price).toFixed(0) })}
               </span>
             </div>
           )}
-          <span className='text-sm font-semibold text-primary'>
+          <span className='text-sm font-semibold text-foreground'>
             +${addon.price.toFixed(2)}
           </span>
         </div>

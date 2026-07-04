@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { ButtonLink } from '@/components/ui/Button';
 
 interface AuthRequiredModalProps {
   isOpen: boolean;
@@ -75,20 +75,23 @@ export default function AuthRequiredModal({
         <p className="mt-2 text-sm text-muted-foreground">{resolvedDescription}</p>
 
         <div className="mt-6 space-y-3">
-          <Link
+          <ButtonLink
             href={`/login?returnTo=${encodedReturnTo}`}
             onClick={onClose}
-            className="block w-full rounded-lg bg-primary px-4 py-3 text-center font-semibold text-primary-foreground transition-colors hover:bg-primary-hover"
+            size="lg"
+            className="w-full"
           >
             {t('signIn')}
-          </Link>
-          <Link
+          </ButtonLink>
+          <ButtonLink
             href={`/register?returnTo=${encodedReturnTo}`}
             onClick={onClose}
-            className="block w-full rounded-lg border border-border px-4 py-3 text-center font-semibold text-foreground transition-colors hover:bg-muted"
+            variant="ghost"
+            size="lg"
+            className="w-full"
           >
             {t('createAccount')}
-          </Link>
+          </ButtonLink>
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ import ActiveFilters from './filters/ActiveFilters';
 import SortDropdown, { SortOption } from './SortDropdown';
 import { UnifiedProduct, HierarchicalCategory, FilterOption } from '@/lib/products/combined-service';
 import { extractFilterOptionsFromProducts } from '@/lib/utils/product-filter-helpers';
+import Button from '@/components/ui/Button';
 
 // Module-level cache to preserve product state across navigations
 let productCache: {
@@ -724,12 +725,9 @@ export default function ShopPageClient({
                     {t('loadingMore')}
                   </div>
                 ) : (
-                  <button
-                    onClick={handleLoadMore}
-                    className="px-8 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
-                  >
+                  <Button onClick={handleLoadMore} size="lg">
                     {t('loadMore')}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}
@@ -748,12 +746,9 @@ export default function ShopPageClient({
             <p className="text-muted-foreground mb-6">
               {t('tryAdjustingFilters')}
             </p>
-            <button
-              onClick={handleClearFilters}
-              className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
-            >
+            <Button onClick={handleClearFilters}>
               {t('clearFilters')}
-            </button>
+            </Button>
           </div>
         )}
       </div>

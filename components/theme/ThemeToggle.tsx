@@ -51,7 +51,7 @@ export default function ThemeToggle() {
         </svg>
       ) : (
         <svg
-          className="h-5 w-5 text-yellow-400"
+          className="h-5 w-5 text-foreground"
           fill="currentColor"
           viewBox="0 0 24 24"
         >

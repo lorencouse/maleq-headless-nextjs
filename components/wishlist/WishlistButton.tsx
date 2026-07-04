@@ -114,9 +114,9 @@ export default function WishlistButton({
       <>
         <button
           onClick={handleToggle}
-          className={`w-full flex items-center justify-center gap-2 py-3 px-6 border-2 rounded-lg font-semibold transition-colors ${
+          className={`w-full flex items-center justify-center gap-2 py-3 px-6 border-2 rounded-lg text-sm font-bold uppercase tracking-[0.12em] transition-colors ${
             isWishlisted
-              ? 'border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+              ? 'border-primary text-primary hover:bg-primary/10'
               : 'border-border text-foreground hover:bg-muted'
           } ${className}`}
           aria-label={isWishlisted ? tProduct('removeFromWishlist') : t('addAriaLabel')}
@@ -140,7 +140,7 @@ export default function WishlistButton({
           onClick={handleToggle}
           className={`flex items-center gap-2 text-sm transition-colors ${
             isWishlisted
-              ? 'text-red-500 hover:text-red-600'
+              ? 'text-primary hover:text-primary-hover'
               : 'text-muted-foreground hover:text-foreground'
           } ${className}`}
           aria-label={isWishlisted ? tProduct('removeFromWishlist') : t('addAriaLabel')}
@@ -167,7 +167,7 @@ export default function WishlistButton({
         onClick={handleToggle}
         className={`${hasExplicitSize ? 'flex items-center justify-center' : 'p-2'} rounded-full transition-colors ${
           isWishlisted
-            ? 'text-red-500 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50'
+            ? 'text-primary bg-primary/10 hover:bg-primary/20'
             : 'text-muted-foreground hover:text-foreground bg-background/80 hover:bg-muted'
         } ${className}`}
         aria-label={isWishlisted ? tProduct('removeFromWishlist') : t('addAriaLabel')}

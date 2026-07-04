@@ -43,7 +43,7 @@ export default memo(function ProductCard({
   const isVariable = product.type === 'VARIABLE';
 
   return (
-    <div className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group h-full flex flex-col'>
+    <div className='bg-card border border-border rounded-lg overflow-hidden hover:border-foreground/50 transition-colors group h-full flex flex-col'>
       {/* Product Image - Link wrapper */}
       <Link
         href={`/product/${product.slug}`}
@@ -67,7 +67,7 @@ export default memo(function ProductCard({
 
           {/* Sale Badge */}
           {product.onSale && (
-            <div className='absolute top-2 right-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded'>
+            <div className='absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-[0.12em] px-2.5 py-1.5'>
               {(() => {
                 const percentOff = calculatePercentOff(
                   product.regularPrice,
@@ -82,7 +82,7 @@ export default memo(function ProductCard({
 
           {/* Stock Status Badge */}
           {product.stockStatus === 'OUT_OF_STOCK' && (
-            <div className='absolute top-2 left-2 bg-foreground text-background text-xs font-bold px-2 py-1 rounded'>
+            <div className='absolute top-0 left-0 bg-foreground text-background text-[10px] font-bold uppercase tracking-[0.12em] px-2.5 py-1.5'>
               {t('outOfStockBadge')}
             </div>
           )}
@@ -95,7 +95,7 @@ export default memo(function ProductCard({
                   e.preventDefault();
                   onRemove(product.databaseId?.toString() || product.id);
                 }}
-                className='w-10 h-10 flex items-center justify-center rounded-full bg-red-500 hover:bg-red-600 text-white shadow-lg transition-colors'
+                className='w-10 h-10 flex items-center justify-center rounded-full bg-destructive hover:opacity-90 text-destructive-foreground transition-opacity'
                 aria-label={t('removeFromWishlist')}
               >
                 <svg
@@ -134,6 +134,13 @@ export default memo(function ProductCard({
         href={`/product/${product.slug}`}
         className='product-card-link flex-1 flex flex-col p-3 sm:p-4'
       >
+        {/* Brand kicker */}
+        {product.brands && product.brands.length > 0 && (
+          <p className='mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary truncate'>
+            {product.brands[0].name}
+          </p>
+        )}
+
         {/* Product Name */}
         <div className='relative pb-2 mb-2'>
           <h3 className='heading-plain text-sm sm:text-base lg:text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors'>
@@ -142,7 +149,7 @@ export default memo(function ProductCard({
           {/* Red underline (always visible) */}
           <span className='absolute bottom-0 left-0 w-full h-0.5 bg-primary' />
           {/* Black underline (expands on hover) */}
-          <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
+          <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-foreground transition-all duration-300 group-hover:w-full' />
         </div>
 
         {/* Spacer to push price and info to bottom */}
@@ -169,12 +176,12 @@ export default memo(function ProductCard({
               <span className='text-base sm:text-lg font-bold text-primary'>
                 {formatPrice(product.salePrice)}
               </span>
-              <span className='text-xs sm:text-sm text-foreground line-through'>
+              <span className='text-xs sm:text-sm text-muted-foreground line-through'>
                 {formatPrice(product.regularPrice)}
               </span>
             </>
           ) : (
-            <span className='text-base sm:text-lg font-bold text-primary'>
+            <span className='text-base sm:text-lg font-bold text-foreground'>
               {formatPrice(product.price || product.regularPrice)}
             </span>
           )}

@@ -103,8 +103,8 @@ export default function CheckoutRedirectRecovery() {
     <div
       className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
         isError
-          ? 'border-red-300 bg-red-50 text-red-700'
-          : 'border-blue-300 bg-blue-50 text-blue-700'
+          ? 'border-destructive/30 bg-destructive/10 text-destructive'
+          : 'border-info/30 bg-info/10 text-info'
       }`}
     >
       {message}

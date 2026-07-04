@@ -21,7 +21,7 @@ export default function ShopHero() {
       subtitle: t('promoFreeShippingSubtitle'),
       cta: t('promoFreeShippingCta'),
       href: '/shop',
-      bgColor: 'bg-gradient-to-br from-primary to-primary-hover',
+      bgColor: 'bg-primary',
       icon: (
         <svg
           className='w-8 h-8'
@@ -43,7 +43,7 @@ export default function ShopHero() {
       subtitle: t('promoSaleSubtitle'),
       cta: t('promoSaleCta'),
       href: '/shop?onSale=true',
-      bgColor: 'bg-gradient-to-br from-accent to-orange-600',
+      bgColor: 'bg-zinc-900 border border-zinc-700',
       icon: (
         <svg
           className='w-8 h-8'
@@ -65,7 +65,7 @@ export default function ShopHero() {
       subtitle: t('promoDiscreetSubtitle'),
       cta: t('promoDiscreetCta'),
       href: '/shipping-returns',
-      bgColor: 'bg-gradient-to-br from-secondary to-indigo-700',
+      bgColor: 'bg-zinc-900 border border-zinc-700',
       icon: (
         <svg
           className='w-8 h-8'
@@ -87,31 +87,20 @@ export default function ShopHero() {
   return (
     <section className='mb-10 select-none'>
       {/* Main Hero Banner */}
-      <div className='relative overflow-hidden rounded-2xl bg-gradient-to-r from-foreground to-zinc-800 dark:from-zinc-900 dark:to-zinc-800 mb-6'>
-        <div className='absolute inset-0 opacity-10'>
-          <div
-            className='absolute inset-0'
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-        </div>
-
+      <div className='relative overflow-hidden bg-zinc-950 border-t-4 border-primary mb-6'>
         <div className='relative px-6 py-12 sm:px-12 sm:py-16 lg:py-20'>
           <div className='max-w-2xl'>
-            <span className='inline-block px-3 py-1 text-xs font-semibold tracking-wider text-primary-light bg-primary/20 rounded-full mb-4 uppercase'>
-              {t('eyebrow')}
-            </span>
-            <h1 className='text-white text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight'>
+            <span className='kicker mb-4'>{t('eyebrow')}</span>
+            <h1 className='heading-plain heading-display text-white text-4xl sm:text-5xl lg:text-6xl mb-4'>
               {t('title')}
             </h1>
-            <p className='text-white/80 text-lg mb-8 max-w-lg'>
+            <p className='standfirst text-zinc-300 mb-8 max-w-lg'>
               {t('subtitle')}
             </p>
             <div className='flex flex-wrap gap-4'>
               <Link
                 href='/shop?onSale=true'
-                className='inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-hover transition-colors'
+                className='inline-flex items-center gap-2 px-6 py-3.5 bg-primary text-white text-xs sm:text-sm font-bold uppercase tracking-[0.14em] hover:bg-primary-hover transition-colors'
               >
                 {t('ctaShopSale')}
                 <svg
@@ -130,7 +119,7 @@ export default function ShopHero() {
               </Link>
               <Link
                 href='#categories'
-                className='inline-flex items-center gap-2 px-6 py-3 bg-white/10 text-white font-semibold rounded-lg hover:bg-white/20 transition-colors backdrop-blur-sm'
+                className='inline-flex items-center gap-2 px-6 py-3.5 border border-white/40 text-white text-xs sm:text-sm font-bold uppercase tracking-[0.14em] hover:bg-white hover:text-zinc-950 transition-colors'
               >
                 {t('ctaBrowseCategories')}
               </Link>
@@ -144,15 +133,15 @@ export default function ShopHero() {
         {promoCards.map((card, index) => (
           <div
             key={index}
-            className={`group overflow-hidden rounded-xl ${card.bgColor} px-6 pt-5 transition-transform`}
+            className={`group overflow-hidden ${card.bgColor} px-6 py-5`}
           >
             <div className='flex items-center gap-4'>
               <div className='text-white opacity-90'>{card.icon}</div>
-              <h3 className='text-white font-bold text-lg mb-0'>
+              <h3 className='heading-plain text-white font-bold text-sm uppercase tracking-[0.12em] mb-0'>
                 {card.title}
               </h3>
             </div>
-            <p className='text-white/80 text-lg ml-12'>{card.subtitle}</p>
+            <p className='text-white/70 text-sm ml-12 mb-0'>{card.subtitle}</p>
           </div>
         ))}
       </div>

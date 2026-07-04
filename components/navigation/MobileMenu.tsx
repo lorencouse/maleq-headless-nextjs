@@ -12,6 +12,7 @@ import {
   onNotificationsUpdated,
 } from '@/lib/pwa/notification-store';
 import ThemeToggle from '@/components/theme/ThemeToggle';
+import { ButtonLink } from '@/components/ui/Button';
 import { mainNavigation, simpleNavLinks, accountNavigation } from '@/lib/config/navigation';
 import { CategoryIcons } from '@/lib/config/category-icons';
 
@@ -131,7 +132,7 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          <h2 className="text-lg font-semibold text-foreground">{t('menu')}</h2>
+          <h2 className="heading-plain text-lg font-semibold text-foreground">{t('menu')}</h2>
           <button
             onClick={onClose}
             className="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
@@ -159,20 +160,24 @@ export default function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
             </div>
           ) : (
             <div className="flex gap-3">
-              <Link
+              <ButtonLink
                 href={pathname.startsWith('/login') || pathname.startsWith('/register') || pathname.startsWith('/forgot-password') ? '/login' : `/login?returnTo=${encodeURIComponent(pathname)}`}
                 onClick={onClose}
-                className="flex-1 py-2.5 text-center border border-input rounded-lg text-foreground hover:bg-muted transition-colors font-medium"
+                variant="ghost"
+                size="sm"
+                className="flex-1"
               >
                 {t('signIn')}
-              </Link>
-              <Link
+              </ButtonLink>
+              <ButtonLink
                 href="/register"
                 onClick={onClose}
-                className="flex-1 py-2.5 text-center bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                variant="primary"
+                size="sm"
+                className="flex-1"
               >
                 {t('register')}
-              </Link>
+              </ButtonLink>
             </div>
           )}
         </div>

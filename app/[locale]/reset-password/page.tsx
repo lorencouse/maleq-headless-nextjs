@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
+import Button, { ButtonLink } from '@/components/ui/Button';
 
 export default function ResetPasswordPage() {
   return (
@@ -96,7 +97,7 @@ function ResetPasswordContent() {
     return (
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md text-center">
-          <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+          <div className="bg-card border border-border rounded-xl p-8">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-destructive/10 flex items-center justify-center">
               <svg className="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -106,12 +107,9 @@ function ResetPasswordContent() {
             <p className="text-muted-foreground mb-6">
               {t('resetPassword.invalidBody')}
             </p>
-            <Link
-              href="/forgot-password"
-              className="block w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center"
-            >
+            <ButtonLink href="/forgot-password" size="lg" className="w-full">
               {t('resetPassword.requestNew')}
-            </Link>
+            </ButtonLink>
           </div>
         </div>
       </div>
@@ -123,9 +121,9 @@ function ResetPasswordContent() {
     return (
       <div className="min-h-[calc(100vh-200px)] flex items-center justify-center py-12 px-4">
         <div className="w-full max-w-md text-center">
-          <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
-              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-card border border-border rounded-xl p-8">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-success/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
@@ -133,12 +131,9 @@ function ResetPasswordContent() {
             <p className="text-muted-foreground mb-6">
               {t('resetPassword.successBody')}
             </p>
-            <Link
-              href="/login"
-              className="block w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center"
-            >
+            <ButtonLink href="/login" size="lg" className="w-full">
               {t('resetPassword.successSignIn')}
-            </Link>
+            </ButtonLink>
           </div>
         </div>
       </div>
@@ -158,7 +153,7 @@ function ResetPasswordContent() {
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
               <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -234,11 +229,7 @@ function ResetPasswordContent() {
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <Button type="submit" disabled={isLoading} size="lg" className="w-full">
               {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -250,7 +241,7 @@ function ResetPasswordContent() {
               ) : (
                 t('resetPassword.submit')
               )}
-            </button>
+            </Button>
 
             <p className="text-center text-sm text-muted-foreground">
               {t('common.rememberPasswordPrompt')}{' '}

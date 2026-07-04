@@ -36,23 +36,23 @@ export function Toaster() {
         success: {
           duration: 3000,
           iconTheme: {
-            primary: '#10B981',
-            secondary: '#ffffff',
+            primary: 'var(--success)',
+            secondary: 'var(--toast-bg)',
           },
         },
         // Error
         error: {
           duration: 5000,
           iconTheme: {
-            primary: '#EF4444',
-            secondary: '#ffffff',
+            primary: 'var(--destructive)',
+            secondary: 'var(--toast-bg)',
           },
         },
         // Loading
         loading: {
           iconTheme: {
-            primary: '#3B82F6',
-            secondary: '#ffffff',
+            primary: 'var(--info)',
+            secondary: 'var(--toast-bg)',
           },
         },
       }}

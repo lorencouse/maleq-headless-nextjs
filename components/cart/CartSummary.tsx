@@ -15,6 +15,7 @@ import {
 } from '@/lib/utils/cart-helpers';
 import CouponInput from './CouponInput';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
+import { ButtonLink } from '@/components/ui/Button';
 
 export default function CartSummary() {
   const t = useTranslations('cart');
@@ -172,12 +173,9 @@ export default function CartSummary() {
       </div>
 
       {/* Checkout Button */}
-      <Link
-        href='/checkout'
-        className='block w-full py-3 px-4 text-center bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-lg'
-      >
+      <ButtonLink href='/checkout' size='lg' className='w-full'>
         {t('proceedToCheckout')}
-      </Link>
+      </ButtonLink>
 
       {/* Continue Shopping */}
       <Link

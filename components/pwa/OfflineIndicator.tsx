@@ -9,7 +9,6 @@ export default function OfflineIndicator() {
 
     function handleOffline() {
       toastId = toast('You\'re offline — browsing cached content', {
-        icon: '📡',
         duration: Infinity,
         id: 'offline-indicator',
       });

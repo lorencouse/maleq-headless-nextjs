@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { useTranslations } from 'next-intl';
 import { buildLocaleAlternates } from '@/i18n/seo-alternates';
+import { ButtonLink } from '@/components/ui/Button';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -116,8 +117,8 @@ export default function ShippingReturnsPage() {
 
             <div>
               <h3 className="font-semibold text-foreground mb-3">{t('returnPolicyTitle')}</h3>
-              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-3">
-                <p className="text-amber-800 dark:text-amber-200 font-medium">
+              <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 mb-3">
+                <p className="text-warning font-medium">
                   {t('returnPolicyCallout')}
                 </p>
               </div>
@@ -162,18 +163,12 @@ export default function ShippingReturnsPage() {
           <h2 className="text-2xl font-semibold text-foreground mb-4">{t('moreQuestionsTitle')}</h2>
           <p className="text-muted-foreground mb-6">{t('moreQuestionsBody')}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/faq"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors"
-            >
+            <ButtonLink href="/faq" variant="ghost" size="lg">
               {t('viewFaq')}
-            </Link>
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-hover transition-colors"
-            >
+            </ButtonLink>
+            <ButtonLink href="/contact" size="lg">
               {t('contactUs')}
-            </Link>
+            </ButtonLink>
           </div>
         </div>
       </div>

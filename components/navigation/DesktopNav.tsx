@@ -217,7 +217,7 @@ export default function DesktopNav() {
         >
           <Link
             href={section.href || '#'}
-            className={`flex items-center gap-1 px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+            className={`flex items-center gap-1 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition-colors rounded-md ${
               isActive(section.href || '')
                 ? 'text-primary'
                 : 'text-foreground hover:text-primary hover:bg-muted/50'
@@ -258,7 +258,7 @@ export default function DesktopNav() {
         <Link
           key={link.href}
           href={link.href}
-          className={`px-3 py-2 text-sm font-medium transition-colors rounded-md ${
+          className={`px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] transition-colors rounded-md ${
             pathname === link.href
               ? 'text-primary'
               : 'text-foreground hover:text-primary hover:bg-muted/50'

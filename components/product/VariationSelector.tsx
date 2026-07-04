@@ -333,7 +333,7 @@ export default function VariationSelector({
                   key={value}
                   onClick={() => handleAttributeSelect(name, value)}
                   className={`
-                    px-3 sm:px-4 py-1.5 min-h-[44px] border-2 rounded-xl text-sm sm:text-base font-medium transition-all hover:shadow-sm
+                    px-3 sm:px-4 py-1.5 min-h-[44px] border-2 rounded-xl text-sm sm:text-base font-medium transition-colors
                     ${
                       isSelected
                         ? 'border-primary bg-primary/10 text-foreground'

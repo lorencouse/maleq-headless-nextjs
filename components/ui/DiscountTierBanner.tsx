@@ -21,7 +21,7 @@ export default function DiscountTierBanner({
 
   return (
     <div
-      className={`relative overflow-hidden shadow-[0_0_15px_rgba(255,57,57,0.3)] ring-1 ring-primary/30 discount-banner-shimmer mx-auto ${
+      className={`relative overflow-hidden ring-1 ring-primary/30 mx-auto ${
         isCompact
           ? 'rounded-lg max-w-xl my-4'
           : 'rounded-xl max-w-4xl my-6'
@@ -30,19 +30,19 @@ export default function DiscountTierBanner({
       <div className='flex items-stretch'>
         {/* Accent sidebar with labels */}
         <div
-          className={`bg-gradient-to-b from-primary to-primary-dark flex flex-col justify-center ${
+          className={`bg-primary flex flex-col justify-center ${
             isCompact ? 'px-2.5 sm:px-3' : 'px-4 sm:px-5'
           }`}
         >
           <span
-            className={`font-bold uppercase tracking-widest text-white/80 ${
+            className={`font-bold uppercase tracking-widest text-primary-foreground/80 ${
               isCompact ? 'text-sm py-0.5' : 'text-base sm:text-lg py-1'
             }`}
           >
             {t('spend')}
           </span>
           <span
-            className={`font-bold uppercase tracking-widest text-white ${
+            className={`font-bold uppercase tracking-widest text-primary-foreground ${
               isCompact ? 'text-lg py-0.5' : 'text-xl sm:text-2xl py-1'
             }`}
           >
@@ -50,7 +50,7 @@ export default function DiscountTierBanner({
           </span>
         </div>
         {/* Tier values */}
-        <div className='flex-1 bg-gradient-to-b from-background to-muted text-foreground'>
+        <div className='flex-1 bg-background text-foreground'>
           <div className='grid grid-cols-3 divide-x divide-foreground/10 text-center'>
             {tiers.map((tier) => (
               <span

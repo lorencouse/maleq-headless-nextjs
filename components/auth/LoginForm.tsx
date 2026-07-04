@@ -11,6 +11,7 @@ import { getLoginSchema, type LoginFormData } from '@/lib/validations/auth';
 import * as gtag from '@/lib/analytics/gtag';
 import { getRecaptchaToken } from '@/lib/security/recaptcha-client';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import Button from '@/components/ui/Button';
 
 export default function LoginForm() {
   const t = useTranslations('auth');
@@ -180,11 +181,7 @@ export default function LoginForm() {
         </Link>
       </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" disabled={isLoading} size="lg" className="w-full">
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
@@ -196,7 +193,7 @@ export default function LoginForm() {
         ) : (
           t('login.submit')
         )}
-      </button>
+      </Button>
 
       <p className="text-center text-sm text-muted-foreground">
         {t('login.noAccount')}{' '}

@@ -310,7 +310,7 @@ export default function ShippingAddressForm() {
 
   const inputClassName = (field: keyof ShippingAddress) =>
     `w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-      errors[field] ? 'border-red-500' : 'border-input'
+      errors[field] ? 'border-destructive' : 'border-input'
     }`;
 
   return (

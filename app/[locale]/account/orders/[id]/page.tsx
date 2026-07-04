@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { buttonClasses } from '@/components/ui/Button';
 
 interface OrderItem {
   id: number;
@@ -202,7 +203,7 @@ export default function OrderDetailPage() {
           </div>
         ) : error ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
-            <p className="text-red-500 mb-4">{error}</p>
+            <p className="text-destructive mb-4">{error}</p>
             <Link href="/account/orders" className="text-primary hover:text-primary-hover font-medium">
               {t('returnToOrders')}
             </Link>
@@ -229,7 +230,7 @@ export default function OrderDetailPage() {
             {/* Order Status Timeline */}
             {!['cancelled', 'failed', 'refunded'].includes(order.status) && (
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-6">{t('statusTimeline')}</h2>
+                <h2 className="heading-plain text-lg font-semibold text-foreground mb-6">{t('statusTimeline')}</h2>
                 <div className="relative">
                   {/* Progress Line */}
                   <div className="absolute top-5 left-5 right-5 h-0.5 bg-border">
@@ -290,7 +291,7 @@ export default function OrderDetailPage() {
             {/* Tracking Information */}
             {trackingShipments.length > 0 && (
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+                <h2 className="heading-plain text-lg font-semibold text-foreground mb-4">
                   {t('trackingInformation')}
                 </h2>
                 <div className="space-y-4">
@@ -324,7 +325,7 @@ export default function OrderDetailPage() {
                           }
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
+                          className={buttonClasses('primary', 'sm')}
                         >
                           {t('trackPackage')}
                           <svg
@@ -351,7 +352,7 @@ export default function OrderDetailPage() {
             {/* Order Items */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border">
-                <h2 className="text-lg font-semibold text-foreground">{t('orderItems')}</h2>
+                <h2 className="heading-plain text-lg font-semibold text-foreground">{t('orderItems')}</h2>
               </div>
               <div className="divide-y divide-border">
                 {order.line_items.map((item) => (
@@ -382,7 +383,7 @@ export default function OrderDetailPage() {
                 {parseFloat(order.discount_total) > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{t('discount')}</span>
-                    <span className="text-green-600">-{formatPrice(order.discount_total)}</span>
+                    <span className="text-success">-{formatPrice(order.discount_total)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
@@ -408,7 +409,7 @@ export default function OrderDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Billing Address */}
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">{t('billingAddress')}</h2>
+                <h2 className="heading-plain text-lg font-semibold text-foreground mb-4">{t('billingAddress')}</h2>
                 <address className="not-italic text-muted-foreground space-y-1">
                   <p className="font-medium text-foreground">
                     {order.billing.first_name} {order.billing.last_name}
@@ -427,7 +428,7 @@ export default function OrderDetailPage() {
 
               {/* Shipping Address */}
               <div className="bg-card border border-border rounded-xl p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">{t('shippingAddress')}</h2>
+                <h2 className="heading-plain text-lg font-semibold text-foreground mb-4">{t('shippingAddress')}</h2>
                 <address className="not-italic text-muted-foreground space-y-1">
                   <p className="font-medium text-foreground">
                     {order.shipping.first_name} {order.shipping.last_name}
@@ -445,7 +446,7 @@ export default function OrderDetailPage() {
 
             {/* Payment & Notes */}
             <div className="bg-card border border-border rounded-xl p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">{t('paymentInformation')}</h2>
+              <h2 className="heading-plain text-lg font-semibold text-foreground mb-4">{t('paymentInformation')}</h2>
               <p className="text-muted-foreground">
                 {t.rich('paymentMethodLabel', {
                   method: order.payment_method_title,
@@ -470,7 +471,7 @@ export default function OrderDetailPage() {
 
             {/* Help Section */}
             <div className="bg-muted/30 border border-border rounded-xl p-6 text-center">
-              <h3 className="font-semibold text-foreground mb-2">{t('needHelp')}</h3>
+              <h3 className="heading-plain font-semibold text-foreground mb-2">{t('needHelp')}</h3>
               <p className="text-muted-foreground mb-4">{t('needHelpBody')}</p>
               <Link
                 href="/contact"

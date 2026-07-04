@@ -47,7 +47,7 @@ export default function ReviewSummary({
           {onWriteReview && (
             <button
               onClick={onWriteReview}
-              className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium"
+              className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors text-xs font-bold uppercase tracking-[0.12em]"
             >
               {t('writeReview')}
             </button>
@@ -69,7 +69,7 @@ export default function ReviewSummary({
                   <StarRating rating={rating} size="sm" />
                   <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-yellow-400 rounded-full transition-all duration-300"
+                      className="h-full bg-primary rounded-full transition-all duration-300"
                       style={{ width: `${percentage}%` }}
                     />
                   </div>

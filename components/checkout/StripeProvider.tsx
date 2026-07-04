@@ -35,7 +35,7 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
         appearance: {
           theme: 'stripe',
           variables: {
-            colorPrimary: '#2563eb', // Blue-600
+            colorPrimary: '#E63946', // Brand primary red
             colorBackground: '#ffffff',
             colorText: '#1f2937', // Gray-800
             colorDanger: '#ef4444', // Red-500
@@ -50,8 +50,8 @@ export default function StripeProvider({ children, clientSecret }: StripeProvide
               padding: '12px',
             },
             '.Input:focus': {
-              border: '1px solid #2563eb',
-              boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.1)',
+              border: '1px solid #E63946',
+              boxShadow: '0 0 0 3px rgba(230, 57, 70, 0.1)',
             },
             '.Label': {
               fontWeight: '500',

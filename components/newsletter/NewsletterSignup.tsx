@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import Button from '@/components/ui/Button';
 import { isSubscribed, markAsSubscribed } from '@/lib/utils/newsletter';
 import { isValidEmail } from '@/lib/api/validation';
 import { showSuccess, showError } from '@/lib/utils/toast';
@@ -130,7 +131,7 @@ export default function NewsletterSignup({
           <button
             type="submit"
             disabled={isLoading}
-            className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-sm rounded-r hover:bg-primary-hover transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-xs font-bold uppercase tracking-[0.12em] rounded-r hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
             {isLoading ? (
               <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -154,7 +155,7 @@ export default function NewsletterSignup({
     return (
       <div className={`text-center ${className}`}>
         {showTitle && (
-          <h3 className="text-xl font-bold text-foreground mb-2">{resolvedTitle}</h3>
+          <h3 className="heading-plain text-xl font-bold text-foreground mb-2">{resolvedTitle}</h3>
         )}
         {showDescription && (
           <p className="text-muted-foreground mb-4">{resolvedDescription}</p>
@@ -171,13 +172,9 @@ export default function NewsletterSignup({
             disabled={isLoading}
             className="w-full px-4 py-3 bg-input text-foreground rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
           />
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full px-4 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
-          >
+          <Button type="submit" size="lg" disabled={isLoading} className="w-full">
             {isLoading ? t('subscribing') : resolvedButtonText}
-          </button>
+          </Button>
         </form>
         {error && (
           <p className="mt-2 text-sm text-destructive dark:text-destructive">{error}</p>
@@ -201,13 +198,9 @@ export default function NewsletterSignup({
           disabled={isLoading}
           className="flex-1 px-3 py-2.5 min-h-[44px] bg-input text-foreground text-sm rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
         />
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-sm rounded-lg hover:bg-primary-hover transition-colors disabled:opacity-50"
-        >
+        <Button type="submit" size="sm" disabled={isLoading}>
           {isLoading ? '...' : resolvedButtonText}
-        </button>
+        </Button>
       </form>
       {error && (
         <p className="mt-1 text-xs text-destructive dark:text-destructive">{error}</p>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
+import { buttonClasses } from '@/components/ui/Button';
 import { OPEN_CHAT_EVENT } from './ChatWidget';
 
 /**
@@ -16,10 +17,7 @@ export default function ChatWithUsButton({ className }: { className?: string }) 
     <button
       type="button"
       onClick={() => window.dispatchEvent(new Event(OPEN_CHAT_EVENT))}
-      className={
-        className ??
-        'inline-flex items-center justify-center gap-2 rounded-full bg-primary text-primary-foreground px-5 py-2.5 text-sm font-semibold hover:bg-primary-hover transition-colors'
-      }
+      className={className ?? buttonClasses('primary', 'sm')}
     >
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path

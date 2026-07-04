@@ -2,32 +2,39 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getLocale, getTranslations } from 'next-intl/server';
 import { getBrands } from '@/lib/products/combined-service';
 import ShopSearch from '@/components/shop/ShopSearch';
 import { BRAND_LOGOS } from '@/lib/brand-logos';
 
-export const metadata: Metadata = {
-  title: 'Shop by Brand',
-  description: 'Browse our collection of top brands at Male Q. Find quality products from trusted manufacturers with fast, discreet shipping.',
-  openGraph: {
-    title: 'Shop by Brand | Male Q',
-    description: 'Browse our collection of top brands at Male Q.',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary',
-    title: 'Shop by Brand | Male Q',
-    description: 'Browse our collection of top brands at Male Q.',
-  },
-  alternates: {
-    canonical: '/brands',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'brands' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+    openGraph: {
+      title: t('metaOgTitle'),
+      description: t('metaOgDescription'),
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: t('metaOgTitle'),
+      description: t('metaOgDescription'),
+    },
+    alternates: {
+      canonical: '/brands',
+    },
+  };
+}
 
 // ISR: Revalidate weekly — webhook handles real-time invalidation on product updates
 export const revalidate = 604800;
 
 export default async function BrandsPage() {
+  const locale = await getLocale();
+  const t = await getTranslations({ locale, namespace: 'brands' });
   const brands = await getBrands();
 
   // Group brands by first letter
@@ -54,21 +61,21 @@ export default async function BrandsPage() {
       <div className="mb-12">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
           <Link href="/shop" className="hover:text-foreground transition-colors">
-            Shop
+            {t('breadcrumbShop')}
           </Link>
           <span>/</span>
-          <span className="text-foreground">Brands</span>
+          <span className="text-foreground">{t('breadcrumbBrands')}</span>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-            Shop by Brand
+            {t('heading')}
           </h1>
           <Suspense fallback={<div className="w-full max-w-md h-11 bg-muted rounded-lg animate-pulse" />}>
             <ShopSearch />
           </Suspense>
         </div>
         <p className="text-muted-foreground max-w-2xl">
-          Explore our curated selection of {brands.length} premium brands. From industry leaders to specialty manufacturers, find the quality products you&apos;re looking for.
+          {t('subtitle', { count: brands.length })}
         </p>
       </div>
 
@@ -102,7 +109,7 @@ export default async function BrandsPage() {
                   <Link
                     key={brand.id}
                     href={`/brand/${brand.slug}`}
-                    className="group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary hover:shadow-md transition-all"
+                    className="group flex flex-col rounded-xl border border-border bg-card overflow-hidden hover:border-primary transition-colors"
                   >
                     {/* Logo / monogram tile. Dark-ink logos (theme 'light') sit
                         on white; light-ink logos (theme 'dark') need a dark tile. */}
@@ -155,7 +162,7 @@ export default async function BrandsPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
           </svg>
-          Back to top
+          {t('backToTop')}
         </a>
       </div>
     </div>

@@ -9,6 +9,7 @@ import StockFilter from './StockFilter';
 import SelectFilter from './SelectFilter';
 import type { FilterOption } from '@/lib/products/combined-service';
 import { useLocalizedColorName, useLocalizedMaterialName } from '@/lib/i18n/attribute-translations';
+import Button from '@/components/ui/Button';
 
 export interface FilterState {
   category: string;
@@ -120,7 +121,7 @@ export default function FilterPanel({
       {hasActiveFilters && (
         <button
           onClick={onClearFilters}
-          className="w-full mb-4 py-3 min-h-[44px] px-4 text-sm text-primary hover:text-primary-hover font-medium border border-primary rounded-lg hover:bg-primary/5 transition-colors"
+          className="w-full mb-4 py-3 min-h-[44px] px-4 text-xs text-primary hover:text-primary-hover font-bold uppercase tracking-[0.12em] border border-primary rounded-lg hover:bg-primary/5 transition-colors"
         >
           {t('clearAll')}
         </button>
@@ -447,12 +448,9 @@ export default function FilterPanel({
 
       {/* Mobile Apply Button */}
       {isMobile && (
-        <button
-          onClick={onClose}
-          className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold mt-4"
-        >
+        <Button onClick={onClose} size="lg" className="w-full mt-4">
           {t('applyMobile')}
-        </button>
+        </Button>
       )}
     </div>
   );

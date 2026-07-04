@@ -113,7 +113,7 @@ export default function WishlistPage() {
               </button>
               <button
                 onClick={clearWishlist}
-                className="px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors font-medium text-sm"
+                className="px-4 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors font-medium text-sm"
               >
                 {t('clearAll')}
               </button>

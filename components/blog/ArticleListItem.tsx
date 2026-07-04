@@ -38,7 +38,7 @@ export default function ArticleListItem({ post, showImage = true }: ArticleListI
               sizes="144px"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-muted to-border" />
+            <div className="w-full h-full bg-muted" />
           )}
         </Link>
       )}

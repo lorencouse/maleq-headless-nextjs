@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { getLocale, getTranslations } from 'next-intl/server';
 import { searchBlogPosts, getBlogPosts, getGuidesLanding } from '@/lib/blog/blog-service';
+import SectionHeader from '@/components/ui/SectionHeader';
 import BlogPostsGrid from '@/components/blog/BlogPostsGrid';
 import BlogSearch from '@/components/blog/BlogSearch';
 import ArticleHero from '@/components/blog/ArticleHero';
@@ -137,9 +138,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
       {/* More stories (infinite scroll) */}
       <div className="mt-12 lg:mt-16 border-t border-border pt-10">
-        <h2 className="text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary mb-6">
-          {t('moreStoriesHeading')}
-        </h2>
+        <SectionHeader title={t('moreStoriesHeading')} />
         <BlogPostsGrid
           initialPosts={tail.posts}
           initialPageInfo={{ hasNextPage: tail.pageInfo.hasNextPage, endCursor: tail.pageInfo.endCursor }}

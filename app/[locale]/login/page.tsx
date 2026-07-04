@@ -38,7 +38,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+        <div className="bg-card border border-border rounded-xl p-8">
           <Suspense fallback={<div className="h-64 flex items-center justify-center text-muted-foreground">{t('common.loading')}</div>}>
             <LoginForm />
           </Suspense>

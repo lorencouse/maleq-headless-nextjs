@@ -291,6 +291,9 @@ export const CategoryIcons = {
 };
 
 // Category to icon and gradient mapping
+// NOTE: The `gradient` field is deprecated by the Newsstand redesign — consumers
+// (CategoryHero, CategoryCard) now render flat ink tiles (bg-zinc-950/bg-zinc-900)
+// and no longer read `config.gradient`. Kept for data completeness only.
 export const categoryConfig: Record<string, { icon: React.ReactNode; gradient: string }> = {
   // Main categories
   'vibrators': { gradient: 'from-pink-500 to-rose-600', icon: CategoryIcons.vibrator },

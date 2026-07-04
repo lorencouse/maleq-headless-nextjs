@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { useLocale, useTranslations } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
 import { formatPostDate } from '@/lib/utils/format-post-date';
@@ -20,9 +21,7 @@ export default function TrendingList({ posts }: TrendingListProps) {
 
   return (
     <section>
-      <h2 className="mb-5 border-l-4 border-primary pl-3 text-2xl sm:text-3xl font-bold text-foreground">
-        {t('trending')}
-      </h2>
+      <SectionHeader title={t('trending')} className="mb-5" />
       <ol className="grid grid-cols-1 gap-x-10 sm:grid-cols-2">
         {posts.map((post, i) => {
           const category = post.categories?.nodes?.[0];

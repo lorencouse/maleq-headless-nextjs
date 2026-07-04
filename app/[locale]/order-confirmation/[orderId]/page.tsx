@@ -5,6 +5,7 @@ import { getOrder } from '@/lib/woocommerce/orders';
 import OrderDetails from '@/components/order/OrderDetails';
 import ClearCartOnMount from '@/components/checkout/ClearCartOnMount';
 import PushNotificationPrompt from '@/components/pwa/PushNotificationPrompt';
+import { ButtonLink } from '@/components/ui/Button';
 
 interface OrderConfirmationPageProps {
   params: Promise<{ orderId: string }>;
@@ -45,8 +46,8 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
       <ClearCartOnMount />
       {/* Success Header */}
       <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
@@ -77,18 +78,12 @@ export default async function OrderConfirmationPage({ params, searchParams }: Or
 
       {/* Actions */}
       <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
-        <Link
-          href="/shop"
-          className="py-3 px-6 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold text-center"
-        >
+        <ButtonLink href="/shop" size="md">
           {t('continueShopping')}
-        </Link>
-        <Link
-          href="/account/orders"
-          className="py-3 px-6 border border-border text-foreground rounded-lg hover:bg-muted transition-colors font-semibold text-center"
-        >
+        </ButtonLink>
+        <ButtonLink href="/account/orders" variant="ghost" size="md">
           {t('viewAllOrders')}
-        </Link>
+        </ButtonLink>
       </div>
 
       {/* Support Info */}

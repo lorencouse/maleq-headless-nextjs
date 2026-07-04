@@ -16,6 +16,7 @@ import {
   type StoredNotification,
 } from '@/lib/pwa/notification-store';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import Button from '@/components/ui/Button';
 
 type PreferenceKey = 'orderUpdates' | 'backInStock' | 'promotions' | 'news';
 
@@ -57,28 +58,28 @@ function getNotificationCategory(type: string): { key: CategoryKey; className: s
   if (normalized.includes('order') || normalized.includes('tracking')) {
     return {
       key: 'categoryOrderUpdate',
-      className: 'bg-blue-500/10 text-blue-700 dark:text-blue-300',
+      className: 'bg-muted text-muted-foreground',
     };
   }
 
   if (normalized.includes('stock')) {
     return {
       key: 'categoryBackInStock',
-      className: 'bg-green-500/10 text-green-700 dark:text-green-300',
+      className: 'bg-muted text-muted-foreground',
     };
   }
 
   if (normalized.includes('promo') || normalized.includes('sale')) {
     return {
       key: 'categorySalesAndDeals',
-      className: 'bg-orange-500/10 text-orange-700 dark:text-orange-300',
+      className: 'bg-muted text-muted-foreground',
     };
   }
 
   if (normalized.includes('reminder')) {
     return {
       key: 'categoryReminder',
-      className: 'bg-purple-500/10 text-purple-700 dark:text-purple-300',
+      className: 'bg-muted text-muted-foreground',
     };
   }
 
@@ -272,7 +273,7 @@ export default function NotificationsPage() {
                 aria-label={t('toggleAriaLabel')}
               >
                 <span
-                  className={`inline-block h-5 w-5 rounded-full bg-white transition-transform shadow-sm ${
+                  className={`inline-block h-5 w-5 rounded-full bg-background transition-transform shadow-sm ${
                     isSubscribed ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -412,20 +413,14 @@ export default function NotificationsPage() {
             {notifications.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllAsRead}
-                    className="px-3 py-2 text-xs rounded-lg border border-border hover:bg-muted transition-colors"
-                  >
+                  <Button variant="ghost" size="sm" onClick={handleMarkAllAsRead}>
                     {t('markAllAsRead')}
-                  </button>
+                  </Button>
                 )}
 
-                <button
-                  onClick={handleClearHistory}
-                  className="px-3 py-2 text-xs rounded-lg border border-border hover:bg-muted transition-colors"
-                >
+                <Button variant="ghost" size="sm" onClick={handleClearHistory}>
                   {t('clearHistory')}
-                </button>
+                </Button>
               </div>
             )}
           </div>

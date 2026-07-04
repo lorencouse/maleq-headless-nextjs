@@ -18,41 +18,42 @@
   --primary-light: #ef5663;
   --primary-dark: #b82d37;
 
-  /* Accent colors */
-  --accent: #f97316;
+  /* Accent (muted amber-orange) — functional only: low-stock, rare sale flashes */
+  --accent: #c2570c;
   --accent-foreground: #ffffff;
-  --accent-hover: #ea580c;
+  --accent-hover: #9a4509;
 
-  /* Secondary colors */
-  --secondary: #6366f1;
+  /* Secondary — ink. The indigo is retired; secondary actions wear black. */
+  --secondary: #18181b;
   --secondary-foreground: #ffffff;
-  --secondary-hover: #4f46e5;
+  --secondary-hover: #3f3f46;
 
-  /* Info colors (blue - for neutral indicators) */
-  --info: #3b82f6;
+  /* Info (desaturated slate-blue - for neutral indicators) */
+  --info: #3a66a0;
   --info-foreground: #ffffff;
-  --info-hover: #2563eb;
-  --info-light: #60a5fa;
+  --info-hover: #2d5183;
+  --info-light: #6e93c4;
 
   /* Destructive */
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
 
-  /* Success */
-  --success: #10b981;
+  /* Success (desaturated) */
+  --success: #15803d;
   --success-foreground: #ffffff;
 
-  /* Warning */
-  --warning: #f59e0b;
+  /* Warning (desaturated) */
+  --warning: #b45309;
   --warning-foreground: #ffffff;
 
-  /* Border radius */
-  --radius: 0.5rem;
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.5rem;
+  /* Border radius — Newsstand cut: near-sharp everywhere.
+     rounded-full survives untouched for chips, counts, and avatars. */
+  --radius: 0.125rem;
+  --radius-sm: 0.125rem;
+  --radius-md: 0.125rem;
+  --radius-lg: 0.125rem;
+  --radius-xl: 0.25rem;
+  --radius-2xl: 0.25rem;
   --radius-full: 9999px;
 
   /* Shadows */
@@ -61,12 +62,6 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-  /* Colored shadows for brand elements */
-  --shadow-primary: 0 4px 14px -3px rgba(230, 57, 70, 0.25);
-  --shadow-primary-lg: 0 10px 25px -5px rgba(230, 57, 70, 0.3);
-  --shadow-success: 0 4px 14px -3px rgba(16, 185, 129, 0.25);
-  --shadow-info: 0 4px 14px -3px rgba(59, 130, 246, 0.25);
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -104,33 +99,33 @@
   --primary-light: #f47580;
   --primary-dark: #cf2f3c;
 
-  /* Accent colors for dark mode */
-  --accent: #fb923c;
-  --accent-foreground: #ffffff;
-  --accent-hover: #f97316;
+  /* Accent for dark mode (muted amber-orange) */
+  --accent: #d98a4a;
+  --accent-foreground: #1a1208;
+  --accent-hover: #c2570c;
 
-  /* Secondary colors for dark mode */
-  --secondary: #818cf8;
-  --secondary-foreground: #ffffff;
-  --secondary-hover: #6366f1;
+  /* Secondary for dark mode — paper on ink */
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --secondary-hover: #d4d4d8;
 
-  /* Info colors for dark mode */
-  --info: #60a5fa;
-  --info-foreground: #ffffff;
-  --info-hover: #3b82f6;
-  --info-light: #93c5fd;
+  /* Info for dark mode (desaturated slate-blue) */
+  --info: #86a9d9;
+  --info-foreground: #101418;
+  --info-hover: #6e93c4;
+  --info-light: #a5bfe3;
 
   /* Destructive for dark mode */
   --destructive: #f87171;
   --destructive-foreground: #ffffff;
 
-  /* Success for dark mode */
-  --success: #34d399;
-  --success-foreground: #ffffff;
+  /* Success for dark mode (desaturated) */
+  --success: #4caf7a;
+  --success-foreground: #0b130e;
 
-  /* Warning for dark mode */
-  --warning: #fbbf24;
-  --warning-foreground: #ffffff;
+  /* Warning for dark mode (desaturated) */
+  --warning: #d9a23c;
+  --warning-foreground: #171106;
 
   /* Shadows for dark mode (deeper) */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
@@ -138,12 +133,6 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-
-  /* Colored shadows for dark mode */
-  --shadow-primary: 0 4px 14px -3px rgba(230, 57, 70, 0.35);
-  --shadow-primary-lg: 0 10px 25px -5px rgba(230, 57, 70, 0.4);
-  --shadow-success: 0 4px 14px -3px rgba(52, 211, 153, 0.35);
-  --shadow-info: 0 4px 14px -3px rgba(96, 165, 250, 0.35);
 
   /* Toast colors for dark mode */
   --toast-bg: #18181b;
@@ -173,17 +162,17 @@
   --color-primary-light: var(--primary-light);
   --color-primary-dark: var(--primary-dark);
 
-  /* Accent (Orange) */
+  /* Accent (muted amber-orange, functional only) */
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-hover: var(--accent-hover);
 
-  /* Secondary (Indigo) */
+  /* Secondary (ink) */
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-hover: var(--secondary-hover);
 
-  /* Info (Blue) */
+  /* Info (desaturated slate-blue) */
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
   --color-info-hover: var(--info-hover);
@@ -209,6 +198,10 @@
   /* Fonts */
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
+  /* Display (headings/kickers) + editorial serif (standfirsts/pull quotes).
+     Exposed to Tailwind as `font-display` and `font-serif` utilities. */
+  --font-display: var(--font-archivo);
+  --font-serif: var(--font-source-serif);
 }
 
 body {
@@ -225,10 +218,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-outfit), 'Outfit', sans-serif;
-  font-weight: 700;
+  font-family: var(--font-archivo), 'Archivo', sans-serif;
+  font-weight: 800;
+  /* Slightly condensed by default (Archivo wdth axis) — the magazine cut.
+     Full condensation is reserved for .heading-display moments. */
+  font-stretch: 87.5%;
   font-style: normal;
-  line-height: 1.2;
+  line-height: 1.15;
   margin-bottom: 0.5rem;
 }
 
@@ -252,24 +248,14 @@ h2:not(.heading-plain) {
 .dark h2:not(.heading-plain) {
   border-bottom-color: white;
 }
+/* h3/h4 no longer carry rules — the thick rule is reserved for h1/h2
+   (page titles + section openers) so it stays a signature, not wallpaper. */
 h3:not(.heading-plain) {
   font-size: 20px;
-  border-bottom: 3px solid black;
-  padding-bottom: 0.5rem;
-}
-
-.dark h3:not(.heading-plain) {
-  border-bottom-color: white;
 }
 
 h4:not(.heading-plain) {
   font-size: 18px;
-  border-bottom: 2px solid black;
-  padding-bottom: 0.5rem;
-}
-
-.dark h4:not(.heading-plain) {
-  border-bottom-color: white;
 }
 h5:not(.heading-plain) {
   font-size: 16px;
@@ -331,6 +317,68 @@ h5.heading-plain,
 h6.heading-plain {
   border-bottom: none;
   padding-bottom: 0;
+}
+
+/* ============================================
+   NEWSSTAND TYPOGRAPHY UTILITIES
+
+   The three editorial voices:
+   - .heading-display  cover/section titles: black, fully condensed, caps
+   - .kicker           caps eyebrow with a red bar (category/section labels)
+   - .standfirst       serif-italic deck under a display heading
+   ============================================ */
+
+/* Display titles — hero headlines, section openers, landing-page mastheads.
+   Pair with .heading-plain when the thick rule isn't wanted. */
+.heading-display {
+  font-family: var(--font-archivo), 'Archivo', sans-serif;
+  font-weight: 900;
+  font-stretch: 75%;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+/* Caps eyebrow label with the red kicker bar */
+.kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-family: var(--font-archivo), 'Archivo', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--primary);
+}
+
+.kicker::before {
+  content: '';
+  width: 2rem;
+  height: 3px;
+  background: var(--primary);
+}
+
+/* Bare variant — no bar (tight spots: cards, chips) */
+.kicker-plain::before {
+  display: none;
+}
+
+/* Serif-italic deck / standfirst under display headings.
+   No color here — this unlayered rule would beat Tailwind text-* utilities;
+   call sites set their own (usually text-muted-foreground / text-zinc-300). */
+.standfirst {
+  font-family: var(--font-source-serif), 'Source Serif 4', Georgia, serif;
+  font-style: italic;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 640px) {
+  .standfirst {
+    font-size: 1.25rem;
+  }
 }
 
 p {
@@ -1126,27 +1174,6 @@ a:focus-visible {
   overflow: visible;
   clip: auto;
   white-space: normal;
-}
-
-/* Discount banner shimmer animation */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.discount-banner-shimmer::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.05) 45%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.05) 55%,
-    transparent 65%
-  );
-  animation: shimmer 4s ease-in-out infinite;
 }
 
 /* Respect user preference for reduced motion */

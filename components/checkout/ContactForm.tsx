@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
+import Button from '@/components/ui/Button';
 
 interface ContactFormProps {
   onComplete: (data: { email: string; phone: string; newsletter: boolean }) => void;
@@ -79,7 +80,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
           className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-            errors.email ? 'border-red-500' : 'border-input'
+            errors.email ? 'border-destructive' : 'border-input'
           }`}
         />
         {errors.email && (
@@ -99,7 +100,7 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
           onChange={(e) => setPhone(e.target.value)}
           placeholder={t('phonePlaceholder')}
           className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-foreground ${
-            errors.phone ? 'border-red-500' : 'border-input'
+            errors.phone ? 'border-destructive' : 'border-input'
           }`}
         />
         {errors.phone && (
@@ -125,12 +126,9 @@ export default function ContactForm({ onComplete }: ContactFormProps) {
       </div>
 
       {/* Continue Button */}
-      <button
-        type="submit"
-        className="w-full py-3 px-4 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
-      >
+      <Button type="submit" size="lg" className="w-full">
         {t('continueToShipping')}
-      </button>
+      </Button>
     </form>
   );
 }

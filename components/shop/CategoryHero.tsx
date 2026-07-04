@@ -32,19 +32,7 @@ export default function CategoryHero({
   return (
     <section className='mb-8 select-none'>
       {/* Hero Banner */}
-      <div
-        className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${config.gradient}`}
-      >
-        {/* Pattern Overlay */}
-        <div className='absolute inset-0 opacity-10'>
-          <div
-            className='absolute inset-0'
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-        </div>
-
+      <div className='relative overflow-hidden bg-zinc-950 border-t-4 border-primary'>
         {/* Content */}
         <div className='relative px-6 py-8 sm:px-8 sm:py-12'>
           <div className='flex flex-col sm:flex-row sm:items-center gap-6'>
@@ -70,7 +58,7 @@ export default function CategoryHero({
             {/* Text Content */}
             <div className='flex-1'>
               {/* Breadcrumb */}
-              <div className='drop-shadow-md [&_nav]:mb-2'>
+              <div className='[&_nav]:mb-2'>
                 <Breadcrumbs
                   variant='light'
                   items={[
@@ -92,12 +80,12 @@ export default function CategoryHero({
               </div>
 
               {/* Title */}
-              <h1 className='text-white text-3xl sm:text-4xl font-bold mb-2 drop-shadow-lg'>
+              <h1 className='text-white text-3xl sm:text-4xl font-bold mb-2'>
                 {categoryName}
               </h1>
 
               {/* Stats */}
-              <div className='flex flex-wrap items-center gap-4 text-white/90 drop-shadow-md'>
+              <div className='flex flex-wrap items-center gap-4 text-white/90'>
                 <span className='flex items-center gap-1.5'>
                   <svg
                     className='w-5 h-5'
@@ -139,14 +127,14 @@ export default function CategoryHero({
             <div className='hidden sm:flex flex-col gap-2'>
               <a
                 href='#products'
-                className='px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg text-white text-sm font-medium transition-colors backdrop-blur-sm text-center'
+                className='px-4 py-2 border border-white/40 hover:bg-white hover:text-zinc-950 rounded-lg text-white text-xs font-bold uppercase tracking-[0.12em] transition-colors text-center'
               >
                 {t('browseProducts')}
               </a>
               {category.children && category.children.length > 0 && (
                 <a
                   href='#subcategories'
-                  className='px-4 py-2 border border-white/30 hover:bg-white/10 rounded-lg text-white text-sm font-medium transition-colors text-center'
+                  className='px-4 py-2 border border-white/40 hover:bg-white hover:text-zinc-950 rounded-lg text-white text-xs font-bold uppercase tracking-[0.12em] transition-colors text-center'
                 >
                   {t('viewSubcategories')}
                 </a>
@@ -154,24 +142,20 @@ export default function CategoryHero({
             </div>
           </div>
         </div>
-
-        {/* Decorative Elements */}
-        <div className='absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-3xl' />
-        <div className='absolute -bottom-10 -left-10 w-32 h-32 bg-black/10 rounded-full blur-3xl' />
       </div>
 
       {/* Mobile Quick Actions */}
       <div className='flex sm:hidden gap-2 mt-4'>
         <a
           href='#products'
-          className={`flex-1 px-4 py-2.5 bg-gradient-to-r ${config.gradient} text-white rounded-lg text-sm font-medium text-center`}
+          className='flex-1 px-4 py-2.5 bg-zinc-950 border-t-4 border-primary text-white rounded-lg text-xs font-bold uppercase tracking-[0.12em] text-center'
         >
           {t('browseProducts')}
         </a>
         {category.children && category.children.length > 0 && (
           <a
             href='#subcategories'
-            className='flex-1 px-4 py-2.5 border border-border rounded-lg text-sm font-medium text-foreground text-center hover:bg-muted transition-colors'
+            className='flex-1 px-4 py-2.5 border border-border rounded-lg text-xs font-bold uppercase tracking-[0.12em] text-foreground text-center hover:bg-muted transition-colors'
           >
             {t('subcategoriesMobile')}
           </a>

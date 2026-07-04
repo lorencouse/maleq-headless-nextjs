@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useLocale } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
+import { formatPostDate } from '@/lib/utils/format-post-date';
 import { getProductionImageUrl } from '@/lib/utils/image';
 
 interface BlogCardProps {
@@ -10,8 +12,9 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
+  const locale = useLocale();
   return (
-    <article className='bg-card border border-border rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all group'>
+    <article className='bg-card border border-border rounded-lg overflow-hidden hover:border-foreground/50 transition-colors group'>
       {/* Featured Image */}
       <Link href={`/guides/${post.slug}`} className='blog-card-link'>
         <div
@@ -54,7 +57,7 @@ export default function BlogCard({ post }: BlogCardProps) {
               <Link
                 key={category.id}
                 href={`/guides/category/${category.slug}`}
-                className='min-w-0 shrink truncate text-xs font-medium text-primary hover:text-primary-hover'
+                className='min-w-0 shrink truncate text-[10px] font-bold uppercase tracking-[0.16em] text-primary hover:text-primary-hover'
               >
                 {category.name}
               </Link>
@@ -75,8 +78,18 @@ export default function BlogCard({ post }: BlogCardProps) {
           {/* Red underline (always visible) */}
           <span className='absolute bottom-0 left-0 w-full h-0.5 bg-primary' />
           {/* Black underline (expands on hover) */}
-          <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-black transition-all duration-300 group-hover:w-full' />
+          <span className='absolute bottom-0 left-0 w-0 h-0.5 bg-foreground transition-all duration-300 group-hover:w-full' />
         </div>
+
+        {/* Dateline */}
+        {post.date && (
+          <time
+            dateTime={post.date}
+            className='mt-2 block text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground'
+          >
+            {formatPostDate(post.date, locale)}
+          </time>
+        )}
       </div>
     </article>
   );

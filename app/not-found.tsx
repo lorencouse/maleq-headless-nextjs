@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
+import { ButtonLink } from '@/components/ui/Button';
 import { routing } from '@/i18n/routing';
 import Log404 from '@/components/analytics/Log404';
 import NotFoundSuggestions from '@/components/analytics/NotFoundSuggestions';
@@ -30,11 +31,11 @@ export default function NotFound() {
           <div className="text-8xl font-bold text-primary/20">404</div>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+        <h1 className="heading-plain heading-display text-3xl md:text-4xl text-foreground mb-3">
           Page Not Found
         </h1>
         <p className="text-lg text-muted-foreground mb-6">
-          Oops! The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          This page doesn&apos;t exist — or it moved. The good stuff is still here.
         </p>
 
         {/* Search Bar */}
@@ -51,24 +52,18 @@ export default function NotFound() {
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary-hover transition-colors"
-          >
+          <ButtonLink href="/">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             Go Home
-          </Link>
-          <Link
-            href="/shop"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-border text-foreground font-semibold rounded-lg hover:bg-muted transition-colors"
-          >
+          </ButtonLink>
+          <ButtonLink href="/shop" variant="ghost">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
             </svg>
             Browse Shop
-          </Link>
+          </ButtonLink>
         </div>
 
         {/* Helpful Links */}

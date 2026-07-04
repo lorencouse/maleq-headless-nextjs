@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
+import Button from '@/components/ui/Button';
 
 interface Address {
   first_name: string;
@@ -355,19 +356,12 @@ export default function AddressesPage() {
       </div>
 
       <div className="flex gap-3 pt-4">
-        <button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold disabled:opacity-50"
-        >
+        <Button onClick={handleSave} disabled={isSaving}>
           {isSaving ? tForm('saving') : tForm('saveAddress')}
-        </button>
-        <button
-          onClick={handleCancel}
-          className="px-6 py-2.5 border border-input rounded-lg hover:bg-muted transition-colors font-medium text-foreground"
-        >
+        </Button>
+        <Button variant="ghost" onClick={handleCancel}>
           {tForm('cancel')}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -417,8 +411,8 @@ export default function AddressesPage() {
           <div
             className={`p-4 rounded-lg ${
               message.type === 'success'
-                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-600 dark:text-green-400'
-                : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400'
+                ? 'bg-success/10 border border-success/20 text-success'
+                : 'bg-destructive/10 border border-destructive/20 text-destructive'
             }`}
           >
             {message.text}
@@ -435,7 +429,7 @@ export default function AddressesPage() {
             {/* Billing Address */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
-                <h2 className="font-semibold text-foreground">{t('billing')}</h2>
+                <h2 className="heading-plain font-semibold text-foreground">{t('billing')}</h2>
                 {editingType !== 'billing' && customerData?.billing?.address_1 && (
                   <button
                     onClick={() => handleEdit('billing')}
@@ -455,7 +449,7 @@ export default function AddressesPage() {
             {/* Shipping Address */}
             <div className="bg-card border border-border rounded-xl overflow-hidden">
               <div className="p-4 border-b border-border flex justify-between items-center">
-                <h2 className="font-semibold text-foreground">{t('shipping')}</h2>
+                <h2 className="heading-plain font-semibold text-foreground">{t('shipping')}</h2>
                 <div className="flex gap-3">
                   {editingType !== 'shipping' && customerData?.billing?.address_1 && (
                     <button

@@ -508,7 +508,7 @@ export default function ProductPageClient({
               {justAdded ? (
                 <button
                   onClick={() => miniCartControls.open()}
-                  className='flex-1 bg-green-600 text-white py-3.5 px-6 rounded-xl hover:bg-green-700 transition-colors font-semibold text-lg flex items-center justify-center gap-2'
+                  className='flex-1 bg-success text-success-foreground py-3.5 px-6 rounded-xl hover:opacity-90 transition-colors font-semibold text-lg flex items-center justify-center gap-2'
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -626,7 +626,7 @@ export default function ProductPageClient({
               {justAdded ? (
                 <button
                   onClick={() => miniCartControls.open()}
-                  className='flex-1 sm:flex-none bg-green-600 text-white py-2.5 px-6 rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm sm:text-base whitespace-nowrap flex items-center justify-center gap-2'
+                  className='flex-1 sm:flex-none bg-success text-success-foreground py-2.5 px-6 rounded-lg hover:opacity-90 transition-colors font-semibold text-sm sm:text-base whitespace-nowrap flex items-center justify-center gap-2'
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

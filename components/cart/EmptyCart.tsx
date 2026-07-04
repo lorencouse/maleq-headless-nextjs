@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { ButtonLink } from '@/components/ui/Button';
 
 export default function EmptyCart() {
   const t = useTranslations('cart');
@@ -34,12 +35,9 @@ export default function EmptyCart() {
       </p>
 
       {/* Action Button */}
-      <Link
-        href="/shop"
-        className="inline-block py-3 px-8 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
-      >
+      <ButtonLink href="/shop" size="md">
         {t('startShopping')}
-      </Link>
+      </ButtonLink>
 
       {/* Additional Links */}
       <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm">

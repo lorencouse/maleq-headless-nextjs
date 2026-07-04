@@ -94,21 +94,14 @@ function newId() {
 
 /**
  * Per-pill color palette, cycled by index so each guided pill gets its own
- * color. Anchored to the site accent system: the first entry is the exact
- * brand primary (--primary #E63946), and the orange/indigo entries mirror the
- * --accent (#f97316) and --secondary (#6366f1) tokens, with the rest harmonized
- * warm→cool at readable tones (white text). Full literal class strings so
- * Tailwind's scanner keeps them; each has light + dark variants.
+ * color. A two-tone red/ink pair anchored to the design system: the first
+ * entry is the brand primary (--primary red), the second a neutral "ink"
+ * pill (zinc-900, inverted to zinc-100 in dark mode). Full literal class
+ * strings so Tailwind's scanner keeps them; each has light + dark variants.
  */
 const PILL_COLORS = [
   'bg-primary text-white hover:bg-primary-hover',
-  'bg-orange-600 text-white hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600',
-  'bg-amber-600 text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600',
-  'bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:hover:bg-rose-600',
-  'bg-pink-600 text-white hover:bg-pink-700 dark:bg-pink-500 dark:hover:bg-pink-600',
-  'bg-violet-600 text-white hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600',
-  'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600',
-  'bg-sky-600 text-white hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600',
+  'bg-zinc-900 text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300',
 ];
 
 // Renders [label](/path) markdown links and **bold** as React nodes.

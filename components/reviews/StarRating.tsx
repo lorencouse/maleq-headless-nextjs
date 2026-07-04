@@ -71,7 +71,7 @@ export default function StarRating({
                 style={{ width: filled ? '100%' : `${percentage}%`, height: '100%' }}
               >
                 <svg
-                  className={`block ${sizeClasses[size]} text-yellow-400`}
+                  className={`block ${sizeClasses[size]} text-primary`}
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >

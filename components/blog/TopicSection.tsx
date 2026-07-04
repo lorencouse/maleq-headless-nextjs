@@ -1,11 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
 import BlogCard from './BlogCard';
 import ArticleListItem from './ArticleListItem';
 import ArticleCarousel from './ArticleCarousel';
+import UISectionHeader from '@/components/ui/SectionHeader';
 
 export type TopicLayout = 'carousel' | 'grid' | 'list';
 
@@ -19,22 +19,12 @@ interface TopicSectionProps {
 function SectionHeader({ title, viewAllLink }: { title: string; viewAllLink?: string }) {
   const t = useTranslations('blog');
   return (
-    <div className="mb-5 flex items-end justify-between gap-4">
-      <h2 className="text-2xl sm:text-3xl font-bold text-foreground pl-3 border-l-4 border-primary">
-        {title}
-      </h2>
-      {viewAllLink && (
-        <Link
-          href={viewAllLink}
-          className="flex-shrink-0 text-sm font-medium text-primary hover:text-primary-hover inline-flex items-center gap-1"
-        >
-          {t('viewAllSection')}
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-      )}
-    </div>
+    <UISectionHeader
+      title={title}
+      viewAllHref={viewAllLink}
+      viewAllLabel={t('viewAllSection')}
+      className="mb-5"
+    />
   );
 }
 

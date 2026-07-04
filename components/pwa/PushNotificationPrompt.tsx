@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePushSubscription } from '@/lib/hooks/usePushSubscription';
 import { showSuccess, showError } from '@/lib/utils/toast';
+import Button from '@/components/ui/Button';
 
 interface PushNotificationPromptProps {
   /** Show only after this many visits (0 = always show) */
@@ -80,21 +81,17 @@ export default function PushNotificationPrompt({
           </svg>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-foreground mb-1">{t('heading')}</h3>
+          <h3 className="heading-plain font-semibold text-foreground mb-1">{t('heading')}</h3>
           <p className="text-sm text-muted-foreground mb-4">
             {t('body')}
           </p>
           <div className="flex flex-wrap gap-3">
-            <button
-              onClick={handleEnable}
-              disabled={isLoading}
-              className="px-4 py-2.5 min-h-[44px] bg-primary text-primary-foreground text-sm font-medium rounded-lg hover:bg-primary-hover disabled:opacity-50 transition-colors"
-            >
+            <Button onClick={handleEnable} disabled={isLoading} size="sm">
               {isLoading ? t('enabling') : t('enableButton')}
-            </button>
+            </Button>
             <button
               onClick={handleDismiss}
-              className="px-4 py-2.5 min-h-[44px] text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+              className="px-4 py-2.5 min-h-[44px] text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
             >
               {t('notNow')}
             </button>

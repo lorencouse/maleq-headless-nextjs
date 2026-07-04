@@ -178,7 +178,7 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
             <span className="text-lg text-muted-foreground line-through">
               ${product.regularPrice.toFixed(2)}
             </span>
-            <span className="text-2xl font-bold text-red-600">
+            <span className="text-2xl font-bold text-primary">
               ${product.price.toFixed(2)}
             </span>
           </>
@@ -197,14 +197,13 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
         disabled={isAdding || !product.inStock}
         className={`
           inline-flex items-center justify-center gap-2
-          px-6 py-3 rounded-lg font-semibold text-base
+          px-6 py-3 rounded-lg text-sm font-bold uppercase tracking-[0.12em]
           transition-all duration-200 w-full
           ${isAdded
-            ? 'bg-green-600 text-white'
-            : 'bg-primary text-primary-foreground hover:bg-primary-hover hover:-translate-y-0.5'
+            ? 'bg-success text-success-foreground'
+            : 'bg-primary text-primary-foreground hover:bg-primary-hover'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
-          shadow-md hover:shadow-lg
         `}
       >
         {isAdding ? (

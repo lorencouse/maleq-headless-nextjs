@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import BlogCard from './BlogCard';
+import Button from '@/components/ui/Button';
 import { Post } from '@/lib/types/wordpress';
 
 interface PageInfo {
@@ -103,11 +104,7 @@ export default function BlogPostsGrid({
       {/* Load More Button */}
       {pageInfo.hasNextPage && (
         <div className="mt-12 text-center">
-          <button
-            onClick={loadMore}
-            disabled={isPending}
-            className="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-          >
+          <Button onClick={loadMore} disabled={isPending}>
             {isPending ? (
               <>
                 <svg
@@ -135,7 +132,7 @@ export default function BlogPostsGrid({
             ) : (
               t('gridLoadMore')
             )}
-          </button>
+          </Button>
         </div>
       )}
     </>

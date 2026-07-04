@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import AccountLayout from '@/components/account/AccountLayout';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { ButtonLink } from '@/components/ui/Button';
 
 interface OrderItem {
   id: number;
@@ -93,7 +94,7 @@ export default function OrdersPage() {
           </div>
         ) : error ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
-            <p className="text-red-500">{error}</p>
+            <p className="text-destructive">{error}</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="bg-card border border-border rounded-xl p-12 text-center">
@@ -114,10 +115,7 @@ export default function OrdersPage() {
             <p className="text-muted-foreground mb-6">
               {t('noOrdersHint')}
             </p>
-            <Link
-              href="/shop"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary-hover transition-colors font-semibold"
-            >
+            <ButtonLink href="/shop" size="md">
               {t('browseProducts')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -127,7 +125,7 @@ export default function OrdersPage() {
                   d="M14 5l7 7m0 0l-7 7m7-7H3"
                 />
               </svg>
-            </Link>
+            </ButtonLink>
           </div>
         ) : (
           <div className="space-y-4">

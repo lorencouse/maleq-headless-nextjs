@@ -48,7 +48,7 @@ export default function ArticleHero({ posts }: ArticleHeroProps) {
               sizes="(max-width: 1024px) 100vw, 66vw"
             />
           ) : (
-            <span className="absolute inset-0 bg-gradient-to-br from-muted to-border" />
+            <span className="absolute inset-0 bg-muted" />
           )}
           {/* Readability scrim — desktop overlay only */}
           <span className="hidden lg:block absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent" />
