@@ -12,6 +12,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISS_KEY = 'maleq-install-prompt-dismissed';
 const INSTALL_VISITS_KEY = 'maleq-install-visit-count';
+const SESSION_COUNTED_KEY = 'maleq-install-session-counted';
+// Delay the manual (iOS/macOS) prompt so it appears after some engagement
+// rather than the instant a page loads.
+const MANUAL_PROMPT_DELAY_MS = 8000;
 type InstallMode = 'prompt' | 'manual-ios' | 'manual-macos';
 
 function isStandaloneMode(): boolean {
@@ -54,14 +58,20 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
       return; // localStorage unavailable — don't show prompt
     }
 
-    // Track visits
+    // Track visits — count ONE per browser session (not per page navigation),
+    // so the prompt escalates across return visits instead of firing on the
+    // 2nd page view of a first session.
     let hasEnoughVisits = true;
     try {
-      const visits = parseInt(localStorage.getItem(INSTALL_VISITS_KEY) || '0', 10) + 1;
-      localStorage.setItem(INSTALL_VISITS_KEY, String(visits));
+      let visits = parseInt(localStorage.getItem(INSTALL_VISITS_KEY) || '0', 10);
+      if (!sessionStorage.getItem(SESSION_COUNTED_KEY)) {
+        visits += 1;
+        localStorage.setItem(INSTALL_VISITS_KEY, String(visits));
+        sessionStorage.setItem(SESSION_COUNTED_KEY, '1');
+      }
       hasEnoughVisits = visits >= minVisits;
     } catch {
-      // localStorage unavailable — show prompt anyway
+      // storage unavailable — show prompt anyway
     }
 
     const manualMode = detectManualInstallMode();
@@ -74,7 +84,7 @@ export default function InstallPrompt({ minVisits = 2 }: { minVisits?: number })
           category: 'PWA',
           label: manualMode,
         });
-      }, 0);
+      }, MANUAL_PROMPT_DELAY_MS);
     }
 
     const handler = (e: Event) => {

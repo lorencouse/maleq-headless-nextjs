@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface Testimonial {
   id: number;
@@ -92,13 +93,12 @@ export default function TestimonialsSection() {
   return (
     <section className="bg-muted/30 py-8 sm:py-16 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-foreground mb-3">{t('heading')}</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            {t('subtitle')}
-          </p>
-        </div>
+        <SectionHeader
+          title={t('heading')}
+          subtitle={t('subtitle')}
+          centered
+          className="mb-12"
+        />
 
         {/* Desktop Grid */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-6">

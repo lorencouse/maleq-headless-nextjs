@@ -68,7 +68,7 @@ export default function HomeHero() {
           </div>
 
           {/* Dateline strip — trust signals as tracked caps over a hairline */}
-          <div className='flex flex-wrap gap-x-8 gap-y-3 mt-10 pt-6 border-t border-white/15 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-400'>
+          <div className='flex flex-wrap gap-x-5 gap-y-2.5 sm:gap-x-8 sm:gap-y-3 mt-10 pt-6 border-t border-white/15 text-[11px] font-bold uppercase tracking-[0.16em] text-zinc-400'>
             <span className='text-zinc-300'>{t('socialProof')}</span>
             <Link href='/privacy' className='hover:text-white transition-colors'>
               {t('trustSecureCheckout')}

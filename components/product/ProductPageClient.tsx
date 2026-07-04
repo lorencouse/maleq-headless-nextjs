@@ -406,15 +406,19 @@ export default function ProductPageClient({
         </div>
       )}
 
-      {/* Product Attributes */}
-      {product.attributes && product.attributes.length > 0 && (
+      {/* Product Attributes — only attrs that have a value to show; variation
+          axes often surface here with empty options (e.g. bare "Style:") */}
+      {product.attributes &&
+        product.attributes.some(
+          (attr) => attr.visible && attr.options.some((o) => o && o.trim())
+        ) && (
         <div className='mb-8 p-5 bg-primary/5 rounded-xl border border-primary/10'>
           <h3 className='font-semibold text-foreground mb-3'>
             {t('productDetailsHeading')}
           </h3>
           <div className='grid grid-cols-2 gap-3 text-sm'>
             {product.attributes
-              .filter((attr) => attr.visible)
+              .filter((attr) => attr.visible && attr.options.some((o) => o && o.trim()))
               .map((attr, index) => {
                 // Localize the value for color/material attributes via the
                 // dictionaries (keyed by the slugified option); other attribute

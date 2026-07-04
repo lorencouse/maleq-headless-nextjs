@@ -1,10 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { UnifiedProduct } from '@/lib/products/combined-service';
 import ProductCard from '@/components/shop/ProductCard';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { useHorizontalScroll } from '@/lib/hooks/useHorizontalScroll';
 
 interface ProductCarouselProps {
@@ -59,13 +59,14 @@ export default function ProductCarousel({
   const content = (
     <div className={`${wrapperClass} ${className}`}>
       {/* Header */}
-      <div className='mb-8'>
-        {badge && <div className='mb-1'>{badge}</div>}
-        <h2 className='text-2xl sm:text-3xl font-bold text-foreground'>
-          {title}
-        </h2>
-        {subtitle && <p className='text-muted-foreground mt-1'>{subtitle}</p>}
-      </div>
+      {badge && <div className='mb-2'>{badge}</div>}
+      <SectionHeader
+        title={title}
+        subtitle={subtitle}
+        viewAllHref={viewAllLink}
+        viewAllLabel={viewAllLink ? resolvedViewAllText : undefined}
+        className='mb-8'
+      />
 
       {/* Carousel */}
       <div className='relative'>
@@ -156,31 +157,6 @@ export default function ProductCarousel({
               d='M9 5l7 7-7 7'
             />
           </svg>
-        </div>
-      )}
-
-      {/* View All Link */}
-      {viewAllLink && (
-        <div className='mt-6 text-center'>
-          <Link
-            href={viewAllLink}
-            className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
-          >
-            {resolvedViewAllText}
-            <svg
-              className='w-4 h-4'
-              fill='none'
-              stroke='currentColor'
-              viewBox='0 0 24 24'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M9 5l7 7-7 7'
-              />
-            </svg>
-          </Link>
         </div>
       )}
 

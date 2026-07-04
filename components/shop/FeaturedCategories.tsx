@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { HierarchicalCategory } from '@/lib/products/combined-service';
 import CategoryCard from './CategoryCard';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface FeaturedCategoriesProps {
   categories: HierarchicalCategory[];
@@ -61,13 +62,13 @@ export default function FeaturedCategories({ categories }: FeaturedCategoriesPro
 
   return (
     <section id="categories" className="mb-10">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">{t('shopByCategory')}</h2>
-        <p className="text-muted-foreground text-sm mt-1">{t('shopByCategorySubtitle')}</p>
-      </div>
+      <SectionHeader
+        title={t('shopByCategory')}
+        subtitle={t('shopByCategorySubtitle')}
+      />
 
       {/* Categories Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         {featuredCategories.map((category) => (
           <CategoryCard key={category.id} category={category} />
         ))}

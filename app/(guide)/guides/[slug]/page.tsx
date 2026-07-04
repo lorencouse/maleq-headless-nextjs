@@ -340,6 +340,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const locale = await getGuideLocaleBySlug(slug);
   setRequestLocale(staticRequestLocale(locale));
   const t = await getTranslations({ locale, namespace: 'blog' });
+  const tNews = await getTranslations({ locale, namespace: 'news' });
 
   // SQL-first content render (deterministic), GraphQL do_blocks only as a
   // last resort for posts with dynamic blocks. See getGuidePost above.
@@ -348,6 +349,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   if (!post) {
     notFound();
   }
+
+  // News articles live under /guides/[slug] but belong to the /news section —
+  // give them a "Home › News › Title" trail instead of the guides taxonomy trail.
+  const isNews = post.categories?.nodes?.some((n) => n.slug === 'news') ?? false;
 
   // Fetch related posts from the same category
   let relatedPosts: Post[] = [];
@@ -454,7 +459,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <BreadcrumbSchema
         items={[
           { name: t('breadcrumbHome'), url: SITE_URL },
-          { name: t('breadcrumbGuides'), url: `${SITE_URL}/guides` },
+          isNews
+            ? { name: tNews('breadcrumb'), url: `${SITE_URL}/news` }
+            : { name: t('breadcrumbGuides'), url: `${SITE_URL}/guides` },
           { name: post.title, url: `${SITE_URL}/guides/${slug}` },
         ]}
       />
@@ -464,13 +471,23 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Breadcrumb */}
       <Breadcrumbs
-        items={[
-          { label: t('breadcrumbGuides'), href: '/guides' },
-          ...(post.categories?.nodes?.[0]
-            ? [{ label: post.categories.nodes[0].name, href: `/guides/category/${post.categories.nodes[0].slug}` }]
-            : []),
-          { label: post.title },
-        ]}
+        items={
+          isNews
+            ? [
+                { label: tNews('breadcrumb'), href: '/news' },
+                { label: post.title },
+              ]
+            : [
+                { label: t('breadcrumbGuides'), href: '/guides' },
+                ...(post.categories?.nodes?.[0]
+                  ? [{
+                      label: post.categories.nodes[0].name,
+                      href: `/guides/category/${post.categories.nodes[0].slug}`,
+                    }]
+                  : []),
+                { label: post.title },
+              ]
+        }
       />
 
       {/* Header */}

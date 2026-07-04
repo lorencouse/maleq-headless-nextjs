@@ -74,9 +74,10 @@ export default function ProductDetailsWrapper({
   }));
 
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12'>
-      {/* Product Images */}
-      <div>
+    <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 lg:items-start'>
+      {/* Product Images — sticky on desktop so the gallery stays in view while
+          the longer details/options column scrolls past it. */}
+      <div className='lg:sticky lg:top-24'>
         <ProductImageGallery
           images={galleryImages}
           productName={product.name}

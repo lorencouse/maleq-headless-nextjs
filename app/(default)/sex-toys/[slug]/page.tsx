@@ -273,7 +273,11 @@ export default async function CategoryPage({
     }
   }
 
-  products = sortProductsByPriority(products);
+  // Dedup by id — taxonomy LEFT JOINs in the GraphQL fallback can multiply
+  // rows, which would otherwise trip React's duplicate-key warning on the grid.
+  products = sortProductsByPriority(
+    Array.from(new Map(products.map((p) => [p.id, p])).values()),
+  );
   const displayedProductCount = hasAdditionalFilters
     ? totalProductCount || products.length
     : category.count;
@@ -285,7 +289,7 @@ export default async function CategoryPage({
   const showFeaturedSections = !hasAdditionalFilters;
 
   return (
-    <div className='max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12'>
+    <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12'>
       {/* Breadcrumb Schema */}
       <BreadcrumbSchema
         items={[

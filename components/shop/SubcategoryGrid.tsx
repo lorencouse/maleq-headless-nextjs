@@ -11,9 +11,17 @@ interface SubcategoryGridProps {
   parentName?: string;
 }
 
-// Simple plural-to-singular conversion for category names
+// Simple plural-to-singular conversion for category names.
+// Names with conjunctions ("Dildos & Dongs", "Books, Adult Games & Music")
+// are split into segments and each segment is singularized on its own —
+// singularizing only the final word would yield "Dildos & Dong".
 function toSingular(name: string): string {
-  // Handle compound names - only singularize the last word
+  if (/[,&]|\band\b/i.test(name)) {
+    return name
+      .split(/(\s*(?:,|&|\band\b)\s*)/i)
+      .map((part, i) => (i % 2 === 0 && part ? toSingular(part) : part))
+      .join('');
+  }
   const words = name.trim().split(/\s+/);
   const last = words[words.length - 1];
   const lower = last.toLowerCase();
@@ -100,7 +108,7 @@ export default function SubcategoryGrid({
       </div>
 
       {/* Subcategories Grid */}
-      <div className='grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3'>
+      <div className='grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3'>
         {activeSubcategories.map((subcategory) => (
           <CategoryCard key={subcategory.id} category={subcategory} />
         ))}

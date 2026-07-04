@@ -299,9 +299,14 @@ export default function ShopPageClient({
       const data = await response.json();
 
       if (data.products) {
-        // Append products when loading more (offset or cursor pagination)
+        // Append products when loading more (offset or cursor pagination).
+        // Dedup by id: pagination boundaries can re-return a product already
+        // shown, which would trip React's duplicate-key warning and render it twice.
         if ((offset !== undefined && offset > 0) || afterCursor) {
-          setProducts((prev) => [...prev, ...data.products]);
+          setProducts((prev) => {
+            const seen = new Set(prev.map((p) => p.id));
+            return [...prev, ...data.products.filter((p: { id: string }) => !seen.has(p.id))];
+          });
           if (typeof data.total === 'number') {
             setTotalCount((prevTotal) => Math.max(prevTotal, data.total));
           }

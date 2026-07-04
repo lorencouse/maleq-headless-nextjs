@@ -43,7 +43,10 @@ export default function StorefrontChrome({
       </main>
       <Footer />
       <NewsletterPopup delay={45000} showOnExitIntent />
-      <div className="fixed bottom-4 right-4 z-40 max-w-sm space-y-3">
+      {/* Keep clear of the chat FAB (bottom-4 right-4, 56px): on mobile the card
+          is near full-width so we lift it above the FAB; on desktop we tuck it
+          to the left of the FAB instead. */}
+      <div className="fixed bottom-20 right-4 sm:bottom-4 sm:right-20 z-40 max-w-sm space-y-3">
         <InstallPrompt minVisits={2} />
         <PushNotificationPrompt minVisits={3} />
       </div>

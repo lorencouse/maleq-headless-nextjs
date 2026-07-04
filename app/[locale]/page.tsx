@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { buildLocaleAlternates } from '@/i18n/seo-alternates';
@@ -18,7 +17,6 @@ import ArticleHero from '@/components/blog/ArticleHero';
 import HomeHero from '@/components/home/HomeHero';
 import HomeBenefits from '@/components/home/HomeBenefits';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
-import NewsletterSection from '@/components/home/NewsletterSection';
 import SocialSection from '@/components/home/SocialSection';
 import FeaturedCategories from '@/components/shop/FeaturedCategories';
 import ProductCarousel from '@/components/product/ProductCarousel';
@@ -104,13 +102,13 @@ export default async function Home({ params }: Props) {
       <HomeHero />
 
       {/* Featured Categories */}
-      <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12'>
+      <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-12'>
         <FeaturedCategories categories={categories} />
       </section>
 
       {/* Featured Products */}
       {products.length > 0 && (
-        <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-16'>
+        <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 sm:pb-16'>
           <ProductCarousel
             products={products}
             title={t('featured.title')}
@@ -127,7 +125,7 @@ export default async function Home({ params }: Props) {
       {/* Trending Products Carousel */}
       {trendingProducts.length > 0 && (
         <section className='py-6 sm:py-12 bg-muted/30'>
-          <div className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8'>
+          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
             <ProductCarousel
               products={trendingProducts}
               title={t('trending.title')}
@@ -162,40 +160,18 @@ export default async function Home({ params }: Props) {
 
       {/* Recent Blog Posts */}
       {posts.length > 0 && (
-        <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
-          <div className='mb-8'>
-            <h2 className='text-2xl sm:text-3xl font-bold text-foreground'>
-              {t('blogStrip.heading')}
-            </h2>
-            <p className='text-muted-foreground mt-1'>
-              {t('blogStrip.subtitle')}
-            </p>
-          </div>
+        <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
+          <SectionHeader
+            title={t('blogStrip.heading')}
+            subtitle={t('blogStrip.subtitle')}
+            viewAllHref='/guides'
+            viewAllLabel={t('blogStrip.viewAll')}
+            className='mb-8'
+          />
           <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6'>
             {posts.slice(0, 4).map((post) => (
               <BlogCard key={post.id} post={post} />
             ))}
-          </div>
-          <div className='mt-8 text-center'>
-            <Link
-              href='/guides'
-              className='text-primary hover:text-primary-hover font-medium inline-flex items-center gap-1'
-            >
-              {t('blogStrip.viewAll')}
-              <svg
-                className='w-4 h-4'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M9 5l7 7-7 7'
-                />
-              </svg>
-            </Link>
           </div>
         </section>
       )}
@@ -205,7 +181,7 @@ export default async function Home({ params }: Props) {
 
       {/* Latest News */}
       {newsPosts.length > 0 && (
-        <section className='max-w-screen-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
+        <section className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-16'>
           <SectionHeader
             title={t('newsStrip.heading')}
             viewAllHref='/news'
@@ -222,8 +198,8 @@ export default async function Home({ params }: Props) {
       {/* Social Media / YouTube Section */}
       <SocialSection />
 
-      {/* Newsletter */}
-      <NewsletterSection />
+      {/* Newsletter capture lives in the global footer — no standalone band here
+          (it duplicated the footer form directly above it). */}
     </div>
   );
 }

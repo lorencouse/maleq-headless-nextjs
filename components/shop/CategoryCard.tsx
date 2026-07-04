@@ -33,7 +33,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
           alt={categoryName}
           fill
           className='object-cover transition-transform group-hover:scale-105'
-          sizes='(max-width: 640px) 33vw, (max-width: 1024px) 25vw, 16vw'
+          sizes='(max-width: 640px) 50vw, 25vw'
         />
       ) : (
         <>
@@ -52,7 +52,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
 
       {/* Content - Centered translucent bar for images, bottom content for gradients */}
       {categoryImage ? (
-        <div className='absolute inset-x-0 bottom-0 h-1/3 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-between px-3 py-2 text-center'>
+        <div className='absolute inset-x-0 bottom-0 min-h-[33%] bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-1 px-3 py-2 text-center'>
           <span className='text-white font-bold text-sm sm:text-base leading-5 line-clamp-2'>
             {categoryName}
           </span>

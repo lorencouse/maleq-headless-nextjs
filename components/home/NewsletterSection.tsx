@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Button from '@/components/ui/Button';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 interface NewsletterSectionProps {
   /** Override the default homepage heading (e.g. a news-specific CTA). */
@@ -59,12 +60,12 @@ export default function NewsletterSection({ heading, subtitle }: NewsletterSecti
           </div>
 
           {/* Content */}
-          <h2 className="text-3xl font-bold text-foreground mb-4">
-            {heading ?? t('heading')}
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            {subtitle ?? t('subtitle')}
-          </p>
+          <SectionHeader
+            title={heading ?? t('heading')}
+            subtitle={subtitle ?? t('subtitle')}
+            centered
+            className="mb-8"
+          />
 
           {/* Form */}
           {status === 'success' ? (

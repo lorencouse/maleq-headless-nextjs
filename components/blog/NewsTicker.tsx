@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { Post } from '@/lib/types/wordpress';
 
 interface NewsTickerProps {
@@ -17,6 +17,7 @@ interface NewsTickerProps {
  */
 export default function NewsTicker({ posts }: NewsTickerProps) {
   const t = useTranslations('news');
+  const locale = useLocale();
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => setNow(Date.now()), []);
 
@@ -30,7 +31,14 @@ export default function NewsTicker({ posts }: NewsTickerProps) {
     if (minutes < 60) return t('minutesAgo', { count: minutes });
     const hours = Math.floor(minutes / 60);
     if (hours < 24) return t('hoursAgo', { count: hours });
-    return t('daysAgo', { count: Math.floor(hours / 24) });
+    const days = Math.floor(hours / 24);
+    if (days <= 7) return t('daysAgo', { count: days });
+    // Older than a week: "342d ago" reads as stale — show the real date instead.
+    return new Date(dateString).toLocaleDateString(locale, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
   };
 
   return (

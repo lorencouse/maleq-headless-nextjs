@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ButtonLink } from '@/components/ui/Button';
+import SectionHeader from '@/components/ui/SectionHeader';
 
 // News-brand social accounts. Shared "Follow Us" section used on the home and news pages.
 const socialLinks = [
@@ -44,12 +45,12 @@ export default function SocialSection() {
   return (
     <section className="py-6 sm:py-12 bg-muted/30 select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-2">{t('heading')}</h2>
-          <p className="text-muted-foreground">
-            {t('subtitle')}
-          </p>
-        </div>
+        <SectionHeader
+          title={t('heading')}
+          subtitle={t('subtitle')}
+          centered
+          className="mb-8"
+        />
 
         {/* Social links */}
         <div className="flex flex-wrap justify-center gap-4 mb-10">
