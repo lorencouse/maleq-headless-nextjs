@@ -248,8 +248,12 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     `charge.refunded: ${isFullRefund ? 'Full' : 'Partial'} refund on order #${orderId} (${paymentIntentId})`
   );
 
+  // Only a full refund implies a status change. Forcing 'processing' on a
+  // partial refund would demote an already-completed order — and now that
+  // refunds can be issued from the WooCommerce order screen (see the
+  // maleq-stripe-refunds mu-plugin), this fires on every partial refund.
   await updateOrder(orderId, {
-    status: isFullRefund ? 'refunded' : 'processing',
+    ...(isFullRefund ? { status: 'refunded' as const } : {}),
     meta_data: [
       {
         key: '_stripe_refund_amount',

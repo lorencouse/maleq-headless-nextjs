@@ -38,6 +38,7 @@ Copy these files to: `wp-content/mu-plugins/`
 | `maleq-order-tracking.php` | Order tracking management with admin UI, REST API, and customer email notifications | `wordpress/mu-plugins/maleq-order-tracking.php` |
 | `maleq-stock-sync.php` | Bulk stock sync endpoints for daily cron (stock-mapping + stock-update) | `wordpress/mu-plugins/maleq-stock-sync.php` |
 | `maleq-stock-priority.php` | Orders products with in-stock items first, prioritizes WT/manual over STC sources | `wordpress/mu-plugins/maleq-stock-priority.php` |
+| `maleq-stripe-refunds.php` | Refund-only `stripe` gateway so the order screen can issue real Stripe refunds (requires `MALEQ_STRIPE_SECRET_KEY`) | `wordpress/mu-plugins/maleq-stripe-refunds.php` |
 | `maleq-graphql-product-source.php` | Exposes `_product_source` meta as `productSource` field in WPGraphQL | `wordpress/mu-plugins/maleq-graphql-product-source.php` |
 | `maleq-cache-revalidation.php` | Triggers Next.js cache revalidation on product create/update/delete/stock changes | `wordpress/mu-plugins/maleq-cache-revalidation.php` |
 | `maleq-graphql-query-limit.php` | Increases WPGraphQL max query amount to 500 for sitemap generation | `wordpress/mu-plugins/maleq-graphql-query-limit.php` |
@@ -213,6 +214,10 @@ define('MALEQ_MASTODON_ACCESS_TOKEN', 'your-mastodon-token');     // MASTODON_CL
 - `MALEQ_FRONTEND_URL` is the production URL of your Next.js site (e.g., `https://maleq.com`).
 - `MALEQ_REVALIDATION_SECRET` must match the `REVALIDATION_SECRET` env var in Coolify.
 - `MALEQ_GOOGLE_AUTH_SECRET` must match the `MALEQ_GOOGLE_AUTH_SECRET` env var in Coolify.
+- `MALEQ_STRIPE_SECRET_KEY` powers Stripe refunds from the WooCommerce order screen (`maleq-stripe-refunds.php`). Set it with
+  `wp config set MALEQ_STRIPE_SECRET_KEY 'rk_live_...' --type=constant`. Use a **restricted** key (`rk_`) with
+  `Refunds: write` + `PaymentIntents: read` — this server only needs to issue refunds, so it should never hold the
+  account secret key. Without it the order screen falls back to manual-only refunds and says so.
 - `MALEQ_BLUESKY_*` / `MALEQ_MASTODON_*` power news auto-share; set them via `wp config set <NAME> '<value>' --type=constant`. They are read by constant first, then `getenv()`. Each value mirrors the matching `.env.local` var.
 
 ### Daily Stock Sync (Cron)
