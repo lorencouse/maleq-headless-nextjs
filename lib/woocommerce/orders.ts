@@ -6,12 +6,31 @@
 
 import { getWooCommerceUrl, getAuthHeader, isWooCommerceConfigured } from './auth';
 
+/**
+ * A line item for order creation.
+ *
+ * NEVER add `sku` here. WooCommerce's REST controller resolves the product for
+ * a line item in `WC_REST_Orders_Controller::get_product_id()`, and `sku` wins
+ * over everything:
+ *
+ *   if ( ! empty( $posted['sku'] ) )            -> wc_get_product_id_by_sku()
+ *   elseif ( product_id && ! variation_id )     -> product_id
+ *   elseif ( variation_id )                     -> variation_id
+ *
+ * So sending a SKU silently discards `variation_id` and pins the line to
+ * whatever post owns that SKU. Our cart carries the *parent* SKU on variation
+ * items, and some parents share a SKU outright, so every order created this way
+ * recorded `variation_id = 0` against a variable parent — which then had its own
+ * stock decremented into the negative, firing false out-of-stock and backorder
+ * emails while the variations were fully stocked.
+ *
+ * `product_id` + `variation_id` is authoritative. WooCommerce fills in the name
+ * and SKU from the resolved product, including variation attributes.
+ */
 export interface OrderLineItem {
   product_id: number;
   variation_id?: number;
   quantity: number;
-  name?: string;
-  sku?: string;
 }
 
 export interface OrderAddress {

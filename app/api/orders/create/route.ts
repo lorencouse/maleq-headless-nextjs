@@ -330,13 +330,13 @@ export async function POST(request: NextRequest) {
           email: contact.email,
         };
 
-    // Convert cart items to WooCommerce format
+    // Convert cart items to WooCommerce format.
+    // Only IDs — passing `sku`/`name` makes WooCommerce resolve the line by SKU
+    // and drop `variation_id` entirely. See OrderLineItem in lib/woocommerce/orders.ts.
     const lineItems: OrderLineItem[] = cartItems.map((item) => ({
       product_id: parseInt(item.productId, 10),
       variation_id: item.variationId ? parseInt(item.variationId, 10) : undefined,
       quantity: item.quantity,
-      name: item.name,
-      sku: item.sku,
     }));
 
     // Build the order data
