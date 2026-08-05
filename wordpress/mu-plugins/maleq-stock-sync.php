@@ -195,6 +195,22 @@ function maleq_stock_update(WP_REST_Request $request) {
                     if ($parent_id) {
                         $parent_ids_to_sync[$parent_id] = true;
                     }
+                } else {
+                    // A parent that has variations must NEVER take its stock status
+                    // from the value we just wrote. Feed quantities are matched by
+                    // SKU, and variable parents carry placeholder SKUs (VAR-*), so a
+                    // feed qty of 0 would mark the parent outofstock and hide every
+                    // stocked variation under it. Queue it for the derive-from-
+                    // children pass below, which is the authority for these.
+                    $has_variations = (int) $wpdb->get_var($wpdb->prepare(
+                        "SELECT COUNT(*) FROM {$wpdb->posts}
+                          WHERE post_parent = %d AND post_type = 'product_variation'
+                            AND post_status = 'publish'",
+                        $post_id
+                    ));
+                    if ($has_variations > 0) {
+                        $parent_ids_to_sync[$post_id] = true;
+                    }
                 }
 
                 $results['updated']++;
@@ -217,8 +233,11 @@ function maleq_stock_update(WP_REST_Request $request) {
         }
     }
 
-    // Recalculate parent variable product stock status
-    // Parent is 'instock' if ANY variation is instock, otherwise 'outofstock'
+    // Recalculate parent variable product stock status.
+    // Parent is 'instock' if ANY variation is instock, otherwise 'outofstock'.
+    // This is the sole authority for a variable parent's status — it runs both
+    // for parents whose variations changed and for parents the feed wrote to
+    // directly, so a placeholder-SKU match can never hide stocked variations.
     foreach (array_keys($parent_ids_to_sync) as $parent_id) {
         $has_instock = $wpdb->get_var($wpdb->prepare(
             "SELECT COUNT(*) FROM {$wpdb->posts} v
