@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getStripeServer } from '@/lib/stripe/server';
-import { createOrder, updateOrder, CreateOrderData, OrderAddress } from '@/lib/woocommerce/orders';
+import { updateOrder } from '@/lib/woocommerce/orders';
 import { getWooCommerceEndpoint, getAuthHeader, isWooCommerceConfigured } from '@/lib/woocommerce/auth';
 import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
+import { lookupPaymentIntentReservation } from '@/lib/checkout/payment-intent-lock';
+import { attemptRecoveryOrderCreation } from '@/lib/checkout/payment-recovery';
 
 /**
  * Stripe Webhook Handler
@@ -155,185 +157,6 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
       receiptEmail: paymentIntent.receipt_email || null,
     },
   });
-}
-
-/**
- * Attempt to create a WooCommerce order from Stripe PaymentIntent metadata
- * when the frontend order creation failed. This is the last-resort safety net.
- *
- * Requires checkout_cart_items in PI metadata (added after 2026-04-15).
- * Falls back to a fee-line placeholder if cart items are unavailable.
- */
-async function attemptRecoveryOrderCreation(paymentIntent: Stripe.PaymentIntent) {
-  const meta = paymentIntent.metadata || {};
-  const email = paymentIntent.receipt_email || meta.customer_email || '';
-  const amount = (paymentIntent.amount / 100).toFixed(2);
-
-  if (meta.source !== 'maleq-headless-checkout') {
-    // Not from our checkout — don't create an order automatically.
-    console.warn(
-      `payment_intent.succeeded: Unrecognized source for ${paymentIntent.id}, skipping recovery`
-    );
-    await logDurableEvent({
-      eventType: 'stripe_payment_succeeded_unmatched',
-      severity: 'warning',
-      message: 'payment_intent.succeeded with no matching WooCommerce order (non-checkout source)',
-      paymentIntentId: paymentIntent.id,
-      payload: { amount: paymentIntent.amount, receiptEmail: email || null },
-    });
-    await sendAdminAlert('Payment Succeeded — No WooCommerce Order', {
-      'PaymentIntent': paymentIntent.id,
-      'Amount': `$${amount}`,
-      'Customer Email': email || 'N/A',
-    });
-    return;
-  }
-
-  // Build shipping address from Stripe shipping data
-  const stripeShipping = paymentIntent.shipping;
-  const nameParts = (stripeShipping?.name || '').split(' ');
-  const firstName = nameParts[0] || 'Unknown';
-  const lastName = nameParts.slice(1).join(' ') || 'Customer';
-  const address: OrderAddress = {
-    first_name: firstName,
-    last_name: lastName,
-    company: '',
-    address_1: stripeShipping?.address?.line1 || '',
-    address_2: stripeShipping?.address?.line2 || '',
-    city: stripeShipping?.address?.city || '',
-    state: stripeShipping?.address?.state || '',
-    postcode: stripeShipping?.address?.postal_code || '',
-    country: stripeShipping?.address?.country || 'US',
-    email,
-    phone: stripeShipping?.phone || '',
-  };
-
-  // Parse cart items if available
-  const cartItemsRaw = meta.checkout_cart_items;
-  let lineItems: CreateOrderData['line_items'] = [];
-  let hasCartItems = false;
-
-  if (cartItemsRaw) {
-    try {
-      const parsed = JSON.parse(cartItemsRaw) as Array<[string, string | null, number, number]>;
-      lineItems = parsed.map(([productId, variationId, quantity]) => ({
-        product_id: parseInt(productId, 10),
-        ...(variationId ? { variation_id: parseInt(variationId, 10) } : {}),
-        quantity,
-      }));
-      hasCartItems = lineItems.length > 0;
-    } catch {
-      // Cart items metadata was truncated or malformed
-    }
-  }
-
-  const shippingTotal = meta.checkout_shipping || '0.00';
-  const discountAmount = parseFloat(meta.checkout_discount || '0');
-
-  const orderData: CreateOrderData = {
-    payment_method: 'stripe',
-    payment_method_title: 'Credit Card (Stripe)',
-    set_paid: true,
-    billing: address,
-    shipping: address,
-    line_items: hasCartItems
-      ? lineItems
-      : [],
-    ...(!hasCartItems && {
-      fee_lines: [
-        {
-          name: 'Recovered payment — items unknown (contact customer)',
-          total: meta.checkout_subtotal || amount,
-        },
-        ...(discountAmount > 0
-          ? [{ name: 'Automatic discount', total: (-discountAmount).toFixed(2) }]
-          : []),
-      ],
-    }),
-    shipping_lines: [
-      {
-        method_id: meta.shipping_method_id || 'standard',
-        method_title: meta.shipping_method_id === 'express' ? 'Express Shipping' : 'Standard Shipping',
-        total: shippingTotal,
-      },
-    ],
-    transaction_id: paymentIntent.id,
-    meta_data: [
-      { key: '_stripe_payment_intent_id', value: paymentIntent.id },
-      { key: '_order_source', value: 'maleq-headless-webhook-recovery' },
-      { key: '_recovery_has_cart_items', value: hasCartItems ? 'yes' : 'no' },
-    ],
-    customer_note: hasCartItems
-      ? 'WEBHOOK RECOVERY: Order was automatically created from Stripe webhook because frontend order creation failed.'
-      : 'WEBHOOK RECOVERY: Order was automatically created from Stripe webhook because frontend order creation failed. Cart items could not be recovered — contact customer to confirm items before shipping.',
-  };
-
-  // Add auto-discount as fee line when we have real line items
-  if (hasCartItems && discountAmount > 0) {
-    orderData.fee_lines = [
-      { name: 'Automatic discount', total: (-discountAmount).toFixed(2) },
-    ];
-  }
-
-  try {
-    const order = await createOrder(orderData);
-
-    // Store order ID in PaymentIntent metadata
-    const stripe = getStripeServer();
-    await stripe.paymentIntents.update(paymentIntent.id, {
-      metadata: { woocommerce_order_id: String(order.id) },
-    });
-
-    console.log(
-      `payment_intent.succeeded: Created recovery order #${order.id} for ${paymentIntent.id}`
-    );
-
-    await logDurableEvent({
-      eventType: 'stripe_webhook_recovery_order_created',
-      message: `Created recovery WooCommerce order ${order.id} from webhook`,
-      paymentIntentId: paymentIntent.id,
-      orderId: order.id,
-      payload: {
-        amount: paymentIntent.amount,
-        receiptEmail: email || null,
-        hasCartItems,
-        lineItemCount: lineItems.length,
-      },
-    });
-
-    await sendAdminAlert('Webhook Recovery Order Created', {
-      'Order ID': order.id,
-      'PaymentIntent': paymentIntent.id,
-      'Amount': `$${amount}`,
-      'Customer Email': email || 'N/A',
-      'Has Cart Items': hasCartItems ? 'Yes' : 'No — contact customer',
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(
-      `payment_intent.succeeded: Failed to create recovery order for ${paymentIntent.id}:`,
-      message
-    );
-
-    await logDurableEvent({
-      eventType: 'stripe_webhook_recovery_order_failed',
-      severity: 'error',
-      message: `Failed to create recovery order from webhook for ${paymentIntent.id}`,
-      paymentIntentId: paymentIntent.id,
-      payload: {
-        amount: paymentIntent.amount,
-        receiptEmail: email || null,
-        error: message,
-      },
-    });
-
-    await sendAdminAlert('Payment Succeeded — Recovery Order FAILED', {
-      'PaymentIntent': paymentIntent.id,
-      'Amount': `$${amount}`,
-      'Customer Email': email || 'N/A',
-      'Error': message,
-    });
-  }
 }
 
 /**
@@ -491,10 +314,18 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
 }
 
 /**
- * Extract WooCommerce order ID from PaymentIntent metadata.
+ * Extract WooCommerce order ID for a PaymentIntent.
  *
- * The order ID gets stored in metadata when the frontend creates the order.
- * Falls back to searching by transaction_id if metadata is missing.
+ * Three sources, most to least reliable:
+ *   1. PaymentIntent metadata — written after the order is created, so it is
+ *      exact but lags order creation by one Stripe round-trip.
+ *   2. The `maleq_payment_intent_orders` reservation table — written by
+ *      `/api/orders/create` *around* the WooCommerce call, so it closes the
+ *      window metadata leaves open.
+ *   3. WooCommerce REST search — kept only as a last resort. WooCommerce's
+ *      order search covers billing/shipping fields and line-item names, not
+ *      `transaction_id` or arbitrary meta, so a PaymentIntent ID will usually
+ *      match nothing here. Do not rely on it as the sole guard.
  */
 async function findWooCommerceOrderId(
   paymentIntent: Stripe.PaymentIntent
@@ -504,6 +335,17 @@ async function findWooCommerceOrderId(
   if (metaOrderId) {
     const parsed = parseInt(metaOrderId, 10);
     if (!isNaN(parsed)) return parsed;
+  }
+
+  // Reservation table — covers orders created before metadata was stamped.
+  try {
+    const reservation = await lookupPaymentIntentReservation(paymentIntent.id);
+    if (reservation?.orderId) return reservation.orderId;
+  } catch (error) {
+    console.warn(
+      `findWooCommerceOrderId: reservation lookup failed for ${paymentIntent.id}`,
+      error
+    );
   }
 
   // Fallback: look up order by PaymentIntent ID in transaction_id/meta_data.
@@ -555,6 +397,4 @@ async function findWooCommerceOrderId(
     );
     return null;
   }
-
-  return null;
 }

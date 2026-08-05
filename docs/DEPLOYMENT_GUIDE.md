@@ -234,6 +234,29 @@ curl https://maleq.com/api/cron/stock-sync -H "Authorization: Bearer $ADMIN_API_
 
 **Requires**: `maleq-stock-sync.php` mu-plugin installed on WordPress
 
+### Payment Reconciliation (Cron)
+
+Backstop for Stripe payments that never produced a WooCommerce order:
+- **Endpoint**: `/api/cron/reconcile-payments`
+- **Schedule**: `*/15 * * * *`
+- **Auth**: Uses `CRON_SECRET` (scheduled task) or `ADMIN_API_KEY` (manual trigger)
+- **What it does**: scans succeeded PaymentIntents from our checkout that are
+  10 min – 24 h old and carry no `woocommerce_order_id`, then creates a recovery
+  order for each. Reservations stuck in `processing` are alerted, not recovered.
+
+> **Why this exists:** the Stripe webhook used to create a recovery order the
+> instant `payment_intent.succeeded` arrived, which raced `/api/orders/create`
+> and produced duplicate order pairs (double stock reduction, doubled admin and
+> backorder emails). The webhook now stands down whenever checkout might still
+> own the payment; this sweep covers checkouts that genuinely died.
+
+**Manual trigger**:
+```bash
+curl https://maleq.com/api/cron/reconcile-payments -H "Authorization: Bearer $ADMIN_API_KEY"
+```
+
+**Requires**: the `maleq_payment_intent_orders` table (auto-created on first use)
+
 ---
 
 ## Deployment Steps

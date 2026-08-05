@@ -5,6 +5,7 @@ import { logDurableEvent } from '@/lib/monitoring/durable-events';
 import { checkRateLimit } from '@/lib/api/rate-limit';
 import { validateEmail } from '@/lib/api/validation';
 import { extractAuthToken } from '@/lib/api/auth-token';
+import { buildCartItemsMetadata, type CompactCartItem } from '@/lib/checkout/cart-metadata';
 import {
   buildCheckoutCustomerRef,
   buildCheckoutFingerprint,
@@ -269,15 +270,16 @@ export async function POST(request: NextRequest) {
     const checkoutCustomerRef = buildCheckoutCustomerRef(customerId, customerEmail);
 
     // Serialize cart items into Stripe metadata for disaster recovery.
-    // Stripe allows up to 50 keys, 500 chars per value. We use a compact
-    // JSON array: [[productId, variationId|null, qty, unitPrice], ...]
-    const cartItemsCompact = pricing.items.map((item) => [
+    // Stripe allows up to 50 keys, 500 chars per value, so carts past 500 chars
+    // are split across checkout_cart_items[_N] rather than truncated — a
+    // half-written value is unparseable and used to cost us the item list.
+    const cartItemsCompact: CompactCartItem[] = pricing.items.map((item) => [
       item.productId,
       item.variationId || null,
       item.quantity,
       item.unitPrice,
     ]);
-    const cartItemsJson = JSON.stringify(cartItemsCompact);
+    const cartItemsMetadata = buildCartItemsMetadata(cartItemsCompact);
 
     // Create the PaymentIntent
     const stripe = getStripeServer();
@@ -297,9 +299,9 @@ export async function POST(request: NextRequest) {
         shipping_country: pricing.shippingCountry,
         checkout_fingerprint: checkoutFingerprint,
         checkout_customer_ref: checkoutCustomerRef,
-        // Cart items for recovery if order creation fails (max 500 chars).
+        // Cart items for recovery if order creation fails.
         // Format: [[productId, variationId|null, qty, unitPrice], ...]
-        checkout_cart_items: cartItemsJson.slice(0, 500),
+        ...cartItemsMetadata.metadata,
         source: 'maleq-headless-checkout',
       },
       ...(customerEmail && { receipt_email: customerEmail }),

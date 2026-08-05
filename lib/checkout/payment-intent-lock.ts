@@ -54,6 +54,23 @@ async function ensureTable(): Promise<void> {
   }
 }
 
+/**
+ * Read the current reservation for a PaymentIntent without acquiring it.
+ *
+ * This is the authoritative "does a WooCommerce order already exist / is one
+ * being created right now for this payment?" check. `/api/orders/create`
+ * inserts the row *before* calling WooCommerce and stamps `order_id` after, so
+ * the Stripe webhook can use it to tell "frontend is mid-flight" apart from
+ * "frontend never ran" — something Stripe PI metadata cannot express, because
+ * `woocommerce_order_id` is only written after the order already exists.
+ */
+export async function lookupPaymentIntentReservation(
+  paymentIntentId: string
+): Promise<PaymentIntentReservation | null> {
+  await ensureTable();
+  return getReservation(paymentIntentId);
+}
+
 async function getReservation(paymentIntentId: string): Promise<PaymentIntentReservation | null> {
   const pool = await getPoolAsync();
   const [rows] = await pool.execute<PaymentIntentOrderRow[]>(
