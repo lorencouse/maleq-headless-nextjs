@@ -36,6 +36,8 @@ LOG="$LOG_DIR/run-$(date +%Y%m%d_%H%M%S).log"
   "$BUN" run scripts/news-agent/run.ts --write --yes --limit "${NEWS_AGENT_LIMIT:-3}"
   echo "--- attach cover images ---"
   "$BUN" run scripts/news-agent/attach-covers.ts --write --yes
+  echo "--- notify reviewer (web push) ---"
+  "$BUN" run scripts/news-agent/notify-review.ts --write --yes
   echo "--- share approved (published) posts ---"
   "$BUN" run scripts/news-agent/sync-shares.ts --write --yes
   echo "--- flush WP cache ---"

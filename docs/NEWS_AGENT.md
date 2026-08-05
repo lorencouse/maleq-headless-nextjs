@@ -33,6 +33,7 @@ for you to review and publish in WP admin.
 | `publish.ts`  | Insert `wp_posts` draft + `wp_postmeta` + category/tag `term_relationships` |
 | `images.ts`   | Pexels search + download/resize/WebP conversion (via `sharp`) |
 | `attach-covers.ts` | Pick a Pexels cover per post, import as featured image (WebP, slug-named), set alt + credit |
+| `notify-review.ts` | Web-push "N new stories to review" digest to the owner's phone(s) after each drafting run (see Mobile review below) |
 | `run.ts`      | Orchestrator + CLI flags + approval digest |
 
 ## Usage
@@ -143,7 +144,7 @@ system cron, **3×/day at 7am / 12pm / 5pm America/Los_Angeles**.
 - `.env` (chmod 600): API key + social creds + `REMOTE_MYSQL_PORT=3306` (connects to the
   local prod MySQL directly — no SSH tunnel; user/pass/db come from `db.ts` defaults).
   `MALEQ_WP_URL=https://wp.maleq.com`, `MALEQ_SITE_URL=https://maleq.com`.
-- `cron-run.sh` — draft → attach cover images → share approved → `wp cache flush`; logs to `logs/run-*.log` (30-day retention).
+- `cron-run.sh` — draft → attach cover images → notify reviewer (push) → share approved → `wp cache flush`; logs to `logs/run-*.log` (30-day retention).
 
 **DST-safe timing.** This host's cron (Debian 3.0pl1) has no `CRON_TZ`, and the server is
 UTC. So cron fires **hourly** (`0 * * * *`) and `cron-run.sh` gates on the local PT hour —
@@ -172,6 +173,49 @@ lives at the app **root** (`/home/maleq-wp/news-agent/cron-run.sh`), not under `
 rsync -az scripts/news-agent/cron-run.sh hetzner:/home/maleq-wp/news-agent/cron-run.sh
 ```
 (`maleq-news-autoshare.php` is also deployed separately — into the WP install's `wp-content/mu-plugins/`.)
+
+## Mobile review (Phase 1.5 — LIVE)
+
+Approve from your phone instead of WP admin. The `maleq-news-review.php` mu-plugin serves a
+standalone mobile page at **`https://wp.maleq.com/news-review?k=<MALEQ_NEWS_REVIEW_KEY>`**
+listing every pending draft — cover image, headline, source link, social hook, and the full
+story — with three one-tap buttons per card:
+
+- **✓ Publish** — publishes with the current timestamp; `maleq-news-autoshare.php` fires
+  exactly as if you'd published in WP admin (Bluesky + Mastodon share on shutdown).
+- **🗑 Delete** (tap twice to confirm) — force-deletes the cover attachment (image files
+  gone, with the same "dedicated to this post only" safety checks as the cover picker) but
+  only **trashes** the post: dedupe matches `_maleq_news_source_url` in postmeta with no
+  status filter, so keeping the trashed row's meta stops the agent re-drafting the same
+  story. WP purges trash after 30 days, far beyond the 36 h freshness window.
+- **⏰ Later** — snoozes the card to the bottom of the queue (`_maleq_news_review_later`).
+
+**Push notifications.** The page serves its own service worker (`/news-review-sw` —
+extension-less so nginx routes it through WP instead of 404ing on a missing static file) and
+web-app manifest, and a "🔔 Notify me" button subscribes the device using a **dedicated
+VAPID keypair** (separate from the maleq.com push stack — subscriptions can only be created
+from the token-authed page, so every subscriber is the owner). Subscriptions are stored as a
+JSON string in the `maleq_news_review_push_subs` option. `notify-review.ts` runs in
+`cron-run.sh` right after attach-covers and sends **one digest push per run** ("📰 N new
+stories to review" → tap opens the review page) for drafts not yet carrying
+`_maleq_news_review_notified`; drafts stay un-marked until at least one device receives the
+push, so the first device subscribed gets the backlog. Expired subscriptions (410/404) are
+pruned automatically.
+
+**iPhone:** iOS only delivers web push to installed web apps — open the review URL in
+Safari, Share → **Add to Home Screen**, then tap "🔔 Notify me" inside the installed app.
+Android Chrome works directly in the browser.
+
+Config: wp-config constants `MALEQ_NEWS_REVIEW_KEY` (`openssl rand -hex 32`) and
+`MALEQ_NEWS_REVIEW_VAPID_PUBLIC`; news-agent `.env` vars `NEWS_REVIEW_VAPID_PUBLIC`,
+`NEWS_REVIEW_VAPID_PRIVATE` (`bunx web-push generate-vapid-keys`) and
+`MALEQ_NEWS_REVIEW_URL` (the full keyed URL the notification opens). The `web-push` npm
+package must be installed in the server app dir.
+
+```bash
+bun run scripts/news-agent/notify-review.ts --local              # DRY RUN
+bun run scripts/news-agent/notify-review.ts --write --yes        # send (cron does this)
+```
 
 ## Sharing approved posts (Phase 2)
 
@@ -265,8 +309,8 @@ publish — no share tick required. `sync-shares.ts` remains available for manua
 
 - **Meta (Facebook → Instagram)** — `social/facebook.ts` then `social/instagram.ts`
   (IG needs the featured-image import below). Credentials gathering paused by request.
-- **Phase 1.5** — one-tap approval (secured mu-plugin endpoint + push/email digest) so you
-  can approve from your phone instead of WP admin.
+- ~~**Phase 1.5**~~ — **DONE.** One-tap mobile approval + push digest, shipped as the
+  `maleq-news-review.php` mu-plugin + `notify-review.ts` (see Mobile review above).
 - **Featured-image import** — download lead image → WP attachment → `_thumbnail_id`
   (required before Instagram, which can't post text-only).
 - ~~**Event-driven sharing**~~ — **DONE.** Shipped as the `maleq-news-autoshare.php`
