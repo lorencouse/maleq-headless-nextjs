@@ -15,6 +15,19 @@ RSS feeds ──▶ discover.ts ──▶ dedupe.ts ──▶ draft.ts (Claude) 
               de-dupe          source URL)     tags, SEO, HTML       (status=draft)    status=draft
 ```
 
+**Models & cost (since 2026-08-05):** drafting runs on **Sonnet 5** and the web-research
+pass on **Haiku 4.5**, both submitted through the **Batches API at 50% pricing** — two
+batched passes per run (research briefs, then structured drafts), polled to completion by
+`run.ts`. ~$0.05–0.06/article ≈ $15/mo at 9 stories/day. Every run logs per-story token
+usage and a total estimated $ line (`Run cost: …`) — prices live in `config.ts` `PRICES`.
+Stories are ranked **most-corroborated first** (independent outlets covering the same
+event), newest first within a tier, before the per-run limit is applied.
+
+> ⚠ **Model/tool pairing:** the research pass must use the basic `web_search_20250305`
+> tool — the `_20260209` variant 400s on Haiku, and because the failure was swallowed,
+> this silently disabled ALL research for two months (Jun–Aug 2026). If you change
+> `RESEARCH_MODEL`, re-check the tool variant.
+
 Nothing is published live and nothing is shared to social in Phase 1. Every story
 becomes a **draft** in the `LGBTQ+ News` category, flagged `_maleq_news_pending_review=1`,
 for you to review and publish in WP admin.
@@ -29,7 +42,7 @@ for you to review and publish in WP admin.
 | `dedupe.ts`   | Drop stories already posted (matched on `_maleq_news_source_url(s)`) |
 | `cluster.ts`  | Group same-event coverage across outlets (IDF-weighted headline overlap) → one post can cite several sources |
 | `extract.ts`  | Fetch the article page and pull paragraph text (feed summaries are often headline-only); falls back to feed content |
-| `draft.ts`    | Claude `messages.parse` + Zod schema → 400–550-word piece with `<h2>` subheadings, synthesizing the clustered sources |
+| `draft.ts`    | Zod-validated structured drafting (batch-friendly param builders + parsers; Sonnet 5) → original piece with `<h2>` subheadings, synthesizing the clustered sources + research brief |
 | `publish.ts`  | Insert `wp_posts` draft + `wp_postmeta` + category/tag `term_relationships` |
 | `images.ts`   | Pexels search + download/resize/WebP conversion (via `sharp`) |
 | `attach-covers.ts` | Pick a Pexels cover per post, import as featured image (WebP, slug-named), set alt + credit |

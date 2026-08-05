@@ -21,109 +21,66 @@ import type { StoryCluster } from './cluster';
 import { gatherMaterial, extractEmbeds } from './extract';
 import { addEntityLinks } from './entity-links';
 
+// Field guidance lives in the SYSTEM prompt (which prompt-caches on Sonnet 5);
+// these .describe() strings ride uncached on EVERY request, so keep them to
+// compact field semantics — don't re-grow them into essays (that cost ~2k
+// tokens/story before the 2026-08-05 trim).
 const DraftSchema = z.object({
   title: z.string().describe('Rewritten, original headline (60–80 chars). Not copied from any source.'),
-  slug: z.string().describe('URL slug: lowercase, words separated by hyphens, no punctuation.'),
+  slug: z.string().describe('URL slug: lowercase, hyphen-separated, no punctuation.'),
   excerpt: z.string().describe('One- or two-sentence dek summarizing the story.'),
   seoDescription: z.string().describe('SEO meta description, max 155 characters.'),
   bodyHtml: z.string().describe(
-    'An original, tightly-written news piece in HTML — as long as the story genuinely warrants but ' +
-    'NEVER more than ~20% longer than the primary source (see the LENGTH CAP in the user message); ' +
-    'shorter is fine when the story is fully told. Quality over length: no fluff, hedging, or repetition. ' +
-    'Structure: a 1–2 sentence ' +
-    'lede <p>, then several sections each introduced by an <h2> subheading. Mix factual-reporting ' +
-    'sections with ONE OR TWO clearly-labeled editorial/context sections (vary the heading per piece: ' +
-    '"MQ\'s Take", "More Context", "Worth Considering", "Why It Matters", "The Bigger Picture", ' +
-    '"Our Read", "What to Watch" — do NOT reuse the same label every article). Synthesize the sources ' +
-    'and fold in the research brief for depth. Break up the text with styled elements: a ' +
-    '<aside class="key-takeaways"> box after the lede, 1–2 <blockquote class="pullquote"> pull ' +
-    'quotes, and (only when a striking real number exists) a <aside class="stat-callout"> — see ' +
-    'the system prompt for exact markup. Allowed tags only: <p>, <h2>, <h3>, <strong>, <em>, <ul>, ' +
-    '<li>, <blockquote>, <cite>, <aside>, <span>. Do NOT include a "Sources:" line — that is ' +
-    'appended automatically. Do NOT add any links yourself; list notable entities in "entityLinks".',
+    'The original news piece in HTML, per the system prompt (structure, voice, visual elements, ' +
+    'LENGTH CAP). Allowed tags only: <p>, <h2>, <h3>, <strong>, <em>, <ul>, <li>, <blockquote>, ' +
+    '<cite>, <aside>, <span>. No "Sources:" line (appended automatically) and no <a> tags or ' +
+    'URLs (links are added from entityLinks).',
   ),
   entityLinks: z.array(z.object({
-    text: z.string().describe('The anchor phrase EXACTLY as it appears in bodyHtml (a verbatim substring, same casing).'),
-    query: z.string().describe('The entity\'s name for a Wikipedia lookup — the article title when you know it (e.g. "Heartstopper (TV series)", "Stonewall Inn", "GLAAD").'),
-    kind: z.enum(['film', 'tv', 'person', 'organization', 'place', 'book', 'music', 'game', 'other']).describe(
-      'What KIND of entity this is — it picks the authoritative site we link to: ' +
-      'film/tv → IMDb / Rotten Tomatoes; person (actor, director, musician, public figure) → IMDb / Wikipedia; ' +
-      'organization (company, nonprofit, agency) and place (venue, city, landmark) → official site / Wikipedia; ' +
-      'book → Goodreads; music (album, EP, single) → AllMusic; game (video game) → Steam; ' +
-      'other (law, event, play, generic topic) → Wikipedia. Pick the closest fit.',
-    ),
+    text: z.string().describe('Anchor phrase EXACTLY as it appears in bodyHtml (verbatim substring, same casing).'),
+    query: z.string().describe('Lookup name — the Wikipedia article title when known (e.g. "Heartstopper (TV series)", "GLAAD").'),
+    kind: z.enum(['film', 'tv', 'person', 'organization', 'place', 'book', 'music', 'game', 'other'])
+      .describe('Entity kind (picks the site we link to — see system prompt). Closest fit.'),
   })).describe(
-    'Notable, real-world entities mentioned in bodyHtml that a professional outlet would ' +
-    'hyperlink: films, TV shows, books, plays, albums, places/venues, organizations, laws, ' +
-    'events, and public figures. For EACH, give the exact anchor text from your body, a lookup ' +
-    'term, and its kind. Rules: only genuinely notable, unambiguous entities (skip generic ' +
-    'terms like "the court", "activists", "the community"); pick the FIRST mention of each; do ' +
-    'NOT repeat an entity; 0 to 6 items — return an empty array if the piece has no linkworthy ' +
-    'entities. We verify each against authoritative databases and only link the ones that ' +
-    'resolve, so favor precision over quantity.',
+    'Notable real-world entities in bodyHtml a professional outlet would hyperlink (see system ' +
+    'prompt rules). First mention only, no duplicates, no generic phrases, 0–6 items; empty array if none.',
   ),
   tags: z.array(z.string()).describe('3–5 lowercase topic tags.'),
   socialText: z.string().describe(
-    'A natural-language social-post HOOK (one sentence, ~12–25 words, ≤200 chars) used as the ' +
-    'BODY of the Bluesky/Mastodon/X/Threads post. This is NOT the article headline (the headline ' +
-    'already shows in the auto-generated link card) and NOT the ALL-CAPS image overlay — write a ' +
-    'fresh, conversational line that makes someone want to tap through: a sharp angle, a stake, or ' +
-    'an open loop. Plain sentence case, no hashtags, no emoji, no quotation marks, no trailing URL.',
+    'Social-post HOOK: one conversational sentence (~12–25 words, ≤200 chars) for the post body. ' +
+    'NOT the headline and NOT the cover overlay. Sentence case; no hashtags, emoji, quotes, or URL.',
   ),
   hashtags: z.array(z.string()).describe(
-    '3–5 social discovery hashtags WITHOUT the leading # and WITHOUT spaces — letters/digits only, ' +
-    'CamelCase for multi-word (e.g. "LGBTQ", "QueerNews", "TransRights", "MarriageEquality"). Pick ' +
-    'tags people actually browse on Bluesky/Mastodon, mixing one or two broad community tags with ' +
-    'specific topical ones. These drive reach, so favor established tags over niche inventions.',
+    '3–5 discovery hashtags without the #, letters/digits only, CamelCase for multi-word ' +
+    '(e.g. "QueerNews", "TransRights"). Established tags people actually browse, broad + topical mix.',
   ),
   coverHeadline: z.string().describe(
-    'A SHORT, punchy social-media hook to overlay on the cover image — built to stop a thumb ' +
-    'scrolling a feed. 2–6 words, ideally 3–5. NOT the article title verbatim: sharper, more ' +
-    'active, emotionally charged. Skimmable at a glance. No end punctuation, no hashtags, no ' +
-    'quotation marks, no emoji. It will be rendered in ALL CAPS, so keep it tight enough to fit ' +
-    'two short lines. E.g. title "Supreme Court Declines to Hear Marriage Equality Challenge" → ' +
-    '"MARRIAGE EQUALITY SURVIVES"; title "New Study Finds LGBTQ Youth Face Higher Risks" → ' +
-    '"THE NUMBERS WE CAN\'T IGNORE".',
+    'Short scroll-stopping hook overlaid on the cover image: 2–6 words (ideally 3–5), sharper ' +
+    'than the title, rendered ALL CAPS. No end punctuation, hashtags, quotes, or emoji. ' +
+    'E.g. "MARRIAGE EQUALITY SURVIVES".',
   ),
   coverQuery: z.string().describe(
-    'A concrete, LITERAL stock-photo search phrase (3–6 words) for a cover image: ' +
-    'photographable scenes, objects or settings — NOT named people, brands, or specific ' +
-    'events (stock sites have none of those). Capture the story\'s subject matter. ' +
-    'E.g. "man lifting weights gym", "courthouse steps exterior", "person voting ballot box", ' +
-    '"two grooms wedding". Avoid vague identity-only terms like "lgbtq" or "pride" alone, ' +
-    'which return generic flag/parade photos — only use them if the story is literally about that. ' +
-    'Always provide this even when coverPerson is set — it is the fallback when no licensed portrait is found.',
+    'LITERAL stock-photo search phrase (3–6 words): photographable scenes/objects, never named ' +
+    'people/brands/events (e.g. "courthouse steps exterior", "two grooms wedding"). Avoid bare ' +
+    '"lgbtq"/"pride" unless the story is literally that. Always provide, even with coverPerson set.',
   ),
   coverPerson: z.string().nullable().describe(
-    'The single public figure the story most centers on, as a real licensed portrait of them ' +
-    'will be the cover. STRONG RULE: if a named public figure (celebrity, athlete, politician, ' +
-    'artist, public official) appears in the HEADLINE and is the main actor or subject, return ' +
-    'THAT person — even when the story also discusses a group, an issue, or other people they ' +
-    'are acting on or reacting to. For "Trump Rants About Trans Athletes to Kids", the figure is ' +
-    '"Donald Trump" (NOT null — the trans athletes and kids are the topic he is acting on, not ' +
-    'co-equal subjects). Give their common full name EXACTLY as it titles their Wikipedia article ' +
-    '(e.g. "Donald Trump", "Pedro Pascal", "Kamala Harris", "Aron Piper"). Return null ONLY when ' +
-    'there is genuinely no single dominant individual — e.g. an institution acts ("Supreme Court ' +
-    'rules…", "WHO announces…"), or the story is about a group/event with no central named person ' +
-    '("Pride parade draws thousands"). When two-plus people share the spotlight equally, pick the ' +
-    'one named first in the headline.',
+    'The single public figure the story centers on (their licensed portrait becomes the cover), ' +
+    'named EXACTLY as their Wikipedia article title — see the COVER FIELDS rule in the system ' +
+    'prompt. Null only when no single dominant individual exists.',
   ),
   coverWork: z.object({
-    title: z.string().describe('The work\'s title, as it would appear on IMDb/TMDB (e.g. "Heartstopper", "Blue Film").'),
-    kind: z.enum(['film', 'tv']).describe('"film" for a movie, "tv" for a series/show.'),
+    title: z.string().describe('Title as it appears on IMDb/TMDB.'),
+    kind: z.enum(['film', 'tv']),
   }).nullable().describe(
-    'The single FILM or TV SHOW the story is centrally about — used to fetch its official poster ' +
-    'as the cover. Set this when the piece is essentially ABOUT one movie or series (a review, a ' +
-    'trailer/casting/release story, an episode recap). Return null when there is no single dominant ' +
-    'title, or when the story centers on a PERSON instead (use coverPerson for that — do not set ' +
-    'both; prefer coverPerson when a named individual is the real subject).',
+    'The single film/TV show the piece is centrally ABOUT (its poster becomes the cover). Null if ' +
+    'none, or when a person is the real subject (then use coverPerson — never set both).',
   ),
   sourcesUsed: z.array(z.string()).describe(
-    'The IDs (e.g. "S1","S2") of ALL sources that report the SAME event as your piece. ALWAYS ' +
-    'include "S1". Include EVERY additional source that covers the same event — even if it only ' +
-    'corroborates and adds no new fact. Omit a source ONLY if it is about a genuinely different story.',
+    'IDs ("S1","S2"…) of ALL sources reporting the SAME event. Always include "S1"; include every ' +
+    'corroborating source; omit only sources about a genuinely different story.',
   ),
-  publishable: z.boolean().describe('false if the story is off-topic, unverifiable, defamatory, or unsuitable for an LGBTQ+ retail blog.'),
+  publishable: z.boolean().describe('false if off-topic, unverifiable, defamatory, or unsuitable for an LGBTQ+ retail blog.'),
   skipReason: z.string().nullable().describe('If publishable is false, a short reason; otherwise null.'),
 });
 
@@ -177,6 +134,11 @@ VISUAL ELEMENTS (use these to break up the text — each renders as a styled cal
 - coverHeadline: a short, punchy hook (2–6 words) that gets overlaid on the social cover image. It is NOT the article title — make it sharper and more scroll-stopping, while staying factual (no hype that the story doesn't support). Think feed-engagement, not SEO.
 - socialText: the conversational one-sentence hook that becomes the BODY of the social post (the headline is already shown in the link card, so don't repeat it). Give people a reason to click — an angle or stake — without clickbait or anything the story doesn't support.
 - hashtags: 3–5 discovery hashtags (no #, CamelCase for multi-word) that real people browse, for reach on Bluesky/Mastodon/X/Threads.
+
+COVER FIELDS (drive the cover-image pipeline):
+- coverPerson — STRONG RULE: if a named public figure (celebrity, athlete, politician, artist, official) appears in the HEADLINE as the main actor or subject, return THAT person, even when the story also discusses a group or issue they act on ("Trump Rants About Trans Athletes to Kids" → "Donald Trump", not null). Name them exactly as their Wikipedia article title. Null only when no single dominant individual exists (an institution acts, or a group/event story). Two equal figures → the one named first in the headline.
+- coverWork — set only when the piece is essentially ABOUT one film/series (review, trailer, casting, recap). Prefer coverPerson over coverWork when a named individual is the real subject; never set both.
+- coverQuery — always provide as the stock-photo fallback: a literal photographable scene, never named people or brands.
 - Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
 
 const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote', 'cite', 'aside', 'span'];
@@ -256,64 +218,6 @@ const RESEARCH_SYSTEM = `You are a researcher for Male Q, an LGBTQ+ news blog. Y
 
 Use at most ONE search — make the query count. Do NOT chain follow-up searches. Do NOT rewrite or summarize the story itself. Produce a tight RESEARCH BRIEF (≤250 words) — short paragraphs or bullets — of verifiable, useful context our writer can fold in to make the article deeper than the original. Prefer authoritative sources. Flag clearly where something is well-established vs. uncertain or contested. Never invent facts or numbers. If you genuinely can't find anything beyond the source coverage, say so in one line.`;
 
-/**
- * Best-effort web-research pass: a separate Sonnet call with the server-side web_search
- * tool that returns a plain-text brief of background/context. Run BEFORE (and separate
- * from) the structured draft call — structured outputs are incompatible with the citations
- * that web results carry, so the two must not share one request. Returns '' on any failure
- * (no key feature, refusal, network) so drafting degrades gracefully to source-only synthesis.
- */
-async function gatherResearch(
-  client: Anthropic,
-  primary: NewsItem,
-  primaryMaterial: string,
-  model: string,
-): Promise<string> {
-  try {
-    const prompt =
-      `STORY HEADLINE: ${primary.title}\n` +
-      `OUTLET: ${primary.sourceName}\n` +
-      `PUBLISHED: ${primary.publishedAt?.toISOString() ?? 'unknown'}\n` +
-      `SOURCE MATERIAL (for grounding — do not just restate it):\n${primaryMaterial.slice(0, 3000)}`;
-
-    // Cost guardrails — the research pass was a token bomb (2026-06-12): web_search
-    // returns large page extracts. Two levers keep it cheap (2026-06-13):
-    //   • RESEARCH_MODEL (Haiku 4.5) → ~3× cheaper input+output than the Sonnet draft
-    //   • max_uses: 1 + NO pause_turn re-send → the large search results are sent
-    //     ONCE, never re-sent. We take whatever the single search produced; if it
-    //     pauses mid-loop we just use the text gathered so far rather than paying to
-    //     resend the accumulated page extracts. A hung search bails in ~90s.
-    const MAX_SEARCHES = 1;
-    const researchOpts = { timeout: 90_000, maxRetries: 1 } as const;
-    const researchTools = [
-      { type: 'web_search_20260209', name: 'web_search', max_uses: MAX_SEARCHES },
-    ] as const;
-
-    const messages: Anthropic.MessageParam[] = [{ role: 'user', content: prompt }];
-    const res = await client.messages.create(
-      {
-        model,
-        max_tokens: 1200,
-        system: RESEARCH_SYSTEM,
-        tools: researchTools as any,
-        messages,
-      },
-      researchOpts,
-    );
-
-    if (res.stop_reason === 'refusal') return '';
-
-    return res.content
-      .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-      .map((b) => b.text)
-      .join('\n')
-      .trim();
-  } catch (err) {
-    console.warn(`  ⚠️  research pass failed (${(err as Error).message}); drafting from sources only`);
-    return '';
-  }
-}
-
 /** Attribution block linking exactly the sources actually used. */
 function attribution(used: NewsItem[]): string {
   const links = used
@@ -323,28 +227,92 @@ function attribution(used: NewsItem[]): string {
   return `<p class="news-source"><em>${label}: ${links}</em></p>`;
 }
 
-export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Promise<DraftedPost> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not set. Export it before running the news agent.');
-  }
-  const client = new Anthropic({ apiKey });
+/* ─────────────────── Batch-friendly building blocks ───────────────────
+ * The pipeline runs both Claude passes through the Batches API (50% off), so
+ * drafting is split into pure param-builders + result-parsers that run.ts can
+ * fan out: prepareStory → buildResearchParams / extractResearchBrief →
+ * buildDraftParams → finalizeDraft. draftPost() below composes the same pieces
+ * sequentially with direct calls for one-off/manual use.
+ */
 
-  // Fetch article text for every source in parallel, then make the source with the
-  // MOST material the primary (S1) — feed length is a poor proxy (e.g. them. has a
-  // thin feed but full article text). The model is told to always use S1.
+/** A cluster with its article text fetched, sources ranked, primary chosen. */
+export interface PreparedStory {
+  cluster: StoryCluster;
+  /** Sources ordered by material length — index 0 is the primary (S1). */
+  ordered: NewsItem[];
+  /** Fetched material per source, capped (primary 8k chars; secondaries 5k; ≥S5 omitted). */
+  materials: string[];
+}
+
+/** Chars of article material included per source position. */
+const PRIMARY_MATERIAL_CHARS = 8000;
+const SECONDARY_MATERIAL_CHARS = 5000;
+const MAX_SOURCES_WITH_MATERIAL = 4; // S1 + 3 secondaries; further sources are header-only
+
+/**
+ * Fetch article text for every source in parallel, then make the source with the
+ * MOST material the primary (S1) — feed length is a poor proxy (e.g. them. has a
+ * thin feed but full article text). The model is told to always use S1. Secondary
+ * material is capped so a big cluster can't blow up the draft prompt.
+ */
+export async function prepareStory(cluster: StoryCluster): Promise<PreparedStory> {
   const initial = [cluster.primary, ...cluster.sources.filter((s) => s.url !== cluster.primary.url)];
-  const fetched = await Promise.all(initial.map((s) => gatherMaterial(s, 8000)));
+  const fetched = await Promise.all(initial.map((s) => gatherMaterial(s, PRIMARY_MATERIAL_CHARS)));
   const ranked = initial
     .map((s, i) => ({ s, mat: fetched[i] }))
     .sort((a, b) => b.mat.length - a.mat.length);
   const ordered = ranked.map((r) => r.s);
-  const materials = ranked.map((r) => r.mat);
+  const materials = ranked.map((r, i) => {
+    if (i === 0) return r.mat;
+    if (i < MAX_SOURCES_WITH_MATERIAL) return r.mat.slice(0, SECONDARY_MATERIAL_CHARS);
+    return '';
+  });
+  return { cluster, ordered, materials };
+}
 
-  // Web-research pass (best-effort) for context/background the sources lack. Runs as its
-  // own call — kept out of the structured draft request because web results carry
-  // citations, which structured outputs reject.
-  const research = ENABLE_RESEARCH ? await gatherResearch(client, ordered[0], materials[0], RESEARCH_MODEL) : '';
+/**
+ * Research pass (Haiku + server-side web_search) params. Kept as a separate call
+ * from the structured draft — web results carry citations, which structured
+ * outputs reject. Cost guardrails: cheap model, max_uses: 1, and NO pause_turn
+ * re-send (the large search-result extracts are sent once, never re-sent; the
+ * brief is whatever text the single search produced).
+ * NOTE: Haiku 4.5 supports only the basic `web_search_20250305` tool — the
+ * `_20260209` variant 400s on it (that bug silently disabled research for two
+ * months; the failure was swallowed as "drafting from sources only").
+ */
+export function buildResearchParams(prep: PreparedStory): Anthropic.MessageCreateParamsNonStreaming {
+  const primary = prep.ordered[0];
+  const prompt =
+    `STORY HEADLINE: ${primary.title}\n` +
+    `OUTLET: ${primary.sourceName}\n` +
+    `PUBLISHED: ${primary.publishedAt?.toISOString() ?? 'unknown'}\n` +
+    `SOURCE MATERIAL (for grounding — do not just restate it):\n${prep.materials[0].slice(0, 3000)}`;
+  return {
+    model: RESEARCH_MODEL,
+    max_tokens: 1200,
+    system: RESEARCH_SYSTEM,
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 } as any],
+    messages: [{ role: 'user', content: prompt }],
+  };
+}
+
+/** Pull the plain-text brief out of a research response ('' on refusal/empty). */
+export function extractResearchBrief(msg: Anthropic.Message): string {
+  if (msg.stop_reason === 'refusal') return '';
+  return msg.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n')
+    .trim();
+}
+
+/** Structured draft-call params (Sonnet 5; adaptive thinking left ON for quality). */
+export function buildDraftParams(
+  prep: PreparedStory,
+  research: string,
+  model = DRAFT_MODEL,
+): Anthropic.MessageCreateParamsNonStreaming {
+  const { ordered, materials } = prep;
 
   // Length CAP (not a target): never more than ~20% over the primary source — quality
   // over length, no padding or repetition. Floor (350) stops thin/feed-only scrapes from
@@ -358,7 +326,9 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     `HEADLINE: ${s.title}\n` +
     `PUBLISHED: ${s.publishedAt?.toISOString() ?? 'unknown'}\n` +
     `CANONICAL URL: ${s.url}\n` +
-    `MATERIAL (context only — do not copy):\n${material}`;
+    (material
+      ? `MATERIAL (context only — do not copy):\n${material}`
+      : 'MATERIAL: (omitted — corroborating source; judge same-event from the headline)');
 
   const sourcesBlock = ordered.map((s, i) => block(s, i, materials[i])).join('\n\n');
   const researchBlock = research
@@ -366,22 +336,44 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     : '';
   const lengthBlock =
     `\n\n=== LENGTH CAP ===\nThe primary source runs about ${sourceWords} words. Your piece MUST NOT exceed ${maxWords} words (~20% over the source). This is a hard ceiling, NOT a target to reach — cover the story completely and well, then stop. A shorter, sharper piece beats a longer, padded one. Never repeat a point or add filler to fill space.`;
-  const userContent = sourcesBlock + researchBlock + lengthBlock;
 
-  const response = await client.messages.parse({
+  return {
     model,
-    max_tokens: 8000,
+    // Headroom for Sonnet 5's default adaptive thinking + the article itself —
+    // max_tokens caps thinking AND response text together on this model.
+    max_tokens: 16000,
+    // The ~2k-token system prompt clears Sonnet 5's 1,024-token cache minimum,
+    // so this breakpoint is live again (it was a silent no-op on Haiku's 4,096
+    // minimum). Batch items may or may not hit it — harmless either way.
     system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
     output_config: { format: zodOutputFormat(DraftSchema) },
-    messages: [{ role: 'user', content: userContent }],
-  });
+    messages: [{ role: 'user', content: sourcesBlock + researchBlock + lengthBlock }],
+  };
+}
 
-  if (response.stop_reason === 'refusal') {
+/**
+ * Parse a structured draft response (batch results can't use messages.parse, so
+ * we validate against the Zod schema ourselves) and run all post-processing:
+ * sanitize → strip em-dashes → resolve cited sources → embeds → entity links →
+ * attribution. Throws on refusal/unparseable output (caught per-story by run.ts).
+ */
+export async function finalizeDraft(prep: PreparedStory, msg: Anthropic.Message): Promise<DraftedPost> {
+  const { ordered } = prep;
+  if (msg.stop_reason === 'refusal') {
     throw new Error('Claude refused to draft this story.');
   }
-  const parsed = response.parsed_output;
-  if (!parsed) {
-    throw new Error('Claude returned no parseable structured output (possibly truncated).');
+  const jsonText = msg.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('');
+  if (!jsonText.trim()) {
+    throw new Error(`Claude returned no structured output (stop_reason: ${msg.stop_reason}).`);
+  }
+  let parsed: z.infer<typeof DraftSchema>;
+  try {
+    parsed = DraftSchema.parse(JSON.parse(jsonText));
+  } catch (e: any) {
+    throw new Error(`Structured output failed validation (possibly truncated): ${e.message?.slice(0, 200)}`);
   }
 
   const cleanBody = stripEmDashes(
@@ -422,4 +414,31 @@ export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Pro
     item: ordered[0],
     usedSourceUrls: used.map((s) => s.url),
   };
+}
+
+/**
+ * One-off sequential drafting (direct API calls, no batch) — for manual/backfill
+ * use. The cron path in run.ts uses the exported pieces above through the
+ * Batches API instead.
+ */
+export async function draftPost(cluster: StoryCluster, model = DRAFT_MODEL): Promise<DraftedPost> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    throw new Error('ANTHROPIC_API_KEY is not set. Export it before running the news agent.');
+  }
+  const client = new Anthropic({ apiKey });
+  const prep = await prepareStory(cluster);
+
+  let research = '';
+  if (ENABLE_RESEARCH) {
+    try {
+      const res = await client.messages.create(buildResearchParams(prep), { timeout: 90_000, maxRetries: 1 });
+      research = extractResearchBrief(res);
+    } catch (err) {
+      console.warn(`  ⚠️  research pass failed (${(err as Error).message}); drafting from sources only`);
+    }
+  }
+
+  const msg = await client.messages.create(buildDraftParams(prep, research, model));
+  return finalizeDraft(prep, msg);
 }

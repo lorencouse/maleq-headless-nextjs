@@ -96,18 +96,46 @@ export const META = {
 /** Default author (WP user ID) for generated drafts. 6 = "Mr. Q" (login maleqorg). */
 export const DEFAULT_AUTHOR_ID = 6;
 
-/** Claude model for DRAFTING. Moved Sonnet 4.6 → Haiku 4.5 (2026-06-13) for cost:
- * Haiku is ~3× cheaper in+out ($1/$5 vs $3/$15 per MTok), bringing per-article
- * cost to ~$0.04. Trade-off is less-polished prose than Sonnet — bump back to
- * 'claude-sonnet-4-6' if article quality regresses too far. (Considered Gemini
- * 3.5 Flash but at $1.50/$9 it's pricier than Haiku and would require a full
- * rewrite of the structured-output + web_search machinery.) */
-export const DRAFT_MODEL = 'claude-haiku-4-5';
+/** Claude model for DRAFTING. Haiku 4.5 (2026-06-13 cost move) → Sonnet 5
+ * (2026-08-05 quality decision): drafts now go through the Batches API at 50%
+ * off, so Sonnet 5 prose costs ~1.5× what Haiku cost direct (~$0.06/article vs
+ * ~$0.04) while being markedly better written. Drop back to 'claude-haiku-4-5'
+ * if cost ever matters more than prose again. */
+export const DRAFT_MODEL = 'claude-sonnet-5';
 
 /** Claude model for the web-RESEARCH pass. Haiku 4.5 — research is fact/context
- * gathering, not prose, so it doesn't need a bigger model. (Same model as the
- * draft now; kept as a separate constant so the two can diverge again later.) */
+ * gathering, not prose, so it doesn't need a bigger model. NOTE: Haiku only
+ * supports the basic `web_search_20250305` tool variant — the `_20260209`
+ * dynamic-filtering variant 400s on it (this silently killed the research pass
+ * for 2 months until 2026-08-05). */
 export const RESEARCH_MODEL = 'claude-haiku-4-5';
+
+/** $ per MTok (standard API list price; Sonnet 5 intro pricing through
+ * 2026-08-31 is lower, so estimates here run slightly high until then). */
+export const PRICES: Record<string, { in: number; out: number }> = {
+  'claude-sonnet-5': { in: 3, out: 15 },
+  'claude-haiku-4-5': { in: 1, out: 5 },
+};
+/** Both pipeline passes run through the Batches API at 50% of list price. */
+export const BATCH_DISCOUNT = 0.5;
+/** Server-side web_search tool usage fee: $10 per 1,000 searches. */
+export const WEB_SEARCH_PER_SEARCH = 0.01;
+
+/** Estimated $ for one API message given its usage block (batch pricing). */
+export function estimateCost(
+  model: string,
+  u: { input_tokens: number; output_tokens: number; cache_creation_input_tokens?: number | null; cache_read_input_tokens?: number | null },
+  searches = 0,
+): number {
+  const p = PRICES[model] ?? PRICES['claude-sonnet-5'];
+  const tokens =
+    (u.input_tokens * p.in +
+      (u.cache_creation_input_tokens ?? 0) * p.in * 1.25 +
+      (u.cache_read_input_tokens ?? 0) * p.in * 0.1 +
+      u.output_tokens * p.out) /
+    1_000_000;
+  return tokens * BATCH_DISCOUNT + searches * WEB_SEARCH_PER_SEARCH;
+}
 
 /** Whether the drafter runs a web-research pass (server-side web_search) to add real
  * context/background the source coverage lacks. On by default; set NEWS_DISABLE_RESEARCH=1
