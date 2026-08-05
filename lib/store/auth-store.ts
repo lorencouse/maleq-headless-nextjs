@@ -23,6 +23,9 @@ export interface User {
   lastName: string;
   displayName: string;
   avatarUrl?: string;
+  /** WP role ('administrator' for the site owner) — gates owner-only nav/UI.
+   * Server routes never trust this; they re-validate against WordPress. */
+  role?: string;
 }
 
 interface AuthState {

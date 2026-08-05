@@ -12,8 +12,16 @@ interface AccountLayoutProps {
 
 // Nav items: labels resolved at render time via useTranslations so they
 // stay locale-aware. The icon/href pairs are static; only the visible
-// label changes per locale.
-const navItemsConfig = [
+// label changes per locale. Items with `adminOnly` render only for the
+// administrator account and use `rawLabel` (no translation key — owner-only
+// tooling stays English).
+const navItemsConfig: {
+  labelKey?: string;
+  rawLabel?: string;
+  href: string;
+  icon: React.ReactNode;
+  adminOnly?: boolean;
+}[] = [
   {
     labelKey: 'dashboard',
     href: '/account',
@@ -69,7 +77,17 @@ const navItemsConfig = [
       </svg>
     ),
   },
-] as const;
+  {
+    rawLabel: 'News Review',
+    href: '/account/news-review',
+    adminOnly: true,
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+      </svg>
+    ),
+  },
+];
 
 export default function AccountLayout({ children }: AccountLayoutProps) {
   const t = useTranslations('account.nav');
@@ -125,23 +143,25 @@ export default function AccountLayout({ children }: AccountLayoutProps) {
 
             {/* Navigation */}
             <nav className="space-y-1">
-              {navItemsConfig.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    {item.icon}
-                    <span className="font-medium">{t(item.labelKey)}</span>
-                  </Link>
-                );
-              })}
+              {navItemsConfig
+                .filter((item) => !item.adminOnly || user?.role === 'administrator')
+                .map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                      }`}
+                    >
+                      {item.icon}
+                      <span className="font-medium">{item.rawLabel ?? t(item.labelKey!)}</span>
+                    </Link>
+                  );
+                })}
             </nav>
 
             {/* Logout */}

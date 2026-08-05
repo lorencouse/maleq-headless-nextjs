@@ -219,6 +219,14 @@ pruned automatically.
 Safari, Share → **Add to Home Screen**, then tap "🔔 Notify me" inside the installed app.
 Android Chrome works directly in the browser.
 
+**maleq.com mirror:** the same queue is available at **`maleq.com/account/news-review`**
+when logged in as the WordPress administrator account — a "News Review" item appears in
+the account sidebar (admin only; requires one fresh login after the feature shipped so
+the session picks up the role). The Next.js API validates the session + role against
+WordPress on every request and proxies actions to `/news-review-action` with
+`MALEQ_NEWS_REVIEW_KEY` held server-side (Coolify env var), so Publish fires the
+autoshare exactly like the wp.maleq.com page.
+
 Config: wp-config constants `MALEQ_NEWS_REVIEW_KEY` (`openssl rand -hex 32`) and
 `MALEQ_NEWS_REVIEW_VAPID_PUBLIC`; news-agent `.env` vars `NEWS_REVIEW_VAPID_PUBLIC`,
 `NEWS_REVIEW_VAPID_PRIVATE` (`bunx web-push generate-vapid-keys`) and

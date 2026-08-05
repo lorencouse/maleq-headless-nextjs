@@ -75,7 +75,12 @@ ADMIN_API_KEY=your-admin-key
 WOOCOMMERCE_URL=https://wp.maleq.com
 WOOCOMMERCE_CONSUMER_KEY=ck_xxxxx
 WOOCOMMERCE_CONSUMER_SECRET=cs_xxxxx
+MALEQ_NEWS_REVIEW_KEY=same-value-as-wp-config-constant
 ```
+
+`MALEQ_NEWS_REVIEW_KEY` powers the owner-only `/account/news-review` page's action
+proxy (publish/delete/snooze news drafts) — it must equal the `MALEQ_NEWS_REVIEW_KEY`
+constant in the WordPress server's wp-config.php.
 
 Mark `NEXT_PUBLIC_*` variables as "Build Variable" so they're available during `docker build`.
 

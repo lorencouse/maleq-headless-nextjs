@@ -96,6 +96,9 @@ export async function POST(request: NextRequest) {
         lastName: customer.last_name,
         displayName: `${customer.first_name} ${customer.last_name}`,
         avatarUrl: customer.avatar_url,
+        // Owner-only UI gating (News Review nav). Cosmetic — server routes
+        // re-validate the session + role against WP before serving anything.
+        role: customer.role,
       },
     });
     // Token goes in an httpOnly cookie (not the JSON body / localStorage), so
