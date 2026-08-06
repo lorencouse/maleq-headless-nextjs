@@ -9,10 +9,18 @@
  * here fires the existing maleq-news-autoshare.php exactly like publishing in WP admin.
  * Version: 1.0
  *
+ * Approving a story does not necessarily publish it instantly: publish times are spaced
+ * at least MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES apart, so bulk-approving a morning's drafts
+ * drip-feeds the site and the social accounts instead of dumping five stories at once.
+ * Spacing is done with WordPress's own scheduling ('future' + post_date) — WP-Cron
+ * publishes each slot and autoshare fires on the future→publish transition.
+ *
  * wp-config constants:
  *   MALEQ_NEWS_REVIEW_KEY           — long random secret; the page/actions are 404/403 without it
  *   MALEQ_NEWS_REVIEW_VAPID_PUBLIC  — VAPID public key (pair with the private key in the
  *                                     news-agent .env; used by the browser to subscribe)
+ *   MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES — minimum minutes between article publish times
+ *                                     (default 30; 0 restores publish-immediately)
  */
 
 if (!defined('ABSPATH')) {
@@ -25,6 +33,45 @@ const MALEQ_NR_SUBS_OPTION = 'maleq_news_review_push_subs';
 const MALEQ_NR_LATER_META = '_maleq_news_review_later';
 /** Max stored push subscriptions (owner devices) — hard cap, oldest evicted. */
 const MALEQ_NR_MAX_SUBS = 10;
+/** Fallback minimum gap between publish times when wp-config doesn't override it. */
+const MALEQ_NR_DEFAULT_GAP_MINUTES = 30;
+
+/** Minimum minutes between article publish times. 0 disables the queue. */
+function maleq_nr_gap_minutes(): int {
+    $gap = defined('MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES')
+        ? (int) MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES
+        : MALEQ_NR_DEFAULT_GAP_MINUTES;
+    return max(0, $gap);
+}
+
+/**
+ * The next free publish slot as a GMT timestamp: at least gap_minutes after the most
+ * recent published-or-scheduled post. Returns "now" when that gap has already elapsed,
+ * so approving a single story on a quiet morning still goes out immediately.
+ *
+ * Counts ALL posts, not just machine-drafted news — a story hand-published in WP admin
+ * pushes the queue back too, which is the point (one feed, one cadence).
+ *
+ * WP-Cron granularity is coarser than this (a system cron hits wp-cron.php every 5
+ * minutes), but slots only ever fire at or after their stamped time, so the gap is a
+ * floor: drift pushes a story later, never closer to its predecessor.
+ */
+function maleq_nr_next_slot(): int {
+    $now = time();
+    $gap = maleq_nr_gap_minutes();
+    if ($gap === 0) {
+        return $now;
+    }
+    global $wpdb;
+    $latest = $wpdb->get_var(
+        "SELECT MAX(post_date_gmt) FROM {$wpdb->posts}
+          WHERE post_type = 'post' AND post_status IN ('publish', 'future')"
+    );
+    if (!$latest || $latest === '0000-00-00 00:00:00') {
+        return $now;
+    }
+    return max($now, strtotime($latest . ' UTC') + $gap * 60);
+}
 
 /** True when the supplied key matches MALEQ_NEWS_REVIEW_KEY (constant-time). */
 function maleq_nr_key_ok(?string $k): bool {
@@ -102,28 +149,48 @@ function maleq_nr_serve_action(): void {
 }
 
 /**
- * Approve: publish now. Stamps the publish time (like WP admin's Publish button — the
- * draft's creation date would otherwise back-date the story) and lets the normal
- * transition_post_status hooks fire, so maleq-news-autoshare.php shares to social on
- * shutdown after this response has already been flushed to the phone.
+ * Approve: publish into the next free slot (see maleq_nr_next_slot()). Always stamps the
+ * publish time — the draft's creation date would otherwise back-date the story.
+ *
+ * When the slot is now, this publishes outright and the normal transition_post_status
+ * hooks fire, so maleq-news-autoshare.php shares to social on shutdown after this
+ * response has already been flushed to the phone. When the slot is in the future the
+ * post goes to 'future' and WP-Cron publishes it later — autoshare hooks the
+ * future→publish transition just the same, so sharing happens when the story goes live.
  */
 function maleq_nr_action_publish(int $id): void {
     $post = maleq_nr_reviewable($id);
     if (!$post) {
         maleq_nr_json(['ok' => false, 'error' => 'not a pending news draft'], 404);
     }
+    $slot      = maleq_nr_next_slot();
+    $scheduled = $slot > time();
     $res = wp_update_post([
         'ID'            => $id,
-        'post_status'   => 'publish',
-        'post_date'     => current_time('mysql'),
-        'post_date_gmt' => current_time('mysql', true),
+        'post_status'   => $scheduled ? 'future' : 'publish',
+        'post_date'     => get_date_from_gmt(gmdate('Y-m-d H:i:s', $slot)),
+        'post_date_gmt' => gmdate('Y-m-d H:i:s', $slot),
         'edit_date'     => true,
     ], true);
     if (is_wp_error($res)) {
         maleq_nr_json(['ok' => false, 'error' => $res->get_error_message()], 500);
     }
     delete_post_meta($id, MALEQ_NR_LATER_META);
-    maleq_nr_json(['ok' => true, 'url' => maleq_nr_public_url($post->post_name)]);
+    maleq_nr_json([
+        'ok'        => true,
+        'url'       => maleq_nr_public_url($post->post_name),
+        'scheduled' => $scheduled,
+        // GMT unix timestamp — clients format it in the viewer's own timezone.
+        // Deliberately not a pre-formatted label: the site timezone is UTC, so a
+        // server-rendered time would read an hours-off clock on the owner's phone.
+        'publish_at' => $slot,
+    ]);
+}
+
+/** Slot label in site time — server-render fallback only; clients relabel in local time. */
+function maleq_nr_slot_label(int $ts): string {
+    $sameDay = wp_date('Y-m-d', $ts) === wp_date('Y-m-d');
+    return $sameDay ? wp_date('g:i A', $ts) : wp_date('D g:i A', $ts);
 }
 
 /**
@@ -298,6 +365,19 @@ function maleq_nr_serve_page(): void {
             ['key' => '_maleq_news_pending_review', 'value' => '1'],
         ],
     ]);
+    // Approved-but-not-yet-live stories, soonest first. They keep the pending-review
+    // meta until autoshare deletes it post-share, so this list self-clears.
+    $queued = get_posts([
+        'post_type'      => 'post',
+        'post_status'    => 'future',
+        'posts_per_page' => 50,
+        'orderby'        => 'date',
+        'order'          => 'ASC',
+        'meta_query'     => [
+            ['key' => '_maleq_news_pending_review', 'value' => '1'],
+        ],
+    ]);
+
     // "Later"-flagged drafts sink to the bottom (oldest snooze last).
     usort($posts, function ($a, $b) {
         $la = (int) get_post_meta($a->ID, MALEQ_NR_LATER_META, true);
@@ -399,6 +479,13 @@ function maleq_nr_serve_page(): void {
   .b-lat { background: var(--amber); }
   .status { padding: 0 16px 12px; font-size: 13px; color: var(--muted); min-height: 1em; }
   .note { color: var(--muted); font-size: 13px; text-align: center; padding: 8px 16px 0; }
+  .queued { margin: 0 0 16px; padding: 12px 16px; border-radius: 12px;
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+  .queued h2 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .04em; }
+  .queued ol { margin: 0; padding-left: 18px; }
+  .queued li { font-size: 14px; line-height: 1.45; margin-bottom: 6px; }
+  .queued time { color: var(--muted); font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -407,6 +494,23 @@ function maleq_nr_serve_page(): void {
   <button id="push-btn" type="button">🔔 Notify me</button>
 </header>
 <main id="list">
+<?php if ($queued) : ?>
+  <section class="queued">
+    <h2>Queued · <?php echo count($queued); ?> waiting to go live</h2>
+    <ol>
+      <?php foreach ($queued as $q) :
+          $slotTs = (int) get_post_time('U', true, $q); ?>
+        <li>
+          <?php // Server text is site-time (UTC here); the inline JS relabels it in the
+                // phone's timezone on load, so the owner reads their own clock. ?>
+          <time datetime="<?php echo esc_attr(gmdate('c', $slotTs)); ?>"><?php
+            echo esc_html(maleq_nr_slot_label($slotTs)); ?></time>
+          — <?php echo esc_html(html_entity_decode(get_the_title($q), ENT_QUOTES | ENT_HTML5, 'UTF-8')); ?>
+        </li>
+      <?php endforeach; ?>
+    </ol>
+  </section>
+<?php endif; ?>
 <?php if (!$posts) : ?>
   <p class="empty">All caught up 🎉<br>No drafts waiting for review.</p>
 <?php endif; ?>
@@ -442,7 +546,14 @@ function maleq_nr_serve_page(): void {
   </article>
 <?php endforeach; ?>
 </main>
-<p class="note">Publishing shares to social automatically. Delete removes the story + cover image.<br>
+<p class="note">
+<?php if (maleq_nr_gap_minutes() > 0) : ?>
+  Approved stories go live at least <?php echo (int) maleq_nr_gap_minutes(); ?> minutes apart —
+  the first goes out now, the rest queue up. Social sharing happens as each one publishes.<br>
+<?php else : ?>
+  Publishing shares to social automatically.<br>
+<?php endif; ?>
+Delete removes the story + cover image.<br>
 On iPhone: Add to Home Screen first, then enable notifications from the installed app.</p>
 <script>
 (function () {
@@ -465,14 +576,57 @@ On iPhone: Add to Home Screen first, then enable notifications from the installe
     var n = Math.max(0, (parseInt(el.textContent.replace(/\D/g, ''), 10) || 0) + delta);
     el.textContent = '(' + n + ')';
     if (n === 0 && !document.querySelector('article:not(.gone)')) {
-      document.getElementById('list').innerHTML =
-        '<p class="empty">All caught up 🎉<br>No drafts waiting for review.</p>';
+      // Append rather than replace innerHTML — the queued list lives in #list too.
+      if (!document.querySelector('.empty')) {
+        var p = document.createElement('p');
+        p.className = 'empty';
+        p.innerHTML = 'All caught up 🎉<br>No drafts waiting for review.';
+        document.getElementById('list').appendChild(p);
+      }
     }
   }
 
   function removeCard(card) {
     card.classList.add('gone');
     setTimeout(function () { card.remove(); updateCount(-1); }, 280);
+  }
+
+  /** Slot time in the PHONE's timezone: "3:30 PM" today, "Tue 3:30 PM" beyond. */
+  function fmtSlot(date) {
+    var time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    if (date.toDateString() === new Date().toDateString()) { return time; }
+    return date.toLocaleDateString([], { weekday: 'short' }) + ' ' + time;
+  }
+
+  // Relabel the server-rendered queue (site time, i.e. UTC) into local time.
+  document.querySelectorAll('.queued time[datetime]').forEach(function (t) {
+    var d = new Date(t.getAttribute('datetime'));
+    if (!isNaN(d.getTime())) { t.textContent = fmtSlot(d); }
+  });
+
+  /**
+   * Move a just-approved story into the Queued list so the cadence stays visible
+   * without a reload. Builds the section if this is the first queued story.
+   */
+  function addToQueuedList(res, card) {
+    if (!res.scheduled) { return; }
+    var at = new Date(res.publish_at * 1000);
+    var section = document.querySelector('.queued');
+    if (!section) {
+      section = document.createElement('section');
+      section.className = 'queued';
+      section.innerHTML = '<h2></h2><ol></ol>';
+      document.getElementById('list').insertBefore(section, document.getElementById('list').firstChild);
+    }
+    var li = document.createElement('li');
+    var t = document.createElement('time');
+    t.setAttribute('datetime', at.toISOString());
+    t.textContent = fmtSlot(at);
+    li.appendChild(t);
+    li.appendChild(document.createTextNode(' — ' + card.querySelector('.title').textContent));
+    section.querySelector('ol').appendChild(li);
+    var n = section.querySelectorAll('li').length;
+    section.querySelector('h2').textContent = 'Queued · ' + n + ' waiting to go live';
   }
 
   document.querySelectorAll('article').forEach(function (card) {
@@ -495,11 +649,14 @@ On iPhone: Add to Home Screen first, then enable notifications from the installe
     }
 
     pub.addEventListener('click', function () {
-      busy(true, 'Publishing…');
+      busy(true, 'Approving…');
       api('publish', { post_id: id }).then(function (j) {
         if (!j.ok) { busy(false, '⚠ ' + (j.error || 'failed')); return; }
-        status.textContent = '✓ Published — sharing to social…';
-        setTimeout(function () { removeCard(card); }, 900);
+        status.textContent = j.scheduled
+          ? '🕒 Queued for ' + fmtSlot(new Date(j.publish_at * 1000))
+          : '✓ Published — sharing to social…';
+        addToQueuedList(j, card);
+        setTimeout(function () { removeCard(card); }, j.scheduled ? 1400 : 900);
       }).catch(function () { busy(false, '⚠ Network error — try again.'); });
     });
 

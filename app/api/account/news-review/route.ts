@@ -20,10 +20,23 @@ export interface PendingDraft {
   createdAt: string;
 }
 
+/** An approved story waiting for its publish slot (post_status = 'future'). */
+export interface QueuedDraft {
+  id: number;
+  title: string;
+  /** Scheduled publish time, ISO 8601 UTC. */
+  publishAt: string;
+}
+
 /**
  * GET — the pending news-draft queue (owner only). Mirrors the query in the
  * maleq-news-review.php mu-plugin: drafts flagged `_maleq_news_pending_review`,
  * snoozed items (`_maleq_news_review_later`) sorted last, newest first.
+ *
+ * Also returns `queued`: stories already approved but waiting for their publish
+ * slot (`post_status = 'future'` — see the publish-spacing logic in the
+ * mu-plugin). They keep the pending-review meta until autoshare clears it
+ * post-share, so the list self-empties as stories go live.
  */
 export async function GET(request: NextRequest) {
   const owner = await requireOwner(request);
@@ -31,7 +44,7 @@ export async function GET(request: NextRequest) {
 
   const pool = await getPoolAsync();
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT p.ID, p.post_title, p.post_content, p.post_date,
+    `SELECT p.ID, p.post_title, p.post_content, p.post_date, p.post_date_gmt, p.post_status,
             thumb.guid AS thumb_url,
             alt.meta_value AS thumb_alt,
             src_name.meta_value AS source_name,
@@ -48,25 +61,39 @@ export async function GET(request: NextRequest) {
        LEFT JOIN wp_postmeta src_url ON src_url.post_id = p.ID AND src_url.meta_key = '_maleq_news_source_url'
        LEFT JOIN wp_postmeta social ON social.post_id = p.ID AND social.meta_key = '_maleq_news_social_text'
        LEFT JOIN wp_postmeta later ON later.post_id = p.ID AND later.meta_key = '_maleq_news_review_later'
-      WHERE p.post_type = 'post' AND p.post_status = 'draft'
+      WHERE p.post_type = 'post' AND p.post_status IN ('draft', 'future')
       ORDER BY (later.meta_value IS NOT NULL) ASC, p.post_date DESC
       LIMIT 50`,
   );
 
-  const drafts: PendingDraft[] = rows.map((r) => ({
-    id: Number(r.ID),
-    title: String(r.post_title),
-    contentHtml: String(r.post_content || ''),
-    coverUrl: r.thumb_url ? getProductionImageUrl(String(r.thumb_url)) : null,
-    coverAlt: String(r.thumb_alt || ''),
-    sourceName: String(r.source_name || ''),
-    sourceUrl: String(r.source_url || ''),
-    socialText: String(r.social_text || ''),
-    snoozed: r.snoozed_at != null,
-    createdAt: new Date(r.post_date).toISOString(),
-  }));
+  const drafts: PendingDraft[] = rows
+    .filter((r) => r.post_status === 'draft')
+    .map((r) => ({
+      id: Number(r.ID),
+      title: String(r.post_title),
+      contentHtml: String(r.post_content || ''),
+      coverUrl: r.thumb_url ? getProductionImageUrl(String(r.thumb_url)) : null,
+      coverAlt: String(r.thumb_alt || ''),
+      sourceName: String(r.source_name || ''),
+      sourceUrl: String(r.source_url || ''),
+      socialText: String(r.social_text || ''),
+      snoozed: r.snoozed_at != null,
+      createdAt: new Date(r.post_date).toISOString(),
+    }));
 
-  return NextResponse.json({ drafts });
+  // Soonest-first: this is a countdown, not a feed.
+  const queued: QueuedDraft[] = rows
+    .filter((r) => r.post_status === 'future')
+    .map((r) => ({
+      id: Number(r.ID),
+      title: String(r.post_title),
+      // post_date_gmt is already UTC; stamp it as such so the client renders it
+      // in the viewer's timezone rather than re-interpreting it as local.
+      publishAt: new Date(`${String(r.post_date_gmt).replace(' ', 'T')}Z`).toISOString(),
+    }))
+    .sort((a, b) => a.publishAt.localeCompare(b.publishAt));
+
+  return NextResponse.json({ drafts, queued });
 }
 
 const ACTIONS = new Set(['publish', 'delete', 'later']);

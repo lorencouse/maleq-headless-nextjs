@@ -17,6 +17,12 @@ interface PendingDraft {
   createdAt: string;
 }
 
+interface QueuedDraft {
+  id: number;
+  title: string;
+  publishAt: string;
+}
+
 type CardState = { busy: boolean; status: string; confirmDelete: boolean; expanded: boolean };
 
 function timeAgo(iso: string): string {
@@ -25,6 +31,14 @@ function timeAgo(iso: string): string {
   const hours = Math.round(mins / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.round(hours / 24)}d ago`;
+}
+
+/** Slot time in the viewer's timezone: "3:30 PM" today, "Tue 3:30 PM" beyond. */
+function slotLabel(iso: string): string {
+  const at = new Date(iso);
+  const time = at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  if (at.toDateString() === new Date().toDateString()) return time;
+  return `${at.toLocaleDateString([], { weekday: 'short' })} ${time}`;
 }
 
 /**
@@ -36,6 +50,7 @@ function timeAgo(iso: string): string {
  */
 export default function NewsReviewQueue() {
   const [drafts, setDrafts] = useState<PendingDraft[] | null>(null);
+  const [queued, setQueued] = useState<QueuedDraft[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [cards, setCards] = useState<Record<number, CardState>>({});
 
@@ -57,7 +72,9 @@ export default function NewsReviewQueue() {
         );
       })
       .then((j) => {
-        if (j) setDrafts(j.drafts);
+        if (!j) return;
+        setDrafts(j.drafts);
+        setQueued(j.queued ?? []);
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -71,7 +88,7 @@ export default function NewsReviewQueue() {
 
   const act = useCallback(
     async (id: number, action: 'publish' | 'delete' | 'later') => {
-      setCard(id, { busy: true, status: action === 'publish' ? 'Publishing…' : action === 'delete' ? 'Deleting…' : 'Snoozing…' });
+      setCard(id, { busy: true, status: action === 'publish' ? 'Approving…' : action === 'delete' ? 'Deleting…' : 'Snoozing…' });
       try {
         const r = await fetchAuthed('/api/account/news-review', {
           method: 'POST',
@@ -97,13 +114,25 @@ export default function NewsReviewQueue() {
           });
           return;
         }
+        if (action === 'publish' && j.scheduled) {
+          // Spaced out rather than published now — surface the slot and move the
+          // story into the Queued list so the cadence stays visible.
+          const publishAt = new Date(Number(j.publish_at) * 1000).toISOString();
+          const title = drafts?.find((x) => x.id === id)?.title ?? '';
+          setCard(id, { busy: true, status: `🕒 Queued for ${slotLabel(publishAt)}` });
+          setQueued((q) =>
+            [...q, { id, title, publishAt }].sort((a, b) => a.publishAt.localeCompare(b.publishAt)),
+          );
+          setTimeout(() => setDrafts((d) => (d ? d.filter((x) => x.id !== id) : d)), 1400);
+          return;
+        }
         setCard(id, { busy: true, status: action === 'publish' ? '✓ Published, sharing to social…' : '🗑 Deleted' });
         setTimeout(() => setDrafts((d) => (d ? d.filter((x) => x.id !== id) : d)), 800);
       } catch {
         setCard(id, { busy: false, status: '⚠ Network error, try again.' });
       }
     },
-    [setCard],
+    [setCard, drafts],
   );
 
   if (error) {
@@ -112,15 +141,45 @@ export default function NewsReviewQueue() {
   if (drafts === null) {
     return <p className="text-muted-foreground py-8 text-center">Loading review queue…</p>;
   }
+  // The queued panel renders in the empty state too — clearing the draft list is
+  // exactly when you want to see what's still waiting to go live.
+  const queuedPanel = queued.length > 0 && (
+    <section className="border border-border rounded-xl bg-muted/40 p-4">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+        Queued · {queued.length} waiting to go live
+      </h2>
+      <ol className="space-y-1.5">
+        {queued.map((q) => (
+          <li key={q.id} className="text-sm flex gap-2">
+            <time
+              dateTime={q.publishAt}
+              className="text-muted-foreground tabular-nums shrink-0 w-20"
+            >
+              {slotLabel(q.publishAt)}
+            </time>
+            <span className="min-w-0">{q.title}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+
   if (drafts.length === 0) {
-    return <p className="text-muted-foreground py-8 text-center">All caught up 🎉 No drafts waiting for review.</p>;
+    return (
+      <div className="space-y-6">
+        {queuedPanel}
+        <p className="text-muted-foreground py-8 text-center">All caught up 🎉 No drafts waiting for review.</p>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
+      {queuedPanel}
       <p className="text-sm text-muted-foreground">
-        {drafts.length} draft{drafts.length === 1 ? '' : 's'} pending review. Publishing shares to social
-        automatically; Delete removes the story and its cover image.
+        {drafts.length} draft{drafts.length === 1 ? '' : 's'} pending review. Approved stories are spaced
+        out — the first goes out now, the rest queue up (the Queued list shows exact times). Delete
+        removes the story and its cover image.
       </p>
       {drafts.map((d) => {
         const c = cards[d.id] ?? { busy: false, status: '', confirmDelete: false, expanded: false };
