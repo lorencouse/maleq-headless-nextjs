@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuthStore } from '@/lib/store/auth-store';
+import { useSessionGuard } from '@/lib/hooks/useSessionGuard';
 import { useEffect } from 'react';
 
 interface AccountLayoutProps {
@@ -93,14 +94,21 @@ export default function AccountLayout({ children }: AccountLayoutProps) {
   const t = useTranslations('account.nav');
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, logout, hasHydrated } = useAuthStore();
+  const { user, isAuthenticated, logout, hasHydrated, wasSessionExpired } = useAuthStore();
+
+  // Revalidates the cookie against WP on mount: a stale localStorage session
+  // clears itself here and falls through to the redirect below, instead of
+  // rendering a signed-in shell whose API calls all 401.
+  useSessionGuard();
 
   useEffect(() => {
     // Only redirect after hydration is complete
     if (hasHydrated && !isAuthenticated) {
-      router.push(`/login?returnTo=${encodeURIComponent(pathname)}`);
+      const params = new URLSearchParams({ returnTo: pathname });
+      if (wasSessionExpired) params.set('expired', '1');
+      router.push(`/login?${params.toString()}`);
     }
-  }, [hasHydrated, isAuthenticated, router, pathname]);
+  }, [hasHydrated, isAuthenticated, wasSessionExpired, router, pathname]);
 
   const handleLogout = () => {
     logout();

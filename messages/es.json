@@ -135,6 +135,7 @@
       "noAccount": "¿No tienes cuenta?",
       "createOne": "Crea una",
       "failedGeneric": "Falló el inicio de sesión",
+      "sessionExpired": "Tu sesión ha caducado. Vuelve a iniciar sesión para continuar.",
       "termsBefore": "Al iniciar sesión, aceptas nuestros"
     },
     "register": {

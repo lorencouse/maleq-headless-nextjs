@@ -135,6 +135,7 @@
       "noAccount": "Noch kein Konto?",
       "createOne": "Konto erstellen",
       "failedGeneric": "Anmeldung fehlgeschlagen",
+      "sessionExpired": "Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an, um fortzufahren.",
       "termsBefore": "Mit der Anmeldung stimmen Sie unseren"
     },
     "register": {

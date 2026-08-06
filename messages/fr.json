@@ -135,6 +135,7 @@
       "noAccount": "Vous n'avez pas de compte ?",
       "createOne": "Créer un compte",
       "failedGeneric": "Échec de la connexion",
+      "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter pour continuer.",
       "termsBefore": "En vous connectant, vous acceptez nos"
     },
     "register": {

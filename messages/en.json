@@ -135,6 +135,7 @@
       "noAccount": "Don't have an account?",
       "createOne": "Create one",
       "failedGeneric": "Login failed",
+      "sessionExpired": "Your session expired. Please sign in again to continue.",
       "termsBefore": "By signing in, you agree to our"
     },
     "register": {

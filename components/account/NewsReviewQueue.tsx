@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { fetchAuthed } from '@/lib/api/fetch-authed';
 
 interface PendingDraft {
   id: number;
@@ -39,13 +40,25 @@ export default function NewsReviewQueue() {
   const [cards, setCards] = useState<Record<number, CardState>>({});
 
   useEffect(() => {
-    fetch('/api/account/news-review')
+    fetchAuthed('/api/account/news-review')
       .then(async (r) => {
+        if (r.ok) return r.json();
+        // fetchAuthed already flagged the expired session; AccountLayout is
+        // redirecting to /login, so don't flash an error on the way out.
+        if (r.status === 401) return null;
         if (r.status === 403) throw new Error('This page is only available to the site owner.');
-        if (!r.ok) throw new Error(`Could not load the review queue (${r.status}).`);
-        return r.json();
+        // Surface what the server actually said (e.g. the missing review key)
+        // rather than a bare status code.
+        const body = await r.json().catch(() => null);
+        throw new Error(
+          body?.error
+            ? `${body.error} (${r.status})`
+            : `Could not load the review queue (${r.status}).`,
+        );
       })
-      .then((j) => setDrafts(j.drafts))
+      .then((j) => {
+        if (j) setDrafts(j.drafts);
+      })
       .catch((e) => setError(e.message));
   }, []);
 
@@ -60,13 +73,17 @@ export default function NewsReviewQueue() {
     async (id: number, action: 'publish' | 'delete' | 'later') => {
       setCard(id, { busy: true, status: action === 'publish' ? 'Publishing…' : action === 'delete' ? 'Deleting…' : 'Snoozing…' });
       try {
-        const r = await fetch('/api/account/news-review', {
+        const r = await fetchAuthed('/api/account/news-review', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action, postId: id }),
         });
-        const j = await r.json();
-        if (!j.ok) {
+        if (r.status === 401) {
+          setCard(id, { busy: false, status: '⚠ Session expired — redirecting to sign in…' });
+          return;
+        }
+        const j = await r.json().catch(() => null);
+        if (!j?.ok) {
           setCard(id, { busy: false, status: `⚠ ${j.error || 'Action failed'}` });
           return;
         }

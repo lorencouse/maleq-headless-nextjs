@@ -135,6 +135,7 @@
       "noAccount": "还没有帐户吗？",
       "createOne": "建立一个",
       "failedGeneric": "登入失败",
+      "sessionExpired": "您的会话已过期。请重新登录以继续。",
       "termsBefore": "登入即表示您同意我们的"
     },
     "register": {

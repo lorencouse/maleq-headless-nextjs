@@ -41,6 +41,10 @@ export async function GET(request: NextRequest) {
         lastName: customer.last_name,
         displayName: `${customer.first_name} ${customer.last_name}`,
         avatarUrl: customer.avatar_url,
+        // Same field the login route returns, so a session revalidated here
+        // keeps owner-only UI gating (News Review nav) working. Cosmetic —
+        // server routes re-validate the role on every request.
+        role: customer.role,
       },
     });
   } catch (error) {

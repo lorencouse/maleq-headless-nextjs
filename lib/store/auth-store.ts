@@ -35,6 +35,10 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   hasHydrated: boolean;
+  /** True when the session ended because the cookie/WP token expired rather
+   * than the user signing out — lets /login explain why they're back there.
+   * Deliberately not persisted; it only needs to survive the redirect. */
+  wasSessionExpired: boolean;
 }
 
 interface AuthActions {
@@ -42,6 +46,7 @@ interface AuthActions {
   setToken: (token: string | null) => void;
   login: (user: User) => void;
   logout: () => void;
+  sessionExpired: () => void;
   setLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -55,6 +60,7 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
   hasHydrated: false,
+  wasSessionExpired: false,
 };
 
 export const useAuthStore = create<AuthState & AuthActions>()(
@@ -78,6 +84,7 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           token: null,
           isAuthenticated: true,
           error: null,
+          wasSessionExpired: false,
         }),
 
       logout: () => {
@@ -90,8 +97,23 @@ export const useAuthStore = create<AuthState & AuthActions>()(
           token: null,
           isAuthenticated: false,
           error: null,
+          wasSessionExpired: false,
         });
       },
+
+      // The session died server-side: the httpOnly cookie or the WP token
+      // behind it expired (both 24h) while the persisted store — which has no
+      // expiry — still said "signed in". Unlike logout() this makes no
+      // /api/auth/logout call, because the token is already invalid. Clearing
+      // `isAuthenticated` is what trips AccountLayout's redirect to /login.
+      sessionExpired: () =>
+        set({
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          error: null,
+          wasSessionExpired: true,
+        }),
 
       setLoading: (isLoading) => set({ isLoading }),
 

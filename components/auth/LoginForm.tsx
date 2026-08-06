@@ -19,6 +19,9 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get('returnTo');
+  // Set by AccountLayout when the session cookie expired rather than the user
+  // signing out — otherwise the bounce back to /login looks unexplained.
+  const expired = searchParams.get('expired') === '1';
   const { login, setLoading, setError, isLoading, error, clearError } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [honeypot, setHoneypot] = useState('');
@@ -79,6 +82,12 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {expired && !error && (
+        <div className="p-4 bg-muted border border-border rounded-lg">
+          <p className="text-sm text-muted-foreground">{t('login.sessionExpired')}</p>
+        </div>
+      )}
+
       {error && (
         <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
           <p className="text-sm text-destructive">{error}</p>

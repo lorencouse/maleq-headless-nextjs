@@ -135,6 +135,7 @@
       "noAccount": "還沒有帳戶嗎？",
       "createOne": "建立一個",
       "failedGeneric": "登入失敗",
+      "sessionExpired": "您的工作階段已逾期。請重新登入以繼續。",
       "termsBefore": "登入即表示您同意我們的"
     },
     "register": {
