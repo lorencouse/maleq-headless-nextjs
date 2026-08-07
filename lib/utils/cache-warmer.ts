@@ -8,6 +8,8 @@ interface WarmingConfig {
   types?: PageType[];
   concurrency?: number;
   delayMs?: number;
+  /** Cap pages warmed per type (product slugs come back popularity-sorted, so a cap keeps the best-sellers). */
+  maxPerType?: Partial<Record<PageType, number>>;
 }
 
 interface TypeProgress {
@@ -97,7 +99,13 @@ const TYPE_CONFIG: Record<
     fetchSlugs: async () => {
       const { getAllIndexEntries } = await import('@/lib/products/product-index');
       const entries = await getAllIndexEntries();
-      return entries.map(e => e.slug);
+      // Popularity-sorted so a maxPerType cap warms the pages that get traffic.
+      // Warming all 35K products writes ~30GB of ISR cache per pass (each page
+      // is an html/rsc/meta triple) — the Aug 2026 disk incidents.
+      return entries
+        .slice()
+        .sort((a, b) => b.popularityScore - a.popularityScore)
+        .map(e => e.slug);
     },
     pathPrefix: '/product/',
   },
@@ -226,9 +234,15 @@ async function runWarming(config: WarmingConfig): Promise<void> {
         continue;
       }
 
-      const paths = slugs.map((slug) => `${cfg.pathPrefix}${slug}`);
+      const cap = config.maxPerType?.[typeName];
+      const capped = cap !== undefined && cap >= 0 ? slugs.slice(0, cap) : slugs;
+      const paths = capped.map((slug) => `${cfg.pathPrefix}${slug}`);
       typeProgress[typeName] = { total: paths.length, done: 0, errors: 0 };
-      console.log(`[cache-warmer] Warming ${paths.length} ${typeName} pages (concurrency: ${concurrency}, delay: ${delayMs}ms)...`);
+      console.log(
+        `[cache-warmer] Warming ${paths.length} ${typeName} pages` +
+          (capped.length < slugs.length ? ` (top ${capped.length} of ${slugs.length})` : '') +
+          ` (concurrency: ${concurrency}, delay: ${delayMs}ms)...`,
+      );
 
       await warmBatch(paths, concurrency, delayMs, typeName, ac.signal);
 

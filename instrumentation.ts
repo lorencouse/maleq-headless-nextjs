@@ -28,12 +28,19 @@ export async function register() {
 
     console.log(`[instrumentation] Auto-warm enabled — will start cache warming in ${STARTUP_DELAY_MS / 1000}s`);
 
+    // Warming every product wrote ~30GB of ISR cache per deploy (35K pages ×
+    // html/rsc/meta) — the Aug 2026 disk incidents. Slugs are popularity-sorted,
+    // so capping keeps the pages that actually get traffic; the long tail
+    // renders on demand (~1s first hit). WARM_PRODUCT_LIMIT=-1 restores "all".
+    const productLimit = Number(process.env.WARM_PRODUCT_LIMIT ?? 2000);
+
     setTimeout(async () => {
       try {
         const { startWarming } = await import('@/lib/utils/cache-warmer');
         const result = startWarming({
           concurrency: 5,
           delayMs: 100,
+          ...(productLimit >= 0 ? { maxPerType: { product: productLimit } } : {}),
         });
         console.log(`[instrumentation] Cache warming: ${result.message}`);
       } catch (err) {
