@@ -24,8 +24,18 @@ export function normalizeUrl(raw: string): string {
 
 export interface DiscoverResult {
   items: NewsItem[];
-  /** Per-feed outcome for the --check-feeds report. */
-  feedStatus: { name: string; feed: string; ok: boolean; count: number; error?: string }[];
+  /** Per-feed outcome for the --check-feeds report. `count` is items surviving the
+   * freshness cutoff; `parsed`/`newestAgeHours` describe what the feed actually
+   * returned, so "quiet feed" and "feed returns nothing at all" can be told apart. */
+  feedStatus: {
+    name: string;
+    feed: string;
+    ok: boolean;
+    count: number;
+    parsed: number;
+    newestAgeHours: number | null;
+    error?: string;
+  }[];
 }
 
 export async function discover(): Promise<DiscoverResult> {
@@ -40,19 +50,30 @@ export async function discover(): Promise<DiscoverResult> {
   settled.forEach((r, i) => {
     const src = SOURCES[i];
     if (r.status === 'fulfilled') {
-      const fresh = r.value
-        .filter((it) => it.url && it.title)
+      const usable = r.value.filter((it) => it.url && it.title);
+      const dates = usable.map((it) => it.publishedAt?.getTime()).filter((t): t is number => !!t);
+      const newestAgeHours = dates.length ? (Date.now() - Math.max(...dates)) / 3600_000 : null;
+      const fresh = usable
         .filter((it) => !it.publishedAt || it.publishedAt.getTime() >= cutoff)
         .slice(0, MAX_PER_FEED)
         .map((it) => ({ ...it, url: normalizeUrl(it.url) }));
       all.push(...fresh);
-      feedStatus.push({ name: src.name, feed: src.feed, ok: true, count: fresh.length });
+      feedStatus.push({
+        name: src.name,
+        feed: src.feed,
+        ok: true,
+        count: fresh.length,
+        parsed: usable.length,
+        newestAgeHours,
+      });
     } else {
       feedStatus.push({
         name: src.name,
         feed: src.feed,
         ok: false,
         count: 0,
+        parsed: 0,
+        newestAgeHours: null,
         error: r.reason?.message || String(r.reason),
       });
     }

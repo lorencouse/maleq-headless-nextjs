@@ -15,7 +15,8 @@
  * DB target follows scripts/lib/db.ts (REMOTE/prod by default; --local for Local by Flywheel).
  * Flags: --limit N  --model NAME  --write  --yes  --check-feeds
  *        --no-title-dedupe (skip the 48h duplicate-headline guard)
- *        --dupe-report      (print each candidate's closest recent-title match)
+ *        --dupe-report      (report-only: print each candidate's closest recent-title
+ *                            match and exit — no drafting, no API spend)
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { getConnection } from '../lib/db';
@@ -38,6 +39,7 @@ import {
   RESEARCH_MODEL,
   ENABLE_RESEARCH,
   RECENT_TITLE_HOURS,
+  FRESHNESS_HOURS,
   estimateCost,
 } from './config';
 
@@ -136,10 +138,25 @@ async function main() {
     const { feedStatus, items } = await discover();
     console.log('Feed status:\n');
     for (const f of feedStatus) {
-      const mark = f.ok ? '✓' : '✗';
-      console.log(`  ${mark} ${f.name.padEnd(18)} ${f.ok ? `${f.count} fresh items` : `FAILED — ${f.error}`}`);
-      if (!f.ok) console.log(`      ${f.feed}`);
+      // A feed with 0 fresh items is only healthy if it PARSED items that were
+      // merely too old. 0 parsed = the feed returns nothing at all (dead endpoint,
+      // empty channel, or a shape we can't read) — flag it rather than tick it.
+      const dead = f.ok && f.parsed === 0;
+      const mark = !f.ok ? '✗' : dead ? '⚠' : '✓';
+      let detail: string;
+      if (!f.ok) detail = `FAILED — ${f.error}`;
+      else if (dead) detail = 'returned 0 parseable items — feed may be dead';
+      else {
+        const age = f.newestAgeHours === null ? 'undated' : `newest ${f.newestAgeHours.toFixed(0)}h old`;
+        detail = `${f.count} fresh items (${f.parsed} parsed, ${age})`;
+      }
+      console.log(`  ${mark} ${f.name.padEnd(18)} ${detail}`);
+      if (!f.ok || dead) console.log(`      ${f.feed}`);
     }
+    const quiet = feedStatus.filter((f) => f.ok && f.parsed > 0 && f.count === 0).length;
+    const dead = feedStatus.filter((f) => f.ok && f.parsed === 0);
+    if (quiet) console.log(`\n  ${quiet} feed(s) healthy but with nothing inside the ${FRESHNESS_HOURS}h freshness window.`);
+    if (dead.length) console.log(`  ⚠ ${dead.length} feed(s) returned nothing at all: ${dead.map((f) => f.name).join(', ')}`);
     console.log(`\nTotal fresh, de-duplicated items across feeds: ${items.length}`);
     return;
   }
@@ -220,6 +237,8 @@ async function main() {
   }
 
   if (DUPE_REPORT) {
+    // Report-only: printing scores must never cost an API call, so we stop here
+    // rather than falling through to drafting.
     console.log('\n   Closest recent-title match per candidate (--dupe-report):');
     for (const c of clusters.slice(0, 20)) {
       const m = findDuplicateTitle(c.primary.title, recent, 0);
@@ -228,7 +247,9 @@ async function main() {
         (m ? `  ↔  "${m.against.title.slice(0, 60)}"` : '  (no shared distinctive tokens)'),
       );
     }
-    console.log('');
+    console.log('\n   --dupe-report is report-only — no drafting, no API spend. Re-run without it to draft.\n');
+    await db.end();
+    return;
   }
 
   console.log(`   Drafting up to ${LIMIT} of ${candidates.length} eligible stories.\n`);
