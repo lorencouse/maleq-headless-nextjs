@@ -1,5 +1,11 @@
 # Claude Code Instructions for Male Q Headless
 
+## Commands for the User to Run (clipboard rule)
+
+- **Whenever you produce a shell command for the user to run themselves** (e.g. prod-write/migration operations the agent is blocked from, SSH commands, `wp-cli`, anything you'd prefix with `!`), **also copy it to the macOS clipboard in the same turn** via `pbcopy`, e.g. `printf '%s' '<command>' | pbcopy` (use a heredoc piped to `pbcopy` for multi-line).
+- Copy the command **without** the leading `!` so it pastes cleanly into a terminal (the user can still re-add `!` to run it in-session).
+- If you present multiple commands, copy the single one the user should run **next**; mention that the others are in the message.
+
 ## Build & Testing Rules
 
 - **NEVER run `bun run build` or `npm run build` unless explicitly requested** - builds can crash/hang the project
