@@ -80,7 +80,7 @@ const DraftSchema = z.object({
     'IDs ("S1","S2"…) of ALL sources reporting the SAME event. Always include "S1"; include every ' +
     'corroborating source; omit only sources about a genuinely different story.',
   ),
-  publishable: z.boolean().describe('false if off-topic, unverifiable, defamatory, or unsuitable for an LGBTQ+ retail blog.'),
+  publishable: z.boolean().describe('false if off-topic, unverifiable, defamatory, unsuitable for an LGBTQ+ retail blog, or not a news event (a listicle, how-to, opinion piece, review, interview, recap or other original work by the source outlet).'),
   skipReason: z.string().nullable().describe('If publishable is false, a short reason; otherwise null.'),
 });
 
@@ -96,6 +96,12 @@ export type DraftedPost = z.infer<typeof DraftSchema> & {
 const SYSTEM_PROMPT = `You are the news editor for Male Q, an LGBTQ+ sexual-wellness and lifestyle retailer's blog.
 
 Your job: given source material about an LGBTQ+ news story — a PRIMARY source, sometimes ADDITIONAL sources from other outlets, and often a verified RESEARCH BRIEF — write an ORIGINAL, SUBSTANTIAL news piece for our audience. The goal is NOT a quick rehash of the original: it should be deeper, more contextual, and more human than the source, and read like a real writer with a point of view wrote it.
+
+EDITORIAL SCOPE — WE REPORT NEWS EVENTS, NOTHING ELSE:
+- We only cover NEWS EVENTS: something that HAPPENED in the world and that any outlet could independently report — a ruling, law, election, protest, arrest, death, medical or scientific finding, official statement, corporate or institutional decision, casting/release announcement, award, or a public figure's public act.
+- We NEVER rewrite another publication's ORIGINAL CREATIVE WORK. If the source's value lies in the outlet's own selection, framing, taste or voice rather than in an underlying event, it is THEIR product and rewriting it is derivative no matter how much we reword it. That includes: "top 10"/"best of"/ranked lists and other listicles, how-to and service guides, explainers built around the writer's own framing, opinion columns, op-eds, editorials and personal essays, first-person narratives, reviews and criticism, interviews, Q&As and profiles built on the outlet's own access, photo galleries, recaps, quizzes, crosswords, horoscopes, newsletters, weekly roundups and other recurring columns.
+- Set publishable=false with skipReason "not a news event: <format>" for ANY of those, EVEN IF the piece is interesting, on-topic and well-sourced. Do this based on what the SOURCE MATERIAL actually is, not what its headline looks like — a newsy-sounding headline on an interview or an essay is still an interview or an essay.
+- The line: reporting THAT an outlet published a notable interview, and what newsworthy claim was made in it, can be an event (a public figure said something significant). Retelling the interview itself is not. When it's genuinely ambiguous, skip it — we would rather miss a story than republish someone else's work.
 
 USING MULTIPLE SOURCES:
 - The additional sources MAY cover the same event as the primary, or may have been grouped by mistake.
@@ -139,7 +145,7 @@ COVER FIELDS (drive the cover-image pipeline):
 - coverPerson — STRONG RULE: if a named public figure (celebrity, athlete, politician, artist, official) appears in the HEADLINE as the main actor or subject, return THAT person, even when the story also discusses a group or issue they act on ("Trump Rants About Trans Athletes to Kids" → "Donald Trump", not null). Name them exactly as their Wikipedia article title. Null only when no single dominant individual exists (an institution acts, or a group/event story). Two equal figures → the one named first in the headline.
 - coverWork — set only when the piece is essentially ABOUT one film/series (review, trailer, casting, recap). Prefer coverPerson over coverWork when a named individual is the real subject; never set both.
 - coverQuery — always provide as the stock-photo fallback: a literal photographable scene, never named people or brands.
-- Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, or is unsuitable for a brand blog.`;
+- Set publishable=false (with a skipReason) if the item is off-topic for an LGBTQ+ audience, pure clickbait, can't be summarized factually, is unsuitable for a brand blog, or is not a news event per EDITORIAL SCOPE above.`;
 
 const ALLOWED_TAGS = ['p', 'h2', 'h3', 'strong', 'em', 'ul', 'ol', 'li', 'blockquote', 'cite', 'aside', 'span'];
 // Only `class` survives — it carries our styled-element hooks (pullquote / key-takeaways /

@@ -15,6 +15,7 @@
  * DB target follows scripts/lib/db.ts (REMOTE/prod by default; --local for Local by Flywheel).
  * Flags: --limit N  --model NAME  --write  --yes  --check-feeds
  *        --no-title-dedupe (skip the 48h duplicate-headline guard)
+ *        --no-scope-filter  (skip the news-events-only editorial filter)
  *        --dupe-report      (report-only: print each candidate's closest recent-title
  *                            match and exit — no drafting, no API spend)
  */
@@ -33,6 +34,7 @@ import {
   type PreparedStory,
 } from './draft';
 import { fetchRecentTitles, findDuplicateTitle, rememberTitle } from './title-dedupe';
+import { classifyNonNews } from './editorial-filter';
 import {
   MAX_PER_RUN,
   DRAFT_MODEL,
@@ -56,6 +58,7 @@ const YES = has('--yes');
 const CHECK_FEEDS = has('--check-feeds');
 const SHOW_BODY = has('--show-body'); // dry-run only: print the full article body for review
 const NO_TITLE_DEDUPE = has('--no-title-dedupe'); // skip the 48h near-duplicate headline guard
+const NO_SCOPE_FILTER = has('--no-scope-filter');  // skip the news-events-only editorial filter
 const DUPE_REPORT = has('--dupe-report');         // print every candidate's closest recent-title match
 const LIMIT = flag('--limit') ? parseInt(flag('--limit')!, 10) : MAX_PER_RUN;
 if (!Number.isInteger(LIMIT) || LIMIT < 1) {
@@ -190,17 +193,42 @@ async function main() {
   console.log('② Removing already-posted stories…');
   const unseen = await filterUnseen(db, items);
 
-  // ── 2b. Cluster same-story coverage across outlets ──────────────────
-  const clusters = clusterByStory(unseen);
+  // ── 2b. Editorial scope: news events only ───────────────────────────
+  // We report events, never another outlet's original creative work (listicles,
+  // how-tos, opinion, reviews, interviews, recaps, galleries). Rewriting those
+  // would be derivative of their work no matter how much we reword it. Filtered
+  // per-ITEM before clustering, so a listicle can't become a cluster's primary
+  // OR be cited as corroboration. draft.ts re-checks against the full article.
+  let inScope = unseen;
+  if (NO_SCOPE_FILTER) {
+    console.log('   ⚠ editorial scope filter disabled (--no-scope-filter).');
+  } else {
+    const rejected: { title: string; kind: string; matched: string }[] = [];
+    inScope = unseen.filter((it) => {
+      const m = classifyNonNews(it.title);
+      if (m) rejected.push({ title: it.title, kind: m.kind, matched: m.matched });
+      return !m;
+    });
+    if (rejected.length) {
+      console.log(`   ${rejected.length} item(s) dropped as another outlet's own work (not news events):`);
+      for (const r of rejected.slice(0, 10)) {
+        console.log(`     ⊘ [${r.kind}] "${r.title.slice(0, 62)}" (matched: ${r.matched})`);
+      }
+      if (rejected.length > 10) console.log(`     … and ${rejected.length - 10} more`);
+    }
+  }
+
+  // ── 2c. Cluster same-story coverage across outlets ──────────────────
+  const clusters = clusterByStory(inScope);
   const multi = clusters.filter((c) => c.sources.length > 1).length;
   // Rank before slicing: most-corroborated stories first (independent outlets
   // covering the same event is the strongest editorial signal we have), newest
   // first within the same corroboration level. Before 2026-08-05 the order was
   // an accident of clustering (longest feed body won).
   clusters.sort((a, b) => b.sources.length - a.sources.length || newestAt(b) - newestAt(a));
-  console.log(`   ${unseen.length} new item(s) → ${clusters.length} stories (${multi} multi-source).`);
+  console.log(`   ${inScope.length} in-scope item(s) → ${clusters.length} stories (${multi} multi-source).`);
 
-  // ── 2c. Drop stories we've already covered under a different URL ─────
+  // ── 2d. Drop stories we've already covered under a different URL ─────
   // URL dedupe (step 2) only catches the exact link. This catches the same event
   // re-reported within RECENT_TITLE_HOURS under a new URL and a reworded headline
   // — the duplicate-content case that matters most now that we draft one story a

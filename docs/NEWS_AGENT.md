@@ -9,10 +9,11 @@ one-tap approval loop.
 ## Pipeline
 
 ```
-RSS feeds ─▶ discover.ts ─▶ dedupe.ts ─▶ title-dedupe.ts ─▶ draft.ts (Claude) ─▶ publish.ts ─▶ WP draft
-(config.ts)  freshness +    skip already   skip near-dupe    original summary +   insert wp_posts  "LGBTQ+ News"
-             cross-feed     posted (by     headlines from    commentary, slug,    + meta + terms    category,
-             de-dupe        source URL)    the last 48 h     tags, SEO, HTML      (status=draft)    status=draft
+RSS ─▶ discover.ts ─▶ dedupe.ts ─▶ editorial-filter.ts ─▶ title-dedupe.ts ─▶ draft.ts ─▶ publish.ts ─▶ WP draft
+       freshness +    skip already   news EVENTS only —     skip near-dupe    Claude:      insert         "LGBTQ+ News"
+       cross-feed     posted (by     drop listicles, how-   headlines from    original     wp_posts +      category,
+       de-dupe        source URL)    tos, opinion, reviews  the last 48 h     piece +      meta + terms    status=draft
+                                     interviews, galleries                    SEO, tags   (status=draft)
 ```
 
 **Models & cost (since 2026-08-05):** drafting runs on **Sonnet 5** and the web-research
@@ -42,6 +43,7 @@ for you to review and publish in WP admin.
 | `dedupe.ts`   | Drop stories already posted (matched on `_maleq_news_source_url(s)`) |
 | `cluster.ts`  | Group same-event coverage across outlets (IDF-weighted headline overlap) → one post can cite several sources |
 | `title-dedupe.ts` | Block stories whose headline near-matches a news post from the last 48 h (rarity-weighted Dice over headline tokens) |
+| `editorial-filter.ts` | Drop items that are another outlet's own work (listicles, how-tos, opinion, reviews, interviews, recaps, galleries) rather than news events |
 | `extract.ts`  | Fetch the article page and pull paragraph text (feed summaries are often headline-only); falls back to feed content |
 | `draft.ts`    | Zod-validated structured drafting (batch-friendly param builders + parsers; Sonnet 5) → original piece with `<h2>` subheadings, synthesizing the clustered sources + research brief |
 | `publish.ts`  | Insert `wp_posts` draft + `wp_postmeta` + category/tag `term_relationships` |
@@ -125,6 +127,40 @@ path** (e.g. `/usr/bin/wp`) in the server `.env` — cron's minimal PATH doesn't
 bare `wp`, which silently fails every cover import. (`attach-covers` is the only step that
 shells out to wp-cli; drafting and sharing are pure SQL.) Stock photos are thematic, not the literal event —
 the trade-off for legally publishable imagery.
+
+## Editorial scope — news events only
+
+**Rule: we report news EVENTS, never another publication's original creative work.**
+
+A listicle, how-to, opinion column, review, interview, recap or photo gallery *is* the
+outlet's product — its value is their selection, framing, access and voice, not an
+underlying fact anyone can independently report. Rewriting one yields a derivative of
+their work however much we reword it. A news event (a ruling, a law, a death, an arrest, a
+casting announcement, an election result) is a fact in the world that any outlet may
+report, and that is all we cover.
+
+Enforced in two layers:
+
+**1. Headline filter (`editorial-filter.ts`)** — runs on every item *before* clustering, so
+a rejected piece costs no API call and can neither become a story's primary source nor be
+cited as corroboration. Categories: `listicle`, `how-to / service piece`,
+`opinion / essay`, `review`, `interview / profile`, `recurring column / feature`,
+`shopping / promo`. Rejections are logged with the matched pattern.
+
+Patterns match *formats*, not vocabulary — "review", "best" and bare leading numbers all
+appear in real news ("Supreme Court to review…", "30 celebs join campaign", "Used Flock
+Cameras Over 200 Times"). Two such false positives were caught during calibration and the
+rules tightened: a leading count only counts as a listicle when followed by a listicle noun
+("6 trans films"), and mid-headline counts only for the strongest nouns (`best`, `worst`,
+`things`, `ways`, `reasons`…). On a live 116-item pool it rejects ~10 with no false
+positives. Bypass with `--no-scope-filter`.
+
+**2. The drafter (`draft.ts`)** — the EDITORIAL SCOPE section of the system prompt makes
+the model set `publishable=false` with `skipReason "not a news event: <format>"`, judged on
+the *article text* rather than the headline, since a newsy-sounding headline on an essay is
+still an essay. It's told to skip when genuinely ambiguous: better to miss a story than
+republish someone's work. The line it's given — reporting *that* a public figure said
+something significant in an interview is an event; retelling the interview is not.
 
 ## Editorial / legal guardrails
 
