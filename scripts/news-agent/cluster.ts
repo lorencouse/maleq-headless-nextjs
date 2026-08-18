@@ -35,8 +35,9 @@ const STOPWORDS = new Set([
   'way', 'ways', 'top', 'people', 'group', 'report', 'story',
 ]);
 
-/** Significant tokens of a headline: alnum, length ≥ 4, not a stopword, not all-digits. */
-function tokens(title: string): Set<string> {
+/** Significant tokens of a headline: alnum, length ≥ 4, not a stopword, not all-digits.
+ * Exported for title-dedupe.ts so both same-story checks share one vocabulary. */
+export function tokens(title: string): Set<string> {
   const out = new Set<string>();
   for (const raw of title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').split(' ')) {
     if (raw.length < 4) continue;

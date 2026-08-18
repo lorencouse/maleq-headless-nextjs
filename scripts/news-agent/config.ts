@@ -145,6 +145,26 @@ export const ENABLE_RESEARCH = process.env.NEWS_DISABLE_RESEARCH !== '1';
 /** How far back (hours) a story may be published and still be considered fresh. */
 export const FRESHNESS_HOURS = 36;
 
+/** How far back (hours) title-dedupe looks for near-duplicate coverage. Compared
+ * against both our rewritten titles and the stored original headlines of every
+ * news post in that window — drafts and scheduled posts included, not just live
+ * ones. See title-dedupe.ts. */
+export const RECENT_TITLE_HOURS = 48;
+
+/** Window (hours) the token-rarity statistics are measured over — wider than the
+ * blocking window on purpose: 48 h of posts is too little data to learn that
+ * "pride" is generic and a surname is not. Only affects scoring, never which
+ * posts can block a story. */
+export const TITLE_STATS_HOURS = 24 * 30;
+
+/** Rarity-weighted Dice threshold (0–1) over headline content tokens above which two
+ * headlines are treated as the same story. Calibrated 2026-08-18 against 30 days
+ * of real headlines: true repeats scored ≥0.43 (an exact re-post hit 1.00), while
+ * genuinely separate follow-ups in an ongoing saga sat ≤0.41. Raise it if real
+ * follow-ups get blocked; lower it if near-dupes slip through (`--dupe-report`
+ * prints the scores to calibrate against). */
+export const TITLE_DUPE_THRESHOLD = 0.42;
+
 /** Max stories drafted per run (keeps the approval queue manageable + caps cost). */
 export const MAX_PER_RUN = 6;
 

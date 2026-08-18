@@ -9,10 +9,10 @@ one-tap approval loop.
 ## Pipeline
 
 ```
-RSS feeds ──▶ discover.ts ──▶ dedupe.ts ──▶ draft.ts (Claude) ──▶ publish.ts ──▶ WP draft
-(config.ts)   freshness +     skip already   original summary +    insert wp_posts   "LGBTQ+ News"
-              cross-feed       posted (by      commentary, slug,    + meta + terms     category,
-              de-dupe          source URL)     tags, SEO, HTML       (status=draft)    status=draft
+RSS feeds ─▶ discover.ts ─▶ dedupe.ts ─▶ title-dedupe.ts ─▶ draft.ts (Claude) ─▶ publish.ts ─▶ WP draft
+(config.ts)  freshness +    skip already   skip near-dupe    original summary +   insert wp_posts  "LGBTQ+ News"
+             cross-feed     posted (by     headlines from    commentary, slug,    + meta + terms    category,
+             de-dupe        source URL)    the last 48 h     tags, SEO, HTML      (status=draft)    status=draft
 ```
 
 **Models & cost (since 2026-08-05):** drafting runs on **Sonnet 5** and the web-research
@@ -41,6 +41,7 @@ for you to review and publish in WP admin.
 | `discover.ts` | Pull all feeds, drop stale/dupe items, sort newest-first |
 | `dedupe.ts`   | Drop stories already posted (matched on `_maleq_news_source_url(s)`) |
 | `cluster.ts`  | Group same-event coverage across outlets (IDF-weighted headline overlap) → one post can cite several sources |
+| `title-dedupe.ts` | Block stories whose headline near-matches a news post from the last 48 h (rarity-weighted Dice over headline tokens) |
 | `extract.ts`  | Fetch the article page and pull paragraph text (feed summaries are often headline-only); falls back to feed content |
 | `draft.ts`    | Zod-validated structured drafting (batch-friendly param builders + parsers; Sonnet 5) → original piece with `<h2>` subheadings, synthesizing the clustered sources + research brief |
 | `publish.ts`  | Insert `wp_posts` draft + `wp_postmeta` + category/tag `term_relationships` |
@@ -143,13 +144,50 @@ scrapers is reported and skipped (never fatal). Swap its URL for a working feed 
 
 ## Dedupe
 
-Each draft stores its source URL in `wp_postmeta._maleq_news_source_url`. Re-runs skip any
-story whose URL is already present, so the agent is safe to run repeatedly (e.g. 3×/day).
+Two independent layers.
+
+**1. Source URL (`dedupe.ts`)** — each draft stores its source URL in
+`wp_postmeta._maleq_news_source_url` (and every cited URL in `_maleq_news_source_urls`).
+Re-runs skip any story whose URL is already present, so the agent is safe to run
+repeatedly. Unbounded in time, but only catches the *exact link*.
+
+**2. Near-duplicate headline (`title-dedupe.ts`)** — catches what layer 1 misses: the same
+event re-reported a day later by a different outlet, under a new URL and a reworded
+headline. Every candidate headline is compared against the headlines of all news posts
+modified in the last `RECENT_TITLE_HOURS` (**48 h**) — **drafts, pending and scheduled
+posts included**, since a story waiting in the approval queue is still a reason not to
+draft it again. Both our rewritten `post_title` and the stored original
+`_maleq_news_source_title` are matched against.
+
+Scoring is a **rarity-weighted Dice coefficient** over headline content tokens (same
+stopword vocabulary as `cluster.ts`): `2·Σw(shared) / (Σw(a)+Σw(b))`, where each token's
+weight is its IDF across a **30-day** window of headlines (`TITLE_STATS_HOURS`). The wider
+stats window matters — 48 h of posts is far too little data to learn that `pride` is
+generic and a surname is not. A match also requires ≥2 shared tokens, one of them ≥5
+characters, so a story can't be blocked on a single shared topic word.
+
+Calibrated 2026-08-18 against 30 days of real headlines: true repeats scored **≥0.43** (one
+pair of *identical* published headlines scored 1.00), while genuinely separate instalments
+of an ongoing saga sat **≤0.41** — hence `TITLE_DUPE_THRESHOLD = 0.42`. Unweighted overlap
+was tried first and rejected: it flagged `PHOTOS: Rehoboth Beach Pride` against
+`PHOTOS: Front Royal Pride` on `photos`+`pride` alone.
+
+The guard runs **twice** per story:
+- On the source headline **before drafting** — a blocked story costs no API spend, and it's
+  filtered *before* the `--limit` slice, so it doesn't consume the run's one draft slot.
+- On Claude's **rewritten title before publishing** — a rewrite can land on a recent story
+  even when the source headline didn't, and two stories drafted in the same run can
+  converge (each accepted title is added to the in-memory index).
+
+```bash
+--dupe-report      # print each candidate's closest recent-title match + score (calibration)
+--no-title-dedupe  # bypass the guard entirely (e.g. deliberately re-drafting a story)
+```
 
 ## Scheduling — DEPLOYED on the prod WP VPS
 
 The agent runs on the **Hetzner WP VPS** (`ssh hetzner`) as the `maleq-wp` user, on a
-system cron, **3×/day at 7am / 12pm / 5pm America/Los_Angeles**.
+system cron, **4×/day at 9am / 12pm / 3pm / 6pm America/Los_Angeles** (1 story per run).
 
 **Layout on the server** (`/home/maleq-wp/news-agent/`):
 - The agent code (rsynced subset: `scripts/news-agent/`, `scripts/lib/db.ts`, `lib/db/local-runtime.ts`).
@@ -161,8 +199,9 @@ system cron, **3×/day at 7am / 12pm / 5pm America/Los_Angeles**.
 
 **DST-safe timing.** This host's cron (Debian 3.0pl1) has no `CRON_TZ`, and the server is
 UTC. So cron fires **hourly** (`0 * * * *`) and `cron-run.sh` gates on the local PT hour —
-it runs only at 07/12/17 PT and silently no-ops otherwise. This auto-tracks PST↔PDT.
-Override hours with `NEWS_AGENT_HOURS="07 12 17"`, draft count with `NEWS_AGENT_LIMIT`.
+it runs only at 09/12/15/18 PT and silently no-ops otherwise. This auto-tracks PST↔PDT.
+Override hours with `NEWS_AGENT_HOURS="09 12 15 18"`, draft count with `NEWS_AGENT_LIMIT`
+(default `1` — one drafted story per run, 4/day).
 
 **Manage it:**
 ```bash

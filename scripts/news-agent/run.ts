@@ -14,6 +14,8 @@
  *
  * DB target follows scripts/lib/db.ts (REMOTE/prod by default; --local for Local by Flywheel).
  * Flags: --limit N  --model NAME  --write  --yes  --check-feeds
+ *        --no-title-dedupe (skip the 48h duplicate-headline guard)
+ *        --dupe-report      (print each candidate's closest recent-title match)
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { getConnection } from '../lib/db';
@@ -29,7 +31,15 @@ import {
   type DraftedPost,
   type PreparedStory,
 } from './draft';
-import { MAX_PER_RUN, DRAFT_MODEL, RESEARCH_MODEL, ENABLE_RESEARCH, estimateCost } from './config';
+import { fetchRecentTitles, findDuplicateTitle, rememberTitle } from './title-dedupe';
+import {
+  MAX_PER_RUN,
+  DRAFT_MODEL,
+  RESEARCH_MODEL,
+  ENABLE_RESEARCH,
+  RECENT_TITLE_HOURS,
+  estimateCost,
+} from './config';
 
 const argv = process.argv;
 const has = (f: string) => argv.includes(f);
@@ -43,6 +53,8 @@ const WRITE = has('--write');
 const YES = has('--yes');
 const CHECK_FEEDS = has('--check-feeds');
 const SHOW_BODY = has('--show-body'); // dry-run only: print the full article body for review
+const NO_TITLE_DEDUPE = has('--no-title-dedupe'); // skip the 48h near-duplicate headline guard
+const DUPE_REPORT = has('--dupe-report');         // print every candidate's closest recent-title match
 const LIMIT = flag('--limit') ? parseInt(flag('--limit')!, 10) : MAX_PER_RUN;
 if (!Number.isInteger(LIMIT) || LIMIT < 1) {
   console.error(`⛔ --limit must be a positive integer (got "${flag('--limit')}").`);
@@ -169,8 +181,63 @@ async function main() {
   // first within the same corroboration level. Before 2026-08-05 the order was
   // an accident of clustering (longest feed body won).
   clusters.sort((a, b) => b.sources.length - a.sources.length || newestAt(b) - newestAt(a));
-  console.log(`   ${unseen.length} new item(s) → ${clusters.length} stories (${multi} multi-source). Drafting up to ${LIMIT}.\n`);
-  const batch = clusters.slice(0, LIMIT);
+  console.log(`   ${unseen.length} new item(s) → ${clusters.length} stories (${multi} multi-source).`);
+
+  // ── 2c. Drop stories we've already covered under a different URL ─────
+  // URL dedupe (step 2) only catches the exact link. This catches the same event
+  // re-reported within RECENT_TITLE_HOURS under a new URL and a reworded headline
+  // — the duplicate-content case that matters most now that we draft one story a
+  // run. Runs BEFORE the slice so a blocked story doesn't consume the limit.
+  const recent = await fetchRecentTitles(db);
+  let candidates = clusters;
+  if (NO_TITLE_DEDUPE) {
+    console.log('   ⚠ title dedupe disabled (--no-title-dedupe).');
+  } else {
+    console.log(
+      `   Checking headlines against ${recent.entries.length} title(s) from the last ${RECENT_TITLE_HOURS}h ` +
+      `(rarity weighted over ${recent.docs} headline(s))…`,
+    );
+    const kept: StoryCluster[] = [];
+    for (const c of clusters) {
+      // A cluster is a duplicate if ANY outlet's headline in it matches.
+      let dup = null as ReturnType<typeof findDuplicateTitle>;
+      for (const src of c.sources) {
+        const m = findDuplicateTitle(src.title, recent);
+        if (m && (!dup || m.score > dup.score)) dup = m;
+      }
+      if (dup) {
+        console.log(
+          `   ⊘ dup "${c.primary.title.slice(0, 55)}" ≈ #${dup.against.postId} [${dup.against.status}] ` +
+          `"${dup.against.postTitle.slice(0, 55)}" (${dup.score.toFixed(2)}: ${dup.shared.join(', ')})`,
+        );
+        continue;
+      }
+      kept.push(c);
+    }
+    const blocked = clusters.length - kept.length;
+    if (blocked) console.log(`   ${blocked} story/stories blocked as recent duplicates.`);
+    candidates = kept;
+  }
+
+  if (DUPE_REPORT) {
+    console.log('\n   Closest recent-title match per candidate (--dupe-report):');
+    for (const c of clusters.slice(0, 20)) {
+      const m = findDuplicateTitle(c.primary.title, recent, 0);
+      console.log(
+        `     ${(m ? m.score.toFixed(2) : '0.00')}  "${c.primary.title.slice(0, 60)}"` +
+        (m ? `  ↔  "${m.against.title.slice(0, 60)}"` : '  (no shared distinctive tokens)'),
+      );
+    }
+    console.log('');
+  }
+
+  console.log(`   Drafting up to ${LIMIT} of ${candidates.length} eligible stories.\n`);
+  const batch = candidates.slice(0, LIMIT);
+  if (batch.length === 0) {
+    console.log('   Nothing new to draft this run.');
+    await db.end();
+    return;
+  }
 
   // ── 3. Draft (two batched passes: research → structured draft) ──────
   console.log('③ Drafting with Claude (Batches API, 50% pricing)…');
@@ -224,6 +291,20 @@ async function main() {
         console.log(`   ⊘ skip "${cluster.primary.title.slice(0, 55)}" — ${d.skipReason || 'not publishable'}`);
         continue;
       }
+      // Second guard: Claude's rewritten headline can land on a recent story even
+      // when the source headline didn't (and two stories drafted in the SAME run
+      // can converge). `recent` is appended to below, so this covers both.
+      if (!NO_TITLE_DEDUPE) {
+        const dup = findDuplicateTitle(d.title, recent);
+        if (dup) {
+          console.log(
+            `   ⊘ dup drafted title "${d.title.slice(0, 55)}" ≈ #${dup.against.postId} ` +
+            `[${dup.against.status}] "${dup.against.postTitle.slice(0, 55)}" (${dup.score.toFixed(2)}) — discarded`,
+          );
+          continue;
+        }
+      }
+      rememberTitle(recent, 0, d.title);
       drafts.push(d);
       const usedCount = d.usedSourceUrls.length;
       console.log(
