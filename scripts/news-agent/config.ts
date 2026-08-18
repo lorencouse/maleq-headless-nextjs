@@ -35,7 +35,33 @@ export const SOURCES: NewsSource[] = [
   // was dropped before. Don't re-add without confirming `curl` 200 from `ssh hetzner`.
   // Mainstream outlets — topical LGBTQ sections only (the pipeline trusts each feed to be on-topic).
   { name: 'The Guardian',     feed: 'https://www.theguardian.com/world/lgbt-rights/rss', site: 'https://www.theguardian.com/world/lgbt-rights' },
-  { name: 'HuffPost',         feed: 'https://www.huffpost.com/section/queer-voices/feed', site: 'https://www.huffpost.com/voices/queer-voices' },
+  // NOTE: HuffPost Queer Voices REMOVED 2026-08-18 — its feed 301s to
+  // chaski.huffpost.com and returns a valid but EMPTY channel (0 items), so it
+  // contributed nothing while reporting healthy. Re-add only if it starts
+  // carrying items again.
+  //
+  // Supplemental sources added 2026-08-18. Chosen to fill gaps rather than add
+  // volume: at 1 drafted story/day the pipeline is already ~15× oversupplied, so
+  // extra feeds earn their place by corroborating national stories (multi-source
+  // clusters rank first) and covering angles the US gay-male press misses.
+  // All verified reachable FROM THE HETZNER VPS, not just a home IP.
+  { name: 'Assigned Media',   feed: 'https://www.assignedmedia.org/feed',                site: 'https://www.assignedmedia.org' },
+  { name: 'Xtra',             feed: 'https://xtramagazine.com/feed',                     site: 'https://xtramagazine.com' },
+  { name: 'GCN',              feed: 'https://gcn.ie/feed/',                              site: 'https://gcn.ie' },
+  { name: 'DIVA',             feed: 'https://divamag.co.uk/feed/',                       site: 'https://divamag.co.uk' },
+  { name: 'Attitude',         feed: 'https://www.attitude.co.uk/feed/',                  site: 'https://www.attitude.co.uk' },
+  { name: 'Mamba Online',     feed: 'https://www.mambaonline.com/feed/',                 site: 'https://www.mambaonline.com' },
+  // Verified working from a home IP but 403 FROM THE VPS (same WAF problem as the
+  // Los Angeles Blade above) — do NOT add without re-confirming `curl` 200 from
+  // `ssh hetzner`: The 19th (19thnews.org/feed), Star Observer AU
+  // (starobserver.com.au/feed), Bay Area Reporter (ebar.com/rss/news).
+  // Dead/404 as of 2026-08-18: Georgia Voice, South Florida Gay News, Edge Media,
+  // HRC, Lambda Legal, QNews AU (403), Trans Writes (503), NBC Out (last item 12
+  // days old — effectively abandoned).
+  // Working but deliberately skipped: Instinct Magazine (~4.3/day but celebrity
+  // clickbait — Queerty and Pride already cover that register), Philadelphia Gay
+  // News / Gay City News / Windy City Times / Dallas Voice (solid papers, but
+  // hyper-local stories stay single-source and so rank last anyway).
 ];
 
 /** WordPress category the drafts are filed under (slug must already exist; created if missing). */

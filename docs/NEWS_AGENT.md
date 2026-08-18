@@ -138,9 +138,34 @@ the trade-off for legally publishable imagery.
 
 ## Tuning the source list
 
-Edit `SOURCES` in `config.ts`. Current defaults: PinkNews, The Advocate, them., GLAAD,
-Washington Blade, Out. Run `--check-feeds` after editing — any feed that 404s or blocks
-scrapers is reported and skipped (never fatal). Swap its URL for a working feed path.
+Edit `SOURCES` in `config.ts` — currently **20 feeds**: the US queer press (PinkNews, The
+Advocate, them., GLAAD, Washington Blade, Out, LGBTQ Nation, Queerty, Metro Weekly,
+Autostraddle, Pride, Erin in the Morning), international (Gay Times, Attitude, DIVA, GCN,
+Xtra, Mamba Online), the trans-specialist Assigned Media, and The Guardian's LGBT rights
+section.
+
+Run `--check-feeds` after editing. It now separates three states, which used to look
+alike:
+
+| | meaning |
+|---|---|
+| `✓ N fresh items (M parsed, newest Xh old)` | healthy |
+| `✓ 0 fresh items (M parsed, newest Xh old)` | healthy but quiet — nothing inside the 36 h window |
+| `⚠ returned 0 parseable items` | **dead** — endpoint gone, empty channel, or unreadable shape |
+
+**Always verify a new feed from the VPS, not just your laptop.** Several outlets' WAFs
+serve a 403 to Hetzner's datacenter IP while working fine from a home IP — this is why the
+Los Angeles Blade, The 19th, Star Observer and Bay Area Reporter are all absent despite
+having good feeds:
+
+```bash
+ssh hetzner 'curl -sSL -m 25 -o /tmp/f.xml -w "%{http_code}\n" \
+  -A "Mozilla/5.0 (compatible; maleq-news-agent/1.0)" "<feed-url>"; grep -c "<item>" /tmp/f.xml'
+```
+
+More feeds do **not** mean more articles — at 1 drafted story/day the candidate pool is
+already ~15× oversupplied. Extra sources earn their place by corroborating national
+stories (multi-source clusters rank first) and covering angles the others miss.
 
 ## Dedupe
 
