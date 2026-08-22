@@ -21,9 +21,29 @@ interface QueuedDraft {
   id: number;
   title: string;
   publishAt: string;
+  /** 'front' = one of today's picks; 'longterm' = the backlog queued behind them. */
+  lane: 'front' | 'longterm';
+}
+
+/** The daily front-of-queue quota and the slot times, as reported by the API. */
+interface Cadence {
+  used: number;
+  limit: number;
+  slotsLabel: string;
+}
+
+/** One entry of the post-repack queue the WP action endpoint returns on every approval. */
+interface WpQueueItem {
+  id: number;
+  title: string;
+  publish_at: number;
+  lane: 'front' | 'longterm';
 }
 
 type CardState = { busy: boolean; status: string; confirmDelete: boolean; expanded: boolean };
+
+/** How many queued stories to list before collapsing the rest into a count. */
+const QUEUE_PREVIEW = 10;
 
 function timeAgo(iso: string): string {
   const mins = Math.max(1, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -47,10 +67,17 @@ function slotLabel(iso: string): string {
  * /api/account/news-review, which validates the session against WP and holds
  * the review key server-side; Publish fires the WP autoshare exactly like
  * publishing in WP admin.
+ *
+ * Approving never publishes on the spot: stories go out in fixed daily slots. The first
+ * few approvals of a day (`frontPicks.limit`) take the earliest slots — today's picks —
+ * and every later approval joins the long-term queue behind them, which is what lets one
+ * sitting cover several days. Each approval re-packs the queue server-side, so the
+ * response carries the whole reordered list rather than just the story you approved.
  */
 export default function NewsReviewQueue() {
   const [drafts, setDrafts] = useState<PendingDraft[] | null>(null);
   const [queued, setQueued] = useState<QueuedDraft[]>([]);
+  const [cadence, setCadence] = useState<Cadence | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [cards, setCards] = useState<Record<number, CardState>>({});
 
@@ -75,6 +102,9 @@ export default function NewsReviewQueue() {
         if (!j) return;
         setDrafts(j.drafts);
         setQueued(j.queued ?? []);
+        if (j.frontPicks) {
+          setCadence({ ...j.frontPicks, slotsLabel: j.slotsLabel ?? '' });
+        }
       })
       .catch((e) => setError(e.message));
   }, []);
@@ -115,14 +145,36 @@ export default function NewsReviewQueue() {
           return;
         }
         if (action === 'publish' && j.scheduled) {
-          // Spaced out rather than published now — surface the slot and move the
-          // story into the Queued list so the cadence stays visible.
+          // Slotted rather than published now. The server re-packs the whole queue on every
+          // approval (a front pick pushes the backlog later), so replace the list wholesale
+          // instead of appending this one story to it.
           const publishAt = new Date(Number(j.publish_at) * 1000).toISOString();
-          const title = drafts?.find((x) => x.id === id)?.title ?? '';
-          setCard(id, { busy: true, status: `🕒 Queued for ${slotLabel(publishAt)}` });
-          setQueued((q) =>
-            [...q, { id, title, publishAt }].sort((a, b) => a.publishAt.localeCompare(b.publishAt)),
-          );
+          setCard(id, {
+            busy: true,
+            status:
+              j.lane === 'longterm'
+                ? `🗓 Long-term queue · ${slotLabel(publishAt)}`
+                : `🕒 Queued for ${slotLabel(publishAt)}`,
+          });
+          if (Array.isArray(j.queue)) {
+            setQueued(
+              (j.queue as WpQueueItem[])
+                .map((q) => ({
+                  id: q.id,
+                  title: q.title,
+                  publishAt: new Date(q.publish_at * 1000).toISOString(),
+                  lane: q.lane === 'front' ? ('front' as const) : ('longterm' as const),
+                }))
+                .sort((a, b) => a.publishAt.localeCompare(b.publishAt)),
+            );
+          }
+          if (typeof j.front_used === 'number' && typeof j.front_limit === 'number') {
+            setCadence((c) => ({
+              used: j.front_used,
+              limit: j.front_limit,
+              slotsLabel: c?.slotsLabel ?? '',
+            }));
+          }
           setTimeout(() => setDrafts((d) => (d ? d.filter((x) => x.id !== id) : d)), 1400);
           return;
         }
@@ -132,7 +184,7 @@ export default function NewsReviewQueue() {
         setCard(id, { busy: false, status: '⚠ Network error, try again.' });
       }
     },
-    [setCard, drafts],
+    [setCard],
   );
 
   if (error) {
@@ -141,6 +193,27 @@ export default function NewsReviewQueue() {
   if (drafts === null) {
     return <p className="text-muted-foreground py-8 text-center">Loading review queue…</p>;
   }
+  // How many of today's front-of-queue picks are left, and when stories actually go out.
+  const picksPanel = cadence && (
+    <p className="text-sm text-muted-foreground">
+      Today&rsquo;s picks{' '}
+      <span className="font-semibold text-foreground tabular-nums">
+        {cadence.used}/{cadence.limit}
+      </span>
+      {cadence.used < cadence.limit
+        ? ` · the next ${cadence.limit - cadence.used} approval${
+            cadence.limit - cadence.used === 1 ? ' jumps' : 's jump'
+          } to the front of the queue.`
+        : ' · further approvals join the long-term queue.'}
+      {cadence.slotsLabel && (
+        <>
+          <br />
+          Publishing at {cadence.slotsLabel}.
+        </>
+      )}
+    </p>
+  );
+
   // The queued panel renders in the empty state too — clearing the draft list is
   // exactly when you want to see what's still waiting to go live.
   const queuedPanel = queued.length > 0 && (
@@ -149,17 +222,32 @@ export default function NewsReviewQueue() {
         Queued · {queued.length} waiting to go live
       </h2>
       <ol className="space-y-1.5">
-        {queued.map((q) => (
+        {/* Head of the queue only — the long-term backlog can run weeks deep. */}
+        {queued.slice(0, QUEUE_PREVIEW).map((q) => (
           <li key={q.id} className="text-sm flex gap-2">
             <time
               dateTime={q.publishAt}
-              className="text-muted-foreground tabular-nums shrink-0 w-20"
+              className={`tabular-nums shrink-0 w-24 ${
+                q.lane === 'front' ? 'text-green-600 dark:text-green-500' : 'text-muted-foreground'
+              }`}
             >
               {slotLabel(q.publishAt)}
             </time>
-            <span className="min-w-0">{q.title}</span>
+            <span className="min-w-0">
+              {q.title}
+              {q.lane === 'longterm' && (
+                <span className="ml-2 text-[10px] uppercase tracking-wide text-muted-foreground border border-border rounded px-1 py-0.5 whitespace-nowrap">
+                  long-term
+                </span>
+              )}
+            </span>
           </li>
         ))}
+        {queued.length > QUEUE_PREVIEW && (
+          <li className="text-sm text-muted-foreground">
+            +{queued.length - QUEUE_PREVIEW} more further down the queue
+          </li>
+        )}
       </ol>
     </section>
   );
@@ -167,6 +255,7 @@ export default function NewsReviewQueue() {
   if (drafts.length === 0) {
     return (
       <div className="space-y-6">
+        {picksPanel}
         {queuedPanel}
         <p className="text-muted-foreground py-8 text-center">All caught up 🎉 No drafts waiting for review.</p>
       </div>
@@ -175,11 +264,13 @@ export default function NewsReviewQueue() {
 
   return (
     <div className="space-y-6">
+      {picksPanel}
       {queuedPanel}
       <p className="text-sm text-muted-foreground">
-        {drafts.length} draft{drafts.length === 1 ? '' : 's'} pending review. Approved stories are spaced
-        out — the first goes out now, the rest queue up (the Queued list shows exact times). Delete
-        removes the story and its cover image.
+        {drafts.length} draft{drafts.length === 1 ? '' : 's'} pending review. Nothing publishes on
+        approval: stories go out in the fixed daily slots above. Today&rsquo;s picks take the
+        earliest slots; approve as many as you like after that and they queue up for the days
+        ahead (the Queued list shows exact times). Delete removes the story and its cover image.
       </p>
       {drafts.map((d) => {
         const c = cards[d.id] ?? { busy: false, status: '', confirmDelete: false, expanded: false };

@@ -294,10 +294,9 @@ standalone mobile page at **`https://wp.maleq.com/news-review?k=<MALEQ_NEWS_REVI
 listing every pending draft — cover image, headline, source link, social hook, and the full
 story — with three one-tap buttons per card:
 
-- **✓ Publish** — approves the story into the **publish queue** (see below). When the slot is
-  now it publishes immediately and `maleq-news-autoshare.php` fires exactly as if you'd
-  published in WP admin (Bluesky + Mastodon share on shutdown); otherwise it's scheduled and
-  shares when it goes live.
+- **✓ Publish** — approves the story into the **publish queue** (see below): it is scheduled
+  onto the next slot its lane earns, and `maleq-news-autoshare.php` fires when the slot goes
+  live (Bluesky + Mastodon), exactly as if you'd published in WP admin.
 - **🗑 Delete** (tap twice to confirm) — force-deletes the cover attachment (image files
   gone, with the same "dedicated to this post only" safety checks as the cover picker) but
   only **trashes** the post: dedupe matches `_maleq_news_source_url` in postmeta with no
@@ -305,32 +304,66 @@ story — with three one-tap buttons per card:
   story. WP purges trash after 30 days, far beyond the 36 h freshness window.
 - **⏰ Later** — snoozes the card to the bottom of the queue (`_maleq_news_review_later`).
 
-### Publish queue (minimum spacing)
+### Publish queue (fixed slots + two lanes)
 
-Approving a batch of drafts does **not** dump them all at once. Each approval lands in the
-next free slot, at least `MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES` (default **30**) after the most
-recent published-or-scheduled post — so the first story in a batch goes out now and the rest
-drip-feed the site and the social accounts.
+Approving a story **never publishes it on the spot**. Stories go out only in fixed daily
+slots — **9 AM, 12 PM, 3 PM, 6 PM, 9 PM Eastern**, five a day — and the queue decides which
+story gets which slot.
 
-There is no custom queue table or scheduler: spacing uses **WordPress's own scheduling**.
-`maleq_nr_action_publish()` computes the slot (`maleq_nr_next_slot()`) and writes
-`post_status = 'future'` with a staggered `post_date`. WP-Cron publishes each slot, and
-autoshare hooks `transition_post_status` on `new === 'publish' && old !== 'publish'`, which
-covers `future → publish` — so social sharing happens when the story actually goes live, not
-when you approved it.
+Two lanes, so one review sitting can cover several days:
+
+| Lane | What lands in it | Where it goes |
+| --- | --- | --- |
+| **Front (today's picks)** | the first `MALEQ_NEWS_FRONT_PICKS_PER_DAY` approvals of a calendar day (default **5** — one per slot) | the earliest free slots, *ahead of* anything already queued |
+| **Long-term** | every later approval that day | the slots after all front picks |
+
+So a session goes: approve the five you want out today (they take today's remaining slots,
+then tomorrow morning's), then keep approving as many as you like — those become the backlog
+that keeps the site publishing five a day on the days you never open the review app.
+
+Every approval **re-packs the whole queue** (`maleq_nr_repack_queue()`): the ordered list is
+front picks by approval time, then the long-term queue by approval time, and that order is
+stamped onto the next available slots. That's what "front of the queue" means literally — a
+fresh front pick takes the earliest slot and the backlog behind it shifts a slot later.
+
+There is no custom queue table or scheduler: slotting uses **WordPress's own scheduling**.
+Each queued story is `post_status = 'future'` with its slot as `post_date`; WP-Cron publishes
+it, and autoshare hooks `transition_post_status` on `new === 'publish' && old !== 'publish'`,
+which covers `future → publish` — so social sharing happens when the story actually goes
+live, not when you approved it.
 
 Notes:
-- **All posts count**, not just machine-drafted news. Hand-publishing an article in WP admin
-  pushes the queue back too — one feed, one cadence.
-- **The gap is a floor.** A system cron hits `wp-cron.php` every 5 minutes, so a slot fires at
-  or after its stamped time; drift pushes a story later, never closer to its predecessor.
-- Both review UIs show a **Queued** list (slot time + headline, soonest first). Queued stories
-  keep `_maleq_news_pending_review` until autoshare clears it post-share, so the list
-  self-empties as stories publish.
-- To un-queue a story, edit it in WP admin (`post_status = future` → back to draft). The review
-  apps are read-only for queued items.
-- Set `MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES` to `0` in wp-config to restore publish-immediately.
+- **All posts count.** A slot within 75 minutes of a post this plugin doesn't manage (anything
+  hand-published or hand-scheduled in WP admin) is skipped — one feed, one cadence.
+- **DST-safe.** Slots are built by setting the wall-clock time in `MALEQ_NEWS_PUBLISH_TZ`, so
+  9 AM stays 9 AM across a clock change (the UTC stamp moves, not the slot).
+- **Daily quota is derived, not counted in an option.** The lane comes from
+  `_maleq_news_approved_at` stamps inside today's window, so trashing a story you approved by
+  mistake hands the front-of-queue pick back.
+- **Missed schedules self-heal.** `maleq_nr_catch_up()` publishes any queued story more than
+  5 minutes past its slot (with autoshare). It runs on every review-page load, every action,
+  and — the important one — on every `wp-cron.php` request (`DOING_CRON`), which the root
+  crontab hits every 5 minutes. It rides that request rather than registering its own
+  scheduled event because this site has *lost* `publish_future_post` events: at the Aug 2026
+  rewrite two approved stories were sitting unpublished, one for a day and one for 15 days.
+  A custom cron event would have been just as losable.
+- Un-queueing from WP admin (trash, or `future` → `draft`) is fine: `trashed_post` re-packs so
+  the rest of the queue moves earlier instead of publishing around a hole.
+- **Stories queued under the old 30-minute-gap scheme are adopted automatically**
+  (`maleq_nr_adopt_legacy_queue()`, on the first review-page load or action after deploy):
+  they keep their order, join the long-term lane, and get re-slotted onto the fixed slots.
+  Their approval stamps are backdated a day so they don't eat that day's front picks.
+- Both review UIs show **Today's picks n/5** plus the slot times, and a **Queued** list
+  (slot time + headline, soonest first) with long-term items tagged. Queued stories keep
+  `_maleq_news_pending_review` until autoshare clears it post-share, so the list self-empties.
 - `notify-review.ts` filters on `post_status = 'draft'`, so queued stories are never re-notified.
+- Post meta: `_maleq_news_approved_at` (GMT unix ts) and `_maleq_news_queue_lane` (`1` front,
+  `2` long-term). The `maleq_news_review_cadence` option mirrors the slot label + daily limit
+  out to the maleq.com review page, which reads SQL and can't see wp-config.
+- wp-config knobs: `MALEQ_NEWS_PUBLISH_SLOTS` (default `'9:00,12:00,15:00,18:00,21:00'`;
+  `''` restores publish-immediately), `MALEQ_NEWS_PUBLISH_TZ` (default `'America/New_York'`),
+  `MALEQ_NEWS_FRONT_PICKS_PER_DAY` (default `5`). The old
+  `MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES` gap setting is gone — delete it from wp-config.
 
 **Push notifications.** The page serves its own service worker (`/news-review-sw` —
 extension-less so nginx routes it through WP instead of 404ing on a missing static file) and

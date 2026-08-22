@@ -9,18 +9,31 @@
  * here fires the existing maleq-news-autoshare.php exactly like publishing in WP admin.
  * Version: 1.0
  *
- * Approving a story does not necessarily publish it instantly: publish times are spaced
- * at least MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES apart, so bulk-approving a morning's drafts
- * drip-feeds the site and the social accounts instead of dumping five stories at once.
- * Spacing is done with WordPress's own scheduling ('future' + post_date) — WP-Cron
- * publishes each slot and autoshare fires on the future→publish transition.
+ * Approving a story never publishes it instantly: stories go out only in FIXED DAILY SLOTS
+ * (9am / 12pm / 3pm / 6pm / 9pm Eastern by default), five a day. Slotting uses WordPress's
+ * own scheduling ('future' + post_date) — WP-Cron publishes each slot and autoshare fires on
+ * the future→publish transition.
+ *
+ * Two lanes decide the order, so one review session can cover several days:
+ *   - The first MALEQ_NEWS_FRONT_PICKS_PER_DAY approvals of a calendar day (default 5, one
+ *     per slot) go to the FRONT of the queue — they take the earliest slots, displacing
+ *     anything already queued behind them. These are "today's picks".
+ *   - Every later approval that day joins the LONG-TERM queue, filling slots after the front
+ *     picks. It keeps publishing five a day on days you never open the review app.
+ * Every approval re-packs the whole queue (maleq_nr_repack_queue()), so front picks always
+ * lead and the backlog drifts later rather than blocking them.
  *
  * wp-config constants:
  *   MALEQ_NEWS_REVIEW_KEY           — long random secret; the page/actions are 404/403 without it
  *   MALEQ_NEWS_REVIEW_VAPID_PUBLIC  — VAPID public key (pair with the private key in the
  *                                     news-agent .env; used by the browser to subscribe)
- *   MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES — minimum minutes between article publish times
- *                                     (default 30; 0 restores publish-immediately)
+ *   MALEQ_NEWS_PUBLISH_SLOTS        — comma-separated local slot times; default
+ *                                     '9:00,12:00,15:00,18:00,21:00'. Empty string =
+ *                                     publish immediately on approval (no queue).
+ *   MALEQ_NEWS_PUBLISH_TZ           — timezone the slots are expressed in (default
+ *                                     'America/New_York'; the WP site timezone is UTC)
+ *   MALEQ_NEWS_FRONT_PICKS_PER_DAY  — approvals per day that jump the long-term queue
+ *                                     (default 5 — one per slot)
  */
 
 if (!defined('ABSPATH')) {
@@ -29,49 +42,399 @@ if (!defined('ABSPATH')) {
 
 /** Option holding the review page's own push subscriptions (owner devices only). */
 const MALEQ_NR_SUBS_OPTION = 'maleq_news_review_push_subs';
+/**
+ * Option (JSON string) publishing the cadence to the maleq.com review page, which reads
+ * SQL directly and has no access to the wp-config constants: the slot label and the daily
+ * front-pick limit. Kept as JSON, like the subs option, so the TS side can JSON.parse it.
+ */
+const MALEQ_NR_CADENCE_OPTION = 'maleq_news_review_cadence';
 /** Meta flag: reviewer tapped "Later" (sorts to the bottom of the queue). */
 const MALEQ_NR_LATER_META = '_maleq_news_review_later';
 /** Max stored push subscriptions (owner devices) — hard cap, oldest evicted. */
 const MALEQ_NR_MAX_SUBS = 10;
-/** Fallback minimum gap between publish times when wp-config doesn't override it. */
-const MALEQ_NR_DEFAULT_GAP_MINUTES = 30;
+/** Default publish slots — local times in the slot timezone, five a day. */
+const MALEQ_NR_DEFAULT_SLOTS = '9:00,12:00,15:00,18:00,21:00';
+/** Slots are Eastern, stated explicitly: the WP site timezone itself is UTC. */
+const MALEQ_NR_DEFAULT_SLOT_TZ = 'America/New_York';
+/** Approvals per calendar day that jump the long-term queue (one per slot). */
+const MALEQ_NR_DEFAULT_FRONT_PICKS = 5;
+/** Meta: GMT unix timestamp of approval — orders each lane and counts the daily quota. */
+const MALEQ_NR_APPROVED_META = '_maleq_news_approved_at';
+/** Meta: which lane an approved story sits in (see the two constants below). */
+const MALEQ_NR_LANE_META = '_maleq_news_queue_lane';
+/** Today's picks: earliest slots, ahead of the backlog. */
+const MALEQ_NR_LANE_FRONT = 1;
+/** The backlog: slots after every front pick, so it keeps the site fed on unreviewed days. */
+const MALEQ_NR_LANE_LONGTERM = 2;
+/** A post we don't manage this close to a slot consumes it (about half the slot spacing). */
+const MALEQ_NR_SLOT_BLOCK_MINUTES = 75;
+/** Lookahead ceiling for slot generation — at 5 slots/day this is over a year of queue. */
+const MALEQ_NR_MAX_LOOKAHEAD_DAYS = 400;
+/** Hard cap on how many queued stories one repack will move. */
+const MALEQ_NR_MAX_QUEUE = 500;
+/** How many queued stories the UIs list before collapsing the rest into a count. */
+const MALEQ_NR_QUEUE_PREVIEW = 10;
 
-/** Minimum minutes between article publish times. 0 disables the queue. */
-function maleq_nr_gap_minutes(): int {
-    $gap = defined('MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES')
-        ? (int) MALEQ_NEWS_MIN_PUBLISH_GAP_MINUTES
-        : MALEQ_NR_DEFAULT_GAP_MINUTES;
-    return max(0, $gap);
+/** Timezone the publish slots are expressed in. */
+function maleq_nr_slot_tz(): DateTimeZone {
+    $tz = defined('MALEQ_NEWS_PUBLISH_TZ') ? (string) MALEQ_NEWS_PUBLISH_TZ : MALEQ_NR_DEFAULT_SLOT_TZ;
+    try {
+        return new DateTimeZone($tz);
+    } catch (Exception $e) {
+        return new DateTimeZone(MALEQ_NR_DEFAULT_SLOT_TZ);
+    }
 }
 
 /**
- * The next free publish slot as a GMT timestamp: at least gap_minutes after the most
- * recent published-or-scheduled post. Returns "now" when that gap has already elapsed,
- * so approving a single story on a quiet morning still goes out immediately.
- *
- * Counts ALL posts, not just machine-drafted news — a story hand-published in WP admin
- * pushes the queue back too, which is the point (one feed, one cadence).
- *
- * WP-Cron granularity is coarser than this (a system cron hits wp-cron.php every 5
- * minutes), but slots only ever fire at or after their stamped time, so the gap is a
- * floor: drift pushes a story later, never closer to its predecessor.
+ * The daily slots as ascending [hour, minute] pairs. An empty list is the escape hatch
+ * (MALEQ_NEWS_PUBLISH_SLOTS = ''): no slots means approve = publish now.
  */
-function maleq_nr_next_slot(): int {
-    $now = time();
-    $gap = maleq_nr_gap_minutes();
-    if ($gap === 0) {
-        return $now;
+function maleq_nr_slot_times(): array {
+    $raw = defined('MALEQ_NEWS_PUBLISH_SLOTS') ? (string) MALEQ_NEWS_PUBLISH_SLOTS : MALEQ_NR_DEFAULT_SLOTS;
+    $out = [];
+    foreach (explode(',', $raw) as $piece) {
+        $piece = trim($piece);
+        if ($piece === '') {
+            continue;
+        }
+        [$h, $m] = array_pad(explode(':', $piece, 2), 2, '0');
+        $h = (int) $h;
+        $m = (int) $m;
+        if ($h < 0 || $h > 23 || $m < 0 || $m > 59) {
+            continue;
+        }
+        $out[$h * 60 + $m] = [$h, $m];   // keyed by minute-of-day: dedupes and sorts
     }
-    global $wpdb;
-    $latest = $wpdb->get_var(
-        "SELECT MAX(post_date_gmt) FROM {$wpdb->posts}
-          WHERE post_type = 'post' AND post_status IN ('publish', 'future')"
-    );
-    if (!$latest || $latest === '0000-00-00 00:00:00') {
-        return $now;
-    }
-    return max($now, strtotime($latest . ' UTC') + $gap * 60);
+    ksort($out);
+    return array_values($out);
 }
+
+/** How many approvals a day take the front lane. */
+function maleq_nr_front_picks_per_day(): int {
+    $n = defined('MALEQ_NEWS_FRONT_PICKS_PER_DAY')
+        ? (int) MALEQ_NEWS_FRONT_PICKS_PER_DAY
+        : MALEQ_NR_DEFAULT_FRONT_PICKS;
+    return max(0, $n);
+}
+
+/** [start, end) GMT timestamps bracketing "today" in the slot timezone. */
+function maleq_nr_today_range_gmt(?int $now = null): array {
+    $start = (new DateTimeImmutable('@' . ($now ?? time())))
+        ->setTimezone(maleq_nr_slot_tz())
+        ->setTime(0, 0, 0);
+    return [$start->getTimestamp(), $start->modify('+1 day')->getTimestamp()];
+}
+
+/**
+ * Approvals made today (slot timezone). Counted from the approval stamps themselves rather
+ * than a counter option: trashing a story you approved by mistake hands the pick back, and
+ * nothing can drift out of sync with the posts that actually exist.
+ */
+function maleq_nr_approvals_today(?int $now = null): int {
+    global $wpdb;
+    [$start, $end] = maleq_nr_today_range_gmt($now);
+    return (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT COUNT(*) FROM {$wpdb->postmeta} pm
+           INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+          WHERE pm.meta_key = %s
+            AND CAST(pm.meta_value AS UNSIGNED) >= %d
+            AND CAST(pm.meta_value AS UNSIGNED) < %d
+            AND p.post_status IN ('publish', 'future')",
+        MALEQ_NR_APPROVED_META,
+        $start,
+        $end
+    ));
+}
+
+/**
+ * GMT timestamps of posts that already hold a place in the feed and aren't ours to move
+ * (hand-published or hand-scheduled in WP admin). A slot within
+ * MALEQ_NR_SLOT_BLOCK_MINUTES of one of these is skipped — one feed, one cadence.
+ */
+function maleq_nr_occupied_times(int $from, array $ours): array {
+    global $wpdb;
+    $ids   = array_map('intval', $ours);
+    $where = $ids ? ' AND ID NOT IN (' . implode(',', $ids) . ')' : '';
+    $rows  = $wpdb->get_col($wpdb->prepare(
+        "SELECT post_date_gmt FROM {$wpdb->posts}
+          WHERE post_type = 'post' AND post_status IN ('publish', 'future')
+            AND post_date_gmt >= %s" . $where . "
+          ORDER BY post_date_gmt ASC LIMIT 500",
+        gmdate('Y-m-d H:i:s', $from - MALEQ_NR_SLOT_BLOCK_MINUTES * 60)
+    ));
+    $out = [];
+    foreach ($rows as $row) {
+        $ts = strtotime($row . ' UTC');
+        if ($ts) {
+            $out[] = $ts;
+        }
+    }
+    return $out;
+}
+
+/**
+ * The next $count publish slots as GMT timestamps, at or after $from, skipping slots
+ * already taken by a post outside $ours. DST-safe: each day's slot is built by setting the
+ * wall-clock time in the slot timezone, so 9am stays 9am across a clock change.
+ */
+function maleq_nr_upcoming_slots(int $from, int $count, array $ours = []): array {
+    $times = maleq_nr_slot_times();
+    if ($count < 1 || !$times) {
+        return [];
+    }
+    $day   = (new DateTimeImmutable('@' . $from))->setTimezone(maleq_nr_slot_tz())->setTime(0, 0, 0);
+    $taken = maleq_nr_occupied_times($from, $ours);
+    $slots = [];
+    for ($d = 0; $d < MALEQ_NR_MAX_LOOKAHEAD_DAYS && count($slots) < $count; $d++) {
+        foreach ($times as [$h, $m]) {
+            $ts = $day->setTime($h, $m, 0)->getTimestamp();
+            if ($ts < $from) {
+                continue;
+            }
+            foreach ($taken as $t) {
+                if (abs($t - $ts) < MALEQ_NR_SLOT_BLOCK_MINUTES * 60) {
+                    continue 2;   // slot spoken for by a post we don't manage
+                }
+            }
+            $slots[] = $ts;
+            if (count($slots) >= $count) {
+                break;
+            }
+        }
+        $day = $day->modify('+1 day');
+    }
+    return $slots;
+}
+
+/**
+ * Everything waiting for a slot, in publish order: front picks first (oldest approval
+ * first), then the long-term queue. $extra_id folds the draft being approved right now into
+ * the same ordering, so a single repack places it alongside the rest.
+ */
+function maleq_nr_queue_order(?int $extra_id = null): array {
+    global $wpdb;
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT p.ID,
+                CAST(COALESCE(lane.meta_value, %d) AS UNSIGNED) AS lane,
+                CAST(approved.meta_value AS UNSIGNED) AS approved_at
+           FROM {$wpdb->posts} p
+           INNER JOIN {$wpdb->postmeta} approved
+                   ON approved.post_id = p.ID AND approved.meta_key = %s
+           LEFT JOIN {$wpdb->postmeta} lane
+                  ON lane.post_id = p.ID AND lane.meta_key = %s
+          WHERE p.post_type = 'post' AND p.post_status = 'future'
+          LIMIT " . MALEQ_NR_MAX_QUEUE,
+        MALEQ_NR_LANE_LONGTERM,
+        MALEQ_NR_APPROVED_META,
+        MALEQ_NR_LANE_META
+    ), ARRAY_A);
+
+    $queue = [];
+    foreach ($rows as $row) {
+        $id = (int) $row['ID'];
+        $queue[$id] = ['id' => $id, 'lane' => (int) $row['lane'], 'at' => (int) $row['approved_at']];
+    }
+    if ($extra_id) {
+        $queue[$extra_id] = [
+            'id'   => $extra_id,
+            'lane' => (int) (get_post_meta($extra_id, MALEQ_NR_LANE_META, true) ?: MALEQ_NR_LANE_LONGTERM),
+            'at'   => (int) (get_post_meta($extra_id, MALEQ_NR_APPROVED_META, true) ?: time()),
+        ];
+    }
+    $queue = array_values($queue);
+    usort($queue, function (array $a, array $b): int {
+        return [$a['lane'], $a['at'], $a['id']] <=> [$b['lane'], $b['at'], $b['id']];
+    });
+    return $queue;
+}
+
+/**
+ * Re-stamp every queued story onto the next available slots in queue order and return
+ * [post_id => slot GMT timestamp]. Idempotent — a story already sitting on its slot is left
+ * untouched — so running this on every approval is cheap.
+ *
+ * This is what makes the lanes work: a fresh front pick takes the earliest slot and the
+ * long-term backlog behind it shifts later, instead of the new story waiting out a week of
+ * backlog.
+ */
+function maleq_nr_repack_queue(?int $extra_id = null): array {
+    $queue = maleq_nr_queue_order($extra_id);
+    if (!$queue) {
+        return [];
+    }
+    $now   = time();
+    $slots = maleq_nr_upcoming_slots($now, count($queue), array_column($queue, 'id'));
+    $map   = [];
+    foreach ($queue as $i => $item) {
+        if (!isset($slots[$i])) {
+            break;   // out of lookahead: leave the tail of the queue where it is
+        }
+        $slot = $slots[$i];
+        $post = get_post($item['id']);
+        if (!$post || !in_array($post->post_status, ['draft', 'future'], true)) {
+            continue;   // published (or gone) between the query and now — never move it
+        }
+        $map[$item['id']] = $slot;
+        $target = gmdate('Y-m-d H:i:s', $slot);
+        // A slot that is essentially now publishes outright; WP flips a 'future' post with a
+        // past date to 'publish' anyway, so be explicit about which transition fires.
+        $status = $slot <= $now + 30 ? 'publish' : 'future';
+        if ($post->post_status === $status && $post->post_date_gmt === $target) {
+            continue;
+        }
+        wp_update_post([
+            'ID'            => $item['id'],
+            'post_status'   => $status,
+            'post_date'     => get_date_from_gmt($target),
+            'post_date_gmt' => $target,
+            'edit_date'     => true,
+        ]);
+    }
+    return $map;
+}
+
+/**
+ * Human list of the daily slots in the slot timezone, e.g. "9 AM, 12 PM, 3 PM, 6 PM, 9 PM
+ * EDT". Rendered from today's date so the abbreviation follows DST.
+ */
+function maleq_nr_slots_label(): string {
+    $times = maleq_nr_slot_times();
+    if (!$times) {
+        return 'immediately on approval';
+    }
+    $day   = (new DateTimeImmutable('now'))->setTimezone(maleq_nr_slot_tz());
+    $parts = [];
+    foreach ($times as [$h, $m]) {
+        $parts[] = $day->setTime($h, $m, 0)->format($m === 0 ? 'g A' : 'g:i A');
+    }
+    return implode(', ', $parts) . ' ' . $day->format('T');
+}
+
+/**
+ * Mirror the cadence into an option for the maleq.com review page. Called wherever this
+ * plugin already computes the numbers, so the Next.js UI never has to restate wp-config.
+ */
+function maleq_nr_publish_cadence(int $used, int $limit): void {
+    update_option(MALEQ_NR_CADENCE_OPTION, wp_json_encode([
+        'limit'       => $limit,
+        'used'        => $used,
+        'slots_label' => maleq_nr_slots_label(),
+        'updated'     => gmdate('c'),
+    ]), false);
+}
+
+/** Lane as the wire/UI name. */
+function maleq_nr_lane_name(int $lane): string {
+    return $lane === MALEQ_NR_LANE_FRONT ? 'front' : 'longterm';
+}
+
+/**
+ * The queue as the review UIs render it (slot time + headline + lane, soonest first).
+ * Returned on every approval so both apps can redraw the whole list: a repack moves
+ * stories other than the one just approved.
+ */
+function maleq_nr_queue_payload(array $map): array {
+    $out = [];
+    foreach ($map as $id => $ts) {
+        if (get_post_status($id) !== 'future') {
+            continue;   // went live in this same request
+        }
+        $out[] = [
+            'id'         => (int) $id,
+            'title'      => html_entity_decode(get_the_title($id), ENT_QUOTES | ENT_HTML5, 'UTF-8'),
+            'publish_at' => (int) $ts,
+            'lane'       => maleq_nr_lane_name((int) get_post_meta($id, MALEQ_NR_LANE_META, true)),
+        ];
+    }
+    usort($out, function (array $a, array $b): int {
+        return $a['publish_at'] <=> $b['publish_at'];
+    });
+    return $out;
+}
+
+/**
+ * Adopt stories that were queued before the fixed-slot rewrite — or scheduled by hand in WP
+ * admin while carrying the review meta — so the repacker manages them instead of treating
+ * them as immovable posts to schedule around. Their existing order is preserved and they
+ * join the long-term lane, so a fresh front pick still goes out ahead of them.
+ *
+ * The approval stamps are backdated to yesterday on purpose: a stamp inside today's window
+ * would eat today's front-of-queue picks. Idempotent — once stamped, a story is never
+ * adopted again.
+ */
+function maleq_nr_adopt_legacy_queue(): void {
+    global $wpdb;
+    $rows = $wpdb->get_results($wpdb->prepare(
+        "SELECT p.ID FROM {$wpdb->posts} p
+           INNER JOIN {$wpdb->postmeta} pending
+                   ON pending.post_id = p.ID AND pending.meta_key = '_maleq_news_pending_review'
+                      AND pending.meta_value = '1'
+           LEFT JOIN {$wpdb->postmeta} approved
+                  ON approved.post_id = p.ID AND approved.meta_key = %s
+          WHERE p.post_type = 'post' AND p.post_status = 'future' AND approved.meta_value IS NULL
+          ORDER BY p.post_date_gmt ASC
+          LIMIT " . MALEQ_NR_MAX_QUEUE,
+        MALEQ_NR_APPROVED_META
+    ));
+    if (!$rows) {
+        return;
+    }
+    $base = time() - DAY_IN_SECONDS;
+    foreach ($rows as $i => $row) {
+        update_post_meta((int) $row->ID, MALEQ_NR_APPROVED_META, (string) ($base + $i));
+        update_post_meta((int) $row->ID, MALEQ_NR_LANE_META, (string) MALEQ_NR_LANE_LONGTERM);
+    }
+    maleq_nr_repack_queue();
+}
+
+/**
+ * Publish any queued story whose slot has already passed. WP-Cron normally does this (a
+ * system cron hits wp-cron.php every 5 minutes), but under fixed slots a missed schedule
+ * costs hours rather than minutes, so opening the review app or taking any action sweeps up
+ * stragglers too. wp_publish_post() fires transition_post_status, so autoshare still runs.
+ */
+function maleq_nr_catch_up(): void {
+    global $wpdb;
+    $ids = $wpdb->get_col($wpdb->prepare(
+        "SELECT p.ID FROM {$wpdb->posts} p
+           INNER JOIN {$wpdb->postmeta} approved
+                   ON approved.post_id = p.ID AND approved.meta_key = %s
+          WHERE p.post_type = 'post' AND p.post_status = 'future' AND p.post_date_gmt <= %s
+          ORDER BY p.post_date_gmt ASC LIMIT 20",
+        MALEQ_NR_APPROVED_META,
+        gmdate('Y-m-d H:i:s', time() - 300)
+    ));
+    foreach ($ids as $id) {
+        wp_publish_post((int) $id);
+    }
+}
+
+/**
+ * Ride every wp-cron.php request (a root cron hits it every 5 minutes) to sweep up missed
+ * schedules and adopt anything newly queued outside this plugin.
+ *
+ * Deliberately NOT its own scheduled event: this site has lost `publish_future_post` events
+ * before — two stories sat unpublished for a day and for two weeks — and a custom recurring
+ * event would be just as losable. DOING_CRON keeps the queries off normal page loads.
+ */
+add_action('init', function () {
+    if (defined('DOING_CRON') && DOING_CRON) {
+        maleq_nr_catch_up();
+        maleq_nr_adopt_legacy_queue();
+    }
+}, 20);
+
+/**
+ * Trashing a queued story leaves a hole in the cadence; close it up so the rest of the queue
+ * moves earlier instead of publishing around a gap. (The review app's own Delete only ever
+ * touches drafts, so this is for un-queueing from WP admin.)
+ */
+add_action('trashed_post', function ($post_id) {
+    if (get_post_meta((int) $post_id, MALEQ_NR_APPROVED_META, true) === '') {
+        return;
+    }
+    maleq_nr_repack_queue();
+}, 10, 1);
 
 /** True when the supplied key matches MALEQ_NEWS_REVIEW_KEY (constant-time). */
 function maleq_nr_key_ok(?string $k): bool {
@@ -137,6 +500,8 @@ function maleq_nr_serve_action(): void {
     if (!is_array($body) || !maleq_nr_key_ok($body['k'] ?? null)) {
         maleq_nr_json(['ok' => false, 'error' => 'forbidden'], 403);
     }
+    maleq_nr_catch_up();
+    maleq_nr_adopt_legacy_queue();
     $action = (string) ($body['action'] ?? '');
     switch ($action) {
         case 'publish':     maleq_nr_action_publish((int) ($body['post_id'] ?? 0));
@@ -149,41 +514,84 @@ function maleq_nr_serve_action(): void {
 }
 
 /**
- * Approve: publish into the next free slot (see maleq_nr_next_slot()). Always stamps the
- * publish time — the draft's creation date would otherwise back-date the story.
+ * Approve: drop the story into the publish queue (see the lane rules in the file header).
  *
- * When the slot is now, this publishes outright and the normal transition_post_status
- * hooks fire, so maleq-news-autoshare.php shares to social on shutdown after this
- * response has already been flushed to the phone. When the slot is in the future the
- * post goes to 'future' and WP-Cron publishes it later — autoshare hooks the
- * future→publish transition just the same, so sharing happens when the story goes live.
+ * The first MALEQ_NEWS_FRONT_PICKS_PER_DAY approvals of a day take the front lane and the
+ * earliest slots; later approvals join the long-term queue behind them. Either way the whole
+ * queue is re-packed onto the fixed daily slots, so this response reports both the slot this
+ * story landed on and the queue as it now stands.
+ *
+ * Slots are always stamped explicitly — the draft's creation date would otherwise back-date
+ * the story. When a slot is essentially now the post publishes outright and
+ * maleq-news-autoshare.php shares on shutdown, after this response has reached the phone;
+ * otherwise the post goes to 'future' and WP-Cron publishes it at its slot, where autoshare
+ * hooks the future->publish transition just the same.
  */
 function maleq_nr_action_publish(int $id): void {
     $post = maleq_nr_reviewable($id);
     if (!$post) {
         maleq_nr_json(['ok' => false, 'error' => 'not a pending news draft'], 404);
     }
-    $slot      = maleq_nr_next_slot();
-    $scheduled = $slot > time();
-    $res = wp_update_post([
-        'ID'            => $id,
-        'post_status'   => $scheduled ? 'future' : 'publish',
-        'post_date'     => get_date_from_gmt(gmdate('Y-m-d H:i:s', $slot)),
-        'post_date_gmt' => gmdate('Y-m-d H:i:s', $slot),
-        'edit_date'     => true,
-    ], true);
-    if (is_wp_error($res)) {
-        maleq_nr_json(['ok' => false, 'error' => $res->get_error_message()], 500);
-    }
+
+    $now   = time();
+    $limit = maleq_nr_front_picks_per_day();
+    $used  = maleq_nr_approvals_today($now);
+    $lane  = $used < $limit ? MALEQ_NR_LANE_FRONT : MALEQ_NR_LANE_LONGTERM;
+
+    // Stamped before the repack: maleq_nr_queue_order() reads both to place this story.
+    update_post_meta($id, MALEQ_NR_APPROVED_META, (string) $now);
+    update_post_meta($id, MALEQ_NR_LANE_META, (string) $lane);
     delete_post_meta($id, MALEQ_NR_LATER_META);
+
+    // Escape hatch (MALEQ_NEWS_PUBLISH_SLOTS = ''): no slots means publish on approval.
+    if (!maleq_nr_slot_times()) {
+        $res = wp_update_post([
+            'ID'            => $id,
+            'post_status'   => 'publish',
+            'post_date'     => get_date_from_gmt(gmdate('Y-m-d H:i:s', $now)),
+            'post_date_gmt' => gmdate('Y-m-d H:i:s', $now),
+            'edit_date'     => true,
+        ], true);
+        if (is_wp_error($res)) {
+            maleq_nr_json(['ok' => false, 'error' => $res->get_error_message()], 500);
+        }
+        maleq_nr_publish_cadence(min($limit, $used + 1), $limit);
+        maleq_nr_json([
+            'ok'          => true,
+            'url'         => maleq_nr_public_url($post->post_name),
+            'scheduled'   => false,
+            'publish_at'  => $now,
+            'lane'        => maleq_nr_lane_name($lane),
+            'front_used'  => min($limit, $used + 1),
+            'front_limit' => $limit,
+            'queue'       => [],
+        ]);
+    }
+
+    $map  = maleq_nr_repack_queue($id);
+    $slot = $map[$id] ?? null;
+    if ($slot === null) {
+        // No slot inside the lookahead window: leave the draft as a draft rather than
+        // silently swallowing the approval, and hand the daily pick back.
+        delete_post_meta($id, MALEQ_NR_APPROVED_META);
+        delete_post_meta($id, MALEQ_NR_LANE_META);
+        maleq_nr_json(['ok' => false, 'error' => 'no publish slot available'], 500);
+    }
+
+    maleq_nr_publish_cadence(min($limit, $used + 1), $limit);
     maleq_nr_json([
         'ok'        => true,
         'url'       => maleq_nr_public_url($post->post_name),
-        'scheduled' => $scheduled,
+        'scheduled' => get_post_status($id) === 'future',
         // GMT unix timestamp — clients format it in the viewer's own timezone.
         // Deliberately not a pre-formatted label: the site timezone is UTC, so a
         // server-rendered time would read an hours-off clock on the owner's phone.
-        'publish_at' => $slot,
+        'publish_at'  => $slot,
+        'lane'        => maleq_nr_lane_name($lane),
+        'front_used'  => min($limit, $used + 1),
+        'front_limit' => $limit,
+        // The repack moves other stories too, so ship the whole queue for a redraw.
+        'queue'       => maleq_nr_queue_payload($map),
     ]);
 }
 
@@ -354,6 +762,8 @@ function maleq_nr_serve_page(): void {
         exit;
     }
     $key = (string) $_GET['k'];
+    maleq_nr_catch_up();
+    maleq_nr_adopt_legacy_queue();
 
     $posts = get_posts([
         'post_type'      => 'post',
@@ -370,13 +780,17 @@ function maleq_nr_serve_page(): void {
     $queued = get_posts([
         'post_type'      => 'post',
         'post_status'    => 'future',
-        'posts_per_page' => 50,
+        'posts_per_page' => 200,   // the long-term queue is meant to run days deep
         'orderby'        => 'date',
         'order'          => 'ASC',
         'meta_query'     => [
             ['key' => '_maleq_news_pending_review', 'value' => '1'],
         ],
     ]);
+
+    $front_limit = maleq_nr_front_picks_per_day();
+    $front_used  = min($front_limit, maleq_nr_approvals_today());
+    maleq_nr_publish_cadence($front_used, $front_limit);
 
     // "Later"-flagged drafts sink to the bottom (oldest snooze last).
     usort($posts, function ($a, $b) {
@@ -486,6 +900,13 @@ function maleq_nr_serve_page(): void {
   .queued ol { margin: 0; padding-left: 18px; }
   .queued li { font-size: 14px; line-height: 1.45; margin-bottom: 6px; }
   .queued time { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .queued .more-queued { color: var(--muted); list-style: none; margin-left: -18px; }
+  .queued .lane { font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 6px;
+    padding: 1px 5px; margin-left: 6px; white-space: nowrap; }
+  .queued li.front .lane { color: var(--green); border-color: var(--green); }
+  .picks { margin: 0 0 16px; font-size: 13px; line-height: 1.5; color: var(--muted); }
+  .picks b { color: var(--text); font-variant-numeric: tabular-nums; }
 </style>
 </head>
 <body>
@@ -494,20 +915,40 @@ function maleq_nr_serve_page(): void {
   <button id="push-btn" type="button">🔔 Notify me</button>
 </header>
 <main id="list">
+<p class="picks">
+  <?php // #picks-line is rewritten client-side after each approval — keep setPicks() in sync. ?>
+  <span id="picks-line">Today's picks
+    <b><?php echo (int) $front_used; ?>/<?php echo (int) $front_limit; ?></b><?php
+      if ($front_used < $front_limit) :
+        $left = $front_limit - $front_used; ?>
+      · the next <?php echo (int) $left; ?> approval<?php echo $left === 1 ? '' : 's'; ?> jump<?php
+        echo $left === 1 ? 's' : ''; ?> to the front of the queue.<?php
+      else : ?>
+      · further approvals join the long-term queue.<?php
+      endif; ?>
+  </span>
+  <br>Publishing at <?php echo esc_html(maleq_nr_slots_label()); ?>.
+</p>
 <?php if ($queued) : ?>
   <section class="queued">
     <h2>Queued · <?php echo count($queued); ?> waiting to go live</h2>
     <ol>
-      <?php foreach ($queued as $q) :
-          $slotTs = (int) get_post_time('U', true, $q); ?>
-        <li>
+      <?php // Only the head of the queue: the backlog can run weeks deep on a phone screen.
+      foreach (array_slice($queued, 0, MALEQ_NR_QUEUE_PREVIEW) as $q) :
+          $slotTs = (int) get_post_time('U', true, $q);
+          $lane   = maleq_nr_lane_name((int) get_post_meta($q->ID, MALEQ_NR_LANE_META, true)); ?>
+        <li class="<?php echo esc_attr($lane); ?>">
           <?php // Server text is site-time (UTC here); the inline JS relabels it in the
                 // phone's timezone on load, so the owner reads their own clock. ?>
           <time datetime="<?php echo esc_attr(gmdate('c', $slotTs)); ?>"><?php
             echo esc_html(maleq_nr_slot_label($slotTs)); ?></time>
           — <?php echo esc_html(html_entity_decode(get_the_title($q), ENT_QUOTES | ENT_HTML5, 'UTF-8')); ?>
+          <?php if ($lane === 'longterm') : ?><span class="lane">long-term</span><?php endif; ?>
         </li>
       <?php endforeach; ?>
+      <?php if (count($queued) > MALEQ_NR_QUEUE_PREVIEW) : ?>
+        <li class="more-queued">+<?php echo count($queued) - MALEQ_NR_QUEUE_PREVIEW; ?> more further down the queue</li>
+      <?php endif; ?>
     </ol>
   </section>
 <?php endif; ?>
@@ -604,29 +1045,66 @@ On iPhone: Add to Home Screen first, then enable notifications from the installe
     if (!isNaN(d.getTime())) { t.textContent = fmtSlot(d); }
   });
 
+  /** Front-of-queue picks used today (mirrors the server-rendered #picks-line text). */
+  function setPicks(used, limit) {
+    var el = document.getElementById('picks-line');
+    if (!el || typeof used !== 'number' || typeof limit !== 'number') { return; }
+    var left = Math.max(0, limit - used);
+    var tail = left > 0
+      ? ' · the next ' + left + ' approval' + (left === 1 ? ' jumps' : 's jump') + ' to the front of the queue.'
+      : ' · further approvals join the long-term queue.';
+    el.textContent = "Today's picks ";
+    var b = document.createElement('b');
+    b.textContent = used + '/' + limit;
+    el.appendChild(b);
+    el.appendChild(document.createTextNode(tail));
+  }
+
   /**
-   * Move a just-approved story into the Queued list so the cadence stays visible
-   * without a reload. Builds the section if this is the first queued story.
+   * Redraw the whole Queued list from the server's post-repack queue. Approving a story
+   * re-orders the others (front-of-queue picks displace the long-term backlog), so the
+   * list is replaced rather than appended to.
    */
-  function addToQueuedList(res, card) {
-    if (!res.scheduled) { return; }
-    var at = new Date(res.publish_at * 1000);
+  function renderQueue(queue) {
+    var list = document.getElementById('list');
     var section = document.querySelector('.queued');
+    if (!queue || !queue.length) {
+      if (section) { section.remove(); }
+      return;
+    }
     if (!section) {
       section = document.createElement('section');
       section.className = 'queued';
       section.innerHTML = '<h2></h2><ol></ol>';
-      document.getElementById('list').insertBefore(section, document.getElementById('list').firstChild);
+      list.insertBefore(section, document.querySelector('.picks').nextSibling);
     }
-    var li = document.createElement('li');
-    var t = document.createElement('time');
-    t.setAttribute('datetime', at.toISOString());
-    t.textContent = fmtSlot(at);
-    li.appendChild(t);
-    li.appendChild(document.createTextNode(' — ' + card.querySelector('.title').textContent));
-    section.querySelector('ol').appendChild(li);
-    var n = section.querySelectorAll('li').length;
-    section.querySelector('h2').textContent = 'Queued · ' + n + ' waiting to go live';
+    section.querySelector('h2').textContent = 'Queued · ' + queue.length + ' waiting to go live';
+    var ol = section.querySelector('ol');
+    ol.textContent = '';
+    var preview = <?php echo (int) MALEQ_NR_QUEUE_PREVIEW; ?>;
+    queue.slice(0, preview).forEach(function (q) {
+      var at = new Date(q.publish_at * 1000);
+      var li = document.createElement('li');
+      li.className = q.lane === 'front' ? 'front' : 'longterm';
+      var t = document.createElement('time');
+      t.setAttribute('datetime', at.toISOString());
+      t.textContent = fmtSlot(at);
+      li.appendChild(t);
+      li.appendChild(document.createTextNode(' — ' + q.title));
+      if (q.lane !== 'front') {
+        var tag = document.createElement('span');
+        tag.className = 'lane';
+        tag.textContent = 'long-term';
+        li.appendChild(tag);
+      }
+      ol.appendChild(li);
+    });
+    if (queue.length > preview) {
+      var rest = document.createElement('li');
+      rest.className = 'more-queued';
+      rest.textContent = '+' + (queue.length - preview) + ' more further down the queue';
+      ol.appendChild(rest);
+    }
   }
 
   document.querySelectorAll('article').forEach(function (card) {
@@ -653,9 +1131,11 @@ On iPhone: Add to Home Screen first, then enable notifications from the installe
       api('publish', { post_id: id }).then(function (j) {
         if (!j.ok) { busy(false, '⚠ ' + (j.error || 'failed')); return; }
         status.textContent = j.scheduled
-          ? '🕒 Queued for ' + fmtSlot(new Date(j.publish_at * 1000))
+          ? (j.lane === 'front' ? '🕒 Queued for ' : '🗓 Long-term queue · ')
+            + fmtSlot(new Date(j.publish_at * 1000))
           : '✓ Published — sharing to social…';
-        addToQueuedList(j, card);
+        setPicks(j.front_used, j.front_limit);
+        renderQueue(j.queue);
         setTimeout(function () { removeCard(card); }, j.scheduled ? 1400 : 900);
       }).catch(function () { busy(false, '⚠ Network error — try again.'); });
     });
