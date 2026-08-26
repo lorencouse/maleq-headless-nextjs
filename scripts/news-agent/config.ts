@@ -136,6 +136,14 @@ export const DRAFT_MODEL = 'claude-sonnet-5';
  * for 2 months until 2026-08-05). */
 export const RESEARCH_MODEL = 'claude-haiku-4-5';
 
+/**
+ * Vetting model (vet.ts) — the news-event check that runs BEFORE research and
+ * drafting. Deliberately the cheap model: it reads ~4k chars and answers one
+ * yes/no question, so a rejection costs ~$0.005 instead of the ~$0.11 a
+ * research+draft pair used to burn before the drafter caught the same thing.
+ */
+export const VET_MODEL = 'claude-haiku-4-5';
+
 /** $ per MTok (standard API list price; Sonnet 5 intro pricing through
  * 2026-08-31 is lower, so estimates here run slightly high until then). */
 export const PRICES: Record<string, { in: number; out: number }> = {

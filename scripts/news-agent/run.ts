@@ -16,6 +16,7 @@
  * Flags: --limit N  --model NAME  --write  --yes  --check-feeds
  *        --no-title-dedupe (skip the 48h duplicate-headline guard)
  *        --no-scope-filter  (skip the news-events-only editorial filter)
+ *        --no-skip-memory   (re-consider stories earlier runs rejected)
  *        --dupe-report      (report-only: print each candidate's closest recent-title
  *                            match and exit — no drafting, no API spend)
  */
@@ -35,10 +36,13 @@ import {
 } from './draft';
 import { fetchRecentTitles, findDuplicateTitle, rememberTitle } from './title-dedupe';
 import { classifyNonNews } from './editorial-filter';
+import { loadSkipped } from './skipped';
+import { buildVetParams, parseVet } from './vet';
 import {
   MAX_PER_RUN,
   DRAFT_MODEL,
   RESEARCH_MODEL,
+  VET_MODEL,
   ENABLE_RESEARCH,
   RECENT_TITLE_HOURS,
   FRESHNESS_HOURS,
@@ -65,7 +69,18 @@ if (!Number.isInteger(LIMIT) || LIMIT < 1) {
   console.error(`⛔ --limit must be a positive integer (got "${flag('--limit')}").`);
   process.exit(1);
 }
+const NO_SKIP_MEMORY = has('--no-skip-memory'); // ignore stories rejected by earlier runs
+const NO_VET = has('--no-vet');                // skip the pre-research news-event vetting pass
 const MODEL = flag('--model') || DRAFT_MODEL;
+// How many drafting rounds a run may spend reaching --limit. Vetting (vet.ts) now
+// catches most non-news candidates before we pay to write them, but the drafter
+// can still reject one on closer reading, so the run tops up rather than ending
+// empty-handed — 9 of the 14 runs before 2026-08-24 produced nothing that way.
+// Each extra round costs one more draft (~$0.11), so cap it.
+const MAX_DRAFT_ROUNDS = Number(process.env.NEWS_AGENT_MAX_ROUNDS ?? 3);
+// Candidates vetted per story we still need. Vetting is cheap and batched, so
+// over-fetching here is what keeps a rejection from costing a round trip.
+const VET_FANOUT = Number(process.env.NEWS_AGENT_VET_FANOUT ?? 3);
 
 function banner() {
   console.log('\n╔════════════════════════════════════════════╗');
@@ -79,7 +94,7 @@ function newestAt(c: StoryCluster): number {
 }
 
 /** Running usage/cost totals across both batch passes. */
-const runCost = { research: 0, draft: 0, searches: 0, inTok: 0, outTok: 0, cacheRead: 0 };
+const runCost = { vet: 0, research: 0, draft: 0, searches: 0, inTok: 0, outTok: 0, cacheRead: 0 };
 
 function trackUsage(model: string, msg: Anthropic.Message): number {
   const u = msg.usage;
@@ -280,13 +295,30 @@ async function main() {
     return;
   }
 
-  console.log(`   Drafting up to ${LIMIT} of ${candidates.length} eligible stories.\n`);
-  const batch = candidates.slice(0, LIMIT);
-  if (batch.length === 0) {
+  // ── 2e. Drop stories an earlier run already sent to the model and had rejected ──
+  // Ranking is deterministic, so without this the same "not a news event" reject
+  // sits at the top of the candidate list every run until it ages out of the feed.
+  const skipped = loadSkipped();
+  if (NO_SKIP_MEMORY) {
+    console.log('   ⚠ reject memory disabled (--no-skip-memory).');
+  } else if (skipped.size) {
+    const before = candidates.length;
+    candidates = candidates.filter((c) => !c.sources.some((src) => skipped.has(src.url)));
+    const dropped = before - candidates.length;
+    if (dropped) {
+      console.log(
+        `   ${dropped} story/stories dropped — already rejected by an earlier run ` +
+        `(${skipped.size} remembered).`,
+      );
+    }
+  }
+
+  if (candidates.length === 0) {
     console.log('   Nothing new to draft this run.');
     await db.end();
     return;
   }
+  console.log(`   Drafting up to ${LIMIT} of ${candidates.length} eligible stories.\n`);
 
   // ── 3. Draft (two batched passes: research → structured draft) ──────
   console.log('③ Drafting with Claude (Batches API, 50% pricing)…');
@@ -294,79 +326,171 @@ async function main() {
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set. Export it before running the news agent.');
   const client = new Anthropic({ apiKey });
 
-  // Fetch + rank article material for every story in parallel.
-  const prepared: PreparedStory[] = await Promise.all(batch.map((c) => prepareStory(c)));
-
-  // Pass 1 — research briefs (Haiku + web_search), one batch for the whole run.
-  const briefs = new Map<string, string>();
-  if (ENABLE_RESEARCH && prepared.length > 0) {
-    const reqs = prepared.map((p, i) => ({ custom_id: `story-${i}`, params: buildResearchParams(p) }));
-    try {
-      const msgs = await runBatch(client, reqs, 'research');
-      for (const [id, msg] of msgs) {
-        runCost.research += trackUsage(RESEARCH_MODEL, msg);
-        briefs.set(id, extractResearchBrief(msg));
-      }
-    } catch (e: any) {
-      // Research is best-effort — a failed batch degrades every story to
-      // source-only synthesis, same as a failed individual call always has.
-      console.log(`   ⚠ research batch failed (${e.message}); drafting from sources only`);
-    }
-  }
-
-  // Pass 2 — structured drafts (Sonnet), second batch.
-  const draftReqs = prepared.map((p, i) => ({
-    custom_id: `story-${i}`,
-    params: buildDraftParams(p, briefs.get(`story-${i}`) || '', MODEL),
-  }));
-  const draftMsgs = prepared.length > 0 ? await runBatch(client, draftReqs, 'draft   ') : new Map<string, Anthropic.Message>();
-
+  // Top up to LIMIT across several rounds, drawing from a pool of candidates that
+  // have already passed vetting. Two guards feed this:
+  //   • vet.ts (below) rejects non-news BEFORE research/drafting — cheap.
+  //   • draft.ts re-checks on the assembled material — the backstop, expensive.
+  // One round of exactly LIMIT candidates used to return zero whenever the second
+  // guard fired (9 of the 14 runs before 2026-08-24), which is why no drafts were
+  // reaching the review queue. MAX_DRAFT_ROUNDS bounds the extra spend.
   const drafts: DraftedPost[] = [];
-  for (let i = 0; i < prepared.length; i++) {
-    const prep = prepared[i];
-    const cluster = prep.cluster;
-    const srcLabel = cluster.sources.map((s) => s.sourceName).join(' + ');
-    const msg = draftMsgs.get(`story-${i}`);
-    if (!msg) {
-      console.log(`   ✗ draft failed for "${cluster.primary.title.slice(0, 55)}" (batch item did not succeed)`);
-      continue;
-    }
-    const cost = trackUsage(MODEL, msg);
-    runCost.draft += cost;
-    try {
-      const d = await finalizeDraft(prep, msg);
-      const brief = briefs.get(`story-${i}`) || '';
-      if (!d.publishable) {
-        console.log(`   ⊘ skip "${cluster.primary.title.slice(0, 55)}" — ${d.skipReason || 'not publishable'}`);
+  const vetted: PreparedStory[] = [];
+  let cursor = 0;
+
+  /**
+   * Fill `vetted` with at least `need` publishable stories: fetch article text for
+   * the next slice of candidates, then judge them all in ONE cheap batch. Survivors
+   * carry over between rounds, so nothing is prepared or vetted twice.
+   */
+  async function refillVetted(need: number): Promise<void> {
+    while (vetted.length < need && cursor < candidates.length) {
+      const want = (need - vetted.length) * (NO_VET ? 1 : VET_FANOUT);
+      const slice = candidates.slice(cursor, cursor + want);
+      cursor += slice.length;
+
+      // Article text — network only, no API spend. Both the vet pass and the
+      // drafter reuse this, so a vetted story costs nothing extra to draft.
+      const prepared: PreparedStory[] = await Promise.all(slice.map((c) => prepareStory(c)));
+      if (NO_VET) {
+        vetted.push(...prepared);
         continue;
       }
-      // Second guard: Claude's rewritten headline can land on a recent story even
-      // when the source headline didn't (and two stories drafted in the SAME run
-      // can converge). `recent` is appended to below, so this covers both.
-      if (!NO_TITLE_DEDUPE) {
-        const dup = findDuplicateTitle(d.title, recent);
-        if (dup) {
-          console.log(
-            `   ⊘ dup drafted title "${d.title.slice(0, 55)}" ≈ #${dup.against.postId} ` +
-            `[${dup.against.status}] "${dup.against.postTitle.slice(0, 55)}" (${dup.score.toFixed(2)}) — discarded`,
-          );
+
+      const reqs = prepared.map((p, i) => ({ custom_id: `vet-${i}`, params: buildVetParams(p) }));
+      let verdicts = new Map<string, Anthropic.Message>();
+      try {
+        verdicts = await runBatch(client, reqs, 'vet     ');
+      } catch (e: any) {
+        // Vetting is an optimization, not a gate — if the batch dies, fall through
+        // to the drafter's own check rather than dropping the whole round.
+        console.log(`   ⚠ vetting batch failed (${e.message}); relying on the drafter's own check`);
+        vetted.push(...prepared);
+        continue;
+      }
+
+      for (let i = 0; i < prepared.length; i++) {
+        const prep = prepared[i];
+        const title = prep.cluster.primary.title;
+        const msg = verdicts.get(`vet-${i}`);
+        // A missing or unparseable verdict FAILS OPEN: let the drafter decide
+        // rather than silently losing a story to a flaky call.
+        if (!msg) {
+          vetted.push(prep);
           continue;
         }
+        runCost.vet += trackUsage(VET_MODEL, msg);
+        const v = parseVet(msg);
+        if (!v || v.isNewsEvent) {
+          vetted.push(prep);
+          continue;
+        }
+        console.log(`   ⊘ vetted out "${title.slice(0, 55)}" — ${v.format}: ${v.reason.slice(0, 90)}`);
+        skipped.record(prep.cluster.sources.map((src) => src.url), title, `${v.format}: ${v.reason}`);
       }
-      rememberTitle(recent, 0, d.title);
-      drafts.push(d);
-      const usedCount = d.usedSourceUrls.length;
-      console.log(
-        `   ✓ "${d.title}"  [${srcLabel}${usedCount > 1 ? ` → ${usedCount} cited` : ''}]` +
-        `  (research: ${brief ? `${brief.length} chars` : 'none'} · ${msg.usage.input_tokens + (msg.usage.cache_read_input_tokens ?? 0)}in/${msg.usage.output_tokens}out · ~$${cost.toFixed(3)})`,
-      );
-    } catch (e: any) {
-      console.log(`   ✗ draft failed for "${cluster.primary.title.slice(0, 55)}": ${e.message}`);
     }
   }
-  const totalCost = runCost.research + runCost.draft;
+
+  for (let round = 1; round <= MAX_DRAFT_ROUNDS && drafts.length < LIMIT; round++) {
+    const need = LIMIT - drafts.length;
+    await refillVetted(need);
+    const batch = vetted.splice(0, need);
+    if (batch.length === 0) break;   // candidate pool exhausted
+    if (round > 1) {
+      console.log(
+        `\n   ↻ round ${round}/${MAX_DRAFT_ROUNDS}: ${need} more needed — ` +
+        `drafting the next ${batch.length} vetted candidate(s).`,
+      );
+    }
+
+    const prepared = batch;
+
+    // Pass 1 — research briefs (Haiku + web_search), one batch for the round.
+    const briefs = new Map<string, string>();
+    if (ENABLE_RESEARCH && prepared.length > 0) {
+      const reqs = prepared.map((p, i) => ({ custom_id: `story-${i}`, params: buildResearchParams(p) }));
+      try {
+        const msgs = await runBatch(client, reqs, 'research');
+        for (const [id, msg] of msgs) {
+          runCost.research += trackUsage(RESEARCH_MODEL, msg);
+          briefs.set(id, extractResearchBrief(msg));
+        }
+      } catch (e: any) {
+        // Research is best-effort — a failed batch degrades every story to
+        // source-only synthesis, same as a failed individual call always has.
+        console.log(`   ⚠ research batch failed (${e.message}); drafting from sources only`);
+      }
+    }
+
+    // Pass 2 — structured drafts (Sonnet), second batch.
+    const draftReqs = prepared.map((p, i) => ({
+      custom_id: `story-${i}`,
+      params: buildDraftParams(p, briefs.get(`story-${i}`) || '', MODEL),
+    }));
+    const draftMsgs = prepared.length > 0
+      ? await runBatch(client, draftReqs, 'draft   ')
+      : new Map<string, Anthropic.Message>();
+
+    for (let i = 0; i < prepared.length; i++) {
+      const prep = prepared[i];
+      const cluster = prep.cluster;
+      const srcUrls = cluster.sources.map((src) => src.url);
+      const srcLabel = cluster.sources.map((src) => src.sourceName).join(' + ');
+      const msg = draftMsgs.get(`story-${i}`);
+      if (!msg) {
+        // A batch-level failure is transient — don't remember it as a rejection.
+        console.log(`   ✗ draft failed for "${cluster.primary.title.slice(0, 55)}" (batch item did not succeed)`);
+        continue;
+      }
+      const cost = trackUsage(MODEL, msg);
+      runCost.draft += cost;
+      try {
+        const d = await finalizeDraft(prep, msg);
+        const brief = briefs.get(`story-${i}`) || '';
+        if (!d.publishable) {
+          const reason = d.skipReason || 'not publishable';
+          console.log(`   ⊘ skip "${cluster.primary.title.slice(0, 55)}" — ${reason}`);
+          skipped.record(srcUrls, cluster.primary.title, reason);
+          continue;
+        }
+        // Second guard: Claude's rewritten headline can land on a recent story even
+        // when the source headline didn't (and two stories drafted in the SAME run
+        // can converge). `recent` is appended to below, so this covers both.
+        if (!NO_TITLE_DEDUPE) {
+          const dup = findDuplicateTitle(d.title, recent);
+          if (dup) {
+            console.log(
+              `   ⊘ dup drafted title "${d.title.slice(0, 55)}" ≈ #${dup.against.postId} ` +
+              `[${dup.against.status}] "${dup.against.postTitle.slice(0, 55)}" (${dup.score.toFixed(2)}) — discarded`,
+            );
+            skipped.record(srcUrls, cluster.primary.title, `duplicate of post #${dup.against.postId}`);
+            continue;
+          }
+        }
+        rememberTitle(recent, 0, d.title);
+        drafts.push(d);
+        const usedCount = d.usedSourceUrls.length;
+        console.log(
+          `   ✓ "${d.title}"  [${srcLabel}${usedCount > 1 ? ` → ${usedCount} cited` : ''}]` +
+          `  (research: ${brief ? `${brief.length} chars` : 'none'} · ${msg.usage.input_tokens + (msg.usage.cache_read_input_tokens ?? 0)}in/${msg.usage.output_tokens}out · ~$${cost.toFixed(3)})`,
+        );
+      } catch (e: any) {
+        console.log(`   ✗ draft failed for "${cluster.primary.title.slice(0, 55)}": ${e.message}`);
+      }
+    }
+  }
+  skipped.save();
+
+  if (drafts.length < LIMIT) {
+    console.log(
+      `\n   ⚠ ${drafts.length}/${LIMIT} drafted — ` +
+      (cursor >= candidates.length
+        ? 'ran out of eligible candidates.'
+        : `stopped after ${MAX_DRAFT_ROUNDS} round(s); the rest of the queue keeps for the next run.`),
+    );
+  }
+  const totalCost = runCost.vet + runCost.research + runCost.draft;
   console.log(
-    `\n   Run cost: ~$${totalCost.toFixed(3)} (research $${runCost.research.toFixed(3)} + drafts $${runCost.draft.toFixed(3)})` +
+    `\n   Run cost: ~$${totalCost.toFixed(3)} (vetting $${runCost.vet.toFixed(3)} + research $${runCost.research.toFixed(3)} + drafts $${runCost.draft.toFixed(3)})` +
     ` · ${runCost.inTok.toLocaleString()} in / ${runCost.outTok.toLocaleString()} out tok` +
     `${runCost.cacheRead ? ` (${runCost.cacheRead.toLocaleString()} cached)` : ''}` +
     `${runCost.searches ? ` · ${runCost.searches} web search(es)` : ''}\n`,

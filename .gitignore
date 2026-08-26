@@ -69,3 +69,6 @@ test-results/
 gpt-enrich-products-script.rtf
 product-enrichment-reguirments-prompt.rtf
 package-lock.json
+
+# News-agent local state (reject memory) — disposable, per-machine
+scripts/news-agent/.state/

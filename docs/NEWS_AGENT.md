@@ -9,11 +9,14 @@ one-tap approval loop.
 ## Pipeline
 
 ```
-RSS ─▶ discover.ts ─▶ dedupe.ts ─▶ editorial-filter.ts ─▶ title-dedupe.ts ─▶ draft.ts ─▶ publish.ts ─▶ WP draft
-       freshness +    skip already   news EVENTS only —     skip near-dupe    Claude:      insert         "LGBTQ+ News"
-       cross-feed     posted (by     drop listicles, how-   headlines from    original     wp_posts +      category,
-       de-dupe        source URL)    tos, opinion, reviews  the last 48 h     piece +      meta + terms    status=draft
-                                     interviews, galleries                    SEO, tags   (status=draft)
+RSS ─▶ discover.ts ─▶ dedupe.ts ─▶ editorial-filter.ts ─▶ title-dedupe.ts ─▶ vet.ts ─▶ draft.ts ─▶ publish.ts ─▶ WP draft
+       freshness +    skip already   news EVENTS only —     skip near-dupe    Haiku:     Claude:      insert         "LGBTQ+ News"
+       cross-feed     posted (by     drop listicles, how-   headlines from    same call  original     wp_posts +      category,
+       de-dupe        source URL)    tos, opinion, reviews  the last 48 h     on the     piece +      meta + terms    status=draft
+                                     interviews, galleries  (source headline) FULL text  SEO, tags   (status=draft)
+
+                                     ── all vetting happens LEFT of draft.ts ──▶│ nothing is researched or
+                                                                                 │ written until it passes
 ```
 
 **Models & cost (since 2026-08-05):** drafting runs on **Sonnet 5** and the web-research
@@ -44,6 +47,7 @@ for you to review and publish in WP admin.
 | `cluster.ts`  | Group same-event coverage across outlets (IDF-weighted headline overlap) → one post can cite several sources |
 | `title-dedupe.ts` | Block stories whose headline near-matches a news post from the last 48 h (rarity-weighted Dice over headline tokens) |
 | `editorial-filter.ts` | Drop items that are another outlet's own work (listicles, how-tos, opinion, reviews, interviews, recaps, galleries) rather than news events |
+| `vet.ts`      | Pre-research news-event check: one cheap Haiku call per candidate on the FULL article text, so non-news is rejected before any research/drafting spend |
 | `extract.ts`  | Fetch the article page and pull paragraph text (feed summaries are often headline-only); falls back to feed content |
 | `draft.ts`    | Zod-validated structured drafting (batch-friendly param builders + parsers; Sonnet 5) → original piece with `<h2>` subheadings, synthesizing the clustered sources + research brief |
 | `publish.ts`  | Insert `wp_posts` draft + `wp_postmeta` + category/tag `term_relationships` |
@@ -70,7 +74,8 @@ ANTHROPIC_API_KEY=… bun run scripts/news-agent/run.ts --local --write
 ANTHROPIC_API_KEY=… bun run scripts/news-agent/run.ts --write --yes
 ```
 
-Flags: `--local`, `--write`, `--yes` (prod safety), `--check-feeds`, `--limit N`, `--model NAME`.
+Flags: `--local`, `--write`, `--yes` (prod safety), `--check-feeds`, `--limit N`, `--model NAME`,
+`--no-skip-memory` (re-consider stories earlier runs rejected).
 
 ## Length, headings & multiple sources
 
@@ -162,6 +167,40 @@ still an essay. It's told to skip when genuinely ambiguous: better to miss a sto
 republish someone's work. The line it's given — reporting *that* a public figure said
 something significant in an interview is an event; retelling the interview is not.
 
+**Layer 2 runs BEFORE we spend anything (`vet.ts`).** The drafter's judgement is the
+accurate one — it reads the body, and a newsy-sounding headline on an interview is still
+an interview — but when it fired inside `draft.ts` we had already paid for a web-research
+pass and a full Sonnet draft. So the same EDITORIAL SCOPE rules now run first as a
+dedicated pass: **one cheap Haiku call per candidate over the full article text**, batched,
+before research and drafting. A rejection costs ~$0.005 instead of ~$0.11.
+
+`VET_SYSTEM` in `vet.ts` is a near-verbatim lift of draft.ts's EDITORIAL SCOPE section —
+**change the two together.** If the vet pass is more permissive the drafter still rejects
+(we just paid for it); if it is stricter we silently lose stories the drafter would have
+written. It **fails open**: an unparseable verdict, a missing batch item or a dead batch
+lets the story through to the drafter, which still checks. Bypass with `--no-vet`.
+
+Vetting is fanned out — `NEWS_AGENT_VET_FANOUT` (default 3) candidates vetted per story
+still needed — and survivors carry over between rounds, so nothing is fetched or vetted
+twice.
+
+**Layer 3 is the drafter's own check, and the run tops up instead of ending empty.**
+`draft.ts` still sets `publishable=false` on closer reading. Because that used to end a
+`--limit 1` run with nothing, **9 of the 14 runs between 2026-08-21 and 2026-08-24 produced
+no drafts at all** (zero on 08-23 across four runs) — which is why nothing was reaching the
+review queue. `run.ts` now drafts in **rounds**: after each round it draws more vetted
+candidates until `--limit` drafts are in hand, `MAX_DRAFT_ROUNDS` (env
+`NEWS_AGENT_MAX_ROUNDS`, default 3) is spent, or candidates run out.
+
+**Rejects are remembered (`skipped.ts`).** Ranking is deterministic, so without this the
+same rejected item sits at the top of the candidate list every run until it ages out of
+the feed — "WATCH: Here The Whole Time" burned two consecutive runs that way. Rejected
+source URLs (and headlines discarded as duplicates of an existing post) are written to
+`scripts/news-agent/.state/skipped-stories.json` and filtered out of later runs for 14
+days. The file is disposable and git-ignored; losing it costs one wasted draft. Override
+its location with `NEWS_AGENT_STATE_DIR`, or ignore it for one run with
+`--no-skip-memory`.
+
 ## Editorial / legal guardrails
 
 - The drafter is instructed to **summarize in original words + brief commentary**, never
@@ -243,6 +282,8 @@ The guard runs **twice** per story:
 ```bash
 --dupe-report      # print each candidate's closest recent-title match + score (calibration)
 --no-title-dedupe  # bypass the guard entirely (e.g. deliberately re-drafting a story)
+--no-vet           # skip the pre-research news-event pass (drafter still checks)
+--no-skip-memory   # re-consider stories earlier runs rejected
 ```
 
 ## Scheduling — DEPLOYED on the prod WP VPS
@@ -261,6 +302,12 @@ system cron, **4×/day at 9am / 12pm / 3pm / 6pm America/Los_Angeles** (1 story 
 **DST-safe timing.** This host's cron (Debian 3.0pl1) has no `CRON_TZ`, and the server is
 UTC. So cron fires **hourly** (`0 * * * *`) and `cron-run.sh` gates on the local PT hour —
 it runs only at 09/12/15/18 PT and silently no-ops otherwise. This auto-tracks PST↔PDT.
+`NEWS_AGENT_LIMIT` defaults to **2**, so 4 runs/day = **8 drafts/day**. That is the
+DRAFTING rate, not the publishing rate: drafts wait in the review queue, and
+`maleq-news-review.php` releases approvals onto fixed slots (`9:00,12:00,15:00,18:00,21:00`
+ET) — **one story per 3-hour window, 5/day**. Drafting above the slot count is deliberate:
+it gives you a choice of stories per slot instead of a queue of whatever survived.
+
 Override hours with `NEWS_AGENT_HOURS="09 12 15 18"`, draft count with `NEWS_AGENT_LIMIT`
 (default `1` — one drafted story per run, 4/day).
 

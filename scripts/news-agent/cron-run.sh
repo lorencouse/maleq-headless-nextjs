@@ -14,11 +14,20 @@ WP=/usr/bin/wp
 APP=/home/maleq-wp/news-agent
 WPPATH=/home/maleq-wp/htdocs/wp.maleq.com
 LOG_DIR="$APP/logs"
+# Reject memory (skipped.ts): stories the drafter turned down, so a later run
+# doesn't re-pick them. Kept outside the rsynced tree — that is owned by the
+# deploying user, while this script runs as maleq-wp and must be able to write.
+export NEWS_AGENT_STATE_DIR="$APP/state"
 
 # DST-safe scheduling: cron fires hourly (server is UTC; this host's cron has no
 # CRON_TZ). We gate on the user's local hour so the pipeline runs 4×/day at
 # 9am/12pm/3pm/6pm America/Los_Angeles regardless of PST/PDT. With
-# NEWS_AGENT_LIMIT=1 that's 4 stories/day. Override hours with NEWS_AGENT_HOURS.
+# NEWS_AGENT_LIMIT=2 that's 8 DRAFTS/day. Override hours with NEWS_AGENT_HOURS.
+#
+# Drafting rate is NOT the publishing rate: drafts sit in the review queue until
+# you approve them, and maleq-news-review.php then releases approvals onto fixed
+# slots (9am/12/3/6/9pm ET) — one story per 3-hour window, 5/day. 8 drafts/day
+# gives you more than a full day of slots to choose from without a runaway backlog.
 RUN_HOURS="${NEWS_AGENT_HOURS:-09 12 15 18}"
 LOCAL_HOUR="$(TZ=America/Los_Angeles date +%H)"
 case " $RUN_HOURS " in
@@ -27,13 +36,13 @@ case " $RUN_HOURS " in
 esac
 
 cd "$APP" || { echo "cannot cd $APP"; exit 1; }
-mkdir -p "$LOG_DIR"
+mkdir -p "$LOG_DIR" "$NEWS_AGENT_STATE_DIR"
 LOG="$LOG_DIR/run-$(date +%Y%m%d_%H%M%S).log"
 
 {
   echo "==== news-agent run: $(date) ===="
   echo "--- draft new stories ---"
-  "$BUN" run scripts/news-agent/run.ts --write --yes --limit "${NEWS_AGENT_LIMIT:-1}"
+  "$BUN" run scripts/news-agent/run.ts --write --yes --limit "${NEWS_AGENT_LIMIT:-2}"
   echo "--- attach cover images ---"
   "$BUN" run scripts/news-agent/attach-covers.ts --write --yes
   echo "--- notify reviewer (web push) ---"
