@@ -35,18 +35,28 @@ const CACHE_DIRS = ['.next/server/app', '.next/server/pages'];
  * while .next/server sits in the container layer), and it grows for a
  * different reason — one file per (src, width, quality, format) tuple.
  *
- * Next 16.1.6 has NO cap and NO eviction for this directory, so nothing
- * removes these files but us. (16.2+ adds images.maximumDiskCacheSize; when
- * this project upgrades, prefer that and drop this pass.) Everything under
- * the directory is disposable — a miss just re-encodes — so unlike the ISR
- * pass this one matches ALL files rather than an extension list.
+ * As of Next 16.2 the optimizer bounds this itself: images.maximumDiskCacheSize
+ * in next.config.ts is the PRIMARY limit (3GB), and its LRU evicts whole
+ * per-cache-key directories, so it leaves no empty-dir skeleton. This pass is
+ * now a BACKSTOP, deliberately capped higher (6GB) so it never races the LRU —
+ * if it ever actually deletes something, the LRU has failed and that is worth
+ * investigating rather than silently absorbing.
+ *
+ * It earns its keep for two reasons: it enforces an age limit the LRU has no
+ * concept of, and it reaps empty directories left by anything OTHER than the
+ * LRU (a manual `find -type f -delete` during an incident, or a downgrade
+ * below 16.2). Everything under the directory is disposable — a miss just
+ * re-encodes — so unlike the ISR pass this one matches ALL files.
  */
 const IMAGE_CACHE_DIRS = ['.next/cache/images'];
 
 const MAX_AGE_DAYS = Number(process.env.ISR_CACHE_MAX_AGE_DAYS ?? 14);
 const MAX_BYTES = Number(process.env.ISR_CACHE_MAX_GB ?? 5) * 1024 ** 3;
 const IMAGE_MAX_AGE_DAYS = Number(process.env.IMAGE_CACHE_MAX_AGE_DAYS ?? 30);
-const IMAGE_MAX_BYTES = Number(process.env.IMAGE_CACHE_MAX_GB ?? 3) * 1024 ** 3;
+// 6GB, i.e. ABOVE next.config's maximumDiskCacheSize (3GB) on purpose — see
+// the note above. Lower this to ~3GB if the project ever drops below Next 16.2,
+// because then nothing else is bounding this directory.
+const IMAGE_MAX_BYTES = Number(process.env.IMAGE_CACHE_MAX_GB ?? 6) * 1024 ** 3;
 /** Never delete very fresh files, so we can't race an in-flight render. */
 const MIN_AGE_MS = 60 * 60 * 1000;
 

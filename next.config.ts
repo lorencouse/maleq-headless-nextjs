@@ -44,38 +44,28 @@ const nextConfig: NextConfig = {
   images: {
     // --- On-disk variant budget -------------------------------------------
     // The optimizer writes ONE file per (src, width, quality, format) tuple
-    // into .next/cache/images. On the Next version we ship (16.1.6, see
-    // bun.lock) that cache has NO size cap and NO eviction of any kind, so it
-    // grows without bound. Pointed at a ~35K product catalog it reached 980K
-    // files / 15GB and filled the shared Coolify host in 2026-08.
+    // into .next/cache/images. Pointed at a ~35K product catalog this reached
+    // 980K files / 15GB and filled the shared Coolify host in 2026-08. It is
+    // bounded two ways: this file shrinks how many variants each source image
+    // can produce (~7x), and maximumDiskCacheSize below caps what survives.
     //
-    // Two halves to the fix. This file shrinks how many variants each source
-    // image can produce (~7x). The hard ceiling is enforced separately by
-    // lib/utils/isr-cache-janitor.ts, which now prunes this directory too —
-    // Next itself will not do it for us on 16.1.6.
-    //
-    // (Next 16.2+ adds images.maximumDiskCacheSize and a real disk LRU. Do NOT
-    // add that key here while bun.lock pins 16.1.6: it is rejected as an
-    // unrecognized key and hard-fails `next build`. When this project moves to
-    // 16.2+, set it and the janitor's image pass becomes redundant. Note the
-    // 16.2 default is worse than it sounds — unset, it sizes the LRU to 50% of
-    // FREE DISK at container start, which on a shared host is 50% of space we
-    // do not own.)
-    // Keep this list to widths the layout actually requests — see the `sizes`
-    // prop on ProductCard/CategoryCard before adding any back.
+    // Keep the width lists to what the layout actually requests — see the
+    // `sizes` prop on ProductCard/CategoryCard before adding any back.
     //
     // NOTE on `sizes`: getWidths() (next/dist/shared/lib/get-img-props.js)
     // returns the ENTIRE allSizes list when `sizes` contains no `vw` unit. So
     // a fixed-px `sizes` on a `fill` image (sizes="80px") is the WORST case —
-    // it cached a 1920px file for an 80px thumbnail. Fixed-size thumbnails
-    // must use width/height and NO `sizes`, which takes the 2-variant
-    // (1x/2x) path instead. Only use `sizes` when the box is truly fluid,
-    // and then always with a vw unit.
+    // it cached a 1920px file for an 80px thumbnail. Fixed-size boxes must use
+    // width/height and NO `sizes`, which takes the 2-variant (1x/2x) path.
+    // Only use `sizes` when the box is truly fluid, and then with a vw unit.
     //
-    // webp only (was ['image/avif','image/webp']): two formats doubles the
-    // cache for one image, and avif is much the slower encode. webp is
-    // universally supported; the byte difference vs avif is small next to the
-    // disk it costs us.
+    // VERSION-SENSITIVE: maximumDiskCacheSize does not exist before Next 16.2,
+    // and an unrecognized key under `images` is a FATAL config error that
+    // hard-fails `next build` — it broke a deploy while bun.lock still pinned
+    // 16.1.6. If this ever drops below 16.2, remove that key and lower the
+    // janitor's image cap (lib/utils/isr-cache-janitor.ts) to compensate.
+    // Check bun.lock, NOT node_modules — they had drifted, which is exactly
+    // what made that breakage possible.
     formats: ['image/webp'],
     // Dropped 750/1200/2048 — each was within ~15% of a neighbour, so it
     // added cache entries without adding perceptible sharpness.
@@ -83,8 +73,9 @@ const nextConfig: NextConfig = {
     // Dropped 16/32/48 — the smallest fixed `sizes` in the app is 64px.
     imageSizes: [64, 96, 128, 256, 384],
     // 30 days: the source images are immutable WordPress uploads, so a longer
-    // TTL cuts needless re-encode churn. This bounds staleness, NOT disk use —
-    // the janitor is what bounds disk.
+    // TTL cuts needless re-encode churn. This bounds staleness, NOT disk use:
+    // an expired entry is only replaced when it is next REQUESTED, so one
+    // nobody asks for again just sits there. The size cap is what evicts.
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
 
 
@@ -93,6 +84,19 @@ const nextConfig: NextConfig = {
     // 90 was allowed here. Keep this list short — every distinct quality is
     // another axis in the cache key.
     qualities: [75, 90],
+
+    // Hard ceiling on .next/cache/images (Next 16.2+). Its LRU evicts by
+    // removing the whole per-cache-key DIRECTORY (fs.rm recursive, see
+    // deleteFromCacheDir), so unlike a files-only sweep it leaves no empty-dir
+    // skeleton — that skeleton previously reached ~940K directories and made
+    // the janitor's hourly walk take 13 minutes.
+    //
+    // Setting this explicitly is NOT optional on a shared host: left unset,
+    // Next sizes the LRU to 50% of FREE DISK at container start — half of
+    // space we do not own. A full crawl projects to ~2.1GB and steady state
+    // measured ~0.12GB, so 3GB is comfortable headroom.
+    maximumDiskCacheSize: 3 * 1024 * 1024 * 1024, // 3GB
+
     remotePatterns: [
       {
         protocol: 'https',
