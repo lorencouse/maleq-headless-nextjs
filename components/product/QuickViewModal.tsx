@@ -187,9 +187,9 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                         <Image
                           src={img.url}
                           alt={img.altText || `${product.name} - ${index + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
+                          width={64}
+                          height={64}
+                          className="absolute inset-0 h-full w-full object-cover"
                         />
                       )}
                     </button>

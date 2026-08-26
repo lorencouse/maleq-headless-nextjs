@@ -75,9 +75,9 @@ export default function NotFoundSuggestions() {
                   <Image
                     src={s.image}
                     alt={s.name}
-                    fill
-                    className="object-contain"
-                    sizes="80px"
+                    width={80}
+                    height={80}
+                    className="absolute inset-0 h-full w-full object-contain"
                   />
                 </div>
               ) : (

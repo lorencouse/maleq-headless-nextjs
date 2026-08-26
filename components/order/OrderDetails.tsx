@@ -34,9 +34,9 @@ export default async function OrderDetails({ order }: OrderDetailsProps) {
                   <Image
                     src={item.image.src}
                     alt={item.name}
-                    fill
-                    sizes="64px"
-                    className="object-cover"
+                    width={64}
+                    height={64}
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-muted-foreground">

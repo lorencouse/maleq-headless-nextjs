@@ -68,9 +68,9 @@ export default function OrderSummary() {
                   <Image
                     src={item.image.url}
                     alt={item.image.altText || item.name}
-                    fill
-                    sizes='64px'
-                    className='object-cover'
+                    width={64}
+                    height={64}
+                    className='absolute inset-0 h-full w-full object-cover'
                   />
                 ) : (
                   <div className='w-full h-full flex items-center justify-center text-muted-foreground'>

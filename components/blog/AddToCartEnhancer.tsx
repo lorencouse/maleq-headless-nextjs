@@ -148,10 +148,10 @@ function BlogAddToCart({ product }: { product: BlogProduct }) {
               <Image
                 src={product.image.url}
                 alt={product.image.altText}
-                fill
-                className="object-cover"
+                width={325}
+                height={325}
+                className="absolute inset-0 h-full w-full object-cover"
                 style={{ borderRadius: '0.75rem 0.75rem 0 0' }}
-                sizes="325px"
               />
             </div>
           </Link>

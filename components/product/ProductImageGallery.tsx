@@ -289,9 +289,9 @@ export default function ProductImageGallery({
                     src={image.url}
                     alt={image.altText}
                     title={image.title}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
+                    width={80}
+                    height={80}
+                    className="absolute inset-0 h-full w-full object-cover"
                     onError={() => handleImageError(image.url)}
                   />
                 )}

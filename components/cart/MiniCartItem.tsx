@@ -56,9 +56,9 @@ export default function MiniCartItem({ item }: MiniCartItemProps) {
           <Image
             src={getImageUrl(item.image.url)}
             alt={item.image.altText || item.name}
-            fill
-            className="object-cover"
-            sizes="64px"
+            width={64}
+            height={64}
+            className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">

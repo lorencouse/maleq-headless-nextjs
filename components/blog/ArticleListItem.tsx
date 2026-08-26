@@ -33,9 +33,9 @@ export default function ArticleListItem({ post, showImage = true }: ArticleListI
             <Image
               src={getProductionImageUrl(post.featuredImage.node.sourceUrl)}
               alt={post.featuredImage.node.altText || post.title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="144px"
+              width={144}
+              height={81}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full bg-muted" />

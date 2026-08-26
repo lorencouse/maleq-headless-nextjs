@@ -37,13 +37,54 @@ const nextConfig: NextConfig = {
   staticPageGenerationTimeout: 120,
 
   images: {
-    // Enable image optimization
-    formats: ['image/avif', 'image/webp'],
-    // Set device sizes for responsive images
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Minimize image quality for smaller file sizes (adjust as needed)
-    minimumCacheTTL: 60 * 60 * 24 * 7, // 7 days
+    // --- On-disk variant budget -------------------------------------------
+    // The optimizer writes ONE file per (src, width, quality, format) tuple
+    // into .next/cache/images. Pointed at a ~35K product catalog, every extra
+    // width/format multiplies the file count. In 2026-08 this reached 980K
+    // files / 15GB and filled the shared Coolify host.
+    // Keep this list to widths the layout actually requests — see the `sizes`
+    // prop on ProductCard/CategoryCard before adding any back.
+    //
+    // NOTE on `sizes`: getWidths() (next/dist/shared/lib/get-img-props.js)
+    // returns the ENTIRE allSizes list when `sizes` contains no `vw` unit. So
+    // a fixed-px `sizes` on a `fill` image (sizes="80px") is the WORST case —
+    // it cached a 1920px file for an 80px thumbnail. Fixed-size thumbnails
+    // must use width/height and NO `sizes`, which takes the 2-variant
+    // (1x/2x) path instead. Only use `sizes` when the box is truly fluid,
+    // and then always with a vw unit.
+    //
+    // webp only (was ['image/avif','image/webp']): two formats doubles the
+    // cache for one image, and avif encoding is by far the heaviest CPU cost
+    // on an 8GB/no-swap host. webp is universally supported; the byte
+    // difference vs avif is small next to the disk + CPU it costs us.
+    formats: ['image/webp'],
+    // Dropped 750/1200/2048 — each was within ~15% of a neighbour, so it
+    // added cache entries without adding perceptible sharpness.
+    deviceSizes: [640, 828, 1080, 1920],
+    // Dropped 16/32/48 — the smallest fixed `sizes` in the app is 64px.
+    imageSizes: [64, 96, 128, 256, 384],
+    // 30 days: the source images are immutable WordPress uploads, so a longer
+    // TTL cuts needless re-encode churn. This bounds staleness, not disk use —
+    // maximumDiskCacheSize below is what actually bounds disk.
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
+
+    // --- THE important one ----------------------------------------------
+    // Next 16 DOES evict the image cache (LRU), but when this is unset it
+    // sizes the LRU to 50% of free disk AT CONTAINER START (see
+    // next/dist/server/lib/disk-lru-cache.external.js). Our Coolify host is
+    // shared with the kouzr stack, so "50% of free" is 50% of space we do not
+    // own — the cache grew to 15GB / 980K files and filled the host in 3 days.
+    // Pin it to a budget that is ours. With the variant count now ~7x smaller
+    // (see the sizes audit below), a full crawl of the catalog projects to
+    // ~2.1GB, so 3GB leaves headroom and the LRU should sit idle in steady
+    // state rather than thrashing at the boundary and re-encoding constantly.
+    maximumDiskCacheSize: 3 * 1024 * 1024 * 1024, // 3GB
+
+    // Next 16 defaults this to [75] and REJECTS any other q with a 400. The
+    // PDP zoom view requests quality={90}, so it was failing to load until
+    // 90 was allowed here. Keep this list short — every distinct quality is
+    // another axis in the cache key.
+    qualities: [75, 90],
     remotePatterns: [
       {
         protocol: 'https',
