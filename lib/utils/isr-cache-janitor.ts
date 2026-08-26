@@ -22,7 +22,7 @@
  *
  * Started from instrumentation.ts. Disable with ISR_JANITOR=false.
  */
-import { readdir, stat, unlink } from 'node:fs/promises';
+import { readdir, rmdir, stat, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -63,10 +63,14 @@ interface CacheFile {
 async function collectCacheFiles(
   root: string,
   files: CacheFile[],
-  extensions: readonly string[] | null
+  extensions: readonly string[] | null,
+  dirs?: string[]
 ): Promise<void> {
   const entries = await readdir(root, { withFileTypes: true, recursive: true });
   for (const entry of entries) {
+    // Collected in the SAME walk — a second traversal to find empty dirs would
+    // cost as much as the prune itself. See pruneEmptyDirs below.
+    if (dirs && entry.isDirectory()) dirs.push(path.join(entry.parentPath, entry.name));
     if (!entry.isFile()) continue;
     if (extensions && !extensions.some((ext) => entry.name.endsWith(ext))) continue;
     const filePath = path.join(entry.parentPath, entry.name);
@@ -79,11 +83,43 @@ async function collectCacheFiles(
   }
 }
 
+/**
+ * Remove directories left empty by the file prune, deepest-first.
+ *
+ * next/image writes ONE DIRECTORY PER CACHE KEY, so a cache that held ~1M
+ * variants also holds ~1M directories. Deleting only files leaves that whole
+ * skeleton behind, and since readdir({recursive:true}) has to enumerate every
+ * directory, each subsequent pass gets slower forever — the walk cost stops
+ * tracking how much is actually cached. (Observed 2026-08-25: 9,445 files left
+ * in the cache, but a plain `find -type d` over it did not finish in 120s.)
+ *
+ * rmdir on a non-empty directory fails harmlessly, which is exactly the test we
+ * want — no need to check emptiness first. Errors are ignored: a directory a
+ * concurrent request just wrote into SHOULD survive.
+ */
+async function pruneEmptyDirs(dirs: readonly string[]): Promise<number> {
+  // Deepest first, so a parent becomes empty before we try it.
+  const bydepth = [...dirs].sort(
+    (a, b) => b.split(path.sep).length - a.split(path.sep).length
+  );
+  let removed = 0;
+  for (const dir of bydepth) {
+    try {
+      await rmdir(dir);
+      removed++;
+    } catch {
+      // not empty, already gone, or racing a write — all fine
+    }
+  }
+  return removed;
+}
+
 interface PruneResult {
   scanned: number;
   deleted: number;
   freedBytes: number;
   remainingBytes: number;
+  dirsRemoved: number;
 }
 
 /**
@@ -95,13 +131,15 @@ async function pruneTree(
   dirs: readonly string[],
   extensions: readonly string[] | null,
   maxBytes: number,
-  maxAgeDays: number
+  maxAgeDays: number,
+  reapEmptyDirs = false
 ): Promise<PruneResult> {
   const now = Date.now();
   const files: CacheFile[] = [];
+  const seenDirs: string[] | undefined = reapEmptyDirs ? [] : undefined;
   for (const dir of dirs) {
     const root = path.resolve(baseDir, dir);
-    if (existsSync(root)) await collectCacheFiles(root, files, extensions);
+    if (existsSync(root)) await collectCacheFiles(root, files, extensions, seenDirs);
   }
 
   // Oldest first, so both the age pass and the size trim walk the same order.
@@ -126,7 +164,15 @@ async function pruneTree(
     }
   }
 
-  return { scanned: files.length, deleted, freedBytes, remainingBytes: totalBytes - freedBytes };
+  const dirsRemoved = seenDirs ? await pruneEmptyDirs(seenDirs) : 0;
+
+  return {
+    scanned: files.length,
+    deleted,
+    freedBytes,
+    remainingBytes: totalBytes - freedBytes,
+    dirsRemoved,
+  };
 }
 
 /** One ISR prune pass. Exported for tests and manual runs. */
@@ -136,7 +182,10 @@ export async function pruneIsrCache(baseDir = process.cwd()): Promise<PruneResul
 
 /** One next/image variant-cache prune pass. Exported for tests and manual runs. */
 export async function pruneImageCache(baseDir = process.cwd()): Promise<PruneResult> {
-  return pruneTree(baseDir, IMAGE_CACHE_DIRS, null, IMAGE_MAX_BYTES, IMAGE_MAX_AGE_DAYS);
+  // reapEmptyDirs: only here. The ISR cache's directories mirror route paths
+  // that Next expects to exist; the image cache's are disposable cache-key
+  // hashes, one per variant.
+  return pruneTree(baseDir, IMAGE_CACHE_DIRS, null, IMAGE_MAX_BYTES, IMAGE_MAX_AGE_DAYS, true);
 }
 
 /** Start the recurring janitor: first pass shortly after boot, then hourly. */
@@ -149,7 +198,8 @@ export function startIsrCacheJanitor(): void {
   const summarise = (label: string, r: PruneResult, ms: number) =>
     `[isr-janitor] ${label}: scanned ${r.scanned} files, deleted ${r.deleted} ` +
     `(freed ${(r.freedBytes / 1024 ** 3).toFixed(2)}GB, ` +
-    `${(r.remainingBytes / 1024 ** 3).toFixed(2)}GB remain, ${ms}ms)`;
+    `${(r.remainingBytes / 1024 ** 3).toFixed(2)}GB remain` +
+    `${r.dirsRemoved ? `, reaped ${r.dirsRemoved} empty dirs` : ''}, ${ms}ms)`;
 
   const run = async () => {
     // The two passes are independent and each is wrapped separately: the image
