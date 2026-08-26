@@ -24,12 +24,17 @@ const nextConfig: NextConfig = {
   // Optimize package imports
   experimental: {
     optimizePackageImports: ['graphql-request', 'zustand', 'react-hot-toast'],
-    // Cap static-generation workers. The build host is 8GB with NO swap, and
-    // each worker that renders an index-backed page (sitemap segments, home,
-    // shop) loads the full ~35K-product in-memory index (100MB+). With the
-    // default worker count (= CPU count, 9 on the Coolify host) the parallel
-    // index copies OOM-kill the build. 2 workers keeps peak memory safe; build
-    // time is unchanged because the index load dominates, not parallelism.
+    // Cap static-generation workers. Each worker that renders an index-backed
+    // page (sitemap segments, home, shop) loads the full ~35K-product
+    // in-memory index (100MB+). With the default worker count (= CPU count, 9
+    // on the Coolify host) the parallel index copies exhaust memory and the
+    // build dies. 2 workers keeps peak memory safe; build time is unchanged
+    // because the index load dominates, not parallelism.
+    //
+    // (This comment used to say the host has NO swap. Verified 2026-08-25:
+    // it has an 8GB /swapfile with ~6.9GB free and dmesg shows zero OOM kills.
+    // The cap is still right — swapping nine 100MB+ index copies would thrash
+    // rather than fail — but don't reason about this host as swapless.)
     cpus: 2,
   },
 
@@ -68,9 +73,9 @@ const nextConfig: NextConfig = {
     // and then always with a vw unit.
     //
     // webp only (was ['image/avif','image/webp']): two formats doubles the
-    // cache for one image, and avif encoding is by far the heaviest CPU cost
-    // on an 8GB/no-swap host. webp is universally supported; the byte
-    // difference vs avif is small next to the disk + CPU it costs us.
+    // cache for one image, and avif is much the slower encode. webp is
+    // universally supported; the byte difference vs avif is small next to the
+    // disk it costs us.
     formats: ['image/webp'],
     // Dropped 750/1200/2048 — each was within ~15% of a neighbour, so it
     // added cache entries without adding perceptible sharpness.
