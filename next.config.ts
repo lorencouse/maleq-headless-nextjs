@@ -39,9 +39,23 @@ const nextConfig: NextConfig = {
   images: {
     // --- On-disk variant budget -------------------------------------------
     // The optimizer writes ONE file per (src, width, quality, format) tuple
-    // into .next/cache/images. Pointed at a ~35K product catalog, every extra
-    // width/format multiplies the file count. In 2026-08 this reached 980K
-    // files / 15GB and filled the shared Coolify host.
+    // into .next/cache/images. On the Next version we ship (16.1.6, see
+    // bun.lock) that cache has NO size cap and NO eviction of any kind, so it
+    // grows without bound. Pointed at a ~35K product catalog it reached 980K
+    // files / 15GB and filled the shared Coolify host in 2026-08.
+    //
+    // Two halves to the fix. This file shrinks how many variants each source
+    // image can produce (~7x). The hard ceiling is enforced separately by
+    // lib/utils/isr-cache-janitor.ts, which now prunes this directory too —
+    // Next itself will not do it for us on 16.1.6.
+    //
+    // (Next 16.2+ adds images.maximumDiskCacheSize and a real disk LRU. Do NOT
+    // add that key here while bun.lock pins 16.1.6: it is rejected as an
+    // unrecognized key and hard-fails `next build`. When this project moves to
+    // 16.2+, set it and the janitor's image pass becomes redundant. Note the
+    // 16.2 default is worse than it sounds — unset, it sizes the LRU to 50% of
+    // FREE DISK at container start, which on a shared host is 50% of space we
+    // do not own.)
     // Keep this list to widths the layout actually requests — see the `sizes`
     // prop on ProductCard/CategoryCard before adding any back.
     //
@@ -64,23 +78,12 @@ const nextConfig: NextConfig = {
     // Dropped 16/32/48 — the smallest fixed `sizes` in the app is 64px.
     imageSizes: [64, 96, 128, 256, 384],
     // 30 days: the source images are immutable WordPress uploads, so a longer
-    // TTL cuts needless re-encode churn. This bounds staleness, not disk use —
-    // maximumDiskCacheSize below is what actually bounds disk.
+    // TTL cuts needless re-encode churn. This bounds staleness, NOT disk use —
+    // the janitor is what bounds disk.
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
 
-    // --- THE important one ----------------------------------------------
-    // Next 16 DOES evict the image cache (LRU), but when this is unset it
-    // sizes the LRU to 50% of free disk AT CONTAINER START (see
-    // next/dist/server/lib/disk-lru-cache.external.js). Our Coolify host is
-    // shared with the kouzr stack, so "50% of free" is 50% of space we do not
-    // own — the cache grew to 15GB / 980K files and filled the host in 3 days.
-    // Pin it to a budget that is ours. With the variant count now ~7x smaller
-    // (see the sizes audit below), a full crawl of the catalog projects to
-    // ~2.1GB, so 3GB leaves headroom and the LRU should sit idle in steady
-    // state rather than thrashing at the boundary and re-encoding constantly.
-    maximumDiskCacheSize: 3 * 1024 * 1024 * 1024, // 3GB
 
-    // Next 16 defaults this to [75] and REJECTS any other q with a 400. The
+    // Next 16.1.6 defaults this to [75] and REJECTS any other q with a 400. The
     // PDP zoom view requests quality={90}, so it was failing to load until
     // 90 was allowed here. Keep this list short — every distinct quality is
     // another axis in the cache key.
