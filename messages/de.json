@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "Fußzeile der Website",
-    "tagline": "Ihr vertrauenswürdiger Onlineshop für hochwertige Produkte und spannende Inhalte.",
+    "tagline": "Male Q ist ein Online-Händler für Erwachsenenprodukte, Artikel zur sexuellen Wellness und zugehöriges Zubehör, diskret versandt innerhalb der USA.",
     "quickLinks": "Schnellzugriff",
     "shop": "Shop",
     "guides": "Ratgeber",
@@ -34,12 +34,19 @@
     "contact": "Kontakt",
     "customerService": "Kundenservice",
     "orderTracking": "Sendungsverfolgung",
-    "returns": "Rücksendungen",
+    "returns": "Versand & Rückgabe",
     "faq": "FAQ",
     "privacyPolicy": "Datenschutzerklärung",
     "newsletterTitle": "Newsletter",
     "newsletterDescription": "Abonnieren Sie unseren Newsletter für Updates zu neuen Produkten und Blogbeiträgen.",
-    "copyright": "© {year} Male Q. Alle Rechte vorbehalten."
+    "copyright": "© {year} THE MALEQ LLC, geschäftlich tätig als Male Q. Alle Rechte vorbehalten.",
+    "terms": "Nutzungsbedingungen",
+    "ageNotice": "Nur für Personen ab 18 Jahren. Diese Website verkauft Produkte für Erwachsene. Sie müssen mindestens 18 Jahre alt sein, um zu surfen oder zu kaufen.",
+    "contactHeading": "Kontakt",
+    "legalName": "THE MALEQ LLC",
+    "businessAddress": "295 Wadleigh Falls Rd, Lee, NH 03861, United States",
+    "supportPhone": "+1 (978) 572-0012",
+    "supportEmail": "sales@maleq.com"
   },
   "mobileMenu": {
     "menu": "Menü",
@@ -1206,7 +1213,9 @@
       "errorProcessing": "Zahlungsabwicklung fehlgeschlagen",
       "processing": "Wird verarbeitet...",
       "completeOrder": "Bestellung abschließen",
-      "sslNotice": "Ihre Zahlung ist mit 256-Bit-SSL-Verschlüsselung gesichert"
+      "sslNotice": "Ihre Zahlung ist mit 256-Bit-SSL-Verschlüsselung gesichert",
+      "ageConfirm": "Ich bestätige, dass ich mindestens 18 Jahre alt und in meinem Rechtsgebiet zum Kauf von Produkten für Erwachsene berechtigt bin.",
+      "ageRequired": "Bitte bestätigen Sie, dass Sie mindestens 18 Jahre alt sind, um fortzufahren."
     },
     "express": {
       "heading": "Express-Kasse",

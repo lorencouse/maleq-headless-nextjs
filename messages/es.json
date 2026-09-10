@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "Pie del sitio",
-    "tagline": "Tu tienda online de confianza con productos de calidad y contenido valioso.",
+    "tagline": "Male Q es una tienda en línea de productos para adultos, artículos de bienestar sexual y accesorios relacionados, enviados de forma discreta dentro de Estados Unidos.",
     "quickLinks": "Enlaces rápidos",
     "shop": "Tienda",
     "guides": "Guías",
@@ -34,12 +34,19 @@
     "contact": "Contacto",
     "customerService": "Atención al cliente",
     "orderTracking": "Seguimiento de pedido",
-    "returns": "Devoluciones",
+    "returns": "Envíos y devoluciones",
     "faq": "Preguntas frecuentes",
     "privacyPolicy": "Política de privacidad",
     "newsletterTitle": "Boletín",
     "newsletterDescription": "Suscríbete para recibir novedades sobre productos y artículos.",
-    "copyright": "© {year} Male Q. Todos los derechos reservados."
+    "copyright": "© {year} THE MALEQ LLC, operando como Male Q. Todos los derechos reservados.",
+    "terms": "Términos del servicio",
+    "ageNotice": "Solo mayores de 18 años. Este sitio vende productos para adultos. Debes tener al menos 18 años para navegar o comprar.",
+    "contactHeading": "Contacto",
+    "legalName": "THE MALEQ LLC",
+    "businessAddress": "295 Wadleigh Falls Rd, Lee, NH 03861, United States",
+    "supportPhone": "+1 (978) 572-0012",
+    "supportEmail": "sales@maleq.com"
   },
   "mobileMenu": {
     "menu": "Menú",
@@ -1206,7 +1213,9 @@
       "errorProcessing": "Falló el procesamiento del pago",
       "processing": "Procesando...",
       "completeOrder": "Completar pedido",
-      "sslNotice": "Tu pago está protegido con cifrado SSL de 256 bits"
+      "sslNotice": "Tu pago está protegido con cifrado SSL de 256 bits",
+      "ageConfirm": "Confirmo que tengo al menos 18 años y que puedo comprar legalmente productos para adultos en mi jurisdicción.",
+      "ageRequired": "Por favor, confirma que tienes al menos 18 años para continuar."
     },
     "express": {
       "heading": "Pago exprés",

@@ -26,6 +26,26 @@ export default function Footer() {
             <p className='text-sm'>
               {t('tagline')}
             </p>
+            <address className='mt-4 not-italic text-sm space-y-1'>
+              <p className='text-foreground font-medium'>{t('legalName')}</p>
+              <p>{t('businessAddress')}</p>
+              <p>
+                <a
+                  href={`tel:${t('supportPhone').replace(/[^+\d]/g, '')}`}
+                  className='hover:text-primary transition-colors'
+                >
+                  {t('supportPhone')}
+                </a>
+              </p>
+              <p>
+                <a
+                  href={`mailto:${t('supportEmail')}`}
+                  className='hover:text-primary transition-colors'
+                >
+                  {t('supportEmail')}
+                </a>
+              </p>
+            </address>
           </div>
 
           {/* Quick Links */}
@@ -107,6 +127,14 @@ export default function Footer() {
                   {t('privacyPolicy')}
                 </Link>
               </li>
+              <li>
+                <Link
+                  href='/terms'
+                  className='inline-block py-2 text-sm hover:text-primary transition-colors'
+                >
+                  {t('terms')}
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -123,8 +151,15 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Age restriction — adults-only retail, stated where every page shows it */}
+        <div className='border-t border-border mt-8 pt-6'>
+          <p className='text-sm text-center text-foreground font-medium'>
+            {t('ageNotice')}
+          </p>
+        </div>
+
         {/* Bottom Bar */}
-        <div className='flex justify-center items-center gap-3 border-t border-border mt-8 pt-8 text-sm text-center'>
+        <div className='flex justify-center items-center gap-3 mt-6 pt-6 border-t border-border text-sm text-center'>
           <Image
             src='/images/MQ-logo.png'
             alt='Male Q'

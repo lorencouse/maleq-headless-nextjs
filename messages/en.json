@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "Site footer",
-    "tagline": "Your trusted online store for quality products and engaging content.",
+    "tagline": "Male Q is an online retailer of adult products, sexual wellness items and related accessories, shipped discreetly within the United States.",
     "quickLinks": "Quick Links",
     "shop": "Shop",
     "guides": "Guides",
@@ -34,12 +34,19 @@
     "contact": "Contact",
     "customerService": "Customer Service",
     "orderTracking": "Order Tracking",
-    "returns": "Returns",
+    "returns": "Shipping & Returns",
     "faq": "FAQ",
     "privacyPolicy": "Privacy Policy",
     "newsletterTitle": "Newsletter",
     "newsletterDescription": "Subscribe to get updates on new products and blog posts.",
-    "copyright": "© {year} Male Q. All rights reserved."
+    "copyright": "© {year} THE MALEQ LLC, doing business as Male Q. All rights reserved.",
+    "terms": "Terms of Service",
+    "ageNotice": "18+ Adults only. This site sells adult products. You must be at least 18 years old to browse or purchase.",
+    "legalName": "THE MALEQ LLC",
+    "businessAddress": "295 Wadleigh Falls Rd, Lee, NH 03861, United States",
+    "supportPhone": "+1 (978) 572-0012",
+    "supportEmail": "sales@maleq.com",
+    "contactHeading": "Contact"
   },
   "mobileMenu": {
     "menu": "Menu",
@@ -1174,7 +1181,9 @@
       "errorProcessing": "Payment processing failed",
       "processing": "Processing...",
       "completeOrder": "Complete Order",
-      "sslNotice": "Your payment is secured with 256-bit SSL encryption"
+      "sslNotice": "Your payment is secured with 256-bit SSL encryption",
+      "ageConfirm": "I confirm that I am at least 18 years old and am legally permitted to purchase adult products in my jurisdiction.",
+      "ageRequired": "Please confirm you are at least 18 years old to continue."
     },
     "express": {
       "heading": "Express Checkout",

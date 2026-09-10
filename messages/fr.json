@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "Pied de page du site",
-    "tagline": "Votre boutique en ligne de confiance pour des produits de qualité et des contenus captivants.",
+    "tagline": "Male Q est un détaillant en ligne de produits pour adultes, d'articles de bien-être sexuel et d'accessoires connexes, expédiés discrètement aux États-Unis.",
     "quickLinks": "Liens rapides",
     "shop": "Boutique",
     "guides": "Guides",
@@ -34,12 +34,19 @@
     "contact": "Contact",
     "customerService": "Service client",
     "orderTracking": "Suivi de commande",
-    "returns": "Retours",
+    "returns": "Livraison et retours",
     "faq": "FAQ",
     "privacyPolicy": "Politique de confidentialité",
     "newsletterTitle": "Newsletter",
     "newsletterDescription": "Abonnez-vous pour recevoir les actualités sur les nouveaux produits et les articles de blog.",
-    "copyright": "© {year} Male Q. Tous droits réservés."
+    "copyright": "© {year} THE MALEQ LLC, exerçant sous le nom de Male Q. Tous droits réservés.",
+    "terms": "Conditions d'utilisation",
+    "ageNotice": "Réservé aux 18 ans et plus. Ce site vend des produits pour adultes. Vous devez avoir au moins 18 ans pour naviguer ou acheter.",
+    "contactHeading": "Contact",
+    "legalName": "THE MALEQ LLC",
+    "businessAddress": "295 Wadleigh Falls Rd, Lee, NH 03861, United States",
+    "supportPhone": "+1 (978) 572-0012",
+    "supportEmail": "sales@maleq.com"
   },
   "mobileMenu": {
     "menu": "Menu",
@@ -1206,7 +1213,9 @@
       "errorProcessing": "Échec du traitement du paiement",
       "processing": "Traitement en cours...",
       "completeOrder": "Finaliser la commande",
-      "sslNotice": "Votre paiement est sécurisé par un chiffrement SSL 256 bits"
+      "sslNotice": "Votre paiement est sécurisé par un chiffrement SSL 256 bits",
+      "ageConfirm": "Je confirme avoir au moins 18 ans et être légalement autorisé à acheter des produits pour adultes dans ma juridiction.",
+      "ageRequired": "Veuillez confirmer que vous avez au moins 18 ans pour continuer."
     },
     "express": {
       "heading": "Paiement express",

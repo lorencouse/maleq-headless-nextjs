@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "網站頁尾",
-    "tagline": "您值得信賴的線上商店，提供優質商品與精彩內容。",
+    "tagline": "Male Q 是一家線上零售商，銷售成人用品、性健康產品及相關配件，在美國境內以不透露內容的包裝配送。",
     "quickLinks": "快速連結",
     "shop": "購物",
     "guides": "指南",
@@ -34,12 +34,19 @@
     "contact": "聯絡我們",
     "customerService": "客戶服務",
     "orderTracking": "訂單追蹤",
-    "returns": "退貨",
+    "returns": "配送與退貨",
     "faq": "常見問題",
     "privacyPolicy": "隱私權政策",
     "newsletterTitle": "電子報",
     "newsletterDescription": "訂閱以獲取新商品與部落格文章的最新消息。",
-    "copyright": "© {year} Male Q。版權所有，保留一切權利。"
+    "copyright": "© {year} THE MALEQ LLC，商號 Male Q。保留所有權利。",
+    "terms": "服務條款",
+    "ageNotice": "僅限18歲以上。本網站銷售成人用品。您必須年滿18歲才能瀏覽或購買。",
+    "contactHeading": "聯絡我們",
+    "legalName": "THE MALEQ LLC",
+    "businessAddress": "295 Wadleigh Falls Rd, Lee, NH 03861, United States",
+    "supportPhone": "+1 (978) 572-0012",
+    "supportEmail": "sales@maleq.com"
   },
   "mobileMenu": {
     "menu": "選單",
@@ -1206,7 +1213,9 @@
       "errorProcessing": "付款處理失敗",
       "processing": "處理中…",
       "completeOrder": "完成訂單",
-      "sslNotice": "您的付款受到 256 位元 SSL 加密保護"
+      "sslNotice": "您的付款受到 256 位元 SSL 加密保護",
+      "ageConfirm": "我確認本人已年滿18歲，並且在所在司法管轄區內可合法購買成人用品。",
+      "ageRequired": "請確認您已年滿18歲以繼續。"
     },
     "express": {
       "heading": "快速結帳",

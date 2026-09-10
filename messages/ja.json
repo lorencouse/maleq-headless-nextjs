@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "サイトフッター",
-    "tagline": "高品質な商品と充実したコンテンツをお届けする、信頼のオンラインストア。",
+    "tagline": "Male Q は、アダルト製品、セクシュアルウェルネス用品および関連アクセサリーを取り扱うオンライン小売店です。米国内へ中身のわからない梱包で発送します。",
     "quickLinks": "クイックリンク",
     "shop": "ショップ",
     "guides": "ガイド",
@@ -34,12 +34,19 @@
     "contact": "お問い合わせ",
     "customerService": "カスタマーサービス",
     "orderTracking": "注文追跡",
-    "returns": "返品",
+    "returns": "配送と返品",
     "faq": "よくある質問",
     "privacyPolicy": "プライバシーポリシー",
     "newsletterTitle": "ニュースレター",
     "newsletterDescription": "新商品やブログ記事の最新情報を受け取るには、ご登録ください。",
-    "copyright": "© {year} Male Q. All rights reserved."
+    "copyright": "© {year} THE MALEQ LLC（屋号 Male Q）All rights reserved.",
+    "terms": "利用規約",
+    "ageNotice": "18歳以上限定。当サイトはアダルト製品を販売しています。閲覧および購入には18歳以上である必要があります。",
+    "contactHeading": "お問い合わせ",
+    "legalName": "THE MALEQ LLC",
+    "businessAddress": "295 Wadleigh Falls Rd, Lee, NH 03861, United States",
+    "supportPhone": "+1 (978) 572-0012",
+    "supportEmail": "sales@maleq.com"
   },
   "mobileMenu": {
     "menu": "メニュー",
@@ -1206,7 +1213,9 @@
       "errorProcessing": "お支払い処理に失敗しました",
       "processing": "処理中...",
       "completeOrder": "注文を完了",
-      "sslNotice": "お支払いは256ビット SSL 暗号化で保護されています"
+      "sslNotice": "お支払いは256ビット SSL 暗号化で保護されています",
+      "ageConfirm": "私は18歳以上であり、居住地域においてアダルト製品を購入することが法的に認められていることを確認します。",
+      "ageRequired": "続行するには、18歳以上であることをご確認ください。"
     },
     "express": {
       "heading": "エクスプレス決済",
