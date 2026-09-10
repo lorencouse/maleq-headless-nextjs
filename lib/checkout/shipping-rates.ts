@@ -81,7 +81,10 @@ export const SHIPPING_COUNTRY_OPTIONS = [
   { code: 'AS', name: 'American Samoa' },
   { code: 'UM', name: 'United States Minor Outlying Islands' },
   { code: 'CA', name: 'Canada' },
-  { code: 'MX', name: 'Mexico' },
+  // Stripe's Restricted Businesses list prohibits sex accessories and sex toys in
+  // Brazil, India, Mexico, Malaysia, Singapore, the UAE and Thailand. None of them
+  // may be added here: this list is the server-side allowlist enforced by
+  // assertSupported/server-pricing, so adding one makes those markets sellable.
   // British Isles
   { code: 'GB', name: 'United Kingdom' },
   { code: 'IE', name: 'Ireland' },
@@ -131,10 +134,44 @@ export const SHIPPING_COUNTRY_OPTIONS = [
   { code: 'IL', name: 'Israel' },
 ] as const;
 
+/**
+ * Markets where Stripe's Restricted Businesses list prohibits sex accessories and
+ * sex toys. We do not ship to them, and we tell Stripe so in writing — so this is
+ * enforced in two places rather than trusted to the allowlist staying correct.
+ */
+export const STRIPE_RESTRICTED_MARKETS: readonly string[] = [
+  'BR', // Brazil
+  'IN', // India
+  'MX', // Mexico
+  'MY', // Malaysia
+  'SG', // Singapore
+  'AE', // United Arab Emirates
+  'TH', // Thailand
+];
+
+const STRIPE_RESTRICTED_MARKET_SET = new Set<string>(STRIPE_RESTRICTED_MARKETS);
+
 export const SUPPORTED_SHIPPING_COUNTRIES = SHIPPING_COUNTRY_OPTIONS.map(
   (country) => country.code
-);
+).filter((code) => !STRIPE_RESTRICTED_MARKET_SET.has(code));
 const SUPPORTED_SHIPPING_COUNTRY_SET = new Set<string>(SUPPORTED_SHIPPING_COUNTRIES);
+
+// Fail the build rather than quietly start selling into a prohibited market if
+// someone ever adds one of these back to SHIPPING_COUNTRY_OPTIONS.
+const leaked = SHIPPING_COUNTRY_OPTIONS.map((c) => c.code).filter((code) =>
+  STRIPE_RESTRICTED_MARKET_SET.has(code)
+);
+if (leaked.length > 0) {
+  throw new Error(
+    `SHIPPING_COUNTRY_OPTIONS contains Stripe-restricted markets: ${leaked.join(', ')}. ` +
+      'Sex toys are prohibited there under Stripe\'s Restricted Businesses list and we ' +
+      'have represented to Stripe that we do not sell into them.'
+  );
+}
+
+export function isStripeRestrictedMarket(countryCode?: string): boolean {
+  return STRIPE_RESTRICTED_MARKET_SET.has(normalizeCountryCode(countryCode));
+}
 
 // US + US territories — all reachable via USPS at domestic rates.
 const DOMESTIC_SHIPPING_COUNTRY_SET = new Set<string>([
@@ -150,7 +187,9 @@ export function isDomesticShippingCountry(countryCode?: string): boolean {
 }
 
 export function isSupportedShippingCountry(countryCode?: string): boolean {
-  return SUPPORTED_SHIPPING_COUNTRY_SET.has(normalizeCountryCode(countryCode));
+  const code = normalizeCountryCode(countryCode);
+  if (STRIPE_RESTRICTED_MARKET_SET.has(code)) return false;
+  return SUPPORTED_SHIPPING_COUNTRY_SET.has(code);
 }
 
 export function getShippingRegion(countryCode?: string): ShippingRegion {
