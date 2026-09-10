@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "Fußzeile der Website",
-    "tagline": "Male Q ist ein Online-Händler für Erwachsenenprodukte, Artikel zur sexuellen Wellness und zugehöriges Zubehör, diskret versandt innerhalb der USA.",
+    "tagline": "Male Q ist ein Online-Händler für Erwachsenenprodukte, Artikel zur sexuellen Wellness und zugehöriges Zubehör, diskret aus den USA an Kundinnen und Kunden in Dutzenden Ländern versandt.",
     "quickLinks": "Schnellzugriff",
     "shop": "Shop",
     "guides": "Ratgeber",
@@ -532,7 +532,7 @@
     "customsTitle": "Internationaler Zoll",
     "customsBody": "Bei internationalen Sendungen und Zollerklärungen werden die Artikel als „Gesundheitsausrüstung“, „Kosmetik“ oder „Geschenk“ deklariert.",
     "billingTitle": "Abrechnung",
-    "billingBody": "Alle Käufe erscheinen als <strong>TMQ LLC</strong> auf Ihrer Debit- oder Kreditkartenabrechnung. Wir geben niemals Details zu Ihrem Kauf oder zur Art der Artikel preis.",
+    "billingBody": "Alle Käufe erscheinen als <strong>MALEQ.COM</strong> auf Ihrer Debit- oder Kreditkartenabrechnung. Wir geben niemals Details zu Ihrem Kauf oder zur Art der Artikel preis.",
     "returnsSectionTitle": "Stornierungen & Rücksendungen",
     "cancelTitle": "Bestellstornierungen",
     "cancelBody": "Um die Artikel so schnell wie möglich zu liefern, werden Bestellungen den ganzen Tag über bei Eingang bearbeitet. Wir können nur Bestellungen stornieren, die noch nicht versendet wurden. Bereits versendete Pakete können wir nicht zurückrufen. Bitte kontaktieren Sie uns so schnell wie möglich, wenn Sie eine Bestellung stornieren müssen.",
@@ -708,7 +708,7 @@
       "discreetQ": "Ist Ihr Versand diskret?",
       "discreetA": "Ihre Privatsphäre hat für uns höchste Priorität. Alle Artikel werden in neutraler, unmarkierter Verpackung ohne Hinweis auf den Inhalt versendet. Als Absender erscheint CNV oder TMQ. Bei internationalen Sendungen und beim Zoll werden die Artikel als „Gesundheitsausrüstung“, „Kosmetik“ oder „Geschenk“ deklariert.",
       "billingNameQ": "Welcher Name erscheint auf meiner Abrechnung?",
-      "billingNameA": "Alle Käufe erscheinen als „TMQ LLC“ auf Ihrer Debit- oder Kreditkartenabrechnung. Wir geben auf Ihrer Abrechnung niemals Details zu Ihrem Kauf oder zur Art der Artikel preis."
+      "billingNameA": "Alle Käufe erscheinen als „MALEQ.COM“ auf Ihrer Debit- oder Kreditkartenabrechnung. Wir geben auf Ihrer Abrechnung niemals Details zu Ihrem Kauf oder zur Art der Artikel preis."
     },
     "returns": {
       "title": "Stornierungen & Rücksendungen",
@@ -788,7 +788,7 @@
     "valueInclusivityTitle": "Inklusion",
     "valueInclusivityBody": "Produkte und Beratung für alle Geschlechter und sexuellen Identitäten. Sexuelle Gesundheit ist für alle da, und unser Katalog spiegelt dieses Engagement wider.",
     "valuePrivacyTitle": "Privatsphäre & Diskretion",
-    "valuePrivacyBody": "Neutrale, unmarkierte Verpackung bei jeder Bestellung. Diskrete Abrechnung als „TMQ LLC“. Ihre Privatsphäre wird niemals kompromittiert.",
+    "valuePrivacyBody": "Neutrale, unmarkierte Verpackung bei jeder Bestellung. Diskrete Abrechnung als „MALEQ.COM“. Ihre Privatsphäre wird niemals kompromittiert.",
     "whyTitle": "Warum Male Q wählen?",
     "yearsTitle": "Über 10 Jahre im Geschäft",
     "yearsBody": "Seit 2012 vertrauenswürdig, mit Tausenden zufriedener Kunden",
@@ -1830,7 +1830,7 @@
         },
         "billing-statement": {
           "label": "Welcher Name erscheint auf meiner Abrechnung?",
-          "answer": "Käufe erscheinen als **TMQ LLC** auf Ihrer Debit- oder Kreditkartenabrechnung. Wir geben auf der Abrechnung selbst niemals preis, was gekauft wurde."
+          "answer": "Käufe erscheinen als **MALEQ.COM** auf Ihrer Debit- oder Kreditkartenabrechnung. Wir geben auf der Abrechnung selbst niemals preis, was gekauft wurde."
         }
       },
       "returns": {

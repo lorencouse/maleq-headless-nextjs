@@ -26,7 +26,7 @@
   },
   "footer": {
     "siteFooter": "Pied de page du site",
-    "tagline": "Male Q est un détaillant en ligne de produits pour adultes, d'articles de bien-être sexuel et d'accessoires connexes, expédiés discrètement aux États-Unis.",
+    "tagline": "Male Q est un détaillant en ligne de produits pour adultes, d'articles de bien-être sexuel et d'accessoires connexes, expédiés discrètement depuis les États-Unis vers des clients dans des dizaines de pays.",
     "quickLinks": "Liens rapides",
     "shop": "Boutique",
     "guides": "Guides",
@@ -532,7 +532,7 @@
     "customsTitle": "Douanes internationales",
     "customsBody": "Pour les expéditions internationales et les déclarations en douane, les articles sont décrits comme « Équipement de santé », « Cosmétique » ou « Cadeau ».",
     "billingTitle": "Relevé de facturation",
-    "billingBody": "Tous les achats apparaissent sous la forme <strong>TMQ LLC</strong> sur votre relevé de carte de débit ou de crédit. Nous ne révélons jamais les détails de votre achat ni la nature des articles.",
+    "billingBody": "Tous les achats apparaissent sous la forme <strong>MALEQ.COM</strong> sur votre relevé de carte de débit ou de crédit. Nous ne révélons jamais les détails de votre achat ni la nature des articles.",
     "returnsSectionTitle": "Annulations et retours",
     "cancelTitle": "Annulations de commande",
     "cancelBody": "Afin de livrer les articles le plus rapidement possible, les commandes sont traitées tout au long de la journée au fur et à mesure de leur réception. Nous ne pouvons annuler que les commandes qui n'ont pas encore été expédiées. Nous ne pouvons pas rappeler les colis déjà envoyés. Veuillez nous contacter dès que possible si vous devez annuler une commande.",
@@ -708,7 +708,7 @@
       "discreetQ": "Votre livraison est-elle discrète ?",
       "discreetA": "Votre vie privée est notre priorité absolue. Tous les articles sont expédiés dans un emballage neutre et non marqué, sans aucune indication du contenu. Le nom de l'expéditeur apparaîtra sous la forme CNV ou TMQ. Pour les expéditions internationales et les douanes, les articles sont déclarés comme « Équipement de santé », « Cosmétique » ou « Cadeau ».",
       "billingNameQ": "Quel nom apparaît sur mon relevé de facturation ?",
-      "billingNameA": "Tous les achats apparaissent sous la forme « TMQ LLC » sur votre relevé de carte de débit ou de crédit. Nous ne révélons jamais les détails de votre achat ni la nature des articles sur votre relevé."
+      "billingNameA": "Tous les achats apparaissent sous la forme « MALEQ.COM » sur votre relevé de carte de débit ou de crédit. Nous ne révélons jamais les détails de votre achat ni la nature des articles sur votre relevé."
     },
     "returns": {
       "title": "Annulations et retours",
@@ -788,7 +788,7 @@
     "valueInclusivityTitle": "Inclusivité",
     "valueInclusivityBody": "Des produits et des conseils pour tous les genres et toutes les identités sexuelles. Le bien-être sexuel est pour tout le monde, et notre catalogue reflète cet engagement.",
     "valuePrivacyTitle": "Confidentialité et discrétion",
-    "valuePrivacyBody": "Un emballage neutre et non marqué pour chaque commande. Une facturation discrète sous le nom « TMQ LLC ». Votre vie privée n'est jamais compromise.",
+    "valuePrivacyBody": "Un emballage neutre et non marqué pour chaque commande. Une facturation discrète sous le nom « MALEQ.COM ». Votre vie privée n'est jamais compromise.",
     "whyTitle": "Pourquoi choisir Male Q ?",
     "yearsTitle": "Plus de 10 ans d'expérience",
     "yearsBody": "De confiance depuis 2012, avec des milliers de clients satisfaits",
@@ -1830,7 +1830,7 @@
         },
         "billing-statement": {
           "label": "Quel nom apparaît sur mon relevé ?",
-          "answer": "Les achats apparaissent comme **TMQ LLC** sur votre relevé de carte de débit ou de crédit. Nous ne révélons jamais ce qui a été acheté sur le relevé lui-même."
+          "answer": "Les achats apparaissent comme **MALEQ.COM** sur votre relevé de carte de débit ou de crédit. Nous ne révélons jamais ce qui a été acheté sur le relevé lui-même."
         }
       },
       "returns": {
