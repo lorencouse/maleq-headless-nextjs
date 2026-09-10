@@ -15,6 +15,7 @@ import {
   CheckoutPricingError,
   computeAuthoritativeCheckoutPricing,
 } from '@/lib/checkout/server-pricing';
+import { isDomesticShippingCountry } from '@/lib/checkout/shipping-rates';
 
 /**
  * Create Payment Intent API Route
@@ -281,6 +282,13 @@ export async function POST(request: NextRequest) {
     ]);
     const cartItemsMetadata = buildCartItemsMetadata(cartItemsCompact);
 
+    // Ask for 3-D Secure on cross-border orders. EEA cards get it anyway under
+    // PSD2, but our largest market (US) has no SCA mandate, so without this a
+    // fraudulent international order stays our liability. Requesting it shifts
+    // that to the issuer. Domestic orders are left on Stripe's own risk-based
+    // decision so we don't tax the bulk of checkouts with extra friction.
+    const isCrossBorder = !isDomesticShippingCountry(pricing.shippingCountry);
+
     // Create the PaymentIntent
     const stripe = getStripeServer();
     const paymentIntent = await stripe.paymentIntents.create({
@@ -289,6 +297,11 @@ export async function POST(request: NextRequest) {
       automatic_payment_methods: {
         enabled: true,
       },
+      ...(isCrossBorder && {
+        payment_method_options: {
+          card: { request_three_d_secure: 'any' as const },
+        },
+      }),
       metadata: {
         ...safeMetadata,
         checkout_subtotal: pricing.subtotal.toFixed(2),
@@ -297,6 +310,7 @@ export async function POST(request: NextRequest) {
         checkout_total: pricing.total.toFixed(2),
         shipping_method_id: pricing.shippingMethod.id,
         shipping_country: pricing.shippingCountry,
+        three_d_secure_requested: isCrossBorder ? 'any' : 'automatic',
         checkout_fingerprint: checkoutFingerprint,
         checkout_customer_ref: checkoutCustomerRef,
         // Cart items for recovery if order creation fails.
