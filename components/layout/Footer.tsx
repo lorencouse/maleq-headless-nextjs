@@ -26,9 +26,10 @@ export default function Footer() {
             <p className='text-sm'>
               {t('tagline')}
             </p>
+            {/* Online-only retailer: no trading address is published. The legal
+                entity plus reachable phone and email is what identifies us. */}
             <address className='mt-4 not-italic text-sm space-y-1'>
               <p className='text-foreground font-medium'>{t('legalName')}</p>
-              <p>{t('businessAddress')}</p>
               <p>
                 <a
                   href={`tel:${t('supportPhone').replace(/[^+\d]/g, '')}`}
