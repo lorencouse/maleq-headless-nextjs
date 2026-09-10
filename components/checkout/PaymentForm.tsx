@@ -10,6 +10,7 @@ import {
 import { savePendingCheckout, type PendingOrderPayload } from '@/lib/checkout/pending-order';
 import { reportCheckoutClientError } from '@/lib/checkout/client-error-reporting';
 import Button from '@/components/ui/Button';
+import { AgeConfirmCheckbox, useAgeGate } from '@/components/checkout/AgeGate';
 
 interface PaymentFormProps {
   paymentIntentId?: string | null;
@@ -32,8 +33,7 @@ export default function PaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  // Adults-only retail: the buyer attests to 18+ at the point of payment.
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const { ageConfirmed } = useAgeGate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,18 +135,7 @@ export default function PaymentForm({
         </div>
       )}
 
-      <div className="flex items-start gap-3 p-3 border border-input rounded-lg bg-background">
-        <input
-          id="age-confirm"
-          type="checkbox"
-          checked={ageConfirmed}
-          onChange={(e) => setAgeConfirmed(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 accent-primary cursor-pointer"
-        />
-        <label htmlFor="age-confirm" className="text-sm text-muted-foreground cursor-pointer">
-          {t('ageConfirm')}
-        </label>
-      </div>
+      <AgeConfirmCheckbox id="age-confirm-card" />
 
       <Button
         type="submit"

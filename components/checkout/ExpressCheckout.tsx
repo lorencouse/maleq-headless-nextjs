@@ -28,6 +28,7 @@ import {
   normalizeCountryCode,
 } from '@/lib/checkout/shipping-rates';
 import * as gtag from '@/lib/analytics/gtag';
+import { AgeConfirmCheckbox, useAgeGate } from '@/components/checkout/AgeGate';
 import { clearPendingCheckout, savePendingCheckout } from '@/lib/checkout/pending-order';
 
 /**
@@ -40,6 +41,8 @@ function ExpressCheckoutForm() {
   const elements = useElements();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [ageError, setAgeError] = useState<string | null>(null);
+  const { ageConfirmed } = useAgeGate();
 
   const items = useCartStore((state) => state.items);
   const subtotal = useCartSubtotal();
@@ -56,6 +59,13 @@ function ExpressCheckoutForm() {
 
   const onClick = useCallback(
     (event: StripeExpressCheckoutElementClickEvent) => {
+      // Not resolving leaves the wallet sheet closed, which is the only way to
+      // stop an express payment before it starts.
+      if (!ageConfirmed) {
+        setAgeError(tPayment('ageRequired'));
+        return;
+      }
+      setAgeError(null);
       event.resolve({
         emailRequired: true,
         phoneNumberRequired: true,
@@ -64,7 +74,7 @@ function ExpressCheckoutForm() {
         shippingRates: getStripeShippingRates(subtotal, 'US'),
       });
     },
-    [subtotal]
+    [subtotal, ageConfirmed, tPayment]
   );
 
   const onShippingAddressChange = useCallback(
@@ -405,6 +415,12 @@ function ExpressCheckoutForm() {
 
   return (
     <div>
+      <div className="mb-3">
+        <AgeConfirmCheckbox id="age-confirm-express" />
+        {ageError && (
+          <p className="mt-2 text-sm text-destructive">{ageError}</p>
+        )}
+      </div>
       <ExpressCheckoutElement
         onClick={onClick}
         onConfirm={onConfirm}

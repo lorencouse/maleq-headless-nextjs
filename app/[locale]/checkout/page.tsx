@@ -10,6 +10,7 @@ import CheckoutProgress from '@/components/checkout/CheckoutProgress';
 import CheckoutForm from '@/components/checkout/CheckoutForm';
 import ExpressCheckout from '@/components/checkout/ExpressCheckout';
 import CheckoutRedirectRecovery from '@/components/checkout/CheckoutRedirectRecovery';
+import { AgeGateProvider } from '@/components/checkout/AgeGate';
 import * as gtag from '@/lib/analytics/gtag';
 
 export default function CheckoutPage() {
@@ -77,7 +78,7 @@ export default function CheckoutPage() {
           {t('finalizingPayment')}
         </div>
       ) : (
-        <>
+        <AgeGateProvider>
           <div className="mb-6">
             <ExpressCheckout />
           </div>
@@ -114,7 +115,7 @@ export default function CheckoutPage() {
               </div>
             </div>
           </div>
-        </>
+        </AgeGateProvider>
       )}
     </div>
   );
