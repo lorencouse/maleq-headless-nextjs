@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
-import { SOCIAL_LINKS } from '@/lib/config/social';
+import { FOOTER_SOCIAL_LINKS } from '@/lib/config/social';
 
 // Client component so it reads the active locale from the nearest
 // NextIntlClientProvider. On content-root guide routes there is no next-intl
@@ -159,7 +159,7 @@ export default function Footer() {
                 {t('followUs')}
               </h4>
               <ul className='flex flex-wrap gap-x-4 gap-y-1'>
-                {SOCIAL_LINKS.map((s) => (
+                {FOOTER_SOCIAL_LINKS.map((s) => (
                   <li key={s.platform}>
                     <a
                       href={s.url}
