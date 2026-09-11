@@ -23,6 +23,11 @@ import { readFileSync, writeFileSync } from 'fs';
 import { getConnection } from './lib/db';
 import { resolveAxis, findDuplicateVariationCombos, type SanitizeOpts } from './lib/attribute-sanitizer';
 import { isDimAllowed, type AttrDim } from './lib/attribute-rules';
+import {
+  partitionRestricted,
+  loadRestrictedAllowlist,
+  describeRestriction,
+} from '../lib/import/restricted-products';
 
 // pa_* taxonomy -> rule dimension
 const TAX_TO_DIM: Record<string, AttrDim> = { pa_color: 'color', pa_size: 'apparel', pa_volume: 'volume', pa_length: 'length', pa_flavor: 'flavor', pa_material: 'material', pa_pack: 'count' };
@@ -1524,7 +1529,7 @@ async function main() {
     console.log(`✓ Loaded ${excludedTypes.size} excluded product type codes`);
   }
 
-  const products = allProducts.filter(p => {
+  const typeFiltered = allProducts.filter(p => {
     const typeCode = p.type?.code?.toUpperCase();
     if (typeCode && excludedTypes.has(typeCode)) {
       return false;
@@ -1532,9 +1537,32 @@ async function main() {
     return true;
   });
 
-  const excludedCount = allProducts.length - products.length;
+  const excludedCount = allProducts.length - typeFiltered.length;
   if (excludedCount > 0) {
     console.log(`✓ Filtered out ${excludedCount} products with excluded types`);
+  }
+
+  // Refuse Stripe-restricted goods (CBD/THC, vapes, paraphernalia, poppers, …).
+  // Rules + rationale: lib/import/restricted-products.ts; per-SKU overrides:
+  // data/restricted-allowlist.json. Never bypass this by mapping around it.
+  const allowlist = loadRestrictedAllowlist();
+  const { kept: products, dropped: restricted } = partitionRestricted(
+    typeFiltered,
+    (p: XMLProduct) => ({
+      name: p.name,
+      description: p.description,
+      brand: p.manufacturer?.name,
+      categories: [...(p.categories ?? []).map(c => c.name), p.type?.name],
+      sku: p.sku,
+      barcode: p.barcode,
+    }),
+    { allowlist },
+  );
+  if (restricted.length > 0) {
+    console.log(`⛔ Refusing ${restricted.length} restricted product(s):`);
+    for (const { item, result } of restricted) {
+      console.log(`   ✗ ${item.barcode || item.sku}  ${item.name.substring(0, 60)}  — ${describeRestriction(result)}`);
+    }
   }
   console.log(`✓ ${products.length} products ready for import\n`);
 

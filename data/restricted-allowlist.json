@@ -1,0 +1,5 @@
+{
+  "_comment": "Per-product overrides for lib/import/restricted-products.ts. Add a barcode/SKU to `ids` or an exact title to `names` when a rule misfires on a product that is NOT cannabinoid / vape / paraphernalia / poppers / drug-test / supplement. Do not add real CBD products here. Every entry needs a `why`.",
+  "ids": [],
+  "names": []
+}

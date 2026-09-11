@@ -74,6 +74,16 @@ To prevent re-dirtying the cleaned attribute schema, **any code that creates pro
 - **GLOBAL restrictions:** `volume` only on lube/topical; `flavor` only on lube/topical + condoms. So a FLAVOR on a toy is almost always a mislabeled skin-tone (vanilla/chocolate/caramel → should be `pa_color`); a VOLUME on a non-lube is junk. `reconcileWithCategory()` auto-corrects skin-tone flavor→color and flags the rest.
 - Add new rules by extending `CATEGORY_RULES` / `RESTRICTED`.
 
+## Restricted Products (Stripe) — Never Import or Publish
+
+Stripe closed our account in Sep 2026 and, as an appeal condition, required removal of every CBD product. Their Restricted Businesses list also bars categories the wholesale feeds carry. **Any code that creates or publishes a product MUST pass it through `lib/import/restricted-products.ts` first**:
+- `checkRestrictedProduct({name, description, brand, categories, sku, barcode}, {allowlist})` → `{restricted, category, matches, field}`. Blocked categories: `cannabinoid` (CBD/THC/Delta-8/HHC/kratom), `vape-tobacco`, `psychedelic`, `drug-paraphernalia` (bongs, one-hitters, stash jars, grinders), `poppers` (nitrite "aromas"), `drug-test-evasion` (Whizzinator, detox drinks), `supplement` (enhancement pills).
+- `partitionRestricted(items, toInput, {allowlist})` for feed-level filtering; `loadRestrictedAllowlist()` reads `data/restricted-allowlist.json` — the ONLY sanctioned override, keyed by barcode/SKU or exact title, with a `why`. Fix false positives there or via a rule's `unless` guard (add the title to `__tests__/lib/restricted-products.test.ts`), never by deleting a rule.
+- Brand blocklist `RESTRICTED_BRANDS` (Assorted CBD Vendors, CBD Daily, Kush Queen, 420 Health, Empire Smoke Distributor…) blocks a whole brand regardless of title.
+- Already wired into `scripts/import-products-direct.ts` (feed filter stage, logs every refusal) and `lib/import/product-importer.ts` (`assertNotRestricted`, counted as skipped).
+- Audit the live catalog: `bun scripts/_audit-restricted-products.ts` (dry run; `--apply` drafts the hits with restorable `_maleq_hidden_reason` meta, then run `scripts/ops/revalidate-frontend.sh`).
+- The 38 CBD products hidden on 2026-09-11 carry `_maleq_hidden_reason=stripe-cbd-2026-09-11`. Do not re-publish them.
+
 ## Available Scripts & CLI Tools
 
 Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.ts` for MySQL connections.
@@ -87,6 +97,12 @@ Located in `scripts/`. All scripts use the shared DB module at `scripts/lib/db.t
 - `import-images.ts` - Import product images
 - `import-videos.ts` - Import video content
 - `xml-to-json.ts` - Convert XML exports to JSON
+
+**Production Ops** (`scripts/ops/`, run by the user — the agent is blocked from prod writes):
+- `prod-backup.sh` - SSH-streamed mysqldump → `backups/*.sql.gz` (+ `.status` = DONE_OK). Run before any prod write.
+- `revalidate-frontend.sh` - Runs on the WP host; POSTs `type: all` to `/api/revalidate` so Next.js drops the product index + ISR pages. Needed after wp-cli/SQL bulk changes (CLI-fired webhooks are dropped). Cloudflare still caches HTML ~4h — purge in the CF dashboard for instant effect.
+- `hide-cbd-products-2026-09-11.sh` - The one-off Stripe CBD unpublish (kept for the restore ID list).
+- `_audit-restricted-products.ts` (in `scripts/`) - Dry-run/`--apply` scan for Stripe-restricted products (see Restricted Products section).
 
 **Database Operations:**
 - `db-clone-from-remote.sh` - **Sync local DB from production** (dumps prod via SSH, imports into Local by Flywheel `local` DB). Requires Local site running.

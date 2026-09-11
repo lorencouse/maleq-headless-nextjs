@@ -10,6 +10,12 @@ import {
   getNormalizedColorMeta,
 } from './attribute-normalizer';
 import { enhanceProductAttributes } from './attribute-extractor';
+import {
+  checkRestrictedProduct,
+  describeRestriction,
+  loadRestrictedAllowlist,
+  type RestrictedAllowlist,
+} from './restricted-products';
 
 interface ImportConfig {
   priceMultiplier: number; // 3x
@@ -54,6 +60,32 @@ export class ProductImporter {
     };
 
     this.imageProcessor = new ImageProcessor();
+    this.restrictedAllowlist = loadRestrictedAllowlist();
+  }
+
+  private restrictedAllowlist: RestrictedAllowlist;
+
+  /**
+   * Refuse Stripe-restricted goods (CBD/THC, vapes, paraphernalia, poppers, …).
+   * Rules: lib/import/restricted-products.ts; per-SKU overrides: data/restricted-allowlist.json.
+   * Throws PRODUCT_RESTRICTED, which importProducts() counts as skipped.
+   */
+  private assertNotRestricted(xmlProduct: XMLProduct, groupName?: string): void {
+    const result = checkRestrictedProduct(
+      {
+        name: groupName ? `${groupName} ${xmlProduct.name}` : xmlProduct.name,
+        description: xmlProduct.description,
+        brand: xmlProduct.manufacturer?.name,
+        categories: [...(xmlProduct.categories ?? []).map(c => c.name), xmlProduct.type?.name],
+        sku: xmlProduct.sku,
+        barcode: xmlProduct.barcode,
+      },
+      { allowlist: this.restrictedAllowlist },
+    );
+    if (result.restricted) {
+      console.log(`  ⛔ Restricted — ${describeRestriction(result)} — skipping`);
+      throw new Error('PRODUCT_RESTRICTED');
+    }
   }
 
   /**
@@ -228,6 +260,8 @@ export class ProductImporter {
     console.log(`\n→ Importing: ${xmlProduct.name}`);
     console.log(`  SKU: ${xmlProduct.barcode}`);
 
+    this.assertNotRestricted(xmlProduct);
+
     // Check if product exists
     const existing = await wooClient.getProductBySku(xmlProduct.barcode);
     if (existing) {
@@ -272,6 +306,11 @@ export class ProductImporter {
 
     // Use first product's data for parent
     const firstProduct = group.products[0];
+
+    // A restricted variation taints the whole group (they share a description/brand).
+    for (const variation of group.products) {
+      this.assertNotRestricted(variation, group.baseName);
+    }
 
     // Check if parent product exists (by slug)
     const parentSlug = this.generateSlug(group.baseName);
@@ -491,6 +530,11 @@ export class ProductImporter {
         results.variableProducts++;
         results.processed += group.products.length;
       } catch (error) {
+        if (error instanceof Error && error.message === 'PRODUCT_RESTRICTED') {
+          results.skipped += group.products.length;
+          results.processed += group.products.length;
+          continue;
+        }
         const message = error instanceof Error ? error.message : 'Unknown error';
         console.error(`  ✗ Error: ${message}`);
         results.errors.push({
@@ -508,7 +552,7 @@ export class ProductImporter {
         results.simpleProducts++;
         results.processed++;
       } catch (error) {
-        if (error instanceof Error && error.message === 'PRODUCT_EXISTS') {
+        if (error instanceof Error && (error.message === 'PRODUCT_EXISTS' || error.message === 'PRODUCT_RESTRICTED')) {
           results.skipped++;
           results.processed++;
         } else {
