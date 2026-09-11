@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronOrAdminAuth } from '@/lib/api/admin-auth';
-import { getStripeServer } from '@/lib/stripe/server';
+import { CHECKOUT_SOURCE, getPaymentProvider } from '@/lib/checkout/payment-provider';
 import { attemptRecoveryOrderCreation } from '@/lib/checkout/payment-recovery';
-import { lookupPaymentIntentReservation } from '@/lib/checkout/payment-intent-lock';
+import { findUnreconciledPayments, getPaymentRecord } from '@/lib/checkout/payment-records';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
 import { sendAdminAlert } from '@/lib/email/alert';
 
@@ -12,12 +12,18 @@ export const maxDuration = 120;
 /**
  * Payment reconciliation cron.
  *
- * The Stripe webhook deliberately stands down whenever checkout might still be
- * creating the order — that guard is what stopped the duplicate-order pairs,
- * but it also means a checkout that genuinely dies mid-flight no longer gets
- * recovered inline. This sweep is the backstop: it looks for succeeded
- * PaymentIntents from our checkout that are old enough that no in-flight
- * request could still be responsible, and have no WooCommerce order.
+ * The payment webhook deliberately stands down whenever checkout might still
+ * be creating the order — that guard is what stopped the duplicate-order
+ * pairs, but it also means a checkout that genuinely dies mid-flight no longer
+ * gets recovered inline. This sweep is the backstop.
+ *
+ * It reads candidates from `maleq_payment_intent_orders` rather than paging
+ * the processor's payment list: the rows are ours, indexed on
+ * (status, created_at), and survive a change of processor. The one fact the
+ * table cannot know is whether the payment actually succeeded, so each
+ * candidate is confirmed against the provider — inside
+ * `attemptRecoveryOrderCreation`, which re-reads the payment and bails unless
+ * it is in a succeeded state.
  *
  * Suggested schedule: every 15 minutes.
  *   *\/15 * * * * curl -s -H "x-api-key: $ADMIN_API_KEY" \
@@ -37,70 +43,66 @@ export async function GET(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    const stripe = getStripeServer();
-    const now = Date.now();
-
-    const intents = await stripe.paymentIntents.list({
+    const provider = getPaymentProvider();
+    const candidates = await findUnreconciledPayments({
+      minAgeMs: MIN_AGE_MS,
+      maxAgeMs: MAX_AGE_MS,
       limit: 100,
-      created: { gte: Math.floor((now - MAX_AGE_MS) / 1000) },
     });
 
-    const checked: string[] = [];
     const recovered: string[] = [];
     const skipped: string[] = [];
 
-    for (const intent of intents.data) {
-      if (intent.status !== 'succeeded') continue;
-      if (intent.metadata?.source !== 'maleq-headless-checkout') continue;
-      if (now - intent.created * 1000 < MIN_AGE_MS) continue;
-      if (intent.metadata?.woocommerce_order_id) continue;
+    for (const record of candidates) {
+      const paymentId = record.paymentIntentId;
 
-      checked.push(intent.id);
-
-      // The reservation table is the authoritative record of what checkout did.
-      const reservation = await lookupPaymentIntentReservation(intent.id);
-      if (reservation?.orderId) {
-        skipped.push(intent.id);
+      if (record.status === 'processing') {
+        // A row still held this long after payment means checkout died between
+        // taking the lock and creating the order. Nothing can release it now,
+        // so surface it rather than silently leaving the payment unfulfilled —
+        // clearing the row is a deliberate human decision.
+        await reportStuckReservation(provider, record.paymentIntentId, record.createdAt);
+        skipped.push(paymentId);
         continue;
       }
-      if (reservation && reservation.status === 'processing') {
-        // A row with no order ID this long after payment means checkout died
-        // between taking the lock and creating the order. Nothing can release
-        // it now, so surface it rather than silently leaving the payment
-        // unfulfilled — clearing the row is a deliberate human decision.
+
+      // Unclaimed row: either checkout never got off the ground, or it failed
+      // and handed the lock back. Recovery confirms the payment succeeded
+      // before creating anything.
+      const before = Date.now();
+      await attemptRecoveryOrderCreation(paymentId, { skipGrace: true });
+      recovered.push(paymentId);
+
+      // Keep the sweep inside maxDuration even with a slow provider.
+      if (Date.now() - startTime > 90_000) {
         await logDurableEvent({
-          eventType: 'payment_reconcile_stuck_reservation',
+          eventType: 'payment_reconcile_truncated',
           severity: 'warning',
-          message: 'Payment intent reservation stuck in processing with no order',
-          paymentIntentId: intent.id,
-          payload: { amount: intent.amount, ageMinutes: Math.round((now - intent.created * 1000) / 60000) },
+          message: 'Reconciliation sweep hit its time budget — remaining rows deferred',
+          payload: {
+            processed: recovered.length + skipped.length,
+            pending: candidates.length - (recovered.length + skipped.length),
+            lastItemMs: Date.now() - before,
+          },
         });
-        await sendAdminAlert('Stuck Checkout Reservation', {
-          'PaymentIntent': intent.id,
-          'Amount': `$${(intent.amount / 100).toFixed(2)}`,
-          'Customer Email': intent.receipt_email || 'N/A',
-          'Action':
-            'Confirm no WooCommerce order exists, then delete the row from maleq_payment_intent_orders to let recovery run.',
-        });
-        skipped.push(intent.id);
-        continue;
+        break;
       }
-
-      // No order, no reservation — checkout never got off the ground.
-      // skipGrace: this payment has been unmatched for at least MIN_AGE_MS.
-      await attemptRecoveryOrderCreation(intent, { skipGrace: true });
-      recovered.push(intent.id);
     }
+
+    // Secondary net: payments the processor knows about that we have no row
+    // for at all. Only reachable if `create-intent` could not write its
+    // snapshot, so this normally finds nothing.
+    const orphaned = await sweepProviderOrphans(provider, startTime, recovered);
 
     const duration = Math.round((Date.now() - startTime) / 1000);
 
     return NextResponse.json({
       success: true,
       duration: `${duration}s`,
-      scanned: intents.data.length,
-      unmatched: checked.length,
+      scanned: candidates.length,
       recoveryAttempted: recovered,
       skipped,
+      orphaned,
     });
   } catch (error) {
     const duration = Math.round((Date.now() - startTime) / 1000);
@@ -115,4 +117,98 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Find succeeded payments from our checkout that have no row in
+ * `maleq_payment_intent_orders` — the blind spot the local sweep cannot see,
+ * because a snapshot write is what creates the row in the first place.
+ *
+ * Skipped entirely when the provider cannot list payments.
+ */
+async function sweepProviderOrphans(
+  provider: ReturnType<typeof getPaymentProvider>,
+  startTime: number,
+  alreadyHandled: string[]
+): Promise<string[]> {
+  if (!provider.listRecentPayments) return [];
+  if (Date.now() - startTime > 60_000) return [];
+
+  const handled = new Set(alreadyHandled);
+  const orphaned: string[] = [];
+
+  try {
+    const payments = await provider.listRecentPayments(Date.now() - MAX_AGE_MS);
+
+    for (const payment of payments) {
+      if (payment.status !== 'succeeded') continue;
+      if (payment.source !== CHECKOUT_SOURCE) continue;
+      if (payment.orderReference) continue;
+      if (handled.has(payment.id)) continue;
+      // Same in-flight guard the local sweep applies.
+      if (Date.now() - payment.createdAtMs < MIN_AGE_MS) continue;
+
+      const record = await getPaymentRecord(payment.id);
+      if (record) continue; // The local sweep owns it.
+
+      await logDurableEvent({
+        eventType: 'payment_reconcile_orphan_found',
+        severity: 'warning',
+        message: 'Succeeded payment with no local checkout record — snapshot write must have failed',
+        paymentIntentId: payment.id,
+        payload: { amount: payment.amountCents },
+      });
+
+      await attemptRecoveryOrderCreation(payment.id, { skipGrace: true });
+      orphaned.push(payment.id);
+
+      if (Date.now() - startTime > 100_000) break;
+    }
+  } catch (error) {
+    console.warn('[Cron] Provider orphan sweep failed:', error);
+  }
+
+  return orphaned;
+}
+
+/**
+ * Alert on a reservation that has been held with no order for far longer than
+ * any request could run. Only worth a human's attention if the payment
+ * actually went through, so confirm that first.
+ */
+async function reportStuckReservation(
+  provider: ReturnType<typeof getPaymentProvider>,
+  paymentId: string,
+  createdAt: Date
+): Promise<void> {
+  let amountLabel = 'unknown';
+  let email = 'N/A';
+
+  try {
+    const payment = await provider.retrievePayment(paymentId);
+    if (payment.status !== 'succeeded') return;
+    amountLabel = `$${(payment.amountCents / 100).toFixed(2)}`;
+    email = payment.receiptEmail || 'N/A';
+  } catch {
+    // Provider unreachable — still worth surfacing the stuck row.
+  }
+
+  const ageMinutes = Math.round((Date.now() - createdAt.getTime()) / 60000);
+
+  await logDurableEvent({
+    eventType: 'payment_reconcile_stuck_reservation',
+    severity: 'warning',
+    message: 'Payment reservation stuck in processing with no order',
+    paymentIntentId: paymentId,
+    payload: { ageMinutes },
+  });
+
+  await sendAdminAlert('Stuck Checkout Reservation', {
+    'PaymentIntent': paymentId,
+    'Amount': amountLabel,
+    'Customer Email': email,
+    'Age': `${ageMinutes} min`,
+    'Action':
+      'Confirm no WooCommerce order exists, then delete the row from maleq_payment_intent_orders to let recovery run.',
+  });
 }

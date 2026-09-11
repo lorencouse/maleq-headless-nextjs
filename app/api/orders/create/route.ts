@@ -7,7 +7,6 @@ import {
   OrderLineItem,
   OrderAddress,
 } from '@/lib/woocommerce/orders';
-import { getStripeServer } from '@/lib/stripe/server';
 import { errorResponse, handleApiError, validationError } from '@/lib/api/response';
 import { z } from 'zod';
 import { sendAdminAlert } from '@/lib/email/alert';
@@ -24,10 +23,12 @@ import {
   buildCheckoutFingerprint,
 } from '@/lib/checkout/integrity';
 import {
+  getPaymentRecord,
   markPaymentIntentOrderComplete,
   releasePaymentIntentReservation,
   reservePaymentIntent,
-} from '@/lib/checkout/payment-intent-lock';
+} from '@/lib/checkout/payment-records';
+import { CHECKOUT_SOURCE, getPaymentProvider } from '@/lib/checkout/payment-provider';
 
 /**
  * Create Order API Route
@@ -165,9 +166,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Verify the payment intent
-    const stripe = getStripeServer();
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    // Verify the payment
+    const provider = getPaymentProvider();
+    const paymentIntent = await provider.retrievePayment(paymentIntentId);
+    const paymentRecord = await getPaymentRecord(paymentIntentId).catch(() => null);
 
     if (paymentIntent.status !== 'succeeded') {
       await logDurableEvent({
@@ -192,13 +194,21 @@ export async function POST(request: NextRequest) {
       customerEmail: contact.email,
     });
     const expectedCustomerRef = buildCheckoutCustomerRef(customerId, contact.email);
-    const paymentIntentFingerprint = paymentIntent.metadata?.checkout_fingerprint || '';
-    const paymentIntentCustomerRef = paymentIntent.metadata?.checkout_customer_ref || '';
+
+    // The checkout snapshot is the store of record for these. Provider
+    // metadata is the fallback for payments created before snapshots existed,
+    // and for the case where the snapshot write failed at create-intent time.
+    const snapshot = paymentRecord?.snapshot ?? null;
+    const recordedFingerprint =
+      snapshot?.fingerprint ?? paymentIntent.legacyMetadata.checkout_fingerprint ?? '';
+    const recordedCustomerRef =
+      snapshot?.customerRef ?? paymentIntent.legacyMetadata.checkout_customer_ref ?? '';
+    const isOurPayment = Boolean(paymentRecord) || paymentIntent.source === CHECKOUT_SOURCE;
 
     if (
-      paymentIntent.metadata?.source !== 'maleq-headless-checkout' ||
-      paymentIntentFingerprint !== expectedFingerprint ||
-      paymentIntentCustomerRef !== expectedCustomerRef
+      !isOurPayment ||
+      recordedFingerprint !== expectedFingerprint ||
+      recordedCustomerRef !== expectedCustomerRef
     ) {
       await logDurableEvent({
         eventType: 'checkout_order_integrity_mismatch',
@@ -207,9 +217,10 @@ export async function POST(request: NextRequest) {
         paymentIntentId,
         ...requestMeta,
         payload: {
-          hasExpectedSource: paymentIntent.metadata?.source === 'maleq-headless-checkout',
-          fingerprintMatches: paymentIntentFingerprint === expectedFingerprint,
-          customerRefMatches: paymentIntentCustomerRef === expectedCustomerRef,
+          hasExpectedSource: isOurPayment,
+          integritySource: snapshot ? 'snapshot' : 'provider-metadata',
+          fingerprintMatches: recordedFingerprint === expectedFingerprint,
+          customerRefMatches: recordedCustomerRef === expectedCustomerRef,
           durationMs: Date.now() - startedAt,
         },
       });
@@ -220,8 +231,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate order - if this paymentIntentId already has an order, return it
-    const existingOrderId = paymentIntent.metadata?.woocommerce_order_id;
+    // Check for duplicate order - if this payment already has an order, return it.
+    // Our own record first; the provider-side mirror covers legacy payments.
+    const existingOrderId =
+      paymentRecord?.orderId != null
+        ? String(paymentRecord.orderId)
+        : paymentIntent.orderReference;
     if (existingOrderId) {
       try {
         const existingOrder = await getOrder(parseInt(existingOrderId, 10));
@@ -269,12 +284,12 @@ export async function POST(request: NextRequest) {
 
     // Verify the amount matches - reject mismatches to prevent incorrect charges
     const expectedAmount = Math.round(pricing.total * 100);
-    if (paymentIntent.amount !== expectedAmount) {
-      console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amount}`);
+    if (paymentIntent.amountCents !== expectedAmount) {
+      console.error(`Payment amount mismatch: expected ${expectedAmount}, got ${paymentIntent.amountCents}`);
       await sendAdminAlert('Amount Mismatch on Order Creation', {
         'PaymentIntent': paymentIntentId,
         'Expected (cents)': expectedAmount,
-        'Actual (cents)': paymentIntent.amount,
+        'Actual (cents)': paymentIntent.amountCents,
         'Customer Email': contact.email,
       });
       await logDurableEvent({
@@ -285,7 +300,7 @@ export async function POST(request: NextRequest) {
         ...requestMeta,
         payload: {
           expectedAmountCents: expectedAmount,
-          actualAmountCents: paymentIntent.amount,
+          actualAmountCents: paymentIntent.amountCents,
           authoritativeTotal: pricing.total,
           durationMs: Date.now() - startedAt,
         },
@@ -390,9 +405,11 @@ export async function POST(request: NextRequest) {
     releaseReservation = false;
     await markPaymentIntentOrderComplete(paymentIntentId, order.id);
 
-    // Store order ID in PaymentIntent metadata so the webhook can find it
-    await stripe.paymentIntents.update(paymentIntentId, {
-      metadata: { woocommerce_order_id: String(order.id) },
+    // Mirror the order ID onto the payment so the processor's dashboard is
+    // navigable. Best-effort only — `markPaymentIntentOrderComplete` above is
+    // the authoritative record, and not every processor can store this.
+    await provider.attachOrderReference(paymentIntentId, order.id).catch((error) => {
+      console.warn(`Could not mirror order #${order.id} onto ${paymentIntentId}:`, error);
     });
 
     await markCartRecoveryConverted({

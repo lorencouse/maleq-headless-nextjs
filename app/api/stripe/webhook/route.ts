@@ -5,7 +5,7 @@ import { updateOrder } from '@/lib/woocommerce/orders';
 import { getWooCommerceEndpoint, getAuthHeader, isWooCommerceConfigured } from '@/lib/woocommerce/auth';
 import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
-import { lookupPaymentIntentReservation } from '@/lib/checkout/payment-intent-lock';
+import { lookupPaymentIntentReservation } from '@/lib/checkout/payment-records';
 import { attemptRecoveryOrderCreation } from '@/lib/checkout/payment-recovery';
 
 /**
@@ -133,8 +133,8 @@ export async function POST(request: NextRequest) {
 async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   const orderId = await findWooCommerceOrderId(paymentIntent);
   if (!orderId) {
-    // No existing WC order — attempt to create a recovery order from PI metadata.
-    await attemptRecoveryOrderCreation(paymentIntent);
+    // No existing WC order — rebuild one from the stored checkout snapshot.
+    await attemptRecoveryOrderCreation(paymentIntent.id);
     return;
   }
 
@@ -334,14 +334,8 @@ async function handleDisputeCreated(dispute: Stripe.Dispute) {
 async function findWooCommerceOrderId(
   paymentIntent: Stripe.PaymentIntent
 ): Promise<number | null> {
-  // Check metadata first (fastest)
-  const metaOrderId = paymentIntent.metadata?.woocommerce_order_id;
-  if (metaOrderId) {
-    const parsed = parseInt(metaOrderId, 10);
-    if (!isNaN(parsed)) return parsed;
-  }
-
-  // Reservation table — covers orders created before metadata was stamped.
+  // Reservation table first: it is our store of record, and it is stamped
+  // before the provider-side mirror is.
   try {
     const reservation = await lookupPaymentIntentReservation(paymentIntent.id);
     if (reservation?.orderId) return reservation.orderId;
@@ -350,6 +344,13 @@ async function findWooCommerceOrderId(
       `findWooCommerceOrderId: reservation lookup failed for ${paymentIntent.id}`,
       error
     );
+  }
+
+  // Provider metadata — covers orders created before the reservation table.
+  const metaOrderId = paymentIntent.metadata?.woocommerce_order_id;
+  if (metaOrderId) {
+    const parsed = parseInt(metaOrderId, 10);
+    if (!isNaN(parsed)) return parsed;
   }
 
   // Fallback: look up order by PaymentIntent ID in transaction_id/meta_data.

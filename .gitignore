@@ -49,6 +49,8 @@ next-env.d.ts
 # database backups
 backups/
 *.sql
+# ...but schema migrations are source, not data
+!docs/migrations/*.sql
 
 # local environment
 .env.local

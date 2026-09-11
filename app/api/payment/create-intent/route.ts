@@ -6,6 +6,8 @@ import { checkRateLimit } from '@/lib/api/rate-limit';
 import { validateEmail } from '@/lib/api/validation';
 import { extractAuthToken } from '@/lib/api/auth-token';
 import { buildCartItemsMetadata, type CompactCartItem } from '@/lib/checkout/cart-metadata';
+import { recordCheckoutSnapshot } from '@/lib/checkout/payment-records';
+import { CHECKOUT_SOURCE, getPaymentProvider } from '@/lib/checkout/payment-provider';
 import {
   buildCheckoutCustomerRef,
   buildCheckoutFingerprint,
@@ -270,17 +272,15 @@ export async function POST(request: NextRequest) {
     });
     const checkoutCustomerRef = buildCheckoutCustomerRef(customerId, customerEmail);
 
-    // Serialize cart items into Stripe metadata for disaster recovery.
-    // Stripe allows up to 50 keys, 500 chars per value, so carts past 500 chars
-    // are split across checkout_cart_items[_N] rather than truncated — a
-    // half-written value is unparseable and used to cost us the item list.
+    // Cart snapshot for disaster recovery. This is written to our own database
+    // (see payment-records.ts) rather than into provider metadata, so recovery
+    // does not depend on a processor that offers 50 arbitrary metadata keys.
     const cartItemsCompact: CompactCartItem[] = pricing.items.map((item) => [
       item.productId,
       item.variationId || null,
       item.quantity,
       item.unitPrice,
     ]);
-    const cartItemsMetadata = buildCartItemsMetadata(cartItemsCompact);
 
     // Ask for 3-D Secure on cross-border orders. EEA cards get it anyway under
     // PSD2, but our largest market (US) has no SCA mandate, so without this a
@@ -313,10 +313,7 @@ export async function POST(request: NextRequest) {
         three_d_secure_requested: isCrossBorder ? 'any' : 'automatic',
         checkout_fingerprint: checkoutFingerprint,
         checkout_customer_ref: checkoutCustomerRef,
-        // Cart items for recovery if order creation fails.
-        // Format: [[productId, variationId|null, qty, unitPrice], ...]
-        ...cartItemsMetadata.metadata,
-        source: 'maleq-headless-checkout',
+        source: CHECKOUT_SOURCE,
       },
       ...(customerEmail && { receipt_email: customerEmail }),
       ...(shippingAddress && { shipping: shippingAddress }),
@@ -324,6 +321,49 @@ export async function POST(request: NextRequest) {
 
     if (!paymentIntent.client_secret) {
       throw new Error('Failed to create payment intent');
+    }
+
+    // Park the checkout snapshot against the payment. If this fails the
+    // payment is still perfectly chargeable, but a checkout that then died
+    // would leave an unrecoverable payment — so fall back to the old
+    // behaviour of chunking the cart into provider metadata rather than
+    // letting the order data vanish.
+    const snapshotWritten = await persistCheckoutSnapshot({
+      paymentIntentId: paymentIntent.id,
+      amountCents: paymentIntent.amount,
+      currency,
+      customerEmail,
+      customerId,
+      couponCode,
+      pricing,
+      cartItemsCompact,
+      shippingAddress,
+      fingerprint: checkoutFingerprint,
+      customerRef: checkoutCustomerRef,
+      requestMeta,
+    });
+
+    if (!snapshotWritten) {
+      const { metadata: cartItemsMetadata } = buildCartItemsMetadata(cartItemsCompact);
+      await stripe.paymentIntents
+        .update(paymentIntent.id, { metadata: cartItemsMetadata })
+        .catch(async (error: unknown) => {
+          await logDurableEvent({
+            eventType: 'checkout_snapshot_metadata_fallback_failed',
+            severity: 'error',
+            message: 'Checkout snapshot and metadata fallback both failed',
+            paymentIntentId: paymentIntent.id,
+            ...requestMeta,
+            payload: { error: error instanceof Error ? error.message : String(error) },
+          });
+          await sendAdminAlert('Checkout Snapshot Not Recorded', {
+            'PaymentIntent': paymentIntent.id,
+            'Amount': `$${pricing.total.toFixed(2)}`,
+            'Customer Email': customerEmail || 'N/A',
+            'Impact':
+              'If this checkout fails to create an order, recovery cannot rebuild the cart.',
+          });
+        });
     }
 
     const response: CreatePaymentIntentResponse = {
@@ -416,6 +456,85 @@ export async function POST(request: NextRequest) {
       { error: 'Failed to create payment intent' },
       { status: 500 }
     );
+  }
+}
+
+type AuthoritativePricing = Awaited<ReturnType<typeof computeAuthoritativeCheckoutPricing>>;
+
+/**
+ * Write the checkout snapshot that order recovery rebuilds from.
+ *
+ * Returns false instead of throwing: a snapshot failure must never fail a
+ * checkout whose payment already succeeded, it just downgrades us to the
+ * provider-metadata fallback.
+ */
+async function persistCheckoutSnapshot(params: {
+  paymentIntentId: string;
+  amountCents: number;
+  currency: string;
+  customerEmail?: string;
+  customerId?: number;
+  couponCode?: string;
+  pricing: AuthoritativePricing;
+  cartItemsCompact: CompactCartItem[];
+  shippingAddress?: CreatePaymentIntentRequest['shippingAddress'];
+  fingerprint: string;
+  customerRef: string;
+  requestMeta: ReturnType<typeof getRequestMeta>;
+}): Promise<boolean> {
+  const { pricing, shippingAddress } = params;
+
+  try {
+    await recordCheckoutSnapshot({
+      paymentIntentId: params.paymentIntentId,
+      provider: getPaymentProvider().name,
+      amountCents: params.amountCents,
+      currency: params.currency,
+      customerEmail: params.customerEmail || null,
+      snapshot: {
+        items: params.cartItemsCompact,
+        pricing: {
+          subtotal: pricing.subtotal,
+          shipping: pricing.shipping,
+          discount: pricing.discount,
+          tax: pricing.tax,
+          total: pricing.total,
+        },
+        shippingMethod: {
+          id: pricing.shippingMethod.id,
+          name: pricing.shippingMethod.name,
+        },
+        shippingCountry: pricing.shippingCountry,
+        shippingAddress: shippingAddress
+          ? {
+              name: shippingAddress.name || null,
+              phone: null,
+              line1: shippingAddress.address.line1 || null,
+              line2: shippingAddress.address.line2 || null,
+              city: shippingAddress.address.city || null,
+              state: shippingAddress.address.state || null,
+              postalCode: shippingAddress.address.postal_code || null,
+              country: shippingAddress.address.country || null,
+            }
+          : null,
+        fingerprint: params.fingerprint,
+        customerRef: params.customerRef,
+        customerId: params.customerId ?? null,
+        customerEmail: params.customerEmail || null,
+        couponCode: params.couponCode || null,
+      },
+    });
+    return true;
+  } catch (error) {
+    await logDurableEvent({
+      eventType: 'checkout_snapshot_write_failed',
+      severity: 'warning',
+      message: 'Failed to record checkout snapshot — falling back to provider metadata',
+      paymentIntentId: params.paymentIntentId,
+      ...params.requestMeta,
+      payload: { error: error instanceof Error ? error.message : String(error) },
+    });
+    return false;
   }
 }
 

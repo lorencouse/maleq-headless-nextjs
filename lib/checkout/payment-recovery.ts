@@ -1,33 +1,48 @@
-import type Stripe from 'stripe';
-import { getStripeServer } from '@/lib/stripe/server';
 import { createOrder, CreateOrderData, OrderAddress } from '@/lib/woocommerce/orders';
 import { sendAdminAlert } from '@/lib/email/alert';
 import { logDurableEvent } from '@/lib/monitoring/durable-events';
 import {
+  getPaymentRecord,
   lookupPaymentIntentReservation,
+  markPaymentAbandoned,
   markPaymentIntentOrderComplete,
   releasePaymentIntentReservation,
   reservePaymentIntent,
-} from '@/lib/checkout/payment-intent-lock';
+  type CheckoutSnapshot,
+  type CheckoutSnapshotAddress,
+} from '@/lib/checkout/payment-records';
+import {
+  CHECKOUT_SOURCE,
+  getPaymentProvider,
+  type ProviderPayment,
+} from '@/lib/checkout/payment-provider';
 import { readCartItemsFromMetadata } from '@/lib/checkout/cart-metadata';
+import type { CompactCartItem } from '@/lib/checkout/cart-metadata';
 
 /**
- * Recovery-order creation for Stripe payments that never produced a
- * WooCommerce order.
+ * Recovery-order creation for payments that never produced a WooCommerce
+ * order.
  *
- * Shared by the Stripe webhook (`payment_intent.succeeded`) and the
- * reconciliation cron, so both go through the identical duplicate guards.
+ * Shared by the payment webhook and the reconciliation cron, so both go
+ * through the identical duplicate guards.
+ *
+ * The cart is rebuilt from the checkout snapshot in
+ * `maleq_payment_intent_orders`. Payments created before snapshots existed
+ * still carry their cart in provider metadata, so that read is kept as a
+ * fallback — it can be deleted once no un-reconciled payments predate the
+ * snapshot rollout (they age out after MAX_AGE_MS in the reconcile cron).
  */
 
 /**
  * How long the webhook waits for `/api/orders/create` to finish before it will
  * even consider creating a recovery order.
  *
- * `payment_intent.succeeded` is delivered the moment the customer's card is
+ * Payment-succeeded events are delivered the moment the customer's card is
  * confirmed — routinely *before* the browser's order-creation round-trip has
  * reached WooCommerce (that route re-prices the cart and re-validates the
- * intent first). Recovering immediately is what produced duplicate order pairs.
- * Stripe times webhook deliveries out at ~20s, so this stays well under that.
+ * payment first). Recovering immediately is what produced duplicate order
+ * pairs. Stripe times webhook deliveries out at ~20s, so this stays well under
+ * that.
  */
 const RECOVERY_GRACE_MS = 12_000;
 const RECOVERY_POLL_MS = 1_500;
@@ -36,45 +51,90 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+interface RecoveryCart {
+  items: CompactCartItem[];
+  /** True when the item list came from a legacy metadata value we repaired. */
+  repaired: boolean;
+  /** Where the cart was read from, for the audit trail on the order. */
+  origin: 'snapshot' | 'provider-metadata' | 'none';
+}
+
 /**
- * Attempt to create a WooCommerce order from Stripe PaymentIntent metadata
- * when the frontend order creation failed. This is the last-resort safety net.
+ * Attempt to create a WooCommerce order for a payment whose checkout never
+ * produced one. This is the last-resort safety net.
  *
  * Ordering matters here, and every step exists to prevent a duplicate order:
  *   1. wait out the frontend's normal order-creation window
  *   2. take the *same* `maleq_payment_intent_orders` lock `/api/orders/create`
  *      uses — whoever loses simply stands down
- *   3. re-read PaymentIntent metadata from Stripe, since the copy on the event
+ *   3. re-read the record and the payment, since anything read before the lock
  *      is a snapshot from before the frontend could have stamped the order ID
  *
- * Requires checkout_cart_items in PI metadata (added after 2026-04-15).
- * Falls back to a fee-line placeholder if cart items are unavailable.
- *
- * @param options.skipGrace set by the reconciliation cron, which only ever sees
- *   PaymentIntents that have already been unmatched for many minutes.
+ * @param options.skipGrace set by the reconciliation cron, which only ever
+ *   sees payments that have already been unmatched for many minutes.
  */
 export async function attemptRecoveryOrderCreation(
-  paymentIntent: Stripe.PaymentIntent,
+  paymentId: string,
   options: { skipGrace?: boolean } = {}
 ) {
-  const meta = paymentIntent.metadata || {};
-  const email = paymentIntent.receipt_email || meta.customer_email || '';
-  const amount = (paymentIntent.amount / 100).toFixed(2);
+  const provider = getPaymentProvider();
 
-  if (meta.source !== 'maleq-headless-checkout') {
-    // Not from our checkout — don't create an order automatically.
-    console.warn(
-      `payment_intent.succeeded: Unrecognized source for ${paymentIntent.id}, skipping recovery`
-    );
+  let payment: ProviderPayment;
+  try {
+    payment = await provider.retrievePayment(paymentId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     await logDurableEvent({
-      eventType: 'stripe_payment_succeeded_unmatched',
+      eventType: 'payment_recovery_lookup_failed',
+      severity: 'error',
+      message: 'Could not read the payment from the provider — recovery skipped',
+      paymentIntentId: paymentId,
+      payload: { error: message },
+    });
+    await sendAdminAlert('Recovery Skipped — Payment Lookup Failed', {
+      'PaymentIntent': paymentId,
+      'Error': message,
+      'Action': 'Confirm the order exists in WooCommerce; create it manually if not.',
+    });
+    return;
+  }
+
+  if (payment.status !== 'succeeded') {
+    // Nothing was captured, so there is nothing to fulfil. The overwhelmingly
+    // common case is an abandoned checkout — the customer reached the payment
+    // step and left — so this is deliberately not a durable event. Park the
+    // row in `abandoned` instead, which takes it out of the reconciliation
+    // sweep rather than re-asking the processor about it every 15 minutes.
+    if (payment.status === 'failed' || payment.status === 'canceled') {
+      await markPaymentAbandoned(paymentId).catch(() => {});
+    }
+    return;
+  }
+
+  const record = await getPaymentRecord(paymentId).catch(() => null);
+  const amount = (payment.amountCents / 100).toFixed(2);
+  const email =
+    record?.customerEmail ||
+    record?.snapshot?.customerEmail ||
+    payment.receiptEmail ||
+    payment.legacyMetadata.customer_email ||
+    '';
+
+  // A payment is ours if we recorded it, or if the provider still carries our
+  // source tag (payments created before snapshots, and any provider that
+  // supports metadata). Anything else gets flagged, never auto-fulfilled.
+  const isOurs = Boolean(record) || payment.source === CHECKOUT_SOURCE;
+  if (!isOurs) {
+    console.warn(`Recovery: unrecognized source for ${paymentId}, skipping`);
+    await logDurableEvent({
+      eventType: 'payment_succeeded_unmatched',
       severity: 'warning',
-      message: 'payment_intent.succeeded with no matching WooCommerce order (non-checkout source)',
-      paymentIntentId: paymentIntent.id,
-      payload: { amount: paymentIntent.amount, receiptEmail: email || null },
+      message: 'Succeeded payment with no matching WooCommerce order (non-checkout source)',
+      paymentIntentId: paymentId,
+      payload: { amount: payment.amountCents, receiptEmail: email || null },
     });
     await sendAdminAlert('Payment Succeeded — No WooCommerce Order', {
-      'PaymentIntent': paymentIntent.id,
+      'PaymentIntent': paymentId,
       'Amount': `$${amount}`,
       'Customer Email': email || 'N/A',
     });
@@ -83,16 +143,26 @@ export async function attemptRecoveryOrderCreation(
 
   // ---- Duplicate-order guards -------------------------------------------
 
+  if (record?.orderId) {
+    await logDurableEvent({
+      eventType: 'payment_recovery_skipped',
+      message: 'Payment record already carries an order ID — recovery not needed',
+      paymentIntentId: paymentId,
+      orderId: record.orderId,
+    });
+    return;
+  }
+
   if (!options.skipGrace) {
-    const settledOrderId = await waitForFrontendOrder(paymentIntent.id);
+    const settledOrderId = await waitForFrontendOrder(paymentId);
     if (settledOrderId) {
       console.log(
-        `payment_intent.succeeded: Frontend created order #${settledOrderId} for ${paymentIntent.id}, skipping recovery`
+        `Recovery: frontend created order #${settledOrderId} for ${paymentId}, skipping`
       );
       await logDurableEvent({
-        eventType: 'stripe_webhook_recovery_skipped',
+        eventType: 'payment_recovery_skipped',
         message: 'Frontend order landed during grace window — recovery not needed',
-        paymentIntentId: paymentIntent.id,
+        paymentIntentId: paymentId,
         orderId: settledOrderId,
       });
       return;
@@ -104,15 +174,15 @@ export async function attemptRecoveryOrderCreation(
   // release, at which point the reconciliation cron picks it up.
   let reservationHeld = false;
   try {
-    const reservation = await reservePaymentIntent(paymentIntent.id);
+    const reservation = await reservePaymentIntent(paymentId);
     if (!reservation.acquired) {
       console.log(
-        `payment_intent.succeeded: Checkout holds the reservation for ${paymentIntent.id} (order ${reservation.orderId ?? 'pending'}), skipping recovery`
+        `Recovery: checkout holds the reservation for ${paymentId} (order ${reservation.orderId ?? 'pending'}), skipping`
       );
       await logDurableEvent({
-        eventType: 'stripe_webhook_recovery_skipped',
-        message: 'Checkout route holds the payment intent reservation — recovery not attempted',
-        paymentIntentId: paymentIntent.id,
+        eventType: 'payment_recovery_skipped',
+        message: 'Checkout route holds the payment reservation — recovery not attempted',
+        paymentIntentId: paymentId,
         orderId: reservation.orderId,
         payload: { reservationStatus: reservation.status },
       });
@@ -124,19 +194,16 @@ export async function attemptRecoveryOrderCreation(
     // recoverable by hand; a duplicate order double-reduces stock and spams
     // the customer and admin, so fail closed and alert instead.
     const message = error instanceof Error ? error.message : String(error);
-    console.error(
-      `payment_intent.succeeded: Reservation lock unavailable for ${paymentIntent.id}:`,
-      message
-    );
+    console.error(`Recovery: reservation lock unavailable for ${paymentId}:`, message);
     await logDurableEvent({
-      eventType: 'stripe_webhook_recovery_lock_failed',
+      eventType: 'payment_recovery_lock_failed',
       severity: 'error',
-      message: 'Could not reach the payment intent reservation table — recovery skipped',
-      paymentIntentId: paymentIntent.id,
+      message: 'Could not reach the payment reservation table — recovery skipped',
+      paymentIntentId: paymentId,
       payload: { error: message },
     });
     await sendAdminAlert('Recovery Skipped — Reservation Lock Unavailable', {
-      'PaymentIntent': paymentIntent.id,
+      'PaymentIntent': paymentId,
       'Amount': `$${amount}`,
       'Customer Email': email || 'N/A',
       'Error': message,
@@ -145,55 +212,184 @@ export async function attemptRecoveryOrderCreation(
     return;
   }
 
-  // Final check against Stripe itself: the event payload carries a metadata
-  // snapshot taken before the frontend could have stamped the order ID.
-  try {
-    const stripe = getStripeServer();
-    const fresh = await stripe.paymentIntents.retrieve(paymentIntent.id);
-    const freshOrderId = fresh.metadata?.woocommerce_order_id;
-    if (freshOrderId) {
-      await releasePaymentIntentReservation(paymentIntent.id);
-      console.log(
-        `payment_intent.succeeded: Order #${freshOrderId} already recorded on ${paymentIntent.id}, skipping recovery`
-      );
-      await logDurableEvent({
-        eventType: 'stripe_webhook_recovery_skipped',
-        message: 'PaymentIntent already carries a WooCommerce order ID — recovery not needed',
-        paymentIntentId: paymentIntent.id,
-        orderId: parseInt(freshOrderId, 10) || null,
-      });
-      return;
-    }
-  } catch {
-    // Metadata re-read is best-effort; the reservation lock is the real guard.
+  // Re-read under the lock. The record we loaded above predates it, and the
+  // provider-side reference is the last word for legacy payments whose order
+  // was created before this table existed.
+  const freshRecord = await getPaymentRecord(paymentId).catch(() => record);
+  const priorOrderId = freshRecord?.orderId ?? parseOrderRef(payment.orderReference);
+  if (priorOrderId) {
+    await releasePaymentIntentReservation(paymentId);
+    console.log(`Recovery: order #${priorOrderId} already recorded for ${paymentId}, skipping`);
+    await logDurableEvent({
+      eventType: 'payment_recovery_skipped',
+      message: 'Payment already carries a WooCommerce order ID — recovery not needed',
+      paymentIntentId: paymentId,
+      orderId: priorOrderId,
+    });
+    return;
   }
 
   // ---- Build and create the recovery order ------------------------------
 
-  // Build shipping address from Stripe shipping data
-  const stripeShipping = paymentIntent.shipping;
-  const nameParts = (stripeShipping?.name || '').split(' ');
-  const firstName = nameParts[0] || 'Unknown';
-  const lastName = nameParts.slice(1).join(' ') || 'Customer';
-  const address: OrderAddress = {
-    first_name: firstName,
-    last_name: lastName,
-    company: '',
-    address_1: stripeShipping?.address?.line1 || '',
-    address_2: stripeShipping?.address?.line2 || '',
-    city: stripeShipping?.address?.city || '',
-    state: stripeShipping?.address?.state || '',
-    postcode: stripeShipping?.address?.postal_code || '',
-    country: stripeShipping?.address?.country || 'US',
-    email,
-    phone: stripeShipping?.phone || '',
-  };
+  const snapshot = freshRecord?.snapshot ?? record?.snapshot ?? null;
+  const cart = resolveRecoveryCart(snapshot, payment);
+  const address = buildRecoveryAddress(snapshot, payment, email);
+  const orderData = buildRecoveryOrderData({
+    paymentId,
+    payment,
+    snapshot,
+    cart,
+    address,
+    amount,
+  });
 
-  // Parse cart items if available (chunked across metadata keys; legacy
-  // truncated values are repaired to whatever prefix is still valid)
-  const { items: parsedCartItems, repaired: cartItemsRepaired } =
-    readCartItemsFromMetadata(meta);
-  const lineItems: CreateOrderData['line_items'] = parsedCartItems.map(
+  try {
+    const order = await createOrder(orderData);
+
+    // Stamp the reservation before anything else can race us, then mirror it
+    // onto the payment if the provider can hold it.
+    if (reservationHeld) {
+      reservationHeld = false;
+      await markPaymentIntentOrderComplete(paymentId, order.id).catch((error) => {
+        console.error(
+          `Recovery: failed to record reservation for recovery order #${order.id}:`,
+          error
+        );
+      });
+    }
+
+    await provider.attachOrderReference(paymentId, order.id).catch(() => {
+      // Best-effort: the reservation table is authoritative.
+    });
+
+    console.log(`Recovery: created order #${order.id} for ${paymentId}`);
+
+    await logDurableEvent({
+      eventType: 'payment_recovery_order_created',
+      message: `Created recovery WooCommerce order ${order.id}`,
+      paymentIntentId: paymentId,
+      orderId: order.id,
+      payload: {
+        amount: payment.amountCents,
+        receiptEmail: email || null,
+        cartOrigin: cart.origin,
+        lineItemCount: cart.items.length,
+      },
+    });
+
+    await sendAdminAlert('Recovery Order Created', {
+      'Order ID': order.id,
+      'PaymentIntent': paymentId,
+      'Amount': `$${amount}`,
+      'Customer Email': email || 'N/A',
+      'Cart Source': cart.origin === 'none' ? 'UNKNOWN — contact customer' : cart.origin,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Recovery: failed to create order for ${paymentId}:`, message);
+
+    // Hand the lock back so checkout (or the reconciliation cron) can retry.
+    if (reservationHeld) {
+      reservationHeld = false;
+      await releasePaymentIntentReservation(paymentId).catch(() => {});
+    }
+
+    await logDurableEvent({
+      eventType: 'payment_recovery_order_failed',
+      severity: 'error',
+      message: `Failed to create recovery order for ${paymentId}`,
+      paymentIntentId: paymentId,
+      payload: {
+        amount: payment.amountCents,
+        receiptEmail: email || null,
+        error: message,
+      },
+    });
+
+    await sendAdminAlert('Payment Succeeded — Recovery Order FAILED', {
+      'PaymentIntent': paymentId,
+      'Amount': `$${amount}`,
+      'Customer Email': email || 'N/A',
+      'Error': message,
+    });
+  }
+}
+
+function parseOrderRef(value: string | null): number | null {
+  if (!value) return null;
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+/**
+ * Cart line items, snapshot first. Provider metadata is only consulted for
+ * payments created before snapshots were written.
+ */
+function resolveRecoveryCart(
+  snapshot: CheckoutSnapshot | null,
+  payment: ProviderPayment
+): RecoveryCart {
+  if (snapshot && snapshot.items.length > 0) {
+    return { items: snapshot.items, repaired: false, origin: 'snapshot' };
+  }
+
+  const { items, repaired } = readCartItemsFromMetadata(payment.legacyMetadata);
+  if (items.length > 0) {
+    return { items, repaired, origin: 'provider-metadata' };
+  }
+
+  return { items: [], repaired: false, origin: 'none' };
+}
+
+function buildRecoveryAddress(
+  snapshot: CheckoutSnapshot | null,
+  payment: ProviderPayment,
+  email: string
+): OrderAddress {
+  const source: CheckoutSnapshotAddress | null =
+    snapshot?.shippingAddress ??
+    (payment.shipping
+      ? {
+          name: payment.shipping.name,
+          phone: payment.shipping.phone,
+          line1: payment.shipping.line1,
+          line2: payment.shipping.line2,
+          city: payment.shipping.city,
+          state: payment.shipping.state,
+          postalCode: payment.shipping.postalCode,
+          country: payment.shipping.country,
+        }
+      : null);
+
+  const nameParts = (source?.name || '').trim().split(/\s+/).filter(Boolean);
+
+  return {
+    first_name: nameParts[0] || 'Unknown',
+    last_name: nameParts.slice(1).join(' ') || 'Customer',
+    company: '',
+    address_1: source?.line1 || '',
+    address_2: source?.line2 || '',
+    city: source?.city || '',
+    state: source?.state || '',
+    postcode: source?.postalCode || '',
+    country: source?.country || snapshot?.shippingCountry || 'US',
+    email,
+    phone: source?.phone || '',
+  };
+}
+
+function buildRecoveryOrderData(params: {
+  paymentId: string;
+  payment: ProviderPayment;
+  snapshot: CheckoutSnapshot | null;
+  cart: RecoveryCart;
+  address: OrderAddress;
+  amount: string;
+}): CreateOrderData {
+  const { paymentId, payment, snapshot, cart, address, amount } = params;
+  const meta = payment.legacyMetadata;
+
+  const lineItems: CreateOrderData['line_items'] = cart.items.map(
     ([productId, variationId, quantity]) => ({
       product_id: parseInt(productId, 10),
       ...(variationId ? { variation_id: parseInt(variationId, 10) } : {}),
@@ -202,8 +398,14 @@ export async function attemptRecoveryOrderCreation(
   );
   const hasCartItems = lineItems.length > 0;
 
-  const shippingTotal = meta.checkout_shipping || '0.00';
-  const discountAmount = parseFloat(meta.checkout_discount || '0');
+  const shippingTotal = (snapshot?.pricing.shipping ?? parseFloat(meta.checkout_shipping || '0'))
+    .toFixed(2);
+  const discountAmount = snapshot?.pricing.discount ?? parseFloat(meta.checkout_discount || '0');
+  const subtotal = snapshot?.pricing.subtotal?.toFixed(2) ?? meta.checkout_subtotal ?? amount;
+  const shippingMethodId = snapshot?.shippingMethod.id || meta.shipping_method_id || 'standard';
+  const shippingMethodTitle =
+    snapshot?.shippingMethod.name ||
+    (shippingMethodId === 'express' ? 'Express Shipping' : 'Standard Shipping');
 
   const orderData: CreateOrderData = {
     payment_method: 'stripe',
@@ -211,15 +413,10 @@ export async function attemptRecoveryOrderCreation(
     set_paid: true,
     billing: address,
     shipping: address,
-    line_items: hasCartItems
-      ? lineItems
-      : [],
+    line_items: hasCartItems ? lineItems : [],
     ...(!hasCartItems && {
       fee_lines: [
-        {
-          name: 'Recovered payment — items unknown (contact customer)',
-          total: meta.checkout_subtotal || amount,
-        },
+        { name: 'Recovered payment — items unknown (contact customer)', total: subtotal },
         ...(discountAmount > 0
           ? [{ name: 'Automatic discount', total: (-discountAmount).toFixed(2) }]
           : []),
@@ -227,110 +424,40 @@ export async function attemptRecoveryOrderCreation(
     }),
     shipping_lines: [
       {
-        method_id: meta.shipping_method_id || 'standard',
-        method_title: meta.shipping_method_id === 'express' ? 'Express Shipping' : 'Standard Shipping',
+        method_id: shippingMethodId,
+        method_title: shippingMethodTitle,
         total: shippingTotal,
       },
     ],
-    transaction_id: paymentIntent.id,
+    transaction_id: paymentId,
     meta_data: [
-      { key: '_stripe_payment_intent_id', value: paymentIntent.id },
-      { key: '_order_source', value: 'maleq-headless-webhook-recovery' },
-      { key: '_recovery_has_cart_items', value: hasCartItems ? 'yes' : 'no' },
-      ...(cartItemsRepaired
-        ? [{ key: '_recovery_cart_items_repaired', value: 'yes' }]
-        : []),
+      { key: '_stripe_payment_intent_id', value: paymentId },
+      { key: '_order_source', value: 'maleq-headless-recovery' },
+      { key: '_recovery_cart_origin', value: cart.origin },
+      ...(cart.repaired ? [{ key: '_recovery_cart_items_repaired', value: 'yes' }] : []),
     ],
-    customer_note: !hasCartItems
-      ? 'WEBHOOK RECOVERY: Order was automatically created from Stripe webhook because frontend order creation failed. Cart items could not be recovered — contact customer to confirm items before shipping.'
-      : cartItemsRepaired
-        ? 'WEBHOOK RECOVERY: Order was automatically created from Stripe webhook because frontend order creation failed. The cart metadata was truncated, so this item list may be incomplete — confirm against the Stripe charge total before shipping.'
-        : 'WEBHOOK RECOVERY: Order was automatically created from Stripe webhook because frontend order creation failed.',
+    customer_note: recoveryNote(cart),
   };
 
   // Add auto-discount as fee line when we have real line items
   if (hasCartItems && discountAmount > 0) {
-    orderData.fee_lines = [
-      { name: 'Automatic discount', total: (-discountAmount).toFixed(2) },
-    ];
+    orderData.fee_lines = [{ name: 'Automatic discount', total: (-discountAmount).toFixed(2) }];
   }
 
-  try {
-    const order = await createOrder(orderData);
+  return orderData;
+}
 
-    // Stamp the reservation before anything else can race us, then mirror it
-    // onto the PaymentIntent metadata.
-    if (reservationHeld) {
-      reservationHeld = false;
-      await markPaymentIntentOrderComplete(paymentIntent.id, order.id).catch((error) => {
-        console.error(
-          `payment_intent.succeeded: Failed to record reservation for recovery order #${order.id}:`,
-          error
-        );
-      });
-    }
+function recoveryNote(cart: RecoveryCart): string {
+  const preamble =
+    'RECOVERY: this order was created automatically because checkout took payment but failed to create the order.';
 
-    const stripe = getStripeServer();
-    await stripe.paymentIntents.update(paymentIntent.id, {
-      metadata: { woocommerce_order_id: String(order.id) },
-    });
-
-    console.log(
-      `payment_intent.succeeded: Created recovery order #${order.id} for ${paymentIntent.id}`
-    );
-
-    await logDurableEvent({
-      eventType: 'stripe_webhook_recovery_order_created',
-      message: `Created recovery WooCommerce order ${order.id} from webhook`,
-      paymentIntentId: paymentIntent.id,
-      orderId: order.id,
-      payload: {
-        amount: paymentIntent.amount,
-        receiptEmail: email || null,
-        hasCartItems,
-        lineItemCount: lineItems.length,
-      },
-    });
-
-    await sendAdminAlert('Webhook Recovery Order Created', {
-      'Order ID': order.id,
-      'PaymentIntent': paymentIntent.id,
-      'Amount': `$${amount}`,
-      'Customer Email': email || 'N/A',
-      'Has Cart Items': hasCartItems ? 'Yes' : 'No — contact customer',
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error(
-      `payment_intent.succeeded: Failed to create recovery order for ${paymentIntent.id}:`,
-      message
-    );
-
-    // Hand the lock back so checkout (or the reconciliation cron) can retry.
-    if (reservationHeld) {
-      reservationHeld = false;
-      await releasePaymentIntentReservation(paymentIntent.id).catch(() => {});
-    }
-
-    await logDurableEvent({
-      eventType: 'stripe_webhook_recovery_order_failed',
-      severity: 'error',
-      message: `Failed to create recovery order from webhook for ${paymentIntent.id}`,
-      paymentIntentId: paymentIntent.id,
-      payload: {
-        amount: paymentIntent.amount,
-        receiptEmail: email || null,
-        error: message,
-      },
-    });
-
-    await sendAdminAlert('Payment Succeeded — Recovery Order FAILED', {
-      'PaymentIntent': paymentIntent.id,
-      'Amount': `$${amount}`,
-      'Customer Email': email || 'N/A',
-      'Error': message,
-    });
+  if (cart.origin === 'none') {
+    return `${preamble} The cart could not be recovered — contact the customer to confirm items before shipping.`;
   }
+  if (cart.repaired) {
+    return `${preamble} The stored cart was truncated, so this item list may be incomplete — confirm against the charge total before shipping.`;
+  }
+  return preamble;
 }
 
 /**
@@ -357,4 +484,3 @@ async function waitForFrontendOrder(paymentIntentId: string): Promise<number | n
 
   return null;
 }
-
