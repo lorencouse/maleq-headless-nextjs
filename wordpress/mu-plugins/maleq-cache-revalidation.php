@@ -32,7 +32,10 @@ function maleq_revalidate_frontend_cache($post_id, $type = 'product') {
             'slug' => $slug,
         )),
         'timeout' => 5,
-        'blocking' => false,
+        // Non-blocking in web requests so admin saves stay fast. Under WP-CLI the
+        // process exits right after the hook, which drops a non-blocking request
+        // before it is sent — so block there (bulk `wp post update` runs still fire).
+        'blocking' => (defined('WP_CLI') && WP_CLI),
     ));
 }
 
