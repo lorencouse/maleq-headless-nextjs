@@ -12,6 +12,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { CartProvider } from "@/components/cart/CartProvider";
 import { Toaster } from "@/components/ui/Toaster";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/StructuredData";
+import { SOCIAL_PROFILE_URLS } from "@/lib/config/social";
 import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 import WebVitals from "@/components/analytics/WebVitals";
 import QueryProvider from "@/components/providers/QueryProvider";
@@ -198,6 +199,7 @@ export default async function RootLayout({
           name={SITE_NAME}
           url={SITE_URL}
           logo={`${SITE_URL}/favicon/android/android-launchericon-512-512.png`}
+          sameAs={SOCIAL_PROFILE_URLS}
           contactPoint={{
             url: `${SITE_URL}/contact`,
             contactType: 'customer service',

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
+import { SOCIAL_LINKS } from '@/lib/config/social';
 
 // Client component so it reads the active locale from the nearest
 // NextIntlClientProvider. On content-root guide routes there is no next-intl
@@ -139,7 +140,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
+          {/* Newsletter + social */}
           <div>
             <NewsletterSignup
               source="footer"
@@ -149,6 +150,30 @@ export default function Footer() {
               title={t('newsletterTitle')}
               description={t('newsletterDescription')}
             />
+
+            {/* The accounts the news agent posts to. rel="me" lets Mastodon
+                verify the link back; Organization.sameAs in app/layout.tsx
+                lists the same URLs for search engines and payment reviewers. */}
+            <nav aria-label={t('followUs')} className='mt-6'>
+              <h4 className='text-foreground text-sm font-semibold mb-2'>
+                {t('followUs')}
+              </h4>
+              <ul className='flex flex-wrap gap-x-4 gap-y-1'>
+                {SOCIAL_LINKS.map((s) => (
+                  <li key={s.platform}>
+                    <a
+                      href={s.url}
+                      rel='me noopener noreferrer'
+                      target='_blank'
+                      title={s.handle}
+                      className='inline-block py-1 text-sm hover:text-primary transition-colors'
+                    >
+                      {s.label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
           </div>
         </div>
 
