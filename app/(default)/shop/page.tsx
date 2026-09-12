@@ -24,6 +24,18 @@ import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
 import DidYouMean from '@/components/search/DidYouMean';
 import DiscountTierBanner from '@/components/ui/DiscountTierBanner';
+import Pagination from '@/components/shop/Pagination';
+import { notFound } from 'next/navigation';
+import {
+  parsePage,
+  listingCanonical,
+  listingRobots,
+  stringParams,
+  offsetCursor,
+  totalPagesFor,
+} from '@/lib/seo/listing-params';
+
+const PER_PAGE = 24;
 
 interface ShopPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -34,8 +46,10 @@ export async function generateMetadata({
 }: ShopPageProps): Promise<Metadata> {
   const params = await searchParams;
   const searchQuery = typeof params.q === 'string' ? params.q : undefined;
+  const page = parsePage(params);
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'shopPage' });
+  const tp = await getTranslations({ locale, namespace: 'pagination' });
 
   if (searchQuery) {
     return {
@@ -48,8 +62,9 @@ export async function generateMetadata({
   const description = t('metaShopDescription');
 
   return {
-    title: t('metaShopTitle'),
+    title: page > 1 ? `${t('metaShopTitle')} – ${tp('page', { page })}` : t('metaShopTitle'),
     description,
+    robots: listingRobots(params),
     openGraph: {
       title: t('metaShopOgTitle'),
       description,
@@ -61,7 +76,7 @@ export async function generateMetadata({
       description,
     },
     alternates: {
-      canonical: '/shop',
+      canonical: listingCanonical('/shop', page),
     },
   };
 }
@@ -92,6 +107,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
       : undefined;
   const inStock = params.inStock === 'true';
   const onSale = params.onSale === 'true';
+  const page = parsePage(params);
+  const offset = (page - 1) * PER_PAGE;
 
   // Check if any filters are active (excluding search)
   const hasFilters =
@@ -108,8 +125,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   // The 'browse' param is set when user clears all filters to keep hero hidden
   const browseMode = params.browse === '1';
 
-  // Check if search or filters are active
-  const hasSearchOrFilters = searchQuery || hasFilters || browseMode;
+  // Check if search or filters are active (page 2+ also skips the hero)
+  const hasSearchOrFilters = searchQuery || hasFilters || browseMode || page > 1;
 
   // ─── Try in-memory product index (MySQL) for product data ───
   const useIndex = isMySQLConfigured() && process.env.DATA_SOURCE !== 'graphql';
@@ -148,13 +165,13 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         onSale,
         search: searchQuery,
         sort: 'newest',
-        limit: 24,
-        offset: 0,
+        limit: PER_PAGE,
+        offset,
       });
 
       productsResult = {
         products: indexEntriesToUnifiedProducts(result.products),
-        pageInfo: { hasNextPage: result.total > 24, endCursor: null },
+        pageInfo: { hasNextPage: result.total > offset + PER_PAGE, endCursor: null },
         total: result.total,
       };
       indexFacets = result.facets;
@@ -182,8 +199,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   if (!productsResult) {
     if (searchQuery) {
       const searchResult = await searchProducts(searchQuery, {
-        limit: 24,
-        offset: 0,
+        limit: PER_PAGE,
+        offset,
       });
       productsResult = {
         products: searchResult.products,
@@ -208,7 +225,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
 
       if (isCategoryOnly) {
         const categoryResult = await getFilteredProducts({
-          limit: 24,
+          limit: PER_PAGE,
+          after: offsetCursor(offset),
           category,
         });
         productsResult = {
@@ -217,7 +235,8 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         };
       } else {
         const filteredResult = await getFilteredProducts({
-          limit: 24,
+          limit: PER_PAGE,
+          after: offsetCursor(offset),
           category,
           brand,
           color,
@@ -229,8 +248,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
         });
         productsResult = filteredResult;
       }
+    } else if (page > 1) {
+      productsResult = await getFilteredProducts({ limit: PER_PAGE, after: offsetCursor(offset) });
     } else {
-      productsResult = await getAllProducts({ limit: 24 });
+      productsResult = await getAllProducts({ limit: PER_PAGE });
     }
   }
 
@@ -242,6 +263,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     suggestions,
   } = productsResult;
   const products = sortProductsByPriority(rawProducts);
+
+  // A page past the end is a real 404, not an empty 200 (soft-404).
+  if (page > 1 && products.length === 0) {
+    notFound();
+  }
 
   // Also fetch sale products for featured section (only when no search/filters active)
   let saleProductsPromise: Promise<{ products: typeof rawProducts }>;
@@ -420,8 +446,18 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           initialCursor={pageInfo.endCursor}
           searchQuery={searchQuery}
           initialTotal={initialTotal}
+          initialOffset={offset}
         />
       </Suspense>
+
+      {/* Crawlable ?page=N links (the grid above only infinite-scrolls) */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPagesFor(searchTotal, PER_PAGE)}
+        hasNextPage={pageInfo.hasNextPage}
+        basePath="/shop"
+        query={stringParams(params)}
+      />
     </div>
   );
 }

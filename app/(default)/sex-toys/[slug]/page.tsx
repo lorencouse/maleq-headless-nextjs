@@ -27,7 +27,18 @@ import CategoryHero from '@/components/shop/CategoryHero';
 import SubcategoryGrid from '@/components/shop/SubcategoryGrid';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
+import Pagination from '@/components/shop/Pagination';
 import { BreadcrumbSchema } from '@/components/seo/StructuredData';
+import {
+  parsePage,
+  listingCanonical,
+  listingRobots,
+  stringParams,
+  offsetCursor,
+  totalPagesFor,
+} from '@/lib/seo/listing-params';
+
+const PER_PAGE = 24;
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
@@ -51,11 +62,15 @@ async function getCategories() {
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: CategoryPageProps): Promise<Metadata> {
   try {
     const { slug } = await params;
+    const urlParams = await searchParams;
+    const page = parsePage(urlParams);
     const locale = await getLocale();
     const t = await getTranslations({ locale, namespace: 'shopPage' });
+    const tp = await getTranslations({ locale, namespace: 'pagination' });
     const categories = await getCategories();
     const category = findCategoryBySlug(categories, slug);
 
@@ -70,9 +85,14 @@ export async function generateMetadata({
       count: category.count,
     });
 
+    const baseTitle = t('categoryMetaTitle', { name: category.name });
+
     return {
-      title: t('categoryMetaTitle', { name: category.name }),
+      // Page 2+ gets its own title + self-canonical so the paginated series
+      // is indexable; filtered variants are noindexed (see listing-params.ts).
+      title: page > 1 ? `${baseTitle} – ${tp('page', { page })}` : baseTitle,
       description,
+      robots: listingRobots(urlParams),
       openGraph: {
         title: t('categoryMetaOgTitle', { name: category.name }),
         description,
@@ -84,7 +104,7 @@ export async function generateMetadata({
         description,
       },
       alternates: {
-        canonical: `/sex-toys/${slug}`,
+        canonical: listingCanonical(`/sex-toys/${slug}`, page),
       },
     };
   } catch (error) {
@@ -128,6 +148,8 @@ export default async function CategoryPage({
       : undefined;
   const inStock = urlParams.inStock === 'true';
   const onSale = urlParams.onSale === 'true';
+  const page = parsePage(urlParams);
+  const offset = (page - 1) * PER_PAGE;
 
   // Check if any additional filters are active (beyond the category)
   const hasAdditionalFilters =
@@ -164,6 +186,9 @@ export default async function CategoryPage({
   let colorsData: FilterOption[] = [];
   let materialsData: FilterOption[] = [];
   let totalProductCount = 0;
+  // Exact total from the in-memory index (drives the numbered pagination).
+  // Left undefined on the GraphQL fallback, where only "has next" is known.
+  let exactTotal: number | undefined;
 
   if (useIndex) {
     try {
@@ -186,8 +211,8 @@ export default async function CategoryPage({
           inStock,
           onSale,
           sort: 'popularity',
-          limit: 24,
-          offset: 0,
+          limit: PER_PAGE,
+          offset,
         }),
         !hasAdditionalFilters
           ? queryProductIndex({
@@ -206,10 +231,11 @@ export default async function CategoryPage({
 
       products = indexEntriesToUnifiedProducts(mainResult.products);
       productsPageInfo = {
-        hasNextPage: mainResult.total > 24,
+        hasNextPage: mainResult.total > offset + PER_PAGE,
         endCursor: null,
       };
       totalProductCount = mainResult.total;
+      exactTotal = mainResult.total;
       saleProducts = indexEntriesToUnifiedProducts(saleResult.products);
 
       // Use facets from main result
@@ -233,9 +259,10 @@ export default async function CategoryPage({
         await Promise.all([
           getBrands(),
           getGlobalAttributes(),
-          hasAdditionalFilters
+          hasAdditionalFilters || page > 1
             ? getFilteredProducts({
-                limit: 24,
+                limit: PER_PAGE,
+                after: offsetCursor(offset),
                 category: slug,
                 brand,
                 color,
@@ -245,7 +272,7 @@ export default async function CategoryPage({
                 inStock,
                 onSale,
               })
-            : getAllProducts({ category: slug, limit: 24 }),
+            : getAllProducts({ category: slug, limit: PER_PAGE }),
           !hasAdditionalFilters
             ? getFilteredProducts({
                 limit: 8,
@@ -278,6 +305,11 @@ export default async function CategoryPage({
   products = sortProductsByPriority(
     Array.from(new Map(products.map((p) => [p.id, p])).values()),
   );
+
+  // A page past the end is a real 404, not an empty 200 (soft-404).
+  if (page > 1 && products.length === 0) {
+    notFound();
+  }
   const displayedProductCount = hasAdditionalFilters
     ? totalProductCount || products.length
     : category.count;
@@ -370,8 +402,18 @@ export default async function CategoryPage({
           initialCursor={productsPageInfo.endCursor}
           initialCategory={slug}
           initialTotal={displayedProductCount}
+          initialOffset={offset}
         />
       </Suspense>
+
+      {/* Crawlable ?page=N links (the grid above only infinite-scrolls) */}
+      <Pagination
+        currentPage={page}
+        totalPages={totalPagesFor(exactTotal, PER_PAGE)}
+        hasNextPage={productsPageInfo.hasNextPage}
+        basePath={`/sex-toys/${slug}`}
+        query={stringParams(urlParams)}
+      />
     </div>
   );
 }

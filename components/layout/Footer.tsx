@@ -5,6 +5,12 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import NewsletterSignup from '@/components/newsletter/NewsletterSignup';
 import { FOOTER_SOCIAL_LINKS } from '@/lib/config/social';
+import { mainNavigation } from '@/lib/config/navigation';
+
+// The category groups of the Shop mega-menu (Sex Toys, For Her, For Him, …).
+// Repeated here as plain links so every page carries crawlable paths into the
+// catalog — the header menu alone is not enough (SEO audit 2026-09-12, C4).
+const SHOP_GROUPS = mainNavigation.find((s) => s.href === '/shop')?.children ?? [];
 
 // Client component so it reads the active locale from the nearest
 // NextIntlClientProvider. On content-root guide routes there is no next-intl
@@ -13,12 +19,13 @@ import { FOOTER_SOCIAL_LINKS } from '@/lib/config/social';
 // guide's language (e.g. Spanish on a Spanish guide) and English elsewhere.
 export default function Footer() {
   const t = useTranslations('footer');
+  const tn = useTranslations('nav');
   const currentYear = new Date().getFullYear();
 
   return (
     <footer className='bg-card border-t border-border text-muted-foreground transition-colors' role="contentinfo" aria-label={t('siteFooter')}>
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-8'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8'>
           {/* About */}
           <div>
             <h3 className='text-foreground text-lg font-semibold mb-4'>
@@ -90,6 +97,41 @@ export default function Footer() {
               </li>
             </ul>
           </div>
+
+          {/* Shop by Category */}
+          <nav aria-label={t('shopByCategory')}>
+            <h4 className='text-foreground text-sm font-semibold mb-4'>
+              {t('shopByCategory')}
+            </h4>
+            <ul className='space-y-1'>
+              {SHOP_GROUPS.map((group) => (
+                <li key={group.href}>
+                  <Link
+                    href={group.href}
+                    className='inline-block py-2 text-sm hover:text-primary transition-colors'
+                  >
+                    {tn(group.labelKey)}
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link
+                  href='/sex-toys'
+                  className='inline-block py-2 text-sm font-medium text-foreground hover:text-primary transition-colors'
+                >
+                  {t('allCategories')}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href='/brands'
+                  className='inline-block py-2 text-sm font-medium text-foreground hover:text-primary transition-colors'
+                >
+                  {t('allBrands')}
+                </Link>
+              </li>
+            </ul>
+          </nav>
 
           {/* Customer Service */}
           <div>

@@ -46,7 +46,10 @@
     "followUs": "Síguenos",
     "legalName": "THE MALEQ LLC",
     "supportPhone": "+1 (978) 572-0012",
-    "supportEmail": "sales@maleq.com"
+    "supportEmail": "sales@maleq.com",
+    "shopByCategory": "Comprar por categoría",
+    "allCategories": "Todas las categorías",
+    "allBrands": "Todas las marcas"
   },
   "mobileMenu": {
     "menu": "Menú",
@@ -2029,5 +2032,20 @@
     "newsletterSubtitle": "Recibe nuestras mejores historias, cultura y titulares cada semana.",
     "followHeading": "Sigue a Male Q News",
     "followSubtitle": "Recibe lo último en tu plataforma favorita."
+  },
+  "pagination": {
+    "label": "Paginación",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {page}",
+    "pageOf": "Página {page} de {total}"
+  },
+  "categoryIndex": {
+    "metaTitle": "Todas las categorías | Tienda",
+    "metaDescription": "Explora todas las categorías de productos de Male Q: juguetes sexuales, lubricantes, lencería, bondage, bienestar y más, con envío rápido y discreto.",
+    "h1": "Comprar por categoría",
+    "subtitle": "Todas las categorías que tenemos, desde las grandes familias hasta las estanterías especializadas.",
+    "breadcrumb": "Todas las categorías",
+    "productCount": "{count, plural, =1 {# producto} other {# productos}}"
   }
 }

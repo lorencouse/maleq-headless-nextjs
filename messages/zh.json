@@ -46,7 +46,10 @@
     "followUs": "关注我们",
     "legalName": "THE MALEQ LLC",
     "supportPhone": "+1 (978) 572-0012",
-    "supportEmail": "sales@maleq.com"
+    "supportEmail": "sales@maleq.com",
+    "shopByCategory": "按类别选购",
+    "allCategories": "全部类别",
+    "allBrands": "全部品牌"
   },
   "mobileMenu": {
     "menu": "选单",
@@ -2029,5 +2032,20 @@
     "newsletterSubtitle": "每周为你送上头条故事、文化与要闻。",
     "followHeading": "关注 Male Q News",
     "followSubtitle": "在你喜欢的平台获取最新动态。"
+  },
+  "pagination": {
+    "label": "分页",
+    "previous": "上一页",
+    "next": "下一页",
+    "page": "第 {page} 页",
+    "pageOf": "第 {page} 页，共 {total} 页"
+  },
+  "categoryIndex": {
+    "metaTitle": "全部类别 | 商店",
+    "metaDescription": "浏览 Male Q 的全部商品类别：情趣玩具、润滑剂、情趣内衣、捆绑用品、健康护理等，快速隐私配送。",
+    "h1": "按类别选购",
+    "subtitle": "我们经营的每一个类别，从大类到专业细分。",
+    "breadcrumb": "全部类别",
+    "productCount": "{count} 件商品"
   }
 }

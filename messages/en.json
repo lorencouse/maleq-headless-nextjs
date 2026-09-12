@@ -46,7 +46,10 @@
     "supportPhone": "+1 (978) 572-0012",
     "supportEmail": "sales@maleq.com",
     "contactHeading": "Contact",
-    "followUs": "Follow us"
+    "followUs": "Follow us",
+    "shopByCategory": "Shop by Category",
+    "allCategories": "All Categories",
+    "allBrands": "All Brands"
   },
   "mobileMenu": {
     "menu": "Menu",
@@ -1791,5 +1794,20 @@
     "newsletterSubtitle": "Get our top stories, culture, and headlines delivered weekly.",
     "followHeading": "Follow Male Q News",
     "followSubtitle": "Get the latest on your favorite platform."
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {page}",
+    "pageOf": "Page {page} of {total}"
+  },
+  "categoryIndex": {
+    "metaTitle": "All Categories | Shop",
+    "metaDescription": "Browse every product category at Male Q: sex toys, lubricants, lingerie, bondage gear, wellness and more, with fast, discreet shipping.",
+    "h1": "Shop by Category",
+    "subtitle": "Every category we stock, from the big families down to the specialist shelves.",
+    "breadcrumb": "All Categories",
+    "productCount": "{count, plural, =1 {# product} other {# products}}"
   }
 }

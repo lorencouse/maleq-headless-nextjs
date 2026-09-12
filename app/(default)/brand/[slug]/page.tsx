@@ -14,7 +14,18 @@ import ShopPageClient from '@/components/shop/ShopPageClient';
 import BrandHero from '@/components/shop/BrandHero';
 import FeaturedProducts from '@/components/shop/FeaturedProducts';
 import ShopSearch from '@/components/shop/ShopSearch';
+import Pagination from '@/components/shop/Pagination';
+import {
+  parsePage,
+  listingCanonical,
+  listingRobots,
+  stringParams,
+  offsetCursor,
+  totalPagesFor,
+} from '@/lib/seo/listing-params';
 import { stripHtml } from '@/lib/utils/text-utils';
+
+const PER_PAGE = 24;
 import { BreadcrumbSchema, BrandSchema } from '@/components/seo/StructuredData';
 
 interface BrandPageProps {
@@ -22,11 +33,14 @@ interface BrandPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export async function generateMetadata({ params }: BrandPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: BrandPageProps): Promise<Metadata> {
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'brands' });
+  const tp = await getTranslations({ locale, namespace: 'pagination' });
   try {
     const { slug } = await params;
+    const urlParams = await searchParams;
+    const page = parsePage(urlParams);
     const brand = await getBrandBySlug(slug);
 
     if (!brand) {
@@ -39,9 +53,12 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
       ? stripHtml(brand.description).slice(0, 160)
       : t('brandMetaDescriptionFallback', { name: brand.name, count: brand.count ?? 0 });
 
+    const baseTitle = t('brandMetaTitle', { name: brand.name });
+
     return {
-      title: t('brandMetaTitle', { name: brand.name }),
+      title: page > 1 ? `${baseTitle} – ${tp('page', { page })}` : baseTitle,
       description,
+      robots: listingRobots(urlParams),
       openGraph: {
         title: t('brandMetaOgTitle', { name: brand.name }),
         description,
@@ -53,7 +70,7 @@ export async function generateMetadata({ params }: BrandPageProps): Promise<Meta
         description,
       },
       alternates: {
-        canonical: `/brand/${slug}`,
+        canonical: listingCanonical(`/brand/${slug}`, page),
       },
     };
   } catch (error) {
@@ -85,6 +102,8 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const maxPrice = typeof urlParams.maxPrice === 'string' ? parseFloat(urlParams.maxPrice) : undefined;
   const inStock = urlParams.inStock === 'true';
   const onSale = urlParams.onSale === 'true';
+  const page = parsePage(urlParams);
+  const offset = (page - 1) * PER_PAGE;
 
   // Check if any additional filters are active (beyond the brand)
   const hasAdditionalFilters = category || color || material ||
@@ -108,7 +127,8 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
   const [productsResult, saleProductsResult] = await Promise.all([
     hasAdditionalFilters
       ? getFilteredProducts({
-          limit: 24,
+          limit: PER_PAGE,
+          after: offsetCursor(offset),
           brand: slug,
           category,
           color,
@@ -118,7 +138,7 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           inStock,
           onSale,
         })
-      : getFilteredProducts({ limit: 24, brand: slug }),
+      : getFilteredProducts({ limit: PER_PAGE, after: offsetCursor(offset), brand: slug }),
     // Only fetch sale products if no filters are active
     !hasAdditionalFilters
       ? getFilteredProducts({
@@ -132,6 +152,11 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
 
   const products = sortProductsByPriority(productsResult.products);
   const productsPageInfo = productsResult.pageInfo;
+
+  // A page past the end is a real 404, not an empty 200 (soft-404).
+  if (page > 1 && products.length === 0) {
+    notFound();
+  }
   const saleProducts = saleProductsResult.products;
   const displayedProductCount = hasAdditionalFilters
     ? products.length
@@ -216,8 +241,18 @@ export default async function BrandPage({ params, searchParams }: BrandPageProps
           initialCursor={productsPageInfo.endCursor}
           initialBrand={slug}
           initialTotal={displayedProductCount}
+          initialOffset={offset}
         />
       </Suspense>
+
+      {/* Crawlable ?page=N links (the grid above only infinite-scrolls) */}
+      <Pagination
+        currentPage={page}
+        totalPages={hasAdditionalFilters ? undefined : totalPagesFor(brand.count ?? undefined, PER_PAGE)}
+        hasNextPage={productsPageInfo.hasNextPage}
+        basePath={`/brand/${slug}`}
+        query={stringParams(urlParams)}
+      />
     </div>
   );
 }

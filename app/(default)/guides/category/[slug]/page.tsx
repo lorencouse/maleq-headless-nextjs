@@ -10,10 +10,14 @@ import BlogSearch from '@/components/blog/BlogSearch';
 import { stripHtml } from '@/lib/utils/text-utils';
 import { sanitizeHtml } from '@/lib/utils/sanitize';
 import { BreadcrumbSchema } from '@/components/seo/StructuredData';
+import Pagination from '@/components/shop/Pagination';
+import { parsePage, listingCanonical, offsetCursor, totalPagesFor } from '@/lib/seo/listing-params';
+
+const POSTS_PER_PAGE = 12;
 
 interface BlogCategoryPageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }
 
 interface Category {
@@ -46,10 +50,12 @@ async function fetchCategory(slug: string): Promise<Category | null> {
   return data?.category || null;
 }
 
-export async function generateMetadata({ params }: BlogCategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: BlogCategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const page = parsePage(await searchParams);
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'blog' });
+  const tp = await getTranslations({ locale, namespace: 'pagination' });
   const category = await fetchCategory(slug);
 
   if (!category) {
@@ -62,8 +68,10 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
     ? stripHtml(category.description).slice(0, 160)
     : t('categoryMetaDescription', { name: category.name, count: category.count });
 
+  const baseTitle = t('categoryMetaTitle', { name: category.name });
+
   return {
-    title: t('categoryMetaTitle', { name: category.name }),
+    title: page > 1 ? `${baseTitle} – ${tp('page', { page })}` : baseTitle,
     description,
     openGraph: {
       title: t('categoryMetaOgTitle', { name: category.name }),
@@ -76,7 +84,7 @@ export async function generateMetadata({ params }: BlogCategoryPageProps): Promi
       description,
     },
     alternates: {
-      canonical: `/guides/category/${slug}`,
+      canonical: listingCanonical(`/guides/category/${slug}`, page),
     },
   };
 }
@@ -92,7 +100,10 @@ export const dynamicParams = true;
 
 export default async function BlogCategoryPage({ params, searchParams }: BlogCategoryPageProps) {
   const { slug } = await params;
-  const { q: searchQuery } = await searchParams;
+  const sp = await searchParams;
+  const { q: searchQuery } = sp;
+  const page = parsePage(sp);
+  const offset = (page - 1) * POSTS_PER_PAGE;
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'blog' });
 
@@ -105,7 +116,12 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
   // Fetch posts (with search if provided)
   const { posts, pageInfo } = searchQuery
     ? await searchBlogPosts(searchQuery, { first: 20, categorySlug: slug })
-    : await getBlogPosts({ first: 12, categorySlug: slug });
+    : await getBlogPosts({ first: POSTS_PER_PAGE, after: offsetCursor(offset), categorySlug: slug });
+
+  // A page past the end is a real 404, not an empty 200 (soft-404).
+  if (page > 1 && posts.length === 0) {
+    notFound();
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
@@ -167,6 +183,16 @@ export default async function BlogCategoryPage({ params, searchParams }: BlogCat
         }}
         categorySlug={slug}
       />
+
+      {/* Crawlable ?page=N links for the archive */}
+      {!searchQuery && (
+        <Pagination
+          currentPage={page}
+          totalPages={totalPagesFor(category.count, POSTS_PER_PAGE)}
+          hasNextPage={pageInfo.hasNextPage}
+          basePath={`/guides/category/${slug}`}
+        />
+      )}
 
       {/* Back to blog */}
       <div className="mt-12 pt-8 border-t border-border">

@@ -46,7 +46,10 @@
     "followUs": "フォローする",
     "legalName": "THE MALEQ LLC",
     "supportPhone": "+1 (978) 572-0012",
-    "supportEmail": "sales@maleq.com"
+    "supportEmail": "sales@maleq.com",
+    "shopByCategory": "カテゴリーから探す",
+    "allCategories": "すべてのカテゴリー",
+    "allBrands": "すべてのブランド"
   },
   "mobileMenu": {
     "menu": "メニュー",
@@ -2029,5 +2032,20 @@
     "newsletterSubtitle": "注目記事・カルチャー・見出しを毎週お届けします。",
     "followHeading": "Male Q News をフォロー",
     "followSubtitle": "お好きなプラットフォームで最新情報をチェック。"
+  },
+  "pagination": {
+    "label": "ページ送り",
+    "previous": "前へ",
+    "next": "次へ",
+    "page": "{page}ページ",
+    "pageOf": "{page} / {total}ページ"
+  },
+  "categoryIndex": {
+    "metaTitle": "すべてのカテゴリー | ショップ",
+    "metaDescription": "Male Qのすべての商品カテゴリー：セックストイ、ローション、ランジェリー、ボンデージ、ウェルネスなど。迅速で目立たない配送。",
+    "h1": "カテゴリーから探す",
+    "subtitle": "取り扱っているすべてのカテゴリーを、大きな分類から専門的な棚まで。",
+    "breadcrumb": "すべてのカテゴリー",
+    "productCount": "{count}点の商品"
   }
 }

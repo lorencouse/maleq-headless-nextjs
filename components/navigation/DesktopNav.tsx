@@ -25,16 +25,19 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
   const t = useTranslations('nav');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  if (!isOpen) return null;
-
   // Calculate columns based on number of children
   const columns = section.columns || Math.min(section.children.length, 4);
 
+  // Always rendered, toggled with `hidden`: the ~40 category links in this
+  // menu are the site's main internal-linking path to category pages, and a
+  // `return null` when closed kept them out of the server HTML entirely
+  // (SEO audit 2026-09-12, finding C4).
   return (
     <div
       ref={dropdownRef}
-      className="absolute top-full left-0 mt-0 pt-2 z-50"
+      className={`absolute top-full left-0 mt-0 pt-2 z-50 ${isOpen ? '' : 'hidden'}`}
       onMouseLeave={onClose}
+      aria-hidden={!isOpen}
     >
       <div className={`bg-card border border-border rounded-lg shadow-xl ${columns === 1 ? 'p-4' : 'p-6'}`}>
         {/* Featured items bar */}
@@ -129,12 +132,12 @@ function MegaMenuDropdown({ section, isOpen, onClose }: DropdownProps) {
 function SimpleDropdown({ section, isOpen, onClose }: DropdownProps) {
   const t = useTranslations('nav');
 
-  if (!isOpen) return null;
-
+  // Always rendered (see MegaMenuDropdown) so the links exist for crawlers.
   return (
     <div
-      className="absolute top-full left-0 mt-0 pt-2 z-50"
+      className={`absolute top-full left-0 mt-0 pt-2 z-50 ${isOpen ? '' : 'hidden'}`}
       onMouseLeave={onClose}
+      aria-hidden={!isOpen}
     >
       <div className="bg-card border border-border rounded-lg shadow-xl p-3 min-w-[220px]">
         {section.children.map((group) => (

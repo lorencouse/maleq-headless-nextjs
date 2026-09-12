@@ -1,4 +1,26 @@
-import Script from 'next/script';
+/**
+ * Renders a JSON-LD block as a plain <script> in the server HTML.
+ *
+ * These components are server components, so a plain tag lands in the initial
+ * HTML that crawlers fetch. Do NOT use next/script here: it injects the tag
+ * client-side after hydration, which left every page with zero structured data
+ * for non-JS crawlers (Bing, AI bots) and made Google's pickup depend on
+ * rendering — verified live 2026-09-12 (SEO audit finding C2).
+ *
+ * `<` is escaped so a `</script>` inside a description can't break out of the
+ * tag; JSON parsers read `\u003c` back as `<`.
+ */
+function JsonLd({ id, data }: { id: string; data: unknown }) {
+  return (
+    <script
+      id={id}
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(data).replace(/</g, '\\u003c'),
+      }}
+    />
+  );
+}
 
 interface OrganizationProps {
   name: string;
@@ -30,11 +52,7 @@ export function OrganizationSchema({ name, url, logo, sameAs, contactPoint }: Or
   };
 
   return (
-    <Script
-      id="organization-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="organization-schema" data={schema} />
   );
 }
 
@@ -63,11 +81,7 @@ export function WebSiteSchema({ name, url, searchUrl }: WebSiteProps) {
   };
 
   return (
-    <Script
-      id="website-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="website-schema" data={schema} />
   );
 }
 
@@ -101,11 +115,7 @@ export function BrandSchema({ name, url, sameAs, description, logo }: BrandSchem
   };
 
   return (
-    <Script
-      id="brand-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="brand-schema" data={schema} />
   );
 }
 
@@ -196,11 +206,7 @@ export function ProductSchema({
   };
 
   return (
-    <Script
-      id="product-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="product-schema" data={schema} />
   );
 }
 
@@ -253,11 +259,7 @@ export function ArticleSchema({
   };
 
   return (
-    <Script
-      id="article-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="article-schema" data={schema} />
   );
 }
 
@@ -279,11 +281,7 @@ export function BreadcrumbSchema({ items }: { items: BreadcrumbItem[] }) {
   };
 
   return (
-    <Script
-      id="breadcrumb-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="breadcrumb-schema" data={schema} />
   );
 }
 
@@ -363,11 +361,7 @@ export function ItemListSchema({
   };
 
   return (
-    <Script
-      id="itemlist-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="itemlist-schema" data={schema} />
   );
 }
 
@@ -388,10 +382,6 @@ export function FaqSchema({ faqs }: { faqs: { q: string; a: string }[] }) {
   };
 
   return (
-    <Script
-      id="faq-schema"
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <JsonLd id="faq-schema" data={schema} />
   );
 }

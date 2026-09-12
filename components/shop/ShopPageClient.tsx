@@ -43,6 +43,12 @@ interface ShopPageClientProps {
   initialCategory?: string;
   initialBrand?: string;
   initialTotal?: number;
+  /**
+   * Offset of `initialProducts` within the full result set. Non-zero when the
+   * server rendered `?page=N` (see components/shop/Pagination.tsx); load-more
+   * continues from here instead of re-fetching page 1.
+   */
+  initialOffset?: number;
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -75,6 +81,7 @@ export default function ShopPageClient({
   initialCategory,
   initialBrand,
   initialTotal,
+  initialOffset = 0,
 }: ShopPageClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,7 +97,7 @@ export default function ShopPageClient({
   const [hasMore, setHasMore] = useState(cached?.hasMore ?? initialHasMore);
   const [totalCount, setTotalCount] = useState(cached?.totalCount ?? initialTotal ?? initialProducts.length);
   const [cursor, setCursor] = useState<string | null>(cached?.cursor ?? initialCursorProp ?? null);
-  const [searchOffset, setSearchOffset] = useState(cached?.searchOffset ?? initialProducts.length);
+  const [searchOffset, setSearchOffset] = useState(cached?.searchOffset ?? initialOffset + initialProducts.length);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [availableBrands, setAvailableBrands] = useState<FilterOption[]>(cached?.brands ?? brands);
   const [availableMaterials, setAvailableMaterials] = useState<FilterOption[]>(cached?.materials ?? materials);
@@ -571,12 +578,12 @@ export default function ShopPageClient({
       fetchProducts(filterParams, null, searchOffset);
     } else if (cursor) {
       // GraphQL cursor-based pagination
-      fetchProducts(filterParams, cursor, products.length);
+      fetchProducts(filterParams, cursor, initialOffset + products.length);
     } else {
       // Index offset-based pagination (no cursor available)
-      fetchProducts(filterParams, null, products.length);
+      fetchProducts(filterParams, null, initialOffset + products.length);
     }
-  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchOffset, cursor, products.length, fetchProducts]);
+  }, [isLoading, hasMore, searchQuery, categoryFilter, brandFilter, colorFilter, materialFilter, minPriceFilter, maxPriceFilter, minLengthFilter, maxLengthFilter, minWeightFilter, maxWeightFilter, inStockFilter, onSaleFilter, productTypeFilter, sortBy, searchOffset, cursor, products.length, initialOffset, fetchProducts]);
 
   // Close mobile filter on resize
   useEffect(() => {

@@ -180,16 +180,16 @@ const nextConfig: NextConfig = {
       // --- WooCommerce / Account routes ---
       {
         // Legacy trailing-slash pagination variant
-        // /product-category/dildos/page/2/ → /sex-toys/dildos
+        // /product-category/dildos/page/2/ → /sex-toys/dildos?page=2
         source: '/product-category/:slug/page/:num(\\d+)/',
-        destination: '/sex-toys/:slug',
+        destination: '/sex-toys/:slug?page=:num',
         permanent: true,
       },
       {
-        // Strip pagination from old category URLs before redirect
-        // /product-category/dildos/page/2/ → /sex-toys/dildos
+        // Map old category pagination onto the ?page= listing pages
+        // /product-category/dildos/page/2 → /sex-toys/dildos?page=2
         source: '/product-category/:slug/page/:num(\\d+)',
-        destination: '/sex-toys/:slug',
+        destination: '/sex-toys/:slug?page=:num',
         permanent: true,
       },
       {
@@ -278,28 +278,28 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
 
-      // --- WordPress pagination → strip /page/N/ ---
+      // --- WordPress pagination → ?page=N (listing pages paginate server-side) ---
       {
         source: '/page/:num(\\d+)',
         destination: '/guides',
         permanent: true,
       },
       {
-        // Category pagination: /sex-toys/dildos/page/2 → /sex-toys/dildos
+        // Category pagination: /sex-toys/dildos/page/2 → /sex-toys/dildos?page=2
         source: '/sex-toys/:slug/page/:num(\\d+)',
-        destination: '/sex-toys/:slug',
+        destination: '/sex-toys/:slug?page=:num',
         permanent: true,
       },
       {
-        // Blog pagination: /guides/page/2 → /guides
+        // Blog pagination: /guides/page/2 → /guides?page=2
         source: '/guides/page/:num(\\d+)',
-        destination: '/guides',
+        destination: '/guides?page=:num',
         permanent: true,
       },
       {
         // Blog category pagination
         source: '/guides/category/:slug/page/:num(\\d+)',
-        destination: '/guides/category/:slug',
+        destination: '/guides/category/:slug?page=:num',
         permanent: true,
       },
       {
@@ -311,7 +311,7 @@ const nextConfig: NextConfig = {
       {
         // Brand pagination
         source: '/brand/:slug/page/:num(\\d+)',
-        destination: '/brand/:slug',
+        destination: '/brand/:slug?page=:num',
         permanent: true,
       },
 

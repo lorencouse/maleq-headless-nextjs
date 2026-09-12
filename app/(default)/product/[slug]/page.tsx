@@ -217,7 +217,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductSchema
         name={product.name}
         description={productDescription}
-        image={productImages.length > 0 ? productImages : '/placeholder.jpg'}
+        image={productImages.length > 0 ? productImages : `${SITE_URL}/og-image.jpg`}
         sku={product.sku || undefined}
         gtin={productGtin}
         brand={productBrand || productCategory}

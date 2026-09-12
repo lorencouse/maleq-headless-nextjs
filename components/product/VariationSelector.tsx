@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useSearchParams, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   formatAttributeName,
@@ -106,8 +105,6 @@ export default function VariationSelector({
   defaultAttributes,
   productName,
 }: VariationSelectorProps) {
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
   const t = useTranslations('variations');
   const localizeColorName = useLocalizedColorName();
   const localizeMaterialName = useLocalizedMaterialName();
@@ -161,58 +158,66 @@ export default function VariationSelector({
     }));
   }, [variations]);
 
-  // State to track selected attributes
+  // State to track selected attributes.
+  //
+  // Initialised from the product's default variation ONLY — never from the URL.
+  // Reading `useSearchParams()` here used to suspend this whole subtree during
+  // static/ISR rendering, so every variable product shipped its H1, price,
+  // stock status and add-to-cart button to crawlers as a skeleton (the
+  // <Suspense> fallback in app/(default)/product/[slug]/page.tsx). Deep-linked
+  // `?attribute_*=` selections are applied after mount (see effect below), so
+  // server and client render the same initial markup and the buy box is real
+  // HTML.
   const [selectedAttributes, setSelectedAttributes] = useState<
     Record<string, string>
   >(() => {
-    // Try to initialize from URL params first (e.g., ?attribute_size=Large)
-    const fromUrl: Record<string, string> = {};
-    let hasUrlParams = false;
-
-    for (const [key, value] of searchParams.entries()) {
-      if (key.startsWith('attribute_')) {
-        const attrName = key.replace('attribute_', '');
-        // Find the actual attribute name (case-insensitive match)
-        const matchingAttr = variations[0]?.attributes.find(
-          (a) => a.name.toLowerCase().replace(/\s+/g, '-') === attrName.toLowerCase()
-            || a.name.toLowerCase() === attrName.toLowerCase()
-        );
-        if (matchingAttr) {
-          // Find matching value (case-insensitive)
-          const allValues = new Set<string>();
-          variations.forEach((v) =>
-            v.attributes.forEach((a) => {
-              if (a.name === matchingAttr.name) allValues.add(a.value);
-            })
-          );
-          const matchedValue = Array.from(allValues).find(
-            (v) => v.toLowerCase() === decodeURIComponent(value).toLowerCase()
-          );
-          if (matchedValue) {
-            fromUrl[matchingAttr.name] = matchedValue;
-            hasUrlParams = true;
-          }
-        }
-      }
-    }
-
-    // If URL params matched a valid variation, use those
-    if (hasUrlParams) {
-      const urlVariation = variations.find((v) =>
-        v.attributes.every((attr) => fromUrl[attr.name] === attr.value)
-      );
-      if (urlVariation) return fromUrl;
-    }
-
-    // Use shared default variation logic: default attrs → first in-stock → default OOS → first
     const initialVariation = findDefaultVariation(variations, defaultAttributes);
-
     const initial: Record<string, string> = {};
     initialVariation?.attributes.forEach((attr) => {
       initial[attr.name] = attr.value;
     });
     return initial;
   });
+
+  // Resolve `?attribute_size=Large`-style params from the current URL into a
+  // full attribute selection, or null when they don't identify a variation.
+  const readSelectionFromUrl = (): Record<string, string> | null => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl: Record<string, string> = {};
+    let hasUrlParams = false;
+
+    for (const [key, value] of params.entries()) {
+      if (!key.startsWith('attribute_')) continue;
+      const attrName = key.replace('attribute_', '');
+      // Find the actual attribute name (case-insensitive match)
+      const matchingAttr = variations[0]?.attributes.find(
+        (a) => a.name.toLowerCase().replace(/\s+/g, '-') === attrName.toLowerCase()
+          || a.name.toLowerCase() === attrName.toLowerCase()
+      );
+      if (!matchingAttr) continue;
+      // Find matching value (case-insensitive)
+      const allValues = new Set<string>();
+      variations.forEach((v) =>
+        v.attributes.forEach((a) => {
+          if (a.name === matchingAttr.name) allValues.add(a.value);
+        })
+      );
+      const matchedValue = Array.from(allValues).find(
+        (v) => v.toLowerCase() === value.toLowerCase()
+      );
+      if (matchedValue) {
+        fromUrl[matchingAttr.name] = matchedValue;
+        hasUrlParams = true;
+      }
+    }
+
+    if (!hasUrlParams) return null;
+    const urlVariation = variations.find((v) =>
+      v.attributes.every((attr) => fromUrl[attr.name] === attr.value)
+    );
+    return urlVariation ? fromUrl : null;
+  };
 
   // Find the matching variation based on selected attributes
   const selectedVariation = useMemo(() => {
@@ -223,9 +228,21 @@ export default function VariationSelector({
     );
   }, [selectedAttributes, variations]);
 
-  // Call onVariationChange on mount with the initial variation
-  // This ensures the parent components have the correct initial variation data
+  // On mount: honour a deep-linked `?attribute_*=` selection (client-only, so
+  // SSR markup stays deterministic), otherwise notify the parent of the default
+  // variation so price/stock/gallery reflect it.
   useEffect(() => {
+    const fromUrl = readSelectionFromUrl();
+    if (fromUrl) {
+      setSelectedAttributes(fromUrl);
+      const urlVariation = variations.find((v) =>
+        v.attributes.every((attr) => fromUrl[attr.name] === attr.value)
+      );
+      if (urlVariation && onVariationChange) {
+        onVariationChange(urlVariation);
+      }
+      return;
+    }
     if (selectedVariation && onVariationChange) {
       onVariationChange(selectedVariation);
     }
@@ -256,15 +273,13 @@ export default function VariationSelector({
   //
   // We deliberately use the History API instead of router.replace(): this page's
   // server component does NOT read searchParams, so a router navigation would
-  // refetch the RSC payload for no benefit AND re-suspend the (fallback-less)
-  // <Suspense> wrapping ProductDetailsWrapper in page.tsx — blanking the whole
-  // gallery/details block on the first selection of each variation (worse on
-  // products with many variations, where the refetch is slow enough to see).
-  // history.replaceState updates the URL for shareable links while staying in
-  // sync with useSearchParams, with no navigation and no flicker.
+  // refetch the RSC payload for no benefit and flicker the gallery/details
+  // block. history.replaceState updates the URL for shareable links with no
+  // navigation. (We also don't use useSearchParams() anywhere in this tree —
+  // see the selectedAttributes comment above.)
   const updateUrlParams = (attrs: Record<string, string>) => {
     if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
     // Remove old attribute_ params
     for (const key of Array.from(params.keys())) {
       if (key.startsWith('attribute_')) params.delete(key);
@@ -275,7 +290,7 @@ export default function VariationSelector({
       params.set(paramKey, value);
     }
     const qs = params.toString();
-    window.history.replaceState(null, '', `${pathname}${qs ? `?${qs}` : ''}`);
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
   };
 
   // Handle attribute selection

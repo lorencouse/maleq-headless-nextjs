@@ -10,11 +10,19 @@ import ArticleHero from '@/components/blog/ArticleHero';
 import TopicSection, { TopicLayout } from '@/components/blog/TopicSection';
 import DidYouMean from '@/components/search/DidYouMean';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
+import Pagination from '@/components/shop/Pagination';
+import { notFound } from 'next/navigation';
+import { parsePage, listingCanonical, offsetCursor } from '@/lib/seo/listing-params';
+
+const POSTS_PER_PAGE = 12;
 
 export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
-  const { q: searchQuery } = await searchParams;
+  const sp = await searchParams;
+  const { q: searchQuery } = sp;
+  const page = parsePage(sp);
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'blog' });
+  const tp = await getTranslations({ locale, namespace: 'pagination' });
 
   if (searchQuery) {
     return {
@@ -25,7 +33,7 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
   }
 
   return {
-    title: t('metaTitle'),
+    title: page > 1 ? `${t('metaTitle')} – ${tp('page', { page })}` : t('metaTitle'),
     description: t('metaDescription'),
     openGraph: {
       title: t('metaOgTitle'),
@@ -38,7 +46,7 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
       description: t('metaDescriptionShort'),
     },
     alternates: {
-      canonical: '/guides',
+      canonical: listingCanonical('/guides', page),
     },
   };
 }
@@ -47,16 +55,20 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
 // SQL loaders with a 5-min cache, so the magazine view stays cheap.
 
 interface BlogPageProps {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }
 
 // Cycle layouts so the page reads with news-site variety.
 const SECTION_LAYOUTS: TopicLayout[] = ['carousel', 'grid', 'list', 'carousel', 'grid', 'carousel'];
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
-  const { q: searchQuery } = await searchParams;
+  const sp = await searchParams;
+  const { q: searchQuery } = sp;
+  const page = parsePage(sp);
+  const offset = (page - 1) * POSTS_PER_PAGE;
   const locale = await getLocale();
   const t = await getTranslations({ locale, namespace: 'blog' });
+  const tp = await getTranslations({ locale, namespace: 'pagination' });
 
   // ─── Search view (unchanged behavior) ───
   if (searchQuery) {
@@ -88,10 +100,41 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
     );
   }
 
+  // ─── Archive pages (?page=2+) ───
+  // Plain chronological list with real prev/next links, so every guide is
+  // reachable by crawlers without the JS load-more (SEO audit finding C3).
+  if (page > 1) {
+    const archive = await getBlogPosts({
+      first: POSTS_PER_PAGE,
+      after: offsetCursor(offset),
+      excludeCategorySlugs: ['espanol', 'cn'],
+    });
+    if (archive.posts.length === 0) {
+      notFound();
+    }
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 lg:py-12">
+        <Breadcrumbs items={[{ label: t('breadcrumbGuides'), href: '/guides' }, { label: tp('page', { page }) }]} />
+        <div className="mt-6 mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-1">{t('pageTitle')}</h1>
+          <p className="text-lg text-muted-foreground">
+            {t('moreStoriesHeading')} · {tp('page', { page })}
+          </p>
+        </div>
+        <BlogPostsGrid
+          initialPosts={archive.posts}
+          initialPageInfo={{ hasNextPage: archive.pageInfo.hasNextPage, endCursor: archive.pageInfo.endCursor }}
+          excludeCategories="espanol,cn"
+        />
+        <Pagination currentPage={page} hasNextPage={archive.pageInfo.hasNextPage} basePath="/guides" />
+      </div>
+    );
+  }
+
   // ─── Magazine view ───
   const [{ hero, sections }, tail] = await Promise.all([
     getGuidesLanding(),
-    getBlogPosts({ first: 12, excludeCategorySlugs: ['espanol', 'cn'] }),
+    getBlogPosts({ first: POSTS_PER_PAGE, excludeCategorySlugs: ['espanol', 'cn'] }),
   ]);
 
   return (
@@ -144,6 +187,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           initialPageInfo={{ hasNextPage: tail.pageInfo.hasNextPage, endCursor: tail.pageInfo.endCursor }}
           excludeCategories="espanol,cn"
         />
+        <Pagination currentPage={1} hasNextPage={tail.pageInfo.hasNextPage} basePath="/guides" />
       </div>
     </div>
   );

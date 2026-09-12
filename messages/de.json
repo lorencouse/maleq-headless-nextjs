@@ -46,7 +46,10 @@
     "followUs": "Folge uns",
     "legalName": "THE MALEQ LLC",
     "supportPhone": "+1 (978) 572-0012",
-    "supportEmail": "sales@maleq.com"
+    "supportEmail": "sales@maleq.com",
+    "shopByCategory": "Nach Kategorie shoppen",
+    "allCategories": "Alle Kategorien",
+    "allBrands": "Alle Marken"
   },
   "mobileMenu": {
     "menu": "Menü",
@@ -2029,5 +2032,20 @@
     "newsletterSubtitle": "Erhalte wöchentlich unsere Top-Storys, Kultur und Schlagzeilen.",
     "followHeading": "Folge Male Q News",
     "followSubtitle": "Erhalte Neuigkeiten auf deiner Lieblingsplattform."
+  },
+  "pagination": {
+    "label": "Seitennavigation",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "page": "Seite {page}",
+    "pageOf": "Seite {page} von {total}"
+  },
+  "categoryIndex": {
+    "metaTitle": "Alle Kategorien | Shop",
+    "metaDescription": "Alle Produktkategorien bei Male Q entdecken: Sextoys, Gleitgele, Dessous, Bondage, Wellness und mehr, mit schnellem, diskretem Versand.",
+    "h1": "Nach Kategorie shoppen",
+    "subtitle": "Jede Kategorie, die wir führen, von den großen Familien bis zu den Spezialregalen.",
+    "breadcrumb": "Alle Kategorien",
+    "productCount": "{count, plural, =1 {# Produkt} other {# Produkte}}"
   }
 }
