@@ -46,14 +46,18 @@ export default function Footer() {
                   {t('supportPhone')}
                 </a>
               </p>
-              <p>
-                <a
-                  href={`mailto:${t('supportEmail')}`}
-                  className='hover:text-primary transition-colors'
-                >
-                  {t('supportEmail')}
-                </a>
-              </p>
+              {/* Cloudflare's "Email Address Obfuscation" rewrites any visible
+                  address into a __cf_email__ span AFTER React renders it, so
+                  the HTML no longer matches the client and React throws #418
+                  and re-renders the whole page client-side (seen on every
+                  page, 2026-09-12). The email_off markers tell Cloudflare to
+                  leave this block alone; innerHTML is not diffed on hydration,
+                  so this stays stable even if the feature is left on. */}
+              <p
+                dangerouslySetInnerHTML={{
+                  __html: `<!--email_off--><a href="mailto:${t('supportEmail')}" class="hover:text-primary transition-colors">${t('supportEmail')}</a><!--/email_off-->`,
+                }}
+              />
             </address>
           </div>
 
