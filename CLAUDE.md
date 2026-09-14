@@ -83,6 +83,9 @@ Stripe closed our account in Sep 2026 and, as an appeal condition, required remo
 - Already wired into `scripts/import-products-direct.ts` (feed filter stage, logs every refusal) and `lib/import/product-importer.ts` (`assertNotRestricted`, counted as skipped).
 - Audit the live catalog: `bun scripts/_audit-restricted-products.ts` (dry run; `--apply` drafts the hits with restorable `_maleq_hidden_reason` meta, then run `scripts/ops/revalidate-frontend.sh`).
 - The 38 CBD products hidden on 2026-09-11 carry `_maleq_hidden_reason=stripe-cbd-2026-09-11`. Do not re-publish them.
+- **WordPress-side backstop:** `wordpress/mu-plugins/maleq-restricted-products-guard.php` forces restricted products (and anything with `_maleq_hidden_reason`) back to draft on publish via wp-admin / CSV import / REST / wp-cli. It reads `maleq-restricted-rules.json` (same dir), which is **generated** — after editing a rule, the brand blocklist or the allowlist, run `bun scripts/gen-restricted-rules.ts` and deploy both files. `__tests__/lib/restricted-rules-sync.test.ts` fails if the JSON is stale or a pattern is not PCRE-compatible, and checks the PHP port against the TS checker when a `php` binary exists.
+- **Enforcement:** `.github/workflows/test.yml` runs jest on every push/PR; `__tests__/scripts/product-insert-gate.test.ts` fails if any script inserts `post_type='product'` rows without importing the gate; `e2e/compliance.spec.ts` (daily, in `uat-smoke.yml`) searches production for restricted terms and checks the footer identity + policy pages. Every restricted category fails the run (all 31 non-CBD hits were drafted on 2026-09-14); a category removed from `ENFORCED` only warns.
+- Stripe reinstated the account on 2026-09-14 on the basis of the above. Treat the conditions as permanent.
 
 ## Available Scripts & CLI Tools
 

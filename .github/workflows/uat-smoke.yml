@@ -36,7 +36,7 @@ jobs:
         run: bunx playwright install --with-deps chromium webkit
 
       - name: Run smoke tests (Chromium + WebKit)
-        run: bunx playwright test e2e/home.spec.ts e2e/shop.spec.ts e2e/cart.spec.ts --project=chromium --project=webkit
+        run: bunx playwright test e2e/home.spec.ts e2e/shop.spec.ts e2e/cart.spec.ts e2e/compliance.spec.ts --project=chromium --project=webkit
 
       - name: Upload Playwright report
         if: always()

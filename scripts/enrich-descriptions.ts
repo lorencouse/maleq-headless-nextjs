@@ -47,6 +47,14 @@ import {
   shouldPause,
   type CheckpointData,
 } from './lib/checkpoint';
+import {
+  checkRestrictedProduct,
+  describeRestriction,
+  loadRestrictedAllowlist,
+} from '../lib/import/restricted-products';
+
+/** Stripe gate for machine-written copy (see CLAUDE.md → Restricted Products). */
+const RESTRICTED_ALLOWLIST = loadRestrictedAllowlist();
 
 // ─── CLI Parsing ───
 
@@ -265,7 +273,7 @@ async function processProduct(
     variations?: MergedProduct[];
   } = {}
 ): Promise<{ row: CsvRow; status: string; result: GeneratedDescription }> {
-  const result = await generateDescription(llm, product, options);
+  let result = await generateDescription(llm, product, options);
 
   // Embed images for parent products with successful generation
   let finalHtml = result.html;
@@ -278,6 +286,28 @@ async function processProduct(
   ) {
     finalHtml = embedImages(finalHtml, product.galleryImageUrls, product.title, product.brand);
     imagesEmbedded = (finalHtml.match(/<img /gi) || []).length;
+  }
+
+  // Never write generated copy that would trip the Stripe gate: a model can plausibly
+  // call a hemp lotion "CBD-infused" or a novelty vibe a "vape", and the WordPress
+  // guard would then refuse to publish the product (or worse, it is already live).
+  if (result.status !== 'error') {
+    const restriction = checkRestrictedProduct(
+      {
+        name: product.title,
+        description: `${finalHtml}\n${result.excerpt}\n${result.metaDescription}`,
+        brand: product.brand,
+        categories: product.categories,
+        sku: product.sku,
+        barcode: product.barcode,
+      },
+      { allowlist: RESTRICTED_ALLOWLIST }
+    );
+    if (restriction.restricted) {
+      const why = describeRestriction(restriction);
+      console.warn(`  ⛔ ${product.title}: generated copy is Stripe-restricted (${why}) — not written`);
+      result = { ...result, status: 'error', error: `restricted: ${why}` };
+    }
   }
 
   const row: CsvRow = {

@@ -18,6 +18,13 @@ jest.mock('@/lib/push/push-service', () => ({
   deleteStockAlert: jest.fn(),
 }));
 
+// The subscribe route now requires the caller to own `customerId` (extractAuthToken must
+// return a token for that user); the payload below uses customerId 42.
+jest.mock('@/lib/api/auth-token', () => ({
+  ...jest.requireActual('@/lib/api/auth-token'),
+  extractAuthToken: jest.fn(() => ({ userId: 42 })),
+}));
+
 jest.mock('@/lib/api/rate-limit', () => ({
   RATE_LIMITS: {
     push: { limit: 30, windowSeconds: 60 },
