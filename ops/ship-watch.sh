@@ -12,7 +12,7 @@
 # THIS RUNS ON THE MAC MINI AND NOWHERE ELSE. Two watchers would race each
 # other into the same registry and the same Coolify application, and the loser
 # deploys an image built from a different commit than the one it pinned. The
-# hostname check below is the guard; MALEQ_SHIP_HOST overrides it if this ever
+# hostname check below is the guard; MALEQ_SHIP_HOSTS overrides it if this ever
 # moves to another machine, which is a move, not a second copy.
 #
 # Pause it with `touch ~/.maleq-ship/paused` (rm to resume): being behind on
@@ -28,18 +28,42 @@
 # watcher and the ship script are always the committed versions.
 set -uo pipefail
 cd "$(dirname "$0")/.."
-export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/sbin:/sbin:$PATH"
 WORK=${MALEQ_SHIP_DIR:-$HOME/.maleq-ship}
 export MALEQ_ENV_FILE=${MALEQ_ENV_FILE:-$WORK/env}
 mkdir -p "$WORK"
 log() { echo "$(date -u +%FT%TZ) $*"; }
 
-WATCH_HOST=${MALEQ_SHIP_HOST:-Lorens-Mac-mini-3}
-here=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
-if [ "$here" != "$WATCH_HOST" ]; then
-  log "not shipping: this is $here, the watcher belongs on $WATCH_HOST"
-  exit 0
+# SELF-UPDATE FIRST, before any other check.
+#
+# Everything below is fixable by pushing a commit -- but only if this block is
+# reached. The hostname guard used to sit above it, and when that guard was
+# wrong (it called scutil, which lives in /usr/sbin, absent from the PATH
+# launchd hands an agent) the watcher exited before it could ever pick up its
+# own fix. A watcher that cannot update itself has to be repaired by hand on
+# the machine, which is exactly the thing it exists to avoid.
+git fetch -q origin main 2>/dev/null || { log "fetch failed"; exit 0; }
+sha=$(git rev-parse origin/main)
+# Only in the watcher's own clone: never reset a working checkout.
+if [ "$PWD" = "$WORK/repo" ] && [ "$(git rev-parse HEAD)" != "$sha" ]; then
+  git reset -q --hard "$sha"
+  exec bash "$0" "$@"
 fi
+
+# This machine answers to two names -- scutil's LocalHostName is
+# "Lorens-Mac-mini-3" and `hostname -s` is "Lorens-Mini-3" -- so the guard
+# accepts either. scutil is called by absolute path because it lives in
+# /usr/sbin, which is NOT on the PATH launchd gives an agent: the first install
+# of this watcher refused every tick with "this is Lorens-Mini-3", having
+# silently fallen through to the other name.
+WATCH_HOSTS=${MALEQ_SHIP_HOSTS:-"Lorens-Mac-mini-3 Lorens-Mini-3"}
+here=$(/usr/sbin/scutil --get LocalHostName 2>/dev/null || hostname -s)
+case " $WATCH_HOSTS " in
+  *" $here "*) ;;
+  *)
+    log "not shipping: this is $here, the watcher belongs on $WATCH_HOSTS"
+    exit 0 ;;
+esac
 
 # How long main may sit unshipped before this is worth waking somebody over,
 # and how rarely to repeat it. A cold build of this image plus the deploy is
@@ -73,13 +97,6 @@ ship_running() {
   return 0
 }
 
-git fetch -q origin main 2>/dev/null || { log "fetch failed"; exit 0; }
-sha=$(git rev-parse origin/main)
-# Self-update, only in the watcher's own clone: never reset a working checkout.
-if [ "$PWD" = "$WORK/repo" ] && [ "$(git rev-parse HEAD)" != "$sha" ]; then
-  git reset -q --hard "$sha"
-  exec bash "$0" "$@"
-fi
 if [ "$sha" = "$(cat "$WORK/shipped" 2>/dev/null)" ]; then
   rm -f "$WORK/last-alert"   # level again: the next incident alerts at once
   exit 0

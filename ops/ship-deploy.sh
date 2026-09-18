@@ -103,12 +103,34 @@ done
 # is tagged with the same name a pulled one has). The evidence is whether
 # `bash /artifacts/build.sh` ran. `Build step skipped` is should_skip_build()
 # saying so in as many words.
-# `.logs` is a JSON string that itself contains a JSON document, so one decode
-# still leaves the inner escaping in place: the text reads \/artifacts\/build.sh,
-# and a grep for artifacts/build.sh silently matches nothing. That is how the
-# normalising ship on 2026-09-17 reported "neither a build nor a skip" on a
-# deployment that plainly built. Decode, then unescape the slashes.
-logs=$(api "${COOLIFY_API}/deployments/${dep}" | jq -r '.logs // ""' | sed 's#\\/#/#g')
+# Read ONLY Coolify's own log entries, which are the ones with a null command.
+# Everything else is the output of a command it ran -- and those include
+# `git log -1 --pretty=%B` and `cat Dockerfile`, so the deployment log contains
+# the full text of the commit being deployed. Grepping the whole blob matches
+# words this very commit's message happens to use: aireio-web reported a build
+# on a deployment that had pulled cleanly, because its commit message contained
+# "docker build", and both commits that introduced THIS check quote the two
+# Coolify strings it looks for.
+#
+# `.logs` is also a JSON string containing a JSON document, so it needs its own
+# decode; one decode short of that leaves \/artifacts\/build.sh and matches
+# nothing, which is how the normalising ship reported "neither a build nor a
+# skip" on a deployment that plainly built.
+raw=$(api "${COOLIFY_API}/deployments/${dep}")
+logs=$(printf '%s' "$raw" | jq -r '.logs // "[]"' \
+       | jq -r '[.[] | select(.command == null) | .output] | join("\n")' 2>/dev/null || true)
+if [ -z "$logs" ]; then
+  # The inner document does not always parse (Coolify emits the odd invalid
+  # escape). Fall back to the flattened text, but then ONLY test positively for
+  # the skip: on this path a missing marker is not evidence of a build.
+  flat=$(printf '%s' "$raw" | jq -r '.logs // ""' | sed 's#\\/#/#g')
+  if printf '%s' "$flat" | grep -q 'Build step skipped'; then
+    echo "coolify: pulled the image and SKIPPED the build"
+  else
+    echo "note: could not read Coolify's own log entries; confirm in the UI whether the build was skipped"
+  fi
+  exit 0
+fi
 if [ -z "$logs" ]; then
   echo "note: could not read the deployment log; check in the Coolify UI whether the build step was skipped"
 # Coolify says which of the three happened, in as many words. These strings are

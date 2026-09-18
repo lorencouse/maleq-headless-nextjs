@@ -19,12 +19,13 @@ if [ "${1:-}" = --remove ]; then
   rm -f "$DEST"; echo "removed $LABEL"; exit 0
 fi
 
-WATCH_HOST=${MALEQ_SHIP_HOST:-Lorens-Mac-mini-3}
-here=$(scutil --get LocalHostName 2>/dev/null || hostname -s)
-[ "$here" = "$WATCH_HOST" ] || {
-  echo "this is $here; the watcher belongs on $WATCH_HOST and must exist in one place only" >&2
-  exit 1
-}
+WATCH_HOSTS=${MALEQ_SHIP_HOSTS:-"Lorens-Mac-mini-3 Lorens-Mini-3"}
+here=$(/usr/sbin/scutil --get LocalHostName 2>/dev/null || hostname -s)
+case " $WATCH_HOSTS " in
+  *" $here "*) ;;
+  *) echo "this is $here; the watcher belongs on $WATCH_HOSTS and must exist in one place only" >&2
+     exit 1 ;;
+esac
 
 WORK=$HOME/.maleq-ship
 mkdir -p "$HOME/Library/LaunchAgents" "$WORK"
@@ -36,6 +37,10 @@ if [ ! -d "$WORK/repo/.git" ]; then
   git clone -q https://github.com/lorencouse/maleq-headless-nextjs.git "$WORK/repo"
 fi
 git -C "$WORK/repo" config credential.helper '!gh auth git-credential'
+# Bring the clone to origin/main here too. The watcher self-updates on its own
+# ticks, but a reinstall is what you reach for when the installed copy is too
+# broken to tick, and leaving it on a stale commit makes the reinstall a no-op.
+git -C "$WORK/repo" fetch -q origin main && git -C "$WORK/repo" reset -q --hard origin/main
 
 # The one token it needs, out of this checkout's .env.local.
 umask 077
