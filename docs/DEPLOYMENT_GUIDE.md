@@ -380,10 +380,25 @@ build-impact changed, so it pulls and logs
 `No build configuration changed & image found (…). Build step skipped.`
 
 `ops/ship-deploy.sh` therefore writes config **only when it is not already
-right** — steady state is zero writes — and afterwards greps the log for
-`Build step skipped` versus `artifacts/build.sh`, which is the only reliable
-evidence of which happened. A server-built image carries the same name as a
-pulled one, so the image name proves nothing.
+right** — steady state is zero writes — and afterwards reads the log for which
+of three things Coolify says (the strings are from the running source, not
+guessed):
+
+| Log line | Meaning |
+|---|---|
+| `Build step skipped` | pulled, did not build. What you want. |
+| `Build configuration changed. Rebuilding image.` | something wrote a build-impact field. Expected once after a normalising ship; otherwise a regression. |
+| `Image not found (…). Building new image.` | the tag was not in the registry — the push failed, or `origin/main` moved. |
+
+A server-built image carries the same name as a pulled one, so the image name
+proves nothing; the log line is the evidence.
+
+> Note for anyone who read the earlier version of this: `Image not found …
+> Building new image.` **does** exist in this Coolify, but it never fires for us,
+> because our image IS present. The line that fires on a config change is the
+> second row above. A check that greps only for "Building new image" therefore
+> reports a clean pull on a deployment that rebuilt — which is how this went
+> unnoticed for weeks.
 
 The race this replaces — a push landing between the build and the deploy, so
 Coolify resolves a sha nobody built — is real. It is closed in
@@ -395,6 +410,26 @@ default path.
 > **A normalising ship builds once.** Changing `git_commit_sha` back to `HEAD`
 > is itself a build-impact change, so the deployment that does it builds on the
 > server. The one after it skips. `ship-deploy.sh` says which case it is in.
+
+#### Auto-deploy must stay neutered
+
+The application has `is_auto_deploy_enabled` on and a GitHub webhook, so a push
+to `main` makes Coolify deploy **the commit you just pushed, before the Mac has
+built an image for it** — it finds no tag and builds on the server. That is the
+whole problem, re-entering by the back door.
+
+The guard is `watch_paths`, set to a path that never changes:
+
+```
+watch_paths = ops/deploys-come-from-ship-local
+```
+
+The webhook then matches nothing and never deploys. (house-finder uses
+`.github/deploys-are-triggered-by-actions` for the same reason — that odd value
+is not a real path, it is a note to the next person.) `watch_paths` is not in
+the deployment configuration snapshot, so setting it has no build impact.
+
+**Do not clear it** without turning auto-deploy off instead.
 
 #### Shipping automatically
 

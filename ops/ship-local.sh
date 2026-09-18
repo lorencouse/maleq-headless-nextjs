@@ -238,12 +238,19 @@ fi
 # whole layer cache between runs. That is not theoretical: two consecutive
 # builds of the same commit here produced zero CACHED steps and left 0B
 # reclaimable, i.e. every build was cold and re-ran `bun install` from scratch.
+# (house-finder confirmed the same on their builder against a clean control:
+# 0B on the configured builder hours after three builds, 7.57GB on the
+# unconfigured default builder on the same daemon.)
+#
+# 6GB, not more, because this Mac's boot disk is the constraint -- ~/.colima is
+# already 28G against about 20G free -- and house-finder's builder keeps its
+# own 6GB on the same disk.
 cat > "$WORK/buildkitd.toml" <<TOML
 [registry."$VM_REGISTRY"]
   http = true
 [worker.oci]
   gc = true
-  gckeepstorage = "${BUILD_CACHE_KEEP:-10GB}"
+  gckeepstorage = "${BUILD_CACHE_KEEP:-6GB}"
 TOML
 # The config is only read when the container is created, so a changed config
 # means recreating the builder. Cheap: what is thrown away is a cache that the

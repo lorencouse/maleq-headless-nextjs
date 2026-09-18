@@ -111,17 +111,29 @@ done
 logs=$(api "${COOLIFY_API}/deployments/${dep}" | jq -r '.logs // ""' | sed 's#\\/#/#g')
 if [ -z "$logs" ]; then
   echo "note: could not read the deployment log; check in the Coolify UI whether the build step was skipped"
+# Coolify says which of the three happened, in as many words. These strings are
+# from the running source (ApplicationDeploymentJob.php ~1320-1330), not
+# guessed, and they distinguish the two failure modes -- which matters, because
+# the fix is different for each.
 elif printf '%s' "$logs" | grep -q 'Build step skipped'; then
   echo "coolify: pulled the image and SKIPPED the build"
-elif printf '%s' "$logs" | grep -q 'artifacts/build.sh'; then
-  echo "WARNING: the server BUILT this image instead of only pulling it." >&2
+elif printf '%s' "$logs" | grep -q 'Build configuration changed. Rebuilding image'; then
+  echo "WARNING: the server REBUILT because the configuration changed." >&2
   if [ "$patch" != '{}' ]; then
-    echo "Expected this once, because the config was just normalised. Ship again and it should skip." >&2
+    echo "Expected this once: the config was just normalised. Ship again and it should skip." >&2
   else
-    echo "Not expected: nothing build-impact changed. Something reset git_commit_sha off HEAD," >&2
-    echo "or the tag was missing at deploy time. Read the deployment log before shipping again." >&2
+    echo "Not expected. Something wrote a build-impact field (git_commit_sha is one) between" >&2
+    echo "ships -- a deploy from the Coolify UI, or an edit to the build settings." >&2
     exit 1
   fi
+elif printf '%s' "$logs" | grep -q 'Image not found'; then
+  echo "WARNING: the tag was NOT in the registry, so the server built it itself." >&2
+  echo "Either the push did not land, or origin/main moved and Coolify resolved a commit" >&2
+  echo "nobody built. ops/ship-local.sh re-checks for exactly that, so suspect the push." >&2
+  exit 1
+elif printf '%s' "$logs" | grep -q 'artifacts/build.sh'; then
+  echo "WARNING: the server built, and said none of the three things it says." >&2
+  exit 1
 else
   echo "note: the log shows neither a build nor a skip; worth a look"
 fi
