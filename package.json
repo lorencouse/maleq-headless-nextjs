@@ -19,7 +19,9 @@
     "build:fast": "GENERATE_ALL_PAGES=false next build --webpack",
     "db:status": "bash scripts/db-toggle.sh",
     "db:tunnel": "bash scripts/db-toggle.sh tunnel",
-    "db:tunnel:kill": "bash scripts/db-toggle.sh kill"
+    "db:tunnel:kill": "bash scripts/db-toggle.sh kill",
+    "ship": "bash ops/ship-local.sh",
+    "ship:dry": "bash ops/ship-local.sh --dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.100.1",

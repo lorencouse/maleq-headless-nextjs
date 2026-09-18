@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Ship main when it is pushed: ops/ship-watch.sh every two minutes, run
+       from the watcher's own clone at ~/.maleq-ship/repo (launchd cannot read
+       the external volume the working checkout lives on). Install:
+       ops/ship-watch-install.sh. Its own label, because house-finder owns
+       com.kouzr.ship-watch on this same Mac. -->
+  <key>Label</key><string>com.maleq.ship-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/ops/ship-watch.sh</string>
+  </array>
+  <key>StartInterval</key><integer>120</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/.maleq-ship/watch.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/.maleq-ship/watch.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>HOME</key><string>__HOME__</string>
+    <key>MALEQ_ENV_FILE</key><string>__HOME__/.maleq-ship/env</string>
+  </dict>
+</dict>
+</plist>

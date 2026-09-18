@@ -281,15 +281,15 @@ curl https://maleq.com/api/cron/reconcile-payments -H "Authorization: Bearer $AD
 1. In the Coolify dashboard, create (or open) the application for this project.
 2. Source: the connected GitHub repository.
 3. Branch: `main`.
-4. Build pack: **Nixpacks** (auto-detects the Bun + Next.js project — there is no `Dockerfile` in the repo).
+4. Build pack: **Dockerfile** (`/Dockerfile` in the repo root, port 3000). Leave it as `dockerfile` — see §5; the ship path depends on it.
 
 ### 2. Configure Build Settings
 
-Coolify/Nixpacks auto-detects Next.js. Verify:
+The `Dockerfile` in the repo root does the whole build (bun install → `bun run build`
+→ a `node:20-alpine` runner on `node server.js`). Verify in Coolify:
 
-- **Install Command**: `bun install`
-- **Build Command**: `bun run build`
-- **Start Command**: `bun run start` (Next.js production server)
+- **Dockerfile Location**: `/Dockerfile`
+- **Base Directory**: `/`
 - **Port**: `3000`
 
 ### 3. Add Environment Variables
@@ -297,6 +297,9 @@ Coolify/Nixpacks auto-detects Next.js. Verify:
 1. Open the application → **Environment Variables**.
 2. Add all required variables from the table above.
 3. Mark every `NEXT_PUBLIC_*` variable as a **Build Variable** so it is available during `bun run build` (otherwise it will be empty in the browser).
+4. This is also where `ops/ship-local.sh` reads the build args from, so a
+   `NEXT_PUBLIC_*` value that is only set in this repo's `.env.local` and not in
+   Coolify will be empty in the shipped bundle. Coolify is the source of truth.
 
 ### 4. Configure Domain & TLS
 
@@ -304,13 +307,128 @@ Coolify/Nixpacks auto-detects Next.js. Verify:
 2. Point the domain's DNS at the Coolify VPS (`46.224.227.119`).
 3. TLS is issued automatically by Coolify's bundled **Traefik** via Let's Encrypt (certs stored in `acme.json`). No manual certificate steps are needed.
 
-### 5. Deploy
+### 5. Deploy: `npm run ship` from the Mac Mini
 
-1. Push to `main`.
-2. Coolify deploys via its GitHub webhook. **Note:** the webhook can be flaky — if a push doesn't trigger a build, open the application in Coolify and click **Deploy** (a manual deploy pulls the current `main` HEAD).
-3. Monitor the build logs in Coolify.
+**The server does not build this image. The Mac Mini does.**
 
-> **Build memory caveat:** the Coolify VPS has 8 GB RAM and **no swap**. The Next.js build loads the ~35k-product index per worker, so builds occasionally OOM/get killed transiently. If a build dies with no clear error, just retry the deploy.
+Coolify used to build this Dockerfile on the Coolify VPS — a 75 GB box it shares
+with the live `wp.maleq.com` WordPress and its MySQL. A Next.js build with the
+35k-product index next to a production database is a bad neighbour, and the
+buildkit cache it left behind is what put that disk at 85% on 2026-09-17.
+
+Now the Mac Mini builds it. The Mac is arm64 like the server, so the image is
+native; it is pushed into the plain docker registry that runs on the Coolify
+host (container `kouzr-registry`, bound to `127.0.0.1:5000`, loopback only)
+through an SSH tunnel, and Coolify is then told to deploy that exact tag. The
+server pulls and restarts. This is the same path `house-finder` ships on —
+`../house-finder/ops/` is the original.
+
+```bash
+npm run ship          # build origin/main here, push it, deploy it
+npm run ship:dry      # say what it would ship and stop
+ops/ship-local.sh --build-only   # build and push, do not touch production
+```
+
+What `ops/ship-local.sh` does, in order:
+
+1. Takes a lock (`~/.maleq-ship/lock.d`) so a hand-run and the watcher cannot
+   race, and opens the SSH tunnel to the registry if one is not already up.
+2. Checks `COOLIFY_TOKEN` is still accepted — before the build, not twenty
+   minutes into it.
+3. Checks out `origin/main` into a worktree of its own, `~/.maleq-ship/main`.
+   **Never the working tree:** a docker build context is whatever is on disk,
+   so an image built from your checkout would carry whatever half-finished edit
+   was sitting in `app/`.
+4. Reads the build args from Coolify's own API rather than keeping a second
+   copy of them here. The Dockerfile bakes `NEXT_PUBLIC_*` into the client
+   bundle at build time, so building without them ships a site pointed at
+   nothing. Only the ARGs the Dockerfile declares are passed, and only the
+   **production** environment's values — the same endpoint also returns the
+   preview environment's, whose `NEXT_PUBLIC_SITE_URL` is wrong for production.
+5. Builds `--platform linux/arm64` on a buildx builder of its own (`maleq`),
+   and pushes `maleq/web:<sha>` and `maleq/web:main`. A cold build is about
+   fifteen minutes; a warm one is three or four.
+6. Confirms the tag is really in the registry, then deploys (below).
+
+#### The one thing that is easy to get wrong
+
+**Do not pin `git_commit_sha`.** It looks like the fix and it is the bug.
+
+Read out of the running Coolify (4.0.0-beta.463) on 2026-09-17, because the
+deployment log is actively misleading here — it prints a successful
+`docker pull` of our image and then builds anyway, with no "Building new image"
+line to catch it by:
+
+- `generate_image_names()` — for the `dockerfile` build pack the image is
+  `{docker_registry_image_name}:{resolved commit}`. **`docker_registry_image_tag`
+  is not used at all**; the code that would honour it is commented out.
+- `should_skip_build()` — skips the build only when the image is present
+  locally **and** `pendingDeploymentConfigurationDiff()->requiresBuild()` is
+  false.
+- `requiresBuild()` — true when any changed config item has `impact == 'build'`,
+  and in `ApplicationConfigurationSnapshot` **`git_commit_sha` is impact
+  `build`**.
+
+So pinning the sha on every ship is itself a build-impact configuration change,
+and it forces a rebuild every single time. `docker_registry_image_name` and
+`_tag` are impact `redeploy`, which is why those are safe to set.
+
+What works instead: **leave `git_commit_sha` at `HEAD`** and let Coolify resolve
+the branch. It runs `git ls-remote`, gets `origin/main`'s sha, and looks for
+`localhost:5000/maleq/web:<that sha>` — exactly the tag the Mac pushed. Nothing
+build-impact changed, so it pulls and logs
+`No build configuration changed & image found (…). Build step skipped.`
+
+`ops/ship-deploy.sh` therefore writes config **only when it is not already
+right** — steady state is zero writes — and afterwards greps the log for
+`Build step skipped` versus `artifacts/build.sh`, which is the only reliable
+evidence of which happened. A server-built image carries the same name as a
+pulled one, so the image name proves nothing.
+
+The race this replaces — a push landing between the build and the deploy, so
+Coolify resolves a sha nobody built — is real. It is closed in
+`ops/ship-local.sh` by re-checking `origin/main` immediately before deploying
+and refusing to ship a stale build; the next run picks up the newer commit.
+That leaves Coolify's server-side build as a genuine fallback instead of the
+default path.
+
+> **A normalising ship builds once.** Changing `git_commit_sha` back to `HEAD`
+> is itself a build-impact change, so the deployment that does it builds on the
+> server. The one after it skips. `ship-deploy.sh` says which case it is in.
+
+#### Shipping automatically
+
+`ops/ship-watch-install.sh` installs a launchd agent (`com.maleq.ship-watch`,
+every two minutes) that ships `origin/main` within a few minutes of a green
+push. It only ships a commit whose `test.yml` run came back green; a red commit
+is remembered and skipped, and the next push gets its own chance.
+
+It runs **on the Mac Mini and nowhere else** — two watchers would race each
+other into the registry and into the same Coolify application, and the loser
+deploys an image built from a different commit than the one it pinned. Both the
+watcher and its installer refuse to run on any other host. It runs from a clone
+of its own at `~/.maleq-ship/repo` on the **boot disk**, because launchd agents
+cannot read the external volume this checkout lives on ("Operation not
+permitted", macOS privacy).
+
+```bash
+ops/ship-watch-install.sh            # install / reinstall
+ops/ship-watch-install.sh --remove   # unload
+touch ~/.maleq-ship/paused           # pause; rm to resume
+tail -f ~/.maleq-ship/watch.log      # what it has been doing
+```
+
+#### Registry retention
+
+Every ship pushes a new sha-tagged image and nothing removes the old ones. The
+Coolify host runs `house-finder`'s `ops/registry-retain.sh` hourly (cron, `:47`)
+over both the registry and the host's own image store; it must include the
+`maleq/web` prefix. An unswept prefix fills that disk again in about a week.
+
+> **Build memory caveat (server-side fallback only):** the Coolify VPS has 8 GB
+> RAM plus 8 GB swap. If a ship fails and Coolify falls back to building on the
+> server, that build can still OOM transiently — retry it. Shipping from the Mac
+> avoids this entirely.
 
 ---
 
