@@ -71,7 +71,16 @@ REPO=${REPO:-maleq/web}
 REGISTRY=localhost:5000
 VM_REGISTRY=${VM_REGISTRY:-host.lima.internal:5000}
 WORK=${MALEQ_SHIP_DIR:-$HOME/.maleq-ship}
-TREE=$WORK/main
+# One worktree per owning checkout, keyed by its path.
+#
+# A git worktree belongs to the repository that created it: its .git file is a
+# pointer back into that repo's object store. This checkout lives on an
+# external volume, and the watcher runs from its own clone on the boot disk
+# -- so a single shared worktree path means whichever ran first owns it, and
+# the other gets "fatal: not a git repository: /Volumes/.../.git/worktrees/main"
+# and dies AFTER taking the lock. launchd agents cannot read that volume at
+# all, so for the watcher it is not even a permissions warning, it is gone.
+TREE=$WORK/main-$(printf '%s' "$ROOT" | shasum | cut -c1-8)
 
 # What "too long" means for an unattended tick. A cold arm64 build of this
 # image is roughly fifteen minutes and a warm one two or three, so
@@ -191,7 +200,15 @@ fi
 # in the other fails as "unable to read tree".
 git fetch -q origin main
 SHA=$(git rev-parse origin/main)
+# A worktree whose owner has gone (or which was never ours) is rebuilt rather
+# than reported: `git -C` on it fails outright, so there is nothing to repair.
+if [ -e "$TREE" ] && ! git -C "$TREE" rev-parse --git-dir >/dev/null 2>&1; then
+  log "the worktree at $TREE is not usable from here, rebuilding it"
+  rm -rf "$TREE"
+  git worktree prune
+fi
 if [ ! -d "$TREE/.git" ] && [ ! -f "$TREE/.git" ]; then
+  git worktree prune
   git worktree add -q --detach "$TREE" "$SHA"
 else
   git -C "$TREE" cat-file -e "$SHA^{commit}" 2>/dev/null || git -C "$TREE" fetch -q origin main
